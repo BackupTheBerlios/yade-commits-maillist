@@ -1,0 +1,625 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1359 - in trunk: core gui/py lib/import	pkg/common/DataClass/PhysicalParameters	pkg/common/Engine/DeusExMachina	pkg/common/Engine/StandAloneEngine pkg/dem/Engine/EngineUnit	pkg/dem/Engine/StandAloneEngine	pkg/dem/RenderingEngine/GLDrawElasticContactInteraction
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1359%20-%20in%20trunk%3A%20core%20gui/py%20lib/import%0A%09pkg/common/DataClass/PhysicalParameters%0A%09pkg/common/Engine/DeusExMachina%0A%09pkg/common/Engine/StandAloneEngine%20pkg/dem/Engine/EngineUnit%0A%09pkg/dem/Engine/StandAloneEngine%0A%09pkg/dem/RenderingEngine/GLDrawElasticContactInteraction&In-Reply-To=%3C200805211856.m4LIulMp019593%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000320.html">
+   <LINK REL="Next"  HREF="000322.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1359 - in trunk: core gui/py lib/import	pkg/common/DataClass/PhysicalParameters	pkg/common/Engine/DeusExMachina	pkg/common/Engine/StandAloneEngine pkg/dem/Engine/EngineUnit	pkg/dem/Engine/StandAloneEngine	pkg/dem/RenderingEngine/GLDrawElasticContactInteraction</H1>
+    <B>sega at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1359%20-%20in%20trunk%3A%20core%20gui/py%20lib/import%0A%09pkg/common/DataClass/PhysicalParameters%0A%09pkg/common/Engine/DeusExMachina%0A%09pkg/common/Engine/StandAloneEngine%20pkg/dem/Engine/EngineUnit%0A%09pkg/dem/Engine/StandAloneEngine%0A%09pkg/dem/RenderingEngine/GLDrawElasticContactInteraction&In-Reply-To=%3C200805211856.m4LIulMp019593%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1359 - in trunk: core gui/py lib/import	pkg/common/DataClass/PhysicalParameters	pkg/common/Engine/DeusExMachina	pkg/common/Engine/StandAloneEngine pkg/dem/Engine/EngineUnit	pkg/dem/Engine/StandAloneEngine	pkg/dem/RenderingEngine/GLDrawElasticContactInteraction">sega at mail.berlios.de
+       </A><BR>
+    <I>Wed May 21 20:56:47 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000320.html">[Yade-commits] r1358 - in trunk: core extra extra/clump extra/usct	gui/py gui/qt3 pkg/common/Engine/DeusExMachina	pkg/common/Engine/StandAloneEngine
+</A></li>
+        <LI>Next message: <A HREF="000322.html">[Yade-commits] r1360 - trunk/pkg/dem/Engine/EngineUnit
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#321">[ date ]</a>
+              <a href="thread.html#321">[ thread ]</a>
+              <a href="subject.html#321">[ subject ]</a>
+              <a href="author.html#321">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: sega
+Date: 2008-05-21 20:56:45 +0200 (Wed, 21 May 2008)
+New Revision: 1359
+
+Modified:
+   trunk/core/Interaction.hpp
+   trunk/gui/py/yadeControl.cpp
+   trunk/lib/import/STLImporter.cpp
+   trunk/lib/import/STLImporter.hpp
+   trunk/pkg/common/DataClass/PhysicalParameters/RigidBodyParameters.cpp
+   trunk/pkg/common/DataClass/PhysicalParameters/RigidBodyParameters.hpp
+   trunk/pkg/common/Engine/DeusExMachina/RotationEngine.cpp
+   trunk/pkg/common/Engine/DeusExMachina/RotationEngine.hpp
+   trunk/pkg/common/Engine/StandAloneEngine/SpatialQuickSortCollider.cpp
+   trunk/pkg/dem/Engine/EngineUnit/InteractingFacet2InteractingSphere4SpheresContactGeometry.cpp
+   trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2InteractingSphere4SpheresContactGeometry.cpp
+   trunk/pkg/dem/Engine/StandAloneEngine/ElasticContactLaw.cpp
+   trunk/pkg/dem/RenderingEngine/GLDrawElasticContactInteraction/GLDrawElasticContactInteraction.cpp
+Log:
+1. Added attribute zeroPoint to RigidBodyParameters and RotationEngine. This attribute defines the rotation center of kinematic body.
+2. For ElasticContactLaw added accounting rotation of kinematic body around its zeroPoint. 
+3. Added phase flag &quot;cycle&quot; to Interaction. SpatialQuickSortCollider is modified so interaction's cycle flag is used to mark stale contacts instead isReal flag.
+4. Small changed InteractingSphere2InteractingSphere4SpheresContactGeometry and GLDrawElasticContactInteraction. I think, towards an improvement. If there are objections, changes must be reverted.
+5. pyOmega.save allows recovery 
+6. STLImporter allows multiple files to import consistently.
+7. Bugs fix.
+
+
+Modified: trunk/core/Interaction.hpp
+===================================================================
+--- trunk/core/Interaction.hpp	2008-05-20 20:05:08 UTC (rev 1358)
++++ trunk/core/Interaction.hpp	2008-05-21 18:56:45 UTC (rev 1359)
+@@ -34,6 +34,7 @@
+ 					// we can remove this flag, if we make another container for PotetntialInteraction with only ids
+ 		bool isReal;		// maybe we can remove this, and check if InteractingGeometry, and InteractionPhysics are empty?
+ //		bool isNeighbor;	// Has a meaning only with triangulationCollider atm NOTE : TriangulationCollider needs that
++		bool cycle; // phase flag to mark (for example, SpatialQuickSortCollider mark by it the stale interactions) 
+ 
+ 
+ 	// FIXME - why public ?!
+
+Modified: trunk/gui/py/yadeControl.cpp
+===================================================================
+--- trunk/gui/py/yadeControl.cpp	2008-05-20 20:05:08 UTC (rev 1358)
++++ trunk/gui/py/yadeControl.cpp	2008-05-21 18:56:45 UTC (rev 1359)
+@@ -340,9 +340,9 @@
+ 		needsInitializers=true;
+ 	}
+ 
+-	void save(std::string fileName){
++	void save(std::string fileName, bool recover=false){
+ 		assertRootBody();
+-		OMEGA.saveSimulation(fileName);
++		OMEGA.saveSimulation(fileName,recover);
+ 		LOG_DEBUG(&quot;SAVE!&quot;);
+ 	}
+ 
+@@ -406,14 +406,17 @@
+ 	}
+ 	#undef OMEGA
+ };
++	
++BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(omega_run_overloads,run,0,1);
++BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(omega_save_overloads,save,1,2);
+ 
+ class pySTLImporter : public STLImporter {
+     public:
+-	void py_import(pyBodyContainer bc) { import(bc.proxee); }
++	void py_import(pyBodyContainer bc, unsigned int begin=0) { import(bc.proxee,begin); }
+ };
+-	
+-BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(omega_overloads,run,0,1);
+ 
++BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(STLImporter_import_overloads,py_import,1,2);
++
+ #ifdef USE_PYGLVIEWER 
+ /*! GL viewer wrapper, with full attribute access. CURRENTLY&#160;DOESN'T EVEN&#160;COMPILE!!!
+  *
+@@ -527,9 +530,9 @@
+ 		.add_property(&quot;dt&quot;,&amp;pyOmega::dt_get,&amp;pyOmega::dt_set)
+ 		.add_property(&quot;usesTimeStepper&quot;,&amp;pyOmega::usesTimeStepper_get,&amp;pyOmega::usesTimeStepper_set)
+ 		.def(&quot;load&quot;,&amp;pyOmega::load)
+-		.def(&quot;save&quot;,&amp;pyOmega::save)
++		.def(&quot;save&quot;,&amp;pyOmega::save,omega_save_overloads())
+ 		.def(&quot;saveSpheres&quot;,&amp;pyOmega::saveSpheres)
+-		.def(&quot;run&quot;,&amp;pyOmega::run,omega_overloads())
++		.def(&quot;run&quot;,&amp;pyOmega::run,omega_run_overloads())
+ 		.def(&quot;pause&quot;,&amp;pyOmega::pause)
+ 		.def(&quot;step&quot;,&amp;pyOmega::step)
+ 		.def(&quot;wait&quot;,&amp;pyOmega::wait)
+@@ -635,6 +638,6 @@
+ 	    .def_readwrite(&quot;facets_wire&quot;,&amp;pySTLImporter::facets_wire)
+ 	    .def_readwrite(&quot;import_flat_edges_flag&quot;,&amp;pySTLImporter::import_flat_edges_flag)
+ 	    .def_readwrite(&quot;import_flat_vertices_flag&quot;,&amp;pySTLImporter::import_flat_vertices_flag)
+-	    .def(&quot;import_geometry&quot;,&amp;pySTLImporter::py_import);
++	    .def(&quot;import_geometry&quot;,&amp;pySTLImporter::py_import,STLImporter_import_overloads());
+ }
+ 
+
+Modified: trunk/lib/import/STLImporter.cpp
+===================================================================
+--- trunk/lib/import/STLImporter.cpp	2008-05-20 20:05:08 UTC (rev 1358)
++++ trunk/lib/import/STLImporter.cpp	2008-05-21 18:56:45 UTC (rev 1359)
+@@ -52,93 +52,94 @@
+     return true;
+ }
+ 
+-void STLImporter::import(shared_ptr&lt;BodyContainer&gt; bodies)
++void STLImporter::import(shared_ptr&lt;BodyContainer&gt; bodies, unsigned int begin)
+ {
+-    BodyContainer::iterator b_it = bodies-&gt;begin();
+-    if (import_vertices) 
+-	for(int j=0,e=vts.size(); j&lt;e; ++j)
+-	{
+-	    if (!import_flat_vertices_flag &amp;&amp; vts[j].flat) continue;
++	unsigned int b_id = begin;
+ 
+-	    if (!import_edges &amp;&amp; !import_facets) {
+-		shared_ptr&lt;Vertex&gt; gVertex(new Vertex);
+-		gVertex-&gt;diffuseColor		= Vector3r(0.7,0.7,0.7);
+-		gVertex-&gt;wire			= false;
+-		gVertex-&gt;visible		= true;
+-		gVertex-&gt;shadowCaster		= true;
+-		(*b_it)-&gt;geometricalModel	= gVertex;
+-	    }
++	if (import_vertices) 
++			for(int j=0,e=vts.size(); j&lt;e; ++j)
++			{
++				if (!import_flat_vertices_flag &amp;&amp; vts[j].flat) continue;
+ 
+-	    shared_ptr&lt;InteractingVertex&gt; iVertex(new InteractingVertex);
+-	    iVertex-&gt;normals=vts[j].normals;
+-	    iVertex-&gt;flat=vts[j].flat;
+-	    iVertex-&gt;diffuseColor		= Vector3r(0.8,0.3,0.3);
++				if (!import_edges &amp;&amp; !import_facets) {
++						shared_ptr&lt;Vertex&gt; gVertex(new Vertex);
++						gVertex-&gt;diffuseColor		= Vector3r(0.7,0.7,0.7);
++						gVertex-&gt;wire			= false;
++						gVertex-&gt;visible		= true;
++						gVertex-&gt;shadowCaster		= true;
++						(*bodies)[b_id]-&gt;geometricalModel	= gVertex;
++				}
+ 
+-	    (*b_it)-&gt;physicalParameters-&gt;se3 = Se3r( vts[j].point, Quaternionr( 1,0,0,0 ) );
+-	    (*b_it)-&gt;interactingGeometry= iVertex;
++				shared_ptr&lt;InteractingVertex&gt; iVertex(new InteractingVertex);
++				iVertex-&gt;normals=vts[j].normals;
++				iVertex-&gt;flat=vts[j].flat;
++				iVertex-&gt;diffuseColor		= Vector3r(0.8,0.3,0.3);
+ 
+-	    ++b_it;
+-	}
++				(*bodies)[b_id]-&gt;physicalParameters-&gt;se3 = Se3r( vts[j].point, Quaternionr( 1,0,0,0 ) );
++				(*bodies)[b_id]-&gt;interactingGeometry= iVertex;
+ 
++				++b_id;
++			}
++
+     if (import_edges) 
+-	for(int j=0,e=egs.size(); j&lt;e; ++j)
+-	{ 
+-	    if (!import_flat_edges_flag &amp;&amp; egs[j].flat) continue;
++			for(int j=0,e=egs.size(); j&lt;e; ++j)
++			{ 
++				if (!import_flat_edges_flag &amp;&amp; egs[j].flat) continue;
+ 
+-	    Vector3r p0 = vts[egs[j].first].point
+-		    ,p1 = vts[egs[j].second].point;
++				Vector3r p0 = vts[egs[j].first].point
++					,p1 = vts[egs[j].second].point;
+ 
+-	    if (!import_facets) {
+-		shared_ptr&lt;GeometricalEdge&gt; gEdge(new GeometricalEdge);
+-		gEdge-&gt;edge			= p1-p0;
+-		gEdge-&gt;diffuseColor		= Vector3r(0.8,0.8,0.8);
+-		gEdge-&gt;wire			= false;
+-		gEdge-&gt;visible			= true;
+-		gEdge-&gt;shadowCaster		= true;
+-		(*b_it)-&gt;geometricalModel	= gEdge;
+-	    }
++				if (!import_facets) {
++						shared_ptr&lt;GeometricalEdge&gt; gEdge(new GeometricalEdge);
++						gEdge-&gt;edge			= p1-p0;
++						gEdge-&gt;diffuseColor		= Vector3r(0.8,0.8,0.8);
++						gEdge-&gt;wire			= false;
++						gEdge-&gt;visible			= true;
++						gEdge-&gt;shadowCaster		= true;
++						(*bodies)[b_id]-&gt;geometricalModel	= gEdge;
++				}
+ 
+-	    shared_ptr&lt;InteractingEdge&gt; iEdge(new InteractingEdge);
+-	    iEdge-&gt;edge			= p1-p0;
+-	    iEdge-&gt;normal1	        = egs[j].normal1;
+-	    iEdge-&gt;normal2	        = egs[j].normal2;
+-	    iEdge-&gt;both			= egs[j].both;
+-	    iEdge-&gt;flat			= egs[j].flat;
+-	    iEdge-&gt;diffuseColor		= Vector3r(0.8,0.3,0.3);
++				shared_ptr&lt;InteractingEdge&gt; iEdge(new InteractingEdge);
++				iEdge-&gt;edge			= p1-p0;
++				iEdge-&gt;normal1	        = egs[j].normal1;
++				iEdge-&gt;normal2	        = egs[j].normal2;
++				iEdge-&gt;both			= egs[j].both;
++				iEdge-&gt;flat			= egs[j].flat;
++				iEdge-&gt;diffuseColor		= Vector3r(0.8,0.3,0.3);
+ 
+-	    (*b_it)-&gt;physicalParameters-&gt;se3 = Se3r(p0 , Quaternionr( 1,0,0,0 ) );
+-	    (*b_it)-&gt;interactingGeometry	= iEdge;
++				(*bodies)[b_id]-&gt;physicalParameters-&gt;se3 = Se3r(p0 , Quaternionr( 1,0,0,0 ) );
++				(*bodies)[b_id]-&gt;interactingGeometry	= iEdge;
+ 
+-	    ++b_it;
+-	}
++				++b_id;
++			}
+ 
+     if (import_facets) 
+-	for(int i=0,e=fcs.size(); i&lt;e; ++i)
+-	{
+-	    const Fct &amp;f = fcs[i];
+-	    Vector3r p0 (vts[f[0]].point);
++			for(int i=0,e=fcs.size(); i&lt;e; ++i)
++			{
++				const Fct &amp;f = fcs[i];
++				Vector3r p0 (vts[f[0]].point);
+ 
+-	    shared_ptr&lt;InteractingFacet&gt; iFacet(new InteractingFacet);
+-	    iFacet-&gt;diffuseColor    = Vector3r(0.8,0.3,0.3);
++				shared_ptr&lt;InteractingFacet&gt; iFacet(new InteractingFacet);
++				iFacet-&gt;diffuseColor    = Vector3r(0.8,0.3,0.3);
+ 
+-	    shared_ptr&lt;Facet&gt; gFacet(new Facet);
+-	    gFacet-&gt;diffuseColor    = Vector3r(0.5,0.5,0.5);
+-	    gFacet-&gt;wire	    = facets_wire;
+-	    gFacet-&gt;visible	    = true;
+-	    gFacet-&gt;shadowCaster    = true;
++				shared_ptr&lt;Facet&gt; gFacet(new Facet);
++				gFacet-&gt;diffuseColor    = Vector3r(0.5,0.5,0.5);
++				gFacet-&gt;wire	    = facets_wire;
++				gFacet-&gt;visible	    = true;
++				gFacet-&gt;shadowCaster    = true;
+ 
+-	    for (int j=1,ej=f.size(); j&lt;ej; ++j)
+-	    {   
+-		iFacet-&gt;vertices.push_back(vts[f[j]].point - p0);
+-		gFacet-&gt;vertices.push_back(vts[f[j]].point - p0);
+-	    }
++				for (int j=1,ej=f.size(); j&lt;ej; ++j)
++				{   
++						iFacet-&gt;vertices.push_back(vts[f[j]].point - p0);
++						gFacet-&gt;vertices.push_back(vts[f[j]].point - p0);
++				}
+ 
+-	    (*b_it)-&gt;physicalParameters-&gt;se3 = Se3r( p0, Quaternionr( 1,0,0,0 ) );
+-	    (*b_it)-&gt;geometricalModel	= gFacet;
+-	    (*b_it)-&gt;interactingGeometry	= iFacet;
++				(*bodies)[b_id]-&gt;physicalParameters-&gt;se3 = Se3r( p0, Quaternionr( 1,0,0,0 ) );
++				(*bodies)[b_id]-&gt;geometricalModel	= gFacet;
++				(*bodies)[b_id]-&gt;interactingGeometry	= iFacet;
+ 
+-	    ++b_it;
+-	}
++				++b_id;
++			}
+ }
+ 
+ void STLImporter::processVertex(int id)
+
+Modified: trunk/lib/import/STLImporter.hpp
+===================================================================
+--- trunk/lib/import/STLImporter.hpp	2008-05-20 20:05:08 UTC (rev 1358)
++++ trunk/lib/import/STLImporter.hpp	2008-05-21 18:56:45 UTC (rev 1359)
+@@ -68,7 +68,7 @@
+ 	bool import_flat_vertices_flag; 
+ 
+ 	/// import geometry (sequence vertices, edges, facets)
+-	void import(shared_ptr&lt;BodyContainer&gt; bodies);
++	void import(shared_ptr&lt;BodyContainer&gt; bodies, unsigned int begin=0);
+ 
+     protected:
+ 	/// Vertex
+
+Modified: trunk/pkg/common/DataClass/PhysicalParameters/RigidBodyParameters.cpp
+===================================================================
+--- trunk/pkg/common/DataClass/PhysicalParameters/RigidBodyParameters.cpp	2008-05-20 20:05:08 UTC (rev 1358)
++++ trunk/pkg/common/DataClass/PhysicalParameters/RigidBodyParameters.cpp	2008-05-21 18:56:45 UTC (rev 1359)
+@@ -16,6 +16,7 @@
+ 	acceleration = Vector3r(0,0,0);
+ 	angularAcceleration = Vector3r(0,0,0);
+ 	angularVelocity=Vector3r(0,0,0);
++	zeroPoint=Vector3r(0,0,0);
+ }
+ 
+ RigidBodyParameters::~RigidBodyParameters()
+@@ -27,6 +28,7 @@
+ 	ParticleParameters::registerAttributes();
+ 	REGISTER_ATTRIBUTE(inertia);
+ 	REGISTER_ATTRIBUTE(angularVelocity);
++//	REGISTER_ATTRIBUTE(zeroPoint); // must be set by kinematic Engine
+ }
+ 
+ YADE_PLUGIN();
+
+Modified: trunk/pkg/common/DataClass/PhysicalParameters/RigidBodyParameters.hpp
+===================================================================
+--- trunk/pkg/common/DataClass/PhysicalParameters/RigidBodyParameters.hpp	2008-05-20 20:05:08 UTC (rev 1358)
++++ trunk/pkg/common/DataClass/PhysicalParameters/RigidBodyParameters.hpp	2008-05-21 18:56:45 UTC (rev 1359)
+@@ -21,6 +21,10 @@
+ 		// state
+ 				,angularAcceleration
+ 				,angularVelocity;
++
++		/// It is the rotation center of kinematic (non-isDymanic) body. 
++		/// It is non-serializable and must be set by kinematic Engine. 
++		Vector3r zeroPoint;
+ 	
+ 		RigidBodyParameters ();
+ 		virtual ~RigidBodyParameters ();
+
+Modified: trunk/pkg/common/Engine/DeusExMachina/RotationEngine.cpp
+===================================================================
+--- trunk/pkg/common/Engine/DeusExMachina/RotationEngine.cpp	2008-05-20 20:05:08 UTC (rev 1358)
++++ trunk/pkg/common/Engine/DeusExMachina/RotationEngine.cpp	2008-05-21 18:56:45 UTC (rev 1359)
+@@ -18,6 +18,7 @@
+ RotationEngine::RotationEngine()
+ {
+ 	rotateAroundZero = false;
++	zeroPoint = Vector3r(0,0,0);
+ }
+ 
+ 
+@@ -27,8 +28,14 @@
+ 	REGISTER_ATTRIBUTE(angularVelocity);
+ 	REGISTER_ATTRIBUTE(rotationAxis);
+ 	REGISTER_ATTRIBUTE(rotateAroundZero);
++	REGISTER_ATTRIBUTE(zeroPoint);
+ }
+ 
++void RotationEngine::postProcessAttributes(bool deserializing)
++{
++		if (!deserializing) return;
++		rotationAxis.Normalize();
++}
+ 
+ void RotationEngine::applyCondition(MetaBody *ncb)
+ {
+@@ -52,7 +59,7 @@
+ 		RigidBodyParameters * rb = static_cast&lt;RigidBodyParameters*&gt;((*bodies)[*ii]-&gt;physicalParameters.get());
+ 
+ 		if(rotateAroundZero)
+-			rb-&gt;se3.position	= q*rb-&gt;se3.position; // for RotatingBox
++			rb-&gt;se3.position	= q*(rb-&gt;se3.position-zeroPoint)+zeroPoint; // for RotatingBox
+ 			
+ 		rb-&gt;se3.orientation	= q*rb-&gt;se3.orientation;
+ 
+
+Modified: trunk/pkg/common/Engine/DeusExMachina/RotationEngine.hpp
+===================================================================
+--- trunk/pkg/common/Engine/DeusExMachina/RotationEngine.hpp	2008-05-20 20:05:08 UTC (rev 1358)
++++ trunk/pkg/common/Engine/DeusExMachina/RotationEngine.hpp	2008-05-21 18:56:45 UTC (rev 1359)
+@@ -21,11 +21,13 @@
+ 		Real angularVelocity;
+ 		Vector3r rotationAxis;
+ 		bool rotateAroundZero;
++		Vector3r zeroPoint;
+ 
+ 		void applyCondition(MetaBody * );
+ 
+ 	protected :
+ 		void registerAttributes();
++		void postProcessAttributes(bool deserializing);
+ 	REGISTER_CLASS_NAME(RotationEngine);
+ 	REGISTER_BASE_CLASS_NAME(DeusExMachina);
+ };
+
+Modified: trunk/pkg/common/Engine/StandAloneEngine/SpatialQuickSortCollider.cpp
+===================================================================
+--- trunk/pkg/common/Engine/StandAloneEngine/SpatialQuickSortCollider.cpp	2008-05-20 20:05:08 UTC (rev 1358)
++++ trunk/pkg/common/Engine/StandAloneEngine/SpatialQuickSortCollider.cpp	2008-05-21 18:56:45 UTC (rev 1359)
+@@ -65,7 +65,7 @@
+ 	InteractionContainer::iterator ii    = transientInteractions-&gt;begin();
+ 	InteractionContainer::iterator iiEnd = transientInteractions-&gt;end();
+ 	for( ; ii!=iiEnd ; ++ii)
+-	   (*ii)-&gt;isReal = false;
++	   (*ii)-&gt;cycle = false;
+ 
+ 
+ 	sort(rank.begin(), rank.end(), xBoundComparator()); // sotring along X
+@@ -91,11 +91,11 @@
+ 			if ( (interaction = transientInteractions-&gt;find(body_id_t(id),body_id_t(id2))) == 0)
+ 			{
+ 			    interaction = shared_ptr&lt;Interaction&gt;(new Interaction(id,id2) );
+-			    interaction-&gt;isReal=true;
++			    interaction-&gt;cycle=true;
+ 			    transientInteractions-&gt;insert(interaction);
+ 			}
+ 			else
+-			    interaction-&gt;isReal = true;
++			    interaction-&gt;cycle = true;
+ 		    }
+ 		}
+ 		else break;
+@@ -105,7 +105,7 @@
+ 	ii    = transientInteractions-&gt;begin();
+ 	iiEnd = transientInteractions-&gt;end();
+ 	for( ; ii!=iiEnd ; ++ii)
+-	   if ( ! (interaction = *ii)-&gt;isReal ) transientInteractions-&gt;erase( interaction-&gt;getId1(), interaction-&gt;getId2());
++	   if ( ! (interaction = *ii)-&gt;cycle ) transientInteractions-&gt;erase( interaction-&gt;getId1(), interaction-&gt;getId2());
+ 
+ }
+ 
+
+Modified: trunk/pkg/dem/Engine/EngineUnit/InteractingFacet2InteractingSphere4SpheresContactGeometry.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/EngineUnit/InteractingFacet2InteractingSphere4SpheresContactGeometry.cpp	2008-05-20 20:05:08 UTC (rev 1358)
++++ trunk/pkg/dem/Engine/EngineUnit/InteractingFacet2InteractingSphere4SpheresContactGeometry.cpp	2008-05-21 18:56:45 UTC (rev 1359)
+@@ -63,7 +63,7 @@
+ 	    // global orientation
+ 	    normal = facetAxisT*normal; normal.Normalize();
+ 
+-  	    scm-&gt;contactPoint = se32.position - 0.5*penetrationDepth*normal; 
++  	    scm-&gt;contactPoint = se32.position - (sphereRadius-0.5*penetrationDepth)*normal; 
+   	    scm-&gt;normal = normal; 
+   	    scm-&gt;penetrationDepth = penetrationDepth;
+   	    scm-&gt;radius1 = 2*sphereRadius;
+
+Modified: trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2InteractingSphere4SpheresContactGeometry.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2InteractingSphere4SpheresContactGeometry.cpp	2008-05-20 20:05:08 UTC (rev 1358)
++++ trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2InteractingSphere4SpheresContactGeometry.cpp	2008-05-21 18:56:45 UTC (rev 1359)
+@@ -38,7 +38,7 @@
+ 	Vector3r normal = se32.position-se31.position;
+ 	Real penetrationDepth = pow(interactionDetectionFactor*(s1-&gt;radius+s2-&gt;radius), 2) - normal.SquaredLength();// Compute a wrong value just to check sign - faster than computing distances
+ 	//Real penetrationDepth = s1-&gt;radius+s2-&gt;radius-normal.Normalize();
+-	if (penetrationDepth&gt;0 || c-&gt;isReal){
++	if (penetrationDepth&gt;0 /*|| c-&gt;isReal*/){
+ 		shared_ptr&lt;SpheresContactGeometry&gt; scm;
+ 		if (c-&gt;interactionGeometry){
+ 			// WARNING! 
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/ElasticContactLaw.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/ElasticContactLaw.cpp	2008-05-20 20:05:08 UTC (rev 1358)
++++ trunk/pkg/dem/Engine/StandAloneEngine/ElasticContactLaw.cpp	2008-05-21 18:56:45 UTC (rev 1359)
+@@ -62,7 +62,10 @@
+ 	
+ 			BodyMacroParameters* de1 				= YADE_CAST&lt;BodyMacroParameters*&gt;((*bodies)[id1]-&gt;physicalParameters.get());
+ 			BodyMacroParameters* de2 				= YADE_CAST&lt;BodyMacroParameters*&gt;((*bodies)[id2]-&gt;physicalParameters.get());
+-			
++
++			bool isDynamic1 = (*bodies)[id1]-&gt;isDynamic;
++			bool isDynamic2 = (*bodies)[id2]-&gt;isDynamic;
++
+ 			Vector3r&amp; shearForce 			= currentContactPhysics-&gt;shearForce;
+ 	
+ 			if (contact-&gt;isNew) shearForce=Vector3r(0,0,0);
+@@ -72,12 +75,19 @@
+ 	
+ 			Vector3r axis;
+ 			Real angle;
+-	
++
+ 	/// Here is the code with approximated rotations 	 ///
+ 			
++
+ 			axis = currentContactPhysics-&gt;prevNormal.Cross(currentContactGeometry-&gt;normal);
+ 			shearForce -= shearForce.Cross(axis);
+-			angle = dt*0.5*currentContactGeometry-&gt;normal.Dot(de1-&gt;angularVelocity+de2-&gt;angularVelocity);
++			//angle = dt*0.5*currentContactGeometry-&gt;normal.Dot(de1-&gt;angularVelocity+de2-&gt;angularVelocity);
++				//FIXME: if one body is kinematic then assumed its rotation centre does not lies along the normal
++				//(i.e. virtual sphere, which replaces this kinematic body on contact, does not rotate)
++			Vector3r summaryAngularVelocity(0,0,0);
++			if (isDynamic1) summaryAngularVelocity += de1-&gt;angularVelocity;
++			if (isDynamic2) summaryAngularVelocity += de2-&gt;angularVelocity;
++			angle = dt*0.5*currentContactGeometry-&gt;normal.Dot(summaryAngularVelocity);
+ 			axis = angle*currentContactGeometry-&gt;normal;
+ 			shearForce -= shearForce.Cross(axis);
+ 		
+@@ -105,8 +115,8 @@
+ 			///  (see F. ALONSO-MARROQUIN, R. GARCIA-ROJO, H.J. HERRMANN, 
+ 			///   &quot;Micro-mechanical investigation of granular ratcheting, in Cyclic Behaviour of Soils and Liquefaction Phenomena&quot;,
+ 			///   ed. T. Triantafyllidis (Balklema, London, 2004), p. 3-10 - and a lot more papers from the same authors)
+-            		Vector3r _c1x_	= currentContactGeometry-&gt;radius1*currentContactGeometry-&gt;normal;
+-            		Vector3r _c2x_	= -currentContactGeometry-&gt;radius2*currentContactGeometry-&gt;normal;
++            		Vector3r _c1x_	= (isDynamic1) ? currentContactGeometry-&gt;radius1*currentContactGeometry-&gt;normal : x - de1-&gt;zeroPoint;
++            		Vector3r _c2x_	= (isDynamic2) ? -currentContactGeometry-&gt;radius2*currentContactGeometry-&gt;normal : x - de2-&gt;zeroPoint;
+ 			Vector3r relativeVelocity		= (de2-&gt;velocity+de2-&gt;angularVelocity.Cross(_c2x_)) - (de1-&gt;velocity+de1-&gt;angularVelocity.Cross(_c1x_));
+ 			Vector3r shearVelocity			= relativeVelocity-currentContactGeometry-&gt;normal.Dot(relativeVelocity)*currentContactGeometry-&gt;normal;
+ 			Vector3r shearDisplacement		= shearVelocity*dt;
+@@ -133,7 +143,6 @@
+ 			currentContactPhysics-&gt;prevNormal = currentContactGeometry-&gt;normal;
+ 		}
+ 	}
+-
+ }
+ 
+ 
+
+Modified: trunk/pkg/dem/RenderingEngine/GLDrawElasticContactInteraction/GLDrawElasticContactInteraction.cpp
+===================================================================
+--- trunk/pkg/dem/RenderingEngine/GLDrawElasticContactInteraction/GLDrawElasticContactInteraction.cpp	2008-05-20 20:05:08 UTC (rev 1358)
++++ trunk/pkg/dem/RenderingEngine/GLDrawElasticContactInteraction/GLDrawElasticContactInteraction.cpp	2008-05-21 18:56:45 UTC (rev 1359)
+@@ -48,40 +48,45 @@
+ 
+ 	ElasticContactInteraction*    ph = static_cast&lt;ElasticContactInteraction*&gt;(ih.get());
+ 	SpheresContactGeometry*    sc = static_cast&lt;SpheresContactGeometry*&gt;(i-&gt;interactionGeometry.get());
+-	Vector3r pos1   = b1-&gt;physicalParameters-&gt;se3.position;
+-	Vector3r pos2   = b2-&gt;physicalParameters-&gt;se3.position;
++//	Vector3r pos1   = b1-&gt;physicalParameters-&gt;se3.position;
++//	Vector3r pos2   = b2-&gt;physicalParameters-&gt;se3.position;
+ 
+ 	/// skip drawing interaction with boxes....
+-		if(boxIndex == -1 &amp;&amp; b1-&gt;geometricalModel-&gt;getClassName() == &quot;Box&quot;) boxIndex = b1-&gt;geometricalModel-&gt;getClassIndex();
+-		if(boxIndex == -1 &amp;&amp; b2-&gt;geometricalModel-&gt;getClassName() == &quot;Box&quot;) boxIndex = b2-&gt;geometricalModel-&gt;getClassIndex();
+-		if(b1-&gt;geometricalModel-&gt;getClassIndex() == boxIndex || b2-&gt;geometricalModel-&gt;getClassIndex() == boxIndex) return;
++//		if(boxIndex == -1 &amp;&amp; b1-&gt;geometricalModel-&gt;getClassName() == &quot;Box&quot;) boxIndex = b1-&gt;geometricalModel-&gt;getClassIndex();
++//		if(boxIndex == -1 &amp;&amp; b2-&gt;geometricalModel-&gt;getClassName() == &quot;Box&quot;) boxIndex = b2-&gt;geometricalModel-&gt;getClassIndex();
++//		if(b1-&gt;geometricalModel-&gt;getClassIndex() == boxIndex || b2-&gt;geometricalModel-&gt;getClassIndex() == boxIndex) return;
+ 	//
+ 
+-	Vector3r middle = 0.5*(pos1+pos2);
+-	Vector3r dist   = 0.5*(pos2-pos1);
+-	Vector3r pos1d  = 0.9*pos1 + 0.1*pos2;
+-	Vector3r pos2d  = 0.1*pos1 + 0.9*pos2;
+-	Real     size   = dist.Length()*0.5;
++	Vector3r cp = sc-&gt;contactPoint;
++	Vector3r normal = sc-&gt;normal;
++//	Vector3r middle = 0.5*(pos1+pos2);
++//	Vector3r dist   = 0.5*(pos2-pos1);
++//	Vector3r pos1d  = 0.9*pos1 + 0.1*pos2;
++//	Vector3r pos2d  = 0.1*pos1 + 0.9*pos2;
++//	Real     size   = dist.Length()*0.5;
++	Real     size   = 0.5*(sc-&gt;radius1 + sc-&gt;radius2);
+ 
+ // draw connecting line.
+ 	glBegin(GL_LINES);
+ 	glColor3(1.4,1.4,0.4);
+-	glVertex3v(pos1);
+-	glVertex3v(pos2);
++//	glVertex3v(pos1);
++//	glVertex3v(pos2);
++	glVertex3v(cp-normal*sc-&gt;radius1);
++	glVertex3v(cp+normal*sc-&gt;radius2);
+ 	glEnd();
+ 
+ // draw normal
+-	drawArrow(middle, middle+sc-&gt;normal*size*0.9 ,Vector3r(0,i-&gt;isReal?1:0.4,0));
++	drawArrow(cp, cp+normal*size*0.9 ,Vector3r(0,i-&gt;isReal?1:0.4,0));
+ // draw prevNormal
+ //	drawArrow(middle, middle+ph-&gt;prevNormal*size*0.9 ,Vector3r(i-&gt;isReal?1:0.4,0,0));
+ // draw shearForce
+ 	maxLength = std::max(maxLength,ph-&gt;shearForce.Length());
+ 	if(wireFrame) maxLength = 0.0000001;
+-	drawArrow(middle, middle+ph-&gt;shearForce*size*10.0/maxLength ,Vector3r(0,0,i-&gt;isReal?1:0.4));
++	drawArrow(cp, cp+ph-&gt;shearForce*size*10.0/maxLength ,Vector3r(0,0,i-&gt;isReal?1:0.4));
+ 
+ // write A,B
+-	drawFlatText(pos1d,std::string(&quot;  A &quot;) + boost::lexical_cast&lt;std::string&gt;(b1-&gt;getId()));
+-	drawFlatText(pos2d,std::string(&quot;  B &quot;) + boost::lexical_cast&lt;std::string&gt;(b2-&gt;getId()));
++//	drawFlatText(pos1d,std::string(&quot;  A &quot;) + boost::lexical_cast&lt;std::string&gt;(b1-&gt;getId()));
++//	drawFlatText(pos2d,std::string(&quot;  B &quot;) + boost::lexical_cast&lt;std::string&gt;(b2-&gt;getId()));
+ 
+ }
+ 
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000320.html">[Yade-commits] r1358 - in trunk: core extra extra/clump extra/usct	gui/py gui/qt3 pkg/common/Engine/DeusExMachina	pkg/common/Engine/StandAloneEngine
+</A></li>
+	<LI>Next message: <A HREF="000322.html">[Yade-commits] r1360 - trunk/pkg/dem/Engine/EngineUnit
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#321">[ date ]</a>
+              <a href="thread.html#321">[ thread ]</a>
+              <a href="subject.html#321">[ subject ]</a>
+              <a href="author.html#321">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

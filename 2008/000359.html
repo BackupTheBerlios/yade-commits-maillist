@@ -1,0 +1,285 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1398 - in trunk: . extra gui/py
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1398%20-%20in%20trunk%3A%20.%20extra%20gui/py&In-Reply-To=%3C200806222046.m5MKkVFO018954%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000358.html">
+   <LINK REL="Next"  HREF="000360.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1398 - in trunk: . extra gui/py</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1398%20-%20in%20trunk%3A%20.%20extra%20gui/py&In-Reply-To=%3C200806222046.m5MKkVFO018954%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1398 - in trunk: . extra gui/py">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Sun Jun 22 22:46:31 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000358.html">[Yade-commits] r1397 - in branches/przewdnik: core gui/qt3	pkg/common/Engine/StandAloneEngine/Visualisation
+</A></li>
+        <LI>Next message: <A HREF="000360.html">[Yade-commits] r1399 - in branches/przewdnik: core gui/qt3	pkg/common/Engine/StandAloneEngine/Visualisation	pkg/common/RenderingEngine/OpenGLRenderingEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#359">[ date ]</a>
+              <a href="thread.html#359">[ thread ]</a>
+              <a href="subject.html#359">[ subject ]</a>
+              <a href="author.html#359">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2008-06-22 22:46:30 +0200 (Sun, 22 Jun 2008)
+New Revision: 1398
+
+Removed:
+   trunk/extra/screw/
+Modified:
+   trunk/SConstruct
+   trunk/extra/Brefcom.cpp
+   trunk/extra/Brefcom.hpp
+   trunk/extra/SConscript
+   trunk/gui/py/pyAttrUtils.hpp
+Log:
+1. Remove failing and unused screw generator.
+2. Add rate-dependence variables to brefcom
+3. Add raw attribute access from python, like this:
+	gm=GeometricalModel(&quot;Facet&quot;)
+	gm.setRaw('vertices',&quot;[{1 2 3} {4 5 6} {7 8 9}]&quot;)
+to provide access to attributes the current wrapper doesn't wrap properly (i.e. anything beyond numbers, bools, strings and flat arrays of numbers: e.g. vector&lt;Vector3r&gt;, as in Facet). The format of the raw string is that of XMLFormatManager.
+
+
+
+
+Modified: trunk/SConstruct
+===================================================================
+--- trunk/SConstruct	2008-06-18 17:14:33 UTC (rev 1397)
++++ trunk/SConstruct	2008-06-22 20:46:30 UTC (rev 1398)
+@@ -112,6 +112,7 @@
+ 	('QTDIR','Directories where to look for qt3',['/usr/share/qt3','/usr/lib/qt','/usr/lib/qt3','/usr/qt/3','/usr/lib/qt-3.3'],None,Split),
+ 	('CXX','The c++ compiler','g++'),
+ 	('CXXFLAGS','Additional compiler flags; you can use them for tuning like -march=pentium4.',None,None,Split),
++	#('SHLINK','Linker for shared objects','g++'),
+ 	#('SHLINKFLAGS','Additional linker flags (for shared libs=plugins).',None,None,Split),
+ 	BoolOption('pretty',&quot;Don't show compiler command line (like the Linux kernel)&quot;,1),
+ 	BoolOption('useMiniWm3','use local miniWm3 library instead of Wm3Foundation',1),
+
+Modified: trunk/extra/Brefcom.cpp
+===================================================================
+--- trunk/extra/Brefcom.cpp	2008-06-18 17:14:33 UTC (rev 1397)
++++ trunk/extra/Brefcom.cpp	2008-06-22 20:46:30 UTC (rev 1398)
+@@ -121,7 +121,7 @@
+ 		#endif
+ 
+ 		// shorthands
+-		Real&amp; epsN(BC-&gt;epsN); Vector3r&amp; epsT(BC-&gt;epsT); Real&amp; kappaD(BC-&gt;kappaD); const Real&amp; equilibriumDist(BC-&gt;equilibriumDist); const Real&amp; xiShear(BC-&gt;xiShear); const Real&amp; E(BC-&gt;E); const Real&amp; undamagedCohesion(BC-&gt;undamagedCohesion); const Real&amp; tanFrictionAngle(BC-&gt;tanFrictionAngle); const Real&amp; G(BC-&gt;G); const Real&amp; crossSection(BC-&gt;crossSection); Real&amp; omega(BC-&gt;omega); Real&amp; sigmaN(BC-&gt;sigmaN); 
++		Real&amp; epsN(BC-&gt;epsN); Vector3r&amp; epsT(BC-&gt;epsT); Real&amp; kappaD(BC-&gt;kappaD); const Real&amp; equilibriumDist(BC-&gt;equilibriumDist); const Real&amp; xiShear(BC-&gt;xiShear); const Real&amp; E(BC-&gt;E); const Real&amp; undamagedCohesion(BC-&gt;undamagedCohesion); const Real&amp; tanFrictionAngle(BC-&gt;tanFrictionAngle); const Real&amp; G(BC-&gt;G); const Real&amp; crossSection(BC-&gt;crossSection); const Real&amp; tau(BC-&gt;tau); const Real&amp; expDmgRate(BC-&gt;expDmgRate); Real&amp; omega(BC-&gt;omega); Real&amp; sigmaN(BC-&gt;sigmaN); 
+ 
+ 		Real dist=(rbp1-&gt;se3.position-rbp2-&gt;se3.position).Length();
+ 		#define NNAN(a) assert(!isnan(a));
+
+Modified: trunk/extra/Brefcom.hpp
+===================================================================
+--- trunk/extra/Brefcom.hpp	2008-06-18 17:14:33 UTC (rev 1397)
++++ trunk/extra/Brefcom.hpp	2008-06-22 20:46:30 UTC (rev 1398)
+@@ -25,7 +25,7 @@
+ 	private:
+ 	public:
+ 		/*! Fundamental parameters (constants) */
+-		Real E, G, tanFrictionAngle, undamagedCohesion, equilibriumDist, crossSection, epsCrackOnset, epsFracture, expBending, xiShear;
++		Real E, G, tanFrictionAngle, undamagedCohesion, equilibriumDist, crossSection, epsCrackOnset, epsFracture, expBending, xiShear, tau, expDmgRate;
+ 		/*! Up to now maximum normal strain */
+ 		Real kappaD;
+ 		/*! prevNormal is oriented A&#8594;B (as in SpheresContactGeometry); */
+@@ -40,8 +40,8 @@
+ 		/*! auxiliary variable for visualization and BrefcomStiffnessCounter, recalculated by BrefcomLaw at every iteration */
+ 		Real omega, Fn, sigmaN, epsN;
+ 
+-		BrefcomContact(): InteractionPhysics(),E(0), G(0), tanFrictionAngle(0), undamagedCohesion(0), equilibriumDist(0), crossSection(0), expBending(0), xiShear(0) { createIndex(); epsT=Vector3r::ZERO; kappaD=0; isCohesive=false; }
+-		BrefcomContact(Real _E, Real _G, Real _tanFrictionAngle, Real _undamagedCohesion, Real _equilibriumDist, Real _crossSection, Real _epsCrackOnset, Real _epsFracture, Real _expBending, Real _xiShear): InteractionPhysics(), E(_E), G(_G), tanFrictionAngle(_tanFrictionAngle), undamagedCohesion(_undamagedCohesion), equilibriumDist(_equilibriumDist), crossSection(_crossSection), epsCrackOnset(_epsCrackOnset), epsFracture(_epsFracture), expBending(_expBending), xiShear(_xiShear) { epsT=Vector3r::ZERO; kappaD=0; isCohesive=false; neverDamage=false; omega=0; Fn=0; /*TRVAR5(epsCrackOnset,epsFracture,Kn,crossSection,equilibriumDist); */ }
++		BrefcomContact(): InteractionPhysics(),E(0), G(0), tanFrictionAngle(0), undamagedCohesion(0), equilibriumDist(0), crossSection(0), expBending(0), xiShear(0), tau(0), expDmgRate(0) { createIndex(); epsT=Vector3r::ZERO; kappaD=0; isCohesive=false; }
++		BrefcomContact(Real _E, Real _G, Real _tanFrictionAngle, Real _undamagedCohesion, Real _equilibriumDist, Real _crossSection, Real _epsCrackOnset, Real _epsFracture, Real _expBending, Real _xiShear, Real _tau=0, Real _expDmgRate=1): InteractionPhysics(), E(_E), G(_G), tanFrictionAngle(_tanFrictionAngle), undamagedCohesion(_undamagedCohesion), equilibriumDist(_equilibriumDist), crossSection(_crossSection), epsCrackOnset(_epsCrackOnset), epsFracture(_epsFracture), expBending(_expBending), xiShear(_xiShear), tau(_tau), expDmgRate(_expDmgRate) { epsT=Vector3r::ZERO; kappaD=0; isCohesive=false; neverDamage=false; omega=0; Fn=0; /*TRVAR5(epsCrackOnset,epsFracture,Kn,crossSection,equilibriumDist); */ }
+ 
+ 
+ 		void registerAttributes(){
+@@ -56,6 +56,8 @@
+ 			REGISTER_ATTRIBUTE(epsFracture);
+ 			REGISTER_ATTRIBUTE(expBending);
+ 			REGISTER_ATTRIBUTE(xiShear);
++			REGISTER_ATTRIBUTE(tau);
++			REGISTER_ATTRIBUTE(expDmgRate);
+ 
+ 			REGISTER_ATTRIBUTE(kappaD);
+ 			REGISTER_ATTRIBUTE(neverDamage);
+
+Modified: trunk/extra/SConscript
+===================================================================
+--- trunk/extra/SConscript	2008-06-18 17:14:33 UTC (rev 1397)
++++ trunk/extra/SConscript	2008-06-22 20:46:30 UTC (rev 1398)
+@@ -31,10 +31,6 @@
+ 		['clump/Clump.cpp'],
+ 		LIBS=env['LIBS']+['Shop']),
+ 
+-	env.SharedLibrary('ScrewGen',
+-		['screw/ScrewGen.cpp'],
+-		LIBS=env['LIBS']+['Shop','Clump']),
+-		
+ 	env.SharedLibrary('Tetra',['tetra/Tetra.cpp'],LIBS=env['LIBS']+['Tetrahedron',
+          'ParticleParameters',
+          'RigidBodyParameters',
+
+Modified: trunk/gui/py/pyAttrUtils.hpp
+===================================================================
+--- trunk/gui/py/pyAttrUtils.hpp	2008-06-18 17:14:33 UTC (rev 1397)
++++ trunk/gui/py/pyAttrUtils.hpp	2008-06-22 20:46:30 UTC (rev 1398)
+@@ -6,6 +6,11 @@
+ #include&lt;yade/lib-serialization-xml/XMLFormatManager.hpp&gt;
+ #include&lt;boost/python.hpp&gt;
+ 
++#include&lt;boost/foreach.hpp&gt;
++#ifndef FOREACH
++	#define FOREACH BOOST_FOREACH
++#endif
++
+ using namespace std;
+ using namespace boost;
+ 
+@@ -16,6 +21,8 @@
+ #define ATTR_ACCESS_CXX(accessor,ensureFunc) \
+ 	boost::python::object wrappedPyGet(std::string key){ensureFunc();return accessor-&gt;pyGet(key);} \
+ 	void wrappedPySet(std::string key,python::object val){ensureFunc(); accessor-&gt;pySet(key,val);} \
++	string wrappedGetAttrStr(std::string key){ensureFunc();vector&lt;string&gt; a=accessor-&gt;getAttrStr(key); string ret(&quot;[&quot;); FOREACH(string s, a) ret+=s+&quot; &quot;; return ret+&quot;]&quot;;} \
++	void wrappedSetAttrStr(std::string key, std::string val){ensureFunc();return accessor-&gt;setAttrStr(key,val);} \
+ 	boost::python::list wrappedPyKeys(){ensureFunc(); return accessor-&gt;pyKeys();} \
+ 	bool wrappedPyHasKey(std::string key){ensureFunc(); return accessor-&gt;descriptors.find(key)!=accessor-&gt;descriptors.end();}
+ 	
+@@ -23,7 +30,8 @@
+  *
+  * They define python special functions that support dictionary operations on this object and calls proxies for them. */
+ #define ATTR_ACCESS_PY(cxxClass) \
+-	def(&quot;__getitem__&quot;,&amp;cxxClass::wrappedPyGet).def(&quot;__setitem__&quot;,&amp;cxxClass::wrappedPySet).def(&quot;keys&quot;,&amp;cxxClass::wrappedPyKeys).def(&quot;has_key&quot;,&amp;cxxClass::wrappedPyHasKey)
++	def(&quot;__getitem__&quot;,&amp;cxxClass::wrappedPyGet).def(&quot;__setitem__&quot;,&amp;cxxClass::wrappedPySet).def(&quot;keys&quot;,&amp;cxxClass::wrappedPyKeys).def(&quot;has_key&quot;,&amp;cxxClass::wrappedPyHasKey) \
++	.def(&quot;getRaw&quot;,&amp;cxxClass::wrappedGetAttrStr).def(&quot;setRaw&quot;,&amp;cxxClass::wrappedSetAttrStr)
+ 	//def(&quot;__getattr__&quot;,&amp;cxxClass::wrappedPyGet).def(&quot;__setattr__&quot;,&amp;cxxClass::wrappedPySet).def(&quot;attrs&quot;,&amp;cxxClass::wrappedPyKeys)
+ 
+ 
+@@ -56,9 +64,10 @@
+ 	boost::python::class_&lt;pyClass&gt;(pyName,python::init&lt;python::optional&lt;string,python::dict&gt; &gt;()) \
+ 	.ATTR_ACCESS_PY(pyClass) \
+ 	.def(&quot;__str__&quot;,&amp;pyClass::pyStr).def(&quot;__repr__&quot;,&amp;pyClass::pyStr) \
+-	.add_property(&quot;name&quot;,&amp;pyClass::className)
++	.add_property(&quot;name&quot;,&amp;pyClass::className) \
+ 
+ 
++
+ /*! Helper class for accessing registered attributes through the serialization interface.
+  *
+  * 4 possible types of attributes are supported: bool, string, number and arrays (homogeneous) of any of them.
+@@ -75,13 +84,14 @@
+ 		//! maps attribute name to its archive and vector of its types (given as ints, from the following enum)
+ 		DescriptorMap descriptors;
+ 		//! allowed types
+-		enum {BOOL,STRING,NUMBER, SEQ_NUMBER, SEQ_STRING }; // allowed types
++		enum {BOOL,STRING,NUMBER, SEQ_NUMBER, SEQ_STRING, VEC_VEC }; // allowed types
+ 		
+ 		AttrAccess(Serializable* _ser): ser(shared_ptr&lt;Serializable&gt;(_ser)){init();}
+ 		AttrAccess(shared_ptr&lt;Serializable&gt; _ser):ser(_ser){init();}
+ 
+ 		//! create archives and descriptors, always called from the constructor
+ 		void init(){
++			//cerr&lt;&lt;typeid(std::vector&lt;Wm3::Vector3&lt;double&gt; &gt;*).name()&lt;&lt;endl;
+ 			if(ser-&gt;getArchives().empty()) ser-&gt;registerSerializableAttributes(false);
+ 			archives=ser-&gt;getArchives();
+ 			for(Serializable::Archives::iterator ai=archives.begin();ai!=archives.end();++ai){
+@@ -89,16 +99,29 @@
+ 					AttrDesc desc; 
+ 					desc.archive=*ai;
+ 					any instance=(*ai)-&gt;getAddress(); // gets pointer to the stored value
++					//cerr&lt;&lt;&quot;[&quot;&lt;&lt;(*ai)-&gt;getName()&lt;&lt;&quot;,&quot;&lt;&lt;instance.type().name()&lt;&lt;&quot;]&quot;;
+ 					// 3 possibilities: one BOOL, one or more STRINGS, one or more NUMBERs (fallback if none matches)
+-					if      (any_cast&lt;string*&gt;(&amp;instance)) desc.type=AttrAccess::STRING;
+-					else if (any_cast&lt;bool*&gt;(&amp;instance))   desc.type=AttrAccess::BOOL;
+-					else if (any_cast&lt;Real*&gt;(&amp;instance) || any_cast&lt;int*&gt;(&amp;instance) || any_cast&lt;unsigned int*&gt;(&amp;instance) || any_cast&lt;long*&gt;(&amp;instance) || any_cast&lt;unsigned long*&gt;(&amp;instance)) desc.type=AttrAccess::NUMBER;
+-					else if (any_cast&lt;vector&lt;string&gt;*&gt;(&amp;instance)) desc.type=AttrAccess::SEQ_STRING;
++					if      (any_cast&lt;string*&gt;(&amp;instance)) { desc.type=AttrAccess::STRING; goto found; }
++					else if (any_cast&lt;bool*&gt;(&amp;instance)) { desc.type=AttrAccess::BOOL; goto found; }
++					else if (any_cast&lt;Real*&gt;(&amp;instance) || any_cast&lt;int*&gt;(&amp;instance) || any_cast&lt;unsigned int*&gt;(&amp;instance) || any_cast&lt;long*&gt;(&amp;instance) || any_cast&lt;unsigned long*&gt;(&amp;instance)) { desc.type=AttrAccess::NUMBER; goto found;}
++					else if (any_cast&lt;vector&lt;string&gt;*&gt;(&amp;instance)) { desc.type=AttrAccess::SEQ_STRING; goto found; }
++				#if 0
++					else if (any_cast&lt;vector&lt;Vector3r&gt;*&gt;(&amp;instance)) { cerr&lt;&lt;&quot;WWWWWWWWWWWWW&quot;&lt;&lt;endl;}
++					//else if (any_cast&lt;vector&lt;Vector3r&gt;*&gt;(&amp;&amp;instance)) { cerr&lt;&quot;QQQQQQQQQQQQQQ&quot;&lt;&lt;endl;}
++					#define GET_TYPE_DIRECT(_type,ATTR_ACCESS_TYPE) try{ cerr&lt;&lt;&quot;Try &quot;&lt;&lt;instance.type().name()&lt;&lt;&quot; to &quot;&lt;&lt;typeid(_type).name()&lt;&lt;endl; any_cast&lt;_type &gt;(instance); desc.type=ATTR_ACCESS_TYPE; cerr&lt;&lt;&quot;OK!!!&quot;&lt;&lt;endl; goto found; } catch(boost::bad_any_cast&amp; e){}
++					GET_TYPE_DIRECT(std::vector&lt;Wm3::Vector3r&gt;*,AttrAccess::VEC_VEC);
++					else if (any_cast&lt;vector&lt;Wm3::Vector3&lt;double&gt; &gt;*&gt;(&amp;instance)) {
++						desc.type=AttrAccess::VEC_VEC;
++						cerr&lt;&lt;&quot;Attribute &quot;&lt;&lt;(*ai)-&gt;getName()&lt;&lt;&quot; is a vector&lt;Vector3r&gt;&quot;;
+ 					//else if (any_cast&lt;vector&lt;Real&gt;*&gt;(&amp;instance)) desc.type=AttrAccess::SEQ_NUMBER;
+-					else desc.type=AttrAccess::SEQ_NUMBER;
+-					descriptors[(*ai)-&gt;getName()]=desc;
++					}
++				#endif
++					desc.type=AttrAccess::SEQ_NUMBER;
++					found:
++						descriptors[(*ai)-&gt;getName()]=desc;
+ 				}
+ 			}
++			//cerr&lt;&lt;dumpAttrs();
+ 		}
+ 		
+ 		//! Return serialized attribute by its name, as vector of strings
+@@ -114,7 +137,7 @@
+ 		string dumpAttr(string name){
+ 			string vals,types; AttrDesc desc=descriptors[name]; vector&lt;string&gt; values=getAttrStr(name);
+ 			for(size_t i=0; i&lt;values.size(); i++) vals+=(i&gt;0?&quot; &quot;:&quot;&quot;)+values[i];
+-			string typeDesc(desc.type==BOOL?&quot;BOOL&quot;:(desc.type==STRING?&quot;STRING&quot;:(desc.type==NUMBER?&quot;NUMBER&quot;:(desc.type==SEQ_NUMBER?&quot;SEQ_NUMBER&quot;:(desc.type==SEQ_STRING?&quot;SEQ_STRING&quot;:&quot;&lt;unknown&gt;&quot;)))));
++			string typeDesc(desc.type==BOOL?&quot;BOOL&quot;:(desc.type==STRING?&quot;STRING&quot;:(desc.type==NUMBER?&quot;NUMBER&quot;:(desc.type==SEQ_NUMBER?&quot;SEQ_NUMBER&quot;:(desc.type==SEQ_STRING?&quot;SEQ_STRING&quot;:(desc.type==VEC_VEC?&quot;VEC_VEC&quot;:&quot;&lt;unknown&gt;&quot;))))));
+ 			return name+&quot; =\t&quot;+vals+&quot;\t (&quot;+typeDesc+&quot;)&quot;;
+ 		}
+ 		//! call dumpAttr for all attributes (used for debugging)
+@@ -140,6 +163,14 @@
+ 				case STRING: return python::object(raw[0]);
+ 				case SEQ_STRING: {python::list ret; for(size_t i=0; i&lt;raw.size(); i++) ret.append(python::object(raw[i])); return ret;}
+ 				case SEQ_NUMBER: {python::list ret; for(size_t i=0; i&lt;raw.size(); i++){ ret.append(python::object(lexical_cast&lt;double&gt;(raw[i]))); LOG_TRACE(&quot;Appended &quot;&lt;&lt;raw[i]);} return ret; }
++				case VEC_VEC: {
++					python::list ret; for(size_t i=0; i&lt;raw.size(); i++){
++						/* raw[i] has the form &quot;{number number number}&quot; */
++						vector&lt;string&gt; s; boost::algorithm::split(s,raw[i],algorithm::is_any_of(&quot;{} &quot;),algorithm::token_compress_on);
++						python::list subList; FOREACH(string ss, s) subList.append(python::object(lexical_cast&lt;double&gt;(ss)));
++						ret.append(subList);
++					}
++				}
+ 				default: throw runtime_error(&quot;Unhandled attribute type!&quot;);
+ 			}
+ 		}
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000358.html">[Yade-commits] r1397 - in branches/przewdnik: core gui/qt3	pkg/common/Engine/StandAloneEngine/Visualisation
+</A></li>
+	<LI>Next message: <A HREF="000360.html">[Yade-commits] r1399 - in branches/przewdnik: core gui/qt3	pkg/common/Engine/StandAloneEngine/Visualisation	pkg/common/RenderingEngine/OpenGLRenderingEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#359">[ date ]</a>
+              <a href="thread.html#359">[ thread ]</a>
+              <a href="subject.html#359">[ subject ]</a>
+              <a href="author.html#359">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

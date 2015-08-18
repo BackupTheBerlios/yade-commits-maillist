@@ -1,0 +1,97 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1044 -	trunk/yade-libs/yade-lib-loki/src/yade-lib-loki
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2007/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1044%20-%0A%09trunk/yade-libs/yade-lib-loki/src/yade-lib-loki&In-Reply-To=%3C200701251655.l0PGt2Mt014015%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000008.html">
+   <LINK REL="Next"  HREF="000010.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1044 -	trunk/yade-libs/yade-lib-loki/src/yade-lib-loki</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1044%20-%0A%09trunk/yade-libs/yade-lib-loki/src/yade-lib-loki&In-Reply-To=%3C200701251655.l0PGt2Mt014015%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1044 -	trunk/yade-libs/yade-lib-loki/src/yade-lib-loki">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Thu Jan 25 17:55:02 CET 2007</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000008.html">[Yade-commits] r1043 - in trunk: yade-core/src/yade	yade-libs/yade-lib-factory/src/yade-lib-factory
+</A></li>
+        <LI>Next message: <A HREF="000010.html">[Yade-commits] r1045 - in trunk: . yade-core/src/yade	yade-libs/yade-lib-base/src/yade-lib-base	yade-libs/yade-lib-computational-geometry/src/yade-lib-computational-geometry	yade-packages/yade-package-dem/src	yade-packages/yade-package-dem/src/DataClass/PhysicalAction	yade-packages/yade-package-dem/src/DataClass/PhysicalAction/GlobalStiffness	yade-packages/yade-package-dem/src/Engine/DeusExMachina/ResultantForceEngine	yade-packages/yade-package-dem/src/Engine/DeusExMachina/TriaxialCompressionEngine	yade-packages/yade-package-dem/src/Engine/DeusExMachina/TriaxialStressController	yade-packages/yade-package-dem/src/Engine/StandAloneEngine	yade-packages/yade-package-dem/src/Engine/StandAloneEngine/GlobalStiffnessCounter	yade-packages/yade-package-dem/src/Engine/StandAloneEngine/GlobalStiffnessTimeStepper	yade-packages/yade-package-dem/src/PreProcessor	yade-packages/yade-package-dem/src/PreProcessor/TriaxialTest
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#9">[ date ]</a>
+              <a href="thread.html#9">[ thread ]</a>
+              <a href="subject.html#9">[ subject ]</a>
+              <a href="author.html#9">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2007-01-25 17:55:02 +0100 (Thu, 25 Jan 2007)
+New Revision: 1044
+
+Added:
+   trunk/yade-libs/yade-lib-loki/src/yade-lib-loki/_dummySourceFile.cpp
+Modified:
+   trunk/yade-libs/yade-lib-loki/src/yade-lib-loki/yade-lib-loki.pro
+Log:
+Fix build process for older versions of scons that break if there is a target that has no sources. Added a dummy empty file to the loki library to do that, modified project file. Do not forget to delete yade-libs/yade-lib-loki before running scons again to regenerate SConscript files.
+
+
+Added: trunk/yade-libs/yade-lib-loki/src/yade-lib-loki/_dummySourceFile.cpp
+===================================================================
+--- trunk/yade-libs/yade-lib-loki/src/yade-lib-loki/_dummySourceFile.cpp	2007-01-23 13:51:12 UTC (rev 1043)
++++ trunk/yade-libs/yade-lib-loki/src/yade-lib-loki/_dummySourceFile.cpp	2007-01-25 16:55:02 UTC (rev 1044)
+@@ -0,0 +1,2 @@
++/* This file exists for the only purpose of not breaking building process for shared objects that have no compilable sources (scons&lt;=0.96.1, as it seems).
++It can be safely removed in the future. */
+
+Modified: trunk/yade-libs/yade-lib-loki/src/yade-lib-loki/yade-lib-loki.pro
+===================================================================
+--- trunk/yade-libs/yade-lib-loki/src/yade-lib-loki/yade-lib-loki.pro	2007-01-23 13:51:12 UTC (rev 1043)
++++ trunk/yade-libs/yade-lib-loki/src/yade-lib-loki/yade-lib-loki.pro	2007-01-25 16:55:02 UTC (rev 1044)
+@@ -23,7 +23,9 @@
+            Singleton.hpp \
+            Typelist.hpp \
+            TypeManip.hpp \
+-           TypeTraits.hpp 
++           TypeTraits.hpp
++	   
++SOURCES += _dummySourceFile.cpp
+ 
+ INCLUDEPATH += $${YADE_QMAKE_PATH}/include
+ QMAKE_RUN_CXX_IMP = $(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $(shell pwd)/$&lt;
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000008.html">[Yade-commits] r1043 - in trunk: yade-core/src/yade	yade-libs/yade-lib-factory/src/yade-lib-factory
+</A></li>
+	<LI>Next message: <A HREF="000010.html">[Yade-commits] r1045 - in trunk: . yade-core/src/yade	yade-libs/yade-lib-base/src/yade-lib-base	yade-libs/yade-lib-computational-geometry/src/yade-lib-computational-geometry	yade-packages/yade-package-dem/src	yade-packages/yade-package-dem/src/DataClass/PhysicalAction	yade-packages/yade-package-dem/src/DataClass/PhysicalAction/GlobalStiffness	yade-packages/yade-package-dem/src/Engine/DeusExMachina/ResultantForceEngine	yade-packages/yade-package-dem/src/Engine/DeusExMachina/TriaxialCompressionEngine	yade-packages/yade-package-dem/src/Engine/DeusExMachina/TriaxialStressController	yade-packages/yade-package-dem/src/Engine/StandAloneEngine	yade-packages/yade-package-dem/src/Engine/StandAloneEngine/GlobalStiffnessCounter	yade-packages/yade-package-dem/src/Engine/StandAloneEngine/GlobalStiffnessTimeStepper	yade-packages/yade-package-dem/src/PreProcessor	yade-packages/yade-package-dem/src/PreProcessor/TriaxialTest
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#9">[ date ]</a>
+              <a href="thread.html#9">[ thread ]</a>
+              <a href="subject.html#9">[ subject ]</a>
+              <a href="author.html#9">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

@@ -1,0 +1,394 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1411 - in trunk: core gui/qt3	pkg/common/RenderingEngine/OpenGLRenderingEngine
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1411%20-%20in%20trunk%3A%20core%20gui/qt3%0A%09pkg/common/RenderingEngine/OpenGLRenderingEngine&In-Reply-To=%3C200807021749.m62HnSpQ003879%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000370.html">
+   <LINK REL="Next"  HREF="000372.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1411 - in trunk: core gui/qt3	pkg/common/RenderingEngine/OpenGLRenderingEngine</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1411%20-%20in%20trunk%3A%20core%20gui/qt3%0A%09pkg/common/RenderingEngine/OpenGLRenderingEngine&In-Reply-To=%3C200807021749.m62HnSpQ003879%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1411 - in trunk: core gui/qt3	pkg/common/RenderingEngine/OpenGLRenderingEngine">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Wed Jul  2 19:49:28 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000370.html">[Yade-commits] r1410 - trunk/gui/qt3
+</A></li>
+        <LI>Next message: <A HREF="000372.html">[Yade-commits] r1412 - in trunk: gui/py gui/qt3	pkg/common/Engine/DeusExMachina
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#371">[ date ]</a>
+              <a href="thread.html#371">[ thread ]</a>
+              <a href="subject.html#371">[ subject ]</a>
+              <a href="author.html#371">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2008-07-02 19:49:27 +0200 (Wed, 02 Jul 2008)
+New Revision: 1411
+
+Modified:
+   trunk/core/PhysicalParameters.hpp
+   trunk/gui/qt3/GLViewer.cpp
+   trunk/gui/qt3/GLViewer.hpp
+   trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.cpp
+   trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.hpp
+Log:
+1. Added displacement and rotation scaling to the OpenGLRenderingEngine (accessible from the renderer config). Documentation missing as of now. Displacements from reference point will be scaled in the rendering. At this moment, only geometrical model and a few other elements of the GL display are scaled.
+
+
+Modified: trunk/core/PhysicalParameters.hpp
+===================================================================
+--- trunk/core/PhysicalParameters.hpp	2008-07-01 08:15:09 UTC (rev 1410)
++++ trunk/core/PhysicalParameters.hpp	2008-07-02 17:49:27 UTC (rev 1411)
+@@ -17,7 +17,7 @@
+ 
+ class PhysicalParameters : public Serializable, public Indexable
+ {
+-	public : /// FIXME - remove Se3, move Position and move Orientation to Particle and RigidBody. think about ParametersSingleton
++	public:
+ 			PhysicalParameters() : se3(Vector3r(0,0,0), Quaternionr(1,0,0,0)) {}
+ 		Se3r se3;
+ 
+
+Modified: trunk/gui/qt3/GLViewer.cpp
+===================================================================
+--- trunk/gui/qt3/GLViewer.cpp	2008-07-01 08:15:09 UTC (rev 1410)
++++ trunk/gui/qt3/GLViewer.cpp	2008-07-02 17:49:27 UTC (rev 1411)
+@@ -126,7 +126,7 @@
+ 		else{ displayMessage(&quot;Moving selected object&quot;); mouseMovesManipulatedFrame();}
+ 	}
+ 	else if(e-&gt;key()==Qt::Key_C &amp;&amp; selectedName() &gt;= 0 &amp;&amp; (*(Omega::instance().getRootBody()-&gt;bodies)).exists(selectedName())) setSceneCenter(manipulatedFrame()-&gt;position()), updateGL();
+-	else if(e-&gt;key()==Qt::Key_C &amp;&amp; (e-&gt;state() &amp; AltButton)){ displayMessage(&quot;Median centering&quot;); centerMeanDeviate(); updateGL(); }
++	else if(e-&gt;key()==Qt::Key_C &amp;&amp; (e-&gt;state() &amp; AltButton)){ displayMessage(&quot;Median centering&quot;); centerMedianQuartile(); updateGL(); }
+ 
+ 	else if(e-&gt;key()==Qt::Key_Escape){ resetManipulation();displayMessage(&quot;Manipulating scene.&quot;); }
+ 	else if(e-&gt;key()==Qt::Key_F1 || e-&gt;key()==Qt::Key_F2 /* || ... */ ){
+@@ -204,10 +204,20 @@
+ 	else if( e-&gt;key()!=Qt::Key_Escape &amp;&amp; e-&gt;key()!=Qt::Key_Space )
+ 		QGLViewer::keyPressEvent(e);
+ }
+-
+-void GLViewer::centerMeanDeviate(){
++/* Calculate medians for x, y and z coordinates of all bodies;
++ *then set scene center to median position and scene radius to 2*inter-quartile distance.
++ *
++ * This function eliminates the effect of lonely bodies that went nuts and enlarge
++ * the scene's AABB in such a way that fitting the scene to see the AABB makes the
++ * &quot;central&quot; (where most bodies is) part very small or even invisible.
++ */
++void GLViewer::centerMedianQuartile(){
++	long nBodies=Omega::instance().getRootBody()-&gt;bodies-&gt;size();
++	if(nBodies&lt;4) {
++		LOG_INFO(&quot;Less than 4 bodies, median makes no sense; calling centerScene() instead.&quot;);
++		return centerScene();
++	}
+ 	std::vector&lt;Real&gt; coords[3];
+-	long nBodies=Omega::instance().getRootBody()-&gt;bodies-&gt;size();
+ 	for(int i=0;i&lt;3;i++)coords[i].reserve(nBodies);
+ 	FOREACH(const shared_ptr&lt;Body&gt;&amp; b, *Omega::instance().getRootBody()-&gt;bodies){
+ 		for(int i=0; i&lt;3; i++) coords[i].push_back(b-&gt;physicalParameters-&gt;se3.position[i]);
+@@ -219,7 +229,6 @@
+ 		interQuart[i]=*(coords[i].begin()+3*nBodies/4)-*(coords[i].begin()+nBodies/4);
+ 	}
+ 	LOG_DEBUG(&quot;Median position is&quot;&lt;&lt;median&lt;&lt;&quot;, inter-quartile distance is &quot;&lt;&lt;interQuart);
+-
+ 	setSceneCenter(qglviewer::Vec(median[0],median[1],median[2]));
+ 	setSceneRadius(2*(interQuart[0]+interQuart[1]+interQuart[2])/3.);
+ 	showEntireScene();
+
+Modified: trunk/gui/qt3/GLViewer.hpp
+===================================================================
+--- trunk/gui/qt3/GLViewer.hpp	2008-07-01 08:15:09 UTC (rev 1410)
++++ trunk/gui/qt3/GLViewer.hpp	2008-07-02 17:49:27 UTC (rev 1411)
+@@ -40,7 +40,7 @@
+ 		set&lt;int&gt; boundClipPlanes;
+ 		shared_ptr&lt;qglviewer::LocalConstraint&gt; xyPlaneConstraint;
+ 		string strBoundGroup(){string ret;FOREACH(int i, boundClipPlanes) ret+=&quot; &quot;+lexical_cast&lt;string&gt;(i+1);return ret;}
+-		void centerMeanDeviate();
++		void centerMedianQuartile();
+ 
+      public :
+ 		GLViewer (int id, shared_ptr&lt;OpenGLRenderingEngine&gt; _renderer, QWidget * parent=0, QGLWidget * shareWidget=0);
+
+Modified: trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.cpp
+===================================================================
+--- trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.cpp	2008-07-01 08:15:09 UTC (rev 1410)
++++ trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.cpp	2008-07-02 17:49:27 UTC (rev 1411)
+@@ -11,8 +11,8 @@
+ #include &lt;GL/glu.h&gt;
+ #include &lt;GL/gl.h&gt;
+ #include &lt;GL/glut.h&gt;
++CREATE_LOGGER(OpenGLRenderingEngine);
+ 
+-
+ OpenGLRenderingEngine::OpenGLRenderingEngine() : RenderingEngine(), clipPlaneNum(2)
+ {
+ 
+@@ -33,6 +33,10 @@
+ 	Interaction_geometry	= false;
+ 	Interaction_physics	= false;
+ 
++	scaleDisplacements=false; scaleRotations=false;
++	displacementScale=Vector3r(1,1,1); rotationScale=1;
++
++
+ 	for(int i=0; i&lt;clipPlaneNum; i++){clipPlaneSe3.push_back(Se3r(Vector3r::ZERO,Quaternionr::IDENTITY)); clipPlaneActive.push_back(false); clipPlaneNormals.push_back(Vector3r(1,0,0));}
+ 	
+ 	map&lt;string,DynlibDescriptor&gt;::const_iterator di    = Omega::instance().getDynlibsDescriptor().begin();
+@@ -98,6 +102,19 @@
+ 	return false;
+ }
+ 
++Se3r OpenGLRenderingEngine::renderedSe3(const shared_ptr&lt;Body&gt;&amp; b){
++	if(!(scaleDisplacements||scaleRotations)) return b-&gt;physicalParameters-&gt;se3;
++	const body_id_t&amp; id=b-&gt;getId();
++	const Se3r&amp; se3=b-&gt;physicalParameters-&gt;se3; assert(refSe3.size()&gt;(size_t)b-&gt;getId());
++	Quaternionr relRot=refSe3[id].orientation.Conjugate()*se3.orientation;
++	Vector3r axis; Real angle; relRot.ToAxisAngle(axis,angle);
++	angle*=rotationScale;
++	return Se3r(
++		scaleDisplacements ? diagMult(displacementScale,se3.position-refSe3[id].position)+refSe3[id].position : se3.position,
++		scaleRotations     ? refSe3[id].orientation*Quaternionr(axis,angle) : se3.orientation
++	);
++}
++
+ void OpenGLRenderingEngine::render(
+ 		const shared_ptr&lt;MetaBody&gt;&amp; rootBody, 
+ 		body_id_t selection	// FIXME: not sure. maybe a list of selections, 
+@@ -136,8 +153,27 @@
+ 	glutSolidSphere(3,10,10);
+ 	glPopMatrix();	
+ 
++	// TODO: do this only if clipping is effective (i.e. if clipPlaneActive[i] AND'ed together); dtto for pointClipped
+ 	for(int i=0;i&lt;clipPlaneNum; i++){ clipPlaneNormals[i]=clipPlaneSe3[i].orientation*Vector3r(0,0,1); /* glBegin(GL_LINES);glVertex3v(clipPlaneSe3[i].position);glVertex3v(clipPlaneSe3[i].position+clipPlaneNormals[i]);glEnd(); */ }
+ 
++	// if scaling positions or orientations, _and_ if it is for the first time, save current se3 as reference values
++	// if # of bodies changes, we have to reset those
++	if((scaleDisplacements || scaleRotations) &amp;&amp; refSe3.size()!=rootBody-&gt;bodies-&gt;size()){
++		LOG_DEBUG(&quot;(re)initializing reference positions and orientations.&quot;);
++		refSe3.clear(); refSe3.reserve(rootBody-&gt;bodies-&gt;size());
++		FOREACH(const shared_ptr&lt;Body&gt;&amp; b, *rootBody-&gt;bodies) refSe3.push_back(b-&gt;physicalParameters-&gt;se3);
++	}
++	// debugging only
++	#if 1
++		if(scaleDisplacements){
++			glColor3d(1,1,0); glBegin(GL_LINES); 
++			FOREACH(const shared_ptr&lt;Body&gt;&amp; b, *rootBody-&gt;bodies){
++				Se3r se3=renderedSe3(b);
++				glVertex3v(b-&gt;physicalParameters-&gt;se3.position); glVertex3v(se3.position); }
++			glEnd();
++		}
++	#endif
++
+ 	if (Body_geometrical_model){
+ 		if (Cast_shadows){	
+ 			if (Fast_shadow_volume) renderSceneUsingFastShadowVolumes(rootBody,Light_position);
+@@ -316,75 +352,44 @@
+ 	glDepthMask(GL_TRUE);
+ 	glDepthFunc(GL_LESS);
+ 	glDisable(GL_STENCIL_TEST);
+-	
+ }	
+ 
+ 
+-void OpenGLRenderingEngine::renderShadowVolumes(const shared_ptr&lt;MetaBody&gt;&amp; rootBody,Vector3r Light_position)
+-{	
+-	if (!rootBody-&gt;geometricalModel)
+-	{
+-		BodyContainer::iterator bi    = rootBody-&gt;bodies-&gt;begin();
+-		BodyContainer::iterator biEnd = rootBody-&gt;bodies-&gt;end();
+-		for(; bi!=biEnd ; ++bi )
+-		{
+-			if(pointClipped((*bi)-&gt;physicalParameters-&gt;se3.position)) continue;
+-			if ((*bi)-&gt;geometricalModel-&gt;shadowCaster &amp;&amp; ( ((*bi)-&gt;getGroupMask() &amp; Draw_mask) || (*bi)-&gt;getGroupMask()==0 ))
+-				shadowVolumeDispatcher((*bi)-&gt;geometricalModel,(*bi)-&gt;physicalParameters,Light_position);
++void OpenGLRenderingEngine::renderShadowVolumes(const shared_ptr&lt;MetaBody&gt;&amp; rootBody,Vector3r Light_position){	
++	if (!rootBody-&gt;geometricalModel){
++		FOREACH(const shared_ptr&lt;Body&gt;&amp; b, *rootBody-&gt;bodies){
++			if(pointClipped(b-&gt;physicalParameters-&gt;se3.position)) continue;
++			if (b-&gt;geometricalModel-&gt;shadowCaster &amp;&amp; ( (b-&gt;getGroupMask() &amp; Draw_mask) || b-&gt;getGroupMask()==0 ))
++				shadowVolumeDispatcher(b-&gt;geometricalModel,b-&gt;physicalParameters,Light_position);
+ 		}
+ 	}
+-	else
+-		shadowVolumeDispatcher(rootBody-&gt;geometricalModel,rootBody-&gt;physicalParameters,Light_position);
++	else shadowVolumeDispatcher(rootBody-&gt;geometricalModel,rootBody-&gt;physicalParameters,Light_position);
+ }
+ 
+-
+-void OpenGLRenderingEngine::renderGeometricalModel(const shared_ptr&lt;MetaBody&gt;&amp; rootBody)
+-{	
+-	shared_ptr&lt;BodyContainer&gt;&amp; bodies = rootBody-&gt;bodies;
+-	bool done=false;
+-
+-	if((rootBody-&gt;geometricalModel || Draw_inside) &amp;&amp; Draw_inside)
+-	{
+-		BodyContainer::iterator bi    = bodies-&gt;begin();
+-		BodyContainer::iterator biEnd = bodies-&gt;end();
+-		for( ; bi!=biEnd ; ++bi)
+-		{
+-			if((*bi)-&gt;geometricalModel &amp;&amp; ( ((*bi)-&gt;getGroupMask() &amp; Draw_mask) || (*bi)-&gt;getGroupMask()==0 ))
+-			{
+-				Se3r&amp; se3 = (*bi)-&gt;physicalParameters-&gt;se3;
++void OpenGLRenderingEngine::renderGeometricalModel(const shared_ptr&lt;MetaBody&gt;&amp; rootBody){	
++	const GLfloat ambientColorSelected[4]={10.0,0.0,0.0,1.0};	
++	const GLfloat ambientColorUnselected[4]={0.5,0.5,0.5,1.0};	
++	if((rootBody-&gt;geometricalModel || Draw_inside) &amp;&amp; Draw_inside) {
++		FOREACH(const shared_ptr&lt;Body&gt; b, *rootBody-&gt;bodies){
++			if(b-&gt;geometricalModel &amp;&amp; ((b-&gt;getGroupMask() &amp; Draw_mask) || b-&gt;getGroupMask()==0)){
++				Se3r se3=renderedSe3(b);
+ 				if(pointClipped(se3.position)) continue;
+ 				glPushMatrix();
+-				Real angle;
+-				Vector3r axis;	
+-				se3.orientation.ToAxisAngle(axis,angle);	
++				Real angle; Vector3r axis;	se3.orientation.ToAxisAngle(axis,angle);	
+ 				glTranslatef(se3.position[0],se3.position[1],se3.position[2]);
+ 				glRotatef(angle*Mathr::RAD_TO_DEG,axis[0],axis[1],axis[2]);
+-				if(current_selection == (*bi)-&gt;getId())
+-				{
+-					const GLfloat ambientColor[4]	= {10.0,0.0,0.0,1.0};	
+-					glLightModelfv(GL_LIGHT_MODEL_AMBIENT,ambientColor);
+-					
+-				} else if (done) {
+-					done = false;
+-					const GLfloat ambientColor[4]	= {0.5,0.5,0.5,1.0};	
+-					glLightModelfv(GL_LIGHT_MODEL_AMBIENT,ambientColor);
+-				}
+-				// FIXME FIXME - in fact it is a 1D dispatcher
+-				geometricalModelDispatcher((*bi)-&gt;geometricalModel,(*bi)-&gt;physicalParameters,Body_wire);
+-				if(current_selection == (*bi)-&gt;getId())
+-					done = true;
++				if(current_selection==b-&gt;getId()){glLightModelfv(GL_LIGHT_MODEL_AMBIENT,ambientColorSelected);}
++				geometricalModelDispatcher(b-&gt;geometricalModel,b-&gt;physicalParameters,Body_wire);
++				if(current_selection == b-&gt;getId()){glLightModelfv(GL_LIGHT_MODEL_AMBIENT,ambientColorUnselected);}
+ 				glPopMatrix();
+ 			}
+ 		}
+ 	}
+-	
+-	if(rootBody-&gt;geometricalModel)
+-		geometricalModelDispatcher(rootBody-&gt;geometricalModel,rootBody-&gt;physicalParameters,Body_wire);
++	if(rootBody-&gt;geometricalModel) geometricalModelDispatcher(rootBody-&gt;geometricalModel,rootBody-&gt;physicalParameters,Body_wire);
+ }
+ 
+ 
+-void OpenGLRenderingEngine::renderInteractionGeometry(const shared_ptr&lt;MetaBody&gt;&amp; rootBody)
+-{	
++void OpenGLRenderingEngine::renderInteractionGeometry(const shared_ptr&lt;MetaBody&gt;&amp; rootBody){	
+ 	{
+ 		boost::mutex::scoped_lock lock(rootBody-&gt;persistentInteractions-&gt;drawloopmutex);
+ 
+@@ -502,33 +507,30 @@
+ 		glClipPlane(GL_CLIP_PLANE0,clip0);
+ 		glEnable(GL_CLIP_PLANE0);
+ 	#endif
+-
+-	BodyContainer::iterator bi    = rootBody-&gt;bodies-&gt;begin();
+-	BodyContainer::iterator biEnd = rootBody-&gt;bodies-&gt;end();
+-	for( ; bi!=biEnd ; ++bi)
+-	{
+-		Se3r&amp; se3 = (*bi)-&gt;physicalParameters-&gt;se3;
+-		if(pointClipped(se3.position)) continue;
++	FOREACH(const shared_ptr&lt;Body&gt;&amp; b, *rootBody-&gt;bodies){
++		if(pointClipped(b-&gt;physicalParameters-&gt;se3.position)) continue;
++		Se3r se3=renderedSe3(b);
+ 		glPushMatrix();
+-		Real angle;
+-		Vector3r axis;	
+-		se3.orientation.ToAxisAngle(axis,angle);	
+-		glTranslatef(se3.position[0],se3.position[1],se3.position[2]);
+-		glRotatef(angle*Mathr::RAD_TO_DEG,axis[0],axis[1],axis[2]);
+-		if((*bi)-&gt;interactingGeometry &amp;&amp; ( ((*bi)-&gt;getGroupMask() &amp; Draw_mask) || (*bi)-&gt;getGroupMask()==0 ))
+-			interactingGeometryDispatcher((*bi)-&gt;interactingGeometry,(*bi)-&gt;physicalParameters,Body_wire);
++			Real angle;	Vector3r axis;	se3.orientation.ToAxisAngle(axis,angle);	
++			glTranslatef(se3.position[0],se3.position[1],se3.position[2]);
++			glRotatef(angle*Mathr::RAD_TO_DEG,axis[0],axis[1],axis[2]);
++			if(b-&gt;interactingGeometry &amp;&amp; ( (b-&gt;getGroupMask() &amp; Draw_mask) || b-&gt;getGroupMask()==0 ))
++				interactingGeometryDispatcher(b-&gt;interactingGeometry,b-&gt;physicalParameters,Body_wire);
+ 		glPopMatrix();
+ 	}
+-	
+ 	glPushMatrix();
+-	if(rootBody-&gt;interactingGeometry)
+-		interactingGeometryDispatcher(rootBody-&gt;interactingGeometry,rootBody-&gt;physicalParameters,Body_wire);
++		if(rootBody-&gt;interactingGeometry) interactingGeometryDispatcher(rootBody-&gt;interactingGeometry,rootBody-&gt;physicalParameters,Body_wire);
+ 	glPopMatrix();
+ }
+ 
+ 
+ void OpenGLRenderingEngine::registerAttributes()
+ {
++	REGISTER_ATTRIBUTE(scaleDisplacements);
++	REGISTER_ATTRIBUTE(displacementScale);
++	REGISTER_ATTRIBUTE(scaleRotations);
++	REGISTER_ATTRIBUTE(rotationScale);
++
+ 	REGISTER_ATTRIBUTE(Light_position);
+ 	REGISTER_ATTRIBUTE(Background_color);
+ 	
+
+Modified: trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.hpp
+===================================================================
+--- trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.hpp	2008-07-01 08:15:09 UTC (rev 1410)
++++ trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.hpp	2008-07-02 17:49:27 UTC (rev 1411)
+@@ -34,7 +34,12 @@
+ 		vector&lt;bool&gt; clipPlaneActive;
+ 		const int clipPlaneNum;
+ 
++		vector&lt;Se3r&gt; refSe3;
++		bool scaleDisplacements,scaleRotations;
++		Vector3r displacementScale; Real rotationScale;
++
+ 		bool pointClipped(const Vector3r&amp; p);
++		Se3r renderedSe3(const shared_ptr&lt;Body&gt;&amp;);
+ 		vector&lt;Vector3r&gt; clipPlaneNormals;
+ 
+ 	private :
+@@ -57,6 +62,8 @@
+ 			interactionGeometryFunctorNames,
+ 			interactionPhysicsFunctorNames;
+ 
++		DECLARE_LOGGER;
++
+ 	public :
+ 		void addStateFunctor(const string&amp; str);
+ 		void addBoundingVolumeFunctor(const string&amp; str);
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000370.html">[Yade-commits] r1410 - trunk/gui/qt3
+</A></li>
+	<LI>Next message: <A HREF="000372.html">[Yade-commits] r1412 - in trunk: gui/py gui/qt3	pkg/common/Engine/DeusExMachina
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#371">[ date ]</a>
+              <a href="thread.html#371">[ thread ]</a>
+              <a href="subject.html#371">[ subject ]</a>
+              <a href="author.html#371">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

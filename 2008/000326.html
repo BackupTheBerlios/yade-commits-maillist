@@ -1,0 +1,205 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1364 - in trunk: core gui/py gui/qt3
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1364%20-%20in%20trunk%3A%20core%20gui/py%20gui/qt3&In-Reply-To=%3C200805241332.m4ODWarr022488%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000325.html">
+   <LINK REL="Next"  HREF="000327.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1364 - in trunk: core gui/py gui/qt3</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1364%20-%20in%20trunk%3A%20core%20gui/py%20gui/qt3&In-Reply-To=%3C200805241332.m4ODWarr022488%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1364 - in trunk: core gui/py gui/qt3">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Sat May 24 15:32:36 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000325.html">[Yade-commits] r1363 - trunk/gui/qt3
+</A></li>
+        <LI>Next message: <A HREF="000327.html">[Yade-commits] r1365 - in trunk: core gui/py gui/qt3
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#326">[ date ]</a>
+              <a href="thread.html#326">[ thread ]</a>
+              <a href="subject.html#326">[ subject ]</a>
+              <a href="author.html#326">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2008-05-24 15:32:34 +0200 (Sat, 24 May 2008)
+New Revision: 1364
+
+Modified:
+   trunk/core/MetaBody.cpp
+   trunk/gui/py/yadeControl.cpp
+   trunk/gui/qt3/SimulationController.cpp
+   trunk/gui/qt3/YadeQtMainWindow.cpp
+Log:
+MetaBody still needs InteractingGeometry, BoundingVolume and PhysicalParameters initialized. But that would mean moving more classes to core, which is questionable. For now, fix that in Python and still rely on user init in other code (as before, but less).
+
+
+
+Modified: trunk/core/MetaBody.cpp
+===================================================================
+--- trunk/core/MetaBody.cpp	2008-05-24 12:56:37 UTC (rev 1363)
++++ trunk/core/MetaBody.cpp	2008-05-24 13:32:34 UTC (rev 1364)
+@@ -23,11 +23,7 @@
+ #include&lt;yade/core/PhysicalActionVectorVector.hpp&gt;
+ 
+ MetaBody::MetaBody() :
+-	  Body()
+-	, bodies(new BodyRedirectionVector)
+-	, persistentInteractions(new InteractionVecSet)
+-	, transientInteractions(new InteractionVecSet)
+-	, physicalActions(new PhysicalActionVectorVector)
++	  Body(),bodies(new BodyRedirectionVector),persistentInteractions(new InteractionVecSet),transientInteractions(new InteractionVecSet),physicalActions(new PhysicalActionVectorVector)
+ {	
+ 	engines.clear();
+ 	initializers.clear();
+
+Modified: trunk/gui/py/yadeControl.cpp
+===================================================================
+--- trunk/gui/py/yadeControl.cpp	2008-05-24 12:56:37 UTC (rev 1363)
++++ trunk/gui/py/yadeControl.cpp	2008-05-24 13:32:34 UTC (rev 1364)
+@@ -40,6 +40,8 @@
+ #include&lt;yade/pkg-common/PhysicalParametersMetaEngine.hpp&gt;
+ #include&lt;yade/pkg-common/PhysicalActionDamper.hpp&gt;
+ #include&lt;yade/pkg-common/PhysicalActionApplier.hpp&gt;
++#include&lt;yade/pkg-common/MetaInteractingGeometry.hpp&gt;
++#include&lt;yade/pkg-common/AABB.hpp&gt;
+ 
+ #include&lt;yade/pkg-common/BoundingVolumeEngineUnit.hpp&gt;
+ #include&lt;yade/pkg-common/GeometricalModelEngineUnit.hpp&gt;
+@@ -273,7 +275,13 @@
+ 		 * Initializers are run ad this flag set to false by maybeRunInitializers when running (step or run) */
+ 		bool needsInitializers;
+ 	public:
+-	pyOmega(){ if(!OMEGA.getRootBody()){shared_ptr&lt;MetaBody&gt; mb=Shop::rootBody(); OMEGA.setRootBody(mb);}
++	pyOmega(){
++		shared_ptr&lt;MetaBody&gt; rb=OMEGA.getRootBody();
++		assert(rb);
++		if(!rb-&gt;physicalParameters){rb-&gt;physicalParameters=shared_ptr&lt;PhysicalParameters&gt;(new PhysicalParameters);}
++		if(!rb-&gt;boundingVolume){rb-&gt;boundingVolume=shared_ptr&lt;AABB&gt;(new AABB);}
++		if(!rb-&gt;interactingGeometry){rb-&gt;interactingGeometry=shared_ptr&lt;MetaInteractingGeometry&gt;(new MetaInteractingGeometry);}
++		//if(!OMEGA.getRootBody()){shared_ptr&lt;MetaBody&gt; mb=Shop::rootBody(); OMEGA.setRootBody(mb);}
+ 		/* this is not true if another instance of Omega is created; flag should be stored inside the Omega singleton for clean solution. */
+ 		if(!OMEGA.hasSimulationLoop()){
+ 			OMEGA.createSimulationLoop();
+
+Modified: trunk/gui/qt3/SimulationController.cpp
+===================================================================
+--- trunk/gui/qt3/SimulationController.cpp	2008-05-24 12:56:37 UTC (rev 1363)
++++ trunk/gui/qt3/SimulationController.cpp	2008-05-24 13:32:34 UTC (rev 1364)
+@@ -400,12 +400,13 @@
+ 	bool hasSimulation=(Omega::instance().getRootBody() ? Omega::instance().getRootBody()-&gt;bodies-&gt;size()&gt;0 : false ),
+ 		isRunning=Omega::instance().isRunning(),
+ 		hasTimeStepper=Omega::instance().containTimeStepper(),
+-		usesTimeStepper=Omega::instance().timeStepperActive();
++		usesTimeStepper=Omega::instance().timeStepperActive(),
++		hasFileName=(Omega::instance().getSimulationFileName()!=&quot;&quot;);
+ 
+ 	controller-&gt;pbStartSimulation-&gt;setEnabled(hasSimulation &amp;&amp; !isRunning);
+ 	controller-&gt;pbStopSimulation-&gt;setEnabled(hasSimulation &amp;&amp; isRunning);
+-	controller-&gt;pbResetSimulation-&gt;setEnabled(hasSimulation);
+-	controller-&gt;pbOneSimulationStep-&gt;setEnabled(hasSimulation&amp;&amp;!isRunning);
++	controller-&gt;pbResetSimulation-&gt;setEnabled(hasSimulation &amp;&amp; hasFileName);
++	controller-&gt;pbOneSimulationStep-&gt;setEnabled(hasSimulation &amp;&amp; !isRunning);
+ 	controller-&gt;rbTimeStepper-&gt;setEnabled(hasTimeStepper);
+ 	controller-&gt;rbFixed-&gt;setChecked(!usesTimeStepper);
+ 	controller-&gt;rbFixed-&gt;setChecked(usesTimeStepper);
+
+Modified: trunk/gui/qt3/YadeQtMainWindow.cpp
+===================================================================
+--- trunk/gui/qt3/YadeQtMainWindow.cpp	2008-05-24 12:56:37 UTC (rev 1363)
++++ trunk/gui/qt3/YadeQtMainWindow.cpp	2008-05-24 13:32:34 UTC (rev 1364)
+@@ -106,55 +106,7 @@
+ 	IOFormatManager::saveToFile(&quot;XMLFormatManager&quot;,yadeQtGUIPrefPath.string(),&quot;preferences&quot;,preferences);
+ }
+ 
+-#if 0
+-void YadeQtMainWindow::addMenu(string menuName)
+-{
+-	if (!menuNameExists(menuName))
+-		menus.push_back(pair&lt;string,QPopupMenu*&gt;(menuName,new QPopupMenu(this)));
+ 
+-}
+-
+-
+-void YadeQtMainWindow::addItem(string menuName, string itemName,string className)
+-{
+-	if (menuNameExists(menuName))
+-	{
+-		item2ClassName[itemName] = className;
+-		items.push_back(new QAction(this, itemName.c_str()));
+-		items.back()-&gt;setText( itemName.c_str() );
+-		items.back()-&gt;setMenuText( itemName.c_str() );
+-		items.back()-&gt;setToolTip( (&quot;Load plugin &quot;+ClassFactory::instance().libNameToSystemName(className)).c_str() );
+-		items.back()-&gt;addTo(getPopupMenu(menuName));
+-		connect( items.back(), SIGNAL( activated() ), this, SLOT( dynamicMenuClicked() ) );
+-	}
+-}
+-
+-
+-void YadeQtMainWindow::createMenus()
+-{
+-	vector&lt;pair&lt;string,QPopupMenu*&gt; &gt;::iterator mi    = menus.begin();
+-	vector&lt;pair&lt;string,QPopupMenu*&gt; &gt;::iterator miEnd = menus.end();
+-	for(;mi!=miEnd;++mi)
+-		MenuBar-&gt;insertItem( QString((*mi).first), (*mi).second);
+-
+-}
+-
+-void YadeQtMainWindow::dynamicMenuClicked()
+-{
+-	QAction * action = (QAction*)(this-&gt;sender());
+-	string name = action-&gt;text();
+-	qtWidgets.push_back(ClassFactory::instance().createShared(item2ClassName[name]));
+-
+-	shared_ptr&lt;QWidget&gt; widget = dynamic_pointer_cast&lt;QWidget&gt;(qtWidgets.back());
+-	if (widget) // the library is a QWidget so we set workspace as its parent
+-	{
+-		widget-&gt;show();
+-	}
+-}
+-#endif
+-
+-
+-
+ void YadeQtMainWindow::closeSimulationControllerEvent() { deleteSimulationController(); }
+ 
+ void YadeQtMainWindow::Quit(){ emit close(); }
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000325.html">[Yade-commits] r1363 - trunk/gui/qt3
+</A></li>
+	<LI>Next message: <A HREF="000327.html">[Yade-commits] r1365 - in trunk: core gui/py gui/qt3
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#326">[ date ]</a>
+              <a href="thread.html#326">[ thread ]</a>
+              <a href="subject.html#326">[ subject ]</a>
+              <a href="author.html#326">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

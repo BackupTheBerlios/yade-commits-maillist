@@ -1,0 +1,361 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1083 - trunk
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2007/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1083%20-%20trunk&In-Reply-To=%3C200703050958.l259w8a3023535%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000047.html">
+   <LINK REL="Next"  HREF="000049.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1083 - trunk</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1083%20-%20trunk&In-Reply-To=%3C200703050958.l259w8a3023535%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1083 - trunk">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Mon Mar  5 10:58:08 CET 2007</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000047.html">[Yade-commits] r1082 -	trunk/yade-libs/yade-lib-serialization/src/yade-lib-serialization
+</A></li>
+        <LI>Next message: <A HREF="000049.html">[Yade-commits] r1084 - in trunk: . yade-core/src/yade yade-doc yade-extra/clump yade-packages/yade-package-common/src/Engine/DeusExMachina/ForceEngine yade-packages/yade-package-common/src/Engine/DeusExMachina/GravityEngine yade-packages/yade-package-common/src/Engine/DeusExMachina/RotationEngine yade-packages/yade-package-common/src/Engine/DeusExMachina/TranslationEngine yade-packages/yade-package-common/src/Engine/EngineUnit/LeapFrogOrientationIntegrator yade-packages/yade-package-common/src/Engine/EngineUnit/LeapFrogPositionIntegrator yade-packages/yade-package-common/src/Engine/EngineUnit/MetaInteractingGeometry2AABB yade-packages/yade-package-common/src/Engine/EngineUnit/NewtonsForceLaw yade-packages/yade-package-common/src/Engine/EngineUnit/NewtonsMomentumLaw yade-packages/yade-package-common/src/Engine/MetaEngine/BoundingVolumeMetaEngine yade-packages/yade-package-common/src/Engine/MetaEngine/GeometricalModelMetaEngine yade-packages/yade-package-common/src/Engine/MetaEngine! /InteractingGeometryMetaEngine yade-packages/yade-package-common/src/Engine/MetaEngine/InteractionGeometryMetaEngine yade-packages/yade-package-common/src/Engine/MetaEngine/InteractionPhysicsMetaEngine yade-packages/yade-package-common/src/Engine/MetaEngine/PhysicalActionApplier yade-packages/yade-package-common/src/Engine/MetaEngine/PhysicalActionDamper yade-packages/yade-package-common/src/Engine/MetaEngine/PhysicalParametersMetaEngine yade-packages/yade-package-common/src/Engine/StandAloneEngine/PersistentSAPCollider yade-packages/yade-package-common/src/Engine/StandAloneEngine/PhysicalActionContainerInitializer yade-packages/yade-package-common/src/Engine/StandAloneEngine/PhysicalActionContainerReseter yade-packages/yade-package-common/src/Engine/StandAloneEngine/SAPCollider yade-packages/yade-package-dem/src/Engine/DeusExMachina/ResultantForceEngine yade-packages/yade-package-dem/src/Engine/DeusExMachina/TriaxialStressController yade-packages/yade-package-dem/src/Engin! e/EngineUnit/MacroMicroElasticRelationships yade-packages/yade! -package
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#48">[ date ]</a>
+              <a href="thread.html#48">[ thread ]</a>
+              <a href="subject.html#48">[ subject ]</a>
+              <a href="author.html#48">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2007-03-05 10:58:07 +0100 (Mon, 05 Mar 2007)
+New Revision: 1083
+
+Added:
+   trunk/SConscript
+Modified:
+   trunk/SConstruct
+Log:
+SCons cleanup. Now supports buildPrefix (defaults to '..') so that build is completely separate from sources.
+
+
+Added: trunk/SConscript
+===================================================================
+--- trunk/SConscript	2007-03-04 10:12:35 UTC (rev 1082)
++++ trunk/SConscript	2007-03-05 09:58:07 UTC (rev 1083)
+@@ -0,0 +1,2 @@
++Import('*')
++SConscript(dirs=env['yadeModules'])
+
+Modified: trunk/SConstruct
+===================================================================
+--- trunk/SConstruct	2007-03-04 10:12:35 UTC (rev 1082)
++++ trunk/SConstruct	2007-03-05 09:58:07 UTC (rev 1083)
+@@ -50,6 +50,7 @@
+ 	ListOption('exclude','Components that will not be built','none',names=['extra','common','dem','fem','lattice','mass-spring','realtime-rigidbody']),
+ 	('jobs','Number of jobs to run at the same time (same as -j, but saved)',4,None,int),
+ 	('extraModules', 'Extra directories with their own SConscript files (must be in-tree) (whitespace separated)',None,None,Split),
++	('buildPrefix','Where to create build-[version][POSTFIX] directory for intermediary files','..'),
+ 	('CPPPATH', 'Additional paths for the C preprocessor (whitespace separated)',['/usr/include/wm3'],None,Split),
+ 	('LIBPATH','Additional paths for the linker (whitespace separated)',None,None,Split),
+ 	('QTDIR','Directories where to look for qt3',['/usr/share/qt3','/usr/lib/qt'],None,Split),
+@@ -61,7 +62,7 @@
+ env=Environment(tools=['default'],options=opts)
+ # do not propagate PATH from outside, to ensure identical builds on different machines
+ #env.Append(ENV={'PATH':['/usr/local/bin','/bin','/usr/bin']})
+-# ccache needs $HOME to be set; colorgcc needs $TERM
++# ccache needs $HOME to be set; colorgcc needs $TERM; distcc wants DISTCC_HOSTS
+ propagatedEnvVars=['HOME','TERM','DISTCC_HOSTS']
+ for v in propagatedEnvVars:
+ 	if os.environ.has_key(v): env.Append(ENV={v:os.environ[v]})
+@@ -78,6 +79,7 @@
+ env.Append(CPPPATH='',LIBPATH='',LIBS='')
+ 
+ def CheckQt(context, qtdirs):
++	&quot;Attempts to localize qt3 installation in given qtdirs. Sets necessary variables if found and returns True; otherwise returns False.&quot;
+ 	# make sure they exist and save them for restoring if a test fails
+ 	origs={'LIBS':context.env['LIBS'],'LIBPATH':context.env['LIBPATH'],'CPPPATH':context.env['CPPPATH']}
+ 	for qtdir in qtdirs:
+@@ -93,6 +95,7 @@
+ 	return False
+ 
+ def CheckPython(context):
++	&quot;Checks for functional python/c API. Sets variables if OK and returns true; otherwise returns false.&quot;
+ 	origs={'LIBS':context.env['LIBS'],'LIBPATH':context.env['LIBPATH'],'CPPPATH':context.env['CPPPATH'],'LINKFLAGS':context.env['LINKFLAGS']}
+ 	context.Message('Checking for Python development files... ')
+ 	try:
+@@ -118,6 +121,7 @@
+ 		context.Result(False); return False
+ 
+ def CheckYadeVersion(context):
++	&quot;Attempts to get yade version from local svn tree; should be extended so that it works for releases as well (not yet applicable).&quot;
+ 	context.Message('Getting Yade version... ')
+ 	svnRevision=None
+ 	for l in os.popen(&quot;svn info&quot;).readlines():
+@@ -140,20 +144,23 @@
+ 
+ 
+ if not env.GetOption('clean'):
+-	#essential libraries first
+-	ok=True
+ 	conf=Configure(env,custom_tests={'CheckQt':CheckQt,'CheckCXX':CheckCXX,'CheckPython':CheckPython,'CheckScientificPython':CheckScientificPython,'CheckYadeVersion':CheckYadeVersion})
++
++	## buildDir stuff - derived from yade version
+ 	conf.CheckYadeVersion()
+ 	# set some variables
+ 	env['POSTFIX']='-'+env['VERSION']+env['POSTFIX']
+-	buildDir=env.subst('build$POSTFIX')
++	buildDir=os.path.join(env['buildPrefix'],env.subst('build$POSTFIX'))
+ 	# these MUST be first so that builddir's headers are read before any locally installed ones
+-	env.Append(CPPPATH=[os.path.join('#',buildDir,'include')])
++	if os.path.isabs(buildDir): env.Append(CPPPATH=[os.path.join(buildDir,'include')])
++	else: env.Append(CPPPATH=[os.path.join('#',buildDir,'include')])
+ 
++	ok=True
+ 	ok&amp;=conf.CheckCXX()
+ 	if not ok:
+ 			print &quot;\nYour compiler is broken, no point in continuing. See `config.log' for what went wrong and use the CXX parameter to change your compiler.&quot;
+ 			Exit(1)
++	# essential libs
+ 	ok&amp;=conf.CheckLibWithHeader('pthread','pthread.h','c','pthread_exit(NULL);')
+ 	ok&amp;=conf.CheckLibWithHeader('glut','GL/glut.h','c','glutGetModifiers();')
+ 	ok&amp;=conf.CheckLibWithHeader('boost_date_time','boost/date_time/posix_time/posix_time.hpp','c++','boost::posix_time::time_duration::time_duration();')
+@@ -168,7 +175,7 @@
+ 		Exit(1)
+ 	env.Append(LIBS=['glut','boost_date_time','boost_filesystem','boost_thread','pthread','Wm3Foundation'])
+ 
+-	#optional libraries
++	#optional libs
+ 	if conf.CheckLibWithHeader('log4cxx','log4cxx/logger.h','c++','log4cxx::Logger::getLogger(&quot;foo&quot;);'):
+ 		env.Append(LIBS='log4cxx',CPPDEFINES=['LOG4CXX'])
+ 	if conf.CheckPython() and conf.CheckScientificPython(): env.Append(CPPDEFINES=['EMBED_PYTHON'])
+@@ -180,22 +187,38 @@
+ ############# BUILDING ###################################################################
+ ##########################################################################################
+ 
+-if 1:
+-	env.SourceSignatures('MD5')
+-	env.SetOption('max_drift',5) # cache md5sums of files older than 5 seconds
+-	SetOption('implicit_cache',1) # cache #include files etc.
+-	env.SourceCode(&quot;.&quot;,None) # skip dotted directories
+-	SetOption('num_jobs',env['jobs'])
++### SCONS OPTIMIZATIONS
++env.SourceSignatures('MD5') #can be 'timestamp', but is less reliable and not so much faster
++env.SetOption('max_drift',30) # cache md5sums of files older than 30 seconds
++SetOption('implicit_cache',1) # cache #include files etc.
++env.SourceCode(&quot;.&quot;,None) # skip dotted directories
++SetOption('num_jobs',env['jobs'])
+ 
++### SHOWING OUTPUT
++if env['pretty']:
++	## <A HREF="http://www.scons.org/wiki/HidingCommandLinesInOutput">http://www.scons.org/wiki/HidingCommandLinesInOutput</A>
++	env.Replace(CXXCOMSTR='C ${SOURCES}') # &#8594; ${TARGET.file}')
++	env.Replace(SHCXXCOMSTR='C ${SOURCES}')  #&#8594; ${TARGET.file}')
++	env.Replace(SHLINKCOMSTR='L ${SOURCES}') # &#8594; ${TARGET.file}')
++	env.Replace(LINKCOMSTR='L ${SOURCES}') # &#8594; ${TARGET.file}')
++	env.Replace(INSTALLSTR='&#8658; $TARGET')
++	env.Replace(QT_UICCOMSTR='U ${SOURCES}')
++	env.Replace(QT_MOCCOMSTR='M ${SOURCES}')
++
+ ### DIRECTORIES
++
++# paths to in-tree SConscript files
+ libDirs=['yade-libs','yade-packages/yade-package-common','yade-packages/yade-package-dem','yade-packages/yade-package-fem','yade-packages/yade-package-lattice','yade-packages/yade-package-mass-spring','yade-packages/yade-package-realtime-rigidbody','yade-extra','yade-guis']
+-# exclude stuff that should be excluded
++# BUT: exclude stuff that should be excluded
+ libDirs=[x for x in libDirs if not re.match('^.*-('+'|'.join(env['exclude'])+')$',x)]
+-# all things will be built here...
+-
++# will install in the following dirs (needed?)
+ instDirs=[os.path.join('$PREFIX','bin')]+[os.path.join('$PREFIX','lib','yade$POSTFIX',string.split(x,os.path.sep)[-1]) for x in libDirs]
+-instIncludeDirs=['yade-core']+[os.path.join('$PREFIX','include','yade',string.split(x,os.path.sep)[-1]) for x in libDirs]
+-### PREPROCESSOR
++
++## not used for now...
++#instIncludeDirs=['yade-core']+[os.path.join('$PREFIX','include','yade',string.split(x,os.path.sep)[-1]) for x in libDirs]
++
++
++### PREPROCESSOR FLAGS
+ env.Append(CPPDEFINES=[('POSTFIX',r'$POSTFIX'),('PREFIX',r'$PREFIX')])
+ 
+ ### COMPILER
+@@ -216,7 +239,6 @@
+ 	env.Append(CXXFLAGS=archFlags,LINKFLAGS=archFlags,SHLINKFLAGS=archFlags)
+ if env['profile']: env.Append(CXXFLAGS=['-pg'],LINKFLAGS=['-pg'],SHLINKFLAGS=['-pg'])
+ env.Append(CXXFLAGS=['-pipe','-Wall'])
+-#env.Append(CXXFLAGS=['-save-temps'])
+ 
+ ### LINKER
+ env.Append(LIBS=[]) # ensure existence of the flag
+@@ -227,18 +249,9 @@
+ env.Append(RPATH=[os.path.join('$PREFIX','lib','yade$POSTFIX',string.split(x,os.path.sep)[-1]) for x in libDirs])
+ # find already compiled but not yet installed libraries for linking
+ #env.Append(LIBPATH=[os.path.join('#',x) for x in libDirs]	# -floop-optimize2 is a gcc-4.x flag, doesn't exist on previous version
+-	# CRASH -ffloat-store
+-	# maybe not CRASH?: -fno-math-errno
+-	# CRASH?: -fmodulo-sched  
+-	#   it is probably --ffast-fath that crashes !!!
+-	# gcc-4.1 only: -funsafe-loop-optimizations -Wunsafe-loop-optimizations
+-	# sure CRASH: -ftree-vectorize
+-	# CRASH (one of them): -fivopts -fgcse-sm -fgcse-las (one of them - not sure which one exactly)
+-	# ?: -ftree-loop-linear -ftree-loop-ivcanon)
+-env.Append(LIBPATH=env['RPATH'])
++env.Append(LIBPATH=env['RPATH']) # this is if we link to libs that are installed, which is the case now
+ 
+ 
+-
+ ### this workaround is only needed for scons&lt;=0.96.92, will disappear soon
+ ###  (env.Install method chokes on no-existing directories)
+ if sconsVersion&lt;=9692:
+@@ -251,40 +264,19 @@
+ 				os.makedirs(dd)
+ 			elif not os.path.isdir(dd): raise OSError(&quot;Installation directory `%s' is a file?!&quot;%dd)
+ 	createDirs(instDirs)
+-	createDirs(instIncludeDirs)
++	#createDirs(instIncludeDirs)
+ 	
+ def prepareIncludes(prefix=None):
+-	&quot;&quot;&quot;symlink all in-tree headers into the ./include directory so that we can build before headers are installed.
+-	
+-	If prefix is defined, instruct scons to Install every header file to an appropriate place instead.&quot;&quot;&quot;
+-	#print &quot;prepareIncludes(prefix='%s')&quot;%prefix
++	&quot;&quot;&quot;symlink all in-tree headers into  some include directory so that we can build before headers are installed.
++	If prefix is given, headers will be copied there.
++	If not, include tree will be created and syumlinked in buildDir, using relative symlinks.&quot;&quot;&quot;
+ 	global env
+ 	import os,string,re
+-	from os.path import join,split,isabs,isdir,exists,islink,isfile
+-	if not prefix: yadeRoot=env.subst('build$POSTFIX') # MUST be relative, otherwise relative symlinks for the local includes will break badly
++	from os.path import join,split,isabs,isdir,exists,islink,isfile,sep
++	if not prefix: yadeRoot=buildDir
+ 	else: yadeRoot=prefix
+ 	yadeInc=join(yadeRoot,'include','yade')
+-	#### POSTFIX_INCLUDES
+-	# make the headure install directory symlink to postfixed version
+-	# e.g. ./include/yade -&gt; ./include/yade-debug
+-	# 	./include/yade will be deleted at this point
+-	# 	./include/yade-debug will be created if it doesn't exist
+-	# 	symlink yade -&gt; yade-&gt;debug will be created
+-	# This makes all headers installed to ./include/yade go actually to ./include/yade-debug
+-	#
+-	# I hope this doesn't break scons' algorithm for dependency detection
+-	if 0 and len(env['POSTFIX'])&gt;0:
+-		import shutil
+-		yadeIncPostfix=yadeInc+env.subst(&quot;$POSTFIX&quot;)
+-		
+-		if not exists(yadeInc): pass
+-		elif islink(yadeInc) or isfile(yadeInc): os.remove(yadeInc) # simply remove the link/file
+-		else: shutil.rmtree(yadeInc)
+-		assert(not isfile(yadeInc))
+ 
+-		if not exists(yadeIncPostfix): os.makedirs(yadeIncPostfix)
+-		os.symlink(env.subst(&quot;yade$POSTFIX&quot;),yadeInc)
+-
+ 	for root, dirs, files in os.walk('.'):
+ 		for d in ('.svn','yade-flat','include'):
+ 			try: dirs.remove(d)
+@@ -293,19 +285,25 @@
+ 			if f.split('.')[-1] in ('hpp','inl','ipp','tpp','h'):
+ 				m=re.match('^.*?'+os.path.sep+'(yade-((extra|core)|((gui|lib|package)-.*?)))'+os.path.sep+'.*$',root)
+ 				subInc=join(yadeInc,m.group(1))
+-				if not prefix: # local include directory
++				if not prefix: # local include directory: do symlinks
+ 					if not isdir(subInc): os.makedirs(subInc)
+-					upLevels=len(subInc.split(os.path.sep))
+-					linkTarget=os.path.sep.join(['..' for x in range(0,upLevels)]+[root]+[f])
+-					try: os.symlink(linkTarget,join(subInc,f));
+-					except OSError: pass # if the file already exists, symlink fails
+-				else: env.Install(subInc,join(root,f))
++					def relpath(pf,pt):
++						&quot;&quot;&quot;Returns relative path from pf (path from) to pt (path to) as string.
++						Last component of pf MUST be filename, not directory name. It can be empty, though. Legal pf's: 'dir1/dir2/something.cc', 'dir1/dir2/'. Illegal: 'dir1/dir2'.&quot;&quot;&quot;
++						from os.path import sep,join,abspath,split
++						apfl=abspath(split(pf)[0]).split(sep); aptl=abspath(pt).split(sep); i=0
++						while apfl[i]==aptl[i] and i&lt;min(len(apfl),len(aptl))-1: i+=1
++						return sep.join(['..' for j in range(0,len(apfl)-i)]+aptl[i:])
++					linkName=join(subInc,f); linkTarget=relpath(linkName,join(root,f))
++					if not exists(linkName): os.symlink(linkTarget,linkName)
++				else: # install directory: use scons' Install facility
++					env.Install(subInc,join(root,f))
+ 
+ # 1. re-generate SConscript files if some of them do not exist. This must be done in-place for
+ #		scons postpones all actions after having processed SConscruct and SConscript files.
+-# 2. symlink all headers to ./include/... so that we can build without installing headers to $PREFIX first (pre-build)
+-# 3. instruct scons to install (not symlink) all headers to the right place as well
+-# 4. set the &quot;install&quot; target as default (if scons is called without any arguments)
++# 2. symlink all headers to buildDir/include before the actual build
++# 3. (unused now) instruct scons to install (not symlink) all headers to the right place as well
++# 4. set the &quot;install&quot; target as default (if scons is called without any arguments), which triggers build in turn
+ # Should be cleaned up.
+ 
+ if not env.GetOption('clean'):
+@@ -325,30 +323,13 @@
+ 	Depends(installAlias,prebuildAlias)
+ 	Default(installAlias)
+ 
+-# read all SConscript files
+ env.Export('env');
+ 
+-if env.has_key('extraModules'): extraModules=env['extraModules']
+-else: extraModules=[]
++if env.has_key('extraModules'):
++	env['yadeModules']=env['extraModules']+libDirs+['yade-core']
++	env.Append(LIBPATH=[os.path.join('#',x) for x in env['extraModules']])
++else: env['yadeModules']=libDirs+['yade-core']
+ 
+-for libDir in extraModules+libDirs+['yade-core']:
+-	#print libDir
+-	env.SConscript(dirs=libDir,build_dir=os.path.join(buildDir,libDir),duplicate=0)
+-env.Append(LIBPATH=[os.path.join('#',x) for x in extraModules])
++# read top-level SConscript file. It is used only so that build_dir is set. This file reads all SConscripts from in yadeModules
++env.SConscript(dirs=['.'],build_dir=buildDir,duplicate=0)
+ 
+-
+-#env.NoClean('$PREFIX/bin/yade$POSTFIX','$PREFIX/lib/yade$POSTFIX','$PREFIX/include/yade')
+-##########################################################################################
+-############# INSTALLATION ###############################################################
+-##########################################################################################
+-
+-
+-if env['pretty']:
+-	## <A HREF="http://www.scons.org/wiki/HidingCommandLinesInOutput">http://www.scons.org/wiki/HidingCommandLinesInOutput</A>
+-	env.Replace(CXXCOMSTR='C ${SOURCES}') # &#8594; ${TARGET.file}')
+-	env.Replace(SHCXXCOMSTR='C ${SOURCES}')  #&#8594; ${TARGET.file}')
+-	env.Replace(SHLINKCOMSTR='L ${SOURCES}') # &#8594; ${TARGET.file}')
+-	env.Replace(LINKCOMSTR='L ${SOURCES}') # &#8594; ${TARGET.file}')
+-	env.Replace(INSTALLSTR='&#8658; $TARGET')
+-	env.Replace(QT_UICCOMSTR='U ${SOURCES}')
+-	env.Replace(QT_MOCCOMSTR='M ${SOURCES}')
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000047.html">[Yade-commits] r1082 -	trunk/yade-libs/yade-lib-serialization/src/yade-lib-serialization
+</A></li>
+	<LI>Next message: <A HREF="000049.html">[Yade-commits] r1084 - in trunk: . yade-core/src/yade yade-doc yade-extra/clump yade-packages/yade-package-common/src/Engine/DeusExMachina/ForceEngine yade-packages/yade-package-common/src/Engine/DeusExMachina/GravityEngine yade-packages/yade-package-common/src/Engine/DeusExMachina/RotationEngine yade-packages/yade-package-common/src/Engine/DeusExMachina/TranslationEngine yade-packages/yade-package-common/src/Engine/EngineUnit/LeapFrogOrientationIntegrator yade-packages/yade-package-common/src/Engine/EngineUnit/LeapFrogPositionIntegrator yade-packages/yade-package-common/src/Engine/EngineUnit/MetaInteractingGeometry2AABB yade-packages/yade-package-common/src/Engine/EngineUnit/NewtonsForceLaw yade-packages/yade-package-common/src/Engine/EngineUnit/NewtonsMomentumLaw yade-packages/yade-package-common/src/Engine/MetaEngine/BoundingVolumeMetaEngine yade-packages/yade-package-common/src/Engine/MetaEngine/GeometricalModelMetaEngine yade-packages/yade-package-common/src/Engine/MetaEngine! /InteractingGeometryMetaEngine yade-packages/yade-package-common/src/Engine/MetaEngine/InteractionGeometryMetaEngine yade-packages/yade-package-common/src/Engine/MetaEngine/InteractionPhysicsMetaEngine yade-packages/yade-package-common/src/Engine/MetaEngine/PhysicalActionApplier yade-packages/yade-package-common/src/Engine/MetaEngine/PhysicalActionDamper yade-packages/yade-package-common/src/Engine/MetaEngine/PhysicalParametersMetaEngine yade-packages/yade-package-common/src/Engine/StandAloneEngine/PersistentSAPCollider yade-packages/yade-package-common/src/Engine/StandAloneEngine/PhysicalActionContainerInitializer yade-packages/yade-package-common/src/Engine/StandAloneEngine/PhysicalActionContainerReseter yade-packages/yade-package-common/src/Engine/StandAloneEngine/SAPCollider yade-packages/yade-package-dem/src/Engine/DeusExMachina/ResultantForceEngine yade-packages/yade-package-dem/src/Engine/DeusExMachina/TriaxialStressController yade-packages/yade-package-dem/src/Engin! e/EngineUnit/MacroMicroElasticRelationships yade-packages/yade! -package
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#48">[ date ]</a>
+              <a href="thread.html#48">[ thread ]</a>
+              <a href="subject.html#48">[ subject ]</a>
+              <a href="author.html#48">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

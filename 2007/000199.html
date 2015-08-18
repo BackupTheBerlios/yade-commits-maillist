@@ -1,0 +1,299 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1234 - in trunk: . extra/clump extra/tetra	lib/factory lib/serialization pkg/dem/Engine/StandAloneEngine
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2007/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1234%20-%20in%20trunk%3A%20.%20extra/clump%20extra/tetra%0A%09lib/factory%20lib/serialization%20pkg/dem/Engine/StandAloneEngine&In-Reply-To=%3C200710091340.l99DerHr003417%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000198.html">
+   <LINK REL="Next"  HREF="000200.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1234 - in trunk: . extra/clump extra/tetra	lib/factory lib/serialization pkg/dem/Engine/StandAloneEngine</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1234%20-%20in%20trunk%3A%20.%20extra/clump%20extra/tetra%0A%09lib/factory%20lib/serialization%20pkg/dem/Engine/StandAloneEngine&In-Reply-To=%3C200710091340.l99DerHr003417%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1234 - in trunk: . extra/clump extra/tetra	lib/factory lib/serialization pkg/dem/Engine/StandAloneEngine">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Tue Oct  9 15:40:53 CEST 2007</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000198.html">[Yade-commits] r1233 - in trunk: . extra/tetra	pkg/common/DataClass/GeometricalModel
+</A></li>
+        <LI>Next message: <A HREF="000200.html">[Yade-commits] r1235 - in trunk: . extra/tetra gui/qt3
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#199">[ date ]</a>
+              <a href="thread.html#199">[ thread ]</a>
+              <a href="subject.html#199">[ subject ]</a>
+              <a href="author.html#199">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2007-10-09 15:40:52 +0200 (Tue, 09 Oct 2007)
+New Revision: 1234
+
+Modified:
+   trunk/SConstruct
+   trunk/extra/clump/Clump.cpp
+   trunk/extra/clump/Shop.cpp
+   trunk/extra/tetra/Tetra.cpp
+   trunk/extra/tetra/Tetra.hpp
+   trunk/lib/factory/ClassFactory.hpp
+   trunk/lib/serialization/Archive.hpp
+   trunk/pkg/dem/Engine/StandAloneEngine/ElasticCohesiveLaw.cpp
+   trunk/pkg/dem/Engine/StandAloneEngine/ElasticContactLaw.cpp
+Log:
+1. Scons now updates itself to 0.97.0d20070918 (for testing purposes etc)
+2. fix crash in ElasticContactLaw and ElasticCohesiveLaw if interaction is not SpheresContactGeometry and ElasticContactInteraction; this fixes tetrahedra interaction.
+3. other tetrahedron fixes (still not fully functional yet)
+4. mark attributes in class factory as __attribute__((unused)) to avoid warnings
+
+
+
+Modified: trunk/SConstruct
+===================================================================
+--- trunk/SConstruct	2007-10-08 15:56:45 UTC (rev 1233)
++++ trunk/SConstruct	2007-10-09 13:40:52 UTC (rev 1234)
+@@ -35,9 +35,9 @@
+ ##########################################################################################
+ ########## PROXY TO NEWER SCONS (DOWNLOADED IF NEEDED) ###################################
+ ##########################################################################################
+-if sconsVersion&lt;9693:
+-	#tgzParams=(&quot;<A HREF="http://ovh.dl.sourceforge.net/sourceforge/scons/scons-local-0.97.0d20070918.tar.gz">http://ovh.dl.sourceforge.net/sourceforge/scons/scons-local-0.97.0d20070918.tar.gz</A>&quot;,&quot;/scons-local-0.97.0d20070918&quot;) ## sconsVersion&lt;=9700
+-	tgzParams=(&quot;<A HREF="http://dfn.dl.sourceforge.net/sourceforge/scons/scons-local-0.97.tar.gz">http://dfn.dl.sourceforge.net/sourceforge/scons/scons-local-0.97.tar.gz</A>&quot;,&quot;scons-local-0.97&quot;)
++if sconsVersion&lt;9700:  ##&lt;9693: 
++	tgzParams=(&quot;<A HREF="http://ovh.dl.sourceforge.net/sourceforge/scons/scons-local-0.97.0d20070918.tar.gz">http://ovh.dl.sourceforge.net/sourceforge/scons/scons-local-0.97.0d20070918.tar.gz</A>&quot;,&quot;/scons-local-0.97.0d20070918&quot;) ## sconsVersion&lt;=9700
++	#tgzParams=(&quot;<A HREF="http://dfn.dl.sourceforge.net/sourceforge/scons/scons-local-0.97.tar.gz">http://dfn.dl.sourceforge.net/sourceforge/scons/scons-local-0.97.tar.gz</A>&quot;,&quot;scons-local-0.97&quot;)
+ 	newPrefix=&quot;./scons-local&quot;;
+ 	newUrl,newDir=tgzParams[0],newPrefix+&quot;/&quot;+tgzParams[1]
+ 	if not os.path.exists(newDir):
+@@ -445,7 +445,7 @@
+ 
+ ############# OTHER TARGETS #####################
+ env.Command('tags',libDirs,&quot;ctags -R --extra=+q --fields=+n --exclude='.*' --exclude=yade-flat --exclude=include --exclude='*.so'&quot;)
+-#env.Alias('doc',env.Command('doc/doxygen/html/index.html',libDirs,&quot;cd doc; doxygen Doxyfile&quot;))
++env.Alias('doc',env.Command('doc/doxygen/html/index.html',libDirs,&quot;cd doc; doxygen Doxyfile&quot;))
+ 
+ 
+ 
+
+Modified: trunk/extra/clump/Clump.cpp
+===================================================================
+--- trunk/extra/clump/Clump.cpp	2007-10-08 15:56:45 UTC (rev 1233)
++++ trunk/extra/clump/Clump.cpp	2007-10-09 13:40:52 UTC (rev 1234)
+@@ -287,7 +287,7 @@
+ 
+ /*! @brief Recalculates inertia tensor of a body after translation away from (default) or towards its centroid.
+  *
+- * @oaram I inertia tensor in the original coordinates; it is assumed to be upper-triangular (elements below the diagonal are ignored).
++ * @param I inertia tensor in the original coordinates; it is assumed to be upper-triangular (elements below the diagonal are ignored).
+  * @param m mass of the body; if positive, translation is away from the centroid; if negative, towards centroid.
+  * @param off offset of the new origin from the original origin
+  * @return inertia tensor in the new coordinate system; the matrix is symmetric.
+
+Modified: trunk/extra/clump/Shop.cpp
+===================================================================
+--- trunk/extra/clump/Shop.cpp	2007-10-08 15:56:45 UTC (rev 1233)
++++ trunk/extra/clump/Shop.cpp	2007-10-09 13:40:52 UTC (rev 1234)
+@@ -209,6 +209,10 @@
+ 	constitutiveLaw2-&gt;sdecGroupMask = getDefault&lt;int&gt;(&quot;body_sdecGroupMask&quot;);
+ 	constitutiveLaw2-&gt;momentRotationLaw = getDefault&lt;bool&gt;(&quot;param_momentRotationLaw&quot;);
+ 	rootBody-&gt;engines.push_back(constitutiveLaw2);
++
++	shared_ptr&lt;TetraLaw&gt; constitutiveLaw3(new TetraLaw);
++	constitutiveLaw3-&gt;sdecGroupMask = getDefault&lt;int&gt;(&quot;body_sdecGroupMask&quot;);
++	rootBody-&gt;engines.push_back(constitutiveLaw3);
+ 	
+ 	if(getDefault&lt;Vector3r&gt;(&quot;param_gravity&quot;)!=Vector3r(0,0,0)){
+ 		shared_ptr&lt;GravityEngine&gt; gravityCondition(new GravityEngine);
+
+Modified: trunk/extra/tetra/Tetra.cpp
+===================================================================
+--- trunk/extra/tetra/Tetra.cpp	2007-10-08 15:56:45 UTC (rev 1233)
++++ trunk/extra/tetra/Tetra.cpp	2007-10-09 13:40:52 UTC (rev 1234)
+@@ -161,8 +161,9 @@
+ 	 * In our case, the least inertia is along ix, the other coordinates are (ix+1)%3 and (ix+2)%3. equivalentPenetrationDepth means what was z.
+ 	 */
+ 	Real equivalentPenetrationDepth=sqrt(6*(-Ip(ix,ix)+Ip(ixx,ixx)+Ip(ixxx,ixxx))/V);
++	Real equivalentCrossSection=V/equivalentPenetrationDepth;
+ 	TRVAR1(equivalentPenetrationDepth);
+-	Real equivalentCrossSection=V/equivalentPenetrationDepth;
++	TRVAR1(equivalentCrossSection);
+ 
+ 	/* Now rotate the whole inertia tensors of A and B and estimate maxPenetrationDepth -- the length of the body in the direction of the contact normal.
+ 	 * This will be used to calculate relative deformation, which is needed for elastic response. */
+@@ -365,8 +366,8 @@
+ 	assert(false);
+ }
+ 
++CREATE_LOGGER(TetraLaw);
+ 
+-
+ /*! Apply forces on tetrahedra in collision based on geometric configuration provided by Tetra2TetraBang.
+  *
+  * Comments on functionality limitations are in the code. It has not been tested at all!!! */
+@@ -387,6 +388,7 @@
+ 		const shared_ptr&lt;ElasticBodyParameters&gt;&amp; physB(dynamic_pointer_cast&lt;ElasticBodyParameters&gt;(B-&gt;physicalParameters));
+ 		
+ 		const shared_ptr&lt;TetraBang&gt;&amp; contactGeom(dynamic_pointer_cast&lt;TetraBang&gt;((*contactI)-&gt;interactionGeometry));
++		if(!contactGeom) {LOG_TRACE(&quot;interactionGeoemtry is not a TetraBang&quot;); continue;}
+ 		//const shared_ptr&lt;SimpleElasticInteraction&gt;&amp; contactPhys(dynamic_pointer_cast&lt;SimpleElasticInteraction*&gt;((*contactI)-&gt;interactionPhysics));
+ 
+ 
+@@ -401,6 +403,8 @@
+ 		// F=&#963;A=&#949;EA
+ 		// this is unused; should it?: contactPhys-&gt;kn
+ 		Vector3r F=contactGeom-&gt;normal*averageStrain*young*contactGeom-&gt;equivalentCrossSection;
++		TRWM3VEC(F);
++		TRWM3VEC((physB-&gt;se3.position-contactGeom-&gt;contactPoint).Cross(F));
+ 		static_pointer_cast&lt;Force&gt;(rootBody-&gt;physicalActions-&gt;find(idA,actionForce-&gt;getClassIndex()))-&gt;force-=F;
+ 		static_pointer_cast&lt;Force&gt;(rootBody-&gt;physicalActions-&gt;find(idB,actionForce-&gt;getClassIndex()))-&gt;force+=F;
+ 		static_pointer_cast&lt;Momentum&gt;(rootBody-&gt;physicalActions-&gt;find(idA,actionMomentum-&gt;getClassIndex()))-&gt;momentum-=(physA-&gt;se3.position-contactGeom-&gt;contactPoint).Cross(F);
+
+Modified: trunk/extra/tetra/Tetra.hpp
+===================================================================
+--- trunk/extra/tetra/Tetra.hpp	2007-10-08 15:56:45 UTC (rev 1233)
++++ trunk/extra/tetra/Tetra.hpp	2007-10-09 13:40:52 UTC (rev 1234)
+@@ -145,6 +145,8 @@
+ 		int sdecGroupMask; // probably unused?!
+ 
+ 		void action(Body* body);
++
++		DECLARE_LOGGER;
+ 	protected:
+ 		void registerAttributes(){InteractionSolver::registerAttributes(); /* &#8230; */ }
+ 		REGISTER_CLASS_NAME(TetraLaw);
+
+Modified: trunk/lib/factory/ClassFactory.hpp
+===================================================================
+--- trunk/lib/factory/ClassFactory.hpp	2007-10-08 15:56:45 UTC (rev 1233)
++++ trunk/lib/factory/ClassFactory.hpp	2007-10-09 13:40:52 UTC (rev 1234)
+@@ -40,7 +40,7 @@
+ 	{										\
+ 		return new name;							\
+ 	}										\
+-	const bool registered##name =							\
++	const bool registered##name __attribute__ ((unused)) =							\
+ 		ClassFactory::instance().registerFactorable( 	#name ,			\
+ 								Create##name ,		\
+ 								CreateShared##name ,	\
+
+Modified: trunk/lib/serialization/Archive.hpp
+===================================================================
+--- trunk/lib/serialization/Archive.hpp	2007-10-08 15:56:45 UTC (rev 1233)
++++ trunk/lib/serialization/Archive.hpp	2007-10-09 13:40:52 UTC (rev 1234)
+@@ -39,7 +39,7 @@
+ 	{										\
+ 		return typeid(name);							\
+ 	}										\
+-	const bool registered##name##sname =						\
++	const bool registered##name##sname __attribute__((unused)) =						\
+ 		SerializableSingleton::instance().registerSerializableDescriptor(	\
+ 								#sname ,		\
+ 								Verify##name ,		\
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/ElasticCohesiveLaw.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/ElasticCohesiveLaw.cpp	2007-10-08 15:56:45 UTC (rev 1233)
++++ trunk/pkg/dem/Engine/StandAloneEngine/ElasticCohesiveLaw.cpp	2007-10-09 13:40:52 UTC (rev 1234)
+@@ -61,13 +61,13 @@
+ 			unsigned int id1 = contact2-&gt;getId1();
+ 			unsigned int id2 = contact2-&gt;getId2();
+ 			
+-			if( !( (*bodies)[id1]-&gt;getGroupMask() &amp; (*bodies)[id2]-&gt;getGroupMask() &amp; sdecGroupMask) )
+-				continue; // skip other groups, BTW: this is example of a good usage of 'continue' keyword
++			if( !( (*bodies)[id1]-&gt;getGroupMask() &amp; (*bodies)[id2]-&gt;getGroupMask() &amp; sdecGroupMask) ) continue;
+ 	
+ 			BodyMacroParameters* de1			= YADE_CAST&lt;BodyMacroParameters*&gt;((*bodies)[id1]-&gt;physicalParameters.get());
+ 			BodyMacroParameters* de2			= YADE_CAST&lt;BodyMacroParameters*&gt;((*bodies)[id2]-&gt;physicalParameters.get());
+-			SDECLinkPhysics* currentContactPhysics		= YADE_CAST&lt;SDECLinkPhysics*&gt;(contact2-&gt;interactionPhysics.get());
+-			SDECLinkGeometry* currentContactGeometry	= YADE_CAST&lt;SDECLinkGeometry*&gt;(contact2-&gt;interactionGeometry.get());
++			SDECLinkPhysics* currentContactPhysics		= dynamic_cast&lt;SDECLinkPhysics*&gt;(contact2-&gt;interactionPhysics.get());
++			SDECLinkGeometry* currentContactGeometry	= dynamic_cast&lt;SDECLinkGeometry*&gt;(contact2-&gt;interactionGeometry.get());
++			if((!currentContactPhysics)||(!currentContactGeometry)) continue;
+ 	
+ 			Real un 					= currentContactPhysics-&gt;equilibriumDistance-(de2-&gt;se3.position-de1-&gt;se3.position).Length();
+ 			currentContactPhysics-&gt;normalForce		= currentContactPhysics-&gt;kn*un*currentContactGeometry-&gt;normal;
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/ElasticContactLaw.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/ElasticContactLaw.cpp	2007-10-08 15:56:45 UTC (rev 1233)
++++ trunk/pkg/dem/Engine/StandAloneEngine/ElasticContactLaw.cpp	2007-10-09 13:40:52 UTC (rev 1234)
+@@ -54,32 +54,32 @@
+ 			int id1 = contact-&gt;getId1();
+ 			int id2 = contact-&gt;getId2();
+ 			
+-			if( !( (*bodies)[id1]-&gt;getGroupMask() &amp; (*bodies)[id2]-&gt;getGroupMask() &amp; sdecGroupMask)  )
+-				continue; // skip other groups, BTW: this is example of a good usage of 'continue' keyword
++			if( !( (*bodies)[id1]-&gt;getGroupMask() &amp; (*bodies)[id2]-&gt;getGroupMask() &amp; sdecGroupMask) ) continue;
++
++			SpheresContactGeometry*    currentContactGeometry= dynamic_cast&lt;SpheresContactGeometry*&gt;(contact-&gt;interactionGeometry.get());
++			ElasticContactInteraction* currentContactPhysics = dynamic_cast&lt;ElasticContactInteraction*&gt; (contact-&gt;interactionPhysics.get());
++			if((!currentContactGeometry)||(!currentContactPhysics)) continue;
+ 	
+ 			BodyMacroParameters* de1 				= YADE_CAST&lt;BodyMacroParameters*&gt;((*bodies)[id1]-&gt;physicalParameters.get());
+ 			BodyMacroParameters* de2 				= YADE_CAST&lt;BodyMacroParameters*&gt;((*bodies)[id2]-&gt;physicalParameters.get());
+-			SpheresContactGeometry* currentContactGeometry		= YADE_CAST&lt;SpheresContactGeometry*&gt;(contact-&gt;interactionGeometry.get());
+-			ElasticContactInteraction* currentContactPhysics   	= YADE_CAST&lt;ElasticContactInteraction*&gt; (contact-&gt;interactionPhysics.get());
+ 			
+ 			Vector3r&amp; shearForce 			= currentContactPhysics-&gt;shearForce;
+ 	
+-			if ( contact-&gt;isNew)
+-				shearForce			= Vector3r(0,0,0);
++			if (contact-&gt;isNew) shearForce=Vector3r(0,0,0);
+ 					
+-			Real un 				= currentContactGeometry-&gt;penetrationDepth;
+-			currentContactPhysics-&gt;normalForce	= currentContactPhysics-&gt;kn*std::max(un,(Real) 0)*currentContactGeometry-&gt;normal;
++			Real un=currentContactGeometry-&gt;penetrationDepth;
++			currentContactPhysics-&gt;normalForce=currentContactPhysics-&gt;kn*std::max(un,(Real) 0)*currentContactGeometry-&gt;normal;
+ 	
+ 			Vector3r axis;
+ 			Real angle;
+ 	
+ 	/// Here is the code with approximated rotations 	 ///
+ 			
+-			axis	 		= currentContactPhysics-&gt;prevNormal.Cross(currentContactGeometry-&gt;normal);
+-			shearForce 	       -= shearForce.Cross(axis);
+-			angle 			= dt*0.5*currentContactGeometry-&gt;normal.Dot(de1-&gt;angularVelocity+de2-&gt;angularVelocity);
+-			axis 			= angle*currentContactGeometry-&gt;normal;
+-			shearForce 	       -= shearForce.Cross(axis);
++			axis = currentContactPhysics-&gt;prevNormal.Cross(currentContactGeometry-&gt;normal);
++			shearForce -= shearForce.Cross(axis);
++			angle = dt*0.5*currentContactGeometry-&gt;normal.Dot(de1-&gt;angularVelocity+de2-&gt;angularVelocity);
++			axis = angle*currentContactGeometry-&gt;normal;
++			shearForce -= shearForce.Cross(axis);
+ 		
+ 	/// Here is the code with exact rotations 		 ///
+ 	
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000198.html">[Yade-commits] r1233 - in trunk: . extra/tetra	pkg/common/DataClass/GeometricalModel
+</A></li>
+	<LI>Next message: <A HREF="000200.html">[Yade-commits] r1235 - in trunk: . extra/tetra gui/qt3
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#199">[ date ]</a>
+              <a href="thread.html#199">[ thread ]</a>
+              <a href="subject.html#199">[ subject ]</a>
+              <a href="author.html#199">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

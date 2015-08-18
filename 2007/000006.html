@@ -1,0 +1,1641 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1041 - in trunk: yade-core/src/yade	yade-guis/yade-gui-qt/src/QtGUI	yade-libs/yade-lib-serialization-bin/src/yade-lib-serialization-bin	yade-packages/yade-package-lattice/src/Engine/EngineUnit/LatticeSet2LatticeBeams	yade-packages/yade-package-lattice/src/Engine/StandAloneEngine	yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/BeamRecorder	yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/LatticeLaw	yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/MovingSupport	yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/NodeRecorder	yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/StrainRecorder	yade-packages/yade-package-lattice/src/PreProcessor/LatticeExample	yade-packages/yade-package-lattice/src/RenderingEngine/GLDrawLatticeBeamState
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2007/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1041%20-%20in%20trunk%3A%20yade-core/src/yade%0A%09yade-guis/yade-gui-qt/src/QtGUI%0A%09yade-libs/yade-lib-serialization-bin/src/yade-lib-serialization-bin%0A%09yade-packages/yade-package-lattice/src/Engine/EngineUnit/LatticeSet2LatticeBeams%0A%09yade-packages/yade-package-lattice/src/Engine/StandAloneEngine%0A%09yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/BeamRecorder%0A%09yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/LatticeLaw%0A%09yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/MovingSupport%0A%09yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/NodeRecorder%0A%09yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/StrainRecorder%0A%09yade-packages/yade-package-lattice/src/PreProcessor/LatticeExample%0A%09yade-packages/yade-package-lattice/src/RenderingEngine/GLDrawLatticeBeamState&In-Reply-To=%3C200701222237.l0MMb9Zj017543%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000005.html">
+   <LINK REL="Next"  HREF="000007.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1041 - in trunk: yade-core/src/yade	yade-guis/yade-gui-qt/src/QtGUI	yade-libs/yade-lib-serialization-bin/src/yade-lib-serialization-bin	yade-packages/yade-package-lattice/src/Engine/EngineUnit/LatticeSet2LatticeBeams	yade-packages/yade-package-lattice/src/Engine/StandAloneEngine	yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/BeamRecorder	yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/LatticeLaw	yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/MovingSupport	yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/NodeRecorder	yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/StrainRecorder	yade-packages/yade-package-lattice/src/PreProcessor/LatticeExample	yade-packages/yade-package-lattice/src/RenderingEngine/GLDrawLatticeBeamState</H1>
+    <B>cosurgi at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1041%20-%20in%20trunk%3A%20yade-core/src/yade%0A%09yade-guis/yade-gui-qt/src/QtGUI%0A%09yade-libs/yade-lib-serialization-bin/src/yade-lib-serialization-bin%0A%09yade-packages/yade-package-lattice/src/Engine/EngineUnit/LatticeSet2LatticeBeams%0A%09yade-packages/yade-package-lattice/src/Engine/StandAloneEngine%0A%09yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/BeamRecorder%0A%09yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/LatticeLaw%0A%09yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/MovingSupport%0A%09yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/NodeRecorder%0A%09yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/StrainRecorder%0A%09yade-packages/yade-package-lattice/src/PreProcessor/LatticeExample%0A%09yade-packages/yade-package-lattice/src/RenderingEngine/GLDrawLatticeBeamState&In-Reply-To=%3C200701222237.l0MMb9Zj017543%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1041 - in trunk: yade-core/src/yade	yade-guis/yade-gui-qt/src/QtGUI	yade-libs/yade-lib-serialization-bin/src/yade-lib-serialization-bin	yade-packages/yade-package-lattice/src/Engine/EngineUnit/LatticeSet2LatticeBeams	yade-packages/yade-package-lattice/src/Engine/StandAloneEngine	yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/BeamRecorder	yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/LatticeLaw	yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/MovingSupport	yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/NodeRecorder	yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/StrainRecorder	yade-packages/yade-package-lattice/src/PreProcessor/LatticeExample	yade-packages/yade-package-lattice/src/RenderingEngine/GLDrawLatticeBeamState">cosurgi at mail.berlios.de
+       </A><BR>
+    <I>Mon Jan 22 23:37:09 CET 2007</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000005.html">[Yade-commits] r1040 - in trunk: yade-core/src/yade yade-guis/yade-gui-qt/src/QtGUI yade-libs/yade-lib-base yade-libs/yade-lib-computational-geometry/src/yade-lib-computational-geometry yade-libs/yade-lib-serialization-qt/src/yade-lib-serialization-qt yade-packages/yade-package-dem/src/PreProcessor/Funnel yade-packages/yade-package-dem/src/PreProcessor/IsotropicCompressionTest yade-packages/yade-package-dem/src/PreProcessor/SDECImpactTest yade-packages/yade-package-dem/src/PreProcessor/SDECLinkedSpheres yade-packages/yade-package-dem/src/PreProcessor/SDECMovingWall yade-packages/yade-package-dem/src/PreProcessor/SDECSpheresPlane yade-packages/yade-package-dem/src/PreProcessor/TetrahedronsTest yade-packages/yade-package-dem/src/PreProcessor/TriaxialTest yade-packages/yade-package-fem/src/PreProcessor/FEMBeam yade-packages/yade-package-lattice/src/DataClass/PhysicalParameters/LatticeBeamParameters yade-packages/yade-package-lattice/src/Engine/EngineUnit/LatticeSet2LatticeBeams yade-! packages/yade-package-lattice/src/Engine/StandAloneEngine/MeasurePoisson yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/StrainRecorder yade-packages/yade-package-lattice/src/PreProcessor/LatticeExample yade-packages/yade-package-lattice/src/RenderingEngine yade-packages/yade-package-lattice/src/RenderingEngine/GLDrawLatticeSetGeometry yade-packages/yade-package-lattice/src/RenderingEngine/GLDrawLineSegment yade-packages/yade-package-mass-spring/src/PreProcessor/HangingCloth
+</A></li>
+        <LI>Next message: <A HREF="000007.html">[Yade-commits] r1042 - trunk
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#6">[ date ]</a>
+              <a href="thread.html#6">[ thread ]</a>
+              <a href="subject.html#6">[ subject ]</a>
+              <a href="author.html#6">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: cosurgi
+Date: 2007-01-22 23:37:07 +0100 (Mon, 22 Jan 2007)
+New Revision: 1041
+
+Added:
+   trunk/yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/BeamRecorder/
+   trunk/yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/BeamRecorder/BeamRecorder.cpp
+   trunk/yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/BeamRecorder/BeamRecorder.hpp
+   trunk/yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/BeamRecorder/BeamRecorder.pro
+   trunk/yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/MovingSupport/
+   trunk/yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/MovingSupport/MovingSupport.cpp
+   trunk/yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/MovingSupport/MovingSupport.hpp
+   trunk/yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/MovingSupport/MovingSupport.pro
+   trunk/yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/NodeRecorder/
+   trunk/yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/NodeRecorder/NodeRecorder.cpp
+   trunk/yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/NodeRecorder/NodeRecorder.hpp
+   trunk/yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/NodeRecorder/NodeRecorder.pro
+Modified:
+   trunk/yade-core/src/yade/MetaBody.hpp
+   trunk/yade-core/src/yade/Omega.hpp
+   trunk/yade-core/src/yade/yade.cpp
+   trunk/yade-guis/yade-gui-qt/src/QtGUI/QtFileGenerator.cpp
+   trunk/yade-guis/yade-gui-qt/src/QtGUI/QtGeneratedSimulationController.ui
+   trunk/yade-libs/yade-lib-serialization-bin/src/yade-lib-serialization-bin/BINFormatManager.cpp
+   trunk/yade-libs/yade-lib-serialization-bin/src/yade-lib-serialization-bin/BINFormatManager.hpp
+   trunk/yade-packages/yade-package-lattice/src/Engine/EngineUnit/LatticeSet2LatticeBeams/LatticeSet2LatticeBeams.cpp
+   trunk/yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/LatticeLaw/LatticeLaw.cpp
+   trunk/yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/LatticeLaw/LatticeLaw.hpp
+   trunk/yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/StandAloneEngine.pro
+   trunk/yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/StrainRecorder/StrainRecorder.cpp
+   trunk/yade-packages/yade-package-lattice/src/PreProcessor/LatticeExample/LatticeExample.cpp
+   trunk/yade-packages/yade-package-lattice/src/PreProcessor/LatticeExample/LatticeExample.hpp
+   trunk/yade-packages/yade-package-lattice/src/PreProcessor/LatticeExample/LatticeExample.pro
+   trunk/yade-packages/yade-package-lattice/src/RenderingEngine/GLDrawLatticeBeamState/GLDrawLatticeBeamState.cpp
+Log:
+- QtFileGenerator remembers save file name (so it is not always
+  ../data/scene.xml), this was done in previous commit. A small bugfix here
+
+- maximum delay between display updates is now 10 minutes (600000 miliseconds)
+
+- BIN format did not support std::pair, I had to fix it, because I needed that.
+  But we are switching to boost::serialization in near future, anyway. 
+
+- added NodeRecorder (records average position of selected nodes), BeamRecorder
+  (records stress in x and y direction in a selected section) and MovingSupport
+  (a sliding support - transfers only one DOF acorss it) to lattice.
+
+- replaced std::vector with std::list in few places in lattice. There where
+  add/remove was more often, and random access was not needed.
+
+
+
+Modified: trunk/yade-core/src/yade/MetaBody.hpp
+===================================================================
+--- trunk/yade-core/src/yade/MetaBody.hpp	2007-01-20 12:11:21 UTC (rev 1040)
++++ trunk/yade-core/src/yade/MetaBody.hpp	2007-01-22 22:37:07 UTC (rev 1041)
+@@ -20,7 +20,7 @@
+ 	public : // FIXME - why public?
+ 		shared_ptr&lt;BodyContainer&gt;		bodies;
+ 		vector&lt;shared_ptr&lt;Engine&gt; &gt;		engines;
+-		vector&lt;shared_ptr&lt;Engine&gt; &gt;		initializers;
++		vector&lt;shared_ptr&lt;Engine&gt; &gt;		initializers; // FIXME: see MovingSupport:50
+ 		shared_ptr&lt;InteractionContainer&gt;	persistentInteractions; // disappear, reappear according to physical (or any other non-spatial) criterion
+ 		shared_ptr&lt;InteractionContainer&gt;	transientInteractions;	// disappear, reappear according to spatial criterion
+ 		shared_ptr&lt;PhysicalActionContainer&gt;	physicalActions;
+
+Modified: trunk/yade-core/src/yade/Omega.hpp
+===================================================================
+--- trunk/yade-core/src/yade/Omega.hpp	2007-01-20 12:11:21 UTC (rev 1040)
++++ trunk/yade-core/src/yade/Omega.hpp	2007-01-22 22:37:07 UTC (rev 1041)
+@@ -77,9 +77,13 @@
+ 		void logMessage(const string&amp; str);
+ 		void logError(const string&amp; str);
+ 		
++		// FIXME this is a hack. See  GLViewer:86
++		// problem is that currently there is no way to transmit arguments between UI and GLDraw* methods.
++		// Omega will be deleted anyway, so, uh.. I am polluting it now :/
+ 		float	isoValue;
+ 		float	isoThick;
+ 		int     isoSec;
++		// FIXME end
+ 		
+ 		boost::mutex&amp;	getRootBodyMutex();
+ 		
+
+Modified: trunk/yade-core/src/yade/yade.cpp
+===================================================================
+--- trunk/yade-core/src/yade/yade.cpp	2007-01-20 12:11:21 UTC (rev 1040)
++++ trunk/yade-core/src/yade/yade.cpp	2007-01-22 22:37:07 UTC (rev 1041)
+@@ -139,7 +139,7 @@
+ 			case 'w' :	setup = true;		break;
+ 			case 'C' :	configPath = optarg; 	break;
+ 			case 'c' :	configPath = &quot;.&quot;; 	break;
+-			case 'S' : simulationFileName=optarg; break;
++			case 'S' :	simulationFileName=optarg; break;
+ 			default	 :	printHelp();		return 1;
+ 		}
+ 	
+
+Modified: trunk/yade-guis/yade-gui-qt/src/QtGUI/QtFileGenerator.cpp
+===================================================================
+--- trunk/yade-guis/yade-gui-qt/src/QtGUI/QtFileGenerator.cpp	2007-01-20 12:11:21 UTC (rev 1040)
++++ trunk/yade-guis/yade-gui-qt/src/QtGUI/QtFileGenerator.cpp	2007-01-22 22:37:07 UTC (rev 1041)
+@@ -255,6 +255,13 @@
+ 			IOFormatManager::loadFromFile(&quot;XMLFormatManager&quot;,fileName,&quot;fileGenerator&quot;,fg); 
+ 			setGeneratorName(fg-&gt;getClassName());
+ 			displayFileGeneratorAttributes(fg);
++
++			std::string tmp=fg-&gt;getFileName();
++			if(tmp!=&quot;../data/scene.xml&quot;) // this check to avoid resetting data, when loading older file.
++			{
++				leOutputFileName-&gt;setText(tmp);
++				setSerializationName(fg-&gt;getSerializationLibrary());
++			}
+ 		} 
+ 		catch(SerializableError&amp; e) // catching it...
+ 		{
+@@ -263,12 +270,6 @@
+ 			return;
+ 		}
+ 	}
+-	std::string tmp=fg-&gt;getFileName();
+-	if(tmp!=&quot;../data/scene.xml&quot;) // this check to avoid resetting data, when loading older file.
+-	{
+-		leOutputFileName-&gt;setText(tmp);
+-		setSerializationName(fg-&gt;getSerializationLibrary());
+-	}
+ }
+ 
+ void QtFileGenerator::pbSaveClicked()
+
+Modified: trunk/yade-guis/yade-gui-qt/src/QtGUI/QtGeneratedSimulationController.ui
+===================================================================
+--- trunk/yade-guis/yade-gui-qt/src/QtGUI/QtGeneratedSimulationController.ui	2007-01-20 12:11:21 UTC (rev 1040)
++++ trunk/yade-guis/yade-gui-qt/src/QtGUI/QtGeneratedSimulationController.ui	2007-01-22 22:37:07 UTC (rev 1041)
+@@ -1156,7 +1156,7 @@
+                                             &lt;/size&gt;
+                                         &lt;/property&gt;
+                                         &lt;property name=&quot;maxValue&quot;&gt;
+-                                            &lt;number&gt;3000&lt;/number&gt;
++                                            &lt;number&gt;600000&lt;/number&gt;
+                                         &lt;/property&gt;
+                                         &lt;property name=&quot;value&quot;&gt;
+                                             &lt;number&gt;20&lt;/number&gt;
+
+Modified: trunk/yade-libs/yade-lib-serialization-bin/src/yade-lib-serialization-bin/BINFormatManager.cpp
+===================================================================
+--- trunk/yade-libs/yade-lib-serialization-bin/src/yade-lib-serialization-bin/BINFormatManager.cpp	2007-01-20 12:11:21 UTC (rev 1040)
++++ trunk/yade-libs/yade-lib-serialization-bin/src/yade-lib-serialization-bin/BINFormatManager.cpp	2007-01-22 22:37:07 UTC (rev 1041)
+@@ -29,7 +29,8 @@
+ 	Archive::addSerializablePointer(SerializableTypes::POINTER      , true , serializeSmartPointer             , deserializeSmartPointer);
+ 
+ 	Archive::addSerializablePointer(SerializableTypes::CUSTOM_CLASS , false, serializeUnsupported              , deserializeUnsupported);
+-	Archive::addSerializablePointer(SerializableTypes::CUSTOM_CLASS , true , serializeUnsupported              , deserializeUnsupported);
++	//Archive::addSerializablePointer(SerializableTypes::CUSTOM_CLASS , true , serializeUnsupported              , deserializeUnsupported);
++	Archive::addSerializablePointer(SerializableTypes::CUSTOM_CLASS , true , serializeCustomFundamental        , deserializeCustomFundamental);
+ }
+ 
+ BINFormatManager::~BINFormatManager()
+@@ -336,3 +337,40 @@
+ 	throw SerializableError(error.c_str());
+ }
+ 
++void BINFormatManager::deserializeCustomFundamental(istream&amp; stream, Archive&amp; ac,const string&amp; str)
++{
++	shared_ptr&lt;Serializable&gt; s = dynamic_pointer_cast&lt;Serializable&gt;(ClassFactory::instance().createShared(ac.getSerializableClassName()));
++
++	s-&gt;registerSerializableAttributes(true);
++
++	Serializable::Archives archives = s-&gt;getArchives();
++	Serializable::Archives::iterator archi = archives.begin();
++	Serializable::Archives::iterator archiEnd = archives.end();
++	for( ; archi!=archiEnd ; ++archi)
++		(*archi)-&gt;deserialize(stream,**archi,str);
++
++	s-&gt;deserialize(ac.getAddress());
++	s-&gt;unregisterSerializableAttributes(true);
++	ac.markProcessed();
++}
++
++
++void BINFormatManager::serializeCustomFundamental(ostream&amp; stream, Archive&amp; ac,int depth)
++{
++	shared_ptr&lt;Serializable&gt; ss = dynamic_pointer_cast&lt;Serializable&gt;(ClassFactory::instance().createShared(ac.getSerializableClassName()));
++	ss-&gt;serialize(ac.getAddress());
++	ss-&gt;registerSerializableAttributes(false);
++	Serializable::Archives archives = ss-&gt;getArchives();
++	Serializable::Archives::iterator archi = archives.begin();
++	Serializable::Archives::iterator archiEnd = archives.end();
++
++	for( ; archi!=archiEnd ; ++archi)
++	{
++		(*archi)-&gt;serialize(stream,**archi,depth+1);
++		(*archi)-&gt;markProcessed();
++	}
++
++	ss-&gt;unregisterSerializableAttributes(false);
++	ac.markProcessed();
++}
++
+
+Modified: trunk/yade-libs/yade-lib-serialization-bin/src/yade-lib-serialization-bin/BINFormatManager.hpp
+===================================================================
+--- trunk/yade-libs/yade-lib-serialization-bin/src/yade-lib-serialization-bin/BINFormatManager.hpp	2007-01-20 12:11:21 UTC (rev 1040)
++++ trunk/yade-libs/yade-lib-serialization-bin/src/yade-lib-serialization-bin/BINFormatManager.hpp	2007-01-22 22:37:07 UTC (rev 1041)
+@@ -44,6 +44,9 @@
+ 		static void 		  serializeUnsupported(ostream&amp;, Archive&amp;, int);
+ 		static void 		deserializeUnsupported(istream&amp;, Archive&amp;,const string&amp;);
+ 
++		static void               serializeCustomFundamental(ostream&amp; stream, Archive&amp; ac, int depth);
++		static void		deserializeCustomFundamental(istream&amp; stream, Archive&amp; ac,const string&amp; str);
++
+ 	REGISTER_CLASS_NAME(BINFormatManager);
+ 	REGISTER_BASE_CLASS_NAME(IOFormatManager);
+ };
+
+Modified: trunk/yade-packages/yade-package-lattice/src/Engine/EngineUnit/LatticeSet2LatticeBeams/LatticeSet2LatticeBeams.cpp
+===================================================================
+--- trunk/yade-packages/yade-package-lattice/src/Engine/EngineUnit/LatticeSet2LatticeBeams/LatticeSet2LatticeBeams.cpp	2007-01-20 12:11:21 UTC (rev 1040)
++++ trunk/yade-packages/yade-package-lattice/src/Engine/EngineUnit/LatticeSet2LatticeBeams/LatticeSet2LatticeBeams.cpp	2007-01-22 22:37:07 UTC (rev 1041)
+@@ -40,7 +40,7 @@
+ 			      if(beam-&gt;criticalTensileStrain &gt; 0.00006) line-&gt;diffuseColor = Vector3f(0.0,0.0,0.0); else // AGGREGATE
+ 			                                                line-&gt;diffuseColor = Vector3f(0.3,0.3,0.3);      // BOND
+ 
+-			      if(beam-&gt;longitudalStiffness &gt; 3.6 ) line-&gt;diffuseColor = Vector3f(1.0,0.0,0.0); // NON-DESTROY
++			      if(beam-&gt;longitudalStiffness &gt; 3.6 ) line-&gt;diffuseColor = Vector3f(0.4,0.4,1.0); // NON-DESTROY
+ 		}
+ 	}
+ }
+
+Added: trunk/yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/BeamRecorder/BeamRecorder.cpp
+===================================================================
+--- trunk/yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/BeamRecorder/BeamRecorder.cpp	2007-01-20 12:11:21 UTC (rev 1040)
++++ trunk/yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/BeamRecorder/BeamRecorder.cpp	2007-01-22 22:37:07 UTC (rev 1041)
+@@ -0,0 +1,169 @@
++/*************************************************************************
++*  Copyright (C) 2004 by Janek Kozicki                                   *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">cosurgi at berlios.de</A>                                                    *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#include &quot;BeamRecorder.hpp&quot;
++#include &lt;yade/yade-core/MetaBody.hpp&gt;
++#include &quot;LatticeBeamParameters.hpp&quot;
++#include &quot;LatticeNodeParameters.hpp&quot;
++// to calculate strain of whole speciemen - first two bodies in subscribedBodies are Nodes. FIXME - make it clean!
++#include &lt;boost/lexical_cast.hpp&gt;
++
++/*
++ *
++	private :
++		std::ofstream ofile; 
++		std::vector&lt;std::pair&lt;std::list&lt;unsigned int&gt;, int&gt; &gt;	subscribedBodies; // [region]&lt;list of bodies' ids, direction&gt;
++		bool			first;
++		int			nodeGroupMask,beamGroupMask;
++
++	public :
++		std::string	 outputFile;
++		unsigned int	 interval;
++		std::list&lt;std::pair&lt;Vector3r,std::pair&lt; Real, int &gt; &gt; &gt; sections; // a list of section planes: &lt;a midpoint, half length, direction &gt;
++		// int direction refers to: which coordinate to take from the Beam's.direction: x, y or z (0, 1 or 2)
++ * */
++
++
++BeamRecorder::BeamRecorder () : DataRecorder()
++{
++	outputFile = &quot;&quot;;
++	interval = 50;
++	subscribedBodies.clear();
++	first = true;
++	// FIXME ...
++        nodeGroupMask           = 1;
++        beamGroupMask           = 2;
++}
++
++
++void BeamRecorder::postProcessAttributes(bool deserializing)
++{
++	if(deserializing)
++	{
++		ofile.open(outputFile.c_str());
++//		first = true;
++//		subscribedBodies.clear();
++	}
++}
++
++
++void BeamRecorder::registerAttributes()
++{
++	DataRecorder::registerAttributes();
++	REGISTER_ATTRIBUTE(outputFile);
++	REGISTER_ATTRIBUTE(interval);
++	REGISTER_ATTRIBUTE(sections);
++
++	REGISTER_ATTRIBUTE(first);
++	REGISTER_ATTRIBUTE(subscribedBodies);
++}
++
++
++bool BeamRecorder::isActivated()
++{
++	return ((Omega::instance().getCurrentIteration() % interval == 0) &amp;&amp; (ofile));
++}
++
++
++void BeamRecorder::action(Body * body)
++{
++//	std::cerr &lt;&lt; &quot;BeamRecorder quits\n&quot;;
++//	return;
++	
++	MetaBody * ncb = static_cast&lt;MetaBody*&gt;(body);
++
++	if(first)
++	{
++	// scan the sections and subscribe beams that cross each of them
++	// FIXME - this is still problematic, because this should be done only
++	// on the first run, regardless of saving/loading this file...
++		first = false;
++		subscribedBodies.resize( sections.size() );
++
++		std::list&lt;std::pair&lt;Vector3r,std::pair&lt;Real,int&gt; &gt; &gt;::iterator i  =sections.begin();
++		std::list&lt;std::pair&lt;Vector3r,std::pair&lt;Real,int&gt; &gt; &gt;::iterator end=sections.end();
++
++		for( int section=0 ; i != end ; ++i, ++section )
++		{
++			Vector3r midpoint = i-&gt;first;
++			Real     half     = i-&gt;second.first;
++			int	 dir	  = i-&gt;second.second;
++
++			if(!subscribedBodies[section].first.empty())
++				std::cerr &lt;&lt; &quot;First, but not empty\n&quot;;
++
++			subscribedBodies[section].second=dir; 
++
++			BodyContainer::iterator bi    = ncb-&gt;bodies-&gt;begin();
++			BodyContainer::iterator biEnd = ncb-&gt;bodies-&gt;end();
++			for(  ; bi!=biEnd ; ++bi )
++			{
++				if( (*bi)-&gt;getGroupMask() &amp; beamGroupMask )
++				{
++					Vector3r pos1 = (*(ncb-&gt;bodies))[static_cast&lt;LatticeBeamParameters*&gt;( (*bi)-&gt;physicalParameters.get() )-&gt;id1]-&gt;physicalParameters-&gt;se3.position; // beam first node
++					Vector3r pos2 = (*(ncb-&gt;bodies))[static_cast&lt;LatticeBeamParameters*&gt;( (*bi)-&gt;physicalParameters.get() )-&gt;id2]-&gt;physicalParameters-&gt;se3.position; // beam second node
++					
++					if( pos1[dir] &lt; pos2[dir] )
++						std::swap(pos1,pos2); // make sure that pos1[dir] is bigger 
++		
++					if(        pos1[dir] &gt; midpoint[dir]
++						&amp;&amp; pos2[dir] &lt; midpoint[dir] // beam crosses the plane!
++
++						&amp;&amp; pos1[(dir+1)%3] &gt; midpoint[(dir+1)%3]-half
++						&amp;&amp; pos1[(dir+1)%3] &lt; midpoint[(dir+1)%3]+half
++						&amp;&amp; pos2[(dir+1)%3] &gt; midpoint[(dir+1)%3]-half
++						&amp;&amp; pos2[(dir+1)%3] &lt; midpoint[(dir+1)%3]+half // both points are within halflength in direction (dir+1)%3
++
++						&amp;&amp; pos1[(dir+2)%3] &gt; midpoint[(dir+2)%3]-half
++						&amp;&amp; pos1[(dir+2)%3] &lt; midpoint[(dir+2)%3]+half
++						&amp;&amp; pos2[(dir+2)%3] &gt; midpoint[(dir+2)%3]-half
++						&amp;&amp; pos2[(dir+2)%3] &lt; midpoint[(dir+2)%3]+half // both points are within halflength in direction (dir+2)%3
++						)
++						subscribedBodies[section].first.push_back( (*bi)-&gt;getId() ); 
++				}
++			}
++		}
++	}
++
++
++	for( int section=0 ; section&lt;sections.size() ; ++section )
++	{
++		std::list&lt;unsigned int&gt;::iterator i   = subscribedBodies[section].first.begin();
++		std::list&lt;unsigned int&gt;::iterator end = subscribedBodies[section].first.end();
++		//int dir                               = subscribedBodies[section].second; // unused...
++		
++		//Real stress=0; // in direction 'dir'
++		Real stress_x=0;
++		Real stress_y=0;
++
++		for( ; i != end ; ++i )
++		{
++			if( (*(ncb-&gt;bodies)).exists(*i) )
++			{
++				LatticeBeamParameters* beam 	= static_cast&lt;LatticeBeamParameters*&gt;( (*(ncb-&gt;bodies))[*i]-&gt;physicalParameters . get() );
++				// direction is a unit vector, so direction[1] is cos(angle_to_dir)
++				//Real s			= beam-&gt;strain() * std::abs(beam-&gt;direction[dir]) * beam-&gt;longitudalStiffness;
++				Real s_x			= beam-&gt;strain() * std::abs(beam-&gt;direction[0]) * beam-&gt;longitudalStiffness;
++				Real s_y			= beam-&gt;strain() * std::abs(beam-&gt;direction[1]) * beam-&gt;longitudalStiffness;
++				stress_x += s_x;
++				stress_y += s_y;
++
++				(*(ncb-&gt;bodies))[*i]-&gt;geometricalModel-&gt;diffuseColor = Vector3f(1.0,0.0,((float)section)/3.0); // FIXME [1]
++			}
++		}
++
++		ofile	&lt;&lt; lexical_cast&lt;string&gt;(stress_x) &lt;&lt; &quot; &quot; &lt;&lt; lexical_cast&lt;string&gt;(stress_y) &lt;&lt; &quot; \t &quot;;
++	}
++	ofile &lt;&lt; endl; 
++		
++	// [1]
++	// mark colors what is monitored - FIXME - provide a way to do that for ALL DataRecorders in that parent class.
++	// GLDrawSomething can just put a getClassName()
++	 
++}
++
+
+Added: trunk/yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/BeamRecorder/BeamRecorder.hpp
+===================================================================
+--- trunk/yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/BeamRecorder/BeamRecorder.hpp	2007-01-20 12:11:21 UTC (rev 1040)
++++ trunk/yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/BeamRecorder/BeamRecorder.hpp	2007-01-22 22:37:07 UTC (rev 1041)
+@@ -0,0 +1,51 @@
++/*************************************************************************
++*  Copyright (C) 2004 by Janek Kozicki                                   *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">cosurgi at berlios.de</A>                                                    *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#ifndef BEAM_RECORDER_HPP
++#define BEAM_RECORDER_HPP 
++
++#include &lt;yade/yade-core/DataRecorder.hpp&gt;
++
++#include &lt;string&gt;
++#include &lt;fstream&gt;
++#include &lt;list&gt;
++#include &lt;vector&gt;
++
++//class PhysicalAction;
++
++class BeamRecorder : public DataRecorder
++{ // given a section plane it records all the beams that cross it: their deformation projected
++  // on direction perpendicular to the plane multiplied by their longitudalStiffness
++	private :
++		std::ofstream ofile; 
++		std::vector&lt;std::pair&lt;std::list&lt;unsigned int&gt;, int&gt; &gt;	subscribedBodies; // [region]&lt;list of bodies' ids, direction&gt;
++		bool			first;
++		int			nodeGroupMask,beamGroupMask;
++
++	public :
++		std::string	 outputFile;
++		unsigned int	 interval;
++		std::list&lt;std::pair&lt;Vector3r,std::pair&lt; Real, int &gt; &gt; &gt; sections; // a list of section planes: &lt;a midpoint, half length, direction &gt;
++		// int direction refers to: which coordinate to take from the Beam's.direction: x, y or z (0, 1 or 2)
++
++		BeamRecorder ();
++
++		virtual void registerAttributes();
++		virtual void action(Body* b);
++		virtual bool isActivated();
++
++	protected :
++		virtual void postProcessAttributes(bool deserializing);
++	REGISTER_CLASS_NAME(BeamRecorder);
++	REGISTER_BASE_CLASS_NAME(DataRecorder);
++};
++
++REGISTER_SERIALIZABLE(BeamRecorder,false);
++
++#endif // STRAIN_RECORDER_HPP 
++
+
+Added: trunk/yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/BeamRecorder/BeamRecorder.pro
+===================================================================
+--- trunk/yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/BeamRecorder/BeamRecorder.pro	2007-01-20 12:11:21 UTC (rev 1040)
++++ trunk/yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/BeamRecorder/BeamRecorder.pro	2007-01-22 22:37:07 UTC (rev 1041)
+@@ -0,0 +1,28 @@
++isEmpty ( YADE_QMAKE_PATH ) {
++error( &quot;YADE_QMAKE_PATH internal qmake variable is not set, you should run for example qmake YADE_QMAKE_PATH=/usr/local, this will not work from inside kdevelop (when they will fix it?)&quot; )
++}
++
++
++LIBS += -lLatticeBeamParameters \
++        -lLatticeNodeParameters \
++        -rdynamic 
++QMAKE_LIBDIR = ../../../../bin \
++$${YADE_QMAKE_PATH}/lib/yade/yade-package-common/ \
++               $${YADE_QMAKE_PATH}/lib/yade/yade-libs/ 
++QMAKE_CXXFLAGS_RELEASE += -lpthread \
++                          -pthread 
++QMAKE_CXXFLAGS_DEBUG += -lpthread \
++                        -pthread 
++DESTDIR = ../../../../bin 
++CONFIG += debug \
++          thread \
++          warn_on \
++          dll 
++TEMPLATE = lib 
++HEADERS += BeamRecorder.hpp 
++SOURCES += BeamRecorder.cpp 
++INCLUDEPATH += ../../../DataClass/PhysicalParameters/LatticeNodeParameters \
++../../../DataClass/PhysicalParameters/LatticeBeamParameters \
++$${YADE_QMAKE_PATH}/include
++
++QMAKE_RUN_CXX_IMP = $(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $(shell pwd)/$&lt;
+
+Modified: trunk/yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/LatticeLaw/LatticeLaw.cpp
+===================================================================
+--- trunk/yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/LatticeLaw/LatticeLaw.cpp	2007-01-20 12:11:21 UTC (rev 1040)
++++ trunk/yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/LatticeLaw/LatticeLaw.cpp	2007-01-22 22:37:07 UTC (rev 1041)
+@@ -274,6 +274,7 @@
+ 		{ // 'E_min' 'E_max' criterion
+ 			if( deleteBeam(lattice , beam, body) ) // calculates strain
+ 			{
++				std::cerr &lt;&lt; &quot;one beam deleted\n&quot;;
+ 				futureDeletes.push_back(body-&gt;getId());
+ 				continue;
+ 			}
+@@ -392,8 +393,8 @@
+ 	{ // delete all beams and nodes marked for deletion 
+ 	  // - beams that exceeded critical tensile/compressive strain
+ 	  // - nodes that have no more beams
+-		vector&lt;unsigned int&gt;::iterator vend = futureDeletes.end();
+-		for( vector&lt;unsigned int&gt;::iterator vsta = futureDeletes.begin() ; vsta != vend ; ++vsta)
++		std::list&lt;unsigned int&gt;::iterator vend = futureDeletes.end();
++		for( std::list&lt;unsigned int&gt;::iterator vsta = futureDeletes.begin() ; vsta != vend ; ++vsta)
+ 			bodies-&gt;erase(*vsta); 
+ 	}
+ }
+
+Modified: trunk/yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/LatticeLaw/LatticeLaw.hpp
+===================================================================
+--- trunk/yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/LatticeLaw/LatticeLaw.hpp	2007-01-20 12:11:21 UTC (rev 1040)
++++ trunk/yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/LatticeLaw/LatticeLaw.hpp	2007-01-22 22:37:07 UTC (rev 1041)
+@@ -13,15 +13,15 @@
+ #include &quot;LatticeBeamParameters.hpp&quot;
+ #include &lt;yade/yade-core/InteractionSolver.hpp&gt;
+ #include &lt;yade/yade-core/BodyContainer.hpp&gt;
++#include &lt;list&gt;
+ 
+-
+ class PhysicalAction;
+ 
+ 
+ class LatticeLaw : public InteractionSolver
+ {
+ 	private:
+-		vector&lt;unsigned int&gt; futureDeletes;
++		std::list&lt;unsigned int&gt; futureDeletes;
+ 		//bool nonlocal;
+                 
+                 bool deleteBeam(MetaBody* lattice , LatticeBeamParameters* beam, Body*);
+
+Added: trunk/yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/MovingSupport/MovingSupport.cpp
+===================================================================
+--- trunk/yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/MovingSupport/MovingSupport.cpp	2007-01-20 12:11:21 UTC (rev 1040)
++++ trunk/yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/MovingSupport/MovingSupport.cpp	2007-01-22 22:37:07 UTC (rev 1041)
+@@ -0,0 +1,180 @@
++/*************************************************************************
++*  Copyright (C) 2004 by Janek Kozicki                                   *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">cosurgi at berlios.de</A>                                                    *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#include &quot;MovingSupport.hpp&quot;
++#include &lt;yade/yade-core/MetaBody.hpp&gt;
++#include &quot;LatticeBeamParameters.hpp&quot;
++#include &quot;LatticeNodeParameters.hpp&quot;
++// to calculate strain of whole speciemen - first two bodies in subscribedBodies are Nodes. FIXME - make it clean!
++#include &lt;boost/lexical_cast.hpp&gt;
++
++MovingSupport::MovingSupport () : DataRecorder()
++{
++	subscribedBodies.clear();
++	first = true;
++	// FIXME ...
++        nodeGroupMask           = 1;
++        beamGroupMask           = 2;
++}
++
++
++void MovingSupport::postProcessAttributes(bool deserializing)
++{
++	if(deserializing)
++	{
++//		first = true;
++//		subscribedBodies.clear();
++	}
++}
++
++
++void MovingSupport::registerAttributes()
++{
++	DataRecorder::registerAttributes();
++	REGISTER_ATTRIBUTE(sections);
++
++	REGISTER_ATTRIBUTE(first);
++	REGISTER_ATTRIBUTE(subscribedBodies);
++}
++
++
++bool MovingSupport::isActivated()
++{
++	return true;
++}
++
++
++void MovingSupport::action(Body * body)
++	// FIXME: about &quot;bool first&quot;:
++	// FIXME: maybe it could be added to initialiers, and called with a bool argument saying that the initialisation is performed. 
++{
++//	std::cerr &lt;&lt; &quot;MovingSupport quits\n&quot;;
++//	return;
++	
++	MetaBody * ncb = static_cast&lt;MetaBody*&gt;(body);
++
++	if(first)
++	{
++	// scan the sections and delete beams that cross each of them
++	// FIXME - this is still problematic, because this should be done only
++	// on the first run, regardless of saving/loading this file...
++		first = false;
++		subscribedBodies.resize( sections.size() );
++
++		std::list&lt;std::pair&lt;Vector3r,std::pair&lt;int,Real&gt; &gt; &gt;::iterator i  =sections.begin();
++		std::list&lt;std::pair&lt;Vector3r,std::pair&lt;int,Real&gt; &gt; &gt;::iterator end=sections.end();
++
++		for( int section=0 ; i != end ; ++i, ++section )
++		{
++			Vector3r midpoint = i-&gt;first;
++			Real     half     = i-&gt;second.second;
++			int	 dir	  = i-&gt;second.first;
++// std::vector
++//	&lt;
++//		std::pair
++//		&lt;
++//			std::list
++//			&lt;
++//				std::pair
++//				&lt;
++//					std::pair
++//					&lt;unsigned int,unsigned int&gt;
++//					,Real distance
++//				&gt;
++//			&gt;
++//			, int direction
++//		&gt;
++//	&gt;	subscribedBodies; // [region]&lt;(list of node pairs, distance), direction&gt;
++			if(!subscribedBodies[section].first.empty())
++				std::cerr &lt;&lt; &quot;First, but not empty\n&quot;;
++
++			subscribedBodies[section].second=dir; 
++
++			BodyContainer::iterator bi    = ncb-&gt;bodies-&gt;begin();
++			BodyContainer::iterator biEnd = ncb-&gt;bodies-&gt;end();
++			for(  ; bi!=biEnd ; ++bi )
++			{
++				if( (*bi)-&gt;getGroupMask() &amp; beamGroupMask )
++				{
++					Vector3r pos1 = (*(ncb-&gt;bodies))[static_cast&lt;LatticeBeamParameters*&gt;( (*bi)-&gt;physicalParameters.get() )-&gt;id1]-&gt;physicalParameters-&gt;se3.position; // beam first node
++					Vector3r pos2 = (*(ncb-&gt;bodies))[static_cast&lt;LatticeBeamParameters*&gt;( (*bi)-&gt;physicalParameters.get() )-&gt;id2]-&gt;physicalParameters-&gt;se3.position; // beam second node
++					
++					if( pos1[dir] &lt; pos2[dir] )
++						std::swap(pos1,pos2); // make sure that pos1[dir] is bigger 
++		
++					if(        pos1[dir] &gt; midpoint[dir]
++						&amp;&amp; pos2[dir] &lt; midpoint[dir] // beam crosses the plane!
++
++						&amp;&amp; pos1[(dir+1)%3] &gt; midpoint[(dir+1)%3]-half
++						&amp;&amp; pos1[(dir+1)%3] &lt; midpoint[(dir+1)%3]+half
++						&amp;&amp; pos2[(dir+1)%3] &gt; midpoint[(dir+1)%3]-half
++						&amp;&amp; pos2[(dir+1)%3] &lt; midpoint[(dir+1)%3]+half // both points are within halflength in direction (dir+1)%3
++
++						&amp;&amp; pos1[(dir+2)%3] &gt; midpoint[(dir+2)%3]-half
++						&amp;&amp; pos1[(dir+2)%3] &lt; midpoint[(dir+2)%3]+half
++						&amp;&amp; pos2[(dir+2)%3] &gt; midpoint[(dir+2)%3]-half
++						&amp;&amp; pos2[(dir+2)%3] &lt; midpoint[(dir+2)%3]+half // both points are within halflength in direction (dir+2)%3
++						)
++					{
++						subscribedBodies[section].first.push_back(
++							 std::make_pair( // push nodes
++								 std::make_pair(
++								 static_cast&lt;LatticeBeamParameters*&gt;( (*bi)-&gt;physicalParameters.get() )-&gt;id1
++								,static_cast&lt;LatticeBeamParameters*&gt;( (*bi)-&gt;physicalParameters.get() )-&gt;id2)
++								,
++								  (*(ncb-&gt;bodies))[static_cast&lt;LatticeBeamParameters*&gt;( (*bi)-&gt;physicalParameters.get() )-&gt;id1]-&gt;physicalParameters-&gt;se3.position[dir]
++								- (*(ncb-&gt;bodies))[static_cast&lt;LatticeBeamParameters*&gt;( (*bi)-&gt;physicalParameters.get() )-&gt;id2]-&gt;physicalParameters-&gt;se3.position[dir]
++								) ); 
++						futureDeletes.push_back( (*bi)-&gt;getId() );
++					}
++				}
++			}
++		}
++		// still first: delete
++		std::list&lt;unsigned int&gt;::iterator vend = futureDeletes.end();
++		for( std::list&lt;unsigned int&gt;::iterator vsta = futureDeletes.begin() ; vsta != vend ; ++vsta)
++			ncb-&gt;bodies-&gt;erase(*vsta); 
++	}
++
++
++	for( int section=0 ; section&lt;sections.size() ; ++section )
++	{
++	//	std::list&lt;unsigned int&gt;::iterator i   = subscribedBodies[section].first.begin();
++	//	std::list&lt;unsigned int&gt;::iterator end = subscribedBodies[section].first.end();
++		std::list&lt;std::pair&lt;std::pair&lt;unsigned int,unsigned int&gt;,Real&gt; &gt;::iterator i   = subscribedBodies[section].first.begin();
++		std::list&lt;std::pair&lt;std::pair&lt;unsigned int,unsigned int&gt;,Real&gt; &gt;::iterator end = subscribedBodies[section].first.end();
++		int dir                               = subscribedBodies[section].second;
++		
++		Real stress=0; // in direction 'dir'
++
++		for( ; i != end ; ++i )
++		{
++			unsigned int id1 = i-&gt;first.first;
++			unsigned int id2 = i-&gt;first.second;
++			Real        dist = i-&gt;second;
++			if( (*(ncb-&gt;bodies)).exists(id1) &amp;&amp; (*(ncb-&gt;bodies)).exists(id2) )
++			{
++				Real current_dist	= (*(ncb-&gt;bodies))[id1]-&gt;physicalParameters-&gt;se3.position[dir]
++							- (*(ncb-&gt;bodies))[id2]-&gt;physicalParameters-&gt;se3.position[dir];
++				Real delta = (dist - current_dist)/2.0;
++
++				(*(ncb-&gt;bodies))[id1]-&gt;physicalParameters-&gt;se3.position[dir] += delta;
++				(*(ncb-&gt;bodies))[id2]-&gt;physicalParameters-&gt;se3.position[dir] -= delta;
++
++				(*(ncb-&gt;bodies))[id1]-&gt;geometricalModel-&gt;diffuseColor = Vector3f(0.0,0.0,((float)section)/2.0); // FIXME [1]
++				(*(ncb-&gt;bodies))[id2]-&gt;geometricalModel-&gt;diffuseColor = Vector3f(0.0,0.0,((float)section)/2.0); // FIXME [1]
++			}
++		}
++	}
++		
++	// [1]
++	// mark colors what is monitored - FIXME - provide a way to do that for ALL DataRecorders in that parent class.
++	// GLDrawSomething can just put a getClassName()
++	 
++}
++
+
+Added: trunk/yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/MovingSupport/MovingSupport.hpp
+===================================================================
+--- trunk/yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/MovingSupport/MovingSupport.hpp	2007-01-20 12:11:21 UTC (rev 1040)
++++ trunk/yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/MovingSupport/MovingSupport.hpp	2007-01-22 22:37:07 UTC (rev 1041)
+@@ -0,0 +1,52 @@
++/*************************************************************************
++*  Copyright (C) 2004 by Janek Kozicki                                   *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">cosurgi at berlios.de</A>                                                    *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#ifndef NO_SHEAR_PLANE
++#define NO_SHEAR_PLANE
++
++#include &lt;yade/yade-core/DataRecorder.hpp&gt;
++
++#include &lt;string&gt;
++#include &lt;fstream&gt;
++#include &lt;list&gt;
++#include &lt;vector&gt;
++
++//class PhysicalAction;
++
++class MovingSupport : public DataRecorder
++{ // given a section plane it deletes all the beams that cross it, and remembers the nodes that they did connect.
++  // Then it ensures that the nodes have constant distance in the 'direction' coordinate. But nodes can move in other directions
++  // thus it creates a place that transfers only displacement in 'direction' and ignores movement in other directions.
++  // It like a moving support.
++	private :
++		std::ofstream ofile; 
++		std::vector&lt;std::pair&lt;std::list&lt;std::pair&lt;std::pair&lt;unsigned int,unsigned int&gt;,Real&gt; &gt;, int&gt; &gt;	subscribedBodies; // [region]&lt;(list of node pairs,distance), direction&gt;
++		bool			first;
++		std::list&lt;unsigned int&gt; futureDeletes;
++		int			nodeGroupMask,beamGroupMask;
++
++	public :
++		std::list&lt;std::pair&lt;Vector3r,std::pair&lt; int , Real &gt; &gt; &gt; sections; // a list of section planes: &lt;a midpoint, direction , half length &gt;
++		// int direction refers to: which coordinate to take from the Beam's.direction: x, y or z (0, 1 or 2)
++
++		MovingSupport ();
++
++		virtual void registerAttributes();
++		virtual void action(Body* b);
++		virtual bool isActivated();
++
++	protected :
++		virtual void postProcessAttributes(bool deserializing);
++	REGISTER_CLASS_NAME(MovingSupport);
++	REGISTER_BASE_CLASS_NAME(DataRecorder);
++};
++
++REGISTER_SERIALIZABLE(MovingSupport,false);
++
++#endif // STRAIN_RECORDER_HPP 
++
+
+Added: trunk/yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/MovingSupport/MovingSupport.pro
+===================================================================
+--- trunk/yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/MovingSupport/MovingSupport.pro	2007-01-20 12:11:21 UTC (rev 1040)
++++ trunk/yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/MovingSupport/MovingSupport.pro	2007-01-22 22:37:07 UTC (rev 1041)
+@@ -0,0 +1,28 @@
++isEmpty ( YADE_QMAKE_PATH ) {
++error( &quot;YADE_QMAKE_PATH internal qmake variable is not set, you should run for example qmake YADE_QMAKE_PATH=/usr/local, this will not work from inside kdevelop (when they will fix it?)&quot; )
++}
++
++
++LIBS += -lLatticeBeamParameters \
++        -lLatticeNodeParameters \
++        -rdynamic 
++QMAKE_LIBDIR = ../../../../bin \
++$${YADE_QMAKE_PATH}/lib/yade/yade-package-common/ \
++               $${YADE_QMAKE_PATH}/lib/yade/yade-libs/ 
++QMAKE_CXXFLAGS_RELEASE += -lpthread \
++                          -pthread 
++QMAKE_CXXFLAGS_DEBUG += -lpthread \
++                        -pthread 
++DESTDIR = ../../../../bin 
++CONFIG += debug \
++          thread \
++          warn_on \
++          dll 
++TEMPLATE = lib 
++HEADERS += MovingSupport.hpp 
++SOURCES += MovingSupport.cpp 
++INCLUDEPATH += ../../../DataClass/PhysicalParameters/LatticeNodeParameters \
++../../../DataClass/PhysicalParameters/LatticeBeamParameters \
++$${YADE_QMAKE_PATH}/include
++
++QMAKE_RUN_CXX_IMP = $(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $(shell pwd)/$&lt;
+
+Added: trunk/yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/NodeRecorder/NodeRecorder.cpp
+===================================================================
+--- trunk/yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/NodeRecorder/NodeRecorder.cpp	2007-01-20 12:11:21 UTC (rev 1040)
++++ trunk/yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/NodeRecorder/NodeRecorder.cpp	2007-01-22 22:37:07 UTC (rev 1041)
+@@ -0,0 +1,138 @@
++/*************************************************************************
++*  Copyright (C) 2004 by Janek Kozicki                                   *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">cosurgi at berlios.de</A>                                                    *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#include &quot;NodeRecorder.hpp&quot;
++#include &lt;yade/yade-core/MetaBody.hpp&gt;
++#include &quot;LatticeBeamParameters.hpp&quot;
++#include &quot;LatticeNodeParameters.hpp&quot;
++// to calculate strain of whole speciemen - first two bodies in subscribedBodies are Nodes. FIXME - make it clean!
++#include &lt;boost/lexical_cast.hpp&gt;
++
++
++NodeRecorder::NodeRecorder () : DataRecorder()
++{
++	outputFile = &quot;&quot;;
++	interval = 50;
++	subscribedBodies.clear();
++	first = true;
++	// FIXME ...
++        nodeGroupMask           = 1;
++        beamGroupMask           = 2;
++}
++
++
++void NodeRecorder::postProcessAttributes(bool deserializing)
++{
++	if(deserializing)
++	{
++		ofile.open(outputFile.c_str());
++//		first = true;
++//		subscribedBodies.clear();
++	}
++}
++
++
++void NodeRecorder::registerAttributes()
++{
++	DataRecorder::registerAttributes();
++	REGISTER_ATTRIBUTE(outputFile);
++	REGISTER_ATTRIBUTE(interval);
++	REGISTER_ATTRIBUTE(regions);
++
++	REGISTER_ATTRIBUTE(first);
++	REGISTER_ATTRIBUTE(subscribedBodies);
++}
++
++
++bool NodeRecorder::isActivated()
++{
++	return ((Omega::instance().getCurrentIteration() % interval == 0) &amp;&amp; (ofile));
++}
++
++
++void NodeRecorder::action(Body * body)
++{
++//	std::cerr &lt;&lt; &quot;NodeRecorder quits\n&quot;;
++//	return;
++	
++	MetaBody * ncb = static_cast&lt;MetaBody*&gt;(body);
++
++	if(first)
++	{
++	// scan the regions and subscribe bodies for each of them
++	// FIXME - this is still problematic, because this should be done only
++	// on the first run, regardless of saving/loading this file...
++		first = false;
++		subscribedBodies.resize( regions.size() );
++
++		std::list&lt;std::pair&lt;Vector3r,Vector3r&gt; &gt;::iterator i  =regions.begin();
++		std::list&lt;std::pair&lt;Vector3r,Vector3r&gt; &gt;::iterator end=regions.end();
++
++		for( int region=0 ; i != end ; ++i, ++region )
++		{
++			Vector3r min = i-&gt;first;
++			Vector3r max = i-&gt;second;
++
++			if(!subscribedBodies[region].empty())
++				std::cerr &lt;&lt; &quot;First, but not empty\n&quot;;
++
++			BodyContainer::iterator bi    = ncb-&gt;bodies-&gt;begin();
++			BodyContainer::iterator biEnd = ncb-&gt;bodies-&gt;end();
++			for(  ; bi!=biEnd ; ++bi )
++			{
++				if( (*bi)-&gt;getGroupMask() &amp; nodeGroupMask )
++				{
++					Vector3r pos = (*bi)-&gt;physicalParameters-&gt;se3.position;
++					if(        pos[0] &gt; min[0] 
++						&amp;&amp; pos[1] &gt; min[1] 
++						&amp;&amp; pos[2] &gt; min[2] 
++						&amp;&amp; pos[0] &lt; max[0] 
++						&amp;&amp; pos[1] &lt; max[1] 
++						&amp;&amp; pos[2] &lt; max[2] 
++						&amp;&amp; ((*bi)-&gt;getGroupMask() &amp; nodeGroupMask)
++					  )
++					{
++						subscribedBodies[region].push_back((*bi)-&gt;getId());
++					}
++				}
++			}
++		}
++	}
++
++	for( int region=0 ; region&lt;regions.size() ; ++region )
++	{
++		std::list&lt;unsigned int&gt;::iterator i   = subscribedBodies[region].begin();
++		std::list&lt;unsigned int&gt;::iterator end = subscribedBodies[region].end();
++		
++		Real count=0;
++		Vector3r sum=Vector3r(0,0,0);
++
++		for( ; i != end ; ++i )
++		{
++			if( (*(ncb-&gt;bodies)).exists(*i) )
++			{
++				sum+=(*(ncb-&gt;bodies))[*i]-&gt;physicalParameters-&gt;se3.position;
++				++count;
++				
++				(*(ncb-&gt;bodies))[*i]-&gt;geometricalModel-&gt;diffuseColor = Vector3f(0.0,1.0,((float)region)/1.5); // FIXME [1]
++			}
++		}
++
++		sum/=count;
++
++		ofile	&lt;&lt; lexical_cast&lt;string&gt;(sum[0]) &lt;&lt; &quot; &quot; 
++			&lt;&lt; lexical_cast&lt;string&gt;(sum[1]) &lt;&lt; &quot; &quot; 
++			&lt;&lt; lexical_cast&lt;string&gt;(sum[2]) &lt;&lt; &quot; \t &quot;; 
++	}
++	ofile &lt;&lt; endl; 
++		
++	// [1]
++	// mark colors what is monitored - FIXME - provide a way to do that for ALL DataRecorders in that parent class.
++	// GLDrawSomething can just put a getClassName()
++}
++
+
+Added: trunk/yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/NodeRecorder/NodeRecorder.hpp
+===================================================================
+--- trunk/yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/NodeRecorder/NodeRecorder.hpp	2007-01-20 12:11:21 UTC (rev 1040)
++++ trunk/yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/NodeRecorder/NodeRecorder.hpp	2007-01-22 22:37:07 UTC (rev 1041)
+@@ -0,0 +1,50 @@
++/*************************************************************************
++*  Copyright (C) 2004 by Janek Kozicki                                   *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">cosurgi at berlios.de</A>                                                    *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#ifndef NODE_RECORDER_HPP
++#define NODE_RECORDER_HPP 
++
++#include &lt;yade/yade-core/DataRecorder.hpp&gt;
++
++#include &lt;string&gt;
++#include &lt;fstream&gt;
++#include &lt;list&gt;
++#include &lt;vector&gt;
++
++//class PhysicalAction;
++
++class NodeRecorder : public DataRecorder
++{ // records average position of nodes in a given region
++	private :
++		std::ofstream ofile; 
++		
++		std::vector&lt;std::list&lt;unsigned int&gt; &gt;	subscribedBodies; // [region]&lt;list of bodies' ids&gt;
++		bool			first;
++		int			nodeGroupMask,beamGroupMask;
++
++	public :
++		std::string	 outputFile;
++		unsigned int	 interval;
++		std::list&lt;std::pair&lt;Vector3r,Vector3r&gt; &gt; regions; // a list of min/max pairs describing each region.
++
++		NodeRecorder ();
++
++		virtual void registerAttributes();
++		virtual void action(Body* b);
++		virtual bool isActivated();
++
++	protected :
++		virtual void postProcessAttributes(bool deserializing);
++	REGISTER_CLASS_NAME(NodeRecorder);
++	REGISTER_BASE_CLASS_NAME(DataRecorder);
++};
++
++REGISTER_SERIALIZABLE(NodeRecorder,false);
++
++#endif // STRAIN_RECORDER_HPP 
++
+
+Added: trunk/yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/NodeRecorder/NodeRecorder.pro
+===================================================================
+--- trunk/yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/NodeRecorder/NodeRecorder.pro	2007-01-20 12:11:21 UTC (rev 1040)
++++ trunk/yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/NodeRecorder/NodeRecorder.pro	2007-01-22 22:37:07 UTC (rev 1041)
+@@ -0,0 +1,28 @@
++isEmpty ( YADE_QMAKE_PATH ) {
++error( &quot;YADE_QMAKE_PATH internal qmake variable is not set, you should run for example qmake YADE_QMAKE_PATH=/usr/local, this will not work from inside kdevelop (when they will fix it?)&quot; )
++}
++
++
++LIBS += -lLatticeBeamParameters \
++        -lLatticeNodeParameters \
++        -rdynamic 
++QMAKE_LIBDIR = ../../../../bin \
++$${YADE_QMAKE_PATH}/lib/yade/yade-package-common/ \
++               $${YADE_QMAKE_PATH}/lib/yade/yade-libs/ 
++QMAKE_CXXFLAGS_RELEASE += -lpthread \
++                          -pthread 
++QMAKE_CXXFLAGS_DEBUG += -lpthread \
++                        -pthread 
++DESTDIR = ../../../../bin 
++CONFIG += debug \
++          thread \
++          warn_on \
++          dll 
++TEMPLATE = lib 
++HEADERS += NodeRecorder.hpp 
++SOURCES += NodeRecorder.cpp 
++INCLUDEPATH += ../../../DataClass/PhysicalParameters/LatticeNodeParameters \
++../../../DataClass/PhysicalParameters/LatticeBeamParameters \
++$${YADE_QMAKE_PATH}/include
++
++QMAKE_RUN_CXX_IMP = $(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $(shell pwd)/$&lt;
+
+Modified: trunk/yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/StandAloneEngine.pro
+===================================================================
+--- trunk/yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/StandAloneEngine.pro	2007-01-20 12:11:21 UTC (rev 1040)
++++ trunk/yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/StandAloneEngine.pro	2007-01-22 22:37:07 UTC (rev 1041)
+@@ -6,7 +6,10 @@
+ SUBDIRS += LatticeLaw \
+            NonLocalInitializer \
+            MeasurePoisson \
+-           StrainRecorder
++           StrainRecorder \
++	   NodeRecorder \
++	   BeamRecorder \
++	   MovingSupport
+ CONFIG += debug \
+           thread \
+ warn_on
+
+Modified: trunk/yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/StrainRecorder/StrainRecorder.cpp
+===================================================================
+--- trunk/yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/StrainRecorder/StrainRecorder.cpp	2007-01-20 12:11:21 UTC (rev 1040)
++++ trunk/yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/StrainRecorder/StrainRecorder.cpp	2007-01-22 22:37:07 UTC (rev 1041)
+@@ -51,8 +51,8 @@
+ 
+ void StrainRecorder::action(Body * body)
+ {
+-	std::cerr &lt;&lt; &quot;StrainRecorder quits\n&quot;;
+-	return;
++//	std::cerr &lt;&lt; &quot;StrainRecorder quits\n&quot;;
++//	return;
+ 	
+ 	MetaBody * ncb = static_cast&lt;MetaBody*&gt;(body);
+ 	Real strain_y=0,stress_y=0;//,stress_nonlocal_y=0;
+
+Modified: trunk/yade-packages/yade-package-lattice/src/PreProcessor/LatticeExample/LatticeExample.cpp
+===================================================================
+--- trunk/yade-packages/yade-package-lattice/src/PreProcessor/LatticeExample/LatticeExample.cpp	2007-01-20 12:11:21 UTC (rev 1040)
++++ trunk/yade-packages/yade-package-lattice/src/PreProcessor/LatticeExample/LatticeExample.cpp	2007-01-22 22:37:07 UTC (rev 1041)
+@@ -16,6 +16,9 @@
+ #include &quot;LineSegment.hpp&quot;
+ #include &quot;LatticeLaw.hpp&quot;
+ #include &quot;StrainRecorder.hpp&quot;
++#include &quot;NodeRecorder.hpp&quot;
++#include &quot;BeamRecorder.hpp&quot;
++#include &quot;MovingSupport.hpp&quot;
+ #include &quot;MeasurePoisson.hpp&quot;
+ #include &quot;NonLocalInitializer.hpp&quot;
+ #include &lt;yade/yade-lib-base/yadeWm3Extra.hpp&gt;
+@@ -109,6 +112,8 @@
+         measurePoisson_node4     = Vector3r(0.2,0.1,0);
+         outputFile               = &quot;../data/strains&quot;;
+         poissonFile              = &quot;../data/poisson&quot;;
++        nodeRecorderFile         = &quot;../data/npos&quot;;
++        beamRecorderFile         = &quot;../data/bstr&quot;;
+         subscribedBodies.clear();
+                 
+         regionDelete_A_min       = Vector3r(0,0,0);
+@@ -140,6 +145,12 @@
+         nonDestroy_B_min         = Vector3r(0,0,0);
+         nonDestroy_B_max         = Vector3r(0,0,0);
+ 
++	CT_A_min		 = Vector3r(0,0,-1);
++	CT_A_max		 = Vector3r(0,0,-1);
++	CT_B_min		 = Vector3r(0,0,-1);
++	CT_B_max		 = Vector3r(0,0,-1);
++	CT			 = 1;
++
+         useAggregates            = false;
+         aggregatePercent         = 40;
+         aggregateMeanDiameter    = cellsizeUnit_in_meters*1;
+@@ -158,6 +169,53 @@
+         bond_torsStiffness_noUnit= 0.28;                                // k_b bond
+         bond_critCompressStrain  = 100.0;                               // E.c bond
+         bond_critTensileStrain   = 50.0;                                // E.l bond
++		
++	nodeRec_A_min=Vector3r(0,0,0);
++	nodeRec_A_max=Vector3r(0,0,0);
++	nodeRec_B_min=Vector3r(0,0,0);
++	nodeRec_B_max=Vector3r(0,0,0);
++	nodeRec_C_min=Vector3r(0,0,0);
++	nodeRec_C_max=Vector3r(0,0,0);
++	nodeRec_D_min=Vector3r(0,0,0);
++	nodeRec_D_max=Vector3r(0,0,0);
++	nodeRec_E_min=Vector3r(0,0,0);
++	nodeRec_E_max=Vector3r(0,0,0);
++	nodeRec_F_min=Vector3r(0,0,0);
++	nodeRec_F_max=Vector3r(0,0,0);
++	
++	beamRec_A_pos=Vector3r(0,0,0);
++	beamRec_B_pos=Vector3r(0,0,0);
++	beamRec_C_pos=Vector3r(0,0,0);
++	beamRec_D_pos=Vector3r(0,0,0);
++	beamRec_E_pos=Vector3r(0,0,0);
++
++	beamRec_A_range=0;
++	beamRec_B_range=0;
++	beamRec_C_range=0;
++	beamRec_D_range=0;
++	beamRec_E_range=0;
++
++	beamRec_A_dir=-1;
++	beamRec_B_dir=-1;
++	beamRec_C_dir=-1;
++	beamRec_D_dir=-1;
++	beamRec_E_dir=-1;
++		
++	movSupp_A_pos=Vector3r(0,0,0);
++	movSupp_A_range=0;
++	movSupp_A_dir=-1;
++
++	movSupp_B_pos=Vector3r(0,0,0);
++	movSupp_B_range=0;
++	movSupp_B_dir=-1;
++
++	movSupp_C_pos=Vector3r(0,0,0);
++	movSupp_C_range=0;
++	movSupp_C_dir=-1;
++
++	movSupp_D_pos=Vector3r(0,0,0);
++	movSupp_D_range=0;
++	movSupp_D_dir=-1;
+ }
+ 
+ 
+@@ -215,14 +273,60 @@
+         REGISTER_ATTRIBUTE(direction_D);
+         REGISTER_ATTRIBUTE(displacement_D_meters);
+         
++	REGISTER_ATTRIBUTE(outputFile);
+         REGISTER_ATTRIBUTE(strainRecorder_xz_plane);
+         REGISTER_ATTRIBUTE(strainRecorder_node1);
+         REGISTER_ATTRIBUTE(strainRecorder_node2);
+-        REGISTER_ATTRIBUTE(outputFile);
++
++        REGISTER_ATTRIBUTE(poissonFile);
+         REGISTER_ATTRIBUTE(measurePoisson_node3);
+         REGISTER_ATTRIBUTE(measurePoisson_node4);
+-        REGISTER_ATTRIBUTE(poissonFile);
+-        
++
++
++	REGISTER_ATTRIBUTE(nodeRecorderFile);
++	REGISTER_ATTRIBUTE(nodeRec_A_min);
++	REGISTER_ATTRIBUTE(nodeRec_A_max);
++	REGISTER_ATTRIBUTE(nodeRec_B_min);
++	REGISTER_ATTRIBUTE(nodeRec_B_max);
++	REGISTER_ATTRIBUTE(nodeRec_C_min);
++	REGISTER_ATTRIBUTE(nodeRec_C_max);
++	REGISTER_ATTRIBUTE(nodeRec_D_min);
++	REGISTER_ATTRIBUTE(nodeRec_D_max);
++	REGISTER_ATTRIBUTE(nodeRec_E_min);
++	REGISTER_ATTRIBUTE(nodeRec_E_max);
++	REGISTER_ATTRIBUTE(nodeRec_F_min);
++	REGISTER_ATTRIBUTE(nodeRec_F_max);
++	
++	REGISTER_ATTRIBUTE(beamRecorderFile);
++	REGISTER_ATTRIBUTE(beamRec_A_dir);
++	REGISTER_ATTRIBUTE(beamRec_A_pos);
++	REGISTER_ATTRIBUTE(beamRec_A_range);
++	REGISTER_ATTRIBUTE(beamRec_B_dir);
++	REGISTER_ATTRIBUTE(beamRec_B_pos);
++	REGISTER_ATTRIBUTE(beamRec_B_range);
++	REGISTER_ATTRIBUTE(beamRec_C_dir);
++	REGISTER_ATTRIBUTE(beamRec_C_pos);
++	REGISTER_ATTRIBUTE(beamRec_C_range);
++	REGISTER_ATTRIBUTE(beamRec_D_dir);
++	REGISTER_ATTRIBUTE(beamRec_D_pos);
++	REGISTER_ATTRIBUTE(beamRec_D_range);
++	REGISTER_ATTRIBUTE(beamRec_E_dir);
++	REGISTER_ATTRIBUTE(beamRec_E_pos);
++	REGISTER_ATTRIBUTE(beamRec_E_range);
++
++	REGISTER_ATTRIBUTE(movSupp_A_dir);
++	REGISTER_ATTRIBUTE(movSupp_A_pos);
++	REGISTER_ATTRIBUTE(movSupp_A_range);
++	REGISTER_ATTRIBUTE(movSupp_B_dir);
++	REGISTER_ATTRIBUTE(movSupp_B_pos);
++	REGISTER_ATTRIBUTE(movSupp_B_range);
++	REGISTER_ATTRIBUTE(movSupp_C_dir);
++	REGISTER_ATTRIBUTE(movSupp_C_pos);
++	REGISTER_ATTRIBUTE(movSupp_C_range);
++	REGISTER_ATTRIBUTE(movSupp_D_dir);
++	REGISTER_ATTRIBUTE(movSupp_D_pos);
++	REGISTER_ATTRIBUTE(movSupp_D_range);
++
+         REGISTER_ATTRIBUTE(regionDelete_A_min);
+         REGISTER_ATTRIBUTE(regionDelete_A_max);
+         REGISTER_ATTRIBUTE(regionDelete_B_min);
+@@ -251,6 +355,12 @@
+         REGISTER_ATTRIBUTE(nonDestroy_A_max);
+         REGISTER_ATTRIBUTE(nonDestroy_B_min);
+         REGISTER_ATTRIBUTE(nonDestroy_B_max);
++       
++	REGISTER_ATTRIBUTE(CT);
++	REGISTER_ATTRIBUTE(CT_A_min);
++        REGISTER_ATTRIBUTE(CT_A_max);
++        REGISTER_ATTRIBUTE(CT_B_min);
++        REGISTER_ATTRIBUTE(CT_B_max);
+ 
+         REGISTER_ATTRIBUTE(useAggregates);
+         REGISTER_ATTRIBUTE(aggregatePercent);
+@@ -277,7 +387,6 @@
+ 	rootBody = shared_ptr&lt;MetaBody&gt;(new MetaBody);
+ 	createActors(rootBody);
+ 	positionRootBody(rootBody);
+-
+ 	
+ 	rootBody-&gt;persistentInteractions	= shared_ptr&lt;InteractionContainer&gt;(new InteractionVecSet);
+ 	rootBody-&gt;transientInteractions		= shared_ptr&lt;InteractionContainer&gt;(new InteractionVecSet);
+@@ -586,19 +695,6 @@
+ 		}
+ 	};
+         
+-//	setMessage(&quot;Deleting A...&quot;); regionDelete(rootBody,regionDelete_A_min,regionDelete_A_max); if(shouldTerminate()) return &quot;&quot;;
+-//	setMessage(&quot;Deleting B...&quot;); regionDelete(rootBody,regionDelete_B_min,regionDelete_B_max); if(shouldTerminate()) return &quot;&quot;;
+-//	setMessage(&quot;Deleting C...&quot;); regionDelete(rootBody,regionDelete_C_min,regionDelete_C_max); if(shouldTerminate()) return &quot;&quot;;
+-//	setMessage(&quot;Deleting D...&quot;); regionDelete(rootBody,regionDelete_D_min,regionDelete_D_max); if(shouldTerminate()) return &quot;&quot;;
+-//	setMessage(&quot;Deleting E...&quot;); regionDelete(rootBody,regionDelete_E_min,regionDelete_E_max); if(shouldTerminate()) return &quot;&quot;;
+-//	setMessage(&quot;Deleting F...&quot;); regionDelete(rootBody,regionDelete_F_min,regionDelete_F_max); if(shouldTerminate()) return &quot;&quot;;
+-//
+-//	setMessage(&quot;Deleting 1...&quot;); regionDelete(rootBody,regionDelete_1_min,regionDelete_1_max); if(shouldTerminate()) return &quot;&quot;;
+-//	setMessage(&quot;Deleting 2...&quot;); regionDelete(rootBody,regionDelete_2_min,regionDelete_2_max); if(shouldTerminate()) return &quot;&quot;;
+-//	setMessage(&quot;Deleting 3...&quot;); regionDelete(rootBody,regionDelete_3_min,regionDelete_3_max); if(shouldTerminate()) return &quot;&quot;;
+-//	setMessage(&quot;Deleting 4...&quot;); regionDelete(rootBody,regionDelete_4_min,regionDelete_4_max); if(shouldTerminate()) return &quot;&quot;;
+-//	setMessage(&quot;Deleting 5...&quot;); regionDelete(rootBody,regionDelete_5_min,regionDelete_5_max); if(shouldTerminate()) return &quot;&quot;;
+-
+         imposeTranslation(rootBody,region_A_min,region_A_max,direction_A,displacement_A_meters);
+         imposeTranslation(rootBody,region_B_min,region_B_max,direction_B,displacement_B_meters);
+         imposeTranslation(rootBody,region_C_min,region_C_max,direction_C,displacement_C_meters);
+@@ -610,6 +706,9 @@
+         nonDestroy(rootBody,nonDestroy_A_min,nonDestroy_A_max);
+         nonDestroy(rootBody,nonDestroy_B_min,nonDestroy_B_max);
+         
++	modifyCT(rootBody,CT_A_min,CT_A_max);
++        modifyCT(rootBody,CT_B_min,CT_B_max);
++        
+         cerr &lt;&lt; &quot;finished.. saving\n&quot;;
+ 
+         return &quot;Number of nodes created:\n&quot; + lexical_cast&lt;string&gt;(nbNodes[0]) + &quot;,&quot;
+@@ -881,7 +980,42 @@
+         measurePoisson-&gt;outputFile              = poissonFile;
+         measurePoisson-&gt;interval                = 10;
+         
+-        shared_ptr&lt;LatticeLaw&gt; latticeLaw(new LatticeLaw);
++/*
++NodeRecorder nnnn;
++	std::string	 outputFile;
++	unsigned int	 interval;
++	std::list&lt;std::pair&lt;Vector3r,Vector3r&gt; &gt; regions; // a list of min/max pairs describing each region.
++BeamRecorder bbbb;
++	std::string	 outputFile;
++	unsigned int	 interval;
++	std::list&lt;std::pair&lt;Vector3r,std::pair&lt; Real, int &gt; &gt; &gt; sections; // a list of section planes: &lt;a midpoint, half length, direction &gt;
++*/
++        nodeRecorder   = shared_ptr&lt;NodeRecorder&gt;(new NodeRecorder);
++        nodeRecorder-&gt;outputFile                = nodeRecorderFile;
++        nodeRecorder-&gt;interval                  = 10;
++	if(nodeRec_A_min != nodeRec_A_max) nodeRecorder-&gt;regions.push_back(std::make_pair(nodeRec_A_min,nodeRec_A_max));
++	if(nodeRec_B_min != nodeRec_B_max) nodeRecorder-&gt;regions.push_back(std::make_pair(nodeRec_B_min,nodeRec_B_max));
++	if(nodeRec_C_min != nodeRec_C_max) nodeRecorder-&gt;regions.push_back(std::make_pair(nodeRec_C_min,nodeRec_C_max));
++	if(nodeRec_D_min != nodeRec_D_max) nodeRecorder-&gt;regions.push_back(std::make_pair(nodeRec_D_min,nodeRec_D_max));
++	if(nodeRec_E_min != nodeRec_E_max) nodeRecorder-&gt;regions.push_back(std::make_pair(nodeRec_E_min,nodeRec_E_max));
++	if(nodeRec_F_min != nodeRec_F_max) nodeRecorder-&gt;regions.push_back(std::make_pair(nodeRec_F_min,nodeRec_F_max));
++        
++        beamRecorder = shared_ptr&lt;BeamRecorder&gt;(new BeamRecorder);
++        beamRecorder-&gt;outputFile                = beamRecorderFile;
++        beamRecorder-&gt;interval                  = 10;
++	if(beamRec_A_dir != -1) beamRecorder-&gt;sections.push_back(std::make_pair(beamRec_A_pos,std::make_pair(beamRec_A_range,beamRec_A_dir)));
++	if(beamRec_B_dir != -1) beamRecorder-&gt;sections.push_back(std::make_pair(beamRec_B_pos,std::make_pair(beamRec_B_range,beamRec_B_dir)));
++	if(beamRec_C_dir != -1) beamRecorder-&gt;sections.push_back(std::make_pair(beamRec_C_pos,std::make_pair(beamRec_C_range,beamRec_C_dir)));
++	if(beamRec_D_dir != -1) beamRecorder-&gt;sections.push_back(std::make_pair(beamRec_D_pos,std::make_pair(beamRec_D_range,beamRec_D_dir)));
++	if(beamRec_E_dir != -1) beamRecorder-&gt;sections.push_back(std::make_pair(beamRec_E_pos,std::make_pair(beamRec_E_range,beamRec_E_dir)));
++        
++        movingSupport   = shared_ptr&lt;MovingSupport&gt;(new MovingSupport);
++	if(movSupp_A_dir != -1) movingSupport-&gt;sections.push_back(std::make_pair(movSupp_A_pos,std::make_pair(movSupp_A_dir,movSupp_A_range)));
++	if(movSupp_B_dir != -1) movingSupport-&gt;sections.push_back(std::make_pair(movSupp_B_pos,std::make_pair(movSupp_B_dir,movSupp_B_range)));
++	if(movSupp_C_dir != -1) movingSupport-&gt;sections.push_back(std::make_pair(movSupp_C_pos,std::make_pair(movSupp_C_dir,movSupp_C_range)));
++	if(movSupp_D_dir != -1) movingSupport-&gt;sections.push_back(std::make_pair(movSupp_D_pos,std::make_pair(movSupp_D_dir,movSupp_D_range)));
++ 	
++	shared_ptr&lt;LatticeLaw&gt; latticeLaw(new LatticeLaw);
+         latticeLaw-&gt;ensure2D   = ensure2D;
+         latticeLaw-&gt;roughEdges = roughEdges;
+         latticeLaw-&gt;calcTorsion= calculate_Torsion;
+@@ -892,6 +1026,9 @@
+         rootBody-&gt;engines.push_back(geometricalModelDispatcher);
+         rootBody-&gt;engines.push_back(strainRecorder);
+         rootBody-&gt;engines.push_back(measurePoisson);
++        rootBody-&gt;engines.push_back(nodeRecorder);
++        rootBody-&gt;engines.push_back(beamRecorder);
++	rootBody-&gt;engines.push_back(movingSupport);
+         
+         rootBody-&gt;initializers.clear();
+         rootBody-&gt;initializers.push_back(boundingVolumeDispatcher);
+@@ -944,11 +1081,15 @@
+  	translationCondition-&gt;displacement  = displacement;
+ 	direction.Normalize();
+  	translationCondition-&gt;translationAxis = direction;
+-        
++
++        // FIXME: WTF ???
+         rootBody-&gt;engines.push_back((rootBody-&gt;engines)[rootBody-&gt;engines.size()-1]);
+         (rootBody-&gt;engines)[rootBody-&gt;engines.size()-2]=(rootBody-&gt;engines)[rootBody-&gt;engines.size()-3];
+         (rootBody-&gt;engines)[rootBody-&gt;engines.size()-3]=(rootBody-&gt;engines)[rootBody-&gt;engines.size()-4];
+-        (rootBody-&gt;engines)[rootBody-&gt;engines.size()-4]=translationCondition;
++        (rootBody-&gt;engines)[rootBody-&gt;engines.size()-4]=(rootBody-&gt;engines)[rootBody-&gt;engines.size()-5];
++        (rootBody-&gt;engines)[rootBody-&gt;engines.size()-5]=(rootBody-&gt;engines)[rootBody-&gt;engines.size()-6];
++        (rootBody-&gt;engines)[rootBody-&gt;engines.size()-6]=(rootBody-&gt;engines)[rootBody-&gt;engines.size()-7];
++        (rootBody-&gt;engines)[rootBody-&gt;engines.size()-7]=translationCondition;
+         translationCondition-&gt;subscribedBodies.clear();
+         
+         BodyContainer::iterator bi    = rootBody-&gt;bodies-&gt;begin();
+@@ -1039,7 +1180,7 @@
+ 
+ void LatticeExample::nonDestroy(shared_ptr&lt;MetaBody&gt;&amp; rootBody, Vector3r min, Vector3r max)
+ {
+-        vector&lt;unsigned int&gt; marked;
++	std::list&lt;unsigned int&gt; marked;
+         
+         BodyContainer::iterator bi    = rootBody-&gt;bodies-&gt;begin();
+         BodyContainer::iterator biEnd = rootBody-&gt;bodies-&gt;end();
+@@ -1061,13 +1202,13 @@
+                 }
+         }
+         
+-        vector&lt;unsigned int&gt;::iterator vend = marked.end();
+-        for( vector&lt;unsigned int&gt;::iterator vsta = marked.begin() ; vsta != vend ; ++vsta)
++	std::list&lt;unsigned int&gt;::iterator vend = marked.end();
++        for( std::list&lt;unsigned int&gt;::iterator vsta = marked.begin() ; vsta != vend ; ++vsta)
+         {
+                 LatticeBeamParameters* beam = static_cast&lt;LatticeBeamParameters*&gt;( ((*(rootBody-&gt;bodies))[*vsta])-&gt;physicalParameters.get());
+                 beam-&gt;criticalTensileStrain     = 0.9;
+                 beam-&gt;criticalCompressiveStrain = 0.9;
+-                beam-&gt;longitudalStiffness       = 4.0;
++                beam-&gt;longitudalStiffness       = 10.0;
+                 beam-&gt;bendingStiffness          = 2.8;
+                 beam-&gt;torsionalStiffness        = 2.8;
+                 (*(rootBody-&gt;bodies))[beam-&gt;id1]-&gt;geometricalModel-&gt;diffuseColor = Vector3f(0.2,0.5,0.7);
+@@ -1076,6 +1217,39 @@
+ }
+ 
+ 
++void LatticeExample::modifyCT(shared_ptr&lt;MetaBody&gt;&amp; rootBody, Vector3r min, Vector3r max)
++{
++	std::list&lt;unsigned int&gt; marked;
++        
++        BodyContainer::iterator bi    = rootBody-&gt;bodies-&gt;begin();
++        BodyContainer::iterator biEnd = rootBody-&gt;bodies-&gt;end();
++        for(  ; bi!=biEnd ; ++bi )
++        {
++                shared_ptr&lt;Body&gt; b = *bi;
++        
++                if( b-&gt;getGroupMask() &amp; beamGroupMask )
++                {
++                        Vector3r pos = b-&gt;physicalParameters-&gt;se3.position;
++                        if(        pos[0] &gt; min[0] 
++                                &amp;&amp; pos[1] &gt; min[1] 
++                                &amp;&amp; pos[2] &gt; min[2] 
++                                &amp;&amp; pos[0] &lt; max[0] 
++                                &amp;&amp; pos[1] &lt; max[1] 
++                                &amp;&amp; pos[2] &lt; max[2] 
++                                )
++                                marked.push_back( b-&gt;getId() );
++                }
++        }
++        
++	std::list&lt;unsigned int&gt;::iterator vend = marked.end();
++        for( std::list&lt;unsigned int&gt;::iterator vsta = marked.begin() ; vsta != vend ; ++vsta)
++        {
++                LatticeBeamParameters* beam = static_cast&lt;LatticeBeamParameters*&gt;( ((*(rootBody-&gt;bodies))[*vsta])-&gt;physicalParameters.get());
++                beam-&gt;criticalTensileStrain     = CT;
++        }
++}
++
++
+ /////////////////////////////////////////////////////////////////////////////////////////
+ /////////////////////////////////////////////////////////////////////////////////////////
+ 
+
+Modified: trunk/yade-packages/yade-package-lattice/src/PreProcessor/LatticeExample/LatticeExample.hpp
+===================================================================
+--- trunk/yade-packages/yade-package-lattice/src/PreProcessor/LatticeExample/LatticeExample.hpp	2007-01-20 12:11:21 UTC (rev 1040)
++++ trunk/yade-packages/yade-package-lattice/src/PreProcessor/LatticeExample/LatticeExample.hpp	2007-01-22 22:37:07 UTC (rev 1041)
+@@ -17,6 +17,9 @@
+ class LatticeBeamParameters;
+ class StrainRecorder;
+ class MeasurePoisson;
++class NodeRecorder;
++class BeamRecorder;
++class MovingSupport;
+ 
+ class LatticeExample : public FileGenerator
+ {
+@@ -106,7 +109,10 @@
+                                 ,measurePoisson_node4;
+                 shared_ptr&lt;StrainRecorder&gt; strainRecorder;
+                 shared_ptr&lt;MeasurePoisson&gt; measurePoisson;
+-                std::string      outputFile,poissonFile;
++		shared_ptr&lt;BeamRecorder&gt;   beamRecorder;
++		shared_ptr&lt;NodeRecorder&gt;   nodeRecorder;
++		shared_ptr&lt;MovingSupport&gt;  movingSupport;
++                std::string      outputFile,poissonFile,nodeRecorderFile,beamRecorderFile;
+                 
+         // delete beams regions
+                 Vector3r         regionDelete_A_min
+@@ -133,12 +139,71 @@
+                                 ,regionDelete_5_min
+                                 ,regionDelete_5_max;
+ 
++	// node recorder
++		Vector3r	 nodeRec_A_min
++				,nodeRec_A_max
++				,nodeRec_B_min
++				,nodeRec_B_max
++				,nodeRec_C_min
++				,nodeRec_C_max
++				,nodeRec_D_min
++				,nodeRec_D_max
++				,nodeRec_E_min
++				,nodeRec_E_max
++				,nodeRec_F_min
++				,nodeRec_F_max;
++	// beam recorder
++		
++		Vector3r	 beamRec_A_pos
++				,beamRec_B_pos
++				,beamRec_C_pos
++				,beamRec_D_pos
++				,beamRec_E_pos;
++
++		Real		 beamRec_A_range
++				,beamRec_B_range
++				,beamRec_C_range
++				,beamRec_D_range
++				,beamRec_E_range;
++
++		int		 beamRec_A_dir
++				,beamRec_B_dir
++				,beamRec_C_dir
++				,beamRec_D_dir
++				,beamRec_E_dir;
++
++	// moving support
++
++		Vector3r	 movSupp_A_pos;
++		Real		 movSupp_A_range;
++		int		 movSupp_A_dir;
++
++		Vector3r	 movSupp_B_pos;
++		Real		 movSupp_B_range;
++		int		 movSupp_B_dir;
++
++		Vector3r	 movSupp_C_pos;
++		Real		 movSupp_C_range;
++		int		 movSupp_C_dir;
++
++		Vector3r	 movSupp_D_pos;
++		Real		 movSupp_D_range;
++		int		 movSupp_D_dir;
++
+         // non destroy areas
+                 Vector3r         nonDestroy_A_min
+                                 ,nonDestroy_A_max
+                                 ,nonDestroy_B_min
+                                 ,nonDestroy_B_max;
+-                
++
++	// region of modified crit_TensileStrain
++	
++		Vector3r	 CT_A_min
++				,CT_A_max
++				,CT_B_min
++				,CT_B_max;
++		Real		 CT;
++
+                                  
+                 std::vector&lt; std::vector&lt; unsigned int &gt; &gt; connections; // which node is in touch with what beams.
+                                 
+@@ -163,6 +228,7 @@
+                 void imposeTranslation(shared_ptr&lt;MetaBody&gt;&amp; rootBody, Vector3r min, Vector3r max, Vector3r direction, Real velocity);
+                 void regionDelete(shared_ptr&lt;MetaBody&gt;&amp; rootBody, Vector3r min, Vector3r max);
+                 void nonDestroy(shared_ptr&lt;MetaBody&gt;&amp; rootBody, Vector3r min, Vector3r max);
++                void modifyCT(shared_ptr&lt;MetaBody&gt;&amp; rootBody, Vector3r min, Vector3r max);
+ 
+                 virtual void registerAttributes();
+                 REGISTER_CLASS_NAME(LatticeExample);
+
+Modified: trunk/yade-packages/yade-package-lattice/src/PreProcessor/LatticeExample/LatticeExample.pro
+===================================================================
+--- trunk/yade-packages/yade-package-lattice/src/PreProcessor/LatticeExample/LatticeExample.pro	2007-01-20 12:11:21 UTC (rev 1040)
++++ trunk/yade-packages/yade-package-lattice/src/PreProcessor/LatticeExample/LatticeExample.pro	2007-01-22 22:37:07 UTC (rev 1041)
+@@ -10,6 +10,9 @@
+         -lNonLocalDependency \
+         -lNonLocalInitializer \
+         -lStrainRecorder \
++        -lNodeRecorder \
++        -lBeamRecorder \
++	-lMovingSupport \
+         -lMeasurePoisson \
+         -lLatticeBeamAngularSpring \
+         -lPhysicalActionVectorVector \
+@@ -35,6 +38,9 @@
+ INCLUDEPATH += $${YADE_QMAKE_PATH}/include/ \
+                ../../Engine/StandAloneEngine/LatticeLaw \
+                ../../Engine/StandAloneEngine/StrainRecorder \
++               ../../Engine/StandAloneEngine/NodeRecorder \
++               ../../Engine/StandAloneEngine/BeamRecorder \
++	       ../../Engine/StandAloneEngine/MovingSupport \
+                ../../Engine/StandAloneEngine/MeasurePoisson \
+                ../../Engine/StandAloneEngine/NonLocalInitializer \
+                ../../DataClass/PhysicalParameters/LatticeSetParameters \
+
+Modified: trunk/yade-packages/yade-package-lattice/src/RenderingEngine/GLDrawLatticeBeamState/GLDrawLatticeBeamState.cpp
+===================================================================
+--- trunk/yade-packages/yade-package-lattice/src/RenderingEngine/GLDrawLatticeBeamState/GLDrawLatticeBeamState.cpp	2007-01-20 12:11:21 UTC (rev 1040)
++++ trunk/yade-packages/yade-package-lattice/src/RenderingEngine/GLDrawLatticeBeamState/GLDrawLatticeBeamState.cpp	2007-01-22 22:37:07 UTC (rev 1041)
+@@ -15,6 +15,9 @@
+ 	static Real maxTensileFactor = 0.0; // FIXME - thread unsafe
+ 	static Real maxCompressFactor = 0.0; // FIXME - thread unsafe
+ 
++	static unsigned int cccc=0;
++	if(((++cccc)%100000) == 0) std::cerr &lt;&lt; maxTensileFactor &lt;&lt; &quot; &quot; &lt;&lt;maxCompressFactor &lt;&lt; &quot;\n&quot;;
++
+ 	LatticeBeamParameters* beam = static_cast&lt;LatticeBeamParameters*&gt;(pp.get());
+ 	Real strain                     = beam-&gt;strain();
+ 	Real factor;
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000005.html">[Yade-commits] r1040 - in trunk: yade-core/src/yade yade-guis/yade-gui-qt/src/QtGUI yade-libs/yade-lib-base yade-libs/yade-lib-computational-geometry/src/yade-lib-computational-geometry yade-libs/yade-lib-serialization-qt/src/yade-lib-serialization-qt yade-packages/yade-package-dem/src/PreProcessor/Funnel yade-packages/yade-package-dem/src/PreProcessor/IsotropicCompressionTest yade-packages/yade-package-dem/src/PreProcessor/SDECImpactTest yade-packages/yade-package-dem/src/PreProcessor/SDECLinkedSpheres yade-packages/yade-package-dem/src/PreProcessor/SDECMovingWall yade-packages/yade-package-dem/src/PreProcessor/SDECSpheresPlane yade-packages/yade-package-dem/src/PreProcessor/TetrahedronsTest yade-packages/yade-package-dem/src/PreProcessor/TriaxialTest yade-packages/yade-package-fem/src/PreProcessor/FEMBeam yade-packages/yade-package-lattice/src/DataClass/PhysicalParameters/LatticeBeamParameters yade-packages/yade-package-lattice/src/Engine/EngineUnit/LatticeSet2LatticeBeams yade-! packages/yade-package-lattice/src/Engine/StandAloneEngine/MeasurePoisson yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/StrainRecorder yade-packages/yade-package-lattice/src/PreProcessor/LatticeExample yade-packages/yade-package-lattice/src/RenderingEngine yade-packages/yade-package-lattice/src/RenderingEngine/GLDrawLatticeSetGeometry yade-packages/yade-package-lattice/src/RenderingEngine/GLDrawLineSegment yade-packages/yade-package-mass-spring/src/PreProcessor/HangingCloth
+</A></li>
+	<LI>Next message: <A HREF="000007.html">[Yade-commits] r1042 - trunk
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#6">[ date ]</a>
+              <a href="thread.html#6">[ thread ]</a>
+              <a href="subject.html#6">[ subject ]</a>
+              <a href="author.html#6">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

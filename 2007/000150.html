@@ -1,0 +1,196 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1185 - in trunk: . core gui pkg/dem
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2007/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1185%20-%20in%20trunk%3A%20.%20core%20gui%20pkg/dem&In-Reply-To=%3C200706051515.l55FFQYu013212%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000149.html">
+   <LINK REL="Next"  HREF="000151.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1185 - in trunk: . core gui pkg/dem</H1>
+    <B>cosurgi at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1185%20-%20in%20trunk%3A%20.%20core%20gui%20pkg/dem&In-Reply-To=%3C200706051515.l55FFQYu013212%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1185 - in trunk: . core gui pkg/dem">cosurgi at mail.berlios.de
+       </A><BR>
+    <I>Tue Jun  5 17:15:26 CEST 2007</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000149.html">[Yade-commits] r1184 - /
+</A></li>
+        <LI>Next message: <A HREF="000151.html">[Yade-commits] r1186 - in trunk: debian scripts
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#150">[ date ]</a>
+              <a href="thread.html#150">[ thread ]</a>
+              <a href="subject.html#150">[ subject ]</a>
+              <a href="author.html#150">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: cosurgi
+Date: 2007-06-05 17:15:26 +0200 (Tue, 05 Jun 2007)
+New Revision: 1185
+
+Modified:
+   trunk/SConstruct
+   trunk/core/SConscript
+   trunk/gui/SConscript
+   trunk/pkg/dem/SConscript
+Log:
+BZR revno: 983
+committer: vsmilauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">vsmilauer at c1sinquatis-l</A>&gt;
+  Fix scons to handle boost.*-mt well, some other cleanups.
+
+BZR revno: 985
+committer: vsmilauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">vsmilauer at c1sinquatis-l</A>&gt;
+  fix my stupid mistakes with scons, removed kdevelop redundant path
+
+BZR revno: 986
+committer: vsmilauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">vsmilauer at c1sinquatis-l</A>&gt;
+  remove hardcoded linkage with boost libs from SConscript files
+
+
+
+
+Modified: trunk/SConstruct
+===================================================================
+--- trunk/SConstruct	2007-06-05 13:52:27 UTC (rev 1184)
++++ trunk/SConstruct	2007-06-05 15:15:26 UTC (rev 1185)
+@@ -90,6 +90,10 @@
+ 	if os.path.exists('RELEASE'):
+ 		env['version']=file('RELEASE').readline().strip()
+ 	if not env.has_key('version'):
++		for l in os.popen(&quot;LC_ALL=C bzr version-info&quot;).readlines():
++			m=re.match(r'revno: ([0-9]+)',l)
++			if m: env['version']='bzr'+m.group(1)
++	if not env.has_key('version'):
+ 		for l in os.popen(&quot;LC_ALL=C svn info&quot;).readlines():
+ 			m=re.match(r'Revision: ([0-9]+)',l)
+ 			if m: env['version']='svn'+m.group(1)
+@@ -180,23 +184,24 @@
+ 			print &quot;\nYour compiler is broken, no point in continuing. See `%s' for what went wrong and use the CXX/CXXFLAGS parameters to change your compiler.&quot;%(buildDir+'/config.log')
+ 			Exit(1)
+ 	# check essential libs
+-	ok&amp;=conf.CheckLibWithHeader('pthread','pthread.h','c','pthread_exit(NULL);')
+-	ok&amp;=conf.CheckLibWithHeader('glut','GL/glut.h','c','glutGetModifiers();')
++	ok&amp;=conf.CheckLibWithHeader('pthread','pthread.h','c','pthread_exit(NULL);',autoadd=1)
++	ok&amp;=conf.CheckLibWithHeader('glut','GL/glut.h','c','glutGetModifiers();',autoadd=1)
+ 
+ 	# gentoo has threaded flavour named differently and it must have precedence over the non-threaded one
+ 	ok&amp;=(conf.CheckLibWithHeader('boost_date_time-mt','boost/date_time/posix_time/posix_time.hpp','c++','boost::posix_time::time_duration::time_duration();',autoadd=1)
+ 		or conf.CheckLibWithHeader('boost_date_time','boost/date_time/posix_time/posix_time.hpp','c++','boost::posix_time::time_duration::time_duration();',autoadd=1))
+-	ok&amp;=(conf.CheckLibWithHeader('boost_thread-mt','boost/thread/thread.hpp','c++','boost::thread::thread();')
+-		or conf.CheckLibWithHeader('boost_thread','boost/thread/thread.hpp','c++','boost::thread::thread();'))
++	ok&amp;=(conf.CheckLibWithHeader('boost_thread-mt','boost/thread/thread.hpp','c++','boost::thread::thread();',autoadd=1)
++		or conf.CheckLibWithHeader('boost_thread','boost/thread/thread.hpp','c++','boost::thread::thread();',autoadd=1))
+ 	ok&amp;=(conf.CheckLibWithHeader('boost_filesystem-mt','boost/filesystem/path.hpp','c++','boost::filesystem::path();',autoadd=1)
+ 		or conf.CheckLibWithHeader('boost_filesystem','boost/filesystem/path.hpp','c++','boost::filesystem::path();',autoadd=1))
+ 
+-	if not env['useMiniWm3']: ok&amp;=conf.CheckLibWithHeader('Wm3Foundation','Wm3Math.h','c++','Wm3::Math&lt;double&gt;::PI;')
++	if not env['useMiniWm3']: ok&amp;=conf.CheckLibWithHeader('Wm3Foundation','Wm3Math.h','c++','Wm3::Math&lt;double&gt;::PI;',autoadd=1)
+ 
+ 	ok&amp;=conf.CheckQt(env['QTDIR'])
+ 	env.Tool('qt'); env.Replace(QT_LIB='qt-mt')
+ 
+ 	# one or another (QGLViewer is upstream name, 3dviewer is (teomporary) workaround for clashing name with obsolete package once in debian)
++	# (this one has to be explicitly mentioned for each plugin that uses it, no autoadd)
+ 	if conf.CheckLibWithHeader('QGLViewer','QGLViewer/qglviewer.h','c++','QGLViewer(1);'): env['QGLVIEWER_LIB']='QGLViewer'
+ 	elif conf.CheckLibWithHeader('3dviewer','QGLViewer/qglviewer.h','c++','QGLViewer(1);'): env['QGLVIEWER_LIB']='3dviewer'
+ 	else: ok=False
+@@ -207,16 +212,12 @@
+ 		Exit(1)
+ 
+ 	# check optional libs
+-	if 'log4cxx' in env['features'] and conf.CheckLibWithHeader('log4cxx','log4cxx/logger.h','c++','log4cxx::Logger::getLogger(&quot;foo&quot;);'):
+-		env.Append(LIBS='log4cxx',CPPDEFINES=['LOG4CXX'])
++	if 'log4cxx' in env['features'] and conf.CheckLibWithHeader('log4cxx','log4cxx/logger.h','c++','log4cxx::Logger::getLogger(&quot;foo&quot;);',autoadd=1):
++		env.Append(CPPDEFINES=['LOG4CXX'])
+ 	if 'python' in env['features'] and conf.CheckPython() and conf.CheckScientificPython():
+ 		env.Append(CPPDEFINES=['EMBED_PYTHON'])
+ 
+-	# append essential libs		
+-	env.Append(LIBS=['glut','boost_date_time','boost_filesystem','boost_thread','pthread'])
+-
+ 	if env['useMiniWm3']: env.Append(LIBS='miniWm3',CPPDEFINES=['MINIWM3'])
+-	else:	env.Append(LIBS='Wm3Foundation')
+ 
+ 	env=conf.Finish()
+ 
+
+Modified: trunk/core/SConscript
+===================================================================
+--- trunk/core/SConscript	2007-06-05 13:52:27 UTC (rev 1184)
++++ trunk/core/SConscript	2007-06-05 15:15:26 UTC (rev 1185)
+@@ -31,9 +31,6 @@
+ 			'yade-base',
+ 			'yade-loki',
+ 			'yade-multimethods',
+-			'glut',
+-			'boost_date_time',
+-			'boost_filesystem',
+-			'boost_thread'],
++			'glut'],
+ 		)
+ ])
+
+Modified: trunk/gui/SConscript
+===================================================================
+--- trunk/gui/SConscript	2007-06-05 13:52:27 UTC (rev 1184)
++++ trunk/gui/SConscript	2007-06-05 15:15:26 UTC (rev 1185)
+@@ -38,9 +38,7 @@
+ 			'yade-computational-geometry',
+ 			'XMLFormatManager',
+ 			'yade-serialization-qt',
+-			'$QGLVIEWER_LIB',
+-			'boost_date_time',
+-			'boost_filesystem'],
++			'$QGLVIEWER_LIB'],
+ 		CPPPATH=env['CPPPATH']+['qt3']),
+ ])
+ 
+
+Modified: trunk/pkg/dem/SConscript
+===================================================================
+--- trunk/pkg/dem/SConscript	2007-06-05 13:52:27 UTC (rev 1184)
++++ trunk/pkg/dem/SConscript	2007-06-05 15:15:26 UTC (rev 1185)
+@@ -534,7 +534,6 @@
+ 			'SAPCollider',
+ 			'MetaInteractingGeometry2AABB',
+ 			'yade-multimethods',
+-			'boost_filesystem',
+ 			'TranslationEngine']),
+ 
+ env.SharedLibrary('WallStressRecorder',
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000149.html">[Yade-commits] r1184 - /
+</A></li>
+	<LI>Next message: <A HREF="000151.html">[Yade-commits] r1186 - in trunk: debian scripts
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#150">[ date ]</a>
+              <a href="thread.html#150">[ thread ]</a>
+              <a href="subject.html#150">[ subject ]</a>
+              <a href="author.html#150">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

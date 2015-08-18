@@ -1,0 +1,2000 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1382 - in trunk: core extra extra/clump gui/qt3
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1382%20-%20in%20trunk%3A%20core%20extra%20extra/clump%20gui/qt3&In-Reply-To=%3C200806100917.m5A9H2ce017019%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000342.html">
+   <LINK REL="Next"  HREF="000344.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1382 - in trunk: core extra extra/clump gui/qt3</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1382%20-%20in%20trunk%3A%20core%20extra%20extra/clump%20gui/qt3&In-Reply-To=%3C200806100917.m5A9H2ce017019%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1382 - in trunk: core extra extra/clump gui/qt3">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Tue Jun 10 11:17:02 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000342.html">[Yade-commits] r1381 - trunk/gui/py
+</A></li>
+        <LI>Next message: <A HREF="000344.html">[Yade-commits] r1383 - in trunk: gui gui/py gui/qt3	pkg/common/Engine/StandAloneEngine scripts
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#343">[ date ]</a>
+              <a href="thread.html#343">[ thread ]</a>
+              <a href="subject.html#343">[ subject ]</a>
+              <a href="author.html#343">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2008-06-10 11:17:01 +0200 (Tue, 10 Jun 2008)
+New Revision: 1382
+
+Removed:
+   trunk/extra/clump/PythonRecorder.cpp
+   trunk/extra/clump/PythonRecorder.hpp
+Modified:
+   trunk/core/Omega.cpp
+   trunk/core/Omega.hpp
+   trunk/extra/SConscript
+   trunk/gui/qt3/QtGeneratedSimulationController.ui
+   trunk/gui/qt3/SimulationController.cpp
+   trunk/gui/qt3/SimulationController.hpp
+   trunk/gui/qt3/YadeQtMainWindow.cpp
+   trunk/gui/qt3/YadeQtMainWindow.hpp
+Log:
+1. Fix sync mode in qt3 ui.
+2. Fix real time display in qt3 ui.
+3. Fix resizing of controller in qt3 ui (childs expand now)
+4. Remove deprecated PythonRecorder (superseded by PeriodicPythonRunner)
+5. Initialize Omega timers also at construction-time rather than simulation-loading only as it used to be.
+6. Don't print bogus values of iters/sec in controller at startup.
+
+
+
+
+Modified: trunk/core/Omega.cpp
+===================================================================
+--- trunk/core/Omega.cpp	2008-06-06 17:17:33 UTC (rev 1381)
++++ trunk/core/Omega.cpp	2008-06-10 09:17:01 UTC (rev 1382)
+@@ -32,12 +32,14 @@
+ Omega::Omega()
+ {
+ 	LOG_INFO(&quot;Constructing Omega  (if multiple times - check '-rdynamic' flag!).&quot;);
++	init();
++	timeInit();
+ }
+ 
+ 
+ Omega::~Omega()
+ {
+-	LOG_INFO(&quot;Shuting down; duration &quot;&lt;&lt;sStartingSimulationTime-second_clock::local_time());
++	LOG_INFO(&quot;Shuting down; duration &quot;&lt;&lt;(msStartingSimulationTime-microsec_clock::local_time())/1000&lt;&lt;&quot; s&quot;);
+ }
+ 
+ void Omega::reset(){
+@@ -46,14 +48,19 @@
+ 	init();
+ }
+ 
+-void Omega::init()
+-{
++void Omega::init(){
+ 	simulationFileName=&quot;&quot;;
+ 	currentIteration = 0;
+ 	stopAtIteration = 0;
+ 	resetRootBody();
+ }
+ 
++void Omega::timeInit(){
++	//sStartingSimulationTime=second_clock::local_time();
++	msStartingSimulationTime=microsec_clock::local_time();
++	simulationPauseDuration=msStartingSimulationTime-msStartingSimulationTime;
++	msStartingPauseTime=msStartingSimulationTime;
++}
+ 
+ void Omega::createSimulationLoop()
+ {
+@@ -341,10 +348,8 @@
+ 
+ 	if( rootBody-&gt;getClassName() != &quot;MetaBody&quot;) throw yadeBadFile(&quot;Wrong file format (rootBody is not a MetaBody!) ??&quot;);
+ 
+-	sStartingSimulationTime = second_clock::local_time();
+-	msStartingSimulationTime = microsec_clock::local_time();
+-	simulationPauseDuration = msStartingSimulationTime-msStartingSimulationTime;
+-	msStartingPauseTime = msStartingSimulationTime;
++	timeInit();
++
+ 	LOG_DEBUG(&quot;Simulation loaded&quot;);
+ 	currentIteration = 0;
+ 	simulationTime = 0;
+
+Modified: trunk/core/Omega.hpp
+===================================================================
+--- trunk/core/Omega.hpp	2008-06-06 17:17:33 UTC (rev 1381)
++++ trunk/core/Omega.hpp	2008-06-10 09:17:01 UTC (rev 1382)
+@@ -80,7 +80,7 @@
+ 		map&lt;string,DynlibDescriptor&gt;	 dynlibs;	// FIXME : should store that in ClassFactory ?
+ 		
+ 		shared_ptr&lt;MetaBody&gt;		 rootBody;
+-		ptime				 sStartingSimulationTime;
++		//ptime				 sStartingSimulationTime;
+ 		ptime				 msStartingSimulationTime;
+ 		ptime				 msStartingPauseTime;
+ 		time_duration			 simulationPauseDuration;
+@@ -150,7 +150,8 @@
+ 		Real		getSimulationTime() { return simulationTime;};
+ 		void		incrementSimulationTime() { simulationTime+=getTimeStep();};
+ 		
+-		void		init();
++		void init();
++		void timeInit();
+ 
+ 		void reset();
+ 
+
+Modified: trunk/extra/SConscript
+===================================================================
+--- trunk/extra/SConscript	2008-06-06 17:17:33 UTC (rev 1381)
++++ trunk/extra/SConscript	2008-06-10 09:17:01 UTC (rev 1382)
+@@ -90,7 +90,6 @@
+ 			'MetaInteractingGeometry',
+ 			'MetaInteractingGeometry2AABB',
+ 			'GlobalStiffness',
+-			# 'EMBED_PYTHON' in env['CPPDEFINES'] and 'PythonRecorder' or 'yade-base', # FIXME: handle python properly; duplicated base is harmless
+ 			'InteractingSphere2AABB',\
+ 			'InteractingBox2AABB',
+ 			'NewtonsMomentumLaw',
+
+Deleted: trunk/extra/clump/PythonRecorder.cpp
+===================================================================
+--- trunk/extra/clump/PythonRecorder.cpp	2008-06-06 17:17:33 UTC (rev 1381)
++++ trunk/extra/clump/PythonRecorder.cpp	2008-06-10 09:17:01 UTC (rev 1382)
+@@ -1,85 +0,0 @@
+-// (c) 2007 Vaclav Smilauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">eudoxos at arcig.cz</A>&gt; 
+-
+-// Python likes to be first..
+-#include &lt;Python.h&gt;
+-
+-#include &quot;PythonRecorder.hpp&quot;
+-//#include&lt;yade/pkg-common/RigidBodyParameters.hpp&gt;
+-//#include&lt;yade/core/Omega.hpp&gt;
+-#include&lt;yade/core/MetaBody.hpp&gt;
+-//#include &lt;boost/lexical_cast.hpp&gt;
+-#include &lt;boost/preprocessor/stringize.hpp&gt;
+-
+-
+-CREATE_LOGGER(PythonRecorder);
+-
+-/*! Constructor loads the pyade module.
+- *
+- */
+-
+-PythonRecorder::PythonRecorder():DataRecorder(){
+-	LOG_FATAL(&quot;what use of releasing unknown lock?! Otherwise deadlock here.&quot;);
+-	PyEval_ReleaseLock();
+-	PyGILState_STATE pyState = PyGILState_Ensure();
+-		PyRun_SimpleString(&quot;import sys; sys.path.insert(0,'&quot; PREFIX &quot;/lib/yade&quot; SUFFIX &quot;/extra');&quot;);
+-		int status=PyRun_SimpleString(&quot;from pyade import *&quot;); // pyade will import _pyade by itself
+-		if(status){ LOG_ERROR(&quot;pyade import failed.&quot;); } else LOG_DEBUG(&quot;pyade imported.&quot;);
+-	PyGILState_Release(pyState);
+-
+-	compiledRunExprCall=NULL;
+-}
+-
+-/* Transform deserialized attributes in something useful.
+- *
+- * - runs initExpr in python.
+- * - creates runExpr function definition
+- * - attempts its acceleration through psyco
+- * - creates bytecode for runExpr call
+- *
+- */
+-void PythonRecorder::postProcessAttributes(bool deserializing){
+-	PyGILState_STATE pyState = PyGILState_Ensure();
+-		if(outputFile.length()&gt;0){
+-			LOG_DEBUG(&quot;Redirecting python stdout to `&quot;&lt;&lt;outputFile&lt;&lt;&quot;'.&quot;);
+-			PyRun_SimpleString(string(&quot;import os; import sys; ofile=file('&quot;+outputFile+&quot;','w+'); sys.stdout=ofile&quot;).c_str());
+-		}
+-		if(initExpr.length()&gt;0){
+-			PyRun_SimpleString(initExpr.c_str());
+-		}
+-
+-		// if this is not the first time we deserialize, free the old byte-compiled code
+-		if(compiledRunExprCall) Py_DECREF(compiledRunExprCall);
+-
+-		if(runExpr.length()&gt;0){
+-			// transform expression to function definition
+-			runExprAsDef=&quot;def runExpr():\n&quot;+runExpr;
+-			size_t pos=0; while((pos=runExprAsDef.find('\n',pos))!=string::npos){runExprAsDef.replace(pos,1,&quot;\n\t&quot;); pos+=2;}
+-
+-			if(PyRun_SimpleString(runExprAsDef.c_str())&gt;=0){ // no error running the user-supplied code...
+-				// attempt psyco machine-code compilation of runExpr
+-				PyRun_SimpleString(&quot;try:\n\timport psyco\n\tpsyco.bind(runExpr)\nexcept ImportError: pass\n&quot;);
+-				// byte-compile the actual invocation of runExpr
+-				compiledRunExprCall=Py_CompileString(&quot;runExpr()&quot;,&quot;&lt;runExpr definition&gt;&quot;, Py_single_input);
+-				// mainDict is used later, when calling the byte-compiled piece
+-				PyObject* __main__=PyImport_AddModule(&quot;__main__&quot;); // borrowed reference, no need to Py_DECREF
+-				mainDict=PyModule_GetDict(__main__); // borrowed reference as well
+-			}
+-			else {LOG_WARN(&quot;Compiling runExpr failed in Python, engine will not do anything! (expression was:\n&quot;&lt;&lt;runExprAsDef);}
+-		}
+-	PyGILState_Release(pyState);
+-}
+-
+-void PythonRecorder::action(MetaBody *rootBody)
+-{
+-	if(compiledRunExprCall){
+-		PyGILState_STATE pyState = PyGILState_Ensure();
+-			PyObject* res=PyEval_EvalCode((PyCodeObject*)compiledRunExprCall,mainDict,mainDict);
+-			if(res) Py_DECREF(res);
+-			else { LOG_WARN(&quot;runExpr() execution in Python failed?!&quot;); }
+-		PyGILState_Release(pyState);
+-	}
+-}
+-
+-
+-
+-YADE_PLUGIN();
+
+Deleted: trunk/extra/clump/PythonRecorder.hpp
+===================================================================
+--- trunk/extra/clump/PythonRecorder.hpp	2008-06-06 17:17:33 UTC (rev 1381)
++++ trunk/extra/clump/PythonRecorder.hpp	2008-06-10 09:17:01 UTC (rev 1382)
+@@ -1,53 +0,0 @@
+-// (c) 2007 Vaclav Smilauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">eudoxos at arcig.cz</A>&gt; 
+-
+-#ifndef PYTHON_RECORDER_HPP
+-#define PYTHON_RECORDER_HPP
+-
+-#ifndef EMBED_PYTHON
+-	#error EMBED_PYTHON must be defined for this module to work!
+-#endif
+-
+-#include&lt;Python.h&gt;
+-#include&lt;string&gt;
+-#include&lt;yade/core/DataRecorder.hpp&gt;
+-#include&lt;yade/lib-base/Logging.hpp&gt;
+-
+-/*! Recorder that executes arbitrary python expression when called.
+- *
+- * The expressions to access yade's internals are described in documentation for pyade.py and pyade.cpp.
+- *
+- * */
+-class PythonRecorder: public DataRecorder
+-{
+-	private:
+-		//! simple call to 
+-		PyObject *compiledRunExprCall;
+-		//! dictionary of globals, for passing to PyEval_EvalCode
+-		PyObject *mainDict;
+-		//! runExpr, but string-transformed to python function definition
+-		std::string runExprAsDef;
+-	public :
+-		//! Constructor that imports pyade module (warns if there is an error).
+-		PythonRecorder();
+-		virtual void action(MetaBody*);
+-		virtual bool isActivated(){return true;}
+-		virtual void registerAttributes(){DataRecorder::registerAttributes(); REGISTER_ATTRIBUTE(runExpr); REGISTER_ATTRIBUTE(initExpr); REGISTER_ATTRIBUTE(outputFile);}
+-		//! This expression will be interpreted when the engine is called (every iteration)
+-		std::string runExpr;
+-		//! Piece of python code run on intialization (deserialization)
+-		std::string initExpr;
+-		//! If not empty, python sys.stdout will be redirected to this file (overwritten every time!)
+-		std::string outputFile;
+-	protected :
+-		virtual void postProcessAttributes(bool deserializing);
+-	DECLARE_LOGGER;
+-
+-	REGISTER_CLASS_NAME(PythonRecorder);
+-	REGISTER_BASE_CLASS_NAME(DataRecorder);
+-
+-};
+-
+-REGISTER_SERIALIZABLE(PythonRecorder,false);
+-
+-#endif // PYTHON_RECORDER_HPP
+-
+
+Modified: trunk/gui/qt3/QtGeneratedSimulationController.ui
+===================================================================
+--- trunk/gui/qt3/QtGeneratedSimulationController.ui	2008-06-06 17:17:33 UTC (rev 1381)
++++ trunk/gui/qt3/QtGeneratedSimulationController.ui	2008-06-10 09:17:01 UTC (rev 1382)
+@@ -8,14 +8,14 @@
+         &lt;rect&gt;
+             &lt;x&gt;0&lt;/x&gt;
+             &lt;y&gt;0&lt;/y&gt;
+-            &lt;width&gt;319&lt;/width&gt;
+-            &lt;height&gt;544&lt;/height&gt;
++            &lt;width&gt;275&lt;/width&gt;
++            &lt;height&gt;510&lt;/height&gt;
+         &lt;/rect&gt;
+     &lt;/property&gt;
+     &lt;property name=&quot;sizePolicy&quot;&gt;
+         &lt;sizepolicy&gt;
+-            &lt;hsizetype&gt;1&lt;/hsizetype&gt;
+-            &lt;vsizetype&gt;1&lt;/vsizetype&gt;
++            &lt;hsizetype&gt;3&lt;/hsizetype&gt;
++            &lt;vsizetype&gt;3&lt;/vsizetype&gt;
+             &lt;horstretch&gt;0&lt;/horstretch&gt;
+             &lt;verstretch&gt;0&lt;/verstretch&gt;
+         &lt;/sizepolicy&gt;
+@@ -29,652 +29,639 @@
+     &lt;property name=&quot;frameShadow&quot;&gt;
+         &lt;enum&gt;Plain&lt;/enum&gt;
+     &lt;/property&gt;
+-    &lt;widget class=&quot;QLabel&quot;&gt;
++    &lt;grid&gt;
+         &lt;property name=&quot;name&quot;&gt;
+-            &lt;cstring&gt;labelIter&lt;/cstring&gt;
++            &lt;cstring&gt;unnamed&lt;/cstring&gt;
+         &lt;/property&gt;
+-        &lt;property name=&quot;geometry&quot;&gt;
+-            &lt;rect&gt;
+-                &lt;x&gt;10&lt;/x&gt;
+-                &lt;y&gt;60&lt;/y&gt;
+-                &lt;width&gt;190&lt;/width&gt;
+-                &lt;height&gt;20&lt;/height&gt;
+-            &lt;/rect&gt;
+-        &lt;/property&gt;
+-        &lt;property name=&quot;text&quot;&gt;
+-            &lt;string&gt;iter #0, 0/s&lt;/string&gt;
+-        &lt;/property&gt;
+-    &lt;/widget&gt;
+-    &lt;widget class=&quot;QLabel&quot;&gt;
+-        &lt;property name=&quot;name&quot;&gt;
+-            &lt;cstring&gt;labelSimulTime&lt;/cstring&gt;
+-        &lt;/property&gt;
+-        &lt;property name=&quot;geometry&quot;&gt;
+-            &lt;rect&gt;
+-                &lt;x&gt;10&lt;/x&gt;
+-                &lt;y&gt;40&lt;/y&gt;
+-                &lt;width&gt;190&lt;/width&gt;
+-                &lt;height&gt;21&lt;/height&gt;
+-            &lt;/rect&gt;
+-        &lt;/property&gt;
+-        &lt;property name=&quot;text&quot;&gt;
+-            &lt;string&gt;virt 00:000.000m000u000n&lt;/string&gt;
+-        &lt;/property&gt;
+-    &lt;/widget&gt;
+-    &lt;widget class=&quot;QLabel&quot;&gt;
+-        &lt;property name=&quot;name&quot;&gt;
+-            &lt;cstring&gt;labelRealTime&lt;/cstring&gt;
+-        &lt;/property&gt;
+-        &lt;property name=&quot;geometry&quot;&gt;
+-            &lt;rect&gt;
+-                &lt;x&gt;10&lt;/x&gt;
+-                &lt;y&gt;20&lt;/y&gt;
+-                &lt;width&gt;200&lt;/width&gt;
+-                &lt;height&gt;21&lt;/height&gt;
+-            &lt;/rect&gt;
+-        &lt;/property&gt;
+-        &lt;property name=&quot;text&quot;&gt;
+-            &lt;string&gt;real 0:00:00.000&lt;/string&gt;
+-        &lt;/property&gt;
+-    &lt;/widget&gt;
+-    &lt;widget class=&quot;QLabel&quot;&gt;
+-        &lt;property name=&quot;name&quot;&gt;
+-            &lt;cstring&gt;labelStep&lt;/cstring&gt;
+-        &lt;/property&gt;
+-        &lt;property name=&quot;geometry&quot;&gt;
+-            &lt;rect&gt;
+-                &lt;x&gt;10&lt;/x&gt;
+-                &lt;y&gt;80&lt;/y&gt;
+-                &lt;width&gt;140&lt;/width&gt;
+-                &lt;height&gt;21&lt;/height&gt;
+-            &lt;/rect&gt;
+-        &lt;/property&gt;
+-        &lt;property name=&quot;text&quot;&gt;
+-            &lt;string&gt;step 4e-3&lt;/string&gt;
+-        &lt;/property&gt;
+-    &lt;/widget&gt;
+-    &lt;widget class=&quot;QTabWidget&quot;&gt;
+-        &lt;property name=&quot;name&quot;&gt;
+-            &lt;cstring&gt;tabWidget&lt;/cstring&gt;
+-        &lt;/property&gt;
+-        &lt;property name=&quot;geometry&quot;&gt;
+-            &lt;rect&gt;
+-                &lt;x&gt;10&lt;/x&gt;
+-                &lt;y&gt;110&lt;/y&gt;
+-                &lt;width&gt;290&lt;/width&gt;
+-                &lt;height&gt;420&lt;/height&gt;
+-            &lt;/rect&gt;
+-        &lt;/property&gt;
+-        &lt;property name=&quot;sizePolicy&quot;&gt;
+-            &lt;sizepolicy&gt;
+-                &lt;hsizetype&gt;1&lt;/hsizetype&gt;
+-                &lt;vsizetype&gt;1&lt;/vsizetype&gt;
+-                &lt;horstretch&gt;0&lt;/horstretch&gt;
+-                &lt;verstretch&gt;0&lt;/verstretch&gt;
+-            &lt;/sizepolicy&gt;
+-        &lt;/property&gt;
+-        &lt;widget class=&quot;QWidget&quot;&gt;
++        &lt;widget class=&quot;QLayoutWidget&quot; row=&quot;0&quot; column=&quot;0&quot;&gt;
+             &lt;property name=&quot;name&quot;&gt;
+-                &lt;cstring&gt;tab&lt;/cstring&gt;
++                &lt;cstring&gt;layout10&lt;/cstring&gt;
+             &lt;/property&gt;
+-            &lt;attribute name=&quot;title&quot;&gt;
+-                &lt;string&gt;Simulation&lt;/string&gt;
+-            &lt;/attribute&gt;
+-            &lt;widget class=&quot;QLabel&quot;&gt;
++            &lt;grid&gt;
+                 &lt;property name=&quot;name&quot;&gt;
+-                    &lt;cstring&gt;tlCurrentSimulation&lt;/cstring&gt;
++                    &lt;cstring&gt;unnamed&lt;/cstring&gt;
+                 &lt;/property&gt;
+-                &lt;property name=&quot;geometry&quot;&gt;
+-                    &lt;rect&gt;
+-                        &lt;x&gt;10&lt;/x&gt;
+-                        &lt;y&gt;50&lt;/y&gt;
+-                        &lt;width&gt;150&lt;/width&gt;
+-                        &lt;height&gt;20&lt;/height&gt;
+-                    &lt;/rect&gt;
++                &lt;property name=&quot;spacing&quot;&gt;
++                    &lt;number&gt;0&lt;/number&gt;
+                 &lt;/property&gt;
+-                &lt;property name=&quot;sizePolicy&quot;&gt;
+-                    &lt;sizepolicy&gt;
+-                        &lt;hsizetype&gt;7&lt;/hsizetype&gt;
+-                        &lt;vsizetype&gt;5&lt;/vsizetype&gt;
+-                        &lt;horstretch&gt;0&lt;/horstretch&gt;
+-                        &lt;verstretch&gt;0&lt;/verstretch&gt;
+-                    &lt;/sizepolicy&gt;
+-                &lt;/property&gt;
+-                &lt;property name=&quot;text&quot;&gt;
+-                    &lt;string&gt;...&lt;/string&gt;
+-                &lt;/property&gt;
+-                &lt;property name=&quot;alignment&quot;&gt;
+-                    &lt;set&gt;AlignCenter&lt;/set&gt;
+-                &lt;/property&gt;
+-            &lt;/widget&gt;
+-            &lt;widget class=&quot;QPushButton&quot;&gt;
+-                &lt;property name=&quot;name&quot;&gt;
+-                    &lt;cstring&gt;pbSaveSimulation&lt;/cstring&gt;
+-                &lt;/property&gt;
+-                &lt;property name=&quot;geometry&quot;&gt;
+-                    &lt;rect&gt;
+-                        &lt;x&gt;90&lt;/x&gt;
+-                        &lt;y&gt;10&lt;/y&gt;
+-                        &lt;width&gt;74&lt;/width&gt;
+-                        &lt;height&gt;33&lt;/height&gt;
+-                    &lt;/rect&gt;
+-                &lt;/property&gt;
+-                &lt;property name=&quot;text&quot;&gt;
+-                    &lt;string&gt;Save&lt;/string&gt;
+-                &lt;/property&gt;
+-            &lt;/widget&gt;
+-            &lt;widget class=&quot;QPushButton&quot;&gt;
+-                &lt;property name=&quot;name&quot;&gt;
+-                    &lt;cstring&gt;pbNewView_2&lt;/cstring&gt;
+-                &lt;/property&gt;
+-                &lt;property name=&quot;enabled&quot;&gt;
+-                    &lt;bool&gt;true&lt;/bool&gt;
+-                &lt;/property&gt;
+-                &lt;property name=&quot;geometry&quot;&gt;
+-                    &lt;rect&gt;
+-                        &lt;x&gt;10&lt;/x&gt;
+-                        &lt;y&gt;340&lt;/y&gt;
+-                        &lt;width&gt;150&lt;/width&gt;
+-                        &lt;height&gt;33&lt;/height&gt;
+-                    &lt;/rect&gt;
+-                &lt;/property&gt;
+-                &lt;property name=&quot;sizePolicy&quot;&gt;
+-                    &lt;sizepolicy&gt;
+-                        &lt;hsizetype&gt;0&lt;/hsizetype&gt;
+-                        &lt;vsizetype&gt;0&lt;/vsizetype&gt;
+-                        &lt;horstretch&gt;0&lt;/horstretch&gt;
+-                        &lt;verstretch&gt;0&lt;/verstretch&gt;
+-                    &lt;/sizepolicy&gt;
+-                &lt;/property&gt;
+-                &lt;property name=&quot;text&quot;&gt;
+-                    &lt;string&gt;New View ...&lt;/string&gt;
+-                &lt;/property&gt;
+-            &lt;/widget&gt;
+-            &lt;widget class=&quot;QPushButton&quot;&gt;
+-                &lt;property name=&quot;name&quot;&gt;
+-                    &lt;cstring&gt;pbCenterScene_2&lt;/cstring&gt;
+-                &lt;/property&gt;
+-                &lt;property name=&quot;geometry&quot;&gt;
+-                    &lt;rect&gt;
+-                        &lt;x&gt;10&lt;/x&gt;
+-                        &lt;y&gt;300&lt;/y&gt;
+-                        &lt;width&gt;150&lt;/width&gt;
+-                        &lt;height&gt;33&lt;/height&gt;
+-                    &lt;/rect&gt;
+-                &lt;/property&gt;
+-                &lt;property name=&quot;sizePolicy&quot;&gt;
+-                    &lt;sizepolicy&gt;
+-                        &lt;hsizetype&gt;0&lt;/hsizetype&gt;
+-                        &lt;vsizetype&gt;0&lt;/vsizetype&gt;
+-                        &lt;horstretch&gt;0&lt;/horstretch&gt;
+-                        &lt;verstretch&gt;0&lt;/verstretch&gt;
+-                    &lt;/sizepolicy&gt;
+-                &lt;/property&gt;
+-                &lt;property name=&quot;text&quot;&gt;
+-                    &lt;string&gt;Center Scene&lt;/string&gt;
+-                &lt;/property&gt;
+-            &lt;/widget&gt;
+-            &lt;widget class=&quot;QPushButton&quot;&gt;
+-                &lt;property name=&quot;name&quot;&gt;
+-                    &lt;cstring&gt;pbStartSimulation&lt;/cstring&gt;
+-                &lt;/property&gt;
+-                &lt;property name=&quot;enabled&quot;&gt;
+-                    &lt;bool&gt;false&lt;/bool&gt;
+-                &lt;/property&gt;
+-                &lt;property name=&quot;geometry&quot;&gt;
+-                    &lt;rect&gt;
+-                        &lt;x&gt;10&lt;/x&gt;
+-                        &lt;y&gt;70&lt;/y&gt;
+-                        &lt;width&gt;70&lt;/width&gt;
+-                        &lt;height&gt;60&lt;/height&gt;
+-                    &lt;/rect&gt;
+-                &lt;/property&gt;
+-                &lt;property name=&quot;text&quot;&gt;
+-                    &lt;string&gt;&lt;/string&gt;
+-                &lt;/property&gt;
+-                &lt;property name=&quot;pixmap&quot;&gt;
+-                    &lt;pixmap&gt;image0&lt;/pixmap&gt;
+-                &lt;/property&gt;
+-            &lt;/widget&gt;
+-            &lt;widget class=&quot;QPushButton&quot;&gt;
+-                &lt;property name=&quot;name&quot;&gt;
+-                    &lt;cstring&gt;pbStopSimulation&lt;/cstring&gt;
+-                &lt;/property&gt;
+-                &lt;property name=&quot;enabled&quot;&gt;
+-                    &lt;bool&gt;false&lt;/bool&gt;
+-                &lt;/property&gt;
+-                &lt;property name=&quot;geometry&quot;&gt;
+-                    &lt;rect&gt;
+-                        &lt;x&gt;90&lt;/x&gt;
+-                        &lt;y&gt;70&lt;/y&gt;
+-                        &lt;width&gt;70&lt;/width&gt;
+-                        &lt;height&gt;60&lt;/height&gt;
+-                    &lt;/rect&gt;
+-                &lt;/property&gt;
+-                &lt;property name=&quot;text&quot;&gt;
+-                    &lt;string&gt;&lt;/string&gt;
+-                &lt;/property&gt;
+-                &lt;property name=&quot;pixmap&quot;&gt;
+-                    &lt;pixmap&gt;image1&lt;/pixmap&gt;
+-                &lt;/property&gt;
+-            &lt;/widget&gt;
+-            &lt;widget class=&quot;QPushButton&quot;&gt;
+-                &lt;property name=&quot;name&quot;&gt;
+-                    &lt;cstring&gt;pbOneSimulationStep&lt;/cstring&gt;
+-                &lt;/property&gt;
+-                &lt;property name=&quot;enabled&quot;&gt;
+-                    &lt;bool&gt;false&lt;/bool&gt;
+-                &lt;/property&gt;
+-                &lt;property name=&quot;geometry&quot;&gt;
+-                    &lt;rect&gt;
+-                        &lt;x&gt;10&lt;/x&gt;
+-                        &lt;y&gt;140&lt;/y&gt;
+-                        &lt;width&gt;40&lt;/width&gt;
+-                        &lt;height&gt;40&lt;/height&gt;
+-                    &lt;/rect&gt;
+-                &lt;/property&gt;
+-                &lt;property name=&quot;text&quot;&gt;
+-                    &lt;string&gt;&lt;/string&gt;
+-                &lt;/property&gt;
+-                &lt;property name=&quot;pixmap&quot;&gt;
+-                    &lt;pixmap&gt;image2&lt;/pixmap&gt;
+-                &lt;/property&gt;
+-            &lt;/widget&gt;
+-            &lt;widget class=&quot;QPushButton&quot;&gt;
+-                &lt;property name=&quot;name&quot;&gt;
+-                    &lt;cstring&gt;pbResetSimulation&lt;/cstring&gt;
+-                &lt;/property&gt;
+-                &lt;property name=&quot;enabled&quot;&gt;
+-                    &lt;bool&gt;false&lt;/bool&gt;
+-                &lt;/property&gt;
+-                &lt;property name=&quot;geometry&quot;&gt;
+-                    &lt;rect&gt;
+-                        &lt;x&gt;60&lt;/x&gt;
+-                        &lt;y&gt;140&lt;/y&gt;
+-                        &lt;width&gt;100&lt;/width&gt;
+-                        &lt;height&gt;40&lt;/height&gt;
+-                    &lt;/rect&gt;
+-                &lt;/property&gt;
+-                &lt;property name=&quot;text&quot;&gt;
+-                    &lt;string&gt;&lt;/string&gt;
+-                &lt;/property&gt;
+-                &lt;property name=&quot;pixmap&quot;&gt;
+-                    &lt;pixmap&gt;image3&lt;/pixmap&gt;
+-                &lt;/property&gt;
+-                &lt;property name=&quot;toolTip&quot; stdset=&quot;0&quot;&gt;
+-                    &lt;string&gt;Note: currently using synchronized display can *sometimes* lead to crash when reloading file.&lt;/string&gt;
+-                &lt;/property&gt;
+-            &lt;/widget&gt;
+-            &lt;widget class=&quot;QSpinBox&quot;&gt;
+-                &lt;property name=&quot;name&quot;&gt;
+-                    &lt;cstring&gt;sb10PowerSecond&lt;/cstring&gt;
+-                &lt;/property&gt;
+-                &lt;property name=&quot;enabled&quot;&gt;
+-                    &lt;bool&gt;true&lt;/bool&gt;
+-                &lt;/property&gt;
+-                &lt;property name=&quot;geometry&quot;&gt;
+-                    &lt;rect&gt;
+-                        &lt;x&gt;120&lt;/x&gt;
+-                        &lt;y&gt;270&lt;/y&gt;
+-                        &lt;width&gt;40&lt;/width&gt;
+-                        &lt;height&gt;25&lt;/height&gt;
+-                    &lt;/rect&gt;
+-                &lt;/property&gt;
+-                &lt;property name=&quot;maxValue&quot;&gt;
+-                    &lt;number&gt;20&lt;/number&gt;
+-                &lt;/property&gt;
+-                &lt;property name=&quot;minValue&quot;&gt;
+-                    &lt;number&gt;-20&lt;/number&gt;
+-                &lt;/property&gt;
+-                &lt;property name=&quot;value&quot;&gt;
+-                    &lt;number&gt;-3&lt;/number&gt;
+-                &lt;/property&gt;
+-            &lt;/widget&gt;
+-            &lt;widget class=&quot;QLabel&quot;&gt;
+-                &lt;property name=&quot;name&quot;&gt;
+-                    &lt;cstring&gt;tl10Power&lt;/cstring&gt;
+-                &lt;/property&gt;
+-                &lt;property name=&quot;enabled&quot;&gt;
+-                    &lt;bool&gt;true&lt;/bool&gt;
+-                &lt;/property&gt;
+-                &lt;property name=&quot;geometry&quot;&gt;
+-                    &lt;rect&gt;
+-                        &lt;x&gt;80&lt;/x&gt;
+-                        &lt;y&gt;270&lt;/y&gt;
+-                        &lt;width&gt;30&lt;/width&gt;
+-                        &lt;height&gt;25&lt;/height&gt;
+-                    &lt;/rect&gt;
+-                &lt;/property&gt;
+-                &lt;property name=&quot;text&quot;&gt;
+-                    &lt;string&gt;x10&lt;/string&gt;
+-                &lt;/property&gt;
+-                &lt;property name=&quot;alignment&quot;&gt;
+-                    &lt;set&gt;AlignVCenter|AlignRight&lt;/set&gt;
+-                &lt;/property&gt;
+-            &lt;/widget&gt;
+-            &lt;widget class=&quot;QSpinBox&quot;&gt;
+-                &lt;property name=&quot;name&quot;&gt;
+-                    &lt;cstring&gt;sbSecond&lt;/cstring&gt;
+-                &lt;/property&gt;
+-                &lt;property name=&quot;enabled&quot;&gt;
+-                    &lt;bool&gt;true&lt;/bool&gt;
+-                &lt;/property&gt;
+-                &lt;property name=&quot;geometry&quot;&gt;
+-                    &lt;rect&gt;
+-                        &lt;x&gt;30&lt;/x&gt;
+-                        &lt;y&gt;270&lt;/y&gt;
+-                        &lt;width&gt;49&lt;/width&gt;
+-                        &lt;height&gt;25&lt;/height&gt;
+-                    &lt;/rect&gt;
+-                &lt;/property&gt;
+-                &lt;property name=&quot;value&quot;&gt;
+-                    &lt;number&gt;40&lt;/number&gt;
+-                &lt;/property&gt;
+-            &lt;/widget&gt;
+-            &lt;widget class=&quot;QPushButton&quot;&gt;
+-                &lt;property name=&quot;name&quot;&gt;
+-                    &lt;cstring&gt;pbLoadSimulation&lt;/cstring&gt;
+-                &lt;/property&gt;
+-                &lt;property name=&quot;geometry&quot;&gt;
+-                    &lt;rect&gt;
+-                        &lt;x&gt;10&lt;/x&gt;
+-                        &lt;y&gt;10&lt;/y&gt;
+-                        &lt;width&gt;72&lt;/width&gt;
+-                        &lt;height&gt;33&lt;/height&gt;
+-                    &lt;/rect&gt;
+-                &lt;/property&gt;
+-                &lt;property name=&quot;text&quot;&gt;
+-                    &lt;string&gt;Load&lt;/string&gt;
+-                &lt;/property&gt;
+-            &lt;/widget&gt;
+-            &lt;widget class=&quot;QButtonGroup&quot;&gt;
+-                &lt;property name=&quot;name&quot;&gt;
+-                    &lt;cstring&gt;timestep&lt;/cstring&gt;
+-                &lt;/property&gt;
+-                &lt;property name=&quot;geometry&quot;&gt;
+-                    &lt;rect&gt;
+-                        &lt;x&gt;10&lt;/x&gt;
+-                        &lt;y&gt;180&lt;/y&gt;
+-                        &lt;width&gt;150&lt;/width&gt;
+-                        &lt;height&gt;80&lt;/height&gt;
+-                    &lt;/rect&gt;
+-                &lt;/property&gt;
+-                &lt;property name=&quot;title&quot;&gt;
+-                    &lt;string&gt;timestep&lt;/string&gt;
+-                &lt;/property&gt;
+-                &lt;widget class=&quot;QRadioButton&quot;&gt;
++                &lt;widget class=&quot;QTabWidget&quot; row=&quot;1&quot; column=&quot;0&quot;&gt;
+                     &lt;property name=&quot;name&quot;&gt;
+-                        &lt;cstring&gt;rbFixed&lt;/cstring&gt;
++                        &lt;cstring&gt;tabWidget&lt;/cstring&gt;
+                     &lt;/property&gt;
+-                    &lt;property name=&quot;enabled&quot;&gt;
+-                        &lt;bool&gt;true&lt;/bool&gt;
++                    &lt;property name=&quot;autoMask&quot;&gt;
++                        &lt;bool&gt;false&lt;/bool&gt;
+                     &lt;/property&gt;
+-                    &lt;property name=&quot;geometry&quot;&gt;
+-                        &lt;rect&gt;
+-                            &lt;x&gt;10&lt;/x&gt;
+-                            &lt;y&gt;50&lt;/y&gt;
+-                            &lt;width&gt;116&lt;/width&gt;
+-                            &lt;height&gt;25&lt;/height&gt;
+-                        &lt;/rect&gt;
++                    &lt;property name=&quot;tabPosition&quot;&gt;
++                        &lt;enum&gt;Top&lt;/enum&gt;
+                     &lt;/property&gt;
+-                    &lt;property name=&quot;text&quot;&gt;
+-                        &lt;string&gt;Fixed step&lt;/string&gt;
++                    &lt;property name=&quot;tabShape&quot;&gt;
++                        &lt;enum&gt;Rounded&lt;/enum&gt;
+                     &lt;/property&gt;
+-                    &lt;property name=&quot;buttonGroupId&quot;&gt;
+-                        &lt;number&gt;2&lt;/number&gt;
++                    &lt;widget class=&quot;QWidget&quot;&gt;
++                        &lt;property name=&quot;name&quot;&gt;
++                            &lt;cstring&gt;tab&lt;/cstring&gt;
++                        &lt;/property&gt;
++                        &lt;attribute name=&quot;title&quot;&gt;
++                            &lt;string&gt;Simulation&lt;/string&gt;
++                        &lt;/attribute&gt;
++                        &lt;grid&gt;
++                            &lt;property name=&quot;name&quot;&gt;
++                                &lt;cstring&gt;unnamed&lt;/cstring&gt;
++                            &lt;/property&gt;
++                            &lt;widget class=&quot;QPushButton&quot; row=&quot;0&quot; column=&quot;0&quot;&gt;
++                                &lt;property name=&quot;name&quot;&gt;
++                                    &lt;cstring&gt;pbLoadSimulation&lt;/cstring&gt;
++                                &lt;/property&gt;
++                                &lt;property name=&quot;text&quot;&gt;
++                                    &lt;string&gt;Load&lt;/string&gt;
++                                &lt;/property&gt;
++                            &lt;/widget&gt;
++                            &lt;widget class=&quot;QLayoutWidget&quot; row=&quot;4&quot; column=&quot;0&quot; rowspan=&quot;1&quot; colspan=&quot;2&quot;&gt;
++                                &lt;property name=&quot;name&quot;&gt;
++                                    &lt;cstring&gt;layout4&lt;/cstring&gt;
++                                &lt;/property&gt;
++                                &lt;hbox&gt;
++                                    &lt;property name=&quot;name&quot;&gt;
++                                        &lt;cstring&gt;unnamed&lt;/cstring&gt;
++                                    &lt;/property&gt;
++                                    &lt;spacer&gt;
++                                        &lt;property name=&quot;name&quot;&gt;
++                                            &lt;cstring&gt;spacer1&lt;/cstring&gt;
++                                        &lt;/property&gt;
++                                        &lt;property name=&quot;orientation&quot;&gt;
++                                            &lt;enum&gt;Horizontal&lt;/enum&gt;
++                                        &lt;/property&gt;
++                                        &lt;property name=&quot;sizeType&quot;&gt;
++                                            &lt;enum&gt;Expanding&lt;/enum&gt;
++                                        &lt;/property&gt;
++                                        &lt;property name=&quot;sizeHint&quot;&gt;
++                                            &lt;size&gt;
++                                                &lt;width&gt;16&lt;/width&gt;
++                                                &lt;height&gt;20&lt;/height&gt;
++                                            &lt;/size&gt;
++                                        &lt;/property&gt;
++                                    &lt;/spacer&gt;
++                                    &lt;widget class=&quot;QSpinBox&quot;&gt;
++                                        &lt;property name=&quot;name&quot;&gt;
++                                            &lt;cstring&gt;sbSecond&lt;/cstring&gt;
++                                        &lt;/property&gt;
++                                        &lt;property name=&quot;enabled&quot;&gt;
++                                            &lt;bool&gt;true&lt;/bool&gt;
++                                        &lt;/property&gt;
++                                        &lt;property name=&quot;value&quot;&gt;
++                                            &lt;number&gt;40&lt;/number&gt;
++                                        &lt;/property&gt;
++                                    &lt;/widget&gt;
++                                    &lt;widget class=&quot;QLabel&quot;&gt;
++                                        &lt;property name=&quot;name&quot;&gt;
++                                            &lt;cstring&gt;tl10Power&lt;/cstring&gt;
++                                        &lt;/property&gt;
++                                        &lt;property name=&quot;enabled&quot;&gt;
++                                            &lt;bool&gt;true&lt;/bool&gt;
++                                        &lt;/property&gt;
++                                        &lt;property name=&quot;text&quot;&gt;
++                                            &lt;string&gt;&#215;10&lt;/string&gt;
++                                        &lt;/property&gt;
++                                        &lt;property name=&quot;alignment&quot;&gt;
++                                            &lt;set&gt;AlignVCenter|AlignRight&lt;/set&gt;
++                                        &lt;/property&gt;
++                                    &lt;/widget&gt;
++                                    &lt;widget class=&quot;QSpinBox&quot;&gt;
++                                        &lt;property name=&quot;name&quot;&gt;
++                                            &lt;cstring&gt;sb10PowerSecond&lt;/cstring&gt;
++                                        &lt;/property&gt;
++                                        &lt;property name=&quot;enabled&quot;&gt;
++                                            &lt;bool&gt;true&lt;/bool&gt;
++                                        &lt;/property&gt;
++                                        &lt;property name=&quot;maxValue&quot;&gt;
++                                            &lt;number&gt;20&lt;/number&gt;
++                                        &lt;/property&gt;
++                                        &lt;property name=&quot;minValue&quot;&gt;
++                                            &lt;number&gt;-20&lt;/number&gt;
++                                        &lt;/property&gt;
++                                        &lt;property name=&quot;value&quot;&gt;
++                                            &lt;number&gt;-3&lt;/number&gt;
++                                        &lt;/property&gt;
++                                    &lt;/widget&gt;
++                                &lt;/hbox&gt;
++                            &lt;/widget&gt;
++                            &lt;widget class=&quot;QButtonGroup&quot; row=&quot;3&quot; column=&quot;0&quot; rowspan=&quot;1&quot; colspan=&quot;2&quot;&gt;
++                                &lt;property name=&quot;name&quot;&gt;
++                                    &lt;cstring&gt;timestep&lt;/cstring&gt;
++                                &lt;/property&gt;
++                                &lt;property name=&quot;sizePolicy&quot;&gt;
++                                    &lt;sizepolicy&gt;
++                                        &lt;hsizetype&gt;3&lt;/hsizetype&gt;
++                                        &lt;vsizetype&gt;3&lt;/vsizetype&gt;
++                                        &lt;horstretch&gt;0&lt;/horstretch&gt;
++                                        &lt;verstretch&gt;0&lt;/verstretch&gt;
++                                    &lt;/sizepolicy&gt;
++                                &lt;/property&gt;
++                                &lt;property name=&quot;frameShadow&quot;&gt;
++                                    &lt;enum&gt;Sunken&lt;/enum&gt;
++                                &lt;/property&gt;
++                                &lt;property name=&quot;lineWidth&quot;&gt;
++                                    &lt;number&gt;1&lt;/number&gt;
++                                &lt;/property&gt;
++                                &lt;property name=&quot;title&quot;&gt;
++                                    &lt;string&gt;timestep&lt;/string&gt;
++                                &lt;/property&gt;
++                                &lt;property name=&quot;flat&quot;&gt;
++                                    &lt;bool&gt;false&lt;/bool&gt;
++                                &lt;/property&gt;
++                                &lt;widget class=&quot;QRadioButton&quot;&gt;
++                                    &lt;property name=&quot;name&quot;&gt;
++                                        &lt;cstring&gt;rbTimeStepper&lt;/cstring&gt;
++                                    &lt;/property&gt;
++                                    &lt;property name=&quot;enabled&quot;&gt;
++                                        &lt;bool&gt;true&lt;/bool&gt;
++                                    &lt;/property&gt;
++                                    &lt;property name=&quot;geometry&quot;&gt;
++                                        &lt;rect&gt;
++                                            &lt;x&gt;10&lt;/x&gt;
++                                            &lt;y&gt;20&lt;/y&gt;
++                                            &lt;width&gt;116&lt;/width&gt;
++                                            &lt;height&gt;25&lt;/height&gt;
++                                        &lt;/rect&gt;
++                                    &lt;/property&gt;
++                                    &lt;property name=&quot;text&quot;&gt;
++                                        &lt;string&gt;Time stepper&lt;/string&gt;
++                                    &lt;/property&gt;
++                                    &lt;property name=&quot;buttonGroupId&quot;&gt;
++                                        &lt;number&gt;0&lt;/number&gt;
++                                    &lt;/property&gt;
++                                &lt;/widget&gt;
++                                &lt;widget class=&quot;QRadioButton&quot;&gt;
++                                    &lt;property name=&quot;name&quot;&gt;
++                                        &lt;cstring&gt;rbFixed&lt;/cstring&gt;
++                                    &lt;/property&gt;
++                                    &lt;property name=&quot;enabled&quot;&gt;
++                                        &lt;bool&gt;true&lt;/bool&gt;
++                                    &lt;/property&gt;
++                                    &lt;property name=&quot;geometry&quot;&gt;
++                                        &lt;rect&gt;
++                                            &lt;x&gt;10&lt;/x&gt;
++                                            &lt;y&gt;50&lt;/y&gt;
++                                            &lt;width&gt;116&lt;/width&gt;
++                                            &lt;height&gt;25&lt;/height&gt;
++                                        &lt;/rect&gt;
++                                    &lt;/property&gt;
++                                    &lt;property name=&quot;text&quot;&gt;
++                                        &lt;string&gt;Fixed step&lt;/string&gt;
++                                    &lt;/property&gt;
++                                    &lt;property name=&quot;buttonGroupId&quot;&gt;
++                                        &lt;number&gt;2&lt;/number&gt;
++                                    &lt;/property&gt;
++                                &lt;/widget&gt;
++                            &lt;/widget&gt;
++                            &lt;widget class=&quot;QFrame&quot; row=&quot;2&quot; column=&quot;0&quot; rowspan=&quot;1&quot; colspan=&quot;2&quot;&gt;
++                                &lt;property name=&quot;name&quot;&gt;
++                                    &lt;cstring&gt;frame5&lt;/cstring&gt;
++                                &lt;/property&gt;
++                                &lt;property name=&quot;sizePolicy&quot;&gt;
++                                    &lt;sizepolicy&gt;
++                                        &lt;hsizetype&gt;7&lt;/hsizetype&gt;
++                                        &lt;vsizetype&gt;3&lt;/vsizetype&gt;
++                                        &lt;horstretch&gt;0&lt;/horstretch&gt;
++                                        &lt;verstretch&gt;2&lt;/verstretch&gt;
++                                    &lt;/sizepolicy&gt;
++                                &lt;/property&gt;
++                                &lt;property name=&quot;frameShape&quot;&gt;
++                                    &lt;enum&gt;StyledPanel&lt;/enum&gt;
++                                &lt;/property&gt;
++                                &lt;property name=&quot;frameShadow&quot;&gt;
++                                    &lt;enum&gt;Raised&lt;/enum&gt;
++                                &lt;/property&gt;
++                                &lt;vbox&gt;
++                                    &lt;property name=&quot;name&quot;&gt;
++                                        &lt;cstring&gt;unnamed&lt;/cstring&gt;
++                                    &lt;/property&gt;
++                                    &lt;property name=&quot;margin&quot;&gt;
++                                        &lt;number&gt;0&lt;/number&gt;
++                                    &lt;/property&gt;
++                                    &lt;widget class=&quot;QLayoutWidget&quot;&gt;
++                                        &lt;property name=&quot;name&quot;&gt;
++                                            &lt;cstring&gt;layout1&lt;/cstring&gt;
++                                        &lt;/property&gt;
++                                        &lt;hbox&gt;
++                                            &lt;property name=&quot;name&quot;&gt;
++                                                &lt;cstring&gt;unnamed&lt;/cstring&gt;
++                                            &lt;/property&gt;
++                                            &lt;widget class=&quot;QPushButton&quot;&gt;
++                                                &lt;property name=&quot;name&quot;&gt;
++                                                    &lt;cstring&gt;pbStartSimulation&lt;/cstring&gt;
++                                                &lt;/property&gt;
++                                                &lt;property name=&quot;enabled&quot;&gt;
++                                                    &lt;bool&gt;false&lt;/bool&gt;
++                                                &lt;/property&gt;
++                                                &lt;property name=&quot;sizePolicy&quot;&gt;
++                                                    &lt;sizepolicy&gt;
++                                                        &lt;hsizetype&gt;3&lt;/hsizetype&gt;
++                                                        &lt;vsizetype&gt;7&lt;/vsizetype&gt;
++                                                        &lt;horstretch&gt;0&lt;/horstretch&gt;
++                                                        &lt;verstretch&gt;0&lt;/verstretch&gt;
++                                                    &lt;/sizepolicy&gt;
++                                                &lt;/property&gt;
++                                                &lt;property name=&quot;minimumSize&quot;&gt;
++                                                    &lt;size&gt;
++                                                        &lt;width&gt;0&lt;/width&gt;
++                                                        &lt;height&gt;25&lt;/height&gt;
++                                                    &lt;/size&gt;
++                                                &lt;/property&gt;
++                                                &lt;property name=&quot;text&quot;&gt;
++                                                    &lt;string&gt;&lt;/string&gt;
++                                                &lt;/property&gt;
++                                                &lt;property name=&quot;pixmap&quot;&gt;
++                                                    &lt;pixmap&gt;image0&lt;/pixmap&gt;
++                                                &lt;/property&gt;
++                                            &lt;/widget&gt;
++                                            &lt;widget class=&quot;QPushButton&quot;&gt;
++                                                &lt;property name=&quot;name&quot;&gt;
++                                                    &lt;cstring&gt;pbStopSimulation&lt;/cstring&gt;
++                                                &lt;/property&gt;
++                                                &lt;property name=&quot;enabled&quot;&gt;
++                                                    &lt;bool&gt;false&lt;/bool&gt;
++                                                &lt;/property&gt;
++                                                &lt;property name=&quot;sizePolicy&quot;&gt;
++                                                    &lt;sizepolicy&gt;
++                                                        &lt;hsizetype&gt;7&lt;/hsizetype&gt;
++                                                        &lt;vsizetype&gt;7&lt;/vsizetype&gt;
++                                                        &lt;horstretch&gt;0&lt;/horstretch&gt;
++                                                        &lt;verstretch&gt;0&lt;/verstretch&gt;
++                                                    &lt;/sizepolicy&gt;
++                                                &lt;/property&gt;
++                                                &lt;property name=&quot;text&quot;&gt;
++                                                    &lt;string&gt;&lt;/string&gt;
++                                                &lt;/property&gt;
++                                                &lt;property name=&quot;pixmap&quot;&gt;
++                                                    &lt;pixmap&gt;image1&lt;/pixmap&gt;
++                                                &lt;/property&gt;
++                                            &lt;/widget&gt;
++                                        &lt;/hbox&gt;
++                                    &lt;/widget&gt;
++                                    &lt;widget class=&quot;QLayoutWidget&quot;&gt;
++                                        &lt;property name=&quot;name&quot;&gt;
++                                            &lt;cstring&gt;layout2&lt;/cstring&gt;
++                                        &lt;/property&gt;
++                                        &lt;hbox&gt;
++                                            &lt;property name=&quot;name&quot;&gt;
++                                                &lt;cstring&gt;unnamed&lt;/cstring&gt;
++                                            &lt;/property&gt;
++                                            &lt;widget class=&quot;QPushButton&quot;&gt;
++                                                &lt;property name=&quot;name&quot;&gt;
++                                                    &lt;cstring&gt;pbOneSimulationStep&lt;/cstring&gt;
++                                                &lt;/property&gt;
++                                                &lt;property name=&quot;enabled&quot;&gt;
++                                                    &lt;bool&gt;false&lt;/bool&gt;
++                                                &lt;/property&gt;
++                                                &lt;property name=&quot;sizePolicy&quot;&gt;
++                                                    &lt;sizepolicy&gt;
++                                                        &lt;hsizetype&gt;7&lt;/hsizetype&gt;
++                                                        &lt;vsizetype&gt;7&lt;/vsizetype&gt;
++                                                        &lt;horstretch&gt;1&lt;/horstretch&gt;
++                                                        &lt;verstretch&gt;0&lt;/verstretch&gt;
++                                                    &lt;/sizepolicy&gt;
++                                                &lt;/property&gt;
++                                                &lt;property name=&quot;minimumSize&quot;&gt;
++                                                    &lt;size&gt;
++                                                        &lt;width&gt;0&lt;/width&gt;
++                                                        &lt;height&gt;25&lt;/height&gt;
++                                                    &lt;/size&gt;
++                                                &lt;/property&gt;
++                                                &lt;property name=&quot;text&quot;&gt;
++                                                    &lt;string&gt;&lt;/string&gt;
++                                                &lt;/property&gt;
++                                                &lt;property name=&quot;pixmap&quot;&gt;
++                                                    &lt;pixmap&gt;image2&lt;/pixmap&gt;
++                                                &lt;/property&gt;
++                                            &lt;/widget&gt;
++                                            &lt;widget class=&quot;QPushButton&quot;&gt;
++                                                &lt;property name=&quot;name&quot;&gt;
++                                                    &lt;cstring&gt;pbResetSimulation&lt;/cstring&gt;
++                                                &lt;/property&gt;
++                                                &lt;property name=&quot;enabled&quot;&gt;
++                                                    &lt;bool&gt;false&lt;/bool&gt;
++                                                &lt;/property&gt;
++                                                &lt;property name=&quot;sizePolicy&quot;&gt;
++                                                    &lt;sizepolicy&gt;
++                                                        &lt;hsizetype&gt;3&lt;/hsizetype&gt;
++                                                        &lt;vsizetype&gt;7&lt;/vsizetype&gt;
++                                                        &lt;horstretch&gt;2&lt;/horstretch&gt;
++                                                        &lt;verstretch&gt;0&lt;/verstretch&gt;
++                                                    &lt;/sizepolicy&gt;
++                                                &lt;/property&gt;
++                                                &lt;property name=&quot;text&quot;&gt;
++                                                    &lt;string&gt;&lt;/string&gt;
++                                                &lt;/property&gt;
++                                                &lt;property name=&quot;pixmap&quot;&gt;
++                                                    &lt;pixmap&gt;image3&lt;/pixmap&gt;
++                                                &lt;/property&gt;
++                                                &lt;property name=&quot;toolTip&quot; stdset=&quot;0&quot;&gt;
++                                                    &lt;string&gt;Note: currently using synchronized display can *sometimes* lead to crash when reloading file.&lt;/string&gt;
++                                                &lt;/property&gt;
++                                            &lt;/widget&gt;
++                                        &lt;/hbox&gt;
++                                    &lt;/widget&gt;
++                                &lt;/vbox&gt;
++                            &lt;/widget&gt;
++                            &lt;widget class=&quot;QPushButton&quot; row=&quot;0&quot; column=&quot;1&quot;&gt;
++                                &lt;property name=&quot;name&quot;&gt;
++                                    &lt;cstring&gt;pbSaveSimulation&lt;/cstring&gt;
++                                &lt;/property&gt;
++                                &lt;property name=&quot;sizePolicy&quot;&gt;
++                                    &lt;sizepolicy&gt;
++                                        &lt;hsizetype&gt;3&lt;/hsizetype&gt;
++                                        &lt;vsizetype&gt;0&lt;/vsizetype&gt;
++                                        &lt;horstretch&gt;0&lt;/horstretch&gt;
++                                        &lt;verstretch&gt;0&lt;/verstretch&gt;
++                                    &lt;/sizepolicy&gt;
++                                &lt;/property&gt;
++                                &lt;property name=&quot;text&quot;&gt;
++                                    &lt;string&gt;Save&lt;/string&gt;
++                                &lt;/property&gt;
++                            &lt;/widget&gt;
++                            &lt;widget class=&quot;QLabel&quot; row=&quot;1&quot; column=&quot;0&quot; rowspan=&quot;1&quot; colspan=&quot;2&quot;&gt;
++                                &lt;property name=&quot;name&quot;&gt;
++                                    &lt;cstring&gt;tlCurrentSimulation&lt;/cstring&gt;
++                                &lt;/property&gt;
++                                &lt;property name=&quot;sizePolicy&quot;&gt;
++                                    &lt;sizepolicy&gt;
++                                        &lt;hsizetype&gt;7&lt;/hsizetype&gt;
++                                        &lt;vsizetype&gt;0&lt;/vsizetype&gt;
++                                        &lt;horstretch&gt;0&lt;/horstretch&gt;
++                                        &lt;verstretch&gt;0&lt;/verstretch&gt;
++                                    &lt;/sizepolicy&gt;
++                                &lt;/property&gt;
++                                &lt;property name=&quot;text&quot;&gt;
++                                    &lt;string&gt;...&lt;/string&gt;
++                                &lt;/property&gt;
++                                &lt;property name=&quot;alignment&quot;&gt;
++                                    &lt;set&gt;AlignCenter&lt;/set&gt;
++                                &lt;/property&gt;
++                            &lt;/widget&gt;
++                        &lt;/grid&gt;
++                    &lt;/widget&gt;
++                    &lt;widget class=&quot;QWidget&quot;&gt;
++                        &lt;property name=&quot;name&quot;&gt;
++                            &lt;cstring&gt;tab&lt;/cstring&gt;
++                        &lt;/property&gt;
++                        &lt;attribute name=&quot;title&quot;&gt;
++                            &lt;string&gt;Display&lt;/string&gt;
++                        &lt;/attribute&gt;
++                        &lt;grid&gt;
++                            &lt;property name=&quot;name&quot;&gt;
++                                &lt;cstring&gt;unnamed&lt;/cstring&gt;
++                            &lt;/property&gt;
++                            &lt;widget class=&quot;QLabel&quot; row=&quot;3&quot; column=&quot;0&quot;&gt;
++                                &lt;property name=&quot;name&quot;&gt;
++                                    &lt;cstring&gt;textLabel1&lt;/cstring&gt;
++                                &lt;/property&gt;
++                                &lt;property name=&quot;text&quot;&gt;
++                                    &lt;string&gt;Refresh [ms]&lt;/string&gt;
++                                &lt;/property&gt;
++                                &lt;property name=&quot;toolTip&quot; stdset=&quot;0&quot;&gt;
++                                    &lt;string&gt;How often you wish the display to refresh.&lt;/string&gt;
++                                &lt;/property&gt;
++                            &lt;/widget&gt;
++                            &lt;widget class=&quot;QSpinBox&quot; row=&quot;3&quot; column=&quot;1&quot;&gt;
++                                &lt;property name=&quot;name&quot;&gt;
++                                    &lt;cstring&gt;sbRefreshTime&lt;/cstring&gt;
++                                &lt;/property&gt;
++                                &lt;property name=&quot;sizePolicy&quot;&gt;
++                                    &lt;sizepolicy&gt;
++                                        &lt;hsizetype&gt;0&lt;/hsizetype&gt;
++                                        &lt;vsizetype&gt;0&lt;/vsizetype&gt;
++                                        &lt;horstretch&gt;0&lt;/horstretch&gt;
++                                        &lt;verstretch&gt;0&lt;/verstretch&gt;
++                                    &lt;/sizepolicy&gt;
++                                &lt;/property&gt;
++                                &lt;property name=&quot;minimumSize&quot;&gt;
++                                    &lt;size&gt;
++                                        &lt;width&gt;50&lt;/width&gt;
++                                        &lt;height&gt;0&lt;/height&gt;
++                                    &lt;/size&gt;
++                                &lt;/property&gt;
++                                &lt;property name=&quot;maxValue&quot;&gt;
++                                    &lt;number&gt;600000&lt;/number&gt;
++                                &lt;/property&gt;
++                                &lt;property name=&quot;value&quot;&gt;
++                                    &lt;number&gt;20&lt;/number&gt;
++                                &lt;/property&gt;
++                                &lt;property name=&quot;toolTip&quot; stdset=&quot;0&quot;&gt;
++                                    &lt;string&gt;How often you wish the display to refresh.&lt;/string&gt;
++                                &lt;/property&gt;
++                            &lt;/widget&gt;
++                            &lt;widget class=&quot;QPushButton&quot; row=&quot;1&quot; column=&quot;0&quot; rowspan=&quot;1&quot; colspan=&quot;3&quot;&gt;
++                                &lt;property name=&quot;name&quot;&gt;
++                                    &lt;cstring&gt;pbApply&lt;/cstring&gt;
++                                &lt;/property&gt;
++                                &lt;property name=&quot;sizePolicy&quot;&gt;
++                                    &lt;sizepolicy&gt;
++                                        &lt;hsizetype&gt;3&lt;/hsizetype&gt;
++                                        &lt;vsizetype&gt;1&lt;/vsizetype&gt;
++                                        &lt;horstretch&gt;0&lt;/horstretch&gt;
++                                        &lt;verstretch&gt;0&lt;/verstretch&gt;
++                                    &lt;/sizepolicy&gt;
++                                &lt;/property&gt;
++                                &lt;property name=&quot;minimumSize&quot;&gt;
++                                    &lt;size&gt;
++                                        &lt;width&gt;0&lt;/width&gt;
++                                        &lt;height&gt;0&lt;/height&gt;
++                                    &lt;/size&gt;
++                                &lt;/property&gt;
++                                &lt;property name=&quot;text&quot;&gt;
++                                    &lt;string&gt;Apply&lt;/string&gt;
++                                &lt;/property&gt;
++                            &lt;/widget&gt;
++                            &lt;widget class=&quot;QCheckBox&quot; row=&quot;2&quot; column=&quot;0&quot; rowspan=&quot;1&quot; colspan=&quot;2&quot;&gt;
++                                &lt;property name=&quot;name&quot;&gt;
++                                    &lt;cstring&gt;checkBox1&lt;/cstring&gt;
++                                &lt;/property&gt;
++                                &lt;property name=&quot;text&quot;&gt;
++                                    &lt;string&gt;sync.display&lt;/string&gt;
++                                &lt;/property&gt;
++                                &lt;property name=&quot;toolTip&quot; stdset=&quot;0&quot;&gt;
++                                    &lt;string&gt;Not synchronized: one processor for calculation, another for display. Synchronized can sometimes crash - yet to be fixed.&lt;/string&gt;
++                                &lt;/property&gt;
++                            &lt;/widget&gt;
++                            &lt;widget class=&quot;QPushButton&quot; row=&quot;3&quot; column=&quot;2&quot;&gt;
++                                &lt;property name=&quot;name&quot;&gt;
++                                    &lt;cstring&gt;pushButton10&lt;/cstring&gt;
++                                &lt;/property&gt;
++                                &lt;property name=&quot;sizePolicy&quot;&gt;
++                                    &lt;sizepolicy&gt;
++                                        &lt;hsizetype&gt;0&lt;/hsizetype&gt;
++                                        &lt;vsizetype&gt;0&lt;/vsizetype&gt;
++                                        &lt;horstretch&gt;0&lt;/horstretch&gt;
++                                        &lt;verstretch&gt;0&lt;/verstretch&gt;
++                                    &lt;/sizepolicy&gt;
++                                &lt;/property&gt;
++                                &lt;property name=&quot;minimumSize&quot;&gt;
++                                    &lt;size&gt;
++                                        &lt;width&gt;20&lt;/width&gt;
++                                        &lt;height&gt;25&lt;/height&gt;
++                                    &lt;/size&gt;
++                                &lt;/property&gt;
++                                &lt;property name=&quot;maximumSize&quot;&gt;
++                                    &lt;size&gt;
++                                        &lt;width&gt;20&lt;/width&gt;
++                                        &lt;height&gt;25&lt;/height&gt;
++                                    &lt;/size&gt;
++                                &lt;/property&gt;
++                                &lt;property name=&quot;text&quot;&gt;
++                                    &lt;string&gt;&lt;/string&gt;
++                                &lt;/property&gt;
++                                &lt;property name=&quot;pixmap&quot;&gt;
++                                    &lt;pixmap&gt;image4&lt;/pixmap&gt;
++                                &lt;/property&gt;
++                            &lt;/widget&gt;
++                            &lt;widget class=&quot;QFrame&quot; row=&quot;0&quot; column=&quot;0&quot; rowspan=&quot;1&quot; colspan=&quot;3&quot;&gt;
++                                &lt;property name=&quot;name&quot;&gt;
++                                    &lt;cstring&gt;scrollViewOutsideFrame&lt;/cstring&gt;
++                                &lt;/property&gt;
++                                &lt;property name=&quot;sizePolicy&quot;&gt;
++                                    &lt;sizepolicy&gt;
++                                        &lt;hsizetype&gt;1&lt;/hsizetype&gt;
++                                        &lt;vsizetype&gt;3&lt;/vsizetype&gt;
++                                        &lt;horstretch&gt;0&lt;/horstretch&gt;
++                                        &lt;verstretch&gt;5&lt;/verstretch&gt;
++                                    &lt;/sizepolicy&gt;
++                                &lt;/property&gt;
++                                &lt;property name=&quot;frameShape&quot;&gt;
++                                    &lt;enum&gt;NoFrame&lt;/enum&gt;
++                                &lt;/property&gt;
++                                &lt;property name=&quot;frameShadow&quot;&gt;
++                                    &lt;enum&gt;Raised&lt;/enum&gt;
++                                &lt;/property&gt;
++                            &lt;/widget&gt;
++                        &lt;/grid&gt;
++                    &lt;/widget&gt;
++                &lt;/widget&gt;
++                &lt;widget class=&quot;QLayoutWidget&quot; row=&quot;0&quot; column=&quot;0&quot;&gt;
++                    &lt;property name=&quot;name&quot;&gt;
++                        &lt;cstring&gt;layout9&lt;/cstring&gt;
+                     &lt;/property&gt;
++                    &lt;vbox&gt;
++                        &lt;property name=&quot;name&quot;&gt;
++                            &lt;cstring&gt;unnamed&lt;/cstring&gt;
++                        &lt;/property&gt;
++                        &lt;property name=&quot;spacing&quot;&gt;
++                            &lt;number&gt;0&lt;/number&gt;
++                        &lt;/property&gt;
++                        &lt;widget class=&quot;QLabel&quot;&gt;
++                            &lt;property name=&quot;name&quot;&gt;
++                                &lt;cstring&gt;labelRealTime&lt;/cstring&gt;
++                            &lt;/property&gt;
++                            &lt;property name=&quot;sizePolicy&quot;&gt;
++                                &lt;sizepolicy&gt;
++                                    &lt;hsizetype&gt;5&lt;/hsizetype&gt;
++                                    &lt;vsizetype&gt;0&lt;/vsizetype&gt;
++                                    &lt;horstretch&gt;0&lt;/horstretch&gt;
++                                    &lt;verstretch&gt;0&lt;/verstretch&gt;
++                                &lt;/sizepolicy&gt;
++                            &lt;/property&gt;
++                            &lt;property name=&quot;text&quot;&gt;
++                                &lt;string&gt;real 0:00:00.000&lt;/string&gt;
++                            &lt;/property&gt;
++                        &lt;/widget&gt;
++                        &lt;widget class=&quot;QLabel&quot;&gt;
++                            &lt;property name=&quot;name&quot;&gt;
++                                &lt;cstring&gt;labelSimulTime&lt;/cstring&gt;
++                            &lt;/property&gt;
++                            &lt;property name=&quot;sizePolicy&quot;&gt;
++                                &lt;sizepolicy&gt;
++                                    &lt;hsizetype&gt;5&lt;/hsizetype&gt;
++                                    &lt;vsizetype&gt;0&lt;/vsizetype&gt;
++                                    &lt;horstretch&gt;0&lt;/horstretch&gt;
++                                    &lt;verstretch&gt;0&lt;/verstretch&gt;
++                                &lt;/sizepolicy&gt;
++                            &lt;/property&gt;
++                            &lt;property name=&quot;text&quot;&gt;
++                                &lt;string&gt;virt 00:000.000m000u000n&lt;/string&gt;
++                            &lt;/property&gt;
++                        &lt;/widget&gt;
++                        &lt;widget class=&quot;QLabel&quot;&gt;
++                            &lt;property name=&quot;name&quot;&gt;
++                                &lt;cstring&gt;labelIter&lt;/cstring&gt;
++                            &lt;/property&gt;
++                            &lt;property name=&quot;sizePolicy&quot;&gt;
++                                &lt;sizepolicy&gt;
++                                    &lt;hsizetype&gt;5&lt;/hsizetype&gt;
++                                    &lt;vsizetype&gt;0&lt;/vsizetype&gt;
++                                    &lt;horstretch&gt;0&lt;/horstretch&gt;
++                                    &lt;verstretch&gt;0&lt;/verstretch&gt;
++                                &lt;/sizepolicy&gt;
++                            &lt;/property&gt;
++                            &lt;property name=&quot;text&quot;&gt;
++                                &lt;string&gt;iter #0, 0/s&lt;/string&gt;
++                            &lt;/property&gt;
++                        &lt;/widget&gt;
++                        &lt;widget class=&quot;QLabel&quot;&gt;
++                            &lt;property name=&quot;name&quot;&gt;
++                                &lt;cstring&gt;labelStep&lt;/cstring&gt;
++                            &lt;/property&gt;
++                            &lt;property name=&quot;sizePolicy&quot;&gt;
++                                &lt;sizepolicy&gt;
++                                    &lt;hsizetype&gt;5&lt;/hsizetype&gt;
++                                    &lt;vsizetype&gt;0&lt;/vsizetype&gt;
++                                    &lt;horstretch&gt;0&lt;/horstretch&gt;
++                                    &lt;verstretch&gt;0&lt;/verstretch&gt;
++                                &lt;/sizepolicy&gt;
++                            &lt;/property&gt;
++                            &lt;property name=&quot;text&quot;&gt;
++                                &lt;string&gt;step 4e-3&lt;/string&gt;
++                            &lt;/property&gt;
++                        &lt;/widget&gt;
++                    &lt;/vbox&gt;
+                 &lt;/widget&gt;
+-                &lt;widget class=&quot;QRadioButton&quot;&gt;
++                &lt;widget class=&quot;QLayoutWidget&quot; row=&quot;2&quot; column=&quot;0&quot;&gt;
+                     &lt;property name=&quot;name&quot;&gt;
+-                        &lt;cstring&gt;rbTimeStepper&lt;/cstring&gt;
++                        &lt;cstring&gt;layout5&lt;/cstring&gt;
+                     &lt;/property&gt;
+-                    &lt;property name=&quot;enabled&quot;&gt;
+-                        &lt;bool&gt;true&lt;/bool&gt;
+-                    &lt;/property&gt;
+-                    &lt;property name=&quot;geometry&quot;&gt;
+-                        &lt;rect&gt;
+-                            &lt;x&gt;10&lt;/x&gt;
+-                            &lt;y&gt;20&lt;/y&gt;
+-                            &lt;width&gt;116&lt;/width&gt;
+-                            &lt;height&gt;25&lt;/height&gt;
+-                        &lt;/rect&gt;
+-                    &lt;/property&gt;
+-                    &lt;property name=&quot;text&quot;&gt;
+-                        &lt;string&gt;Time stepper&lt;/string&gt;
+-                    &lt;/property&gt;
+-                    &lt;property name=&quot;buttonGroupId&quot;&gt;
+-                        &lt;number&gt;0&lt;/number&gt;
+-                    &lt;/property&gt;
++                    &lt;hbox&gt;
++                        &lt;property name=&quot;name&quot;&gt;
++                            &lt;cstring&gt;unnamed&lt;/cstring&gt;
++                        &lt;/property&gt;
++                        &lt;widget class=&quot;QPushButton&quot;&gt;
++                            &lt;property name=&quot;name&quot;&gt;
++                                &lt;cstring&gt;pbNewView_2&lt;/cstring&gt;
++                            &lt;/property&gt;
++                            &lt;property name=&quot;enabled&quot;&gt;
++                                &lt;bool&gt;true&lt;/bool&gt;
++                            &lt;/property&gt;
++                            &lt;property name=&quot;sizePolicy&quot;&gt;
++                                &lt;sizepolicy&gt;
++                                    &lt;hsizetype&gt;0&lt;/hsizetype&gt;
++                                    &lt;vsizetype&gt;0&lt;/vsizetype&gt;
++                                    &lt;horstretch&gt;0&lt;/horstretch&gt;
++                                    &lt;verstretch&gt;0&lt;/verstretch&gt;
++                                &lt;/sizepolicy&gt;
++                            &lt;/property&gt;
++                            &lt;property name=&quot;text&quot;&gt;
++                                &lt;string&gt;New 3D&lt;/string&gt;
++                            &lt;/property&gt;
++                        &lt;/widget&gt;
++                        &lt;widget class=&quot;QPushButton&quot;&gt;
++                            &lt;property name=&quot;name&quot;&gt;
++                                &lt;cstring&gt;pbCenterScene_2&lt;/cstring&gt;
++                            &lt;/property&gt;
++                            &lt;property name=&quot;sizePolicy&quot;&gt;
++                                &lt;sizepolicy&gt;
++                                    &lt;hsizetype&gt;0&lt;/hsizetype&gt;
++                                    &lt;vsizetype&gt;0&lt;/vsizetype&gt;
++                                    &lt;horstretch&gt;0&lt;/horstretch&gt;
++                                    &lt;verstretch&gt;0&lt;/verstretch&gt;
++                                &lt;/sizepolicy&gt;
++                            &lt;/property&gt;
++                            &lt;property name=&quot;text&quot;&gt;
++                                &lt;string&gt;Center all&lt;/string&gt;
++                            &lt;/property&gt;
++                        &lt;/widget&gt;
++                    &lt;/hbox&gt;
+                 &lt;/widget&gt;
+-            &lt;/widget&gt;
++            &lt;/grid&gt;
+         &lt;/widget&gt;
+-        &lt;widget class=&quot;QWidget&quot;&gt;
+-            &lt;property name=&quot;name&quot;&gt;
+-                &lt;cstring&gt;tab&lt;/cstring&gt;
+-            &lt;/property&gt;
+-            &lt;attribute name=&quot;title&quot;&gt;
+-                &lt;string&gt;Display&lt;/string&gt;
+-            &lt;/attribute&gt;
+-            &lt;widget class=&quot;QLabel&quot;&gt;
+-                &lt;property name=&quot;name&quot;&gt;
+-                    &lt;cstring&gt;textLabel1&lt;/cstring&gt;
+-                &lt;/property&gt;
+-                &lt;property name=&quot;geometry&quot;&gt;
+-                    &lt;rect&gt;
+-                        &lt;x&gt;10&lt;/x&gt;
+-                        &lt;y&gt;270&lt;/y&gt;
+-                        &lt;width&gt;103&lt;/width&gt;
+-                        &lt;height&gt;25&lt;/height&gt;
+-                    &lt;/rect&gt;
+-                &lt;/property&gt;
+-                &lt;property name=&quot;text&quot;&gt;
+-                    &lt;string&gt;Refresh [ms]&lt;/string&gt;
+-                &lt;/property&gt;
+-                &lt;property name=&quot;toolTip&quot; stdset=&quot;0&quot;&gt;
+-                    &lt;string&gt;How often you wish the display to refresh.&lt;/string&gt;
+-                &lt;/property&gt;
+-            &lt;/widget&gt;
+-            &lt;widget class=&quot;QSpinBox&quot;&gt;
+-                &lt;property name=&quot;name&quot;&gt;
+-                    &lt;cstring&gt;spinBox6&lt;/cstring&gt;
+-                &lt;/property&gt;
+-                &lt;property name=&quot;geometry&quot;&gt;
+-                    &lt;rect&gt;
+-                        &lt;x&gt;110&lt;/x&gt;
+-                        &lt;y&gt;270&lt;/y&gt;
+-                        &lt;width&gt;50&lt;/width&gt;
+-                        &lt;height&gt;25&lt;/height&gt;
+-                    &lt;/rect&gt;
+-                &lt;/property&gt;
+-                &lt;property name=&quot;sizePolicy&quot;&gt;
+-                    &lt;sizepolicy&gt;
+-                        &lt;hsizetype&gt;0&lt;/hsizetype&gt;
+-                        &lt;vsizetype&gt;0&lt;/vsizetype&gt;
+-                        &lt;horstretch&gt;0&lt;/horstretch&gt;
+-                        &lt;verstretch&gt;0&lt;/verstretch&gt;
+-                    &lt;/sizepolicy&gt;
+-                &lt;/property&gt;
+-                &lt;property name=&quot;minimumSize&quot;&gt;
+-                    &lt;size&gt;
+-                        &lt;width&gt;50&lt;/width&gt;
+-                        &lt;height&gt;0&lt;/height&gt;
+-                    &lt;/size&gt;
+-                &lt;/property&gt;
+-                &lt;property name=&quot;maxValue&quot;&gt;
+-                    &lt;number&gt;600000&lt;/number&gt;
+-                &lt;/property&gt;
+-                &lt;property name=&quot;value&quot;&gt;
+-                    &lt;number&gt;20&lt;/number&gt;
+-                &lt;/property&gt;
+-                &lt;property name=&quot;toolTip&quot; stdset=&quot;0&quot;&gt;
+-                    &lt;string&gt;How often you wish the display to refresh.&lt;/string&gt;
+-                &lt;/property&gt;
+-            &lt;/widget&gt;
+-            &lt;widget class=&quot;QCheckBox&quot;&gt;
+-                &lt;property name=&quot;name&quot;&gt;
+-                    &lt;cstring&gt;checkBox1&lt;/cstring&gt;
+-                &lt;/property&gt;
+-                &lt;property name=&quot;geometry&quot;&gt;
+-                    &lt;rect&gt;
+-                        &lt;x&gt;10&lt;/x&gt;
+-                        &lt;y&gt;240&lt;/y&gt;
+-                        &lt;width&gt;110&lt;/width&gt;
+-                        &lt;height&gt;25&lt;/height&gt;
+-                    &lt;/rect&gt;
+-                &lt;/property&gt;
+-                &lt;property name=&quot;text&quot;&gt;
+-                    &lt;string&gt;sync.display&lt;/string&gt;
+-                &lt;/property&gt;
+-                &lt;property name=&quot;toolTip&quot; stdset=&quot;0&quot;&gt;
+-                    &lt;string&gt;Not synchronized: one processor for calculation, another for display. Synchronized can sometimes crash - yet to be fixed.&lt;/string&gt;
+-                &lt;/property&gt;
+-            &lt;/widget&gt;
+-            &lt;widget class=&quot;QPushButton&quot;&gt;
+-                &lt;property name=&quot;name&quot;&gt;
+-                    &lt;cstring&gt;pbApply&lt;/cstring&gt;
+-                &lt;/property&gt;
+-                &lt;property name=&quot;geometry&quot;&gt;
+-                    &lt;rect&gt;
+-                        &lt;x&gt;10&lt;/x&gt;
+-                        &lt;y&gt;210&lt;/y&gt;
+-                        &lt;width&gt;190&lt;/width&gt;
+-                        &lt;height&gt;33&lt;/height&gt;
+-                    &lt;/rect&gt;
+-                &lt;/property&gt;
+-                &lt;property name=&quot;sizePolicy&quot;&gt;
+-                    &lt;sizepolicy&gt;
+-                        &lt;hsizetype&gt;5&lt;/hsizetype&gt;
+-                        &lt;vsizetype&gt;1&lt;/vsizetype&gt;
+-                        &lt;horstretch&gt;0&lt;/horstretch&gt;
+-                        &lt;verstretch&gt;0&lt;/verstretch&gt;
+-                    &lt;/sizepolicy&gt;
+-                &lt;/property&gt;
+-                &lt;property name=&quot;minimumSize&quot;&gt;
+-                    &lt;size&gt;
+-                        &lt;width&gt;0&lt;/width&gt;
+-                        &lt;height&gt;0&lt;/height&gt;
+-                    &lt;/size&gt;
+-                &lt;/property&gt;
+-                &lt;property name=&quot;text&quot;&gt;
+-                    &lt;string&gt;Apply&lt;/string&gt;
+-                &lt;/property&gt;
+-            &lt;/widget&gt;
+-            &lt;widget class=&quot;QPushButton&quot;&gt;
+-                &lt;property name=&quot;name&quot;&gt;
+-                    &lt;cstring&gt;pbNewView&lt;/cstring&gt;
+-                &lt;/property&gt;
+-                &lt;property name=&quot;enabled&quot;&gt;
+-                    &lt;bool&gt;true&lt;/bool&gt;
+-                &lt;/property&gt;
+-                &lt;property name=&quot;geometry&quot;&gt;
+-                    &lt;rect&gt;
+-                        &lt;x&gt;10&lt;/x&gt;
+-                        &lt;y&gt;340&lt;/y&gt;
+-                        &lt;width&gt;150&lt;/width&gt;
+-                        &lt;height&gt;33&lt;/height&gt;
+-                    &lt;/rect&gt;
+-                &lt;/property&gt;
+-                &lt;property name=&quot;sizePolicy&quot;&gt;
+-                    &lt;sizepolicy&gt;
+-                        &lt;hsizetype&gt;0&lt;/hsizetype&gt;
+-                        &lt;vsizetype&gt;0&lt;/vsizetype&gt;
+-                        &lt;horstretch&gt;0&lt;/horstretch&gt;
+-                        &lt;verstretch&gt;0&lt;/verstretch&gt;
+-                    &lt;/sizepolicy&gt;
+-                &lt;/property&gt;
+-                &lt;property name=&quot;text&quot;&gt;
+-                    &lt;string&gt;New View ...&lt;/string&gt;
+-                &lt;/property&gt;
+-            &lt;/widget&gt;
+-            &lt;widget class=&quot;QPushButton&quot;&gt;
+-                &lt;property name=&quot;name&quot;&gt;
+-                    &lt;cstring&gt;pbCenterScene&lt;/cstring&gt;
+-                &lt;/property&gt;
+-                &lt;property name=&quot;geometry&quot;&gt;
+-                    &lt;rect&gt;
+-                        &lt;x&gt;10&lt;/x&gt;
+-                        &lt;y&gt;300&lt;/y&gt;
+-                        &lt;width&gt;150&lt;/width&gt;
+-                        &lt;height&gt;33&lt;/height&gt;
+-                    &lt;/rect&gt;
+-                &lt;/property&gt;
+-                &lt;property name=&quot;sizePolicy&quot;&gt;
+-                    &lt;sizepolicy&gt;
+-                        &lt;hsizetype&gt;0&lt;/hsizetype&gt;
+-                        &lt;vsizetype&gt;0&lt;/vsizetype&gt;
+-                        &lt;horstretch&gt;0&lt;/horstretch&gt;
+-                        &lt;verstretch&gt;0&lt;/verstretch&gt;
+-                    &lt;/sizepolicy&gt;
+-                &lt;/property&gt;
+-                &lt;property name=&quot;text&quot;&gt;
+-                    &lt;string&gt;Center Scene&lt;/string&gt;
+-                &lt;/property&gt;
+-            &lt;/widget&gt;
+-            &lt;widget class=&quot;QPushButton&quot;&gt;
+-                &lt;property name=&quot;name&quot;&gt;
+-                    &lt;cstring&gt;pushButton10&lt;/cstring&gt;
+-                &lt;/property&gt;
+-                &lt;property name=&quot;geometry&quot;&gt;
+-                    &lt;rect&gt;
+-                        &lt;x&gt;170&lt;/x&gt;
+-                        &lt;y&gt;270&lt;/y&gt;
+-                        &lt;width&gt;20&lt;/width&gt;
+-                        &lt;height&gt;25&lt;/height&gt;
+-                    &lt;/rect&gt;
+-                &lt;/property&gt;
+-                &lt;property name=&quot;sizePolicy&quot;&gt;
+-                    &lt;sizepolicy&gt;
+-                        &lt;hsizetype&gt;0&lt;/hsizetype&gt;
+-                        &lt;vsizetype&gt;0&lt;/vsizetype&gt;
+-                        &lt;horstretch&gt;0&lt;/horstretch&gt;
+-                        &lt;verstretch&gt;0&lt;/verstretch&gt;
+-                    &lt;/sizepolicy&gt;
+-                &lt;/property&gt;
+-                &lt;property name=&quot;minimumSize&quot;&gt;
+-                    &lt;size&gt;
+-                        &lt;width&gt;20&lt;/width&gt;
+-                        &lt;height&gt;25&lt;/height&gt;
+-                    &lt;/size&gt;
+-                &lt;/property&gt;
+-                &lt;property name=&quot;maximumSize&quot;&gt;
+-                    &lt;size&gt;
+-                        &lt;width&gt;20&lt;/width&gt;
+-                        &lt;height&gt;25&lt;/height&gt;
+-                    &lt;/size&gt;
+-                &lt;/property&gt;
+-                &lt;property name=&quot;text&quot;&gt;
+-                    &lt;string&gt;&gt;&lt;/string&gt;
+-                &lt;/property&gt;
+-            &lt;/widget&gt;
+-            &lt;widget class=&quot;QFrame&quot;&gt;
+-                &lt;property name=&quot;name&quot;&gt;
+-                    &lt;cstring&gt;scrollViewOutsideFrame&lt;/cstring&gt;
+-                &lt;/property&gt;
+-                &lt;property name=&quot;geometry&quot;&gt;
+-                    &lt;rect&gt;
+-                        &lt;x&gt;0&lt;/x&gt;
+-                        &lt;y&gt;0&lt;/y&gt;
+-                        &lt;width&gt;290&lt;/width&gt;
+-                        &lt;height&gt;200&lt;/height&gt;
+-                    &lt;/rect&gt;
+-                &lt;/property&gt;
+-                &lt;property name=&quot;sizePolicy&quot;&gt;
+-                    &lt;sizepolicy&gt;
+-                        &lt;hsizetype&gt;1&lt;/hsizetype&gt;
+-                        &lt;vsizetype&gt;1&lt;/vsizetype&gt;
+-                        &lt;horstretch&gt;0&lt;/horstretch&gt;
+-                        &lt;verstretch&gt;0&lt;/verstretch&gt;
+-                    &lt;/sizepolicy&gt;
+-                &lt;/property&gt;
+-                &lt;property name=&quot;frameShape&quot;&gt;
+-                    &lt;enum&gt;NoFrame&lt;/enum&gt;
+-                &lt;/property&gt;
+-                &lt;property name=&quot;frameShadow&quot;&gt;
+-                    &lt;enum&gt;Raised&lt;/enum&gt;
+-                &lt;/property&gt;
+-            &lt;/widget&gt;
+-        &lt;/widget&gt;
+-    &lt;/widget&gt;
++    &lt;/grid&gt;
+ &lt;/widget&gt;
+ &lt;images&gt;
+     &lt;image name=&quot;image0&quot;&gt;
+@@ -689,15 +676,12 @@
+     &lt;image name=&quot;image3&quot;&gt;
+         &lt;data format=&quot;PNG&quot; length=&quot;210&quot;&gt;89504e470d0a1a0a0000000d4948445200000015000000150806000000a917a5960000009949444154388ded94bd0a0231108427e18ab1db67d1cef737e575f139b6733aaff0222182dc4f0a854b330cec928fafd890c70c0800014920b9bb479703045c0e92e8d1431e7337c2d2634fc2d243ebf4723d3fb1f2e5740f5f9d028f79744536c4d1689004a3bd88719a879767bd6fb44fa75b485ba7b1fe41d226d27aff4d7a383d9cfeb8d3c1e5301a4ade520a755f9268fa1fdfd31ec413524e89890537f1ed0000000049454e44ae426082&lt;/data&gt;
+     &lt;/image&gt;
++    &lt;image name=&quot;image4&quot;&gt;
++        &lt;data format=&quot;PNG&quot; length=&quot;160&quot;&gt;89504e470d0a1a0a0000000d4948445200000015000000150806000000a917a5960000006749444154388dadccd10d80300c03d1947118a1fbcb23b00e2c4013dbc9fd9ef4168098eecae6def73b8eba70893a3085aa308d2ab084b2b08c32b08556b08d66700b3dc16d1478d628fa07b6d01368a31968a11528a30c28a12c48a30a48a12a58a20e1811f101d3512a7c38fee1ac0000000049454e44ae426082&lt;/data&gt;
++    &lt;/image&gt;
+ &lt;/images&gt;
+ &lt;connections&gt;
+     &lt;connection&gt;
+-        &lt;sender&gt;pbNewView&lt;/sender&gt;
+-        &lt;signal&gt;clicked()&lt;/signal&gt;
+-        &lt;receiver&gt;QtGeneratedSimulationController&lt;/receiver&gt;
+-        &lt;slot&gt;pbNewViewClicked()&lt;/slot&gt;
+-    &lt;/connection&gt;
+-    &lt;connection&gt;
+         &lt;sender&gt;pbStartSimulation&lt;/sender&gt;
+         &lt;signal&gt;clicked()&lt;/signal&gt;
+         &lt;receiver&gt;QtGeneratedSimulationController&lt;/receiver&gt;
+@@ -722,12 +706,6 @@
+         &lt;slot&gt;pbApplyClicked()&lt;/slot&gt;
+     &lt;/connection&gt;
+     &lt;connection&gt;
+-        &lt;sender&gt;pbCenterScene&lt;/sender&gt;
+-        &lt;signal&gt;clicked()&lt;/signal&gt;
+-        &lt;receiver&gt;QtGeneratedSimulationController&lt;/receiver&gt;
+-        &lt;slot&gt;pbCenterSceneClicked()&lt;/slot&gt;
+-    &lt;/connection&gt;
+-    &lt;connection&gt;
+         &lt;sender&gt;pbOneSimulationStep&lt;/sender&gt;
+         &lt;signal&gt;clicked()&lt;/signal&gt;
+         &lt;receiver&gt;QtGeneratedSimulationController&lt;/receiver&gt;
+@@ -746,7 +724,7 @@
+         &lt;slot&gt;sb10PowerSecondValueChanged(int)&lt;/slot&gt;
+     &lt;/connection&gt;
+     &lt;connection&gt;
+-        &lt;sender&gt;spinBox6&lt;/sender&gt;
++        &lt;sender&gt;sbRefreshTime&lt;/sender&gt;
+         &lt;signal&gt;valueChanged(int)&lt;/signal&gt;
+         &lt;receiver&gt;QtGeneratedSimulationController&lt;/receiver&gt;
+         &lt;slot&gt;sbRefreshValueChanged(int)&lt;/slot&gt;
+
+Modified: trunk/gui/qt3/SimulationController.cpp
+===================================================================
+--- trunk/gui/qt3/SimulationController.cpp	2008-06-06 17:17:33 UTC (rev 1381)
++++ trunk/gui/qt3/SimulationController.cpp	2008-06-10 09:17:01 UTC (rev 1382)
+@@ -28,13 +28,20 @@
+ #		define FOREACH BOOST_FOREACH
+ #	endif
+ 
++CREATE_LOGGER(SimulationController);
+ 
+ using namespace boost;
++/* in sync mode:
++ * 	SimulationController::timerEvent handles both redraw (by calling YadeQtMainWindow::redrawAll(force=true) and spawning one simulation loop
++ *
++ * in async mode:
++ * 	YadeQtMainWindow::timerEvent is responsible for doing redraw (will not be done if in sync mode)
++ */
+ 
+ 
+ SimulationController::SimulationController(QWidget * parent) : QtGeneratedSimulationController(parent,&quot;SimulationController&quot;), iterPerSec_TTL_ms(1000)
+ {
+-	sync=false;
++	sync=false; syncRunning=false;
+ 	refreshTime = 40;
+ 	changeTimeStep=false;
+ 
+@@ -73,10 +80,13 @@
+ 		loadSimulationFromFileName(Omega::instance().getSimulationFileName());
+ 	}
+ 	// run timer ANY TIME (simulation may be started asynchronously)
+-	startTimer(refreshTime);
++	updateTimerId=startTimer(refreshTime);
+ }
+ 
++/* restart timer with SimulationController::refreshTime */
++void SimulationController::restartTimer(){ killTimer(updateTimerId); updateTimerId=startTimer(refreshTime); }
+ 
++
+ void SimulationController::pbApplyClicked()
+ {
+ 	guiGen.deserialize(YadeQtMainWindow::self-&gt;renderer);
+@@ -193,36 +203,32 @@
+ 	}
+ }
+ 
+-void SimulationController::pbNewViewClicked()
+-{
+-	addNewView();
++void SimulationController::pbNewViewClicked() {	addNewView(); }
++void SimulationController::addNewView(){ YadeQtMainWindow::self-&gt;createView(); }
++void SimulationController::pbCenterSceneClicked() { YadeQtMainWindow::self-&gt;centerViews(); }
++void SimulationController::closeEvent(QCloseEvent *){ /* switch to async run if running */ if(syncRunning) cbSyncToggled(false); emit closeSignal(); }
++void SimulationController::pbStopClicked() { Omega::instance().stopSimulationLoop(); syncRunning=false; }
++void SimulationController::pbOneSimulationStepClicked(){pbStopClicked();Omega::instance().spawnSingleSimulationLoop();}
++void SimulationController::pbStart2Clicked() { pbStartClicked(); }
++void SimulationController::pbStartClicked(){
++	restartTimer();
++	if(sync) syncRunning=true;
++	else Omega::instance().startSimulationLoop();
+ }
+ 
+-
+-void SimulationController::addNewView()
+-{
+-	YadeQtMainWindow::self-&gt;createView();
+-	return;
++void SimulationController::cbSyncToggled(bool b){	sync=b; if(sync &amp;&amp; refreshTime&lt;20) refreshTime=20; pbStopClicked(); pbStartClicked(); }
++void SimulationController::timerEvent( QTimerEvent* ){
++	doUpdate(); /* update the controller, like iteration number etc */
++	if(sync &amp;&amp; syncRunning){
++		/* update GLViews */
++		//LOG_DEBUG(&quot;Sync: iter &quot;&lt;&lt;Omega::instance().getCurrentIteration());
++		YadeQtMainWindow::self-&gt;redrawAll(true);
++		Omega::instance().spawnSingleSimulationLoop();
++	}
+ }
+ 
+-void SimulationController::pbStopClicked()
+-{
+-	Omega::instance().stopSimulationLoop();
+-	//killTimers();
+-}
+-
+-
+-void SimulationController::pbStartClicked()
+-{
+-	if(!sync)
+-		Omega::instance().startSimulationLoop();        
+-
+-}
+-
+-
+ void SimulationController::pbResetClicked()
+ {
+-
+ 	pbStopClicked();
+ 
+ 	std::string name=Omega::instance().getSimulationFileName(); 
+@@ -242,27 +248,10 @@
+ }
+ 
+ 
+-void SimulationController::pbOneSimulationStepClicked()
+-{
+-	//FIXME : fix real simulation time
+-	pbStopClicked();
+-	Omega::instance().spawnSingleSimulationLoop();
+-}
+ 
+ 
+-void SimulationController::pbCenterSceneClicked()
+-{
+-	YadeQtMainWindow::self-&gt;centerViews();
+-}
+ 
+ 
+-void SimulationController::closeEvent(QCloseEvent *)
+-{
+-	pbStopClicked();
+-	emit closeSignal();
+-}
+-
+-
+ void SimulationController::bgTimeStepClicked(int i)
+ {
+ 	// cerr&lt;&lt;&quot;CHANGING&#160;TIME&#160;STEP: i=&quot;&lt;&lt;i&lt;&lt;endl;
+@@ -274,7 +263,7 @@
+ 			skipTimeStepper = false;
+ 			wasUsingTimeStepper=true;
+ 			break;
+-		case 1 : // Try RealTime
++		case 1 : // Try RealTime -- deprecated
+ 			changeSkipTimeStepper = true;
+ 			skipTimeStepper = true;
+ 			wasUsingTimeStepper=false;
+@@ -306,35 +295,17 @@
+ 
+ void SimulationController::sbRefreshValueChanged(int v)
+ {
+-	pbStopClicked();
++	//pbStopClicked();
+ 	refreshTime = v;
+ 	if(sync &amp;&amp; refreshTime &lt; 20) 
+ 		// FIXME - problem is that ThreadRunner cannot 'too often' call spawnSingleSimulationLoop().
+ 		// This is a temporary solution...
+ 		refreshTime = 20;
++	restartTimer();
+ }
+ 
+-void SimulationController::cbSyncToggled( bool b)
+-{
+-	pbStopClicked();
+-	sync = b;
+-	if(sync &amp;&amp; refreshTime &lt; 20)
+-		refreshTime = 20;
+-}
+ 
+-void SimulationController::pbStart2Clicked()
+-{
+-	pbStartClicked();
+-}
+-
+-void SimulationController::timerEvent( QTimerEvent* )
+-{
+-	doUpdate();
+-	if(sync) Omega::instance().spawnSingleSimulationLoop();
+-}
+-
+ void SimulationController::doUpdate(){
+-	SimulationController *controller=this;
+ 
+ 	Real simulationTime = Omega::instance().getSimulationTime();
+ 
+@@ -350,7 +321,7 @@
+ 
+ 	char strVirt[64];
+ 	snprintf(strVirt,64,&quot;virt %02d:%03d.%03dm%03du%03dn&quot;,min,sec,msec,misec,nsec);
+-	controller-&gt;labelSimulTime-&gt;setText(string(strVirt));
++	labelSimulTime-&gt;setText(string(strVirt));
+ 
+ 	if(Omega::instance().isRunning()){
+ 		time_duration duration = microsec_clock::local_time()-Omega::instance().getMsStartingSimulationTime();
+@@ -366,7 +337,7 @@
+ 		char strReal[64];
+ 		if(days&gt;0) snprintf(strReal,64,&quot;real %dd %02d:%02d:%03d.%03d&quot;,days,hours,minutes,seconds,mseconds);
+ 		else snprintf(strReal,64,&quot;real %02d:%02d:%03d.%03d&quot;,hours,minutes,seconds,mseconds);
+-		controller-&gt;labelRealTime-&gt;setText(string(strReal));
++		labelRealTime-&gt;setText(string(strReal));
+ 	}
+ 
+ 	// update iterations per second - only one in a while (iterPerSec_TTL_ms)
+@@ -377,46 +348,49 @@
+ 		iterPerSec_LastIter=Omega::instance().getCurrentIteration();
+ 		iterPerSec_LastLocalTime=microsec_clock::local_time();
+ 	}
+-
+ 	char strIter[64];
+-	snprintf(strIter,64,&quot;iter #%ld, %.1f/s&quot;,Omega::instance().getCurrentIteration(),iterPerSec);
+-	controller-&gt;labelIter-&gt;setText(strIter);
++	/* print 0 instead of bogus values (at startup) */
++	snprintf(strIter,64,&quot;iter #%ld, %.1f/s&quot;,Omega::instance().getCurrentIteration(),(iterPerSec&lt;1e9 &amp;&amp; iterPerSec&gt;0)?iterPerSec:0.);
++	labelIter-&gt;setText(strIter);
+ 
+-	if (controller-&gt;changeSkipTimeStepper) Omega::instance().skipTimeStepper(controller-&gt;skipTimeStepper);
+-	if (controller-&gt;changeTimeStep) {
+-		Real second = (Real)(controller-&gt;sbSecond-&gt;value());
+-		Real powerSecond = (Real)(controller-&gt;sb10PowerSecond-&gt;value());
++	if (changeSkipTimeStepper) Omega::instance().skipTimeStepper(skipTimeStepper);
++	if (changeTimeStep) {
++		Real second = (Real)(sbSecond-&gt;value());
++		Real powerSecond = (Real)(sb10PowerSecond-&gt;value());
+ 		Omega::instance().setTimeStep(second*Mathr::Pow(10,powerSecond));
+ 	} else {
+ 		Real dt=Omega::instance().getTimeStep();
+ 		int exp10=floor(log10(dt));
+-		controller-&gt;sb10PowerSecond-&gt;setValue(exp10);
+-		controller-&gt;sbSecond-&gt;setValue((int)(.1+dt/(pow((float)10,exp10)))); // .1: rounding issues
++		sb10PowerSecond-&gt;setValue(exp10);
++		sbSecond-&gt;setValue((int)(.1+dt/(pow((float)10,exp10)))); // .1: rounding issues
+ 	}
+ 
++	if(sbRefreshTime-&gt;value()!=refreshTime) sbRefreshTime-&gt;setValue(refreshTime);
++
+ 	char strStep[64];
+ 	snprintf(strStep,64,&quot;step %g&quot;,Omega::instance().getTimeStep());
+-	controller-&gt;labelStep-&gt;setText(string(strStep));
++	labelStep-&gt;setText(string(strStep));
+ 
+-	controller-&gt;changeSkipTimeStepper = false;
+-	controller-&gt;changeTimeStep = false;
++	changeSkipTimeStepper = false;
++	changeTimeStep = false;
+ 
+ 	//cerr&lt;&lt;&quot;dt=&quot;&lt;&lt;dt&lt;&lt;&quot;,exp10=&quot;&lt;&lt;exp10&lt;&lt;&quot;,10^exp10=&quot;&lt;&lt;pow((float)10,exp10)&lt;&lt;endl;
+ 
+ 	/* enable/disable controls here, dynamically */
+ 	bool hasSimulation=(Omega::instance().getRootBody() ? Omega::instance().getRootBody()-&gt;bodies-&gt;size()&gt;0 : false ),
+-		isRunning=Omega::instance().isRunning(),
++		isRunning=Omega::instance().isRunning() || syncRunning,
+ 		hasTimeStepper=Omega::instance().containTimeStepper(),
+ 		usesTimeStepper=Omega::instance().timeStepperActive(),
+ 		hasFileName=(Omega::instance().getSimulationFileName()!=&quot;&quot;);
+ 
+-	controller-&gt;pbStartSimulation-&gt;setEnabled(hasSimulation &amp;&amp; !isRunning);
+-	controller-&gt;pbStopSimulation-&gt;setEnabled(hasSimulation &amp;&amp; isRunning);
+-	controller-&gt;pbResetSimulation-&gt;setEnabled(hasSimulation &amp;&amp; hasFileName);
+-	controller-&gt;pbOneSimulationStep-&gt;setEnabled(hasSimulation &amp;&amp; !isRunning);
+-	controller-&gt;rbTimeStepper-&gt;setEnabled(hasTimeStepper);
++	pbStartSimulation-&gt;setEnabled(hasSimulation &amp;&amp; !isRunning);
++	pbStopSimulation-&gt;setEnabled(hasSimulation &amp;&amp; isRunning);
++	pbResetSimulation-&gt;setEnabled(hasSimulation &amp;&amp; hasFileName);
++	pbOneSimulationStep-&gt;setEnabled(hasSimulation &amp;&amp; !isRunning);
++	rbTimeStepper-&gt;setEnabled(hasTimeStepper);
+ 	// conditionals only avoid setting the state that is already set, to avoid spurious signals
+-	if(controller-&gt;rbFixed-&gt;isChecked()==usesTimeStepper) controller-&gt;rbFixed-&gt;setChecked(!usesTimeStepper);
+-	if(controller-&gt;rbTimeStepper-&gt;isChecked()!=usesTimeStepper) controller-&gt;rbTimeStepper-&gt;setChecked(usesTimeStepper);
++	if(rbFixed-&gt;isChecked()==usesTimeStepper) rbFixed-&gt;setChecked(!usesTimeStepper);
++	if(rbTimeStepper-&gt;isChecked()!=usesTimeStepper) rbTimeStepper-&gt;setChecked(usesTimeStepper);
++
+ }
+ 
+
+Modified: trunk/gui/qt3/SimulationController.hpp
+===================================================================
+--- trunk/gui/qt3/SimulationController.hpp	2008-06-06 17:17:33 UTC (rev 1381)
++++ trunk/gui/qt3/SimulationController.hpp	2008-06-10 09:17:01 UTC (rev 1382)
+@@ -30,7 +30,9 @@
+ 		//map&lt;int,GLViewer* &gt; glViews;
+ 		int maxNbViews;
+ 		int refreshTime;
++		int updateTimerId;
+ 		bool sync;
++		bool syncRunning;
+ 
+ 		const int iterPerSec_TTL_ms;
+ 		long  iterPerSec_LastIter;
+@@ -39,6 +41,7 @@
+ 
+ 	
+ 		void doUpdate();
++		void restartTimer();
+ 
+ 		QScrollView * scrollView;
+ 		QFrame * scrollViewFrame;
+@@ -68,10 +71,15 @@
+ 		virtual void cbSyncToggled(bool);
+ 		virtual void pbStart2Clicked();
+ 
++
++
+         
+         protected :
+                 void closeEvent(QCloseEvent *evt);
+                 virtual void timerEvent(QTimerEvent* );
++
++		friend class YadeQtMainWindow;
++	DECLARE_LOGGER;
+ };
+ 
+ #endif // SIMULATIONCONTROLLER_HPP
+
+Modified: trunk/gui/qt3/YadeQtMainWindow.cpp
+===================================================================
+--- trunk/gui/qt3/YadeQtMainWindow.cpp	2008-06-06 17:17:33 UTC (rev 1381)
++++ trunk/gui/qt3/YadeQtMainWindow.cpp	2008-06-10 09:17:01 UTC (rev 1382)
+@@ -81,10 +81,14 @@
+ 		else {this-&gt;show(); }
+ 	#endif
+ 	// update GL views (if any)
+-	FOREACH(const shared_ptr&lt;GLViewer&gt;&amp; glv,glViews){ if(glv) glv-&gt;updateGL(); }
+-	
++	redrawAll(/*force=*/false);
+ }
+ 
++void YadeQtMainWindow::redrawAll(bool force){
++	if(force || (simulationController &amp;&amp; !simulationController-&gt;syncRunning))
++		FOREACH(const shared_ptr&lt;GLViewer&gt;&amp; glv,glViews){ if(glv) glv-&gt;updateGL(); }
++}
++
+ void YadeQtMainWindow::loadSimulation(string file){
+ 	createSimulationController();
+ 	simulationController-&gt;loadSimulationFromFileName(file);
+
+Modified: trunk/gui/qt3/YadeQtMainWindow.hpp
+===================================================================
+--- trunk/gui/qt3/YadeQtMainWindow.hpp	2008-06-06 17:17:33 UTC (rev 1381)
++++ trunk/gui/qt3/YadeQtMainWindow.hpp	2008-06-10 09:17:01 UTC (rev 1382)
+@@ -29,6 +29,7 @@
+ 		void closeView(int);
+ 		void centerViews();
+ 		void loadSimulation(string file);
++		void redrawAll(bool force=false);
+ 
+ 
+ 	protected :
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000342.html">[Yade-commits] r1381 - trunk/gui/py
+</A></li>
+	<LI>Next message: <A HREF="000344.html">[Yade-commits] r1383 - in trunk: gui gui/py gui/qt3	pkg/common/Engine/StandAloneEngine scripts
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#343">[ date ]</a>
+              <a href="thread.html#343">[ thread ]</a>
+              <a href="subject.html#343">[ subject ]</a>
+              <a href="author.html#343">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

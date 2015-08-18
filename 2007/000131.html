@@ -1,0 +1,105 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1166 - trunk
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2007/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1166%20-%20trunk&In-Reply-To=%3C200705221143.l4MBh1ib001470%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000130.html">
+   <LINK REL="Next"  HREF="000132.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1166 - trunk</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1166%20-%20trunk&In-Reply-To=%3C200705221143.l4MBh1ib001470%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1166 - trunk">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Tue May 22 13:43:01 CEST 2007</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000130.html">[Yade-commits] r1165 - in trunk: . gui/qt3
+</A></li>
+        <LI>Next message: <A HREF="000132.html">[Yade-commits] r1167 - in trunk: core lib/miniWm3	pkg/common/Engine/DeusExMachina	pkg/common/RenderingEngine/GLDrawGeometricalModel	pkg/dem/Engine/DeusExMachina pkg/dem/Engine/StandAloneEngine	pkg/dem/PreProcessor pkg/lattice/DataClass/PhysicalParameters	pkg/lattice/Engine/EngineUnit	pkg/lattice/Engine/StandAloneEngine pkg/lattice/PreProcessor	pkg/lattice/RenderingEngine/GLDrawLatticeSetGeometry	pkg/mass-spring/Engine/StandAloneEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#131">[ date ]</a>
+              <a href="thread.html#131">[ thread ]</a>
+              <a href="subject.html#131">[ subject ]</a>
+              <a href="author.html#131">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2007-05-22 13:43:01 +0200 (Tue, 22 May 2007)
+New Revision: 1166
+
+Modified:
+   trunk/SConstruct
+Log:
+#define MINIWM3 when using miniWm3
+don't exclude lattice with miniWm3 (lattice needs to be modified to not use undefined functions from full Wm3 in this case (Delaunay!)
+
+
+Modified: trunk/SConstruct
+===================================================================
+--- trunk/SConstruct	2007-05-22 11:30:03 UTC (rev 1165)
++++ trunk/SConstruct	2007-05-22 11:43:01 UTC (rev 1166)
+@@ -100,11 +100,10 @@
+ buildInc='$buildDir/include/yade-$version'
+ env.Append(CPPPATH=[buildInc])
+ 
+-if env['useMiniWm3']:
+-	env.Append(CPPPATH=[buildInc+'/yade/lib-miniWm3'])
+-	if not 'lattice' in env['exclude']:
+-		print &quot;!!! Using miniWm3, lattice will be excluded !!!&quot;
+-		env.Append(exclude=['lattice'])
++if env['useMiniWm3']: env.Append(CPPPATH=[buildInc+'/yade/lib-miniWm3'])
++	#if not 'lattice' in env['exclude']:
++	#	print &quot;!!! Using miniWm3, lattice will be excluded !!!&quot;
++	#	env.Append(exclude=['lattice'])
+ 
+ ### OLD: older scons only
+ if not os.path.exists(buildDir): os.makedirs(buildDir)
+@@ -200,9 +199,8 @@
+ 	# append essential libs		
+ 	env.Append(LIBS=['glut','boost_date_time','boost_filesystem','boost_thread','pthread'])
+ 
+-	if env['useMiniWm3']: env.Append(LIBS='miniWm3')
+-	else: env.Append(LIBS='Wm3Foundation')
+-	#'Wm3Foundation'
++	if env['useMiniWm3']: env.Append(LIBS='miniWm3',CPPDEFINES=['MINIWM3'])
++	else:	env.Append(LIBS='Wm3Foundation')
+ 
+ 	env=conf.Finish()
+ 
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000130.html">[Yade-commits] r1165 - in trunk: . gui/qt3
+</A></li>
+	<LI>Next message: <A HREF="000132.html">[Yade-commits] r1167 - in trunk: core lib/miniWm3	pkg/common/Engine/DeusExMachina	pkg/common/RenderingEngine/GLDrawGeometricalModel	pkg/dem/Engine/DeusExMachina pkg/dem/Engine/StandAloneEngine	pkg/dem/PreProcessor pkg/lattice/DataClass/PhysicalParameters	pkg/lattice/Engine/EngineUnit	pkg/lattice/Engine/StandAloneEngine pkg/lattice/PreProcessor	pkg/lattice/RenderingEngine/GLDrawLatticeSetGeometry	pkg/mass-spring/Engine/StandAloneEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#131">[ date ]</a>
+              <a href="thread.html#131">[ thread ]</a>
+              <a href="subject.html#131">[ subject ]</a>
+              <a href="author.html#131">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

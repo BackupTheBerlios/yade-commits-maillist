@@ -1,0 +1,112 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1371 - in trunk: debian extra/usct
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1371%20-%20in%20trunk%3A%20debian%20extra/usct&In-Reply-To=%3C200805271310.m4RDAS52001885%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000331.html">
+   <LINK REL="Next"  HREF="000333.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1371 - in trunk: debian extra/usct</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1371%20-%20in%20trunk%3A%20debian%20extra/usct&In-Reply-To=%3C200805271310.m4RDAS52001885%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1371 - in trunk: debian extra/usct">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Tue May 27 15:10:28 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000331.html">[Yade-commits] r1370 - in trunk: . debian scripts
+</A></li>
+        <LI>Next message: <A HREF="000333.html">[Yade-commits] r1372 - in trunk: extra extra/usct gui/py gui/qt3
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#332">[ date ]</a>
+              <a href="thread.html#332">[ thread ]</a>
+              <a href="subject.html#332">[ subject ]</a>
+              <a href="author.html#332">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2008-05-27 15:10:25 +0200 (Tue, 27 May 2008)
+New Revision: 1371
+
+Modified:
+   trunk/debian/rules
+   trunk/extra/usct/UniaxialStrainControlledTest.cpp
+Log:
+1. Other fixes related to deb packages (jobs=1 because of fakeroot :-( )
+2. transversal strain sensors max speed can only be positive in USCT
+
+
+Modified: trunk/debian/rules
+===================================================================
+--- trunk/debian/rules	2008-05-27 12:18:39 UTC (rev 1370)
++++ trunk/debian/rules	2008-05-27 13:10:25 UTC (rev 1371)
+@@ -54,13 +54,15 @@
+ 	##TMP dh_clean -k 
+ 	dh_installdirs
+ 	## files VERSION and _VERSION contain snapshot version without/with leading '-' respectively (like svn1113 and -svn1113)
+-	### WARNING: !!!!!!!!!!!!! if this hangs later on, use fakeroot-tcp instead of fakeroot !!!!!!!!
++	### WARNING: !!!! with jobs&gt;1, fakeroot may hang; 2 workarounds:
++	###   (a) use fakeroot-tcp instead of fakeroot
++	###   (b) say jobs=1
+ 	#install headers
+-	NO_SCONS_GET_RECENT= scons buildPrefix=debian runtimePREFIX=/usr PREFIX=debian/yade${_VERSION}-dev/usr variant='' version=${VERSION} exclude=realtime-rigidbody,mass-spring debian/yade${_VERSION}-dev/usr/include
++	NO_SCONS_GET_RECENT= scons jobs=1 buildPrefix=debian runtimePREFIX=/usr PREFIX=debian/yade${_VERSION}-dev/usr variant='' version=${VERSION} exclude=realtime-rigidbody,mass-spring debian/yade${_VERSION}-dev/usr/include
+ 	#debug build
+-	NO_SCONS_GET_RECENT= scons PREFIX=debian/yade${_VERSION}-dbg/usr variant=-dbg optimize=0 debug=1
++	NO_SCONS_GET_RECENT= scons jobs=1 PREFIX=debian/yade${_VERSION}-dbg/usr variant=-dbg optimize=0 debug=1
+ 	#optimized build
+-	NO_SCONC_GET_RECENT= scons PREFIX=debian/yade${_VERSION}/usr variant=&quot;&quot; optimize=1 debug=0
++	NO_SCONS_GET_RECENT= scons jobs=1 PREFIX=debian/yade${_VERSION}/usr variant=&quot;&quot; optimize=1 debug=0
+ 
+ 
+ # Build architecture-independent files here.
+
+Modified: trunk/extra/usct/UniaxialStrainControlledTest.cpp
+===================================================================
+--- trunk/extra/usct/UniaxialStrainControlledTest.cpp	2008-05-27 12:18:39 UTC (rev 1370)
++++ trunk/extra/usct/UniaxialStrainControlledTest.cpp	2008-05-27 13:10:25 UTC (rev 1371)
+@@ -67,7 +67,7 @@
+ 	}
+ 	assert((sensorsPusher-&gt;subscribedBodies.size()==transStrainSensors.size()) &amp;&amp; (sensorsPusher-&gt;subscribedBodies.size()==sensorsPusher-&gt;forces.size()));
+ 	Real forceMagnitude=.001*avgStress*transStrainSensorArea;
+-	Real maxVelocity=2*strainRate*originalLength; // move at max 5 &#215; faster than strained ends
++	Real maxVelocity=2*abs(strainRate)*originalLength; // move at max 5 &#215; faster than strained ends
+ 	/* reset orientation to identity and limit velocity */
+ 	FOREACH(body_id_t id, transStrainSensors){
+ 		const shared_ptr&lt;Body&gt;&amp; b=Body::byId(id); const shared_ptr&lt;ParticleParameters&gt;&amp; pp=YADE_PTR_CAST&lt;ParticleParameters&gt;(b-&gt;physicalParameters);
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000331.html">[Yade-commits] r1370 - in trunk: . debian scripts
+</A></li>
+	<LI>Next message: <A HREF="000333.html">[Yade-commits] r1372 - in trunk: extra extra/usct gui/py gui/qt3
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#332">[ date ]</a>
+              <a href="thread.html#332">[ thread ]</a>
+              <a href="subject.html#332">[ subject ]</a>
+              <a href="author.html#332">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

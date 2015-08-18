@@ -1,0 +1,230 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1055 - trunk/yade-guis/yade-gui-qt/src/QtGUI
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2007/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1055%20-%20trunk/yade-guis/yade-gui-qt/src/QtGUI&In-Reply-To=%3C200702031946.l13JkTJH001861%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000019.html">
+   <LINK REL="Next"  HREF="000021.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1055 - trunk/yade-guis/yade-gui-qt/src/QtGUI</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1055%20-%20trunk/yade-guis/yade-gui-qt/src/QtGUI&In-Reply-To=%3C200702031946.l13JkTJH001861%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1055 - trunk/yade-guis/yade-gui-qt/src/QtGUI">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Sat Feb  3 20:46:29 CET 2007</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000019.html">[Yade-commits] r1054 - in trunk: yade-guis/yade-gui-qt/src/QtGUI	yade-packages/yade-package-common/src/RenderingEngine/GLDrawGeometricalModel/GLDrawSphere	yade-packages/yade-package-common/src/RenderingEngine/OpenGLRenderingEngine	yade-packages/yade-package-dem/src/Engine/StandAloneEngine/ElasticCohesiveLaw	yade-packages/yade-package-dem/src/Engine/StandAloneEngine/GeometricalModelForceColorizer	yade-packages/yade-package-dem/src/PreProcessor	yade-packages/yade-package-dem/src/PreProcessor/ThreePointBending	yade-packages/yade-package-dem/src/RenderingEngine	yade-packages/yade-package-dem/src/RenderingEngine/GLDrawSDECLinkGeometry	yade-packages/yade-package-dem/src/RenderingEngine/GLDrawSpheresContactGeometry
+</A></li>
+        <LI>Next message: <A HREF="000021.html">[Yade-commits] r1056 - in trunk: yade-guis/yade-gui-qt/src/QtGUI yade-libs/yade-lib-multimethods/src/yade-lib-multimethods yade-packages/yade-package-common/src/RenderingEngine/GLDrawGeometricalModel/GLDrawSphere yade-packages/yade-package-common/src/RenderingEngine/GLDrawInteractingGeometry/GLDrawInteractingBox yade-packages/yade-package-common/src/RenderingEngine/GLDrawInteractingGeometry/GLDrawInteractingSphere yade-packages/yade-package-common/src/RenderingEngine/GLDrawInteractingGeometry/GLDrawMetaInteractingGeometry yade-packages/yade-package-common/src/RenderingEngine/OpenGLRenderingEngine yade-packages/yade-package-dem/src/PreProcessor/ThreePointBending yade-packages/yade-package-dem/src/RenderingEngine/GLDrawInteractingMyTetrahedron yade-packages/yade-package-dem/src/RenderingEngine/GLDrawSDECLinkGeometry yade-packages/yade-package-dem/src/RenderingEngine/GLDrawSpheresContactGeometry yade-packages/yade-package-lattice/src/DataClass/InteractingGeometry yade-packages/yade-p! ackage-lattice/src/DataClass/InteractingGeometry/LatticeInteractingGeometry yade-packages/yade-package-lattice/src/PreProcessor/LatticeExample yade-packages/yade-package-lattice/src/RenderingEngine yade-packages/yade-package-lattice/src/RenderingEngine/GLDrawLatticeInteractingGeometry yade-packages/yade-package-lattice/src/RenderingEngine/GLDrawLineSegment
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#20">[ date ]</a>
+              <a href="thread.html#20">[ thread ]</a>
+              <a href="subject.html#20">[ subject ]</a>
+              <a href="author.html#20">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2007-02-03 20:46:28 +0100 (Sat, 03 Feb 2007)
+New Revision: 1055
+
+Modified:
+   trunk/yade-guis/yade-gui-qt/src/QtGUI/QtFileGenerator.cpp
+   trunk/yade-guis/yade-gui-qt/src/QtGUI/QtFileGenerator.hpp
+   trunk/yade-guis/yade-gui-qt/src/QtGUI/QtFileGeneratorController.ui
+   trunk/yade-guis/yade-gui-qt/src/QtGUI/SimulationController.cpp
+   trunk/yade-guis/yade-gui-qt/src/QtGUI/YadeQtMainWindow.cpp
+Log:
+Simulation may be (which is the default) loaded after generation automatically now.
+
+
+
+Modified: trunk/yade-guis/yade-gui-qt/src/QtGUI/QtFileGenerator.cpp
+===================================================================
+--- trunk/yade-guis/yade-gui-qt/src/QtGUI/QtFileGenerator.cpp	2007-02-02 15:10:15 UTC (rev 1054)
++++ trunk/yade-guis/yade-gui-qt/src/QtGUI/QtFileGenerator.cpp	2007-02-03 19:46:28 UTC (rev 1055)
+@@ -15,18 +15,20 @@
+ #include &lt;qcombobox.h&gt;
+ #include &lt;qlineedit.h&gt;
+ #include &lt;qprogressbar.h&gt;
++#include &lt;qcheckbox.h&gt;
+ #include &lt;yade/yade-lib-factory/ClassFactory.hpp&gt;
+ #include &lt;yade/yade-core/FileGenerator.hpp&gt;
+ #include &lt;yade/yade-core/Omega.hpp&gt;
+ #include &lt;boost/filesystem/convenience.hpp&gt;
+ #include &lt;boost/filesystem/operations.hpp&gt;
+ #include &quot;MessageDialog.hpp&quot;
++#include &quot;YadeQtMainWindow.hpp&quot;
+ #include &lt;yade/yade-core/ThreadRunner.hpp&gt;
+ 
+ QtFileGenerator::QtFileGenerator ( QWidget * parent , const char * name)
+ 	: QtFileGeneratorController(parent,name)
++	, m_runner(shared_ptr&lt;ThreadRunner&gt;())
+ 	, m_worker(shared_ptr&lt;FileGenerator&gt;())
+-	, m_runner(shared_ptr&lt;ThreadRunner&gt;())
+ {
+ 	QSize s = size();
+ 	setMinimumSize(s);
+@@ -217,6 +219,16 @@
+ 		killTimers();
+ 		progressBar1-&gt;reset();
+ 		textLabel1-&gt;setText(&quot;waiting for orders&quot;);
++
++		/* now, launch the generated simulation if
++		 * 1. it is desired,
++		 * 2. generation was successful (unreliable check: generator returns string; we just have a look if the filename specified exists or not),
++		 * 3. no simulation is open already (by checking Omega's simulationFileName) */
++		if(cbOpenAutomatically-&gt;isChecked() &amp;&amp; filesystem::exists(filesystem::path((const char*)(leOutputFileName-&gt;text()))) &amp;&amp; Omega::instance().getSimulationFileName()==&quot;&quot;){
++			QWidget* qw=this; while (qw-&gt;parentWidget()) qw=qw-&gt;parentWidget(); // find toplevel widget - which should be yade's main window
++			Omega::instance().setSimulationFileName((const char*)(leOutputFileName-&gt;text()));
++			(dynamic_cast&lt;YadeQtMainWindow*&gt;(qw))-&gt;fileNewSimulation();
++		}
+ 	}
+ }
+ 
+
+Modified: trunk/yade-guis/yade-gui-qt/src/QtGUI/QtFileGenerator.hpp
+===================================================================
+--- trunk/yade-guis/yade-gui-qt/src/QtGUI/QtFileGenerator.hpp	2007-02-02 15:10:15 UTC (rev 1054)
++++ trunk/yade-guis/yade-gui-qt/src/QtGUI/QtFileGenerator.hpp	2007-02-03 19:46:28 UTC (rev 1055)
+@@ -49,7 +49,7 @@
+ 	protected : 
+ 		virtual void closeEvent(QCloseEvent *evt);
+                 virtual void timerEvent(QTimerEvent* );
+-
++	
+ 	REGISTER_CLASS_NAME(QtFileGenerator);
+ 	REGISTER_BASE_CLASS_NAME(Factorable);
+ 
+
+Modified: trunk/yade-guis/yade-gui-qt/src/QtGUI/QtFileGeneratorController.ui
+===================================================================
+--- trunk/yade-guis/yade-gui-qt/src/QtGUI/QtFileGeneratorController.ui	2007-02-02 15:10:15 UTC (rev 1054)
++++ trunk/yade-guis/yade-gui-qt/src/QtGUI/QtFileGeneratorController.ui	2007-02-03 19:46:28 UTC (rev 1055)
+@@ -68,17 +68,6 @@
+                 &lt;property name=&quot;name&quot;&gt;
+                     &lt;cstring&gt;unnamed&lt;/cstring&gt;
+                 &lt;/property&gt;
+-                &lt;widget class=&quot;QLabel&quot; row=&quot;0&quot; column=&quot;0&quot;&gt;
+-                    &lt;property name=&quot;name&quot;&gt;
+-                        &lt;cstring&gt;tlOoutputFileName&lt;/cstring&gt;
+-                    &lt;/property&gt;
+-                    &lt;property name=&quot;text&quot;&gt;
+-                        &lt;string&gt;Output File Name :&lt;/string&gt;
+-                    &lt;/property&gt;
+-                    &lt;property name=&quot;alignment&quot;&gt;
+-                        &lt;set&gt;AlignVCenter|AlignRight&lt;/set&gt;
+-                    &lt;/property&gt;
+-                &lt;/widget&gt;
+                 &lt;widget class=&quot;QLabel&quot; row=&quot;1&quot; column=&quot;0&quot;&gt;
+                     &lt;property name=&quot;name&quot;&gt;
+                         &lt;cstring&gt;tlOutputDynlibName&lt;/cstring&gt;
+@@ -127,6 +116,28 @@
+                         &lt;cstring&gt;cbGeneratorName&lt;/cstring&gt;
+                     &lt;/property&gt;
+                 &lt;/widget&gt;
++                &lt;widget class=&quot;QCheckBox&quot; row=&quot;3&quot; column=&quot;1&quot;&gt;
++                    &lt;property name=&quot;name&quot;&gt;
++                        &lt;cstring&gt;cbOpenAutomatically&lt;/cstring&gt;
++                    &lt;/property&gt;
++                    &lt;property name=&quot;text&quot;&gt;
++                        &lt;string&gt;Open automatically&lt;/string&gt;
++                    &lt;/property&gt;
++                    &lt;property name=&quot;checked&quot;&gt;
++                        &lt;bool&gt;true&lt;/bool&gt;
++                    &lt;/property&gt;
++                &lt;/widget&gt;
++                &lt;widget class=&quot;QLabel&quot; row=&quot;0&quot; column=&quot;0&quot;&gt;
++                    &lt;property name=&quot;name&quot;&gt;
++                        &lt;cstring&gt;tlOoutputFileName&lt;/cstring&gt;
++                    &lt;/property&gt;
++                    &lt;property name=&quot;text&quot;&gt;
++                        &lt;string&gt;Output File Name :&lt;/string&gt;
++                    &lt;/property&gt;
++                    &lt;property name=&quot;alignment&quot;&gt;
++                        &lt;set&gt;AlignVCenter|AlignRight&lt;/set&gt;
++                    &lt;/property&gt;
++                &lt;/widget&gt;
+             &lt;/grid&gt;
+         &lt;/widget&gt;
+         &lt;widget class=&quot;QGroupBox&quot;&gt;
+@@ -325,6 +336,9 @@
+         &lt;slot&gt;cbSerializationNameActivated(const QString&amp;)&lt;/slot&gt;
+     &lt;/connection&gt;
+ &lt;/connections&gt;
++&lt;includes&gt;
++    &lt;include location=&quot;local&quot; impldecl=&quot;in implementation&quot;&gt;QtFileGeneratorController.ui.h&lt;/include&gt;
++&lt;/includes&gt;
+ &lt;slots&gt;
+     &lt;slot&gt;cbGeneratorNameActivated( const QString &amp; )&lt;/slot&gt;
+     &lt;slot&gt;pbGenerateClicked()&lt;/slot&gt;
+
+Modified: trunk/yade-guis/yade-gui-qt/src/QtGUI/SimulationController.cpp
+===================================================================
+--- trunk/yade-guis/yade-gui-qt/src/QtGUI/SimulationController.cpp	2007-02-02 15:10:15 UTC (rev 1054)
++++ trunk/yade-guis/yade-gui-qt/src/QtGUI/SimulationController.cpp	2007-02-03 19:46:28 UTC (rev 1055)
+@@ -199,6 +199,7 @@
+ 		catch(SerializableError&amp; e) // catching it...
+ 		{
+ 			Omega::instance().freeRootBody();
++			Omega::instance().setSimulationFileName(&quot;&quot;);
+ 			shared_ptr&lt;MessageDialog&gt; md = shared_ptr&lt;MessageDialog&gt;(new MessageDialog(e.what(),this-&gt;parentWidget()-&gt;parentWidget()));
+ 			md-&gt;exec(); 
+ 			pbStartSimulation-&gt;setDisabled(true);
+@@ -209,6 +210,7 @@
+ 		catch(yadeError&amp; e)
+ 		{
+ 			Omega::instance().freeRootBody();
++			Omega::instance().setSimulationFileName(&quot;&quot;);
+ 			shared_ptr&lt;MessageDialog&gt; md = shared_ptr&lt;MessageDialog&gt;(new MessageDialog(e.what(),this-&gt;parentWidget()-&gt;parentWidget()));
+ 			md-&gt;exec(); 
+ 			pbStartSimulation-&gt;setDisabled(true);
+
+Modified: trunk/yade-guis/yade-gui-qt/src/QtGUI/YadeQtMainWindow.cpp
+===================================================================
+--- trunk/yade-guis/yade-gui-qt/src/QtGUI/YadeQtMainWindow.cpp	2007-02-02 15:10:15 UTC (rev 1054)
++++ trunk/yade-guis/yade-gui-qt/src/QtGUI/YadeQtMainWindow.cpp	2007-02-03 19:46:28 UTC (rev 1055)
+@@ -167,6 +167,7 @@
+ 	delete simulationController;
+ 	simulationController = 0;
+ 	fileNewSimulationAction-&gt;setEnabled(true);
++	Omega::instance().setSimulationFileName(&quot;&quot;);
+ }
+ 
+ 
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000019.html">[Yade-commits] r1054 - in trunk: yade-guis/yade-gui-qt/src/QtGUI	yade-packages/yade-package-common/src/RenderingEngine/GLDrawGeometricalModel/GLDrawSphere	yade-packages/yade-package-common/src/RenderingEngine/OpenGLRenderingEngine	yade-packages/yade-package-dem/src/Engine/StandAloneEngine/ElasticCohesiveLaw	yade-packages/yade-package-dem/src/Engine/StandAloneEngine/GeometricalModelForceColorizer	yade-packages/yade-package-dem/src/PreProcessor	yade-packages/yade-package-dem/src/PreProcessor/ThreePointBending	yade-packages/yade-package-dem/src/RenderingEngine	yade-packages/yade-package-dem/src/RenderingEngine/GLDrawSDECLinkGeometry	yade-packages/yade-package-dem/src/RenderingEngine/GLDrawSpheresContactGeometry
+</A></li>
+	<LI>Next message: <A HREF="000021.html">[Yade-commits] r1056 - in trunk: yade-guis/yade-gui-qt/src/QtGUI yade-libs/yade-lib-multimethods/src/yade-lib-multimethods yade-packages/yade-package-common/src/RenderingEngine/GLDrawGeometricalModel/GLDrawSphere yade-packages/yade-package-common/src/RenderingEngine/GLDrawInteractingGeometry/GLDrawInteractingBox yade-packages/yade-package-common/src/RenderingEngine/GLDrawInteractingGeometry/GLDrawInteractingSphere yade-packages/yade-package-common/src/RenderingEngine/GLDrawInteractingGeometry/GLDrawMetaInteractingGeometry yade-packages/yade-package-common/src/RenderingEngine/OpenGLRenderingEngine yade-packages/yade-package-dem/src/PreProcessor/ThreePointBending yade-packages/yade-package-dem/src/RenderingEngine/GLDrawInteractingMyTetrahedron yade-packages/yade-package-dem/src/RenderingEngine/GLDrawSDECLinkGeometry yade-packages/yade-package-dem/src/RenderingEngine/GLDrawSpheresContactGeometry yade-packages/yade-package-lattice/src/DataClass/InteractingGeometry yade-packages/yade-p! ackage-lattice/src/DataClass/InteractingGeometry/LatticeInteractingGeometry yade-packages/yade-package-lattice/src/PreProcessor/LatticeExample yade-packages/yade-package-lattice/src/RenderingEngine yade-packages/yade-package-lattice/src/RenderingEngine/GLDrawLatticeInteractingGeometry yade-packages/yade-package-lattice/src/RenderingEngine/GLDrawLineSegment
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#20">[ date ]</a>
+              <a href="thread.html#20">[ thread ]</a>
+              <a href="subject.html#20">[ subject ]</a>
+              <a href="author.html#20">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

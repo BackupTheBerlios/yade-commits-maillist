@@ -1,0 +1,2446 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1224 - in trunk: . pkg/common	pkg/common/Engine/StandAloneEngine pkg/dem	pkg/dem/DataClass/InteractionPhysics	pkg/dem/Engine/DeusExMachina pkg/dem/Engine/EngineUnit	pkg/dem/Engine/StandAloneEngine pkg/dem/PreProcessor
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2007/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1224%20-%20in%20trunk%3A%20.%20pkg/common%0A%09pkg/common/Engine/StandAloneEngine%20pkg/dem%0A%09pkg/dem/DataClass/InteractionPhysics%0A%09pkg/dem/Engine/DeusExMachina%20pkg/dem/Engine/EngineUnit%0A%09pkg/dem/Engine/StandAloneEngine%20pkg/dem/PreProcessor&In-Reply-To=%3C200707111444.l6BEiwYV010844%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000188.html">
+   <LINK REL="Next"  HREF="000190.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1224 - in trunk: . pkg/common	pkg/common/Engine/StandAloneEngine pkg/dem	pkg/dem/DataClass/InteractionPhysics	pkg/dem/Engine/DeusExMachina pkg/dem/Engine/EngineUnit	pkg/dem/Engine/StandAloneEngine pkg/dem/PreProcessor</H1>
+    <B>chareyre at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1224%20-%20in%20trunk%3A%20.%20pkg/common%0A%09pkg/common/Engine/StandAloneEngine%20pkg/dem%0A%09pkg/dem/DataClass/InteractionPhysics%0A%09pkg/dem/Engine/DeusExMachina%20pkg/dem/Engine/EngineUnit%0A%09pkg/dem/Engine/StandAloneEngine%20pkg/dem/PreProcessor&In-Reply-To=%3C200707111444.l6BEiwYV010844%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1224 - in trunk: . pkg/common	pkg/common/Engine/StandAloneEngine pkg/dem	pkg/dem/DataClass/InteractionPhysics	pkg/dem/Engine/DeusExMachina pkg/dem/Engine/EngineUnit	pkg/dem/Engine/StandAloneEngine pkg/dem/PreProcessor">chareyre at mail.berlios.de
+       </A><BR>
+    <I>Wed Jul 11 16:44:58 CEST 2007</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000188.html">[Yade-commits] r1223 - tags
+</A></li>
+        <LI>Next message: <A HREF="000190.html">[Yade-commits] r1225 - trunk/pkg/dem/Engine/DeusExMachina
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#189">[ date ]</a>
+              <a href="thread.html#189">[ thread ]</a>
+              <a href="subject.html#189">[ subject ]</a>
+              <a href="author.html#189">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: chareyre
+Date: 2007-07-11 16:44:57 +0200 (Wed, 11 Jul 2007)
+New Revision: 1224
+
+Added:
+   trunk/pkg/common/Engine/StandAloneEngine/DistantPersistentSAPCollider.cpp
+   trunk/pkg/common/Engine/StandAloneEngine/DistantPersistentSAPCollider.hpp
+   trunk/pkg/dem/DataClass/InteractionPhysics/CohesiveFrictionalContactInteraction.cpp
+   trunk/pkg/dem/DataClass/InteractionPhysics/CohesiveFrictionalContactInteraction.hpp
+   trunk/pkg/dem/Engine/DeusExMachina/HydraulicForceEngine.cpp
+   trunk/pkg/dem/Engine/DeusExMachina/HydraulicForceEngine.hpp
+   trunk/pkg/dem/Engine/EngineUnit/CohesiveFrictionalRelationships.cpp
+   trunk/pkg/dem/Engine/EngineUnit/CohesiveFrictionalRelationships.hpp
+   trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2InteractingSphere4DistantSpheresContactGeometry.cpp
+   trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2InteractingSphere4DistantSpheresContactGeometry.hpp
+   trunk/pkg/dem/Engine/StandAloneEngine/CohesiveFrictionalContactLaw.cpp
+   trunk/pkg/dem/Engine/StandAloneEngine/CohesiveFrictionalContactLaw.hpp
+   trunk/pkg/dem/PreProcessor/CohesiveTriaxialTest.cpp
+   trunk/pkg/dem/PreProcessor/CohesiveTriaxialTest.hpp
+Modified:
+   trunk/SConstruct
+   trunk/Yade.kdevelop
+   trunk/pkg/common/SConscript
+   trunk/pkg/dem/SConscript
+Log:
+This commit contains new classes in order to simulate cohesive 
+interactions with transient interactions.
+The new SAPCollider does set IsReal=false at each time step, neither do 
+the Sphere2Sphere4Distant... engine. The user must set isReal=false in 
+another engine (here the CohesiveFrictionalContactLaw engine) in order 
+to have the interactions removed from the DistantPersistentSAPCollider 
+list.
+All new engines are used in the CohesiveTriaxialTest. 
+
+
+
+
+Modified: trunk/SConstruct
+===================================================================
+--- trunk/SConstruct	2007-07-04 18:24:46 UTC (rev 1223)
++++ trunk/SConstruct	2007-07-11 14:44:57 UTC (rev 1224)
+@@ -438,7 +438,7 @@
+ 
+ ############# OTHER TARGETS #####################
+ env.Command('tags',libDirs,&quot;ctags -R --extra=+q --fields=+n --exclude='.*' --exclude=yade-flat --exclude=include --exclude='*.so'&quot;)
+-env.Alias('doc',env.Command('doc/doxygen/html/index.html',libDirs,&quot;cd doc; doxygen Doxyfile&quot;))
++#env.Alias('doc',env.Command('doc/doxygen/html/index.html',libDirs,&quot;cd doc; doxygen Doxyfile&quot;))
+ 
+ 
+ 
+
+Modified: trunk/Yade.kdevelop
+===================================================================
+--- trunk/Yade.kdevelop	2007-07-04 18:24:46 UTC (rev 1223)
++++ trunk/Yade.kdevelop	2007-07-11 14:44:57 UTC (rev 1224)
+@@ -10,16 +10,16 @@
+     &lt;projectname&gt;Yade&lt;/projectname&gt;
+     &lt;projectdirectory&gt;.&lt;/projectdirectory&gt;
+     &lt;absoluteprojectpath&gt;false&lt;/absoluteprojectpath&gt;
+-    &lt;description/&gt;
+-    &lt;defaultencoding/&gt;
+-    &lt;versioncontrol&gt;kdevsubversion&lt;/versioncontrol&gt;
++    &lt;description&gt;&lt;/description&gt;
++    &lt;defaultencoding&gt;&lt;/defaultencoding&gt;
++    &lt;versioncontrol&gt;&lt;/versioncontrol&gt;
+   &lt;/general&gt;
+   &lt;kdevcustomproject&gt;
+     &lt;run&gt;
+       &lt;mainprogram&gt;/usr/local/bin/yade-svn1148&lt;/mainprogram&gt;
+       &lt;directoryradio&gt;executable&lt;/directoryradio&gt;
+-      &lt;programargs/&gt;
+-      &lt;globaldebugarguments/&gt;
++      &lt;programargs&gt;&lt;/programargs&gt;
++      &lt;globaldebugarguments&gt;&lt;/globaldebugarguments&gt;
+       &lt;globalcwd&gt;/tmp&lt;/globalcwd&gt;
+       &lt;useglobalprogram&gt;false&lt;/useglobalprogram&gt;
+       &lt;terminal&gt;false&lt;/terminal&gt;
+@@ -30,7 +30,7 @@
+     &lt;/run&gt;
+     &lt;build&gt;
+       &lt;buildtool&gt;make&lt;/buildtool&gt;
+-      &lt;builddir/&gt;
++      &lt;builddir&gt;&lt;/builddir&gt;
+     &lt;/build&gt;
+     &lt;make&gt;
+       &lt;abortonerror&gt;false&lt;/abortonerror&gt;
+@@ -38,8 +38,8 @@
+       &lt;prio&gt;0&lt;/prio&gt;
+       &lt;dontact&gt;false&lt;/dontact&gt;
+       &lt;makebin&gt;scons&lt;/makebin&gt;
+-      &lt;defaulttarget/&gt;
+-      &lt;makeoptions/&gt;
++      &lt;defaulttarget&gt;&lt;/defaulttarget&gt;
++      &lt;makeoptions&gt;&lt;/makeoptions&gt;
+       &lt;selectedenvironment&gt;default&lt;/selectedenvironment&gt;
+       &lt;environments&gt;
+         &lt;default/&gt;
+@@ -48,11 +48,11 @@
+   &lt;/kdevcustomproject&gt;
+   &lt;kdevdebugger&gt;
+     &lt;general&gt;
+-      &lt;dbgshell/&gt;
+-      &lt;gdbpath/&gt;
+-      &lt;configGdbScript/&gt;
+-      &lt;runShellScript/&gt;
+-      &lt;runGdbScript/&gt;
++      &lt;dbgshell&gt;&lt;/dbgshell&gt;
++      &lt;gdbpath&gt;&lt;/gdbpath&gt;
++      &lt;configGdbScript&gt;&lt;/configGdbScript&gt;
++      &lt;runShellScript&gt;&lt;/runShellScript&gt;
++      &lt;runGdbScript&gt;&lt;/runGdbScript&gt;
+       &lt;breakonloadinglibs&gt;true&lt;/breakonloadinglibs&gt;
+       &lt;separatetty&gt;false&lt;/separatetty&gt;
+       &lt;floatingtoolbar&gt;false&lt;/floatingtoolbar&gt;
+@@ -151,7 +151,7 @@
+       &lt;includePaths&gt;.;&lt;/includePaths&gt;
+     &lt;/codecompletion&gt;
+     &lt;creategettersetter&gt;
+-      &lt;prefixGet/&gt;
++      &lt;prefixGet&gt;&lt;/prefixGet&gt;
+       &lt;prefixSet&gt;set&lt;/prefixSet&gt;
+       &lt;prefixVariable&gt;m_,_&lt;/prefixVariable&gt;
+       &lt;parameterName&gt;theValue&lt;/parameterName&gt;
+
+Added: trunk/pkg/common/Engine/StandAloneEngine/DistantPersistentSAPCollider.cpp
+===================================================================
+--- trunk/pkg/common/Engine/StandAloneEngine/DistantPersistentSAPCollider.cpp	2007-07-04 18:24:46 UTC (rev 1223)
++++ trunk/pkg/common/Engine/StandAloneEngine/DistantPersistentSAPCollider.cpp	2007-07-11 14:44:57 UTC (rev 1224)
+@@ -0,0 +1,256 @@
++/*************************************************************************
++*  Copyright (C) 2004 by Olivier Galizzi                                 *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">olivier.galizzi at imag.fr</A>                                               *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#include &quot;DistantPersistentSAPCollider.hpp&quot;
++#include&lt;yade/core/Body.hpp&gt;
++#include&lt;yade/core/MetaBody.hpp&gt;
++#include&lt;yade/core/BodyContainer.hpp&gt;
++
++DistantPersistentSAPCollider::DistantPersistentSAPCollider() : BroadInteractor()
++{
++//	cerr &lt;&lt; &quot;DistantPersistentSAPCollider\n&quot;;
++
++	//this-&gt;maxObject = 150000;
++	nbObjects=0;
++
++	//xBounds.resize(2*maxObject);
++	//yBounds.resize(2*maxObject);
++	//zBounds.resize(2*maxObject);
++
++	//minimums = new Real[3*maxObject];
++	//maximums = new Real[3*maxObject];
++	
++	xBounds.clear();
++	yBounds.clear();
++	zBounds.clear();
++
++	minimums.clear();
++	maximums.clear();
++}
++
++DistantPersistentSAPCollider::~DistantPersistentSAPCollider()
++{
++
++}
++
++void DistantPersistentSAPCollider::action(Body* body)
++{
++
++	MetaBody * ncb = YADE_CAST&lt;MetaBody*&gt;(body);
++	shared_ptr&lt;BodyContainer&gt; bodies = ncb-&gt;bodies;
++	
++	if (2*bodies-&gt;size()!=xBounds.size())
++	{
++		xBounds.resize(2*bodies-&gt;size());
++		yBounds.resize(2*bodies-&gt;size());
++		zBounds.resize(2*bodies-&gt;size());
++
++		minimums.resize(3*bodies-&gt;size());
++		maximums.resize(3*bodies-&gt;size());
++	}
++
++	// Updates the minimums and maximums arrays according to the new center and radius of the spheres
++	int offset;
++	Vector3r min,max;
++	shared_ptr&lt;Body&gt; b;
++
++	BodyContainer::iterator bi    = bodies-&gt;begin();
++	BodyContainer::iterator biEnd = bodies-&gt;end();
++	for(unsigned int i=0 ; bi!=biEnd ; ++bi,i++ )
++	{
++		b = *bi;
++		
++		offset = 3*i;
++		//FIXME: this is broken: bodies without boundingVolume are just skipped, which means that some garbage values are used later!
++		if(b-&gt;boundingVolume) // can't assume that everybody has BoundingVolume
++		{
++			min = b-&gt;boundingVolume-&gt;min;
++			max = b-&gt;boundingVolume-&gt;max;
++			minimums[offset+0] = min[0];
++			minimums[offset+1] = min[1];
++			minimums[offset+2] = min[2];
++			maximums[offset+0] = max[0];
++			maximums[offset+1] = max[1];
++			maximums[offset+2] = max[2];
++		}
++	}
++	
++	transientInteractions = ncb-&gt;transientInteractions;
++	InteractionContainer::iterator ii    = transientInteractions-&gt;begin();
++	InteractionContainer::iterator iiEnd = transientInteractions-&gt;end();
++	for( ; ii!=iiEnd ; ++ii)
++	{
++		shared_ptr&lt;Interaction&gt; interaction = *ii;
++		// FIXME : remove this isNew flag and test if interactionPhysic ?
++		if (interaction-&gt;isReal) // if a interaction was only potential then no geometry was created for it and so this time it is still a new one
++			interaction-&gt;isNew = false;
++		interaction-&gt;isReal = false;
++	}
++	
++	updateIds(bodies-&gt;size());
++	nbObjects = bodies-&gt;size();
++
++	// permutation sort of the AABBBounds along the 3 axis performed in a independant manner
++	sortBounds(xBounds, nbObjects);
++	sortBounds(yBounds, nbObjects);
++	sortBounds(zBounds, nbObjects);
++
++}
++
++
++void DistantPersistentSAPCollider::updateIds(unsigned int nbElements)
++{
++
++	// the first time broadInteractionTest is called nbObject=0
++	if (nbElements!=nbObjects)
++	{
++		int begin,end;
++
++		end = nbElements;
++		begin = 0;
++
++		if (nbElements&gt;nbObjects)
++			begin = nbObjects;
++
++		// initialization if the xBounds, yBounds, zBounds
++		for(int i=begin;i&lt;end;i++)
++		{
++			xBounds[2*i]	= shared_ptr&lt;AABBBound&gt;(new AABBBound(i,1));
++			xBounds[2*i+1]	= shared_ptr&lt;AABBBound&gt;(new AABBBound(i,0));
++			
++			yBounds[2*i]	= shared_ptr&lt;AABBBound&gt;(new AABBBound(i,1));
++			yBounds[2*i+1]	= shared_ptr&lt;AABBBound&gt;(new AABBBound(i,0));
++			
++			zBounds[2*i]	= shared_ptr&lt;AABBBound&gt;(new AABBBound(i,1));
++			zBounds[2*i+1]	= shared_ptr&lt;AABBBound&gt;(new AABBBound(i,0));
++		}
++
++		// initialization if the field &quot;value&quot; of the xBounds, yBounds, zBounds arrays
++		updateBounds(nbElements);
++
++		// modified quick sort of the xBounds, yBounds, zBounds arrays
++		// The first time these arrays are not sorted so it is faster to use such a sort instead
++		// of the permutation we are going to use next
++		std::sort(xBounds.begin(),xBounds.begin()+2*nbElements,AABBBoundComparator());
++		std::sort(yBounds.begin(),yBounds.begin()+2*nbElements,AABBBoundComparator());
++		std::sort(zBounds.begin(),zBounds.begin()+2*nbElements,AABBBoundComparator());
++
++		// initialize the overlappingBB collection
++		//for(unsigned int j=0;j&lt;nbElements;j++)
++		//	overlappingBB[j].clear(); //attention memoire
++
++		findOverlappingBB(xBounds, nbElements);
++		findOverlappingBB(yBounds, nbElements);
++		findOverlappingBB(zBounds, nbElements);
++
++	}
++	else
++		updateBounds(nbElements);
++}
++
++
++void DistantPersistentSAPCollider::sortBounds(vector&lt;shared_ptr&lt;AABBBound&gt; &gt;&amp; bounds, int nbElements)
++{
++	int i,j;
++	shared_ptr&lt;AABBBound&gt; tmp;
++
++	for (i=1; i&lt;2*nbElements; i++)
++	{
++		tmp = bounds[i];
++		j = i;
++		while (j&gt;0 &amp;&amp; tmp-&gt;value&lt;bounds[j-1]-&gt;value)
++		{
++			bounds[j] = bounds[j-1];
++			updateOverlapingBBSet(tmp-&gt;id,bounds[j-1]-&gt;id);
++			j--;
++		}
++		bounds[j] = tmp;
++	}
++}
++
++
++void DistantPersistentSAPCollider::updateOverlapingBBSet(int id1,int id2)
++{
++
++// 	// look if the pair (id1,id2) already exists in the overleppingBB collection
++	shared_ptr&lt;Interaction&gt; interaction = transientInteractions-&gt;find(body_id_t(id1),body_id_t(id2));//Bruno's Hack
++	//bool found = (transientInteractions-&gt;find(body_id_t(id1),body_id_t(id2))!=0);
++bool found = (interaction!=0);//Bruno's Hack
++
++	
++	// test if the AABBs of the spheres number &quot;id1&quot; and &quot;id2&quot; are overlapping
++	int offset1 = 3*id1;
++	int offset2 = 3*id2;
++	// FIXME: this is perhaps an expensive operation?!
++	const shared_ptr&lt;Body&gt;&amp; b1(Body::byId(body_id_t(id1))), b2(Body::byId(body_id_t(id2)));
++	bool overlap =
++
++		(b1-&gt;isStandalone() || b2-&gt;isStandalone() || b1-&gt;clumpId!=b2-&gt;clumpId ) &amp;&amp; // only collide if at least one particle is standalone or they belong to different clumps
++		!b1-&gt;isClump() &amp;&amp; !b2-&gt;isClump() &amp;&amp; // do not collide clumps, since they are just containers, never interact
++
++		!(maximums[offset1]&lt;minimums[offset2] || maximums[offset2]&lt;minimums[offset1] || 
++		maximums[offset1+1]&lt;minimums[offset2+1] || maximums[offset2+1]&lt;minimums[offset1+1] || 
++		maximums[offset1+2]&lt;minimums[offset2+2] || maximums[offset2+2]&lt;minimums[offset1+2]);
++
++	// inserts the pair p=(id1,id2) if the two AABB overlaps and if p does not exists in the overlappingBB
++	if (overlap &amp;&amp; !found)
++		transientInteractions-&gt;insert(body_id_t(id1),body_id_t(id2));
++	// removes the pair p=(id1,id2) if the two AABB do not overlapp any more and if p already exists in the overlappingBB
++	else if (!overlap &amp;&amp; found &amp;&amp; !interaction-&gt;isReal)
++		transientInteractions-&gt;erase(body_id_t(id1),body_id_t(id2));//Bruno's hack
++//else if (!overlap &amp;&amp; found)
++//		transientInteractions-&gt;erase(body_id_t(id1),body_id_t(id2));
++}
++
++
++void DistantPersistentSAPCollider::updateBounds(int nbElements)
++{
++
++	for(int i=0; i &lt; 2*nbElements; i++)
++	{
++		if (xBounds[i]-&gt;lower)
++			xBounds[i]-&gt;value = minimums[3*xBounds[i]-&gt;id+0];
++		else
++			xBounds[i]-&gt;value = maximums[3*xBounds[i]-&gt;id+0];
++
++		if (yBounds[i]-&gt;lower)
++			yBounds[i]-&gt;value = minimums[3*yBounds[i]-&gt;id+1];
++		else
++			yBounds[i]-&gt;value = maximums[3*yBounds[i]-&gt;id+1];
++
++		if (zBounds[i]-&gt;lower)
++			zBounds[i]-&gt;value = minimums[3*zBounds[i]-&gt;id+2];
++		else
++			zBounds[i]-&gt;value = maximums[3*zBounds[i]-&gt;id+2];
++	}
++}
++
++
++
++
++void DistantPersistentSAPCollider::findOverlappingBB(std::vector&lt;shared_ptr&lt;AABBBound&gt; &gt;&amp; bounds, int nbElements)
++{
++
++	int i,j;
++
++	i = j = 0;
++	while (i&lt;2*nbElements)
++	{
++		while (i&lt;2*nbElements &amp;&amp; !bounds[i]-&gt;lower)
++			i++;
++		j=i+1;
++		while (j&lt;2*nbElements &amp;&amp; bounds[j]-&gt;id!=bounds[i]-&gt;id)
++		{
++			if (bounds[j]-&gt;lower)
++				updateOverlapingBBSet(bounds[i]-&gt;id,bounds[j]-&gt;id);
++			j++;
++		}
++		i++;
++	}
++}
++
+
+Added: trunk/pkg/common/Engine/StandAloneEngine/DistantPersistentSAPCollider.hpp
+===================================================================
+--- trunk/pkg/common/Engine/StandAloneEngine/DistantPersistentSAPCollider.hpp	2007-07-04 18:24:46 UTC (rev 1223)
++++ trunk/pkg/common/Engine/StandAloneEngine/DistantPersistentSAPCollider.hpp	2007-07-11 14:44:57 UTC (rev 1224)
+@@ -0,0 +1,104 @@
++/*************************************************************************
++*  Copyright (C) 2004 by Olivier Galizzi                                 *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">olivier.galizzi at imag.fr</A>                                               *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#ifndef __DISTANTPERSISTENTSAPCOLLIDER_HPP__
++#define __DISTANTPERSISTENTSAPCOLLIDER_HPP__
++
++#include&lt;yade/core/BroadInteractor.hpp&gt;
++#include&lt;yade/core/InteractionContainer.hpp&gt;
++#include &lt;list&gt;
++#include &lt;set&gt;
++#include &lt;vector&gt;
++#include &lt;algorithm&gt;
++
++using namespace std;
++
++class DistantPersistentSAPCollider : public BroadInteractor
++{
++	private :
++		// represent an extrmity of an Axis ALigned bounding box
++		struct AABBBound
++		{
++			AABBBound(int i, char l) : id(i),lower(l) {};
++			int		id;		// AABB of the &quot;id&quot; shpere
++			char		lower;		// is it the lower or upper bound of the AABB
++			Real		value;		// value of the bound
++		};
++		// strucuture that compare 2 AABBBounds =&gt; used in the sort algorithm
++		struct AABBBoundComparator
++		{
++			bool operator() (shared_ptr&lt;AABBBound&gt; b1, shared_ptr&lt;AABBBound&gt; b2)
++			{
++				return b1-&gt;value&lt;b2-&gt;value;
++			}
++		};
++
++	protected :
++		/// number of potential transientInteractions = number of interacting AABB
++		int nbPotentialInteractions;
++
++		/// number of AABB
++		unsigned int nbObjects;
++
++		/// AABB extremity of the sphere number &quot;id&quot; projected onto the X axis
++		vector&lt;shared_ptr&lt;AABBBound&gt; &gt; xBounds;
++
++		/// AABB extremity of the sphere number &quot;id&quot; projected onto the Y axis
++		vector&lt;shared_ptr&lt;AABBBound&gt; &gt; yBounds;
++
++		/// AABB extremity of the sphere number &quot;id&quot; projected onto the Z axis
++		vector&lt;shared_ptr&lt;AABBBound&gt; &gt; zBounds;
++
++		// collection of AABB that are in interaction
++		//protected : vector&lt; set&lt;unsigned int&gt; &gt; overlappingBB;
++		shared_ptr&lt;InteractionContainer&gt; transientInteractions;
++		/// upper right corner of the AABB of the objects =&gt;  for spheres = center[i]-radius
++		vector&lt;Real&gt; maximums;
++
++		/// lower left corner of the AABB of the objects =&gt;  for spheres = center[i]+radius
++		vector&lt;Real&gt; minimums;
++
++		/// Used the first time broadInteractionTest is called, to initialize and sort the xBounds, yBounds,
++		/// and zBounds arrays and to initialize the overlappingBB collection
++		void updateIds(unsigned int nbElements);
++
++		/// Permutation sort the xBounds, yBounds, zBounds arrays according to the &quot;value&quot; field
++		/// Calls updateOverlapingBBSet every time a permutation between 2 AABB i and j occurs
++		void sortBounds(vector&lt;shared_ptr&lt;AABBBound&gt; &gt;&amp; bounds, int nbElements);
++
++		/// Tests if the AABBi and AABBj really overlap.
++		/// If yes, adds the pair (id1,id2) to the collection of overlapping AABBs
++		/// If no, removes the (id1,id2) to the collection of overlapping AABBs if necessary
++		void updateOverlapingBBSet(int id1,int id2);
++
++		/// update the &quot;value&quot; field of the xBounds, yBounds, zBounds arrays
++		void updateBounds(int nbElements);
++
++		/// Used the first time broadInteractionTest is called
++		/// It is necessary to initialise the overlapping AABB collection because this collection is only
++		/// incrementally udated each time step
++		void findOverlappingBB(vector&lt;shared_ptr&lt;AABBBound&gt; &gt;&amp; bounds, int nbElements);
++
++	public :
++		DistantPersistentSAPCollider();
++
++		virtual ~DistantPersistentSAPCollider();
++
++		/// return a list &quot;transientInteractions&quot; of pairs of Body which Bounding volume are in potential interaction
++		void action(Body * body);
++
++
++	REGISTER_CLASS_NAME(DistantPersistentSAPCollider);
++	REGISTER_BASE_CLASS_NAME(BroadInteractor);
++
++};
++
++REGISTER_SERIALIZABLE(DistantPersistentSAPCollider,false);
++
++#endif // __PERSISTENTSAPCOLLIDER_HPP__
++
+
+Modified: trunk/pkg/common/SConscript
+===================================================================
+--- trunk/pkg/common/SConscript	2007-07-04 18:24:46 UTC (rev 1223)
++++ trunk/pkg/common/SConscript	2007-07-11 14:44:57 UTC (rev 1224)
+@@ -356,6 +356,11 @@
+ 		['Engine/StandAloneEngine/PersistentSAPCollider.cpp'],
+ 		LIBS=env['LIBS']+['yade-base'],
+ 		CPPPATH=env['CPPPATH']+['Engine/StandAloneEngine', '$PREFIX/include']),
++		
++	env.SharedLibrary('DistantPersistentSAPCollider',
++		['Engine/StandAloneEngine/DistantPersistentSAPCollider.cpp'],
++		LIBS=env['LIBS']+['yade-base'],
++		CPPPATH=env['CPPPATH']+['Engine/StandAloneEngine', '$PREFIX/include']),
+ 
+ 	env.SharedLibrary('SAPCollider',
+ 		['Engine/StandAloneEngine/SAPCollider.cpp'],
+
+Added: trunk/pkg/dem/DataClass/InteractionPhysics/CohesiveFrictionalContactInteraction.cpp
+===================================================================
+--- trunk/pkg/dem/DataClass/InteractionPhysics/CohesiveFrictionalContactInteraction.cpp	2007-07-04 18:24:46 UTC (rev 1223)
++++ trunk/pkg/dem/DataClass/InteractionPhysics/CohesiveFrictionalContactInteraction.cpp	2007-07-11 14:44:57 UTC (rev 1224)
+@@ -0,0 +1,68 @@
++/*************************************************************************
++*  Copyright (C) 2007 by Bruno Chareyre                                 *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">bruno.chareyre at imag.fr</A>                                               *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#include &quot;CohesiveFrictionalContactInteraction.hpp&quot;
++
++
++CohesiveFrictionalContactInteraction::CohesiveFrictionalContactInteraction()
++{
++	createIndex();
++	cohesionDisablesFriction = false;
++	cohesionBroken = false;
++	fragile = true;
++	normalAdhesion = 0;
++	shearAdhesion = 0;
++	
++}
++
++void CohesiveFrictionalContactInteraction::SetBreakingState()
++{
++	
++	if (fragile) {
++		cohesionBroken = true;
++		normalAdhesion = 0;
++		shearAdhesion = 0;}
++	
++}
++
++CohesiveFrictionalContactInteraction::~CohesiveFrictionalContactInteraction()
++{
++}
++
++// void CohesiveFrictionalContactInteraction::postProcessAttributes(bool)
++// {
++// 
++// }
++
++
++void CohesiveFrictionalContactInteraction::registerAttributes()
++{
++	SimpleElasticInteraction::registerAttributes();
++	REGISTER_ATTRIBUTE(prevNormal);
++	REGISTER_ATTRIBUTE(shearForce);
++	REGISTER_ATTRIBUTE(initialKn);
++	REGISTER_ATTRIBUTE(initialKs);
++	REGISTER_ATTRIBUTE(tangensOfFrictionAngle);
++	REGISTER_ATTRIBUTE(cohesionDisablesFriction);
++	REGISTER_ATTRIBUTE(fragile);
++	REGISTER_ATTRIBUTE(cohesionBroken);
++	REGISTER_ATTRIBUTE(normalAdhesion);
++	REGISTER_ATTRIBUTE(shearAdhesion);
++//		Real		 kn				// normal elastic constant.
++//				,ks				// shear elastic constant.
++//				,initialKn			// initial normal elastic constant.
++//				,initialKs			// initial shear elastic constant.
++//				,equilibriumDistance		// equilibrium distance
++//				,initialEquilibriumDistance	// initial equilibrium distance
++//				,frictionAngle 			// angle of friction, according to Coulumb criterion
++//				,tangensOfFrictionAngle;
++//	
++//		Vector3r	prevNormal			// unit normal of the contact plane.
++//				,normalForce			// normal force applied on a DE
++//				,shearForce;			// shear force applied on a DE
++}
+
+Added: trunk/pkg/dem/DataClass/InteractionPhysics/CohesiveFrictionalContactInteraction.hpp
+===================================================================
+--- trunk/pkg/dem/DataClass/InteractionPhysics/CohesiveFrictionalContactInteraction.hpp	2007-07-04 18:24:46 UTC (rev 1223)
++++ trunk/pkg/dem/DataClass/InteractionPhysics/CohesiveFrictionalContactInteraction.hpp	2007-07-11 14:44:57 UTC (rev 1224)
+@@ -0,0 +1,41 @@
++/*************************************************************************
++*  Copyright (C) 2007 by Bruno Chareyre                                 *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">bruno.chareyre at imag.fr</A>                                               *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#ifndef COHESIVE_FRICTIONAL_CONTACT_PARAMETERS_HPP
++#define COHESIVE_FRICTIONAL_CONTACT_PARAMETERS_HPP
++
++#include&lt;yade/pkg-common/SimpleElasticInteraction.hpp&gt;
++#include&lt;yade/pkg-dem/ElasticContactInteraction.hpp&gt;
++
++class CohesiveFrictionalContactInteraction : public ElasticContactInteraction
++{
++	public :
++		bool		cohesionDisablesFriction,	//is shear strength the sum of friction and adhesion or only adhesion?
++				cohesionBroken,	//is cohesion active? should be set to false when a fragile contact is broken
++				fragile;	//do cohesion disapear when contact strength is exceeded?
++
++		Real		normalAdhesion			// max tensile force
++				,shearAdhesion;			// max shear force (actual max force can include friction too depending on cohesionDisablesFriction)
++	
++		CohesiveFrictionalContactInteraction();
++		virtual ~CohesiveFrictionalContactInteraction();
++		void SetBreakingState ();
++	protected :
++		virtual void registerAttributes();
++
++	REGISTER_CLASS_NAME(CohesiveFrictionalContactInteraction);
++	REGISTER_BASE_CLASS_NAME(ElasticContactInteraction);
++
++	REGISTER_CLASS_INDEX(CohesiveFrictionalContactInteraction,ElasticContactInteraction);
++
++};
++
++REGISTER_SERIALIZABLE(CohesiveFrictionalContactInteraction,false);
++
++#endif // COHESIVE_FRICTIONAL_CONTACT_PARAMETERS_HPP
++
+
+Added: trunk/pkg/dem/Engine/DeusExMachina/HydraulicForceEngine.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/HydraulicForceEngine.cpp	2007-07-04 18:24:46 UTC (rev 1223)
++++ trunk/pkg/dem/Engine/DeusExMachina/HydraulicForceEngine.cpp	2007-07-11 14:44:57 UTC (rev 1224)
+@@ -0,0 +1,59 @@
++/*************************************************************************
++*  Copyright (C) 2004 by Janek Kozicki                                   *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">cosurgi at berlios.de</A>                                                    *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#include &quot;HydraulicForceEngine.hpp&quot;
++#include &lt;yade/pkg-common/ParticleParameters.hpp&gt;
++#include &lt;yade/pkg-common/Force.hpp&gt;
++#include&lt;yade/core/MetaBody.hpp&gt;
++
++HydraulicForceEngine::HydraulicForceEngine() : actionParameterForce(new Force), gravity(Vector3r::ZERO), isActivated(false)
++{
++}
++
++
++HydraulicForceEngine::~HydraulicForceEngine()
++{
++}
++
++
++void HydraulicForceEngine::registerAttributes()
++{
++	REGISTER_ATTRIBUTE(gravity);
++}
++
++
++void HydraulicForceEngine::applyCondition(Body* body)
++{
++    if (isActivated)
++    {
++        MetaBody * ncb = YADE_CAST&lt;MetaBody*&gt;(body);
++        shared_ptr&lt;BodyContainer&gt;&amp; bodies = ncb-&gt;bodies;
++
++        BodyContainer::iterator bi    = bodies-&gt;begin();
++        BodyContainer::iterator biEnd = bodies-&gt;end();
++        for ( ; bi!=biEnd ; ++bi )
++        {
++            shared_ptr&lt;Body&gt; b = *bi;
++            /* skip bodies that are within a clump;
++             * even if they are marked isDynamic==false, forces applied to them are passed to the clump, which is dynamic;
++             * and since clump is a body with mass equal to the sum of masses of its components, it would have gravity applied twice.
++             *
++             * The choice is to skip (b-&gt;isClumpMember()) or (b-&gt;isClump()). We rather skip members,
++             * since that will apply smaller number of forces and (theoretically) improve numerical stability ;-) */
++            if (b-&gt;isClumpMember()) continue;
++
++            cerr &lt;&lt; &quot;particle id = &quot;&lt;&lt; b-&gt;getId() &lt;&lt; endl;
++            cout &lt;&lt; &quot;cout version&quot; &lt;&lt; endl;
++
++            ParticleParameters* p = dynamic_cast&lt;ParticleParameters*&gt;(b-&gt;physicalParameters.get());
++            //if (p)
++            //static_cast&lt;Force*&gt;( ncb-&gt;physicalActions-&gt;find( b-&gt;getId() , actionParameterForce-&gt;getClassIndex() ).get() )-&gt;force += gravity * p-&gt;mass;
++        }
++    }
++}
++
+
+Added: trunk/pkg/dem/Engine/DeusExMachina/HydraulicForceEngine.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/HydraulicForceEngine.hpp	2007-07-04 18:24:46 UTC (rev 1223)
++++ trunk/pkg/dem/Engine/DeusExMachina/HydraulicForceEngine.hpp	2007-07-11 14:44:57 UTC (rev 1224)
+@@ -0,0 +1,38 @@
++/*************************************************************************
++*  Copyright (C) 2004 by Janek Kozicki                                   *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">cosurgi at berlios.de</A>                                                    *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#ifndef HYDRAULIC_FORCE_FUNCTOR_HPP
++#define HYDRAULIC_FORCE_FUNCTOR_HPP 
++
++#include&lt;yade/core/DeusExMachina.hpp&gt;
++
++class Force;
++
++class HydraulicForceEngine : public DeusExMachina 
++{
++	private	:
++		shared_ptr&lt;Force&gt; actionParameterForce;
++
++	public :
++		Vector3r gravity;
++		bool isActivated;
++		HydraulicForceEngine();
++		virtual ~HydraulicForceEngine();
++	
++		virtual void applyCondition(Body*);
++	
++	protected :
++		virtual void registerAttributes();
++	REGISTER_CLASS_NAME(HydraulicForceEngine);
++	REGISTER_BASE_CLASS_NAME(DeusExMachina);
++};
++
++REGISTER_SERIALIZABLE(HydraulicForceEngine,false);
++
++#endif // GRAVITY_FORCE_FUNCTOR_HPP 
++
+
+Added: trunk/pkg/dem/Engine/EngineUnit/CohesiveFrictionalRelationships.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/EngineUnit/CohesiveFrictionalRelationships.cpp	2007-07-04 18:24:46 UTC (rev 1223)
++++ trunk/pkg/dem/Engine/EngineUnit/CohesiveFrictionalRelationships.cpp	2007-07-11 14:44:57 UTC (rev 1224)
+@@ -0,0 +1,116 @@
++/*************************************************************************
++*  Copyright (C) 2007 by Bruno CHAREYRE                                 *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">bruno.chareyre at hmg.inpg.fr</A>                                        *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#include&quot;CohesiveFrictionalRelationships.hpp&quot;
++#include&lt;yade/pkg-dem/SpheresContactGeometry.hpp&gt;
++#include&lt;yade/pkg-dem/CohesiveFrictionalContactInteraction.hpp&gt;
++#include&lt;yade/pkg-dem/SDECLinkGeometry.hpp&gt; // FIXME - I can't dispatch by SDECLinkGeometry &lt;-&gt; SpheresContactGeometry !!?
++#include&lt;yade/pkg-dem/SDECLinkPhysics.hpp&gt; // FIXME
++#include&lt;yade/pkg-dem/BodyMacroParameters.hpp&gt;
++#include&lt;yade/core/Omega.hpp&gt;
++#include&lt;yade/core/MetaBody.hpp&gt;
++
++
++CohesiveFrictionalRelationships::CohesiveFrictionalRelationships()
++{
++		normalCohesion = 10000000;
++		shearCohesion = 10000000;
++		setCohesionNow = false;
++		setCohesionOnNewContacts = false;
++}
++
++
++void CohesiveFrictionalRelationships::registerAttributes()
++{
++	REGISTER_ATTRIBUTE(normalCohesion);
++	REGISTER_ATTRIBUTE(shearCohesion);
++	REGISTER_ATTRIBUTE(setCohesionNow);
++	REGISTER_ATTRIBUTE(setCohesionOnNewContacts);	
++}
++
++
++void CohesiveFrictionalRelationships::go(	  const shared_ptr&lt;PhysicalParameters&gt;&amp; b1 // BodyMacroParameters
++					, const shared_ptr&lt;PhysicalParameters&gt;&amp; b2 // BodyMacroParameters
++					, const shared_ptr&lt;Interaction&gt;&amp; interaction)
++{
++	BodyMacroParameters* sdec1 = static_cast&lt;BodyMacroParameters*&gt;(b1.get());
++	BodyMacroParameters* sdec2 = static_cast&lt;BodyMacroParameters*&gt;(b2.get());
++	SpheresContactGeometry* interactionGeometry = dynamic_cast&lt;SpheresContactGeometry*&gt;(interaction-&gt;interactionGeometry.get());
++	
++	if(interactionGeometry) // so it is SpheresContactGeometry  - NON PERMANENT LINK
++	{
++		if(interaction-&gt;isNew)
++		{
++			interaction-&gt;interactionPhysics = shared_ptr&lt;CohesiveFrictionalContactInteraction&gt;(new CohesiveFrictionalContactInteraction());
++			CohesiveFrictionalContactInteraction* contactPhysics = YADE_CAST&lt;CohesiveFrictionalContactInteraction*&gt;(interaction-&gt;interactionPhysics.get());
++
++			Real Ea 	= sdec1-&gt;young;
++			Real Eb 	= sdec2-&gt;young;
++			Real Va 	= sdec1-&gt;poisson;
++			Real Vb 	= sdec2-&gt;poisson;
++			Real Da 	= interactionGeometry-&gt;radius1; // FIXME - multiply by factor of sphere interaction distance (so sphere interacts at bigger range that its geometrical size)
++			Real Db 	= interactionGeometry-&gt;radius2; // FIXME - as above
++			Real fa 	= sdec1-&gt;frictionAngle;
++			Real fb 	= sdec2-&gt;frictionAngle;
++
++			//Real Eab	= 2*Ea*Eb/(Ea+Eb);
++			//Real Vab	= 2*Va*Vb/(Va+Vb);
++
++			Real Dinit 	= Da+Db; 			// FIXME - is it just a sum?
++			//Real Sinit 	= Mathr::PI * std::pow( std::min(Da,Db) , 2);
++
++			Real Kn = 2*Ea*Da*Eb*Db/(Ea*Da+Eb*Db);//harmonic average of two stiffnesses
++			Real Ks = 2*Ea*Da*Va*Eb*Db*Vb/(Ea*Da*Va+Eb*Db*Va);//harmonic average of two stiffnesses with ks=V*kn for each sphere
++
++			contactPhysics-&gt;initialKn			= Kn;
++			contactPhysics-&gt;initialKs			= Ks;
++//cerr &lt;&lt; &quot;Ks: &quot; &lt;&lt;       contactPhysics-&gt;initialKs			&lt;&lt; endl;
++			contactPhysics-&gt;frictionAngle			= std::min(fa,fb); // FIXME - this is actually a waste of memory space, just like initialKs and initialKn
++			contactPhysics-&gt;tangensOfFrictionAngle		= std::tan(contactPhysics-&gt;frictionAngle);
++
++			if (setCohesionOnNewContacts || setCohesionNow) { 
++			contactPhysics-&gt;normalAdhesion			= normalCohesion*pow(std::min(interactionGeometry-&gt;radius2, interactionGeometry-&gt;radius1),2);
++			contactPhysics-&gt;shearAdhesion			= shearCohesion*pow(std::min(interactionGeometry-&gt;radius2, interactionGeometry-&gt;radius1),2);;
++			}
++
++			contactPhysics-&gt;prevNormal 			= interactionGeometry-&gt;normal;
++			contactPhysics-&gt;initialEquilibriumDistance	= Dinit;			
++
++			contactPhysics-&gt;kn = contactPhysics-&gt;initialKn;
++			contactPhysics-&gt;ks = contactPhysics-&gt;initialKs;
++			contactPhysics-&gt;equilibriumDistance = contactPhysics-&gt;initialEquilibriumDistance;
++
++		}
++		else
++		{	// FIXME - are those lines necessary ???? what they are doing in fact ???
++			CohesiveFrictionalContactInteraction* contactPhysics = YADE_CAST&lt;CohesiveFrictionalContactInteraction*&gt;(interaction-&gt;interactionPhysics.get());
++
++			contactPhysics-&gt;kn = contactPhysics-&gt;initialKn;
++			contactPhysics-&gt;ks = contactPhysics-&gt;initialKs;
++			contactPhysics-&gt;equilibriumDistance = contactPhysics-&gt;initialEquilibriumDistance;
++			if (setCohesionNow) { 
++			contactPhysics-&gt;normalAdhesion			= normalCohesion*pow(std::min(interactionGeometry-&gt;radius2, interactionGeometry-&gt;radius1),2);
++			contactPhysics-&gt;shearAdhesion			= shearCohesion*pow(std::min(interactionGeometry-&gt;radius2, interactionGeometry-&gt;radius1),2);
++			//setCohesionNow = false;
++			}
++		}	
++		
++	}
++	else   // this is PERMANENT LINK because previous dynamic_cast failed, dispatcher should do this job
++	{
++		SDECLinkGeometry* sdecLinkGeometry =  dynamic_cast&lt;SDECLinkGeometry*&gt;(interaction-&gt;interactionGeometry.get());
++		if (sdecLinkGeometry)
++		{		
++			SDECLinkPhysics* linkPhysics = static_cast&lt;SDECLinkPhysics*&gt;(interaction-&gt;interactionPhysics.get());
++	//		linkPhysics-&gt;frictionAngle 		= ?? //FIXME - uninitialized 
++			linkPhysics-&gt;kn 			= linkPhysics-&gt;initialKn;
++			linkPhysics-&gt;ks 			= linkPhysics-&gt;initialKs;
++			linkPhysics-&gt;equilibriumDistance 	= linkPhysics-&gt;initialEquilibriumDistance;
++		}
++	}
++};
+
+Added: trunk/pkg/dem/Engine/EngineUnit/CohesiveFrictionalRelationships.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/EngineUnit/CohesiveFrictionalRelationships.hpp	2007-07-04 18:24:46 UTC (rev 1223)
++++ trunk/pkg/dem/Engine/EngineUnit/CohesiveFrictionalRelationships.hpp	2007-07-11 14:44:57 UTC (rev 1224)
+@@ -0,0 +1,39 @@
++/*************************************************************************
++*  Copyright (C) 2007 by Bruno CHAREYRE                                 *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">bruno.chareyre at hmg.inpg.fr</A>                                        *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#ifndef COHESIVEFRICTIONALCONTACTMODEL_HPP
++#define COHESIVEFRICTIONALCONTACTMODEL_HPP
++
++#include&lt;yade/pkg-common/InteractionPhysicsEngineUnit.hpp&gt;
++
++class CohesiveFrictionalRelationships : public InteractionPhysicsEngineUnit
++{
++	public :
++		CohesiveFrictionalRelationships();
++
++		virtual void go(	const shared_ptr&lt;PhysicalParameters&gt;&amp; b1,
++					const shared_ptr&lt;PhysicalParameters&gt;&amp; b2,
++					const shared_ptr&lt;Interaction&gt;&amp; interaction);
++
++		Real 		normalCohesion,
++				shearCohesion;
++
++		bool		setCohesionNow,
++				setCohesionOnNewContacts;
++
++	protected :
++		virtual void registerAttributes();
++	REGISTER_CLASS_NAME(CohesiveFrictionalRelationships);
++	REGISTER_BASE_CLASS_NAME(InteractionPhysicsEngineUnit);
++
++};
++
++REGISTER_SERIALIZABLE(CohesiveFrictionalRelationships,false);
++
++#endif // COHESIVEFRICTIONALCONTACTMODEL_HPP
++
+
+Added: trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2InteractingSphere4DistantSpheresContactGeometry.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2InteractingSphere4DistantSpheresContactGeometry.cpp	2007-07-04 18:24:46 UTC (rev 1223)
++++ trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2InteractingSphere4DistantSpheresContactGeometry.cpp	2007-07-11 14:44:57 UTC (rev 1224)
+@@ -0,0 +1,116 @@
++/*************************************************************************
++*  Copyright (C) 2004 by Olivier Galizzi                                 *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">olivier.galizzi at imag.fr</A>                                               *
++*  Copyright (C) 2004 by Janek Kozicki                                   *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">cosurgi at berlios.de</A>                                                    *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#include&quot;InteractingSphere2InteractingSphere4DistantSpheresContactGeometry.hpp&quot;
++#include&lt;yade/pkg-dem/SpheresContactGeometry.hpp&gt;
++#include&lt;yade/pkg-dem/SDECLinkGeometry.hpp&gt;
++#include&lt;yade/pkg-common/InteractingSphere.hpp&gt;
++
++#include&lt;yade/lib-base/yadeWm3Extra.hpp&gt;
++
++
++InteractingSphere2InteractingSphere4DistantSpheresContactGeometry::InteractingSphere2InteractingSphere4DistantSpheresContactGeometry()
++{
++	InteractionDetectionFactor = 1;
++}
++
++void InteractingSphere2InteractingSphere4DistantSpheresContactGeometry::registerAttributes()
++{	
++	REGISTER_ATTRIBUTE(InteractionDetectionFactor);
++}
++
++bool InteractingSphere2InteractingSphere4DistantSpheresContactGeometry::go(	const shared_ptr&lt;InteractingGeometry&gt;&amp; cm1,
++							const shared_ptr&lt;InteractingGeometry&gt;&amp; cm2,
++							const Se3r&amp; se31,
++							const Se3r&amp; se32,
++							const shared_ptr&lt;Interaction&gt;&amp; c)
++{
++	InteractingSphere* s1 = static_cast&lt;InteractingSphere*&gt;(cm1.get());
++	InteractingSphere* s2 = static_cast&lt;InteractingSphere*&gt;(cm2.get());
++
++	Vector3r normal = se32.position-se31.position;
++	Real penetrationDepth = pow(InteractionDetectionFactor*(s1-&gt;radius+s2-&gt;radius), 2) - normal.SquaredLength();// Compute a wrong value just to check sign - faster than computing distances
++	//Real penetrationDepth = s1-&gt;radius+s2-&gt;radius-normal.Normalize();
++
++	shared_ptr&lt;SpheresContactGeometry&gt; scm;
++	if (c-&gt;interactionGeometry)
++	{
++		//scm = YADE_PTR_CAST&lt;SpheresContactGeometry&gt;(c-&gt;interactionGeometry);
++	//
++	// WARNING! 
++	//
++	// FIXME - this must be dynamic cast until the contaners are rewritten to support multiple interactions types
++	//         the problem is that scm can be either SDECLinkGeometry or SpheresContactGeometry and the only way CURRENTLY
++	//         to check this is by dynamic cast. This has to be fixed.
++	//
++		scm = dynamic_pointer_cast&lt;SpheresContactGeometry&gt;(c-&gt;interactionGeometry);
++		//scm = dynamic_cast&lt;SpheresContactGeometry*&gt;(c-&gt;interactionGeometry.get());
++	// BEGIN .......  FIXME FIXME	- wrong hack, to make cohesion work.
++		if(! scm) // this is not SpheresContactGeometry, so it is SDECLinkGeometry, dispatcher should do this job.
++		{
++			shared_ptr&lt;SDECLinkGeometry&gt; linkGeometry = dynamic_pointer_cast&lt;SDECLinkGeometry&gt;(c-&gt;interactionGeometry);
++//			cerr &lt;&lt; &quot;it is SpringGeometry ???: &quot; &lt;&lt; c-&gt;interactionGeometry-&gt;getClassName() &lt;&lt; endl;
++//			assert(linkGeometry);
++			if(linkGeometry)
++			{
++				linkGeometry-&gt;normal 			= se32.position-se31.position;
++				linkGeometry-&gt;normal.Normalize();
++				return true;
++			}
++			else
++				return false; // SpringGeometry !!!???????
++		}
++	// END
++	}
++	else
++		scm = shared_ptr&lt;SpheresContactGeometry&gt;(new SpheresContactGeometry());
++		
++	if (penetrationDepth&gt;0 || c-&gt;isReal)
++	{
++		penetrationDepth = s1-&gt;radius+s2-&gt;radius-normal.Normalize();
++		scm-&gt;contactPoint = se31.position+(s1-&gt;radius-0.5*penetrationDepth)*normal;//0.5*(pt1+pt2);
++		scm-&gt;normal = normal;
++		scm-&gt;penetrationDepth = penetrationDepth;
++		scm-&gt;radius1 = s1-&gt;radius;
++		scm-&gt;radius2 = s2-&gt;radius;
++				
++		if (!c-&gt;interactionGeometry)
++			c-&gt;interactionGeometry = scm;
++	
++		return true;
++	}
++	else {
++// 	if (c-&gt;isReal) {//Update geometry and let next engines decide if the interaction is real - otherwise it will be erased during next step
++// 		penetrationDepth = s1-&gt;radius+s2-&gt;radius-normal.Normalize();
++// 		scm-&gt;contactPoint = se31.position+(s1-&gt;radius-0.5*penetrationDepth)*normal;//0.5*(pt1+pt2);
++// 		scm-&gt;normal = normal;
++// 		scm-&gt;penetrationDepth = penetrationDepth;
++// 		scm-&gt;radius1 = s1-&gt;radius;
++// 		scm-&gt;radius2 = s2-&gt;radius;
++// 				
++// 		if (!c-&gt;interactionGeometry)
++// 			c-&gt;interactionGeometry = scm;
++// 	
++// 	}
++		return false;
++		}
++	
++}
++
++
++bool InteractingSphere2InteractingSphere4DistantSpheresContactGeometry::goReverse(	const shared_ptr&lt;InteractingGeometry&gt;&amp; cm1,
++								const shared_ptr&lt;InteractingGeometry&gt;&amp; cm2,
++								const Se3r&amp; se31,
++								const Se3r&amp; se32,
++								const shared_ptr&lt;Interaction&gt;&amp; c)
++{
++	return go(cm1,cm2,se31,se32,c);
++}
++
+
+Added: trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2InteractingSphere4DistantSpheresContactGeometry.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2InteractingSphere4DistantSpheresContactGeometry.hpp	2007-07-04 18:24:46 UTC (rev 1223)
++++ trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2InteractingSphere4DistantSpheresContactGeometry.hpp	2007-07-11 14:44:57 UTC (rev 1224)
+@@ -0,0 +1,49 @@
++/*************************************************************************
++*  Copyright (C) 2004 by Olivier Galizzi                                 *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">olivier.galizzi at imag.fr</A>                                               *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++
++///This engine is designed to work with the DistantPersistentSAPCollider, the go method does not return
++///false when an interaction exists - even if there is no overlap.
++
++#ifndef SPHERE2SPHERE4DISTANTMACROMICROCONTACTGEOMETRY_HPP
++#define SPHERE2SPHERE4DISTANTMACROMICROCONTACTGEOMETRY_HPP
++
++#include&lt;yade/pkg-common/InteractionGeometryEngineUnit.hpp&gt;
++
++class InteractingSphere2InteractingSphere4DistantSpheresContactGeometry : public InteractionGeometryEngineUnit
++{
++	public :
++		virtual bool go(	const shared_ptr&lt;InteractingGeometry&gt;&amp; cm1,
++					const shared_ptr&lt;InteractingGeometry&gt;&amp; cm2,
++					const Se3r&amp; se31,
++					const Se3r&amp; se32,
++					const shared_ptr&lt;Interaction&gt;&amp; c);
++		virtual bool goReverse(	const shared_ptr&lt;InteractingGeometry&gt;&amp; cm1,
++					const shared_ptr&lt;InteractingGeometry&gt;&amp; cm2,
++					const Se3r&amp; se31,
++					const Se3r&amp; se32,
++					const shared_ptr&lt;Interaction&gt;&amp; c);
++					
++		InteractingSphere2InteractingSphere4DistantSpheresContactGeometry();		
++					
++		double InteractionDetectionFactor;// InteractionGeometry will be computed when InteractionDetectionFactor*(rad1+rad2) &gt; distance 		
++	
++
++	REGISTER_CLASS_NAME(InteractingSphere2InteractingSphere4DistantSpheresContactGeometry);
++	REGISTER_BASE_CLASS_NAME(InteractionGeometryEngineUnit);
++
++	DEFINE_FUNCTOR_ORDER_2D(InteractingSphere,InteractingSphere);
++	
++	protected :
++		virtual void registerAttributes();
++};
++
++REGISTER_SERIALIZABLE(InteractingSphere2InteractingSphere4DistantSpheresContactGeometry,false);
++
++#endif // SPHERE2SPHERE4MACROMICROCONTACTGEOMETRY_HPP
++
+
+Added: trunk/pkg/dem/Engine/StandAloneEngine/CohesiveFrictionalContactLaw.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/CohesiveFrictionalContactLaw.cpp	2007-07-04 18:24:46 UTC (rev 1223)
++++ trunk/pkg/dem/Engine/StandAloneEngine/CohesiveFrictionalContactLaw.cpp	2007-07-11 14:44:57 UTC (rev 1224)
+@@ -0,0 +1,167 @@
++/*************************************************************************
++*  Copyright (C) 2007 by Bruno Chareyre                                  *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">bruno.chareyre at imag.fr</A>                                                *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#include &quot;CohesiveFrictionalContactLaw.hpp&quot;
++#include&lt;yade/pkg-dem/BodyMacroParameters.hpp&gt;
++#include&lt;yade/pkg-dem/SpheresContactGeometry.hpp&gt;
++#include&lt;yade/pkg-dem/SDECLinkGeometry.hpp&gt;
++#include&lt;yade/pkg-dem/CohesiveFrictionalContactInteraction.hpp&gt;
++#include&lt;yade/pkg-dem/SDECLinkPhysics.hpp&gt;
++#include&lt;yade/core/Omega.hpp&gt;
++#include&lt;yade/core/MetaBody.hpp&gt;
++#include&lt;yade/pkg-common/Force.hpp&gt;
++#include&lt;yade/pkg-common/Momentum.hpp&gt;
++#include&lt;yade/core/PhysicalAction.hpp&gt;
++
++
++CohesiveFrictionalContactLaw::CohesiveFrictionalContactLaw() : InteractionSolver() , actionForce(new Force) , actionMomentum(new Momentum)
++{
++	sdecGroupMask=1;
++	momentRotationLaw = true;
++}
++
++
++void CohesiveFrictionalContactLaw::registerAttributes()
++{
++	InteractionSolver::registerAttributes();
++	REGISTER_ATTRIBUTE(sdecGroupMask);
++	REGISTER_ATTRIBUTE(momentRotationLaw);
++}
++
++
++//FIXME : remove bool first !!!!!
++void CohesiveFrictionalContactLaw::action(Body* body)
++{
++        MetaBody * ncb = YADE_CAST&lt;MetaBody*&gt;(body);
++        shared_ptr&lt;BodyContainer&gt;&amp; bodies = ncb-&gt;bodies;
++
++        Real dt = Omega::instance().getTimeStep();
++
++        /// Non Permanents Links												///
++
++        InteractionContainer::iterator ii    = ncb-&gt;transientInteractions-&gt;begin();
++        InteractionContainer::iterator iiEnd = ncb-&gt;transientInteractions-&gt;end();
++        for(  ; ii!=iiEnd ; ++ii ) {
++                //if ((*ii)-&gt;interactionGeometry &amp;&amp; (*ii)-&gt;interactionPhysics)
++                if ((*ii)-&gt;isReal) {
++                        const shared_ptr&lt;Interaction&gt;&amp; contact = *ii;
++                        int id1 = contact-&gt;getId1();
++                        int id2 = contact-&gt;getId2();
++
++                        if( !( (*bodies)[id1]-&gt;getGroupMask() &amp; (*bodies)[id2]-&gt;getGroupMask() &amp; sdecGroupMask)  )
++                                continue; // skip other groups,
++
++                        BodyMacroParameters* de1 				= YADE_CAST&lt;BodyMacroParameters*&gt;((*bodies)[id1]-&gt;physicalParameters.get());
++                        BodyMacroParameters* de2 				= YADE_CAST&lt;BodyMacroParameters*&gt;((*bodies)[id2]-&gt;physicalParameters.get());
++                        SpheresContactGeometry* currentContactGeometry		= YADE_CAST&lt;SpheresContactGeometry*&gt;(contact-&gt;interactionGeometry.get());
++                        CohesiveFrictionalContactInteraction* currentContactPhysics   	= YADE_CAST&lt;CohesiveFrictionalContactInteraction*&gt; (contact-&gt;interactionPhysics.get());
++
++                        Vector3r&amp; shearForce 			= currentContactPhysics-&gt;shearForce;
++
++                        if (contact-&gt;isNew)
++                                shearForce			= Vector3r::ZERO;
++
++                        Real un 				= currentContactGeometry-&gt;penetrationDepth;
++                        currentContactPhysics-&gt;normalForce	= currentContactPhysics-&gt;kn*un*currentContactGeometry-&gt;normal;
++                        if (un &lt; 0 &amp;&amp; (currentContactPhysics-&gt;normalForce.SquaredLength() &gt; pow(currentContactPhysics-&gt;normalAdhesion,2) || currentContactPhysics-&gt;normalAdhesion==0)) {
++                                //currentContactPhysics-&gt;SetBreakingState();
++                                //if (currentContactPhysics-&gt;cohesionBroken) {
++                                cerr &lt;&lt; &quot;broken&quot; &lt;&lt; endl;
++                                contact-&gt;isReal= false;
++                                currentContactPhysics-&gt;cohesionBroken = true;
++                                currentContactPhysics-&gt;normalForce = Vector3r::ZERO;
++                                currentContactPhysics-&gt;shearForce = Vector3r::ZERO;
++                                //return;
++                                //                         } else
++                                //                                 currentContactPhysics-&gt;normalForce	= -currentContactPhysics-&gt;normalAdhesion*currentContactGeometry-&gt;normal;
++                        } else {
++
++                                Vector3r axis;
++                                Real angle;
++
++                                /// Here is the code with approximated rotations 	 ///
++
++                                axis	 		= currentContactPhysics-&gt;prevNormal.Cross(currentContactGeometry-&gt;normal);
++                                shearForce 	       -= shearForce.Cross(axis);
++                                angle 			= dt*0.5*currentContactGeometry-&gt;normal.Dot(de1-&gt;angularVelocity+de2-&gt;angularVelocity);
++                                axis 			= angle*currentContactGeometry-&gt;normal;
++                                shearForce 	       -= shearForce.Cross(axis);
++
++                                /// Here is the code with exact rotations 		 ///
++
++                                // 		Quaternionr q;
++                                //
++                                // 		axis					= currentContactPhysics-&gt;prevNormal.cross(currentContactGeometry-&gt;normal);
++                                // 		angle					= acos(currentContactGeometry-&gt;normal.dot(currentContactPhysics-&gt;prevNormal));
++                                // 		q.fromAngleAxis(angle,axis);
++                                //
++                                // 		currentContactPhysics-&gt;shearForce	= currentContactPhysics-&gt;shearForce*q;
++                                //
++                                // 		angle					= dt*0.5*currentContactGeometry-&gt;normal.dot(de1-&gt;angularVelocity+de2-&gt;angularVelocity);
++                                // 		axis					= currentContactGeometry-&gt;normal;
++                                // 		q.fromAngleAxis(angle,axis);
++                                // 		currentContactPhysics-&gt;shearForce	= q*currentContactPhysics-&gt;shearForce;
++
++                                /// 							 ///
++
++                                Vector3r x				= currentContactGeometry-&gt;contactPoint;
++                                Vector3r c1x				= (x - de1-&gt;se3.position);
++                                Vector3r c2x				= (x - de2-&gt;se3.position);
++                                Vector3r relativeVelocity		= (de2-&gt;velocity+de2-&gt;angularVelocity.Cross(c2x)) - (de1-&gt;velocity+de1-&gt;angularVelocity.Cross(c1x));
++                                Vector3r shearVelocity			= relativeVelocity-currentContactGeometry-&gt;normal.Dot(relativeVelocity)*currentContactGeometry-&gt;normal;
++                                Vector3r shearDisplacement		= shearVelocity*dt;
++                                shearForce 			       -= currentContactPhysics-&gt;ks*shearDisplacement;
++                              //  cerr &lt;&lt; &quot;shearForce0 = &quot; &lt;&lt; shearForce &lt;&lt; endl;
++                                Real maxFs = 0;
++                                Real Fn = currentContactPhysics-&gt;kn*un;
++                                Real Fs = currentContactPhysics-&gt;shearForce.Length();
++                                //if (!currentContactPhysics-&gt;cohesionBroken) {
++                                maxFs = max((Real) 0, currentContactPhysics-&gt;shearAdhesion + Fn*currentContactPhysics-&gt;tangensOfFrictionAngle);
++                                // if (!currentContactPhysics-&gt;cohesionDisablesFriction)
++                                //         maxFs += Fn * currentContactPhysics-&gt;tangensOfFrictionAngle;
++                                //} else
++                                // maxFs = Fn * currentContactPhysics-&gt;tangensOfFrictionAngle;
++                              //  cerr &lt;&lt; &quot;maxFs = &quot; &lt;&lt; maxFs &lt;&lt; &quot;     Fs = &quot; &lt;&lt; Fs&lt;&lt; endl;
++                                if( Fs  &gt; maxFs ) {
++                                        currentContactPhysics-&gt;cohesionBroken = true;
++                                        //if (currentContactPhysics-&gt;fragile &amp;&amp; !currentContactPhysics-&gt;cohesionBroken) {
++                                        currentContactPhysics-&gt;SetBreakingState();
++                                        //     maxFs = currentContactPhysics-&gt;shearAdhesion;
++                                        //    if (!currentContactPhysics-&gt;cohesionDisablesFriction &amp;&amp; un&gt;0)
++                                        //         maxFs += Fn * currentContactPhysics-&gt;tangensOfFrictionAngle;
++                                        maxFs = max((Real) 0, Fn * currentContactPhysics-&gt;tangensOfFrictionAngle);
++                                        //cerr &lt;&lt; &quot;currentContactPhysics-&gt;tangensOfFrictionAngle = &quot; &lt;&lt; currentContactPhysics-&gt;tangensOfFrictionAngle &lt;&lt; endl;
++                                       // cerr &lt;&lt; &quot;maxFs = &quot; &lt;&lt; maxFs &lt;&lt; endl;
++
++                                        maxFs = maxFs / Fs;
++                                       // cerr &lt;&lt; &quot;maxFs = &quot; &lt;&lt; maxFs &lt;&lt; endl;
++                                        if (maxFs&gt;1)
++                                                cerr &lt;&lt; &quot;maxFs&gt;1!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!&quot; &lt;&lt; endl;
++                                        shearForce *= maxFs;
++                                        if (Fn&lt;0)  currentContactPhysics-&gt;normalForce = Vector3r::ZERO;
++                                }
++
++                                ////////// PFC3d SlipModel
++
++                                Vector3r f				= currentContactPhysics-&gt;normalForce + shearForce;
++                               // cerr &lt;&lt; &quot;currentContactPhysics-&gt;normalForce= &quot; &lt;&lt; currentContactPhysics-&gt;normalForce &lt;&lt; endl;
++                              //  cerr &lt;&lt; &quot;shearForce &quot; &lt;&lt; shearForce &lt;&lt; endl;
++                               // cerr &lt;&lt; &quot;f= &quot; &lt;&lt; f &lt;&lt; endl;
++                                // it will be some macro(	body-&gt;physicalActions,	ActionType , bodyId )
++                                static_cast&lt;Force*&gt;   ( ncb-&gt;physicalActions-&gt;find( id1 , actionForce   -&gt;getClassIndex() ).get() )-&gt;force    -= f;
++                                static_cast&lt;Force*&gt;   ( ncb-&gt;physicalActions-&gt;find( id2 , actionForce   -&gt;getClassIndex() ).get() )-&gt;force    += f;
++
++                                static_cast&lt;Momentum*&gt;( ncb-&gt;physicalActions-&gt;find( id1 , actionMomentum-&gt;getClassIndex() ).get() )-&gt;momentum -= c1x.Cross(f);
++                                static_cast&lt;Momentum*&gt;( ncb-&gt;physicalActions-&gt;find( id2 , actionMomentum-&gt;getClassIndex() ).get() )-&gt;momentum += c2x.Cross(f);
++
++                                currentContactPhysics-&gt;prevNormal = currentContactGeometry-&gt;normal;
++                        }
++                }
++        }
++}
++
+
+Added: trunk/pkg/dem/Engine/StandAloneEngine/CohesiveFrictionalContactLaw.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/CohesiveFrictionalContactLaw.hpp	2007-07-04 18:24:46 UTC (rev 1223)
++++ trunk/pkg/dem/Engine/StandAloneEngine/CohesiveFrictionalContactLaw.hpp	2007-07-11 14:44:57 UTC (rev 1224)
+@@ -0,0 +1,42 @@
++/*************************************************************************
++*  Copyright (C) 2007 by Bruno Chareyre                                 *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">bruno.chareyre at imag.fr</A>                                               *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#ifndef COHESIVE_FRICTIONAL_CONTACT_LAW_HPP
++#define COHESIVE_FRICTIONAL_CONTACT_LAW_HPP
++
++#include&lt;yade/core/InteractionSolver.hpp&gt;
++
++#include &lt;set&gt;
++#include &lt;boost/tuple/tuple.hpp&gt;
++
++class PhysicalAction;
++
++class CohesiveFrictionalContactLaw : public InteractionSolver
++{
++/// Attributes
++	private :
++		shared_ptr&lt;PhysicalAction&gt; actionForce;
++		shared_ptr&lt;PhysicalAction&gt; actionMomentum;
++
++	public :
++		int sdecGroupMask;
++		bool momentRotationLaw;
++	
++		CohesiveFrictionalContactLaw();
++		void action(Body* body);
++
++	protected :
++		void registerAttributes();
++	REGISTER_CLASS_NAME(CohesiveFrictionalContactLaw);
++	REGISTER_BASE_CLASS_NAME(InteractionSolver);
++};
++
++REGISTER_SERIALIZABLE(CohesiveFrictionalContactLaw,false);
++
++#endif // COHESIVE_FRICTIONAL_CONTACT_LAW_HPP
++
+
+Added: trunk/pkg/dem/PreProcessor/CohesiveTriaxialTest.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/CohesiveTriaxialTest.cpp	2007-07-04 18:24:46 UTC (rev 1223)
++++ trunk/pkg/dem/PreProcessor/CohesiveTriaxialTest.cpp	2007-07-11 14:44:57 UTC (rev 1224)
+@@ -0,0 +1,787 @@
++/*************************************************************************
++*  Copyright (C) 2004 by Olivier Galizzi                                 *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">olivier.galizzi at imag.fr</A>                                               *
++*  Copyright (C) 2004 by Janek Kozicki                                   *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">cosurgi at berlios.de</A>                                                    *
++*  Copyright (C) 2007 by Bruno Chareyre		                         *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">bruno.chareyre at hmg.inpg.fr</A>                                            *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#include &quot;CohesiveTriaxialTest.hpp&quot;
++
++#include&lt;yade/pkg-dem/CohesiveFrictionalContactLaw.hpp&gt;
++#include&lt;yade/pkg-dem/CohesiveFrictionalRelationships.hpp&gt;
++#include&lt;yade/pkg-dem/BodyMacroParameters.hpp&gt;
++#include&lt;yade/pkg-dem/SDECLinkGeometry.hpp&gt;
++#include&lt;yade/pkg-dem/SDECLinkPhysics.hpp&gt;
++#include&lt;yade/pkg-dem/GlobalStiffnessCounter.hpp&gt;
++#include&lt;yade/pkg-dem/GlobalStiffnessTimeStepper.hpp&gt;
++#include&lt;yade/pkg-dem/PositionOrientationRecorder.hpp&gt;
++
++#include&lt;yade/pkg-dem/AveragePositionRecorder.hpp&gt;
++#include&lt;yade/pkg-dem/ForceRecorder.hpp&gt;
++#include&lt;yade/pkg-dem/VelocityRecorder.hpp&gt;
++#include&lt;yade/pkg-dem/TriaxialStressController.hpp&gt;
++#include&lt;yade/pkg-dem/TriaxialCompressionEngine.hpp&gt;
++#include &lt;yade/pkg-dem/WallStressRecorder.hpp&gt;
++
++#include&lt;yade/pkg-common/Box.hpp&gt;
++#include&lt;yade/pkg-common/AABB.hpp&gt;
++#include&lt;yade/pkg-common/Sphere.hpp&gt;
++#include&lt;yade/core/MetaBody.hpp&gt;
++#include&lt;yade/pkg-common/SAPCollider.hpp&gt;
++#include&lt;yade/pkg-common/DistantPersistentSAPCollider.hpp&gt;
++#include&lt;yade/lib-serialization/IOFormatManager.hpp&gt;
++#include&lt;yade/core/Interaction.hpp&gt;
++#include&lt;yade/pkg-common/BoundingVolumeMetaEngine.hpp&gt;
++#include&lt;yade/pkg-common/MetaInteractingGeometry2AABB.hpp&gt;
++#include&lt;yade/pkg-common/MetaInteractingGeometry.hpp&gt;
++
++#include&lt;yade/pkg-common/GravityEngine.hpp&gt;
++#include&lt;yade/pkg-dem/HydraulicForceEngine.hpp&gt;
++#include&lt;yade/pkg-common/PhysicalActionApplier.hpp&gt;
++#include&lt;yade/pkg-common/PhysicalActionDamper.hpp&gt;
++#include&lt;yade/pkg-common/CundallNonViscousForceDamping.hpp&gt;
++#include&lt;yade/pkg-common/CundallNonViscousMomentumDamping.hpp&gt;
++
++#include&lt;yade/pkg-common/InteractionGeometryMetaEngine.hpp&gt;
++#include&lt;yade/pkg-common/InteractionPhysicsMetaEngine.hpp&gt;
++#include&lt;yade/core/Body.hpp&gt;
++#include&lt;yade/pkg-common/InteractingBox.hpp&gt;
++#include&lt;yade/pkg-common/InteractingSphere.hpp&gt;
++
++#include&lt;yade/pkg-common/PhysicalActionContainerReseter.hpp&gt;
++#include&lt;yade/pkg-common/PhysicalActionContainerInitializer.hpp&gt;
++
++#include&lt;yade/pkg-common/PhysicalParametersMetaEngine.hpp&gt;
++
++#include&lt;yade/pkg-common/BodyRedirectionVector.hpp&gt;
++#include&lt;yade/pkg-common/InteractionVecSet.hpp&gt;
++#include&lt;yade/pkg-common/InteractionHashMap.hpp&gt;
++#include&lt;yade/pkg-common/PhysicalActionVectorVector.hpp&gt;
++
++#include &lt;boost/filesystem/convenience.hpp&gt;
++#include &lt;boost/lexical_cast.hpp&gt;
++#include &lt;boost/numeric/conversion/bounds.hpp&gt;
++#include &lt;boost/limits.hpp&gt;
++
++// random
++#include &lt;boost/random/linear_congruential.hpp&gt;
++#include &lt;boost/random/uniform_real.hpp&gt;
++#include &lt;boost/random/variate_generator.hpp&gt;
++#include &lt;boost/random/normal_distribution.hpp&gt;
++
++
++
++using namespace boost;
++using namespace std;
++
++
++typedef pair&lt;Vector3r, Real&gt; BasicSphere;
++//! make a list of spheres non-overlapping sphere
++string GenerateCloud(vector&lt;BasicSphere&gt;&amp; sphere_list, Vector3r lowerCorner, Vector3r upperCorner, long number, Real rad_std_dev, Real porosity);
++
++
++CohesiveTriaxialTest::CohesiveTriaxialTest () : FileGenerator()
++{
++	lowerCorner 		= Vector3r(0,0,0);
++	upperCorner 		= Vector3r(1,1,1);
++	thickness 		= 0.001;
++	importFilename 		= &quot;../data/small.sdec.xyz&quot;;
++	outputFileName 		= &quot;../data/CohesiveTriaxialTest.xml&quot;;
++	//nlayers = 1;
++	wall_top 		= true;
++	wall_bottom 		= true;
++	wall_1			= true;
++	wall_2			= true;
++	wall_3			= true;
++	wall_4			= true;
++	wall_top_wire 		= true;
++	wall_bottom_wire	= true;
++	wall_1_wire		= true;
++	wall_2_wire		= true;
++	wall_3_wire		= true;
++	wall_4_wire		= true;
++	spheresColor		= Vector3r(0.8,0.3,0.3);
++	spheresRandomColor	= false;
++	recordBottomForce	= true;
++	forceRecordFile		= &quot;../data/force&quot;;
++	recordAveragePositions	= true;
++	positionRecordFile	= &quot;../data/positions&quot;;
++	recordIntervalIter	= 20;
++	velocityRecordFile 	= &quot;../data/velocities&quot;;
++	saveAnimationSnapshots = false;
++	AnimationSnapshotsBaseName = &quot;../data/snapshots/snap&quot;;
++	WallStressRecordFile = &quot;../data/WallStresses&quot;;
++
++	rotationBlocked = false;
++	//	boxWalls 		= false;
++	boxWalls 		= true;
++	internalCompaction	=false;
++
++	dampingForce = 0.2;
++	dampingMomentum = 0.2;
++	defaultDt = 1;
++	
++	timeStepUpdateInterval = 50;
++	timeStepOutputInterval = 50;
++	wallStiffnessUpdateInterval = 10;
++	radiusControlInterval = 10;
++	numberOfGrains = 400;
++	strainRate = 0.1;
++	StabilityCriterion = 0.01;
++	autoCompressionActivation = false;
++	maxMultiplier = 1.01;
++	finalMaxMultiplier = 1.001;
++	
++	sphereYoungModulus  = 15000000.0;
++	spherePoissonRatio  = 0.5;
++	sphereFrictionDeg   = 18.0;
++	normalCohesion = 0;
++	shearCohesion = 0;
++	setCohesionOnNewContacts = false;
++	density			= 2600;
++	
++	boxYoungModulus   = 15000000.0;
++	boxPoissonRatio  = 0.2;
++	boxFrictionDeg   = 0.f;
++	gravity 	= Vector3r(0,-9.81,0);
++	
++	sigma_iso = 50000;
++	
++//	wall_top_id =0;
++// 	wall_bottom_id =0;
++// 	wall_left_id =0;
++// 	all_right_id =0;
++// 	wall_front_id =0;
++// 	wall_back_id =0;
++}
++
++
++CohesiveTriaxialTest::~CohesiveTriaxialTest ()
++{
++
++}
++
++
++void CohesiveTriaxialTest::registerAttributes()
++{
++	FileGenerator::registerAttributes();
++	REGISTER_ATTRIBUTE(lowerCorner);
++	REGISTER_ATTRIBUTE(upperCorner);
++	REGISTER_ATTRIBUTE(thickness);
++	REGISTER_ATTRIBUTE(importFilename);
++	//REGISTER_ATTRIBUTE(nlayers);
++	//REGISTER_ATTRIBUTE(boxWalls);
++	REGISTER_ATTRIBUTE(internalCompaction);
++	REGISTER_ATTRIBUTE(maxMultiplier);
++	REGISTER_ATTRIBUTE(finalMaxMultiplier);
++
++	REGISTER_ATTRIBUTE(sphereYoungModulus);
++	REGISTER_ATTRIBUTE(spherePoissonRatio);
++	REGISTER_ATTRIBUTE(sphereFrictionDeg);
++	REGISTER_ATTRIBUTE(normalCohesion);
++	REGISTER_ATTRIBUTE(shearCohesion);
++	REGISTER_ATTRIBUTE(setCohesionOnNewContacts);
++
++	REGISTER_ATTRIBUTE(boxYoungModulus);
++	REGISTER_ATTRIBUTE(boxPoissonRatio);
++	REGISTER_ATTRIBUTE(boxFrictionDeg);
++
++	REGISTER_ATTRIBUTE(density);
++	REGISTER_ATTRIBUTE(defaultDt);
++	REGISTER_ATTRIBUTE(dampingForce);
++	REGISTER_ATTRIBUTE(dampingMomentum);
++	REGISTER_ATTRIBUTE(rotationBlocked);
++	REGISTER_ATTRIBUTE(timeStepUpdateInterval);
++	REGISTER_ATTRIBUTE(timeStepOutputInterval);
++	REGISTER_ATTRIBUTE(wallStiffnessUpdateInterval);
++	REGISTER_ATTRIBUTE(radiusControlInterval);
++	REGISTER_ATTRIBUTE(numberOfGrains);
++	REGISTER_ATTRIBUTE(strainRate);
++	REGISTER_ATTRIBUTE(StabilityCriterion);
++	REGISTER_ATTRIBUTE(autoCompressionActivation);
++//	REGISTER_ATTRIBUTE(wall_top);
++//	REGISTER_ATTRIBUTE(wall_bottom);
++//	REGISTER_ATTRIBUTE(wall_1);
++//	REGISTER_ATTRIBUTE(wall_2);
++//	REGISTER_ATTRIBUTE(wall_3);
++//	REGISTER_ATTRIBUTE(wall_4);
++//	REGISTER_ATTRIBUTE(wall_top_wire);
++//	REGISTER_ATTRIBUTE(wall_bottom_wire);
++//	REGISTER_ATTRIBUTE(wall_1_wire);
++//	REGISTER_ATTRIBUTE(wall_2_wire);
++//	REGISTER_ATTRIBUTE(wall_3_wire);
++//	REGISTER_ATTRIBUTE(wall_4_wire);
++//	REGISTER_ATTRIBUTE(spheresColor);
++//	REGISTER_ATTRIBUTE(spheresRandomColor);
++	REGISTER_ATTRIBUTE(recordBottomForce);
++	REGISTER_ATTRIBUTE(forceRecordFile);
++//	REGISTER_ATTRIBUTE(recordAveragePositions);
++	REGISTER_ATTRIBUTE(positionRecordFile);
++	REGISTER_ATTRIBUTE(velocityRecordFile);
++	REGISTER_ATTRIBUTE(recordIntervalIter);
++	REGISTER_ATTRIBUTE(saveAnimationSnapshots);
++	REGISTER_ATTRIBUTE(AnimationSnapshotsBaseName);
++	REGISTER_ATTRIBUTE(WallStressRecordFile);
++
++//	REGISTER_ATTRIBUTE(gravity);
++	
++	//REGISTER_ATTRIBUTE(bigBall);
++	//REGISTER_ATTRIBUTE(bigBallRadius);
++	//REGISTER_ATTRIBUTE(bigBallDensity);
++	//REGISTER_ATTRIBUTE(bigBallDropTimeSeconds);
++	//REGISTER_ATTRIBUTE(bigBallFrictDeg);
++	//REGISTER_ATTRIBUTE(bigBallYoungModulus);
++	//REGISTER_ATTRIBUTE(bigBallPoissonRatio);
++	//REGISTER_ATTRIBUTE(bigBallDropHeight);
++	REGISTER_ATTRIBUTE(sigma_iso);
++
++}
++
++
++bool CohesiveTriaxialTest::generate()
++{
++//	unsigned int startId=boost::numeric::bounds&lt;unsigned int&gt;::highest(), endId=0; // record forces from group 2
++	
++	rootBody = shared_ptr&lt;MetaBody&gt;(new MetaBody);
++	createActors(rootBody);
++	positionRootBody(rootBody);
++
++// 	rootBody-&gt;persistentInteractions	= shared_ptr&lt;InteractionContainer&gt;(new InteractionVecSet);
++// 	rootBody-&gt;transientInteractions		= shared_ptr&lt;InteractionContainer&gt;(new InteractionVecSet);
++	rootBody-&gt;persistentInteractions	= shared_ptr&lt;InteractionContainer&gt;(new InteractionHashMap);
++	rootBody-&gt;transientInteractions		= shared_ptr&lt;InteractionContainer&gt;(new InteractionHashMap);
++	rootBody-&gt;physicalActions		= shared_ptr&lt;PhysicalActionContainer&gt;(new PhysicalActionVectorVector);
++	rootBody-&gt;bodies 			= shared_ptr&lt;BodyContainer&gt;(new BodyRedirectionVector);
++
++	shared_ptr&lt;Body&gt; body;
++	
++	vector&lt;BasicSphere&gt; sphere_list;
++	message=GenerateCloud(sphere_list, lowerCorner, upperCorner, numberOfGrains, 0.3, 0.75);
++	
++	vector&lt;BasicSphere&gt;::iterator it = sphere_list.begin();
++	vector&lt;BasicSphere&gt;::iterator it_end = sphere_list.end();
++			
++	for (;it!=it_end; ++it)
++	{
++		cerr &lt;&lt; &quot;sphere (&quot; &lt;&lt; it-&gt;first &lt;&lt; &quot; &quot; &lt;&lt; it-&gt;second &lt;&lt; endl;
++		createSphere(body,it-&gt;first,it-&gt;second,true);
++		rootBody-&gt;bodies-&gt;insert(body);
++	}
++	
++// 	if(importFilename.size() != 0 &amp;&amp; filesystem::exists(importFilename) )
++// 	{
++// 		
++// 		Vector3r layersDistance (Vector3r::ZERO); 
++// 		for (int layer=1; layer &lt;= nlayers; ++layer)
++// 		{			
++// 			ifstream loadFile(importFilename.c_str());
++// 			long int i=0;
++// 			Real f,g,x,y,z,radius;
++// 			while( ! loadFile.eof() )
++// 			{
++// 				++i;
++// 				loadFile &gt;&gt; x;
++// 				loadFile &gt;&gt; y;
++// 				loadFile &gt;&gt; z;
++// 				Vector3r position = (Vector3r(x,z,y) + layersDistance);
++// 				loadFile &gt;&gt; radius;
++// 			
++// 				loadFile &gt;&gt; f;
++// 				loadFile &gt;&gt; g;
++// 				if( boxWalls ? f&gt;1 : false ) // skip loading of SDEC walls
++// 					continue;
++// 				if(f==8)
++// 					continue;
++// 	
++// 		//		if( i % 100 == 0 ) // FIXME - should display a progress BAR !!
++// 		//			cout &lt;&lt; &quot;loaded: &quot; &lt;&lt; i &lt;&lt; endl;
++// 				if(f==1)
++// 				{
++// 					lowerCorner[0] = min(position[0]-radius , lowerCorner[0]);
++// 					lowerCorner[1] = min(position[1]-radius , lowerCorner[1]);
++// 					lowerCorner[2] = min(position[2]-radius , lowerCorner[2]);
++// 					upperCorner[0] = max(position[0]+radius , upperCorner[0]);
++// 					upperCorner[1] = max(position[1]+radius , upperCorner[1]);
++// 					upperCorner[2] = max(position[2]+radius , upperCorner[2]);
++// 				}
++// 				createSphere(body,position,radius,false,f==1);
++// 				rootBody-&gt;bodies-&gt;insert(body);
++// 				if(f == 2)
++// 				{
++// 					startId = std::min(body-&gt;getId() , startId);
++// 					endId   = std::max(body-&gt;getId() , endId);
++// 				}
++// 					
++// 			}
++// 			layersDistance.y() = upperCorner.y();
++// 		}
++// 	}
++
++// create bigBall
++	//Vector3r position = (upperCorner+lowerCorner)*0.5 + Vector3r(0,bigBallDropHeight,0);
++	//createSphere(body,position,bigBallRadius,true,false);	
++	//int bigId = 0;
++// 	if(bigBall)
++// 		rootBody-&gt;bodies-&gt;insert(body);
++// 	bigId = body-&gt;getId();
++	//forcerec-&gt;startId = startId;
++	//forcerec-&gt;endId   = endId;
++	//averagePositionRecorder-&gt;bigBallId = bigId;
++	//velocityRecorder-&gt;bigBallId = bigId;
++
++	if(boxWalls)
++	{
++	// bottom box
++	 	Vector3r center		= Vector3r(
++	 						(lowerCorner[0]+upperCorner[0])/2,
++	 						lowerCorner[1]-thickness/2.0,
++	 						(lowerCorner[2]+upperCorner[2])/2);
++	 	Vector3r halfSize	= Vector3r(
++	 						fabs(lowerCorner[0]-upperCorner[0])/2+thickness,
++							thickness/2.0,
++	 						fabs(lowerCorner[2]-upperCorner[2])/2+thickness);
++	
++		createBox(body,center,halfSize,wall_bottom_wire);
++	 	if(wall_bottom) {
++			rootBody-&gt;bodies-&gt;insert(body);
++			//(resultantforceEngine-&gt;subscribedBodies).push_back(body-&gt;getId());
++			triaxialcompressionEngine-&gt;wall_bottom_id = body-&gt;getId();
++			wallStressRecorder-&gt;wall_bottom_id = body-&gt;getId();
++			forcerec-&gt;startId = body-&gt;getId();
++			forcerec-&gt;endId   = body-&gt;getId();
++			}
++		//forcerec-&gt;id = body-&gt;getId();
++	
++	// top box
++	 	center			= Vector3r(
++	 						(lowerCorner[0]+upperCorner[0])/2,
++	 						upperCorner[1]+thickness/2.0,
++	 						(lowerCorner[2]+upperCorner[2])/2);
++	 	halfSize		= Vector3r(
++	 						fabs(lowerCorner[0]-upperCorner[0])/2+thickness,
++	 						thickness/2.0,
++	 						fabs(lowerCorner[2]-upperCorner[2])/2+thickness);
++	
++		createBox(body,center,halfSize,wall_top_wire);
++	 	if(wall_top) {
++			rootBody-&gt;bodies-&gt;insert(body);
++			triaxialcompressionEngine-&gt;wall_top_id = body-&gt;getId();
++			wallStressRecorder-&gt;wall_top_id = body-&gt;getId();
++			}
++	// box 1
++	
++	 	center			= Vector3r(
++	 						lowerCorner[0]-thickness/2.0,
++	 						(lowerCorner[1]+upperCorner[1])/2,
++	 						(lowerCorner[2]+upperCorner[2])/2);
++		halfSize		= Vector3r(
++							thickness/2.0,
++	 						fabs(lowerCorner[1]-upperCorner[1])/2+thickness,
++	 						fabs(lowerCorner[2]-upperCorner[2])/2+thickness);
++		createBox(body,center,halfSize,wall_1_wire);
++	 	if(wall_1) {
++			rootBody-&gt;bodies-&gt;insert(body);
++			triaxialcompressionEngine-&gt;wall_left_id = body-&gt;getId();
++			wallStressRecorder-&gt;wall_left_id = body-&gt;getId();
++			}
++	// box 2
++	 	center			= Vector3r(
++	 						upperCorner[0]+thickness/2.0,
++	 						(lowerCorner[1]+upperCorner[1])/2,
++							(lowerCorner[2]+upperCorner[2])/2);
++	 	halfSize		= Vector3r(
++	 						thickness/2.0,
++	 						fabs(lowerCorner[1]-upperCorner[1])/2+thickness,
++	 						fabs(lowerCorner[2]-upperCorner[2])/2+thickness);
++	 	
++		createBox(body,center,halfSize,wall_2_wire);
++	 	if(wall_2) {
++			rootBody-&gt;bodies-&gt;insert(body);
++			triaxialcompressionEngine-&gt;wall_right_id = body-&gt;getId();
++			wallStressRecorder-&gt;wall_right_id = body-&gt;getId();
++			}
++	// box 3
++	 	center			= Vector3r(
++	 						(lowerCorner[0]+upperCorner[0])/2,
++	 						(lowerCorner[1]+upperCorner[1])/2,
++	 						lowerCorner[2]-thickness/2.0);
++	 	halfSize		= Vector3r(
++	 						fabs(lowerCorner[0]-upperCorner[0])/2+thickness,
++	 						fabs(lowerCorner[1]-upperCorner[1])/2+thickness,
++	 						thickness/2.0);
++		createBox(body,center,halfSize,wall_3_wire);
++	 	if(wall_3) {
++			rootBody-&gt;bodies-&gt;insert(body);
++			triaxialcompressionEngine-&gt;wall_back_id = body-&gt;getId();
++			wallStressRecorder-&gt;wall_back_id = body-&gt;getId();
++			}
++	
++	// box 4
++	 	center			= Vector3r(
++	 						(lowerCorner[0]+upperCorner[0])/2,
++	 						(lowerCorner[1]+upperCorner[1])/2,
++	 						upperCorner[2]+thickness/2.0);
++	 	halfSize		= Vector3r(
++	 						fabs(lowerCorner[0]-upperCorner[0])/2+thickness,
++	 						fabs(lowerCorner[1]-upperCorner[1])/2+thickness,
++	 						thickness/2.0);
++		createBox(body,center,halfSize,wall_3_wire);
++	 	if(wall_4) {
++			rootBody-&gt;bodies-&gt;insert(body);
++			triaxialcompressionEngine-&gt;wall_front_id = body-&gt;getId();
++			wallStressRecorder-&gt;wall_front_id = body-&gt;getId();
++			}
++			 
++	}
++	
++	return true;
++//  	return &quot;Generated a sample inside box of dimensions: (&quot; 
++//  		+ lexical_cast&lt;string&gt;(lowerCorner[0]) + &quot;,&quot; 
++//  		+ lexical_cast&lt;string&gt;(lowerCorner[1]) + &quot;,&quot; 
++//  		+ lexical_cast&lt;string&gt;(lowerCorner[2]) + &quot;) and (&quot; 
++//  		+ lexical_cast&lt;string&gt;(upperCorner[0]) + &quot;,&quot; 
++//  		+ lexical_cast&lt;string&gt;(upperCorner[1]) + &quot;,&quot; 
++//  		+ lexical_cast&lt;string&gt;(upperCorner[2]) + &quot;).&quot;;
++
++}
++
++
++void CohesiveTriaxialTest::createSphere(shared_ptr&lt;Body&gt;&amp; body, Vector3r position, Real radius, bool dynamic )
++{
++	body = shared_ptr&lt;Body&gt;(new Body(body_id_t(0),2));
++	shared_ptr&lt;BodyMacroParameters&gt; physics(new BodyMacroParameters);
++	shared_ptr&lt;AABB&gt; aabb(new AABB);
++	shared_ptr&lt;Sphere&gt; gSphere(new Sphere);
++	shared_ptr&lt;InteractingSphere&gt; iSphere(new InteractingSphere);
++	
++	Quaternionr q;
++	q.FromAxisAngle( Vector3r(0,0,1),0);
++	
++	body-&gt;isDynamic			= dynamic;
++	
++	physics-&gt;angularVelocity	= Vector3r(0,0,0);
++	physics-&gt;velocity		= Vector3r(0,0,0);
++	physics-&gt;mass			= 4.0/3.0*Mathr::PI*radius*radius*radius*density;
++	
++	physics-&gt;inertia		= Vector3r( 	2.0/5.0*physics-&gt;mass*radius*radius,
++							2.0/5.0*physics-&gt;mass*radius*radius,
++							2.0/5.0*physics-&gt;mass*radius*radius);
++	physics-&gt;se3			= Se3r(position,q);
++	physics-&gt;young			= sphereYoungModulus;
++	physics-&gt;poisson		= spherePoissonRatio;
++	physics-&gt;frictionAngle		= sphereFrictionDeg * Mathr::PI/180.0;
++
++	if((!dynamic) &amp;&amp; (!boxWalls))
++	{
++		physics-&gt;young			= boxYoungModulus;
++		physics-&gt;poisson		= boxPoissonRatio;
++		physics-&gt;frictionAngle		= boxFrictionDeg * Mathr::PI/180.0;
++	}
++	
++	aabb-&gt;diffuseColor		= Vector3r(0,1,0);
++
++
++	gSphere-&gt;radius			= radius;
++	gSphere-&gt;diffuseColor		= spheresColor;
++	gSphere-&gt;wire			= false;
++	gSphere-&gt;visible		= true;
++	gSphere-&gt;shadowCaster		= true;
++	
++	iSphere-&gt;radius			= radius;
++	iSphere-&gt;diffuseColor		= Vector3r(Mathr::UnitRandom(),Mathr::UnitRandom(),Mathr::UnitRandom());
++
++	body-&gt;interactingGeometry	= iSphere;
++	body-&gt;geometricalModel		= gSphere;
++	body-&gt;boundingVolume		= aabb;
++	body-&gt;physicalParameters	= physics;
++}
++
++
++void CohesiveTriaxialTest::createBox(shared_ptr&lt;Body&gt;&amp; body, Vector3r position, Vector3r extents, bool wire)
++{
++	body = shared_ptr&lt;Body&gt;(new Body(body_id_t(0),2));
++	shared_ptr&lt;BodyMacroParameters&gt; physics(new BodyMacroParameters);
++	shared_ptr&lt;AABB&gt; aabb(new AABB);
++	shared_ptr&lt;Box&gt; gBox(new Box);
++	shared_ptr&lt;InteractingBox&gt; iBox(new InteractingBox);
++	
++	Quaternionr q;
++	q.FromAxisAngle( Vector3r(0,0,1),0);
++
++	body-&gt;isDynamic			= false;
++	
++	physics-&gt;angularVelocity	= Vector3r(0,0,0);
++	physics-&gt;velocity		= Vector3r(0,0,0);
++	physics-&gt;mass			= 0; 
++	//physics-&gt;mass			= extents[0]*extents[1]*extents[2]*density*2; 
++	physics-&gt;inertia		= Vector3r(
++							  physics-&gt;mass*(extents[1]*extents[1]+extents[2]*extents[2])/3
++							, physics-&gt;mass*(extents[0]*extents[0]+extents[2]*extents[2])/3
++							, physics-&gt;mass*(extents[1]*extents[1]+extents[0]*extents[0])/3
++						);
++//	physics-&gt;mass			= 0;
++//	physics-&gt;inertia		= Vector3r(0,0,0);
++	physics-&gt;se3			= Se3r(position,q);
++
++	physics-&gt;young			= boxYoungModulus;
++	physics-&gt;poisson		= boxPoissonRatio;
++	physics-&gt;frictionAngle		= boxFrictionDeg * Mathr::PI/180.0;
++
++	aabb-&gt;diffuseColor		= Vector3r(1,0,0);
++
++	gBox-&gt;extents			= extents;
++	gBox-&gt;diffuseColor		= Vector3r(1,1,1);
++	gBox-&gt;wire			= wire;
++	gBox-&gt;visible			= true;
++	gBox-&gt;shadowCaster		= false;
++	
++	iBox-&gt;extents			= extents;
++	iBox-&gt;diffuseColor		= Vector3r(1,1,1);
++
++	body-&gt;boundingVolume		= aabb;
++	body-&gt;interactingGeometry	= iBox;
++	body-&gt;geometricalModel		= gBox;
++	body-&gt;physicalParameters	= physics;
++}
++
++
++void CohesiveTriaxialTest::createActors(shared_ptr&lt;MetaBody&gt;&amp; rootBody)
++{
++// recording average positions
++	averagePositionRecorder = shared_ptr&lt;AveragePositionRecorder&gt;(new AveragePositionRecorder);
++	averagePositionRecorder -&gt; outputFile 		= positionRecordFile;
++	averagePositionRecorder -&gt; interval 		= recordIntervalIter;
++// recording forces
++	forcerec = shared_ptr&lt;ForceRecorder&gt;(new ForceRecorder);
++	forcerec -&gt; outputFile 	= forceRecordFile;
++	forcerec -&gt; interval 	= recordIntervalIter;
++// recording velocities
++	velocityRecorder = shared_ptr&lt;VelocityRecorder&gt;(new VelocityRecorder);
++	velocityRecorder-&gt; outputFile 	= velocityRecordFile;
++	velocityRecorder-&gt; interval 	= recordIntervalIter;
++
++	shared_ptr&lt;PhysicalActionContainerInitializer&gt; physicalActionInitializer(new PhysicalActionContainerInitializer);
++	physicalActionInitializer-&gt;physicalActionNames.push_back(&quot;Force&quot;);
++	physicalActionInitializer-&gt;physicalActionNames.push_back(&quot;Momentum&quot;);
++	//physicalActionInitializer-&gt;physicalActionNames.push_back(&quot;StiffnessMatrix&quot;);
++	physicalActionInitializer-&gt;physicalActionNames.push_back(&quot;GlobalStiffness&quot;);
++	
++	shared_ptr&lt;InteractionGeometryMetaEngine&gt; interactionGeometryDispatcher(new InteractionGeometryMetaEngine);
++	interactionGeometryDispatcher-&gt;add(&quot;InteractingSphere&quot;,&quot;InteractingSphere&quot;,&quot;InteractingSphere2InteractingSphere4DistantSpheresContactGeometry&quot;);
++	interactionGeometryDispatcher-&gt;add(&quot;InteractingSphere&quot;,&quot;InteractingBox&quot;,&quot;InteractingBox2InteractingSphere4SpheresContactGeometry&quot;);
++
++	shared_ptr&lt;CohesiveFrictionalRelationships&gt; cohesiveFrictionalRelationships = shared_ptr&lt;CohesiveFrictionalRelationships&gt; (new CohesiveFrictionalRelationships);
++	cohesiveFrictionalRelationships-&gt;shearCohesion = shearCohesion;
++	cohesiveFrictionalRelationships-&gt;normalCohesion = normalCohesion;
++	cohesiveFrictionalRelationships-&gt;setCohesionOnNewContacts = setCohesionOnNewContacts;
++	shared_ptr&lt;InteractionPhysicsMetaEngine&gt; interactionPhysicsDispatcher(new InteractionPhysicsMetaEngine);
++	interactionPhysicsDispatcher-&gt;add(&quot;BodyMacroParameters&quot;,&quot;BodyMacroParameters&quot;,&quot;CohesiveFrictionalRelationships&quot;, cohesiveFrictionalRelationships);
++		
++	shared_ptr&lt;BoundingVolumeMetaEngine&gt; boundingVolumeDispatcher	= shared_ptr&lt;BoundingVolumeMetaEngine&gt;(new BoundingVolumeMetaEngine);
++	boundingVolumeDispatcher-&gt;add(&quot;InteractingSphere&quot;,&quot;AABB&quot;,&quot;InteractingSphere2AABB&quot;);
++	boundingVolumeDispatcher-&gt;add(&quot;InteractingBox&quot;,&quot;AABB&quot;,&quot;InteractingBox2AABB&quot;);
++	boundingVolumeDispatcher-&gt;add(&quot;MetaInteractingGeometry&quot;,&quot;AABB&quot;,&quot;MetaInteractingGeometry2AABB&quot;);
++
++	
++
++		
++	shared_ptr&lt;GravityEngine&gt; gravityCondition(new GravityEngine);
++	gravityCondition-&gt;gravity = gravity;
++	
++	shared_ptr&lt;CundallNonViscousForceDamping&gt; actionForceDamping(new CundallNonViscousForceDamping);
++	actionForceDamping-&gt;damping = dampingForce;
++	shared_ptr&lt;CundallNonViscousMomentumDamping&gt; actionMomentumDamping(new CundallNonViscousMomentumDamping);
++	actionMomentumDamping-&gt;damping = dampingMomentum;
++	shared_ptr&lt;PhysicalActionDamper&gt; actionDampingDispatcher(new PhysicalActionDamper);
++	actionDampingDispatcher-&gt;add(&quot;Force&quot;,&quot;ParticleParameters&quot;,&quot;CundallNonViscousForceDamping&quot;,actionForceDamping);
++	actionDampingDispatcher-&gt;add(&quot;Momentum&quot;,&quot;RigidBodyParameters&quot;,&quot;CundallNonViscousMomentumDamping&quot;,actionMomentumDamping);
++	
++	shared_ptr&lt;PhysicalActionApplier&gt; applyActionDispatcher(new PhysicalActionApplier);
++	applyActionDispatcher-&gt;add(&quot;Force&quot;,&quot;ParticleParameters&quot;,&quot;NewtonsForceLaw&quot;);
++	applyActionDispatcher-&gt;add(&quot;Momentum&quot;,&quot;RigidBodyParameters&quot;,&quot;NewtonsMomentumLaw&quot;);
++		
++	shared_ptr&lt;PhysicalParametersMetaEngine&gt; positionIntegrator(new PhysicalParametersMetaEngine);
++	positionIntegrator-&gt;add(&quot;ParticleParameters&quot;,&quot;LeapFrogPositionIntegrator&quot;);
++	shared_ptr&lt;PhysicalParametersMetaEngine&gt; orientationIntegrator(new PhysicalParametersMetaEngine);
++	orientationIntegrator-&gt;add(&quot;RigidBodyParameters&quot;,&quot;LeapFrogOrientationIntegrator&quot;);
++
++	//shared_ptr&lt;ElasticCriterionTimeStepper&gt; sdecTimeStepper(new ElasticCriterionTimeStepper);
++	//sdecTimeStepper-&gt;sdecGroupMask = 2;
++	//sdecTimeStepper-&gt;timeStepUpdateInterval = timeStepUpdateInterval;
++	
++	//shared_ptr&lt;StiffnessMatrixTimeStepper&gt; stiffnessMatrixTimeStepper(new StiffnessMatrixTimeStepper);
++	//stiffnessMatrixTimeStepper-&gt;sdecGroupMask = 2;
++	//stiffnessMatrixTimeStepper-&gt;timeStepUpdateInterval = timeStepUpdateInterval;
++	
++	shared_ptr&lt;GlobalStiffnessTimeStepper&gt; globalStiffnessTimeStepper(new GlobalStiffnessTimeStepper);
++	globalStiffnessTimeStepper-&gt;sdecGroupMask = 2;
++	globalStiffnessTimeStepper-&gt;timeStepUpdateInterval = timeStepUpdateInterval;
++	globalStiffnessTimeStepper-&gt;defaultDt = defaultDt;
++	
++	shared_ptr&lt;HydraulicForceEngine&gt; hydraulicForceEngine (new HydraulicForceEngine);
++	
++	shared_ptr&lt;CohesiveFrictionalContactLaw&gt; cohesiveFrictionalContactLaw(new CohesiveFrictionalContactLaw);
++	cohesiveFrictionalContactLaw-&gt;sdecGroupMask = 2;
++	
++	//shared_ptr&lt;StiffnessCounter&gt; stiffnesscounter(new StiffnessCounter);
++	//stiffnesscounter-&gt;sdecGroupMask = 2;
++	//stiffnesscounter-&gt;interval = timeStepUpdateInterval;
++	
++	shared_ptr&lt;GlobalStiffnessCounter&gt; globalStiffnessCounter(new GlobalStiffnessCounter);
++	globalStiffnessCounter-&gt;sdecGroupMask = 2;
++	globalStiffnessCounter-&gt;interval = timeStepUpdateInterval;
++	
++	// moving walls to regulate the stress applied + compress when the packing is dense an stable
++	//cerr &lt;&lt; &quot;triaxialcompressionEngine = shared_ptr&lt;TriaxialCompressionEngine&gt; (new TriaxialCompressionEngine);&quot; &lt;&lt; std::endl;
++	triaxialcompressionEngine = shared_ptr&lt;TriaxialCompressionEngine&gt; (new TriaxialCompressionEngine);
++	triaxialcompressionEngine-&gt; interval = wallStiffnessUpdateInterval;// = stiffness update interval
++	triaxialcompressionEngine-&gt; radiusControlInterval = radiusControlInterval;// = stiffness update interval
++	triaxialcompressionEngine-&gt; sigma_iso = sigma_iso;
++	triaxialcompressionEngine-&gt; max_vel = 0.0001;
++	triaxialcompressionEngine-&gt; thickness = thickness;
++	triaxialcompressionEngine-&gt;strainRate = strainRate;
++	triaxialcompressionEngine-&gt;StabilityCriterion = StabilityCriterion;
++	triaxialcompressionEngine-&gt;autoCompressionActivation = autoCompressionActivation;
++	triaxialcompressionEngine-&gt;internalCompaction = internalCompaction;
++	triaxialcompressionEngine-&gt;maxMultiplier = maxMultiplier;
++		
++	//cerr &lt;&lt; &quot;fin de section triaxialcompressionEngine = shared_ptr&lt;TriaxialCompressionEngine&gt; (new TriaxialCompressionEngine);&quot; &lt;&lt; std::endl;
++	
++// recording global stress
++	wallStressRecorder = shared_ptr&lt;WallStressRecorder&gt;(new
++	WallStressRecorder);
++	wallStressRecorder-&gt; outputFile 	= WallStressRecordFile;
++	wallStressRecorder-&gt; interval 		= recordIntervalIter;
++	wallStressRecorder-&gt; thickness 		= thickness;
++	
++	
++	// moving walls to regulate the stress applied
++	//cerr &lt;&lt; &quot;triaxialstressController = shared_ptr&lt;TriaxialStressController&gt; (new TriaxialStressController);&quot; &lt;&lt; std::endl;
++	triaxialstressController = shared_ptr&lt;TriaxialStressController&gt; (new TriaxialStressController);
++	triaxialstressController-&gt; interval = 1;// = recordIntervalIter
++	triaxialstressController-&gt; sigma_iso = sigma_iso;
++	triaxialstressController-&gt; max_vel = 0.0001;
++	triaxialstressController-&gt; thickness = thickness;
++	triaxialstressController-&gt;wall_bottom_activated = false;
++	triaxialstressController-&gt;wall_top_activated = false;	
++		//cerr &lt;&lt; &quot;fin de sezction triaxialstressController = shared_ptr&lt;TriaxialStressController&gt; (new TriaxialStressController);&quot; &lt;&lt; std::endl;
++	
++	rootBody-&gt;engines.clear();
++	rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new PhysicalActionContainerReseter));
++//	rootBody-&gt;engines.push_back(sdecTimeStepper);	
++	rootBody-&gt;engines.push_back(boundingVolumeDispatcher);
++	rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new DistantPersistentSAPCollider));
++	rootBody-&gt;engines.push_back(interactionGeometryDispatcher);
++	rootBody-&gt;engines.push_back(interactionPhysicsDispatcher);
++	rootBody-&gt;engines.push_back(cohesiveFrictionalContactLaw);
++	rootBody-&gt;engines.push_back(triaxialcompressionEngine);
++	//rootBody-&gt;engines.push_back(stiffnesscounter);
++	//rootBody-&gt;engines.push_back(stiffnessMatrixTimeStepper);
++	rootBody-&gt;engines.push_back(globalStiffnessCounter);
++	rootBody-&gt;engines.push_back(globalStiffnessTimeStepper);
++	rootBody-&gt;engines.push_back(wallStressRecorder);
++	//rootBody-&gt;engines.push_back(hydraulicForceEngine);//&lt;-------------HYDRAULIC ENGINE HERE
++	rootBody-&gt;engines.push_back(actionDampingDispatcher);
++	rootBody-&gt;engines.push_back(applyActionDispatcher);
++	rootBody-&gt;engines.push_back(positionIntegrator);
++	if(!rotationBlocked)
++		rootBody-&gt;engines.push_back(orientationIntegrator);
++	//rootBody-&gt;engines.push_back(resultantforceEngine);
++	//rootBody-&gt;engines.push_back(triaxialstressController);
++	
++		
++	//rootBody-&gt;engines.push_back(averagePositionRecorder);
++	//rootBody-&gt;engines.push_back(velocityRecorder);
++	//rootBody-&gt;engines.push_back(forcerec);
++	
++	if (saveAnimationSnapshots) {
++	shared_ptr&lt;PositionOrientationRecorder&gt; positionOrientationRecorder(new PositionOrientationRecorder);
++	positionOrientationRecorder-&gt;outputFile = AnimationSnapshotsBaseName;
++	rootBody-&gt;engines.push_back(positionOrientationRecorder);}
++	
++	rootBody-&gt;initializers.clear();
++	rootBody-&gt;initializers.push_back(physicalActionInitializer);
++	rootBody-&gt;initializers.push_back(boundingVolumeDispatcher);
++	
++}
++
++
++void CohesiveTriaxialTest::positionRootBody(shared_ptr&lt;MetaBody&gt;&amp; rootBody)
++{
++	rootBody-&gt;isDynamic		= false;
++
++	Quaternionr q;
++	q.FromAxisAngle( Vector3r(0,0,1),0);
++	shared_ptr&lt;ParticleParameters&gt; physics(new ParticleParameters); // FIXME : fix indexable class PhysicalParameters
++	physics-&gt;se3			= Se3r(Vector3r(0,0,0),q);
++	physics-&gt;mass			= 0;
++	physics-&gt;velocity		= Vector3r::ZERO;
++	physics-&gt;acceleration		= Vector3r::ZERO;
++	
++	shared_ptr&lt;MetaInteractingGeometry&gt; set(new MetaInteractingGeometry());
++	
++	set-&gt;diffuseColor		= Vector3r(0,0,1);
++
++	shared_ptr&lt;AABB&gt; aabb(new AABB);
++	aabb-&gt;diffuseColor		= Vector3r(0,0,1);
++	
++	rootBody-&gt;interactingGeometry	= YADE_PTR_CAST&lt;InteractingGeometry&gt;(set);	
++	rootBody-&gt;boundingVolume	= YADE_PTR_CAST&lt;BoundingVolume&gt;(aabb);
++	rootBody-&gt;physicalParameters 	= physics;
++	
++}
++
++
++
++string GenerateCloud(vector&lt;BasicSphere&gt;&amp; sphere_list, Vector3r lowerCorner, Vector3r upperCorner, long number, Real rad_std_dev, Real porosity)
++{
++	typedef boost::minstd_rand StdGenerator;
++	static StdGenerator generator;
++	static boost::variate_generator&lt;StdGenerator&amp;, boost::uniform_real&lt;&gt; &gt;
++			random1(generator, boost::uniform_real&lt;&gt;(0,1));
++        //         static boost::variate_generator&lt;StdGenerator&amp;, boost::normal_distribution&lt;&gt; &gt;
++        //         randomN(generator, boost::normal_distribution&lt;&gt;(aggregateMeanRadius,aggregateSigmaRadius));
++
++	sphere_list.clear();
++	long tries = 1000; //nb of tries for positionning the next sphere
++	Vector3r dimensions = upperCorner - lowerCorner;
++		
++	Real mean_radius = std::pow(dimensions.X()*dimensions.Y()*dimensions.Z()*(1-porosity)/(3.1416*1.3333*number),0.333333);
++        //cerr &lt;&lt; mean_radius;
++
++	std::cerr &lt;&lt; &quot;generating aggregates ... &quot;;
++	
++	long t, i;
++	for (i=0; i&lt;number; ++i) {
++		BasicSphere s;
++		for (t=0; t&lt;tries; ++t) {
++			s.second = (random1()-0.5)*rad_std_dev*mean_radius+mean_radius;
++			s.first.X() = lowerCorner.X()+s.second+(dimensions.X()-2*s.second)*random1();
++			s.first.Y() = lowerCorner.Y()+s.second+(dimensions.Y()-2*s.second)*random1();
++			s.first.Z() = lowerCorner.Z()+s.second+(dimensions.Z()-2*s.second)*random1();
++			bool overlap=false;
++			for (long j=0; (j&lt;i &amp;&amp; !overlap); j++)
++				if ( pow(sphere_list[j].second+s.second, 2) &gt; (sphere_list[j].first-s.first).SquaredLength()) overlap=true;
++			if (!overlap)
++			{
++				sphere_list.push_back(s);
++				break;
++			}			
++		}
++		if (t==tries) return &quot;More than &quot; + lexical_cast&lt;string&gt;(tries) +
++					&quot; tries while generating sphere number &quot; +
++					lexical_cast&lt;string&gt;(i+1) + &quot;/&quot; + lexical_cast&lt;string&gt;(number) + &quot;.&quot;;
++	}
++	return &quot;Generated a sample with &quot; + lexical_cast&lt;string&gt;(number) + &quot;spheres inside box of dimensions: (&quot; 
++			+ lexical_cast&lt;string&gt;(dimensions[0]) + &quot;,&quot; 
++			+ lexical_cast&lt;string&gt;(dimensions[1]) + &quot;,&quot; 
++			+ lexical_cast&lt;string&gt;(dimensions[2]) + &quot;).&quot;;
++}
++
++
++
+
+Added: trunk/pkg/dem/PreProcessor/CohesiveTriaxialTest.hpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/CohesiveTriaxialTest.hpp	2007-07-04 18:24:46 UTC (rev 1223)
++++ trunk/pkg/dem/PreProcessor/CohesiveTriaxialTest.hpp	2007-07-11 14:44:57 UTC (rev 1224)
+@@ -0,0 +1,138 @@
++/*************************************************************************
++*  Copyright (C) 2004 by Olivier Galizzi                                 *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">olivier.galizzi at imag.fr</A>                                               *
++*  Copyright (C) 2004 by Janek Kozicki                                   *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">cosurgi at berlios.de</A>                                                    *
++*  Copyright (C) 2007 by Bruno Chareyre		                         *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">bruno.chareyre at hmg.inpg.fr</A>                                            *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#ifndef COHESIVE_TRIAXIAL_TEST_HPP
++#define COHESIVE_TRIAXIAL_TEST_HPP
++
++#include&lt;yade/core/FileGenerator.hpp&gt;
++#include &lt;Wm3Vector3.h&gt;
++#include&lt;yade/lib-base/yadeWm3.hpp&gt;
++
++class ForceRecorder;
++class AveragePositionRecorder;
++class VelocityRecorder;
++class TriaxialStressController;
++class TriaxialCompressionEngine;
++class WallStressRecorder;
++
++/*! \brief Isotropic compression + uniaxial compression test
++
++	detailed description...
++ */
++
++class CohesiveTriaxialTest : public FileGenerator
++{
++	private	:
++		Vector3r	 gravity
++				,lowerCorner
++				,upperCorner;
++
++		Vector3r	 spheresColor;
++
++		Real		 thickness
++				,sphereYoungModulus
++				,spherePoissonRatio
++				,sphereFrictionDeg
++				,normalCohesion
++				,shearCohesion
++				,boxYoungModulus
++				,boxPoissonRatio
++				,boxFrictionDeg
++				,density
++				,dampingForce
++				,dampingMomentum
++				,defaultDt
++
++// 				,bigBallRadius
++// 				,bigBallDensity
++// 				,bigBallDropTimeSeconds
++// 				,bigBallPoissonRatio
++// 				,bigBallYoungModulus
++// 				,bigBallFrictDeg
++// 				,bigBallDropHeight
++				
++				,sigma_iso
++				,strainRate
++				,StabilityCriterion
++				,maxMultiplier ///max multiplier of diameters during internal compaction
++				,finalMaxMultiplier;
++		 
++		bool		setCohesionOnNewContacts
++				,wall_top
++				,wall_bottom
++				,wall_1
++				,wall_2
++				,wall_3
++				,wall_4
++				,wall_top_wire
++				,wall_bottom_wire
++				,wall_1_wire
++				,wall_2_wire
++				,wall_3_wire
++				,wall_4_wire
++				,autoCompressionActivation
++				,bigBall
++				,rotationBlocked
++				,spheresRandomColor
++				,recordBottomForce
++				,recordAveragePositions
++				,boxWalls
++				,internalCompaction
++				,saveAnimationSnapshots;
++
++		int		 recordIntervalIter
++				,timeStepUpdateInterval
++				,timeStepOutputInterval
++				,wallStiffnessUpdateInterval
++				,radiusControlInterval
++				,numberOfGrains;
++				/*,wall_top_id
++				,wall_bottom_id
++				,wall_left_id
++				,all_right_id
++				,wall_front_id
++				,wall_back_id;*/
++		
++		string		 forceRecordFile
++				,positionRecordFile
++				,velocityRecordFile
++				,importFilename
++				,AnimationSnapshotsBaseName
++				,WallStressRecordFile;
++	
++		shared_ptr&lt;ForceRecorder&gt; forcerec;
++		shared_ptr&lt;VelocityRecorder&gt; velocityRecorder;
++		shared_ptr&lt;AveragePositionRecorder&gt; averagePositionRecorder;
++		shared_ptr&lt;TriaxialCompressionEngine&gt; triaxialcompressionEngine;
++		shared_ptr&lt;TriaxialStressController&gt; triaxialstressController;
++		shared_ptr&lt;WallStressRecorder&gt; wallStressRecorder;
++			
++		void createBox(shared_ptr&lt;Body&gt;&amp; body, Vector3r position, Vector3r extents,bool wire);
++		void createSphere(shared_ptr&lt;Body&gt;&amp; body, Vector3r position, Real radius,bool dynamic);
++		void createActors(shared_ptr&lt;MetaBody&gt;&amp; rootBody);
++		void positionRootBody(shared_ptr&lt;MetaBody&gt;&amp; rootBody);
++	
++	public : 
++		CohesiveTriaxialTest ();
++		~CohesiveTriaxialTest ();
++		bool generate();
++	
++	protected :
++		void registerAttributes();
++	REGISTER_CLASS_NAME(CohesiveTriaxialTest);
++	REGISTER_BASE_CLASS_NAME(FileGenerator);
++};
++
++REGISTER_SERIALIZABLE(CohesiveTriaxialTest,false);
++
++#endif // COHESIVE_TRIAXIAL_TEST_HPP
++
+
+Modified: trunk/pkg/dem/SConscript
+===================================================================
+--- trunk/pkg/dem/SConscript	2007-07-04 18:24:46 UTC (rev 1223)
++++ trunk/pkg/dem/SConscript	2007-07-11 14:44:57 UTC (rev 1224)
+@@ -27,6 +27,10 @@
+ 	env.SharedLibrary('ElasticContactInteraction',
+ 		['DataClass/InteractionPhysics/ElasticContactInteraction.cpp'],
+ 		LIBS=env['LIBS']+['SimpleElasticInteraction']),
++		
++	env.SharedLibrary('CohesiveFrictionalContactInteraction',
++		['DataClass/InteractionPhysics/CohesiveFrictionalContactInteraction.cpp'],
++		LIBS=env['LIBS']+['ElasticContactInteraction']),
+ 
+ 	env.SharedLibrary('SDECLinkPhysics',
+ 		['DataClass/InteractionPhysics/SDECLinkPhysics.cpp']),
+@@ -74,6 +78,15 @@
+ 			'yade-base',
+ 			'yade-multimethods',
+ 			'InteractingSphere']),
++			
++	env.SharedLibrary('InteractingSphere2InteractingSphere4DistantSpheresContactGeometry',
++		['Engine/EngineUnit/InteractingSphere2InteractingSphere4DistantSpheresContactGeometry.cpp'],
++		LIBS=env['LIBS']+['SDECLinkGeometry',
++			'SpheresContactGeometry',
++			'InteractionGeometryMetaEngine',
++			'yade-base',
++			'yade-multimethods',
++			'InteractingSphere']),
+ 
+ 	env.SharedLibrary('InteractingMyTetrahedron2AABB',
+ 		['Engine/EngineUnit/InteractingMyTetrahedron2AABB.cpp'],
+@@ -120,6 +133,17 @@
+ 			'Momentum',
+ 			'Sphere',
+ 			'RigidBodyParameters']),
++			
++	env.SharedLibrary('CohesiveFrictionalRelationships',
++		['Engine/EngineUnit/CohesiveFrictionalRelationships.cpp'],
++		LIBS=env['LIBS']+['SDECLinkPhysics',
++			'SDECLinkGeometry',
++			'CohesiveFrictionalContactInteraction',
++			'SpheresContactGeometry',
++			'BodyMacroParameters',
++			'RigidBodyParameters',
++			'ParticleParameters',
++			'InteractionPhysicsMetaEngine']),
+ 
+ 	env.SharedLibrary('ElasticContactLaw',
+ 		['Engine/StandAloneEngine/ElasticContactLaw.cpp'],
+@@ -136,6 +160,22 @@
+ 			'Momentum',
+ 			'Sphere',
+ 			'RigidBodyParameters']),
++			
++	env.SharedLibrary('CohesiveFrictionalContactLaw',
++		['Engine/StandAloneEngine/CohesiveFrictionalContactLaw.cpp'],
++		LIBS=env['LIBS']+['SDECLinkPhysics',
++			'CohesiveFrictionalContactInteraction',
++			'SDECLinkGeometry',
++			'SpheresContactGeometry',
++			'BodyMacroParameters',
++			'yade-serialization',
++			'yade-base',
++			
++			'yade-multimethods',
++			'Force',
++			'Momentum',
++			'Sphere',
++			'RigidBodyParameters']),
+ 
+ 	env.SharedLibrary('MyTetrahedronLaw',
+ 		['Engine/StandAloneEngine/MyTetrahedronLaw.cpp'],
+@@ -501,6 +541,51 @@
+ 			'yade-base',
+ 			'WallStressRecorder',
+ 			'PositionOrientationRecorder']),
++			
++	env.SharedLibrary('CohesiveTriaxialTest',
++		['PreProcessor/CohesiveTriaxialTest.cpp'],
++		LIBS=env['LIBS']+['SDECLinkGeometry',
++			'CohesiveFrictionalContactLaw',
++			'AveragePositionRecorder',
++			'VelocityRecorder',
++			'ForceRecorder',
++			'CohesiveFrictionalRelationships',
++			'ElasticCriterionTimeStepper',
++			'PhysicalActionVectorVector',
++			'InteractionVecSet',
++			'InteractionHashMap',
++			'BodyRedirectionVector',
++			'InteractingSphere',
++			'InteractingBox',
++			'CundallNonViscousMomentumDamping',
++			'CundallNonViscousForceDamping',
++			'MetaInteractingGeometry',
++			'GravityEngine',
++			'yade-serialization',
++			'PhysicalActionContainerInitializer',
++			'PhysicalActionContainerReseter',
++			'InteractionGeometryMetaEngine',
++			'InteractionPhysicsMetaEngine',
++			'PhysicalActionApplier',
++			'PhysicalParametersMetaEngine',
++			'BoundingVolumeMetaEngine',
++			'yade-multimethods',
++			'Box',
++			'Sphere',
++			'AABB',
++			'DistantPersistentSAPCollider',
++			'SAPCollider',
++			'MetaInteractingGeometry2AABB',
++			'GlobalStiffness',
++			'GlobalStiffnessCounter',
++			'ResultantForceEngine',
++			'TriaxialStressController',
++			'TriaxialCompressionEngine',
++			'GlobalStiffnessTimeStepper',
++			'yade-base',
++			'WallStressRecorder',
++			'PositionOrientationRecorder',
++			'HydraulicForceEngine']),
+ 
+ 	env.SharedLibrary('ThreePointBending',
+ 		['PreProcessor/ThreePointBending.cpp'],
+@@ -670,6 +755,14 @@
+ env.SharedLibrary('InteractingSphere2AABBwater',
+ 		['Engine/EngineUnit/InteractingSphere2AABBwater.cpp'],
+ 		LIBS=env['LIBS']+['InteractingSphere', 'AABB', 'BoundingVolumeMetaEngine']),
++		
++env.SharedLibrary('HydraulicForceEngine',
++		['Engine/DeusExMachina/HydraulicForceEngine.cpp'],
++		LIBS=env['LIBS']+['yade-base',  'Force', 'ParticleParameters'],
++		CPPPATH=env['CPPPATH']+['Engine/DeusExMachina',
++			'DataClass/PhysicalAction',
++			'$PREFIX/include',
++			'DataClass/PhysicalParameters']),
+ 
+ 
+ 
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000188.html">[Yade-commits] r1223 - tags
+</A></li>
+	<LI>Next message: <A HREF="000190.html">[Yade-commits] r1225 - trunk/pkg/dem/Engine/DeusExMachina
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#189">[ date ]</a>
+              <a href="thread.html#189">[ thread ]</a>
+              <a href="subject.html#189">[ subject ]</a>
+              <a href="author.html#189">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

@@ -1,0 +1,855 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1401 - in trunk: . core extra gui/py gui/qt3 lib	lib/serialization pkg/common pkg/common/DataClass/PhysicalParameters	pkg/dem/Engine/DeusExMachina scripts
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1401%20-%20in%20trunk%3A%20.%20core%20extra%20gui/py%20gui/qt3%20lib%0A%09lib/serialization%20pkg/common%20pkg/common/DataClass/PhysicalParameters%0A%09pkg/dem/Engine/DeusExMachina%20scripts&In-Reply-To=%3C200806251843.m5PIhuQm003768%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000361.html">
+   <LINK REL="Next"  HREF="000363.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1401 - in trunk: . core extra gui/py gui/qt3 lib	lib/serialization pkg/common pkg/common/DataClass/PhysicalParameters	pkg/dem/Engine/DeusExMachina scripts</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1401%20-%20in%20trunk%3A%20.%20core%20extra%20gui/py%20gui/qt3%20lib%0A%09lib/serialization%20pkg/common%20pkg/common/DataClass/PhysicalParameters%0A%09pkg/dem/Engine/DeusExMachina%20scripts&In-Reply-To=%3C200806251843.m5PIhuQm003768%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1401 - in trunk: . core extra gui/py gui/qt3 lib	lib/serialization pkg/common pkg/common/DataClass/PhysicalParameters	pkg/dem/Engine/DeusExMachina scripts">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Wed Jun 25 20:43:56 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000361.html">[Yade-commits] r1400 - in branches/przewdnik/core: . visualisation
+</A></li>
+        <LI>Next message: <A HREF="000363.html">[Yade-commits] r1402 - in trunk: . core extra gui gui/py gui/qt3	pkg/common pkg/common/Engine scripts
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#362">[ date ]</a>
+              <a href="thread.html#362">[ thread ]</a>
+              <a href="subject.html#362">[ subject ]</a>
+              <a href="author.html#362">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2008-06-25 20:43:53 +0200 (Wed, 25 Jun 2008)
+New Revision: 1401
+
+Modified:
+   trunk/SConstruct
+   trunk/core/MetaBody.cpp
+   trunk/core/MetaBody.hpp
+   trunk/core/SimulationFlow.cpp
+   trunk/extra/Brefcom.cpp
+   trunk/gui/py/pyAttrUtils.hpp
+   trunk/gui/py/utils.py
+   trunk/gui/py/yadeControl.cpp
+   trunk/gui/qt3/GLViewer.cpp
+   trunk/gui/qt3/SimulationController.cpp
+   trunk/lib/SConscript
+   trunk/lib/serialization/Serializable.hpp
+   trunk/pkg/common/DataClass/PhysicalParameters/ParticleParameters.hpp
+   trunk/pkg/common/SConscript
+   trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.cpp
+   trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.hpp
+   trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.cpp
+   trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.hpp
+   trunk/scripts/cylindrical-layer-packing.py
+Log:
+1. Triaxial now calculates thickness of the walls automatically (from the extents of the first wall)
+2. Add flags to scons, for the gold linker (doesn't link plugins, oh well)
+3. Many fixes in brefcom
+4. flag needsInitializers moved into MetaBody and it is checked at every iteration; assigning initializers from python sets this flag. It is set to true in MetaBody constructor.
+5. Added wrapper for postProcessAttributes in python, for Facets. Serializable::postProcessAttributes was made public due to that (don't kill me).
+6. A few things added to yade.utils
+7. SimulationController now correctly handles decreasing timestep mantissa from 1 (goes to 9 and exponent is decreased by 1) and increasing it from 9.
+
+
+
+Modified: trunk/SConstruct
+===================================================================
+--- trunk/SConstruct	2008-06-25 17:12:26 UTC (rev 1400)
++++ trunk/SConstruct	2008-06-25 18:43:53 UTC (rev 1401)
+@@ -111,9 +111,9 @@
+ 	('LIBPATH','Additional paths for the linker (whitespace separated)',None,None,Split),
+ 	('QTDIR','Directories where to look for qt3',['/usr/share/qt3','/usr/lib/qt','/usr/lib/qt3','/usr/qt/3','/usr/lib/qt-3.3'],None,Split),
+ 	('CXX','The c++ compiler','g++'),
+-	('CXXFLAGS','Additional compiler flags; you can use them for tuning like -march=pentium4.',None,None,Split),
++	('CXXFLAGS','Additional compiler flags for compilation (like -march=core2).',None,None,Split),
+ 	#('SHLINK','Linker for shared objects','g++'),
+-	#('SHLINKFLAGS','Additional linker flags (for shared libs=plugins).',None,None,Split),
++	('SHCCFLAGS','Additional compiler flags for linking (for plugins).',None,None,Split),
+ 	BoolOption('pretty',&quot;Don't show compiler command line (like the Linux kernel)&quot;,1),
+ 	BoolOption('useMiniWm3','use local miniWm3 library instead of Wm3Foundation',1),
+ 	#BoolOption('useLocalQGLViewer','use in-tree QGLViewer library instead of the one installed in system',1),
+@@ -198,7 +198,7 @@
+ ##########################################################################################
+ 
+ # ensure non-None
+-env.Append(CPPPATH='',LIBPATH='',LIBS='',CXXFLAGS='')
++env.Append(CPPPATH='',LIBPATH='',LIBS='',CXXFLAGS='',SHCCFLAGS='')
+ 
+ def CheckQt(context, qtdirs):
+ 	&quot;Attempts to localize qt3 installation in given qtdirs. Sets necessary variables if found and returns True; otherwise returns False.&quot;
+@@ -510,7 +510,4 @@
+ # read top-level SConscript file. It is used only so that build_dir is set. This file reads all SConscripts from in yadeModules
+ env.SConscript(dirs=['.'],build_dir=buildDir,duplicate=0)
+ 
+-
+-
+-
+-
++#Progress('.', interval=100, file=sys.stderr)
+
+Modified: trunk/core/MetaBody.cpp
+===================================================================
+--- trunk/core/MetaBody.cpp	2008-06-25 17:12:26 UTC (rev 1400)
++++ trunk/core/MetaBody.cpp	2008-06-25 18:43:53 UTC (rev 1401)
+@@ -34,6 +34,7 @@
+ {	
+ 	engines.clear();
+ 	initializers.clear();
++	needsInitializers=true;
+ 	recover=false;
+ 	// I must assign something to avoid &quot;nan&quot; when loading. When recover=false, those can be &quot;nan&quot; and lead to crash.
+ 	recoverCurrentIteration=1;
+@@ -57,15 +58,12 @@
+ }
+ 
+ 
+-void MetaBody::runInitializers(){
+-	FOREACH(shared_ptr&lt;Engine&gt; e, initializers){
+-		if(e-&gt;isActivated()) e-&gt;action(this);
+-	}
+-}
+ 
+ void MetaBody::postProcessAttributes(bool deserializing)
+ {
+-	runInitializers();	
++	// this is now checked in MoveToNextTimeStep
++	//runInitializers();	
++	
+ 	//	initializers.clear(); // FIXME - we want to delate ONLY some of them!
+ 	//                                       because when you save and load file, you still want some initializers, but not all of them. Eg - you don't want VRML loader, or FEM loader, but you want BoundingVolumeMetaEngine. Maybe we need two list of initilizers? One that 'survive' between load and save, and others that are deleted on first time?
+ }
+@@ -93,13 +91,11 @@
+ 
+ void MetaBody::moveToNextTimeStep()
+ {
+-	vector&lt;shared_ptr&lt;Engine&gt; &gt;::iterator ai    = engines.begin();
+-	vector&lt;shared_ptr&lt;Engine&gt; &gt;::iterator aiEnd = engines.end();
+-	for( ; ai!=aiEnd ; ++ai )
+-	{
+-		if ((*ai)-&gt;isActivated())
+-			(*ai)-&gt;action(this);
++	if(needsInitializers){
++		FOREACH(shared_ptr&lt;Engine&gt; e, initializers){ if(e-&gt;isActivated()) e-&gt;action(this); }
++		needsInitializers=false;
+ 	}
++	FOREACH(const shared_ptr&lt;Engine&gt;&amp; e, engines){ if(e-&gt;isActivated()) e-&gt;action(this); }
+ }
+ 
+ shared_ptr&lt;Engine&gt; MetaBody::engineByName(string s){
+
+Modified: trunk/core/MetaBody.hpp
+===================================================================
+--- trunk/core/MetaBody.hpp	2008-06-25 17:12:26 UTC (rev 1400)
++++ trunk/core/MetaBody.hpp	2008-06-25 18:43:53 UTC (rev 1401)
+@@ -45,8 +45,7 @@
+ 
+ 		Real dt;
+ 
+-
+-		void runInitializers();
++		bool needsInitializers;
+ /// Serialization
+ 	protected :
+ 		virtual void postProcessAttributes(bool deserializing);
+
+Modified: trunk/core/SimulationFlow.cpp
+===================================================================
+--- trunk/core/SimulationFlow.cpp	2008-06-25 17:12:26 UTC (rev 1400)
++++ trunk/core/SimulationFlow.cpp	2008-06-25 18:43:53 UTC (rev 1401)
+@@ -12,13 +12,13 @@
+ 
+ void SimulationFlow::singleAction()
+ {
+-	if (Omega::instance().getRootBody()) // FIXME - would it contain the loop in the private variables, this check would be unnecessary
++	Omega&amp; OO=Omega::instance();
++	if (OO.getRootBody()) // FIXME - would it contain the loop in the private variables, this check would be unnecessary
+ 	{
+-		Omega::instance().getRootBody()-&gt;moveToNextTimeStep();
+-		Omega::instance().incrementCurrentIteration();
+-		Omega::instance().incrementSimulationTime();
+-		if(Omega::instance().stopAtIteration&gt;0 &amp;&amp; Omega::instance().getCurrentIteration()==Omega::instance().stopAtIteration){
+-			//cerr&lt;&lt;&quot;PAUSE at iteration #&quot;&lt;&lt;Omega::instance().getCurrentIteration()&lt;&lt;&quot; as requested.&quot;&lt;&lt;endl;
++		OO.getRootBody()-&gt;moveToNextTimeStep();
++		OO.incrementCurrentIteration();
++		OO.incrementSimulationTime();
++		if(OO.stopAtIteration&gt;0 &amp;&amp; OO.getCurrentIteration()==OO.stopAtIteration){
+ 			setTerminate(true);
+ 			return;
+ 		}
+
+Modified: trunk/extra/Brefcom.cpp
+===================================================================
+--- trunk/extra/Brefcom.cpp	2008-06-25 17:12:26 UTC (rev 1400)
++++ trunk/extra/Brefcom.cpp	2008-06-25 18:43:53 UTC (rev 1401)
+@@ -43,7 +43,7 @@
+ 
+ 		/* recommend default values for parameters
+ 		 * propose ways to determine them exactly */
+-		assert(!isnan(expBending)); assert(!isnan(sigmaT)); assert(!isnan(xiShear));
++		if(!neverDamage) { assert(!isnan(expBending)); assert(!isnan(sigmaT)); assert(!isnan(xiShear));}
+ 
+ 		shared_ptr&lt;BrefcomContact&gt; contPhys(new BrefcomContact(
+ 			/* E */ E12,
+@@ -125,7 +125,8 @@
+ 
+ 		Real dist=(rbp1-&gt;se3.position-rbp2-&gt;se3.position).Length();
+ 		#define NNAN(a) assert(!isnan(a));
+-		assert(equilibriumDist&gt;0);
++		#define NNANV(v) assert(!isnan(v[0])); assert(!isnan(v[1])); assert(!isnan(v[2]));
++		assert(equilibriumDist&gt;0);	assert(dist!=0);
+ 		NNAN(dist);
+ 
+ 		/*LOG_DEBUG(&quot; ============= ITERATION&#160;&quot;&lt;&lt;Omega::instance().getCurrentIteration()&lt;&lt;&quot; ================&quot;);
+@@ -146,33 +147,36 @@
+ 
+ 		/* shear strain: always use it, even for epsN&gt;0 */
+ 		/*if(false &amp;&amp; epsN&gt;0) { epsT=Vector3r::ZERO; } else {*/
+-				NNAN(epsT[0]); NNAN(epsT[1]);	NNAN(epsT[2]);
++				NNANV(epsT);
+ 			/* rotate epsT to the new contact plane */
+ 				const Real&amp; dt=Omega::instance().getTimeStep();
+ 				// rotation of the contact normal
+ 				//TRVAR2(epsT,BC-&gt;prevNormal.Cross(contGeom-&gt;normal));
+ 				//TRVAR1((BC-&gt;prevNormal.Cross(contGeom-&gt;normal)).Cross(epsT));
+ 				epsT+=(BC-&gt;prevNormal.Cross(contGeom-&gt;normal)).Cross(epsT);
+-				NNAN(epsT[0]); NNAN(epsT[1]);	NNAN(epsT[2]);
++				NNANV(epsT);
+ 				
+ 				// mutual rotation
+ 				Real angle=dt*.5*contGeom-&gt;normal.Dot(rbp1-&gt;angularVelocity+rbp2-&gt;angularVelocity); /*assumes equal radii */
+ 				//TRVAR1(dt*.5*contGeom-&gt;normal.Dot(rbp1-&gt;angularVelocity+rbp2-&gt;angularVelocity));
+ 				//TRVAR1(epsT.Cross(angle*contGeom-&gt;normal));
+ 				epsT+=(angle*contGeom-&gt;normal).Cross(epsT);
+-				NNAN(epsT[0]); NNAN(epsT[1]);	NNAN(epsT[2]);
++				NNANV(epsT);
+ 
+ 			/* calculate tangential strain increment */
+ 				Vector3r AtoC(contGeom-&gt;contactPoint-rbp1-&gt;se3.position), BtoC(contGeom-&gt;contactPoint-rbp2-&gt;se3.position);
++				//TRVAR3(contGeom-&gt;contactPoint,rbp1-&gt;se3.position,rbp2-&gt;se3.position);
+ 				Vector3r relVelocity /* at the contact point */ = 
+ 					//rbp2-&gt;velocity-rbp1-&gt;velocity +
+ 					rbp2-&gt;angularVelocity.Cross(BtoC)
+ 					-rbp1-&gt;angularVelocity.Cross(AtoC);
++
+ 				Vector3r tangentialDisplacement=dt*(relVelocity- /* subtract non-shear component */ contGeom-&gt;normal.Dot(relVelocity)*contGeom-&gt;normal);
+-				//TRVAR2(AtoC,BtoC);
++				//TRVAR4(AtoC,BtoC,rbp2-&gt;angularVelocity,rbp1-&gt;angularVelocity);
+ 				//TRVAR3(relVelocity,tangentialDisplacement,tangentialDisplacement/dist);
++				//TRWM3VEC(contGeom-&gt;normal);
+ 			epsT+=tangentialDisplacement/dist;
+-				NNAN(epsT[0]); NNAN(epsT[1]);	NNAN(epsT[2]);
++				NNANV(epsT);
+ 			/* artificially remove residuum in the normal direction */
+ 			//epsT-=contGeom-&gt;normal*epsT.Dot(contGeom-&gt;normal);
+ 			//TRVAR1(epsT.Dot(contGeom-&gt;normal));
+
+Modified: trunk/gui/py/pyAttrUtils.hpp
+===================================================================
+--- trunk/gui/py/pyAttrUtils.hpp	2008-06-25 17:12:26 UTC (rev 1400)
++++ trunk/gui/py/pyAttrUtils.hpp	2008-06-25 18:43:53 UTC (rev 1401)
+@@ -24,8 +24,12 @@
+ 	string wrappedGetAttrStr(std::string key){ensureFunc();vector&lt;string&gt; a=accessor-&gt;getAttrStr(key); string ret(&quot;[&quot;); FOREACH(string s, a) ret+=s+&quot; &quot;; return ret+&quot;]&quot;;} \
+ 	void wrappedSetAttrStr(std::string key, std::string val){ensureFunc();return accessor-&gt;setAttrStr(key,val);} \
+ 	boost::python::list wrappedPyKeys(){ensureFunc(); return accessor-&gt;pyKeys();} \
+-	bool wrappedPyHasKey(std::string key){ensureFunc(); return accessor-&gt;descriptors.find(key)!=accessor-&gt;descriptors.end();}
++	bool wrappedPyHasKey(std::string key){ensureFunc(); return accessor-&gt;descriptors.find(key)!=accessor-&gt;descriptors.end();} \
+ 	
++	
++	//boost::python::object wrappedPyGet_throw(std::string key){ensureFunc(); if(wrappedPyHasKey(key)) return accessor-&gt;pyGet(key); PyErr_SetString(PyExc_AttributeError, &quot;No such attribute.&quot;); boost::python::throw_error_already_set(); /* make compiler happy*/ return boost::python::object(); }
++
++
+ /*! Python special functions complementing proxies defined by ATTR_ACCESS_CXX, to be used with boost::python::class_&lt;&gt;.
+  *
+  * They define python special functions that support dictionary operations on this object and calls proxies for them. */
+@@ -34,6 +38,7 @@
+ 	.def(&quot;getRaw&quot;,&amp;cxxClass::wrappedGetAttrStr).def(&quot;setRaw&quot;,&amp;cxxClass::wrappedSetAttrStr)
+ 	//def(&quot;__getattr__&quot;,&amp;cxxClass::wrappedPyGet).def(&quot;__setattr__&quot;,&amp;cxxClass::wrappedPySet).def(&quot;attrs&quot;,&amp;cxxClass::wrappedPyKeys)
+ 
++	//.def(&quot;__getattribute__&quot;,&amp;cxxClass::wrappedPyGet_throw)
+ 
+ #define BASIC_PY_PROXY_HEAD(pyClass,yadeClass) \
+ class pyClass{shared_ptr&lt;AttrAccess&gt; accessor; \
+@@ -44,6 +49,7 @@
+ 		pyClass(const shared_ptr&lt;yadeClass&gt;&amp; _proxee): proxee(_proxee) {} \
+ 		std::string pyStr(void){ ensureAcc(); return string(proxee-&gt;getClassName()==#yadeClass ? &quot;&lt;&quot;+proxee-&gt;getClassName()+&quot;&gt;&quot; : &quot;&lt;&quot;+proxee-&gt;getClassName()+&quot; &quot;+ #yadeClass +&quot;&gt;&quot;); } \
+ 		string className(void){ ensureAcc(); return proxee-&gt;getClassName(); } \
++		void postProcessAttributes(void){ensureAcc(); static_pointer_cast&lt;Serializable&gt;(proxee)-&gt;/*<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">__HACK__D at _N</A>@T_ABUSE_*/postProcessAttributes(/*deserializing*/ true); } \
+ 		ATTR_ACCESS_CXX(accessor,ensureAcc);
+ 
+ #define BASIC_PY_PROXY_TAIL };
+@@ -65,6 +71,7 @@
+ 	.ATTR_ACCESS_PY(pyClass) \
+ 	.def(&quot;__str__&quot;,&amp;pyClass::pyStr).def(&quot;__repr__&quot;,&amp;pyClass::pyStr) \
+ 	.add_property(&quot;name&quot;,&amp;pyClass::className) \
++	.def(&quot;postProcessAttributes&quot;,&amp;pyClass::postProcessAttributes)
+ 
+ 
+ 
+
+Modified: trunk/gui/py/utils.py
+===================================================================
+--- trunk/gui/py/utils.py	2008-06-25 17:12:26 UTC (rev 1400)
++++ trunk/gui/py/utils.py	2008-06-25 18:43:53 UTC (rev 1401)
+@@ -13,10 +13,10 @@
+ 	psyco.full()
+ except ImportError: pass
+ 
+-def sphere(center,radius,density=1,young=30e9,poisson=.3,frictionAngle=0.5236,dynamic=True,color=[1,1,1]):
++def sphere(center,radius,density=1,young=30e9,poisson=.3,frictionAngle=0.5236,dynamic=True,wire=False,color=[1,1,1]):
+ 	&quot;&quot;&quot;Create default sphere, with given parameters. Physical properties such as mass and inertia are calculated automatically.&quot;&quot;&quot;
+ 	s=Body()
+-	s.shape=GeometricalModel('Sphere',{'radius':radius,'diffuseColor':color})
++	s.shape=GeometricalModel('Sphere',{'radius':radius,'diffuseColor':color,'wire':wire,'visible':True})
+ 	s.mold=InteractingGeometry('InteractingSphere',{'radius':radius,'diffuseColor':color})
+ 	V=(4./3)*math.pi*radius**3
+ 	inert=(2./5.)*V*density*radius**2
+@@ -25,10 +25,10 @@
+ 	s['isDynamic']=dynamic
+ 	return s
+ 
+-def box(center,extents,orientation=[1,0,0,0],density=1,young=30e9,poisson=.3,frictionAngle=0.5236,dynamic=True,color=[1,1,1]):
++def box(center,extents,orientation=[1,0,0,0],density=1,young=30e9,poisson=.3,frictionAngle=0.5236,dynamic=True,wire=False,color=[1,1,1]):
+ 	&quot;&quot;&quot;Create default box (cuboid), with given parameters. Physical properties such as mass and inertia are calculated automatically.&quot;&quot;&quot;
+ 	b=Body()
+-	b.shape=GeometricalModel('Box',{'extents':extents,'diffuseColor':color})
++	b.shape=GeometricalModel('Box',{'extents':extents,'diffuseColor':color,'wire':wire,'visible':True})
+ 	b.mold=InteractingGeometry('InteractingBox',{'extents':extents,'diffuseColor':color})
+ 	mass=8*extents[0]*extents[1]*extents[2]*density
+ 	b.phys=PhysicalParameters('BodyMacroParameters',{'se3':[center[0],center[1],center[2],orientation[0],orientation[1],orientation[2],orientation[3]],'mass':mass,'inertia':[mass*4*(extents[1]**2+extents[2]**2),mass*4*(extents[0]**2+extents[2]**2),mass*4*(extents[0]**2+extents[1]**2)],'young':young,'poisson':poisson,'frictionAngle':frictionAngle})
+@@ -54,22 +54,50 @@
+ 		if b.phys['se3'][axis]+b.shape['radius']*distFactor&gt;=extremes[1]: ret[1].append(b.id)
+ 	return ret
+ 
+-def perpendicularArea(axis,consider=lambda body: True):
+-	&quot;&quot;&quot;return area perpendicular to given axis (0=x,1=y,2=z) generated by bodies
+-	for which the function consider returns True (defaults to returning True always)
+-	and which is of the type &quot;Sphere&quot;
++def aabbWalls(extrema=None,thickness=None,oversizeFactor=1.5,**kw):
++	&quot;&quot;&quot;return 6 walls that will wrap existing packing;
++	extrema are extremal points of the AABB of the packing (will be calculated if not specified)
++	thickness is wall thickness (will be 1/10 of the X-dimension if not specified)
++	Walls will be enlarged in their plane by oversizeFactor.
++	returns list of 6 wall Bodies enclosing the packing, in the order minX,maxX,minY,maxY,minZ,maxZ.
+ 	&quot;&quot;&quot;
++	walls=[]
++	if not extrema: extrema=aabbExtrema()
++	if not thickness: thickness=(extrema[1][0]-extrema[0][0])/10.
++	for axis in [0,1,2]:
++		mi,ma=extrema
++		center=[(mi[i]+ma[i])/2. for i in range(3)]
++		extents=[.5*oversizeFactor*(ma[i]-mi[i]) for i in range(3)]
++		extents[axis]=thickness/2.
++		for j in [0,1]:
++			center[axis]=extrema[j][axis]+(j-.5)*thickness
++			walls.append(box(center=center,extents=extents,dynamic=False,**kw))
++			walls[-1].shape['wire']=True
++			walls[-1].shape['visible']=True
++	return walls
++
++
++def aabbExtrema(consider=lambda body:True):
++	&quot;&quot;&quot;return min and max points of an aabb around spherical packing (non-spheres are ignored)&quot;&quot;&quot;
+ 	inf=float('inf')
+-	ext=[[inf,inf],[-inf,-inf]]
+-	otherAxes=((axis+1)%3,(axis+2)%3)
++	minimum,maximum=[inf,inf,inf],[-inf,-inf,-inf]
+ 	o=Omega()
+ 	for b in o.bodies:
+ 		if consider(b) and b.shape.name=='Sphere':
+-			ext[0]=[min(ext[0][i],b.phys['se3'][otherAxes[i]]-b.shape['radius']) for i in [0,1]]
+-			ext[1]=[max(ext[1][i],b.phys['se3'][otherAxes[i]]+b.shape['radius']) for i in [0,1]]
+-	return (ext[1][0]-ext[0][0])*(ext[1][1]-ext[0][1])
++			minimum=[min(minimum[i],b.phys['se3'][i]-b.shape['radius']) for i in range(3)]
++			maximum=[max(maximum[i],b.phys['se3'][i]+b.shape['radius']) for i in range(3)]
++	return minimum,maximum
+ 
++def perpendicularArea(axis,consider=lambda body: True):
++	&quot;&quot;&quot;return area perpendicular to given axis (0=x,1=y,2=z) generated by bodies
++	for which the function consider returns True (defaults to returning True always)
++	and which is of the type &quot;Sphere&quot;
++	&quot;&quot;&quot;
++	ext=aabbExtrema(consider)
++	other=((axis+1)%3,(axis+2)%3)
++	return (ext[1][other[0]]-ext[0][other[0]])*(ext[1][other[1]]-ext[0][other[1]])
+ 
++
+ def randomizeColors(onShapes=True,onMolds=False,onlyDynamic=False):
+ 	&quot;&quot;&quot;Assign random colors to shape's (GeometricalModel) and/or mold's (InteractingGeometry) diffuseColor.
+ 	
+@@ -93,25 +121,40 @@
+ 	o=Omega()
+ 	dt=float('inf')
+ 	for b in o.bodies:
++		if not (b.phys and b.shape): continue
+ 		if not (b.phys.has_key('young') and b.shape.has_key('radius')): continue
+ 		density=b.phys['mass']/((4./3.)*math.pi*b.shape['radius']**3)
+ 		thisDt=b.shape['radius']/math.sqrt(b.phys['young']/density)
+ 		dt=min(dt,thisDt)
+ 	return dt
+ 
+-def spheresFromFile(filename,scale=1.,**kw):
++def spheresFromFile(filename,scale=1.,wenjieFormat=False,**kw):
+ 	&quot;&quot;&quot;Load sphere coordinates from file, create spheres, insert them to the simulation.
+ 
+ 	filename is the file holding ASCII numbers (at least 4 colums that hold x_center, y_center, z_center, radius).
+ 	All remaining arguments are passed the the yade.utils.sphere function that creates the bodies.
++
++	wenjieFormat will skip all lines that have exactly 5 numbers and where the 4th one is exactly 1.0 -
++	this was used by a fellow developer called Wenjie to mark box elements.
+ 	
+-	Returns list of body ids that were inserted.&quot;&quot;&quot;
++	Returns list of body ids that were inserted into simulation.&quot;&quot;&quot;
+ 	o=Omega()
+ 	ret=[]
+ 	for l in open(filename):
+ 		ss=[float(i) for i in l.split()]
++		if wenjieFormat and len(ss)==5 and ss[4]==1.0: continue
+ 		id=o.bodies.append(sphere([scale*ss[0],scale*ss[2],scale*ss[1]],scale*ss[3],**kw))
+ 		ret.append(id)
+ 	return ret
+ 
++def spheresToFile(filename,consider=lambda id: True):
++	&quot;&quot;&quot;Save sphere coordinates into ASCII file; the format of the line is: x y z r.
++	Non-spherical bodies are silently skipped.&quot;&quot;&quot;
++	out=open(filename,'w')
++	for b in o.bodies:
++		if not b.shape.name=='Sphere' or not consider(b.id): continue
++		out.write('%g\t%g\t%g\t%g\n'%(b.phys['se3'][0],b.phys['se3'][1],b.phys['se3'][2],b.shape['radius']))
++	out.close()
+ 
++
++
+
+Modified: trunk/gui/py/yadeControl.cpp
+===================================================================
+--- trunk/gui/py/yadeControl.cpp	2008-06-25 17:12:26 UTC (rev 1400)
++++ trunk/gui/py/yadeControl.cpp	2008-06-25 18:43:53 UTC (rev 1401)
+@@ -295,17 +295,12 @@
+ 
+ 
+ class pyOmega{
+-	#define OMEGA Omega::instance()
+ 	private:
+ 		// can be safely removed now, since pyOmega makes an empty rootBody in the constructor, if there is none
+ 		void assertRootBody(){if(!OMEGA.getRootBody()) throw std::runtime_error(&quot;No root body.&quot;); }
+-		void maybeRunInitializers(){if(needsInitializers){OMEGA.getRootBody()-&gt;runInitializers(); needsInitializers=false;}}
+-		/*! do we need initializers before running?
+-		 * This is set to true in constructor (if we create simulation from scratch) and when we load a simulation.
+-		 * Initializers are run ad this flag set to false by maybeRunInitializers when running (step or run) */
+-		bool needsInitializers;
++		Omega&amp; OMEGA;
+ 	public:
+-	pyOmega(){
++	pyOmega(): OMEGA(Omega::instance()){
+ 		shared_ptr&lt;MetaBody&gt; rb=OMEGA.getRootBody();
+ 		assert(rb);
+ 		if(!rb-&gt;physicalParameters){rb-&gt;physicalParameters=shared_ptr&lt;PhysicalParameters&gt;(new ParticleParameters);} /* PhysicalParameters crashes PhysicalParametersMetaEngine... why? */
+@@ -316,7 +311,6 @@
+ 		/* this is not true if another instance of Omega is created; flag should be stored inside the Omega singleton for clean solution. */
+ 		if(!OMEGA.hasSimulationLoop()){
+ 			OMEGA.createSimulationLoop();
+-			needsInitializers=true;
+ 		}
+ 	};
+ 
+@@ -339,14 +333,13 @@
+ 
+ 	void run(long int numIter=-1){
+ 		if(numIter&gt;0) OMEGA.stopAtIteration=OMEGA.getCurrentIteration()+numIter;
+-		maybeRunInitializers();
+ 		//else OMEGA.stopAtIteration=-1;
+ 		OMEGA.startSimulationLoop();
+ 		long toGo=OMEGA.stopAtIteration-OMEGA.getCurrentIteration();
+ 		LOG_DEBUG(&quot;RUN&quot;&lt;&lt;(toGo&gt;0?string(&quot; (&quot;+lexical_cast&lt;string&gt;(toGo)+&quot; to go)&quot;):string(&quot;&quot;))&lt;&lt;&quot;!&quot;);
+ 	}
+ 	void pause(){OMEGA.stopSimulationLoop(); LOG_DEBUG(&quot;PAUSE!&quot;);}
+-	void step() {OMEGA.spawnSingleSimulationLoop(); maybeRunInitializers(); LOG_DEBUG(&quot;STEP!&quot;);}
++	void step() {OMEGA.spawnSingleSimulationLoop(); LOG_DEBUG(&quot;STEP!&quot;);}
+ 
+ 	void load(std::string fileName) {
+ 		OMEGA.finishSimulationLoop();
+@@ -355,7 +348,6 @@
+ 		OMEGA.loadSimulation();
+ 		OMEGA.createSimulationLoop();
+ 		LOG_DEBUG(&quot;LOAD!&quot;);
+-		needsInitializers=true;
+ 	}
+ 
+ 	void reset(){
+@@ -411,7 +403,7 @@
+ 	python::list engines_get(void){assertRootBody(); return anyEngines_get(OMEGA.getRootBody()-&gt;engines);}
+ 	void engines_set(python::object egs){assertRootBody(); anyEngines_set(OMEGA.getRootBody()-&gt;engines,egs);}
+ 	python::list initializers_get(void){assertRootBody(); return anyEngines_get(OMEGA.getRootBody()-&gt;initializers);}
+-	void initializers_set(python::object egs){assertRootBody(); anyEngines_set(OMEGA.getRootBody()-&gt;initializers,egs);}
++	void initializers_set(python::object egs){assertRootBody(); anyEngines_set(OMEGA.getRootBody()-&gt;initializers,egs); OMEGA.getRootBody()-&gt;needsInitializers=true; }
+ 
+ 	python::object labeled_engine_get(string label){
+ 		FOREACH(const shared_ptr&lt;Engine&gt;&amp; eng, OMEGA.getRootBody()-&gt;engines){
+@@ -441,7 +433,6 @@
+ 	}
+ 
+ 	pyTags tags_get(void){assertRootBody(); return pyTags(OMEGA.getRootBody());}
+-	#undef OMEGA
+ };
+ 	
+ BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(omega_run_overloads,run,0,1);
+
+Modified: trunk/gui/qt3/GLViewer.cpp
+===================================================================
+--- trunk/gui/qt3/GLViewer.cpp	2008-06-25 17:12:26 UTC (rev 1400)
++++ trunk/gui/qt3/GLViewer.cpp	2008-06-25 18:43:53 UTC (rev 1401)
+@@ -158,6 +158,15 @@
+ 	Vector3r min,max;	
+ 	if(rb-&gt;boundingVolume){
+ 		min=rb-&gt;boundingVolume-&gt;min; max=rb-&gt;boundingVolume-&gt;max;
++		if(std::max(max[0]-min[0],std::max(max[1]-min[1],max[2]-min[2]))&lt;=0){
++			// AABB is not yet calculated...
++			Real inf=std::numeric_limits&lt;Real&gt;::infinity();
++			min=Vector3r(inf,inf,inf); max=Vector3r(-inf,-inf,-inf);
++			FOREACH(const shared_ptr&lt;Body&gt;&amp; b, *rb-&gt;bodies){
++				max=componentMaxVector(max,b-&gt;physicalParameters-&gt;se3.position);
++				max=componentMinVector(min,b-&gt;physicalParameters-&gt;se3.position);
++			}
++		}
+ 	} else {
+ 		min=Vector3r(-1,-1,-1); max=Vector3r(1,1,1);
+ 	}
+
+Modified: trunk/gui/qt3/SimulationController.cpp
+===================================================================
+--- trunk/gui/qt3/SimulationController.cpp	2008-06-25 17:12:26 UTC (rev 1400)
++++ trunk/gui/qt3/SimulationController.cpp	2008-06-25 18:43:53 UTC (rev 1401)
+@@ -357,6 +357,9 @@
+ 
+ 	if (changeSkipTimeStepper) Omega::instance().skipTimeStepper(skipTimeStepper);
+ 	if (changeTimeStep) {
++		// wrap the mantissa around
++		if(sbSecond-&gt;value()==0){ sbSecond-&gt;setValue(9); sb10PowerSecond-&gt;setValue(sb10PowerSecond-&gt;value()-1); }
++		if(sbSecond-&gt;value()==10){ sbSecond-&gt;setValue(1); sb10PowerSecond-&gt;setValue(sb10PowerSecond-&gt;value()+1); }
+ 		Real second = (Real)(sbSecond-&gt;value());
+ 		Real powerSecond = (Real)(sb10PowerSecond-&gt;value());
+ 		Omega::instance().setTimeStep(second*Mathr::Pow(10,powerSecond));
+
+Modified: trunk/lib/SConscript
+===================================================================
+--- trunk/lib/SConscript	2008-06-25 17:12:26 UTC (rev 1400)
++++ trunk/lib/SConscript	2008-06-25 18:43:53 UTC (rev 1401)
+@@ -105,7 +105,7 @@
+ 	env.SharedLibrary('XMLFormatManager',
+ 		['serialization-xml/XMLFormatManager.cpp',
+ 			'serialization-xml/XMLSaxParser.cpp'],
+-		LIBS=env['LIBS']+['yade-base']), #,'BINFormatManager']),
++		LIBS=env['LIBS']+['yade-base','yade-serialization']), #,'BINFormatManager']),
+ 
+ 	env.SharedLibrary('yade-serialization',
+ 		['serialization/Archive.cpp',
+@@ -114,7 +114,8 @@
+ 			'serialization/FormatChecker.cpp',
+ 			'serialization/Serializable.cpp',
+ 			'serialization/SerializableSingleton.cpp',
+-			'serialization/SerializationExceptions.cpp']),
++			'serialization/SerializationExceptions.cpp'],
++		LIBS=env['LIBS']+['yade-base','yade-factory']),
+ 
+ 	env.SharedLibrary('STLImporter',
+ 		['import/STLReader.cpp',
+
+Modified: trunk/lib/serialization/Serializable.hpp
+===================================================================
+--- trunk/lib/serialization/Serializable.hpp	2008-06-25 17:12:26 UTC (rev 1400)
++++ trunk/lib/serialization/Serializable.hpp	2008-06-25 18:43:53 UTC (rev 1401)
+@@ -60,6 +60,9 @@
+ 		virtual void serialize(any&amp; )	{ throw SerializableError(SerializationExceptions::SetFunctionNotDeclared); };
+ 		virtual void deserialize(any&amp; ) { throw SerializableError(SerializationExceptions::GetFunctionNotDeclared); };
+ 
++		//virtual void <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">__HACK__D at _N</A>@T_ABUSE_postProcessAttributes(bool deserializating){postProcessAttributes;} /* public access to protected postProcessAttributes, from python */
++		virtual void postProcessAttributes(bool /*deserializing*/) {};
++
+ 	private :
+ 		Archives				archives;
+ 		friend class Archive;
+@@ -67,7 +70,6 @@
+ 	protected :
+ 		virtual void registerAttributes() {};
+ 		virtual void preProcessAttributes(bool /*deserializing*/) {};
+-		virtual void postProcessAttributes(bool /*deserializing*/) {};
+ 
+ 		template &lt;typename Type&gt;
+ 		void registerAttribute(const string&amp; name, Type&amp; attribute)
+
+Modified: trunk/pkg/common/DataClass/PhysicalParameters/ParticleParameters.hpp
+===================================================================
+--- trunk/pkg/common/DataClass/PhysicalParameters/ParticleParameters.hpp	2008-06-25 17:12:26 UTC (rev 1400)
++++ trunk/pkg/common/DataClass/PhysicalParameters/ParticleParameters.hpp	2008-06-25 18:43:53 UTC (rev 1401)
+@@ -10,7 +10,7 @@
+ #define PARTICLEPARAMETERS_HPP
+ 
+ #include&lt;yade/core/PhysicalParameters.hpp&gt;
+-#include &lt;Wm3Vector3.h&gt;
++#include&lt;Wm3Vector3.h&gt;
+ #include&lt;yade/lib-base/yadeWm3.hpp&gt;
+ #include&lt;yade/lib-base/yadeWm3Extra.hpp&gt;
+ 
+
+Modified: trunk/pkg/common/SConscript
+===================================================================
+--- trunk/pkg/common/SConscript	2008-06-25 17:12:26 UTC (rev 1400)
++++ trunk/pkg/common/SConscript	2008-06-25 18:43:53 UTC (rev 1401)
+@@ -49,7 +49,8 @@
+ 		LIBS=env['LIBS']+['yade-base']),
+     
+ 	env.SharedLibrary('InteractingVertex'
+-	    ,['DataClass/InteractingGeometry/InteractingVertex.cpp']),
++	    ,['DataClass/InteractingGeometry/InteractingVertex.cpp'],
++		 LIBS=env['LIBS']+['yade-base']),
+ 	
+ 	env.SharedLibrary('InteractingEdge'
+ 	    ,['DataClass/InteractingGeometry/InteractingEdge.cpp']),
+@@ -91,7 +92,7 @@
+ 
+ 	env.SharedLibrary('Momentum',
+ 		['DataClass/PhysicalAction/Momentum.cpp'],
+-		LIBS=env['LIBS']+['yade-base','yade-base']),
++		LIBS=env['LIBS']+['yade-base']),
+ 
+ 	env.SharedLibrary('Box',
+ 		['DataClass/GeometricalModel/Box.cpp'],
+@@ -120,7 +121,8 @@
+ 		CPPPATH=env['CPPPATH']+['$PREFIX/include','DataClass/GeometricalModel']),
+ 
+ 	env.SharedLibrary('Vertex'
+-	    ,['DataClass/GeometricalModel/Vertex.cpp']),
++	    ,['DataClass/GeometricalModel/Vertex.cpp'],
++		 LIBS=env['LIBS']+['yade-base']),
+ 	
+ 	env.SharedLibrary('GeometricalEdge'
+ 	    ,['DataClass/GeometricalModel/GeometricalEdge.cpp']),
+@@ -130,7 +132,7 @@
+ 	
+ 	env.SharedLibrary('MomentEngine',
+ 		['Engine/DeusExMachina/MomentEngine.cpp'],
+-		LIBS=env['LIBS']+['yade-base',  'Momentum', 'ParticleParameters'],
++		LIBS=env['LIBS']+['yade-base','Momentum','ParticleParameters'],
+ 		CPPPATH=env['CPPPATH']+['DataClass/PhysicalParameters',
+ 			'Engine/DeusExMachina',
+ 			'$PREFIX/include',
+@@ -147,13 +149,10 @@
+ 	env.SharedLibrary('DisplacementToForceEngine',
+ 		['Engine/DeusExMachina/DisplacementToForceEngine.cpp'],
+ 		LIBS=env['LIBS']+['yade-base',
+-			
+ 			'yade-factory',
+ 			'yade-base',
+-
+ 			'Force',
+ 			'ParticleParameters',
+-			
+ 			'yade-serialization',
+ 			'yade-multimethods'],
+ 		CPPPATH=env['CPPPATH']+['DataClass/PhysicalParameters',
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.cpp	2008-06-25 17:12:26 UTC (rev 1400)
++++ trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.cpp	2008-06-25 18:43:53 UTC (rev 1401)
+@@ -23,7 +23,7 @@
+ 
+ CREATE_LOGGER(TriaxialCompressionEngine);
+ 
+-TriaxialCompressionEngine::TriaxialCompressionEngine() : actionForce(new Force)
++TriaxialCompressionEngine::TriaxialCompressionEngine() : actionForce(new Force), uniaxialEpsilonCurr(strain[1])
+ {
+ 	translationAxis=TriaxialStressController::normal[wall_bottom_id];
+ 	strainRate=0;
+@@ -79,6 +79,7 @@
+ 	REGISTER_ATTRIBUTE(Key);
+ 	REGISTER_ATTRIBUTE(frictionAngleDegree);
+ 	REGISTER_ATTRIBUTE(epsilonMax);
++	REGISTER_ATTRIBUTE(uniaxialEpsilonCurr);
+ }
+ 
+ void TriaxialCompressionEngine::doStateTransition(MetaBody * body, stateNum nextState){
+@@ -93,8 +94,7 @@
+ 		if (frictionAngleDegree&gt;0) setContactProperties(body, frictionAngleDegree);
+ 		height0 = height; depth0 = depth; width0 = width;
+ 		//compressionActivated = true;
+-		wall_bottom_activated=false;
+-		wall_top_activated=false;
++		wall_bottom_activated=false; wall_top_activated=false;
+ 		if(currentState==STATE_ISO_UNLOADING){ LOG_INFO(&quot;Speres -&gt; /tmp/unloaded.spheres&quot;); Shop::saveSpheresToFile(&quot;/tmp/unloaded.spheres&quot;); }
+ 		if(!firstRun) saveSimulation=true; // saving snapshot .xml will actually be done in ::applyCondition
+ 		Phase1End = &quot;Unloaded&quot;;
+@@ -155,6 +155,7 @@
+ 			{
+ 				doStateTransition (ncb, STATE_TRIAX_LOADING ); computeStressStrain ( ncb );
+ 			}
++			// huh?! this will never happen, because of the first condition...
+ 			else doStateTransition (ncb, STATE_LIMBO );
+ 		}
+ #if 0
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.hpp	2008-06-25 17:12:26 UTC (rev 1400)
++++ trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.hpp	2008-06-25 18:43:53 UTC (rev 1401)
+@@ -26,8 +26,20 @@
+ 
+ /** \brief Class for controlling optional initial isotropic compaction and subsequent triaxial stress test with hydrostatic confinement.
+  *
++ * The engine is a state machine with the following states (and automatic transitions):
+  *
+- * 
++ * 1. STATE_ISO_COMPACTION: isotropic compaction (compression) until
++ *    the prescribed mean pressue sigmaIsoCompaction is reached and the packing is stable.
++ *    The compaction happens either by straining the walls (!internalCompaction)
++ *    or by growing size of grains (internalCompaction)
++ * 2. STATE_ISO_UNLOADING: isotropic unloading from the previously reached state, until
++ *    the mean pressure sigmaLateralConfinement is reached (and stabilizes)
++ * 3. STATE_TRIAX_LOADING: confined uniaxial compression:
++ *		constant sigmaLateralConfinement is kept at lateral walls (left, right, front, back), while
++ * 	top and bottom walls load the packing in their axis (by straining), until the value of epsilonMax
++ * 	(deformation along the loading axis) is reached. At this point, the simulation is stopped.
++ * 4. STATE_TRIAX_LIMBO: currently unused, since simulation is hard-stopped in the previous state.
++ *
+  */
+ class TriaxialCompressionEngine : public TriaxialStressController
+ {
+@@ -64,6 +76,8 @@
+ 		Real sigmaLateralConfinement;
+ 		//! Value of axial deformation for which the simulation must stop
+ 		Real epsilonMax;
++		//! Current value of axial deformation during confined loading (is reference to strain[1])
++		Real&amp; uniaxialEpsilonCurr;
+ 		//! Value of friction to use for the compression test
+ 		Real frictionAngleDegree;
+ 		//! Previous state (used to detect manual changes of the state in .xml)
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.cpp	2008-06-25 17:12:26 UTC (rev 1400)
++++ trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.cpp	2008-06-25 18:43:53 UTC (rev 1401)
+@@ -9,6 +9,7 @@
+ #include&quot;TriaxialStressController.hpp&quot;
+ #include&lt;yade/pkg-common/ParticleParameters.hpp&gt;
+ #include&lt;yade/pkg-common/InteractingSphere.hpp&gt;
++#include&lt;yade/pkg-common/InteractingBox.hpp&gt;
+ #include&lt;yade/pkg-dem/SpheresContactGeometry.hpp&gt;
+ #include&lt;yade/pkg-dem/ElasticContactInteraction.hpp&gt;
+ #include&lt;yade/pkg-common/Force.hpp&gt;
+@@ -113,9 +114,7 @@
+ 	REGISTER_ATTRIBUTE(height0);
+ 	REGISTER_ATTRIBUTE(width0);
+ 	REGISTER_ATTRIBUTE(depth0);
+-	REGISTER_ATTRIBUTE(thickness);
+ 	
+-	
+ 	REGISTER_ATTRIBUTE(sigma_iso);
+ 	REGISTER_ATTRIBUTE(maxMultiplier);
+ 	REGISTER_ATTRIBUTE(finalMaxMultiplier);
+@@ -192,13 +191,11 @@
+ void TriaxialStressController::applyCondition(MetaBody* ncb)
+ {
+ 	//cerr &lt;&lt; &quot;TriaxialStressController::applyCondition&quot; &lt;&lt; endl;
+-
+-	//Update stiffness only if it has been computed by StiffnessCounter (see &quot;stiffnessUpdateInterval&quot;)
+-	if (Omega::instance().getCurrentIteration() % stiffnessUpdateInterval == 0 || Omega::instance().getCurrentIteration()&lt;1000)
+-		updateStiffness(ncb);
+ 		
+ 	shared_ptr&lt;BodyContainer&gt;&amp; bodies = ncb-&gt;bodies;
+ 
++	if(thickness&lt;=0) thickness=YADE_PTR_CAST&lt;InteractingBox&gt;(Body::byId(wall_bottom_id,ncb)-&gt;interactingGeometry)-&gt;extents.Y();
++
+ 	PhysicalParameters* p_bottom = static_cast&lt;PhysicalParameters*&gt;((*bodies)[wall_bottom_id]-&gt;physicalParameters.get());
+ 	PhysicalParameters* p_top   =	 static_cast&lt;PhysicalParameters*&gt;((*bodies)[wall_top_id]-&gt;physicalParameters.get());
+ 	PhysicalParameters* p_left  = static_cast&lt;PhysicalParameters*&gt;((*bodies)[wall_left_id]-&gt;physicalParameters.get());
+@@ -209,6 +206,11 @@
+ 	height = p_top-&gt;se3.position.Y() - p_bottom-&gt;se3.position.Y() - thickness;
+ 	width = p_right-&gt;se3.position.X() - p_left-&gt;se3.position.X() - thickness;
+ 	depth = p_front-&gt;se3.position.Z() - p_back-&gt;se3.position.Z() - thickness;
++
++	// must be done _after_ height, width, depth have been calculated
++	//Update stiffness only if it has been computed by StiffnessCounter (see &quot;stiffnessUpdateInterval&quot;)
++	if (Omega::instance().getCurrentIteration() % stiffnessUpdateInterval == 0 || Omega::instance().getCurrentIteration()&lt;1000) updateStiffness(ncb);
++
+  
+ 		bool isARadiusControlIteration = (Omega::instance().getCurrentIteration() % radiusControlInterval == 0);
+ 	if (Omega::instance().getCurrentIteration() % computeStressStrainInterval == 0 ||
+@@ -259,6 +261,7 @@
+ // 	height = p_top-&gt;se3.position.Y() - p_bottom-&gt;se3.position.Y() - thickness;
+ // 	width = p_right-&gt;se3.position.X() - p_left-&gt;se3.position.X() - thickness;
+ // 	depth = p_front-&gt;se3.position.Z() - p_back-&gt;se3.position.Z() - thickness;
++	assert(height&gt;0); assert(width&gt;0); assert(depth&gt;0);
+ 	
+ 	meanStress = 0;
+ 	if (height0 == 0) height0 = height;
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.hpp	2008-06-25 17:12:26 UTC (rev 1400)
++++ trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.hpp	2008-06-25 18:43:53 UTC (rev 1401)
+@@ -68,7 +68,7 @@
+ 		int &amp;wall_bottom_id, &amp;wall_top_id, &amp;wall_left_id, &amp;wall_right_id, &amp;wall_front_id, &amp;wall_back_id;
+ 		bool wall_bottom_activated, wall_top_activated, wall_left_activated, wall_right_activated, wall_front_activated, wall_back_activated;
+ 		Real height, width, depth, height0, width0, depth0;
+-		Real thickness; // FIXME should retrieve &quot;extents&quot; of a InteractingBox
++		Real thickness;
+ 		Real sigma_iso;
+ 		Real max_vel;
+ 
+
+Modified: trunk/scripts/cylindrical-layer-packing.py
+===================================================================
+--- trunk/scripts/cylindrical-layer-packing.py	2008-06-25 17:12:26 UTC (rev 1400)
++++ trunk/scripts/cylindrical-layer-packing.py	2008-06-25 18:43:53 UTC (rev 1401)
+@@ -24,7 +24,7 @@
+ 	StandAloneEngine('ElasticContactLaw'),
+ 	StandAloneEngine('GlobalStiffnessCounter',{'interval':500}),
+ 	StandAloneEngine('GlobalStiffnessTimeStepper',{'defaultDt':1e-4,'active':True,'timeStepUpdateInterval':500}),
+-	DeusExMachina('AxialGravityEngine',{'axisPoint':[0,0,0],'axisDirection':[1,0,0],'acceleration':100}),
++	DeusExMachina('AxialGravityEngine',{'axisPoint':[0,0,0],'axisDirection':[1,0,0],'acceleration':10000}),
+ 	MetaEngine('PhysicalActionDamper',[
+ 		EngineUnit('CundallNonViscousForceDamping',{'damping':0.4}),
+ 		EngineUnit('CundallNonViscousMomentumDamping',{'damping':0.4})
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000361.html">[Yade-commits] r1400 - in branches/przewdnik/core: . visualisation
+</A></li>
+	<LI>Next message: <A HREF="000363.html">[Yade-commits] r1402 - in trunk: . core extra gui gui/py gui/qt3	pkg/common pkg/common/Engine scripts
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#362">[ date ]</a>
+              <a href="thread.html#362">[ thread ]</a>
+              <a href="subject.html#362">[ subject ]</a>
+              <a href="author.html#362">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

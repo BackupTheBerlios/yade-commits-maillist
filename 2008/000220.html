@@ -1,0 +1,527 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1255 - in trunk/extra: . clump usct
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1255%20-%20in%20trunk/extra%3A%20.%20clump%20usct&In-Reply-To=%3C200802182122.m1ILM46B006344%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000219.html">
+   <LINK REL="Next"  HREF="000221.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1255 - in trunk/extra: . clump usct</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1255%20-%20in%20trunk/extra%3A%20.%20clump%20usct&In-Reply-To=%3C200802182122.m1ILM46B006344%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1255 - in trunk/extra: . clump usct">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Mon Feb 18 22:22:04 CET 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000219.html">[Yade-commits] r1254 - in trunk: core lib/multimethods	pkg/dem/Engine/DeusExMachina pkg/dem/Engine/StandAloneEngine
+</A></li>
+        <LI>Next message: <A HREF="000221.html">[Yade-commits] r1256 - trunk/extra
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#220">[ date ]</a>
+              <a href="thread.html#220">[ thread ]</a>
+              <a href="subject.html#220">[ subject ]</a>
+              <a href="author.html#220">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2008-02-18 22:22:03 +0100 (Mon, 18 Feb 2008)
+New Revision: 1255
+
+Modified:
+   trunk/extra/Brefcom.cpp
+   trunk/extra/Brefcom.hpp
+   trunk/extra/SConscript
+   trunk/extra/clump/Shop.cpp
+   trunk/extra/usct/UniaxialStrainControlledTest.cpp
+Log:
+Updated brefcom, with undisclosable parts moved outside the tree.
+
+Modified: trunk/extra/Brefcom.cpp
+===================================================================
+--- trunk/extra/Brefcom.cpp	2008-02-18 20:25:31 UTC (rev 1254)
++++ trunk/extra/Brefcom.cpp	2008-02-18 21:22:03 UTC (rev 1255)
+@@ -28,32 +28,27 @@
+ 		const shared_ptr&lt;BodyMacroParameters&gt;&amp; elast1=static_pointer_cast&lt;BodyMacroParameters&gt;(pp1);
+ 		const shared_ptr&lt;BodyMacroParameters&gt;&amp; elast2=static_pointer_cast&lt;BodyMacroParameters&gt;(pp2);
+ 
+-		shared_ptr&lt;BrefcomContact&gt; contPhys(new BrefcomContact());
+-		interaction-&gt;interactionPhysics=contPhys;
+-
+-
+ 		Real E12=2*elast1-&gt;young*elast2-&gt;young/(elast1-&gt;young+elast2-&gt;young); // harmonic Young's modulus average
+ 		Real nu12=2*elast1-&gt;poisson*elast2-&gt;poisson/(elast1-&gt;poisson+elast2-&gt;poisson); // dtto for Poisson ratio 
+ 		Real S12=Mathr::PI*pow(min(contGeom-&gt;radius1,contGeom-&gt;radius2),2); // &quot;surface&quot; of interaction
++		Real d0=contGeom-&gt;radius1 + contGeom-&gt;radius2; // equilibrium distace is &quot;just touching&quot;
++		//Real d0=(elast1-&gt;se3.position-elast2-&gt;se3.position).Length();
++		Real Kn=(E12*S12/d0)*((1+alpha)/(beta*(1+nu12)+gamma*(1-alpha*nu12)));
+ 
+-		contPhys-&gt;omegaPl=0;
+-		/* let's try initial distance for d0; that should prevent packings with inner stresses from exploding */
+-		contPhys-&gt;d0=contGeom-&gt;radius1 + contGeom-&gt;radius2; // equilibrium distace is &quot;just touching&quot;
+-		//contPhys-&gt;d0=(elast1-&gt;se3.position-elast2-&gt;se3.position).Length(); // equilibrium distance is now
+-		contPhys-&gt;Kn=(E12*S12/contPhys-&gt;d0)*( (1+alpha)/(beta*(1+nu12) + gamma*(1-alpha*nu12)));
+-		contPhys-&gt;Ks=contPhys-&gt;Kn*(1-alpha*nu12)/(1+nu12);
+-		contPhys-&gt;zeta=zeta; // TODO: calculate zeta from Gf
+-		contPhys-&gt;frictionAngle=.5*(elast1-&gt;frictionAngle+elast2-&gt;frictionAngle);
+-		contPhys-&gt;FnMax=S12*sigmaT;
+-		contPhys-&gt;cohesion=S12*sigmaC;
++		shared_ptr&lt;BrefcomContact&gt; contPhys(new BrefcomContact(
++			/* Kn */ Kn,
++			/* Kt */ Kn*(1-alpha*nu12)/(1+nu12),
++			/* frictionAngle */ .5*(elast1-&gt;frictionAngle+elast2-&gt;frictionAngle),
++			/* undamagedCohesion */ S12*sigmaT,
++			/* equilibriumDist */ d0,
++			/* crossSection */ S12,
++			/* epsCracking */ sigmaT/E12,
++			/* epsFracture */ 5*sigmaT/E12
++			));
+ 		contPhys-&gt;prevNormal=contGeom-&gt;normal;
+-		contPhys-&gt;Fs=Vector3r::ZERO;
++		contPhys-&gt;isCohesive=(Omega::instance().getCurrentIteration()&gt;5 ? false : true);
+ 
+-		// NEVER!!!
+-		// HACK: after beginning all links will be without cohesion (omegaPl=1) !!!
+-		if(false &amp;&amp; Omega::instance().getCurrentIteration()&gt;50) contPhys-&gt;omegaPl=1;
+-		// OTOH, structural contacts will have this flag
+-		else contPhys-&gt;isStructural=true;
++		interaction-&gt;interactionPhysics=contPhys;
+ 	}
+ }
+ 
+@@ -67,31 +62,7 @@
+ 
+ /********************** BrefcomLaw ****************************/
+ CREATE_LOGGER(BrefcomLaw);
+-
+-void BrefcomLaw::calculateNormalForce(){
+-	Real d=(rbp1-&gt;se3.position-rbp2-&gt;se3.position).Length();
+-	//TRVAR2(d,BC-&gt;dBreak);
+-	if(d &gt; BC-&gt;dBreak){
+-		BC-&gt;omegaPl=1; /* LOG_DEBUG(&quot;Complete damage for #&quot;&lt;&lt;id1&lt;&lt;&quot;+#&quot;&lt;&lt;id2); */
+-		Fn=0; return; }
+-	Fn = /* normal is A&#8594;B, but Fn is by convention as applied to A */ (d - BC-&gt;d0_curr) * BC-&gt;Kn;
+-
+-	BREFREC(Fn)
+-	BREFREC(d);
+-	BREFREC(BC-&gt;dBreak);
+-	BREFREC(BC-&gt;dPeak);
+-	BREFREC(BC-&gt;dPeak_curr)
+-
+-	#if 0
+-		if(d&gt;BC-&gt;dPeak_curr){ /* on the softening branch of the diagram */
+-			force+=(BC-&gt;dBreak - d)*(BC-&gt;Kn / BC-&gt;zeta) * contGeom-&gt;normal;
+-			BC-&gt;omegaPl=(d - BC-&gt;dPeak)/(BC-&gt;dBreak - BC-&gt;dPeak);
+-		} else { /* on the elastic branch */
+-			force+=(d - BC-&gt;d0_curr)* BC-&gt;Kn * contGeom-&gt;normal;
+-		}
+-	#endif
+-}
+-
++#if 0
+ void BrefcomLaw::calculateShearForce(){
+ 	Fs=Vector3r::ZERO; return;
+ 	
+@@ -119,75 +90,32 @@
+ 		exit(0);
+ 	}
+ }
++#endif
+ 
+-void BrefcomLaw::rotationEffects(){
+-	/* TODO */
+-	/* is in ElasticCohesiveLaw under if(momentRotationLaw) { &#8230; }, but that code is messy;
+-	 * should be rewritten using some article */
+-}
++void BrefcomLaw::applyForce(const Vector3r force){
+ 
+-void BrefcomLaw::envelopeAndDamage(void){
+-
+-	/* Fn and Fs envelope is:
+-		Fn &lt; FnMax_curr
+-		Fs &lt; cohesion_curr - Fn*tan(frictionAngle);
+-
+-		If any of these conditions is violated, decrement forces keeping their ratio and incement damage.
+-	*/
+-	Real fs=Fs.Length() /* sign irrelevant */;
+-	if(Fn &gt; Mathr::EPSILON &amp;&amp; Fn &gt; BC-&gt;FnMax_curr){
+-		/* return force on the softening branch */
+-		Real envRetFactor=max(1e-3 /*guard numerical stability*/,min(1. /*guard sane solution*/,
+-			(BC-&gt;FnMax_curr - (Fn - BC-&gt;FnMax_curr)/BC-&gt;zeta) / Fn ));
+-		//if(isnan(envRetFactor)){TRVAR3(fn,Fn,contGeom-&gt;normal); exit(0);}
+-		// Real d=(rbp1-&gt;se3.position - rbp2-&gt;se3.position).Length();
+-		//TRVAR6(BC-&gt;d0,BC-&gt;dPeak,BC-&gt;dPeak_curr,BC-&gt;dBreak,BC-&gt;d0_curr,d);
+-		//TRVAR5(Fn,BC-&gt;FnMax_curr,envRetFactor,BC-&gt;omegaPl,(BC-&gt;FnMax_curr - (Fn - BC-&gt;FnMax_curr)/BC-&gt;zeta) / Fn );
+-		// if((d&lt;BC-&gt;d0_curr &amp;&amp; Fn&lt;0) || (d&gt;BC-&gt;d0_curr &amp;&amp; Fn&gt;0)) exit(1);
+-		Fn*=envRetFactor;
+-		BC-&gt;omegaPl=1-Fn/BC-&gt;FnMax; // FnMax_curr will be updated from omegaPl at the next iteration
+-		if(BC-&gt;omegaPl&lt;0 || BC-&gt;omegaPl&gt;1){TRVAR5(Fn,BC-&gt;FnMax_curr,BC-&gt;zeta,envRetFactor,BC-&gt;omegaPl); exit(1);}
+-		// LOG_DEBUG(&quot;Increasing damage to &quot;&lt;&lt;BC-&gt;omegaPl);
+-		//if(Omega::instance().getCurrentIteration()%100 &amp;&amp; BC-&gt;omegaPl&gt;=1) { Real d=(rbp1-&gt;se3.position - rbp2-&gt;se3.position).Length(); TRVAR4(rbp1-&gt;se3.position,rbp2-&gt;se3.position,d,Fn);  }
+-		if(isnan(Fn)){ TRVAR3(Fn,envRetFactor,BC-&gt;omegaPl);	exit(0); }
+-	}
+-	//TRVAR2(fs,BC-&gt;cohesion_curr - fn*tan(BC-&gt;frictionAngle));
+-	if(fs &gt; BC-&gt;cohesion_curr - Fn*tan(BC-&gt;frictionAngle)){
+-		Real FsMax_curr=BC-&gt;cohesion_curr - Fn*tan(BC-&gt;frictionAngle);
+-		Fs.Normalize();
+-		Fs*=FsMax_curr;
+-		#if 0
+-			Real FsMax_undamaged=BC-&gt;cohesion - fn*tan(BC-&gt;frictionAngle);
+-			Fs*=(FsMax_curr/fs);
+-			BC-&gt;omegaPl=1-FsMax_curr/FsMax_undamaged;
+-			TRVAR5(fs,BC-&gt;cohesion_curr,FsMax_curr,FsMax_curr/fs,BC-&gt;omegaPl);
+-		#endif
+-		#if 0 // FIXME: not tested!!!
+-			/* decrease both forces, keep their proportion; tricky */
+-			Real fnEnvelope=BC-&gt;cohesion_curr/((fn/fs)+tan(BC-&gt;frictionAngle)); // normal force on the envelope, with the same Fn/Fs proportion
+-			dmgFactor=(fnEnvelope-(fn-fnEnvelope)/BC-&gt;zeta)/fn; // factor by which decrease Fn
+-			TRVAR2(fn,fs);
+-			TRVAR5(BC-&gt;cohesion_curr,BC-&gt;frictionAngle,dmgFactor,fnEnvelope,BC-&gt;omegaPl);
+-			Fn*=dmgFactor; fn*=dmgFactor;
+-			Fs*=dmgFactor;
+-			BC-&gt;omegaPl*=(1-fn/fnEnvelope); // increase damage
+-		#endif
+-	}
+-	BREFREC(BC-&gt;omegaPl);
+-	BREFREC(Fn);
+-	BREFREC(Fs.Length());
+-}
+-
+-void BrefcomLaw::applyForces(){
+-	BC-&gt;Fs=Fs; BC-&gt;Fn=Fn*contGeom-&gt;normal; // remember forces
+-	Vector3r force=BC-&gt;Fn+Fs;
+-
+ 	static_pointer_cast&lt;Force&gt;(rootBody-&gt;physicalActions-&gt;find(id1,ForceClassIndex))-&gt;force+=force;
+ 	static_pointer_cast&lt;Force&gt;(rootBody-&gt;physicalActions-&gt;find(id2,ForceClassIndex))-&gt;force-=force;
+ 	static_pointer_cast&lt;Momentum&gt;(rootBody-&gt;physicalActions-&gt;find(id1,MomentumClassIndex))-&gt;momentum+=(contGeom-&gt;contactPoint-rbp1-&gt;se3.position).Cross(force);
+ 	static_pointer_cast&lt;Momentum&gt;(rootBody-&gt;physicalActions-&gt;find(id2,MomentumClassIndex))-&gt;momentum-=(contGeom-&gt;contactPoint-rbp2-&gt;se3.position).Cross(force);
+ }
+ 
++Real BrefcomLaw::funcG(Real kappaD){
++#ifdef BREFCOM_FUNC_G
++	BREFCOM_FUNC_G
++#else
++	return 0;
++#endif
++}
++
++Real BrefcomLaw::funcH(Real kappaD){
++#ifdef BREFCOM_FUNC_H
++	BREFCOM_FUNC_H
++#else
++	return 1;
++#endif	
++}	
++
+ void BrefcomLaw::action(Body* body){
+ 	rootBody=YADE_CAST&lt;MetaBody*&gt;(body);
+ 	for(InteractionContainer::iterator I=rootBody-&gt;transientInteractions-&gt;begin(); I!=rootBody-&gt;transientInteractions-&gt;end(); ++I){
+@@ -216,25 +144,42 @@
+ 		BREFREC2(rbp2-&gt;se3.position[0],&quot;x2&quot;);
+ 		BREFREC2(rbp2-&gt;se3.position[1],&quot;y2&quot;);
+ 		BREFREC2(rbp2-&gt;se3.position[2],&quot;z2&quot;);
+-		BREFREC2(BC-&gt;omegaPl,&quot;&#969;&quot;);
++		//BREFREC2(BC-&gt;omega,&quot;&#969;&quot;);
+ 
+-		BC-&gt;deduceOtherParams(); // initialize non-fundamental params/variables
+-		//TRVAR5(BC-&gt;d0,BC-&gt;Kn,BC-&gt;Ks,BC-&gt;zeta,BC-&gt;FnMax);
+-		//TRVAR5(BC-&gt;omegaPl,BC-&gt;dBreak,BC-&gt;dPeak,BC-&gt;d0_curr,BC-&gt;dPeak_curr);
++		// shorthands
++		Vector3r&amp; epsT(BC-&gt;epsT); Real&amp; kappaD(BC-&gt;kappaD); const Real&amp; equilibriumDist(BC-&gt;equilibriumDist); const Real&amp; xiShear(BC-&gt;xiShear); const Real&amp; Kn(BC-&gt;Kn); const Real&amp; undamagedCohesion(BC-&gt;undamagedCohesion); const Real&amp; frictionAngle(BC-&gt;frictionAngle); const Real&amp; Kt(BC-&gt;Kt); const Real&amp; crossSection(BC-&gt;crossSection); Real&amp; omega(BC-&gt;omega);
+ 
+-		calculateNormalForce();
+-		//calculateShearForce();
+-		// rotationEffects();
++		/* rotate epsT to the new contact plane */
++			Real dt=Omega::instance().getTimeStep();
++			// rotation of the contact normal
++			epsT+=BC-&gt;epsT.Cross(BC-&gt;prevNormal.Cross(contGeom-&gt;normal));
++			// mutual rotation
++			Real angle=dt*.5*contGeom-&gt;normal.Dot(rbp1-&gt;angularVelocity+rbp2-&gt;angularVelocity); /* broken, assumes equal radii */
++			epsT+=epsT.Cross(angle*contGeom-&gt;normal);
+ 
+-		envelopeAndDamage();
+-	
+-		/* see above: we keep even broken links there */
+-		//if(BC-&gt;omegaPl&gt;=1) { (*I)-&gt;isReal=false; return; } // if total damage, cancel interaction; collider will delete it properly
++		/* calculate tangential strain increment */
++		Vector3r relVelocity=
++			rbp2-&gt;velocity+rbp2-&gt;angularVelocity.Cross(contGeom-&gt;contactPoint-rbp2-&gt;se3.position)
++			-rbp1-&gt;velocity+rbp1-&gt;angularVelocity.Cross(contGeom-&gt;contactPoint-rbp1-&gt;se3.position);
++		Vector3r tangentialDisplacement=dt*(relVelocity-contGeom-&gt;normal.Dot(relVelocity)*contGeom-&gt;normal);
++		Real dist=(rbp1-&gt;se3.position-rbp2-&gt;se3.position).Length(); 
++		epsT+=tangentialDisplacement/dist;
++		
++		/* normal strain */
++		Real epsN=(dist-equilibriumDist)/dist;
+ 
+-		applyForces();
+-		//if(abs(Fn.Length())&gt;50 &amp;&amp; (Fn.Length()/BC-&gt;prevFn&lt;.5 || Fn.Length()/BC-&gt;prevFn&gt;2)){TRVAR2(BC-&gt;prevFn,Fn.Length());}
+-		// BC-&gt;prevFn=Fn;
++		Real sigmaN; Vector3r sigmaT;
+ 
++		#ifdef BREFCOM_MATERIAL_MODEL
++			BREFCOM_MATERIAL_MODEL
++		#else
++			sigmaN=Kn*epsN;
++			sigmaT=Kt*epsT;
++		#endif
++
++		// TODO: store Fn and Fs inside BC (new attributes), for use with GlobalStiffnessCounter 
++		applyForce(crossSection*(contGeom-&gt;normal*sigmaN + sigmaT));
++
+ 		for(size_t i=0; i&lt;recValues.size(); i++) recStream&lt;&lt;recLabels[i]&lt;&lt;&quot;: &quot;&lt;&lt;recValues[i]&lt;&lt;&quot; &quot;;
+ 		recStream&lt;&lt;endl;
+ 	}
+@@ -255,22 +200,20 @@
+ 		glutSolidCube(1);
+ 	} */
+ 
+-	glColor3(BC-&gt;omegaPl,1-BC-&gt;omegaPl,0.0); /* damaged links red, undamaged green */
++	glColor3(BC-&gt;omega,1-BC-&gt;omega,0.0); /* damaged links red, undamaged green */
+ 
+ 	glBegin(GL_LINES);
+ 		glVertex3v(b1-&gt;physicalParameters-&gt;se3.position);
+ 		glVertex3v(b2-&gt;physicalParameters-&gt;se3.position);
+ 	glEnd();
+ 
+-
+ 	Vector3r mid=0.5*(b1-&gt;physicalParameters-&gt;se3.position+b2-&gt;physicalParameters-&gt;se3.position);
+ 	glTranslatev(mid);
+ 	glPushMatrix();
+ 		glRasterPos2i(0,0);
+-		ostringstream oss; oss&lt;&lt;setw(2)&lt;&lt; /* &quot;w=&quot;&lt;&lt; */ BC-&gt;omegaPl;
++		ostringstream oss; oss&lt;&lt;setw(3)&lt;&lt; /* &quot;w=&quot;&lt;&lt; */ (float)BC-&gt;omega;
+ 		//std::string str=std::string(&quot;omegaPl=&quot;)+boost::lexical_cast&lt;std::string&gt;((float)(BC-&gt;omegaPl));
+ 		for(unsigned int i=0;i&lt;oss.str().length();i++) glutBitmapCharacter(GLUT_BITMAP_HELVETICA_12,oss.str()[i]);
+ 	glPopMatrix();
+-
+ }
+ 
+
+Modified: trunk/extra/Brefcom.hpp
+===================================================================
+--- trunk/extra/Brefcom.hpp	2008-02-18 20:25:31 UTC (rev 1254)
++++ trunk/extra/Brefcom.hpp	2008-02-18 21:22:03 UTC (rev 1255)
+@@ -31,17 +31,17 @@
+ 		/* uniaxial traction resistance, uniaxial compression resistance, fracture energy, elastic/softening modulus ratio */
+ 		Real sigmaT, sigmaC, Gf, zeta;
+ 
+-		BrefcomMakeContact(){ alpha=2.5; beta=2.0; gamma=2.65; sigmaT=3e6, sigmaC=30e6; Gf=1e5; zeta=10; }
++		BrefcomMakeContact(){ alpha=3.7; beta=2.198; gamma=3.79; sigmaT=3e6; sigmaC=30e6; }
+ 		virtual void go(const shared_ptr&lt;PhysicalParameters&gt;&amp; pp1, const shared_ptr&lt;PhysicalParameters&gt;&amp; pp2, const shared_ptr&lt;Interaction&gt;&amp; interaction);
+ 		virtual void registerAttributes(){
+ 			InteractionPhysicsEngineUnit::registerAttributes();
+ 			REGISTER_ATTRIBUTE(alpha);
+ 			REGISTER_ATTRIBUTE(beta);
+ 			REGISTER_ATTRIBUTE(gamma);
+-			REGISTER_ATTRIBUTE(sigmaT);
++			/* REGISTER_ATTRIBUTE(sigmaT);
+ 			REGISTER_ATTRIBUTE(sigmaC);
+ 			REGISTER_ATTRIBUTE(Gf);
+-			REGISTER_ATTRIBUTE(zeta);
++			REGISTER_ATTRIBUTE(zeta); */
+ 		}
+ 
+ 		FUNCTOR2D(BodyMacroParameters,BodyMacroParameters);
+@@ -65,45 +65,40 @@
+ 	private:
+ 	public:
+ 		/*! Fundamental parameters (constants) */
+-		Real d0, Kn, Ks, zeta, frictionAngle, FnMax, cohesion;
+-		/*! Fundamental state variables */
+-		Real omegaPl;
+-		/* prevNormal is oriented A&#8594;B (as in SpheresContactGeometry); OTOH, Fs is as it applies to B */
+-		Vector3r prevNormal, Fs; // shear force is cummulative, this must be remembered
+-		Vector3r Fn; // normal force, as applied to A
+-		bool isStructural; // whether this is &quot;neighbour&quot; or just &quot;meeting&quot; contact
+-		/* calculated by deduceOtherParams (called at every iteration); first two are constants as well, other two depend on damage. */
+-		Real dPeak, dBreak, d0_curr, dPeak_curr, cohesion_curr, FnMax_curr;
+-		void deduceOtherParams(void){
+-			dBreak=d0+(FnMax/Kn)*(1+zeta);
+-			dPeak=d0+(FnMax/Kn);
+-			d0_curr=d0+omegaPl*(dBreak-d0); //FIXME!!!! this may be negative?!!!!
+-			dPeak_curr=dPeak+omegaPl*(dBreak-dPeak);
+-			FnMax_curr=FnMax*(1-omegaPl);
+-			cohesion_curr=cohesion*(1-omegaPl);
+-			// if(Omega::instance().getCurrentIteration()%100==0 &amp;&amp; omegaPl&gt;=1){ TRVAR4(d0,omegaPl,d0_curr,FnMax_curr); }
+-		} 
+-		/* debugging */
+-		Real prevFn;
++		Real Kn, Kt, frictionAngle, undamagedCohesion, equilibriumDist, crossSection, epsCracking, epsFracture, xiShear;
++		/*! Up to now maximum normal strain */
++		Real kappaD;
++		/* prevNormal is oriented A&#8594;B (as in SpheresContactGeometry); */
++		Vector3r prevNormal;
++		/* previous tangential (shear) strain */
++		Vector3r epsT;
++		/* if not cohesive, equivalent to damage being always 1 */
++		bool isCohesive; // FIXME: not yet implemented
+ 
+-		BrefcomContact(): InteractionPhysics(){ createIndex(); /* just in case someone forgets */ Fs=Vector3r::ZERO; Fn=Vector3r::ZERO; omegaPl=0; isStructural=false; }
++		/* auxiliary variable for visualization, always recalculated by BrefcomLaw */
++		Real omega;
+ 
++		BrefcomContact(): InteractionPhysics(),Kn(0), Kt(0), frictionAngle(0), undamagedCohesion(0), equilibriumDist(0), crossSection(0), xiShear(0) { createIndex(); epsT=Vector3r::ZERO; kappaD=0; isCohesive=false; }
++		BrefcomContact(Real _Kn, Real _Ks, Real _frictionAngle, Real _undamagedCohesion, Real _equilibriumDist, Real _crossSection, Real _epsCracking, Real _epsFracture, Real _xiShear=.3): InteractionPhysics(), Kn(_Kn), Kt(_Ks), frictionAngle(_frictionAngle), undamagedCohesion(_undamagedCohesion), equilibriumDist(_equilibriumDist), crossSection(_crossSection), epsCracking(_epsCracking), epsFracture(_epsFracture), xiShear(_xiShear) { epsT=Vector3r::ZERO; kappaD=0; isCohesive=false; }
++
++
+ 		void registerAttributes(){
+ 			InteractionPhysics::registerAttributes();
+-			REGISTER_ATTRIBUTE(d0);
+ 			REGISTER_ATTRIBUTE(Kn);
+-			REGISTER_ATTRIBUTE(Ks);
+-			REGISTER_ATTRIBUTE(zeta);
++			REGISTER_ATTRIBUTE(Kt);
+ 			REGISTER_ATTRIBUTE(frictionAngle);
+-			REGISTER_ATTRIBUTE(FnMax);
+-			REGISTER_ATTRIBUTE(omegaPl);
++			REGISTER_ATTRIBUTE(undamagedCohesion);
++			REGISTER_ATTRIBUTE(equilibriumDist);
++			REGISTER_ATTRIBUTE(crossSection);
++			REGISTER_ATTRIBUTE(epsCracking);
++			REGISTER_ATTRIBUTE(epsFracture);
++			REGISTER_ATTRIBUTE(xiShear);
++
++			REGISTER_ATTRIBUTE(kappaD);
+ 			REGISTER_ATTRIBUTE(prevNormal);
+-			REGISTER_ATTRIBUTE(Fs);
+-			REGISTER_ATTRIBUTE(isStructural);
+-			/*REGISTER_ATTRIBUTE(dPeak);
+-			REGISTER_ATTRIBUTE(dBreak);
+-			REGISTER_ATTRIBUTE(d0_curr);
+-			REGISTER_ATTRIBUTE(dPeak_curr);*/
++			REGISTER_ATTRIBUTE(epsT);
++
++			REGISTER_ATTRIBUTE(isCohesive);
+ 		};
+ 
+ 	REGISTER_CLASS_NAME(BrefcomContact);
+@@ -145,6 +140,9 @@
+ 		ofstream recStream;
+ 		vector&lt;Real&gt; recValues;
+ 		vector&lt;string&gt; recLabels;
++		void applyForce(const Vector3r);
++		Real funcH(Real);
++		Real funcG(Real);
+ 	public:
+ 		BrefcomLaw() {
+ 			/* cache indices for Force and Momentum */
+
+Modified: trunk/extra/SConscript
+===================================================================
+--- trunk/extra/SConscript	2008-02-18 20:25:31 UTC (rev 1254)
++++ trunk/extra/SConscript	2008-02-18 21:22:03 UTC (rev 1255)
+@@ -6,7 +6,23 @@
+ #		env.SharedLibrary('_pyade',['clump/pyade.cpp'],SHLIBPREFIX='',LIBS=env['LIBS']+['yade-base','ParticleParameters','RigidBodyParameters']),
+ #		env.File('clump/pyade.py')])
+ 
++#import os.path, os
++#brefcomMaterialModel=os.environ['HOME']+'/yade/brefcom-mm.hh'
++#if os.path.exists(brefcomMaterialModel):
++#	print &quot;Will include local file &quot;+brefcomMaterialModel
++#	brefcomInclude='-include '+brefcomMaterialModel
++#else:
++#	brefcomInclude=''
+ 
++
++import os.path, os
++brefcomMaterialModel='../brefcom-mm.hh'
++if os.path.exists('../'+brefcomMaterialModel):
++	print &quot;Will include local file &quot;+brefcomMaterialModel
++	brefcomInclude=['-include',brefcomMaterialModel]
++else:
++	brefcominclude=''
++
+ env.Install('$PREFIX/lib/yade$SUFFIX/extra',[
+ 	env.SharedLibrary('SphericalDEMSimulator',
+ 		['spherical-dem-simulator/PersistentAloneSAPCollider.cpp',
+@@ -48,7 +64,7 @@
+ 
+ 	env.SharedLibrary('UniaxialStrainControlledTest',['usct/UniaxialStrainControlledTest.cpp'],LIBS=env['LIBS']+['Shop','GlobalStiffnessTimeStepper','GlobalStiffnessCounter']),
+ 
+-	env.SharedLibrary('Brefcom',['Brefcom.cpp'],LIBS=env['LIBS']+['Shop','InteractingSphere2InteractingSphere4DistantSpheresContactGeometry']),
++	env.SharedLibrary('Brefcom',['Brefcom.cpp'],CXXFLAGS=env['CXXFLAGS']+brefcomInclude,LIBS=env['LIBS']+['Shop','InteractingSphere2InteractingSphere4DistantSpheresContactGeometry']),
+ 
+ 	env.SharedLibrary('BrefcomTestGen',['BrefcomTestGen.cpp'],LIBS=env['LIBS']+['Shop','UniaxialStrainControlledTest']),
+ 
+@@ -104,7 +120,6 @@
+ 			'SDECLinkGeometry',
+ 			'SDECLinkPhysics',
+ 			]),
+-
+ ])
+ 
+ 
+
+Modified: trunk/extra/clump/Shop.cpp
+===================================================================
+--- trunk/extra/clump/Shop.cpp	2008-02-18 20:25:31 UTC (rev 1254)
++++ trunk/extra/clump/Shop.cpp	2008-02-18 21:22:03 UTC (rev 1255)
+@@ -106,7 +106,7 @@
+ 	setDefault&lt;int&gt;(&quot;body_sdecGroupMask&quot;,55);
+ 	
+ 	setDefault(&quot;phys_density&quot;,2e3);
+-	setDefault(&quot;phys_young&quot;,30e7); // 30e10
++	setDefault(&quot;phys_young&quot;,30e10);
+ 	setDefault(&quot;phys_poisson&quot;,.3);
+ 	setDefault(&quot;phys_frictionAngle&quot;,0.5236); //30&#730;
+ 	setDefault(&quot;phys_se3_orientation&quot;,Quaternionr(Vector3r(0,0,1),0));
+
+Modified: trunk/extra/usct/UniaxialStrainControlledTest.cpp
+===================================================================
+--- trunk/extra/usct/UniaxialStrainControlledTest.cpp	2008-02-18 20:25:31 UTC (rev 1254)
++++ trunk/extra/usct/UniaxialStrainControlledTest.cpp	2008-02-18 21:22:03 UTC (rev 1255)
+@@ -268,7 +268,7 @@
+ 		applyActionDispatcher-&gt;add(new NewtonsForceLaw);
+ 		applyActionDispatcher-&gt;add(new NewtonsMomentumLaw);
+ 		rootBody-&gt;engines.push_back(applyActionDispatcher);
+-	
++
+ 	shared_ptr&lt;PhysicalParametersMetaEngine&gt; positionIntegrator(new PhysicalParametersMetaEngine);
+ 		positionIntegrator-&gt;add(new LeapFrogPositionIntegrator); //DISPATCHER_ADD2(ParticleParameters,LeapFrogPositionIntegrator);
+ 		rootBody-&gt;engines.push_back(positionIntegrator);
+@@ -287,7 +287,6 @@
+ 	globalStiffnessTimeStepper-&gt;defaultDt=1e-6;
+ 	rootBody-&gt;engines.push_back(globalStiffnessTimeStepper);
+ 
+-
+ 	rootBody-&gt;engines.push_back(globalStiffnessCounter);
+ }
+ 
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000219.html">[Yade-commits] r1254 - in trunk: core lib/multimethods	pkg/dem/Engine/DeusExMachina pkg/dem/Engine/StandAloneEngine
+</A></li>
+	<LI>Next message: <A HREF="000221.html">[Yade-commits] r1256 - trunk/extra
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#220">[ date ]</a>
+              <a href="thread.html#220">[ thread ]</a>
+              <a href="subject.html#220">[ subject ]</a>
+              <a href="author.html#220">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

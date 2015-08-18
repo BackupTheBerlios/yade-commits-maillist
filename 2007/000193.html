@@ -1,0 +1,1893 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1228 - in trunk: . core	pkg/common/Engine/StandAloneEngine pkg/dem	pkg/dem/Engine/DeusExMachina pkg/dem/Engine/EngineUnit	pkg/dem/Engine/StandAloneEngine pkg/dem/PreProcessor
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2007/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1228%20-%20in%20trunk%3A%20.%20core%0A%09pkg/common/Engine/StandAloneEngine%20pkg/dem%0A%09pkg/dem/Engine/DeusExMachina%20pkg/dem/Engine/EngineUnit%0A%09pkg/dem/Engine/StandAloneEngine%20pkg/dem/PreProcessor&In-Reply-To=%3C200707160750.l6G7oqNF002692%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000192.html">
+   <LINK REL="Next"  HREF="000194.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1228 - in trunk: . core	pkg/common/Engine/StandAloneEngine pkg/dem	pkg/dem/Engine/DeusExMachina pkg/dem/Engine/EngineUnit	pkg/dem/Engine/StandAloneEngine pkg/dem/PreProcessor</H1>
+    <B>chareyre at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1228%20-%20in%20trunk%3A%20.%20core%0A%09pkg/common/Engine/StandAloneEngine%20pkg/dem%0A%09pkg/dem/Engine/DeusExMachina%20pkg/dem/Engine/EngineUnit%0A%09pkg/dem/Engine/StandAloneEngine%20pkg/dem/PreProcessor&In-Reply-To=%3C200707160750.l6G7oqNF002692%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1228 - in trunk: . core	pkg/common/Engine/StandAloneEngine pkg/dem	pkg/dem/Engine/DeusExMachina pkg/dem/Engine/EngineUnit	pkg/dem/Engine/StandAloneEngine pkg/dem/PreProcessor">chareyre at mail.berlios.de
+       </A><BR>
+    <I>Mon Jul 16 09:50:52 CEST 2007</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000192.html">[Yade-commits] r1227 - in trunk/pkg/realtime-rigidbody: .	Engine/EngineUnit
+</A></li>
+        <LI>Next message: <A HREF="000194.html">[Yade-commits] r1229 - trunk/pkg/dem/Engine/DeusExMachina
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#193">[ date ]</a>
+              <a href="thread.html#193">[ thread ]</a>
+              <a href="subject.html#193">[ subject ]</a>
+              <a href="author.html#193">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: chareyre
+Date: 2007-07-16 09:50:51 +0200 (Mon, 16 Jul 2007)
+New Revision: 1228
+
+Added:
+   trunk/pkg/dem/Engine/DeusExMachina/MakeItFlat.cpp
+   trunk/pkg/dem/Engine/DeusExMachina/MakeItFlat.hpp
+   trunk/pkg/dem/PreProcessor/HydraulicTest.cpp
+   trunk/pkg/dem/PreProcessor/HydraulicTest.hpp
+   trunk/pkg/dem/PreProcessor/ModifiedTriaxialTest.cpp
+   trunk/pkg/dem/PreProcessor/ModifiedTriaxialTest.hpp
+Modified:
+   trunk/Yade.kdevelop
+   trunk/core/Body.hpp
+   trunk/pkg/common/Engine/StandAloneEngine/DistantPersistentSAPCollider.cpp
+   trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.cpp
+   trunk/pkg/dem/Engine/EngineUnit/CohesiveFrictionalRelationships.cpp
+   trunk/pkg/dem/Engine/EngineUnit/CohesiveFrictionalRelationships.hpp
+   trunk/pkg/dem/Engine/StandAloneEngine/CohesiveFrictionalContactLaw.cpp
+   trunk/pkg/dem/PreProcessor/CohesiveTriaxialTest.cpp
+   trunk/pkg/dem/SConscript
+Log:
+Some new classes related to the coupling with comsol (main author Andrea 
+Cortis).
+
+
+
+Modified: trunk/Yade.kdevelop
+===================================================================
+--- trunk/Yade.kdevelop	2007-07-12 22:48:34 UTC (rev 1227)
++++ trunk/Yade.kdevelop	2007-07-16 07:50:51 UTC (rev 1228)
+@@ -34,7 +34,7 @@
+     &lt;/build&gt;
+     &lt;make&gt;
+       &lt;abortonerror&gt;false&lt;/abortonerror&gt;
+-      &lt;numberofjobs&gt;1&lt;/numberofjobs&gt;
++      &lt;numberofjobs&gt;2&lt;/numberofjobs&gt;
+       &lt;prio&gt;0&lt;/prio&gt;
+       &lt;dontact&gt;false&lt;/dontact&gt;
+       &lt;makebin&gt;scons&lt;/makebin&gt;
+
+Modified: trunk/core/Body.hpp
+===================================================================
+--- trunk/core/Body.hpp	2007-07-12 22:48:34 UTC (rev 1227)
++++ trunk/core/Body.hpp	2007-07-16 07:50:51 UTC (rev 1228)
+@@ -31,7 +31,7 @@
+  */
+ class Body : public Serializable
+ {
+-	private	:
++	public	:
+ 		body_id_t id;
+ 		/*! group to which body belongs (maybe vector&lt;int&gt; , to allow multiple groups?)
+ 		 * we can use them to make group one yellow, and group two red, or to record data
+
+Modified: trunk/pkg/common/Engine/StandAloneEngine/DistantPersistentSAPCollider.cpp
+===================================================================
+--- trunk/pkg/common/Engine/StandAloneEngine/DistantPersistentSAPCollider.cpp	2007-07-12 22:48:34 UTC (rev 1227)
++++ trunk/pkg/common/Engine/StandAloneEngine/DistantPersistentSAPCollider.cpp	2007-07-16 07:50:51 UTC (rev 1228)
+@@ -89,7 +89,7 @@
+ 		// FIXME : remove this isNew flag and test if interactionPhysic ?
+ 		if (interaction-&gt;isReal) // if a interaction was only potential then no geometry was created for it and so this time it is still a new one
+ 			interaction-&gt;isNew = false;
+-		interaction-&gt;isReal = false;
++		//interaction-&gt;isReal = false;
+ 	}
+ 	
+ 	updateIds(bodies-&gt;size());
+
+Added: trunk/pkg/dem/Engine/DeusExMachina/MakeItFlat.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/MakeItFlat.cpp	2007-07-12 22:48:34 UTC (rev 1227)
++++ trunk/pkg/dem/Engine/DeusExMachina/MakeItFlat.cpp	2007-07-16 07:50:51 UTC (rev 1228)
+@@ -0,0 +1,59 @@
++/*************************************************************************
++*  Copyright (C) 2004 by Janek Kozicki                                   *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">cosurgi at berlios.de</A>                                                    *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#include &lt;yade/pkg-dem/MakeItFlat.hpp&gt;
++#include &lt;yade/pkg-common/ParticleParameters.hpp&gt;
++#include &lt;yade/pkg-common/Force.hpp&gt;
++#include &lt;yade/core/MetaBody.hpp&gt;
++
++MakeItFlat::MakeItFlat() : actionParameterForce(new Force)
++{
++}
++
++
++MakeItFlat::~MakeItFlat()
++{
++}
++
++
++void MakeItFlat::registerAttributes()
++{
++	// REGISTER_ATTRIBUTE(hydraulicForce);
++}
++
++
++void MakeItFlat::applyCondition(Body* body)
++{
++	MetaBody * ncb = YADE_CAST&lt;MetaBody*&gt;(body);
++	shared_ptr&lt;BodyContainer&gt;&amp; bodies = ncb-&gt;bodies;
++	
++	BodyContainer::iterator bi    = bodies-&gt;begin();
++	BodyContainer::iterator biEnd = bodies-&gt;end();
++	for( ; bi!=biEnd ; ++bi )
++	{
++		shared_ptr&lt;Body&gt; b = *bi;
++		/* skip bodies that are within a clump;
++		 * even if they are marked isDynamic==false, forces applied to them are passed to the clump, which is dynamic;
++		 * and since clump is a body with mass equal to the sum of masses of its components, it would have HydraulicForce applied twice.
++		 *
++		 * The choice is to skip (b-&gt;isClumpMember()) or (b-&gt;isClump()). We rather skip members,
++		 * since that will apply smaller number of forces and (theoretically) improve numerical stability ;-) */
++		if(b-&gt;isClumpMember()) continue;
++
++		if(b-&gt;geometricalModel-&gt;getClassName()==&quot;Sphere&quot;)
++		{
++		ParticleParameters* p = dynamic_cast&lt;ParticleParameters*&gt;(b-&gt;physicalParameters.get());
++		if (p)
++		{
++			p-&gt;se3.position[1]=0;
++			static_cast&lt;Force*&gt;( ncb-&gt;physicalActions-&gt;find( b-&gt;getId() , actionParameterForce-&gt;getClassIndex() ).get() )-&gt;force[1]=0;// 
++		}
++		}
++        }
++}
++
+
+Added: trunk/pkg/dem/Engine/DeusExMachina/MakeItFlat.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/MakeItFlat.hpp	2007-07-12 22:48:34 UTC (rev 1227)
++++ trunk/pkg/dem/Engine/DeusExMachina/MakeItFlat.hpp	2007-07-16 07:50:51 UTC (rev 1228)
+@@ -0,0 +1,36 @@
++/*************************************************************************
++*  Copyright (C) 2004 by Janek Kozicki                                   *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">cosurgi at berlios.de</A>                                                    *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#ifndef MakeItFlat_FUNCTOR_HPP
++#define MakeItFlat_FORCE_FUNCTOR_HPP 
++
++#include&lt;yade/core/DeusExMachina.hpp&gt;
++
++class Force;
++
++class MakeItFlat : public DeusExMachina 
++{
++	private	:
++		shared_ptr&lt;Force&gt; actionParameterForce;
++
++	public :
++		MakeItFlat();
++		virtual ~MakeItFlat();
++	
++		virtual void applyCondition(Body*);
++	
++	protected :
++		virtual void registerAttributes();
++	REGISTER_CLASS_NAME(MakeItFlat);
++	REGISTER_BASE_CLASS_NAME(DeusExMachina);
++};
++
++REGISTER_SERIALIZABLE(MakeItFlat,false);
++
++#endif // HydraulicForce_FORCE_FUNCTOR_HPP 
++
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.cpp	2007-07-12 22:48:34 UTC (rev 1227)
++++ trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.cpp	2007-07-16 07:50:51 UTC (rev 1228)
+@@ -107,6 +107,17 @@
+ 		wall_top_activated=false;
+ 		autoCompressionActivation = false;
+ 	}
++	
++	if(!autoCompressionActivation &amp;&amp; UnbalancedForce&lt;=StabilityCriterion &amp;&amp; Omega::instance().getCurrentIteration() &gt; 1000)
++	{
++		internalCompaction = false;
++		Phase1 = true;
++		string fileName = &quot;../data/&quot; + Phase1End + &quot;_&quot; + 
++		lexical_cast&lt;string&gt;(Omega::instance().getCurrentIteration()) + &quot;.xml&quot;;
++		cerr &lt;&lt; &quot;saving snapshot: &quot; &lt;&lt; fileName &lt;&lt; &quot; ...&quot;;
++		Omega::instance().saveSimulation(fileName);
++		Omega::instance().stopSimulationLoop();
++	}
+ 		
+ }
+ 
+
+Modified: trunk/pkg/dem/Engine/EngineUnit/CohesiveFrictionalRelationships.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/EngineUnit/CohesiveFrictionalRelationships.cpp	2007-07-12 22:48:34 UTC (rev 1227)
++++ trunk/pkg/dem/Engine/EngineUnit/CohesiveFrictionalRelationships.cpp	2007-07-16 07:50:51 UTC (rev 1228)
+@@ -22,6 +22,7 @@
+ 		shearCohesion = 10000000;
+ 		setCohesionNow = false;
+ 		setCohesionOnNewContacts = false;
++		cohesionDefinitionIteration = -1;
+ }
+ 
+ 
+@@ -40,8 +41,15 @@
+ {
+ 	BodyMacroParameters* sdec1 = static_cast&lt;BodyMacroParameters*&gt;(b1.get());
+ 	BodyMacroParameters* sdec2 = static_cast&lt;BodyMacroParameters*&gt;(b2.get());
+-	SpheresContactGeometry* interactionGeometry = dynamic_cast&lt;SpheresContactGeometry*&gt;(interaction-&gt;interactionGeometry.get());
++	SpheresContactGeometry* interactionGeometry = dynamic_cast&lt;SpheresContactGeometry*&gt;(interaction-&gt;interactionGeometry.get());	
+ 	
++	//Create cohesive interractions only once
++	if (setCohesionNow &amp;&amp; cohesionDefinitionIteration==-1) {
++		cohesionDefinitionIteration=Omega::instance().getCurrentIteration();}
++	if (setCohesionNow &amp;&amp; cohesionDefinitionIteration!=-1 &amp;&amp; cohesionDefinitionIteration!=Omega::instance().getCurrentIteration()) {
++		cohesionDefinitionIteration = -1;
++		setCohesionNow = 0;}
++		
+ 	if(interactionGeometry) // so it is SpheresContactGeometry  - NON PERMANENT LINK
+ 	{
+ 		if(interaction-&gt;isNew)
+
+Modified: trunk/pkg/dem/Engine/EngineUnit/CohesiveFrictionalRelationships.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/EngineUnit/CohesiveFrictionalRelationships.hpp	2007-07-12 22:48:34 UTC (rev 1227)
++++ trunk/pkg/dem/Engine/EngineUnit/CohesiveFrictionalRelationships.hpp	2007-07-16 07:50:51 UTC (rev 1228)
+@@ -25,6 +25,8 @@
+ 
+ 		bool		setCohesionNow,
+ 				setCohesionOnNewContacts;
++				
++		int cohesionDefinitionIteration;
+ 
+ 	protected :
+ 		virtual void registerAttributes();
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/CohesiveFrictionalContactLaw.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/CohesiveFrictionalContactLaw.cpp	2007-07-12 22:48:34 UTC (rev 1227)
++++ trunk/pkg/dem/Engine/StandAloneEngine/CohesiveFrictionalContactLaw.cpp	2007-07-16 07:50:51 UTC (rev 1228)
+@@ -71,7 +71,7 @@
+                         if (un &lt; 0 &amp;&amp; (currentContactPhysics-&gt;normalForce.SquaredLength() &gt; pow(currentContactPhysics-&gt;normalAdhesion,2) || currentContactPhysics-&gt;normalAdhesion==0)) {
+                                 //currentContactPhysics-&gt;SetBreakingState();
+                                 //if (currentContactPhysics-&gt;cohesionBroken) {
+-                                cerr &lt;&lt; &quot;broken&quot; &lt;&lt; endl;
++                                //cerr &lt;&lt; &quot;broken&quot; &lt;&lt; endl;
+                                 contact-&gt;isReal= false;
+                                 currentContactPhysics-&gt;cohesionBroken = true;
+                                 currentContactPhysics-&gt;normalForce = Vector3r::ZERO;
+@@ -110,8 +110,11 @@
+                                 /// 							 ///
+ 
+                                 Vector3r x				= currentContactGeometry-&gt;contactPoint;
+-                                Vector3r c1x				= (x - de1-&gt;se3.position);
+-                                Vector3r c2x				= (x - de2-&gt;se3.position);
++                                //Vector3r c1x				= (x - de1-&gt;se3.position);
++                                //Vector3r c2x				= (x - de2-&gt;se3.position);
++                                ///The following definition of c1x and c2x is to avoid &quot;granular ratcheting&quot; (see F. ALONSO-MARROQUIN, R. GARCIA-ROJO, H.J. HERRMANN, Micro-mechanical investigation of granular ratcheting, in Cyclic Behaviour of Soils and Liquefaction Phenomena, ed. T. Triantafyllidis (Balklema, London, 2004), p. 3-10 - and a lot more papers from the same authors)
++           			 Vector3r c1x	= -currentContactGeometry-&gt;radius1*currentContactGeometry-&gt;normal;
++           			 Vector3r c2x	= currentContactGeometry-&gt;radius2*currentContactGeometry-&gt;normal;
+                                 Vector3r relativeVelocity		= (de2-&gt;velocity+de2-&gt;angularVelocity.Cross(c2x)) - (de1-&gt;velocity+de1-&gt;angularVelocity.Cross(c1x));
+                                 Vector3r shearVelocity			= relativeVelocity-currentContactGeometry-&gt;normal.Dot(relativeVelocity)*currentContactGeometry-&gt;normal;
+                                 Vector3r shearDisplacement		= shearVelocity*dt;
+
+Modified: trunk/pkg/dem/PreProcessor/CohesiveTriaxialTest.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/CohesiveTriaxialTest.cpp	2007-07-12 22:48:34 UTC (rev 1227)
++++ trunk/pkg/dem/PreProcessor/CohesiveTriaxialTest.cpp	2007-07-16 07:50:51 UTC (rev 1228)
+@@ -260,80 +260,6 @@
+ 
+ 	shared_ptr&lt;Body&gt; body;
+ 	
+-	vector&lt;BasicSphere&gt; sphere_list;
+-	message=GenerateCloud(sphere_list, lowerCorner, upperCorner, numberOfGrains, 0.3, 0.75);
+-	
+-	vector&lt;BasicSphere&gt;::iterator it = sphere_list.begin();
+-	vector&lt;BasicSphere&gt;::iterator it_end = sphere_list.end();
+-			
+-	for (;it!=it_end; ++it)
+-	{
+-		cerr &lt;&lt; &quot;sphere (&quot; &lt;&lt; it-&gt;first &lt;&lt; &quot; &quot; &lt;&lt; it-&gt;second &lt;&lt; endl;
+-		createSphere(body,it-&gt;first,it-&gt;second,true);
+-		rootBody-&gt;bodies-&gt;insert(body);
+-	}
+-	
+-// 	if(importFilename.size() != 0 &amp;&amp; filesystem::exists(importFilename) )
+-// 	{
+-// 		
+-// 		Vector3r layersDistance (Vector3r::ZERO); 
+-// 		for (int layer=1; layer &lt;= nlayers; ++layer)
+-// 		{			
+-// 			ifstream loadFile(importFilename.c_str());
+-// 			long int i=0;
+-// 			Real f,g,x,y,z,radius;
+-// 			while( ! loadFile.eof() )
+-// 			{
+-// 				++i;
+-// 				loadFile &gt;&gt; x;
+-// 				loadFile &gt;&gt; y;
+-// 				loadFile &gt;&gt; z;
+-// 				Vector3r position = (Vector3r(x,z,y) + layersDistance);
+-// 				loadFile &gt;&gt; radius;
+-// 			
+-// 				loadFile &gt;&gt; f;
+-// 				loadFile &gt;&gt; g;
+-// 				if( boxWalls ? f&gt;1 : false ) // skip loading of SDEC walls
+-// 					continue;
+-// 				if(f==8)
+-// 					continue;
+-// 	
+-// 		//		if( i % 100 == 0 ) // FIXME - should display a progress BAR !!
+-// 		//			cout &lt;&lt; &quot;loaded: &quot; &lt;&lt; i &lt;&lt; endl;
+-// 				if(f==1)
+-// 				{
+-// 					lowerCorner[0] = min(position[0]-radius , lowerCorner[0]);
+-// 					lowerCorner[1] = min(position[1]-radius , lowerCorner[1]);
+-// 					lowerCorner[2] = min(position[2]-radius , lowerCorner[2]);
+-// 					upperCorner[0] = max(position[0]+radius , upperCorner[0]);
+-// 					upperCorner[1] = max(position[1]+radius , upperCorner[1]);
+-// 					upperCorner[2] = max(position[2]+radius , upperCorner[2]);
+-// 				}
+-// 				createSphere(body,position,radius,false,f==1);
+-// 				rootBody-&gt;bodies-&gt;insert(body);
+-// 				if(f == 2)
+-// 				{
+-// 					startId = std::min(body-&gt;getId() , startId);
+-// 					endId   = std::max(body-&gt;getId() , endId);
+-// 				}
+-// 					
+-// 			}
+-// 			layersDistance.y() = upperCorner.y();
+-// 		}
+-// 	}
+-
+-// create bigBall
+-	//Vector3r position = (upperCorner+lowerCorner)*0.5 + Vector3r(0,bigBallDropHeight,0);
+-	//createSphere(body,position,bigBallRadius,true,false);	
+-	//int bigId = 0;
+-// 	if(bigBall)
+-// 		rootBody-&gt;bodies-&gt;insert(body);
+-// 	bigId = body-&gt;getId();
+-	//forcerec-&gt;startId = startId;
+-	//forcerec-&gt;endId   = endId;
+-	//averagePositionRecorder-&gt;bigBallId = bigId;
+-	//velocityRecorder-&gt;bigBallId = bigId;
+-
+ 	if(boxWalls)
+ 	{
+ 	// bottom box
+@@ -439,6 +365,82 @@
+ 			 
+ 	}
+ 	
++	vector&lt;BasicSphere&gt; sphere_list;
++	message=GenerateCloud(sphere_list, lowerCorner, upperCorner, numberOfGrains, 0.3, 0.75);
++	
++	vector&lt;BasicSphere&gt;::iterator it = sphere_list.begin();
++	vector&lt;BasicSphere&gt;::iterator it_end = sphere_list.end();
++			
++	for (;it!=it_end; ++it)
++	{
++		cerr &lt;&lt; &quot;sphere (&quot; &lt;&lt; it-&gt;first &lt;&lt; &quot; &quot; &lt;&lt; it-&gt;second &lt;&lt; endl;
++		createSphere(body,it-&gt;first,it-&gt;second,true);
++		rootBody-&gt;bodies-&gt;insert(body);
++	}
++	
++// 	if(importFilename.size() != 0 &amp;&amp; filesystem::exists(importFilename) )
++// 	{
++// 		
++// 		Vector3r layersDistance (Vector3r::ZERO); 
++// 		for (int layer=1; layer &lt;= nlayers; ++layer)
++// 		{			
++// 			ifstream loadFile(importFilename.c_str());
++// 			long int i=0;
++// 			Real f,g,x,y,z,radius;
++// 			while( ! loadFile.eof() )
++// 			{
++// 				++i;
++// 				loadFile &gt;&gt; x;
++// 				loadFile &gt;&gt; y;
++// 				loadFile &gt;&gt; z;
++// 				Vector3r position = (Vector3r(x,z,y) + layersDistance);
++// 				loadFile &gt;&gt; radius;
++// 			
++// 				loadFile &gt;&gt; f;
++// 				loadFile &gt;&gt; g;
++// 				if( boxWalls ? f&gt;1 : false ) // skip loading of SDEC walls
++// 					continue;
++// 				if(f==8)
++// 					continue;
++// 	
++// 		//		if( i % 100 == 0 ) // FIXME - should display a progress BAR !!
++// 		//			cout &lt;&lt; &quot;loaded: &quot; &lt;&lt; i &lt;&lt; endl;
++// 				if(f==1)
++// 				{
++// 					lowerCorner[0] = min(position[0]-radius , lowerCorner[0]);
++// 					lowerCorner[1] = min(position[1]-radius , lowerCorner[1]);
++// 					lowerCorner[2] = min(position[2]-radius , lowerCorner[2]);
++// 					upperCorner[0] = max(position[0]+radius , upperCorner[0]);
++// 					upperCorner[1] = max(position[1]+radius , upperCorner[1]);
++// 					upperCorner[2] = max(position[2]+radius , upperCorner[2]);
++// 				}
++// 				createSphere(body,position,radius,false,f==1);
++// 				rootBody-&gt;bodies-&gt;insert(body);
++// 				if(f == 2)
++// 				{
++// 					startId = std::min(body-&gt;getId() , startId);
++// 					endId   = std::max(body-&gt;getId() , endId);
++// 				}
++// 					
++// 			}
++// 			layersDistance.y() = upperCorner.y();
++// 		}
++// 	}
++
++// create bigBall
++	//Vector3r position = (upperCorner+lowerCorner)*0.5 + Vector3r(0,bigBallDropHeight,0);
++	//createSphere(body,position,bigBallRadius,true,false);	
++	//int bigId = 0;
++// 	if(bigBall)
++// 		rootBody-&gt;bodies-&gt;insert(body);
++// 	bigId = body-&gt;getId();
++	//forcerec-&gt;startId = startId;
++	//forcerec-&gt;endId   = endId;
++	//averagePositionRecorder-&gt;bigBallId = bigId;
++	//velocityRecorder-&gt;bigBallId = bigId;
++
++	
++	
+ 	return true;
+ //  	return &quot;Generated a sample inside box of dimensions: (&quot; 
+ //  		+ lexical_cast&lt;string&gt;(lowerCorner[0]) + &quot;,&quot; 
+@@ -622,6 +624,7 @@
+ 	globalStiffnessTimeStepper-&gt;sdecGroupMask = 2;
+ 	globalStiffnessTimeStepper-&gt;timeStepUpdateInterval = timeStepUpdateInterval;
+ 	globalStiffnessTimeStepper-&gt;defaultDt = defaultDt;
++	globalStiffnessTimeStepper-&gt;timestepSafetyCoefficient = 0.2;
+ 	
+ 	shared_ptr&lt;HydraulicForceEngine&gt; hydraulicForceEngine (new HydraulicForceEngine);
+ 	
+
+Added: trunk/pkg/dem/PreProcessor/HydraulicTest.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/HydraulicTest.cpp	2007-07-12 22:48:34 UTC (rev 1227)
++++ trunk/pkg/dem/PreProcessor/HydraulicTest.cpp	2007-07-16 07:50:51 UTC (rev 1228)
+@@ -0,0 +1,310 @@
++/*************************************************************************
++*  Copyright (C) 2007 by Janek Kozicki                                   *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">cosurgi at berlios.de</A>                                                    *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++///
++// FIXME : add CohesiveContactLaw engine to make it work
++///
++
++#include &quot;HydraulicTest.hpp&quot;
++
++#include&lt;yade/pkg-dem/CohesiveFrictionalContactLaw.hpp&gt;
++#include&lt;yade/pkg-dem/CohesiveFrictionalRelationships.hpp&gt;
++#include&lt;yade/pkg-dem/BodyMacroParameters.hpp&gt;
++#include&lt;yade/pkg-dem/SDECLinkGeometry.hpp&gt;
++#include&lt;yade/pkg-dem/SDECLinkPhysics.hpp&gt;
++#include&lt;yade/pkg-dem/ElasticCriterionTimeStepper.hpp&gt;
++#include&lt;yade/pkg-dem/PositionOrientationRecorder.hpp&gt;
++
++#include&lt;yade/core/yadeExceptions.hpp&gt;
++#include&lt;yade/pkg-common/Box.hpp&gt;
++#include&lt;yade/pkg-common/AABB.hpp&gt;
++#include&lt;yade/pkg-common/Sphere.hpp&gt;
++#include&lt;yade/core/MetaBody.hpp&gt;
++#include&lt;yade/pkg-common/SAPCollider.hpp&gt;
++#include&lt;yade/pkg-common/DistantPersistentSAPCollider.hpp&gt;
++#include&lt;yade/lib-serialization/IOFormatManager.hpp&gt;
++#include&lt;yade/core/Interaction.hpp&gt;
++#include&lt;yade/pkg-common/BoundingVolumeMetaEngine.hpp&gt;
++#include&lt;yade/pkg-common/MetaInteractingGeometry2AABB.hpp&gt;
++#include&lt;yade/pkg-common/MetaInteractingGeometry.hpp&gt;
++
++#include&lt;yade/pkg-common/PhysicalActionDamper.hpp&gt;
++#include&lt;yade/pkg-common/PhysicalActionApplier.hpp&gt;
++#include&lt;yade/pkg-common/CundallNonViscousForceDamping.hpp&gt;
++#include&lt;yade/pkg-common/CundallNonViscousMomentumDamping.hpp&gt;
++#include&lt;yade/pkg-common/GravityEngine.hpp&gt;
++
++#include&lt;yade/pkg-common/InteractionGeometryMetaEngine.hpp&gt;
++#include&lt;yade/pkg-common/InteractionPhysicsMetaEngine.hpp&gt;
++#include&lt;yade/core/Body.hpp&gt;
++#include&lt;yade/pkg-common/InteractingBox.hpp&gt;
++#include&lt;yade/pkg-common/InteractingSphere.hpp&gt;
++
++#include&lt;yade/pkg-common/PhysicalActionContainerReseter.hpp&gt;
++#include&lt;yade/pkg-common/PhysicalActionContainerInitializer.hpp&gt;
++#include&lt;yade/pkg-common/PhysicalParametersMetaEngine.hpp&gt;
++
++#include&lt;yade/pkg-common/BodyRedirectionVector.hpp&gt;
++#include&lt;yade/pkg-common/InteractionVecSet.hpp&gt;
++#include&lt;yade/pkg-common/PhysicalActionVectorVector.hpp&gt;
++
++#include&lt;yade/pkg-common/TranslationEngine.hpp&gt;
++
++#include &lt;boost/filesystem/operations.hpp&gt;
++#include &lt;boost/filesystem/convenience.hpp&gt;
++
++
++HydraulicTest::HydraulicTest () : FileGenerator()
++{
++	yadeFileWithSpheres	=&quot;../data/compression1.xml&quot;;
++	file 			=&quot;../data/spheres_position.dat&quot;;
++	radius 			=0.7;
++}
++
++
++HydraulicTest::~HydraulicTest ()
++{
++
++}
++
++
++void HydraulicTest::postProcessAttributes(bool)
++{
++}
++
++
++void HydraulicTest::registerAttributes()
++{
++	FileGenerator::registerAttributes();
++	
++	REGISTER_ATTRIBUTE(yadeFileWithSpheres);
++	REGISTER_ATTRIBUTE(file);
++	REGISTER_ATTRIBUTE(radius);
++	//REGISTER_ATTRIBUTE(outputFileName);
++	//REGISTER_ATTRIBUTE(serializationDynlib);
++}
++
++
++bool HydraulicTest::generate()
++{
++	rootBody = shared_ptr&lt;MetaBody&gt;(new MetaBody);
++	positionRootBody(rootBody);
++
++////////////////////////////////////
++	
++	rootBody-&gt;persistentInteractions	= shared_ptr&lt;InteractionContainer&gt;(new InteractionVecSet);
++	rootBody-&gt;transientInteractions		= shared_ptr&lt;InteractionContainer&gt;(new InteractionVecSet);
++	rootBody-&gt;physicalActions		= shared_ptr&lt;PhysicalActionContainer&gt;(new PhysicalActionVectorVector);
++	rootBody-&gt;bodies 			= shared_ptr&lt;BodyContainer&gt;(new BodyRedirectionVector);
++
++/////////////////////////////////////
++/////////////////////////////////////
++	// load file
++	
++	shared_ptr&lt;MetaBody&gt; metaBodyWithSpheres;
++
++	if ( 	   yadeFileWithSpheres.size()!=0 
++		&amp;&amp; filesystem::exists(yadeFileWithSpheres) 
++		&amp;&amp; (filesystem::extension(yadeFileWithSpheres)==&quot;.xml&quot; || filesystem::extension(yadeFileWithSpheres)==&quot;.yade&quot;))
++	{
++		try
++		{
++			if(filesystem::extension(yadeFileWithSpheres)==&quot;.xml&quot;)
++				IOFormatManager::loadFromFile(&quot;XMLFormatManager&quot;,yadeFileWithSpheres,&quot;rootBody&quot;,metaBodyWithSpheres);
++
++			else if(filesystem::extension(yadeFileWithSpheres)==&quot;.yade&quot; )
++				IOFormatManager::loadFromFile(&quot;BINFormatManager&quot;,yadeFileWithSpheres,&quot;rootBody&quot;,metaBodyWithSpheres);
++
++			if( metaBodyWithSpheres-&gt;getClassName() != &quot;MetaBody&quot;){ message=&quot;Error: cannot load the file that should contain spheres&quot;; return false; }
++		} 
++		catch(SerializableError&amp; e)
++		{
++			message=&quot;Error: cannot load the file that should contain spheres&quot;; return false;
++		}
++		catch(yadeError&amp; e)
++		{
++			message=&quot;Error: cannot load the file that should contain spheres&quot;; return false;
++		}
++	}
++	else
++		return &quot;Error: cannot load the file that should contain spheres&quot;;
++/////////////////////////////////////
++	Vector3r min(10000,10000,10000),max(-10000,-10000,-10000);
++	{// calc min/max
++		BodyContainer::iterator bi    = metaBodyWithSpheres-&gt;bodies-&gt;begin();
++		BodyContainer::iterator biEnd = metaBodyWithSpheres-&gt;bodies-&gt;end();
++		for( ; bi!=biEnd ; ++bi )
++		{
++			if((*bi)-&gt;geometricalModel-&gt;getClassName() == &quot;Sphere&quot; )
++			{
++				shared_ptr&lt;Body&gt; b = *bi;
++				min = componentMinVector(min,b-&gt;physicalParameters-&gt;se3.position - static_cast&lt;Sphere*&gt;(b-&gt;geometricalModel.get())-&gt;radius * Vector3r(1,1,1));
++				max = componentMaxVector(max,b-&gt;physicalParameters-&gt;se3.position + static_cast&lt;Sphere*&gt;(b-&gt;geometricalModel.get())-&gt;radius * Vector3r(1,1,1));
++
++				BodyMacroParameters* bm = dynamic_cast&lt;BodyMacroParameters*&gt;(b-&gt;physicalParameters.get());
++				if(!bm) {message=&quot;Error: spheres don't use BodyMacroParameters for physical parameters&quot;; return false;}
++
++			}
++		}
++	}
++
++std::cerr &lt;&lt; min &lt;&lt; &quot; &quot; &lt;&lt; max &lt;&lt; std::endl;
++
++	unsigned int nbSpheres=0;
++	unsigned int idSphere=6;
++	{// insert Spheres
++		BodyContainer::iterator bi    = metaBodyWithSpheres-&gt;bodies-&gt;begin();
++		BodyContainer::iterator biEnd = metaBodyWithSpheres-&gt;bodies-&gt;end();
++		for( ; bi!=biEnd ; ++bi )
++		{
++			if(   (*bi)-&gt;geometricalModel-&gt;getClassName() == &quot;Sphere&quot;)
++			{
++				if(  inside((*bi)-&gt;physicalParameters-&gt;se3.position)  )
++				{
++				cerr &lt;&lt; &quot;insert sphere&quot; &lt;&lt; endl;
++					shared_ptr&lt;Body&gt; b = *bi;
++					//b-&gt;id = idSphere++;
++			        	rootBody-&gt;bodies-&gt;insert(b, idSphere++);
++					nbSpheres++;
++				}
++			}
++			if ( (*bi)-&gt;geometricalModel-&gt;getClassName() == &quot;Box&quot; )
++			{
++				//if(  inside((*bi)-&gt;physicalParameters-&gt;se3.position)  )
++				{
++				cerr &lt;&lt; &quot;insert box&quot; &lt;&lt; endl;
++					shared_ptr&lt;Body&gt; b = *bi;
++			        	rootBody-&gt;bodies-&gt;insert(b);
++					
++				}
++			}
++		}
++	}
++	
++// saving file
++	if(file.size() != 0 )
++	{
++		ofstream saveFile(file.c_str());
++		//saveFile &lt;&lt; nbSpheres &lt;&lt; std::endl;
++
++		//BodyContainer::iterator bi    = metaBodyWithSpheres-&gt;bodies-&gt;begin();
++		//BodyContainer::iterator biEnd = metaBodyWithSpheres-&gt;bodies-&gt;end();
++		BodyContainer::iterator bi    = rootBody-&gt;bodies-&gt;begin();
++		BodyContainer::iterator biEnd = rootBody-&gt;bodies-&gt;end();
++		for( ; bi!=biEnd ; ++bi )
++		{
++			if(   (*bi)-&gt;geometricalModel-&gt;getClassName() == &quot;Sphere&quot; )
++			{
++				saveFile &lt;&lt; (*bi)-&gt;getId() &lt;&lt; &quot; &quot; &lt;&lt; YADE_PTR_CAST&lt;Sphere&gt;((*bi)-&gt;geometricalModel)-&gt;radius  &lt;&lt; &quot; &quot; &lt;&lt; (*bi)-&gt;physicalParameters-&gt;se3.position &lt;&lt; std::endl;
++
++			}
++		}
++		saveFile.close();
++	}
++
++/////////////////////////////////////
++
++// 	rootBody-&gt;persistentInteractions-&gt;clear();
++// 	
++// 	shared_ptr&lt;Body&gt; bodyA;
++// 
++// 	BodyContainer::iterator bi    = rootBody-&gt;bodies-&gt;begin();
++// 	BodyContainer::iterator biEnd = rootBody-&gt;bodies-&gt;end();
++// 	BodyContainer::iterator bi2;
++// 
++// 	++bi; // skips piston
++// 	++bi; // skips supportBox1
++// 	++bi; // skips supportBox2
++// 		
++		
++// 	for( ; bi!=biEnd ; ++bi )
++// 	{
++// 		bodyA =*bi;
++// 		bi2=bi;
++// 		++bi2;
++// 		for( ; bi2!=biEnd ; ++bi2 )
++// 		{
++// 			if(   (*bi)-&gt;geometricalModel-&gt;getClassName() == &quot;Sphere&quot;
++// 			   &amp;&amp; (*bi2)-&gt;geometricalModel-&gt;getClassName() == &quot;Sphere&quot;)
++// 			{ 
++// 			shared_ptr&lt;Body&gt; bodyB = *bi2;
++// 
++// 			shared_ptr&lt;BodyMacroParameters&gt; a = YADE_PTR_CAST&lt;BodyMacroParameters&gt;(bodyA-&gt;physicalParameters);
++// 			shared_ptr&lt;BodyMacroParameters&gt; b = YADE_PTR_CAST&lt;BodyMacroParameters&gt;(bodyB-&gt;physicalParameters);
++// 			shared_ptr&lt;InteractingSphere&gt;	as = YADE_PTR_CAST&lt;InteractingSphere&gt;(bodyA-&gt;interactingGeometry);
++// 			shared_ptr&lt;InteractingSphere&gt;	bs = YADE_PTR_CAST&lt;InteractingSphere&gt;(bodyB-&gt;interactingGeometry);
++// 
++// /*			if ((a-&gt;se3.position - b-&gt;se3.position).Length() &lt; (as-&gt;radius + bs-&gt;radius))  
++// 			{
++// 				shared_ptr&lt;Interaction&gt; 		link(new Interaction( bodyA-&gt;getId() , bodyB-&gt;getId() ));
++// 				shared_ptr&lt;SDECLinkGeometry&gt;		geometry(new SDECLinkGeometry);
++// 				shared_ptr&lt;SDECLinkPhysics&gt;	physics(new SDECLinkPhysics);
++// 				
++// 				geometry-&gt;radius1			= as-&gt;radius - fabs(as-&gt;radius - bs-&gt;radius)*0.5;
++// 				geometry-&gt;radius2			= bs-&gt;radius - fabs(as-&gt;radius - bs-&gt;radius)*0.5;
++// 
++// 				physics-&gt;initialKn			= linkKn; // FIXME - BIG problem here.
++// 				physics-&gt;initialKs			= linkKs;
++// 				physics-&gt;heta				= 1;
++// 				physics-&gt;initialEquilibriumDistance	= (a-&gt;se3.position - b-&gt;se3.position).Length();
++// 				physics-&gt;knMax				= linkMaxNormalForce;
++// 				physics-&gt;ksMax				= linkMaxShearForce;
++// 
++// 				link-&gt;interactionGeometry 		= geometry;
++// 				link-&gt;interactionPhysics 		= physics;
++// 				link-&gt;isReal 				= true;
++// 				link-&gt;isNew 				= false;
++// 				
++// 				rootBody-&gt;persistentInteractions-&gt;insert(link);
++// 			}*/
++// 			}
++// 		}
++// 	}
++	
++/*	message=&quot;total number of permament links created: &quot; 
++		+ lexical_cast&lt;string&gt;(rootBody-&gt;persistentInteractions-&gt;size()) 
++		+ &quot;\nWARNING: link bonds are nearly working, but the formulas are waiting for total rewrite!&quot;;
++*/
++	rootBody-&gt;engines= metaBodyWithSpheres-&gt;engines; //Andrea put his dirty hands here!!
++	rootBody-&gt;initializers= metaBodyWithSpheres-&gt;initializers; //Bruno as well
++	return true;
++}
++
++void HydraulicTest::positionRootBody(shared_ptr&lt;MetaBody&gt;&amp; rootBody)
++{
++	rootBody-&gt;isDynamic		= false;
++	
++	Quaternionr q;
++	q.FromAxisAngle( Vector3r(0,0,1),0);
++	
++	shared_ptr&lt;ParticleParameters&gt; physics(new ParticleParameters); // FIXME : fix indexable class PhysicalParameters
++	physics-&gt;se3			= Se3r(Vector3r(0,0,0),q);
++	physics-&gt;mass			= 0;
++	physics-&gt;velocity		= Vector3r::ZERO;
++	physics-&gt;acceleration		= Vector3r::ZERO;
++	
++	shared_ptr&lt;MetaInteractingGeometry&gt; set(new MetaInteractingGeometry());
++	set-&gt;diffuseColor		= Vector3r(0,0,1);
++
++	shared_ptr&lt;AABB&gt; aabb(new AABB);
++	aabb-&gt;diffuseColor		= Vector3r(0,0,1);
++	
++	rootBody-&gt;interactingGeometry	= YADE_PTR_CAST&lt;InteractingGeometry&gt;(set);	
++	rootBody-&gt;boundingVolume	= YADE_PTR_CAST&lt;BoundingVolume&gt;(aabb);
++	rootBody-&gt;physicalParameters 	= physics;
++	
++}
++
++bool HydraulicTest::inside(Vector3r pos)
++{
++	if(std::sqrt(pow(pos[0]-0.015, 2) + pow(pos[2], 2)) &lt; radius)
++		return false;
++
++	return true;
++};
++
+
+Added: trunk/pkg/dem/PreProcessor/HydraulicTest.hpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/HydraulicTest.hpp	2007-07-12 22:48:34 UTC (rev 1227)
++++ trunk/pkg/dem/PreProcessor/HydraulicTest.hpp	2007-07-16 07:50:51 UTC (rev 1228)
+@@ -0,0 +1,59 @@
++/*************************************************************************
++*  Copyright (C) 2007 by Janek Kozicki                                   *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">cosurgi at berlios.de</A>                                                    *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#ifndef HydraulicTest_HPP
++#define HydraulicTest_HPP
++
++#include&lt;yade/core/FileGenerator.hpp&gt;
++#include &lt;Wm3Vector3.h&gt;
++#include&lt;yade/lib-base/yadeWm3.hpp&gt;
++#include&lt;yade/core/Body.hpp&gt;
++
++class HydraulicTest : public FileGenerator
++{
++	private	:
++		std::string	 yadeFileWithSpheres;
++		Vector3r	 gravity;
++		Real 		 radius;
++		Real		 supportDepth
++				,pistonWidth
++				,pistonVelocity
++				,dampingForce
++				,dampingMomentum
++				,linkKn
++				,linkKs
++				,linkMaxNormalForce
++				,linkMaxShearForce
++				,sphereYoungModulus
++				,spherePoissonRatio
++				,sphereFrictionDeg;
++
++		int		 timeStepUpdateInterval;
++
++		bool		 momentRotationLaw;
++	
++		void positionRootBody(shared_ptr&lt;MetaBody&gt;&amp; rootBody);
++		bool inside(Vector3r pos);
++	
++	public :
++		HydraulicTest ();
++		~HydraulicTest ();
++		bool generate();
++		string file;
++	
++	protected :
++		virtual void postProcessAttributes(bool deserializing);
++		void registerAttributes();
++	REGISTER_CLASS_NAME(HydraulicTest);
++	REGISTER_BASE_CLASS_NAME(FileGenerator);
++};
++
++REGISTER_SERIALIZABLE(HydraulicTest,false);
++
++#endif // LINKEDSPHERES_HPP
++
+
+Added: trunk/pkg/dem/PreProcessor/ModifiedTriaxialTest.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/ModifiedTriaxialTest.cpp	2007-07-12 22:48:34 UTC (rev 1227)
++++ trunk/pkg/dem/PreProcessor/ModifiedTriaxialTest.cpp	2007-07-16 07:50:51 UTC (rev 1228)
+@@ -0,0 +1,793 @@
++/*************************************************************************
++*  Copyright (C) 2004 by Olivier Galizzi                                 *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">olivier.galizzi at imag.fr</A>                                               *
++*  Copyright (C) 2004 by Janek Kozicki                                   *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">cosurgi at berlios.de</A>                                                    *
++*  Copyright (C) 2007 by Bruno Chareyre		                         *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">bruno.chareyre at hmg.inpg.fr</A>                                            *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#include &quot;ModifiedTriaxialTest.hpp&quot;
++
++#include&lt;yade/pkg-dem/ElasticContactLaw.hpp&gt;
++#include&lt;yade/pkg-dem/SimpleElasticRelationships.hpp&gt;
++#include&lt;yade/pkg-dem/BodyMacroParameters.hpp&gt;
++#include&lt;yade/pkg-dem/SDECLinkGeometry.hpp&gt;
++#include&lt;yade/pkg-dem/SDECLinkPhysics.hpp&gt;
++#include&lt;yade/pkg-dem/GlobalStiffnessCounter.hpp&gt;
++#include&lt;yade/pkg-dem/GlobalStiffnessTimeStepper.hpp&gt;
++#include&lt;yade/pkg-dem/PositionOrientationRecorder.hpp&gt;
++
++#include&lt;yade/pkg-dem/AveragePositionRecorder.hpp&gt;
++#include&lt;yade/pkg-dem/ForceRecorder.hpp&gt;
++#include&lt;yade/pkg-dem/VelocityRecorder.hpp&gt;
++#include&lt;yade/pkg-dem/TriaxialStressController.hpp&gt;
++#include&lt;yade/pkg-dem/TriaxialCompressionEngine.hpp&gt;
++#include &lt;yade/pkg-dem/WallStressRecorder.hpp&gt;
++
++#include&lt;yade/pkg-common/Box.hpp&gt;
++#include&lt;yade/pkg-common/AABB.hpp&gt;
++#include&lt;yade/pkg-common/Sphere.hpp&gt;
++#include&lt;yade/core/MetaBody.hpp&gt;
++#include&lt;yade/pkg-common/SAPCollider.hpp&gt;
++#include&lt;yade/pkg-common/PersistentSAPCollider.hpp&gt;
++#include&lt;yade/lib-serialization/IOFormatManager.hpp&gt;
++#include&lt;yade/core/Interaction.hpp&gt;
++#include&lt;yade/pkg-common/BoundingVolumeMetaEngine.hpp&gt;
++#include&lt;yade/pkg-common/MetaInteractingGeometry2AABB.hpp&gt;
++#include&lt;yade/pkg-common/MetaInteractingGeometry.hpp&gt;
++
++#include&lt;yade/pkg-common/GravityEngine.hpp&gt;
++#include&lt;yade/pkg-common/HydraulicForceEngine.hpp&gt;
++#include&lt;yade/pkg-common/MakeItFlat.hpp&gt;
++#include&lt;yade/pkg-common/PhysicalActionApplier.hpp&gt;
++#include&lt;yade/pkg-common/PhysicalActionDamper.hpp&gt;
++#include&lt;yade/pkg-common/CundallNonViscousForceDamping.hpp&gt;
++#include&lt;yade/pkg-common/CundallNonViscousMomentumDamping.hpp&gt;
++
++#include&lt;yade/pkg-common/InteractionGeometryMetaEngine.hpp&gt;
++#include&lt;yade/pkg-common/InteractionPhysicsMetaEngine.hpp&gt;
++#include&lt;yade/core/Body.hpp&gt;
++#include&lt;yade/pkg-common/InteractingBox.hpp&gt;
++#include&lt;yade/pkg-common/InteractingSphere.hpp&gt;
++
++#include&lt;yade/pkg-common/PhysicalActionContainerReseter.hpp&gt;
++#include&lt;yade/pkg-common/PhysicalActionContainerInitializer.hpp&gt;
++
++#include&lt;yade/pkg-common/PhysicalParametersMetaEngine.hpp&gt;
++
++#include&lt;yade/pkg-common/BodyRedirectionVector.hpp&gt;
++#include&lt;yade/pkg-common/InteractionVecSet.hpp&gt;
++#include&lt;yade/pkg-common/InteractionHashMap.hpp&gt;
++#include&lt;yade/pkg-common/PhysicalActionVectorVector.hpp&gt;
++
++#include &lt;boost/filesystem/convenience.hpp&gt;
++#include &lt;boost/lexical_cast.hpp&gt;
++#include &lt;boost/numeric/conversion/bounds.hpp&gt;
++#include &lt;boost/limits.hpp&gt;
++
++// random
++#include &lt;boost/random/linear_congruential.hpp&gt;
++#include &lt;boost/random/uniform_real.hpp&gt;
++#include &lt;boost/random/variate_generator.hpp&gt;
++#include &lt;boost/random/normal_distribution.hpp&gt;
++
++
++
++using namespace boost;
++using namespace std;
++
++
++typedef pair&lt;Vector3r, Real&gt; BasicSphere;
++//! make a list of spheres non-overlapping sphere
++string GenerateCloud(vector&lt;BasicSphere&gt;&amp; sphere_list, Vector3r lowerCorner, Vector3r upperCorner, long number, Real rad_std_dev, Real porosity);
++
++
++ModifiedTriaxialTest::ModifiedTriaxialTest () : FileGenerator()
++{
++	lowerCorner 		= Vector3r(-1,-0.1,-1);
++	upperCorner 		= Vector3r(1,0.1,1);
++	thickness 		= 0.001;
++	importFilename 		= &quot;../data/inp.dat&quot;;
++// 	outputFileName 		= &quot;../data/out.xml&quot;;
++	//nlayers = 1;
++	want_2d=true;
++	wall_top 		= true;
++	wall_bottom 		= true;
++	wall_1			= true;
++	wall_2			= true;
++	wall_3			= true;
++	wall_4			= true;
++	wall_top_wire 		= true;
++	wall_bottom_wire	= true;
++	wall_1_wire		= true;
++	wall_2_wire		= true;
++	wall_3_wire		= true;
++	wall_4_wire		= true;
++	spheresColor		= Vector3r(0.8,0.3,0.3);
++	spheresRandomColor	= false;
++	recordBottomForce	= true;
++	forceRecordFile		= &quot;../data/force&quot;;
++	recordAveragePositions	= true;
++	positionRecordFile	= &quot;../data/positions&quot;;
++	recordIntervalIter	= 20;
++	velocityRecordFile 	= &quot;../data/velocities&quot;;
++	saveAnimationSnapshots = false;
++	AnimationSnapshotsBaseName = &quot;../data/snapshots/snap&quot;;
++	WallStressRecordFile = &quot;../data/WallStresses&quot;;
++
++	rotationBlocked = false;
++	//	boxWalls 		= false;
++	boxWalls 		= true;
++	internalCompaction	=false;
++
++//	bigBall 		= true;
++	bigBall 		= false;
++	bigBallRadius		= 0.075;
++	bigBallPoissonRatio 	= 0.3;
++	bigBallYoungModulus 	= 10000000.0;
++	bigBallFrictDeg 	= 60;
++//	bigBallCohesion 	= 10000000000;
++//	bigBallTensionStr 	= 10000000000;
++	bigBallDensity		= 7800;
++	bigBallDropTimeSeconds	= 30;
++	bigBallDropHeight 	= 3.04776;
++	
++	dampingForce = 0.2;
++	dampingMomentum = 0.2;
++	defaultDt = 1;
++	
++	timeStepUpdateInterval = 50;
++	timeStepOutputInterval = 50;
++	wallStiffnessUpdateInterval = 10;
++	radiusControlInterval = 10;
++	numberOfGrains = 400;
++	strainRate = 0.1;
++	StabilityCriterion = 0.01;
++	autoCompressionActivation = false;
++	maxMultiplier = 1.01;
++	finalMaxMultiplier = 1.001;
++	
++	sphereYoungModulus  = 15000000.0;
++	spherePoissonRatio  = 0.5;
++	sphereFrictionDeg   = 18.0;
++	density			= 2600;
++	
++	boxYoungModulus   = 15000000.0;
++	boxPoissonRatio  = 0.2;
++	boxFrictionDeg   = 0.f;
++	gravity 	= Vector3r(0,-9.81,0);
++//        hydraulicForce 	= Vector3r(0.0,0,0);
++
++	
++	sigma_iso = 50000;
++	
++//	wall_top_id =0;
++// 	wall_bottom_id =0;
++// 	wall_left_id =0;
++// 	all_right_id =0;
++// 	wall_front_id =0;
++// 	wall_back_id =0;
++}
++
++
++ModifiedTriaxialTest::~ModifiedTriaxialTest ()
++{
++
++}
++
++
++void ModifiedTriaxialTest::registerAttributes()
++{
++	FileGenerator::registerAttributes();
++	REGISTER_ATTRIBUTE(want_2d);
++	REGISTER_ATTRIBUTE(lowerCorner);
++	REGISTER_ATTRIBUTE(upperCorner);
++	REGISTER_ATTRIBUTE(thickness);
++	REGISTER_ATTRIBUTE(importFilename);
++	//REGISTER_ATTRIBUTE(nlayers);
++	//REGISTER_ATTRIBUTE(boxWalls);
++	REGISTER_ATTRIBUTE(internalCompaction);
++	REGISTER_ATTRIBUTE(maxMultiplier);
++	REGISTER_ATTRIBUTE(finalMaxMultiplier);
++
++	REGISTER_ATTRIBUTE(sphereYoungModulus);
++	REGISTER_ATTRIBUTE(spherePoissonRatio);
++	REGISTER_ATTRIBUTE(sphereFrictionDeg);
++
++	REGISTER_ATTRIBUTE(boxYoungModulus);
++	REGISTER_ATTRIBUTE(boxPoissonRatio);
++	REGISTER_ATTRIBUTE(boxFrictionDeg);
++
++	REGISTER_ATTRIBUTE(density);
++	REGISTER_ATTRIBUTE(defaultDt);
++	REGISTER_ATTRIBUTE(dampingForce);
++	REGISTER_ATTRIBUTE(dampingMomentum);
++	REGISTER_ATTRIBUTE(rotationBlocked);
++	REGISTER_ATTRIBUTE(timeStepUpdateInterval);
++	REGISTER_ATTRIBUTE(timeStepOutputInterval);
++	REGISTER_ATTRIBUTE(wallStiffnessUpdateInterval);
++	REGISTER_ATTRIBUTE(radiusControlInterval);
++	REGISTER_ATTRIBUTE(numberOfGrains);
++	REGISTER_ATTRIBUTE(strainRate);
++	REGISTER_ATTRIBUTE(StabilityCriterion);
++	REGISTER_ATTRIBUTE(autoCompressionActivation);
++//	REGISTER_ATTRIBUTE(wall_top);
++//	REGISTER_ATTRIBUTE(wall_bottom);
++//	REGISTER_ATTRIBUTE(wall_1);
++//	REGISTER_ATTRIBUTE(wall_2);
++//	REGISTER_ATTRIBUTE(wall_3);
++//	REGISTER_ATTRIBUTE(wall_4);
++//	REGISTER_ATTRIBUTE(wall_top_wire);
++//	REGISTER_ATTRIBUTE(wall_bottom_wire);
++//	REGISTER_ATTRIBUTE(wall_1_wire);
++//	REGISTER_ATTRIBUTE(wall_2_wire);
++//	REGISTER_ATTRIBUTE(wall_3_wire);
++//	REGISTER_ATTRIBUTE(wall_4_wire);
++//	REGISTER_ATTRIBUTE(spheresColor);
++//	REGISTER_ATTRIBUTE(spheresRandomColor);
++	REGISTER_ATTRIBUTE(recordBottomForce);
++	REGISTER_ATTRIBUTE(forceRecordFile);
++//	REGISTER_ATTRIBUTE(recordAveragePositions);
++	REGISTER_ATTRIBUTE(positionRecordFile);
++	REGISTER_ATTRIBUTE(velocityRecordFile);
++	REGISTER_ATTRIBUTE(recordIntervalIter);
++	REGISTER_ATTRIBUTE(saveAnimationSnapshots);
++	REGISTER_ATTRIBUTE(AnimationSnapshotsBaseName);
++	REGISTER_ATTRIBUTE(WallStressRecordFile);
++
++	REGISTER_ATTRIBUTE(gravity);
++//	REGISTER_ATTRIBUTE(hydraulicForce);
++	
++	//REGISTER_ATTRIBUTE(bigBall);
++	//REGISTER_ATTRIBUTE(bigBallRadius);
++	//REGISTER_ATTRIBUTE(bigBallDensity);
++	//REGISTER_ATTRIBUTE(bigBallDropTimeSeconds);
++	//REGISTER_ATTRIBUTE(bigBallFrictDeg);
++	//REGISTER_ATTRIBUTE(bigBallYoungModulus);
++	//REGISTER_ATTRIBUTE(bigBallPoissonRatio);
++	//REGISTER_ATTRIBUTE(bigBallDropHeight);
++	REGISTER_ATTRIBUTE(sigma_iso);
++
++}
++
++
++bool ModifiedTriaxialTest::generate()
++{
++//	unsigned int startId=boost::numeric::bounds&lt;unsigned int&gt;::highest(), endId=0; // record forces from group 2
++	
++	rootBody = shared_ptr&lt;MetaBody&gt;(new MetaBody);
++	createActors(rootBody);
++	positionRootBody(rootBody);
++	rootBody-&gt;persistentInteractions	= shared_ptr&lt;InteractionContainer&gt;(new InteractionHashMap);
++	rootBody-&gt;transientInteractions		= shared_ptr&lt;InteractionContainer&gt;(new InteractionHashMap);
++	rootBody-&gt;physicalActions		= shared_ptr&lt;PhysicalActionContainer&gt;(new PhysicalActionVectorVector);
++	rootBody-&gt;bodies 			= shared_ptr&lt;BodyContainer&gt;(new BodyRedirectionVector);
++
++	shared_ptr&lt;Body&gt; body;
++	
++	vector&lt;BasicSphere&gt; sphere_list;
++	message=GenerateCloud(sphere_list, lowerCorner, upperCorner, numberOfGrains, 0.3, 0.75);
++	
++	vector&lt;BasicSphere&gt;::iterator it = sphere_list.begin();
++	vector&lt;BasicSphere&gt;::iterator it_end = sphere_list.end();
++			
++	for (;it!=it_end; ++it)
++	{
++		cerr &lt;&lt; &quot;sphere (&quot; &lt;&lt; it-&gt;first &lt;&lt; &quot; &quot; &lt;&lt; it-&gt;second &lt;&lt; endl;
++		createSphere(body,it-&gt;first,it-&gt;second,false,true);
++		rootBody-&gt;bodies-&gt;insert(body);
++	}
++	
++// 	if(importFilename.size() != 0 &amp;&amp; filesystem::exists(importFilename) )
++// 	{
++// 		
++// 		Vector3r layersDistance (Vector3r::ZERO); 
++// 		for (int layer=1; layer &lt;= nlayers; ++layer)
++// 		{			
++// 			ifstream loadFile(importFilename.c_str());
++// 			long int i=0;
++// 			Real f,g,x,y,z,radius;
++// 			while( ! loadFile.eof() )
++// 			{
++// 				++i;
++// 				loadFile &gt;&gt; x;
++// 				loadFile &gt;&gt; y;
++// 				loadFile &gt;&gt; z;
++// 				Vector3r position = (Vector3r(x,z,y) + layersDistance);
++// 				loadFile &gt;&gt; radius;
++// 			
++// 				loadFile &gt;&gt; f;
++// 				loadFile &gt;&gt; g;
++// 				if( boxWalls ? f&gt;1 : false ) // skip loading of SDEC walls
++// 					continue;
++// 				if(f==8)
++// 					continue;
++// 	
++// 		//		if( i % 100 == 0 ) // FIXME - should display a progress BAR !!
++// 		//			cout &lt;&lt; &quot;loaded: &quot; &lt;&lt; i &lt;&lt; endl;
++// 				if(f==1)
++// 				{
++// 					lowerCorner[0] = min(position[0]-radius , lowerCorner[0]);
++// 					lowerCorner[1] = min(position[1]-radius , lowerCorner[1]);
++// 					lowerCorner[2] = min(position[2]-radius , lowerCorner[2]);
++// 					upperCorner[0] = max(position[0]+radius , upperCorner[0]);
++// 					upperCorner[1] = max(position[1]+radius , upperCorner[1]);
++// 					upperCorner[2] = max(position[2]+radius , upperCorner[2]);
++// 				}
++// 				createSphere(body,position,radius,false,f==1);
++// 				rootBody-&gt;bodies-&gt;insert(body);
++// 				if(f == 2)
++// 				{
++// 					startId = std::min(body-&gt;getId() , startId);
++// 					endId   = std::max(body-&gt;getId() , endId);
++// 				}
++// 					
++// 			}
++// 			layersDistance.y() = upperCorner.y();
++// 		}
++// 	}
++
++// create bigBall
++	//Vector3r position = (upperCorner+lowerCorner)*0.5 + Vector3r(0,bigBallDropHeight,0);
++	//createSphere(body,position,bigBallRadius,true,false);	
++	//int bigId = 0;
++// 	if(bigBall)
++// 		rootBody-&gt;bodies-&gt;insert(body);
++// 	bigId = body-&gt;getId();
++	//forcerec-&gt;startId = startId;
++	//forcerec-&gt;endId   = endId;
++	//averagePositionRecorder-&gt;bigBallId = bigId;
++	//velocityRecorder-&gt;bigBallId = bigId;
++
++	if(boxWalls)
++	{
++	// bottom box
++	 	Vector3r center		= Vector3r(
++	 						(lowerCorner[0]+upperCorner[0])/2,
++	 						lowerCorner[1]-thickness/2.0,
++	 						(lowerCorner[2]+upperCorner[2])/2);
++	 	Vector3r halfSize	= Vector3r(
++	 						fabs(lowerCorner[0]-upperCorner[0])/2+thickness,
++							thickness/2.0,
++	 						fabs(lowerCorner[2]-upperCorner[2])/2+thickness);
++	
++		createBox(body,center,halfSize,wall_bottom_wire);
++	 	if(wall_bottom) {
++			rootBody-&gt;bodies-&gt;insert(body);
++			//(resultantforceEngine-&gt;subscribedBodies).push_back(body-&gt;getId());
++			triaxialcompressionEngine-&gt;wall_bottom_id = body-&gt;getId();
++			wallStressRecorder-&gt;wall_bottom_id = body-&gt;getId();
++			forcerec-&gt;startId = body-&gt;getId();
++			forcerec-&gt;endId   = body-&gt;getId();
++			}
++		//forcerec-&gt;id = body-&gt;getId();
++	
++	// top box
++	 	center			= Vector3r(
++	 						(lowerCorner[0]+upperCorner[0])/2,
++	 						upperCorner[1]+thickness/2.0,
++	 						(lowerCorner[2]+upperCorner[2])/2);
++	 	halfSize		= Vector3r(
++	 						fabs(lowerCorner[0]-upperCorner[0])/2+thickness,
++	 						thickness/2.0,
++	 						fabs(lowerCorner[2]-upperCorner[2])/2+thickness);
++	
++		createBox(body,center,halfSize,wall_top_wire);
++	 	if(wall_top) {
++			rootBody-&gt;bodies-&gt;insert(body);
++			triaxialcompressionEngine-&gt;wall_top_id = body-&gt;getId();
++			wallStressRecorder-&gt;wall_top_id = body-&gt;getId();
++			}
++	// box 1
++	
++	 	center			= Vector3r(
++	 						lowerCorner[0]-thickness/2.0,
++	 						(lowerCorner[1]+upperCorner[1])/2,
++	 						(lowerCorner[2]+upperCorner[2])/2);
++		halfSize		= Vector3r(
++							thickness/2.0,
++	 						fabs(lowerCorner[1]-upperCorner[1])/2+thickness,
++	 						fabs(lowerCorner[2]-upperCorner[2])/2+thickness);
++		createBox(body,center,halfSize,wall_1_wire);
++	 	if(wall_1) {
++			rootBody-&gt;bodies-&gt;insert(body);
++			triaxialcompressionEngine-&gt;wall_left_id = body-&gt;getId();
++			wallStressRecorder-&gt;wall_left_id = body-&gt;getId();
++			}
++	// box 2
++	 	center			= Vector3r(
++	 						upperCorner[0]+thickness/2.0,
++	 						(lowerCorner[1]+upperCorner[1])/2,
++							(lowerCorner[2]+upperCorner[2])/2);
++	 	halfSize		= Vector3r(
++	 						thickness/2.0,
++	 						fabs(lowerCorner[1]-upperCorner[1])/2+thickness,
++	 						fabs(lowerCorner[2]-upperCorner[2])/2+thickness);
++	 	
++		createBox(body,center,halfSize,wall_2_wire);
++	 	if(wall_2) {
++			rootBody-&gt;bodies-&gt;insert(body);
++			triaxialcompressionEngine-&gt;wall_right_id = body-&gt;getId();
++			wallStressRecorder-&gt;wall_right_id = body-&gt;getId();
++			}
++	// box 3
++	 	center			= Vector3r(
++	 						(lowerCorner[0]+upperCorner[0])/2,
++	 						(lowerCorner[1]+upperCorner[1])/2,
++	 						lowerCorner[2]-thickness/2.0);
++	 	halfSize		= Vector3r(
++	 						fabs(lowerCorner[0]-upperCorner[0])/2+thickness,
++	 						fabs(lowerCorner[1]-upperCorner[1])/2+thickness,
++	 						thickness/2.0);
++		createBox(body,center,halfSize,wall_3_wire);
++	 	if(wall_3) {
++			rootBody-&gt;bodies-&gt;insert(body);
++			triaxialcompressionEngine-&gt;wall_back_id = body-&gt;getId();
++			wallStressRecorder-&gt;wall_back_id = body-&gt;getId();
++			}
++	
++	// box 4
++	 	center			= Vector3r(
++	 						(lowerCorner[0]+upperCorner[0])/2,
++	 						(lowerCorner[1]+upperCorner[1])/2,
++	 						upperCorner[2]+thickness/2.0);
++	 	halfSize		= Vector3r(
++	 						fabs(lowerCorner[0]-upperCorner[0])/2+thickness,
++	 						fabs(lowerCorner[1]-upperCorner[1])/2+thickness,
++	 						thickness/2.0);
++		createBox(body,center,halfSize,wall_3_wire);
++	 	if(wall_4) {
++			rootBody-&gt;bodies-&gt;insert(body);
++			triaxialcompressionEngine-&gt;wall_front_id = body-&gt;getId();
++			wallStressRecorder-&gt;wall_front_id = body-&gt;getId();
++			}
++			 
++	}
++	
++	return true;
++//  	return &quot;Generated a sample inside box of dimensions: (&quot; 
++//  		+ lexical_cast&lt;string&gt;(lowerCorner[0]) + &quot;,&quot; 
++//  		+ lexical_cast&lt;string&gt;(lowerCorner[1]) + &quot;,&quot; 
++//  		+ lexical_cast&lt;string&gt;(lowerCorner[2]) + &quot;) and (&quot; 
++//  		+ lexical_cast&lt;string&gt;(upperCorner[0]) + &quot;,&quot; 
++//  		+ lexical_cast&lt;string&gt;(upperCorner[1]) + &quot;,&quot; 
++//  		+ lexical_cast&lt;string&gt;(upperCorner[2]) + &quot;).&quot;;
++
++}
++
++
++void ModifiedTriaxialTest::createSphere(shared_ptr&lt;Body&gt;&amp; body, Vector3r position, Real radius, bool big, bool dynamic )
++{
++	body = shared_ptr&lt;Body&gt;(new Body(body_id_t(0),2));
++	shared_ptr&lt;BodyMacroParameters&gt; physics(new BodyMacroParameters);
++	shared_ptr&lt;AABB&gt; aabb(new AABB);
++	shared_ptr&lt;Sphere&gt; gSphere(new Sphere);
++	shared_ptr&lt;InteractingSphere&gt; iSphere(new InteractingSphere);
++	
++	Quaternionr q;
++	q.FromAxisAngle( Vector3r(0,0,1),0);
++	
++	body-&gt;isDynamic			= dynamic;
++	
++	physics-&gt;angularVelocity	= Vector3r(0,0,0);
++	physics-&gt;velocity		= Vector3r(0,0,0);
++	physics-&gt;mass			= 4.0/3.0*Mathr::PI*radius*radius*radius*(big ? bigBallDensity : density);
++	
++	physics-&gt;inertia		= Vector3r( 	2.0/5.0*physics-&gt;mass*radius*radius,
++							2.0/5.0*physics-&gt;mass*radius*radius,
++							2.0/5.0*physics-&gt;mass*radius*radius);
++	physics-&gt;se3			= Se3r(position,q);
++	physics-&gt;young			= big ? bigBallYoungModulus : sphereYoungModulus;
++	physics-&gt;poisson		= big ? bigBallPoissonRatio : spherePoissonRatio;
++	physics-&gt;frictionAngle		= (big ? bigBallFrictDeg : sphereFrictionDeg ) * Mathr::PI/180.0;
++
++	if((!big) &amp;&amp; (!dynamic) &amp;&amp; (!boxWalls))
++	{
++		physics-&gt;young			= boxYoungModulus;
++		physics-&gt;poisson		= boxPoissonRatio;
++		physics-&gt;frictionAngle		= boxFrictionDeg * Mathr::PI/180.0;
++	}
++	
++	aabb-&gt;diffuseColor		= Vector3r(0,1,0);
++
++
++	gSphere-&gt;radius			= radius;
++	gSphere-&gt;diffuseColor		= spheresColor;
++	gSphere-&gt;wire			= false;
++	gSphere-&gt;visible		= true;
++	gSphere-&gt;shadowCaster		= true;
++	
++	iSphere-&gt;radius			= radius;
++	iSphere-&gt;diffuseColor		= Vector3r(Mathr::UnitRandom(),Mathr::UnitRandom(),Mathr::UnitRandom());
++
++	body-&gt;interactingGeometry	= iSphere;
++	body-&gt;geometricalModel		= gSphere;
++	body-&gt;boundingVolume		= aabb;
++	body-&gt;physicalParameters	= physics;
++}
++
++
++void ModifiedTriaxialTest::createBox(shared_ptr&lt;Body&gt;&amp; body, Vector3r position, Vector3r extents, bool wire)
++{
++	body = shared_ptr&lt;Body&gt;(new Body(body_id_t(0),2));
++	shared_ptr&lt;BodyMacroParameters&gt; physics(new BodyMacroParameters);
++	shared_ptr&lt;AABB&gt; aabb(new AABB);
++	shared_ptr&lt;Box&gt; gBox(new Box);
++	shared_ptr&lt;InteractingBox&gt; iBox(new InteractingBox);
++	
++	Quaternionr q;
++	q.FromAxisAngle( Vector3r(0,0,1),0);
++
++	body-&gt;isDynamic			= false;
++	
++	physics-&gt;angularVelocity	= Vector3r(0,0,0);
++	physics-&gt;velocity		= Vector3r(0,0,0);
++	physics-&gt;mass			= 0; 
++	//physics-&gt;mass			= extents[0]*extents[1]*extents[2]*density*2; 
++	physics-&gt;inertia		= Vector3r(
++							  physics-&gt;mass*(extents[1]*extents[1]+extents[2]*extents[2])/3
++							, physics-&gt;mass*(extents[0]*extents[0]+extents[2]*extents[2])/3
++							, physics-&gt;mass*(extents[1]*extents[1]+extents[0]*extents[0])/3
++						);
++//	physics-&gt;mass			= 0;
++//	physics-&gt;inertia		= Vector3r(0,0,0);
++	physics-&gt;se3			= Se3r(position,q);
++
++	physics-&gt;young			= boxYoungModulus;
++	physics-&gt;poisson		= boxPoissonRatio;
++	physics-&gt;frictionAngle		= boxFrictionDeg * Mathr::PI/180.0;
++
++	aabb-&gt;diffuseColor		= Vector3r(1,0,0);
++
++	gBox-&gt;extents			= extents;
++	gBox-&gt;diffuseColor		= Vector3r(1,1,1);
++	gBox-&gt;wire			= wire;
++	gBox-&gt;visible			= true;
++	gBox-&gt;shadowCaster		= false;
++	
++	iBox-&gt;extents			= extents;
++	iBox-&gt;diffuseColor		= Vector3r(1,1,1);
++
++	body-&gt;boundingVolume		= aabb;
++	body-&gt;interactingGeometry	= iBox;
++	body-&gt;geometricalModel		= gBox;
++	body-&gt;physicalParameters	= physics;
++}
++
++
++void ModifiedTriaxialTest::createActors(shared_ptr&lt;MetaBody&gt;&amp; rootBody)
++{
++// recording average positions
++	averagePositionRecorder = shared_ptr&lt;AveragePositionRecorder&gt;(new AveragePositionRecorder);
++	averagePositionRecorder -&gt; outputFile 		= positionRecordFile;
++	averagePositionRecorder -&gt; interval 		= recordIntervalIter;
++// recording forces
++	forcerec = shared_ptr&lt;ForceRecorder&gt;(new ForceRecorder);
++	forcerec -&gt; outputFile 	= forceRecordFile;
++	forcerec -&gt; interval 	= recordIntervalIter;
++// recording velocities
++	velocityRecorder = shared_ptr&lt;VelocityRecorder&gt;(new VelocityRecorder);
++	velocityRecorder-&gt; outputFile 	= velocityRecordFile;
++	velocityRecorder-&gt; interval 	= recordIntervalIter;
++
++	shared_ptr&lt;PhysicalActionContainerInitializer&gt; physicalActionInitializer(new PhysicalActionContainerInitializer);
++	physicalActionInitializer-&gt;physicalActionNames.push_back(&quot;Force&quot;);
++	physicalActionInitializer-&gt;physicalActionNames.push_back(&quot;Momentum&quot;);
++	//physicalActionInitializer-&gt;physicalActionNames.push_back(&quot;StiffnessMatrix&quot;);
++	physicalActionInitializer-&gt;physicalActionNames.push_back(&quot;GlobalStiffness&quot;);
++	
++	shared_ptr&lt;InteractionGeometryMetaEngine&gt; interactionGeometryDispatcher(new InteractionGeometryMetaEngine);
++	interactionGeometryDispatcher-&gt;add(&quot;InteractingSphere&quot;,&quot;InteractingSphere&quot;,&quot;InteractingSphere2InteractingSphere4SpheresContactGeometry&quot;);
++	interactionGeometryDispatcher-&gt;add(&quot;InteractingSphere&quot;,&quot;InteractingBox&quot;,&quot;InteractingBox2InteractingSphere4SpheresContactGeometry&quot;);
++
++	shared_ptr&lt;InteractionPhysicsMetaEngine&gt; interactionPhysicsDispatcher(new InteractionPhysicsMetaEngine);
++	interactionPhysicsDispatcher-&gt;add(&quot;BodyMacroParameters&quot;,&quot;BodyMacroParameters&quot;,&quot;SimpleElasticRelationships&quot;);
++		
++	shared_ptr&lt;BoundingVolumeMetaEngine&gt; boundingVolumeDispatcher	= shared_ptr&lt;BoundingVolumeMetaEngine&gt;(new BoundingVolumeMetaEngine);
++	boundingVolumeDispatcher-&gt;add(&quot;InteractingSphere&quot;,&quot;AABB&quot;,&quot;InteractingSphere2AABB&quot;);
++	boundingVolumeDispatcher-&gt;add(&quot;InteractingBox&quot;,&quot;AABB&quot;,&quot;InteractingBox2AABB&quot;);
++	boundingVolumeDispatcher-&gt;add(&quot;MetaInteractingGeometry&quot;,&quot;AABB&quot;,&quot;MetaInteractingGeometry2AABB&quot;);
++	
++	shared_ptr&lt;GravityEngine&gt; gravityCondition(new GravityEngine);
++	gravityCondition-&gt;gravity = gravity;
++//	shared_ptr&lt;HydraulicForceEngine&gt; hydraulicForceCondition(new HydraulicForceEngine);
++//	hydraulicForceCondition-&gt;hydraulicForce = hydraulicForce;
++  	shared_ptr&lt;MakeItFlat&gt; makeItFlat(new MakeItFlat);
++//	makeItFlatCondition-&gt;makeItFlat= makeItFlat;
++
++	shared_ptr&lt;CundallNonViscousForceDamping&gt; actionForceDamping(new CundallNonViscousForceDamping);
++	actionForceDamping-&gt;damping = dampingForce;
++	shared_ptr&lt;CundallNonViscousMomentumDamping&gt; actionMomentumDamping(new CundallNonViscousMomentumDamping);
++	actionMomentumDamping-&gt;damping = dampingMomentum;
++	shared_ptr&lt;PhysicalActionDamper&gt; actionDampingDispatcher(new PhysicalActionDamper);
++	actionDampingDispatcher-&gt;add(&quot;Force&quot;,&quot;ParticleParameters&quot;,&quot;CundallNonViscousForceDamping&quot;,actionForceDamping);
++	actionDampingDispatcher-&gt;add(&quot;Momentum&quot;,&quot;RigidBodyParameters&quot;,&quot;CundallNonViscousMomentumDamping&quot;,actionMomentumDamping);
++	
++	shared_ptr&lt;PhysicalActionApplier&gt; applyActionDispatcher(new PhysicalActionApplier);
++	applyActionDispatcher-&gt;add(&quot;Force&quot;,&quot;ParticleParameters&quot;,&quot;NewtonsForceLaw&quot;);
++	applyActionDispatcher-&gt;add(&quot;Momentum&quot;,&quot;RigidBodyParameters&quot;,&quot;NewtonsMomentumLaw&quot;);
++		
++	shared_ptr&lt;PhysicalParametersMetaEngine&gt; positionIntegrator(new PhysicalParametersMetaEngine);
++	positionIntegrator-&gt;add(&quot;ParticleParameters&quot;,&quot;LeapFrogPositionIntegrator&quot;);
++	shared_ptr&lt;PhysicalParametersMetaEngine&gt; orientationIntegrator(new PhysicalParametersMetaEngine);
++	orientationIntegrator-&gt;add(&quot;RigidBodyParameters&quot;,&quot;LeapFrogOrientationIntegrator&quot;);
++
++	//shared_ptr&lt;ElasticCriterionTimeStepper&gt; sdecTimeStepper(new ElasticCriterionTimeStepper);
++	//sdecTimeStepper-&gt;sdecGroupMask = 2;
++	//sdecTimeStepper-&gt;timeStepUpdateInterval = timeStepUpdateInterval;
++	
++	//shared_ptr&lt;StiffnessMatrixTimeStepper&gt; stiffnessMatrixTimeStepper(new StiffnessMatrixTimeStepper);
++	//stiffnessMatrixTimeStepper-&gt;sdecGroupMask = 2;
++	//stiffnessMatrixTimeStepper-&gt;timeStepUpdateInterval = timeStepUpdateInterval;
++	
++	shared_ptr&lt;GlobalStiffnessTimeStepper&gt; globalStiffnessTimeStepper(new GlobalStiffnessTimeStepper);
++	globalStiffnessTimeStepper-&gt;sdecGroupMask = 2;
++	globalStiffnessTimeStepper-&gt;timeStepUpdateInterval = timeStepUpdateInterval;
++	globalStiffnessTimeStepper-&gt;defaultDt = defaultDt;
++	
++	shared_ptr&lt;ElasticContactLaw&gt; elasticContactLaw(new ElasticContactLaw);
++	elasticContactLaw-&gt;sdecGroupMask = 2;
++	
++	//shared_ptr&lt;StiffnessCounter&gt; stiffnesscounter(new StiffnessCounter);
++	//stiffnesscounter-&gt;sdecGroupMask = 2;
++	//stiffnesscounter-&gt;interval = timeStepUpdateInterval;
++	
++	shared_ptr&lt;GlobalStiffnessCounter&gt; globalStiffnessCounter(new GlobalStiffnessCounter);
++	globalStiffnessCounter-&gt;sdecGroupMask = 2;
++	globalStiffnessCounter-&gt;interval = timeStepUpdateInterval;
++	
++	// moving walls to regulate the stress applied + compress when the packing is dense an stable
++	//cerr &lt;&lt; &quot;triaxialcompressionEngine = shared_ptr&lt;TriaxialCompressionEngine&gt; (new TriaxialCompressionEngine);&quot; &lt;&lt; std::endl;
++	triaxialcompressionEngine = shared_ptr&lt;TriaxialCompressionEngine&gt; (new TriaxialCompressionEngine);
++	triaxialcompressionEngine-&gt; interval = wallStiffnessUpdateInterval;// = stiffness update interval
++	triaxialcompressionEngine-&gt; radiusControlInterval = radiusControlInterval;// = stiffness update interval
++	triaxialcompressionEngine-&gt; sigma_iso = sigma_iso;
++	triaxialcompressionEngine-&gt; max_vel = 0.0001;
++	triaxialcompressionEngine-&gt; thickness = thickness;
++	triaxialcompressionEngine-&gt;strainRate = strainRate;
++	triaxialcompressionEngine-&gt;StabilityCriterion = StabilityCriterion;
++	triaxialcompressionEngine-&gt;autoCompressionActivation = autoCompressionActivation;
++	triaxialcompressionEngine-&gt;internalCompaction = internalCompaction;
++	triaxialcompressionEngine-&gt;maxMultiplier = maxMultiplier;
++		
++	//cerr &lt;&lt; &quot;fin de section triaxialcompressionEngine = shared_ptr&lt;TriaxialCompressionEngine&gt; (new TriaxialCompressionEngine);&quot; &lt;&lt; std::endl;
++	
++// recording global stress
++	wallStressRecorder = shared_ptr&lt;WallStressRecorder&gt;(new
++	WallStressRecorder);
++	wallStressRecorder-&gt; outputFile 	= WallStressRecordFile;
++	wallStressRecorder-&gt; interval 		= recordIntervalIter;
++	wallStressRecorder-&gt; thickness 		= thickness;
++	
++	
++	// moving walls to regulate the stress applied
++	//cerr &lt;&lt; &quot;triaxialstressController = shared_ptr&lt;TriaxialStressController&gt; (new TriaxialStressController);&quot; &lt;&lt; std::endl;
++	triaxialstressController = shared_ptr&lt;TriaxialStressController&gt; (new TriaxialStressController);
++	triaxialstressController-&gt; interval = 1;// = recordIntervalIter
++	triaxialstressController-&gt; sigma_iso = sigma_iso;
++	triaxialstressController-&gt; max_vel = 0.0001;
++	triaxialstressController-&gt; thickness = thickness;
++	triaxialstressController-&gt;wall_bottom_activated = false;
++	triaxialstressController-&gt;wall_top_activated = false;	
++		//cerr &lt;&lt; &quot;fin de sezction triaxialstressController = shared_ptr&lt;TriaxialStressController&gt; (new TriaxialStressController);&quot; &lt;&lt; std::endl;
++	
++	rootBody-&gt;engines.clear();
++	rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new PhysicalActionContainerReseter));
++//	rootBody-&gt;engines.push_back(sdecTimeStepper);	
++	rootBody-&gt;engines.push_back(boundingVolumeDispatcher);
++	rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new PersistentSAPCollider));
++	rootBody-&gt;engines.push_back(interactionGeometryDispatcher);
++	rootBody-&gt;engines.push_back(interactionPhysicsDispatcher);
++	rootBody-&gt;engines.push_back(elasticContactLaw);
++	rootBody-&gt;engines.push_back(triaxialcompressionEngine);
++	//rootBody-&gt;engines.push_back(stiffnesscounter);
++	//rootBody-&gt;engines.push_back(stiffnessMatrixTimeStepper);
++	rootBody-&gt;engines.push_back(globalStiffnessCounter);
++	rootBody-&gt;engines.push_back(globalStiffnessTimeStepper);
++	rootBody-&gt;engines.push_back(wallStressRecorder);
++	rootBody-&gt;engines.push_back(gravityCondition);
++	if(want_2d)
++		rootBody-&gt;engines.push_back(makeItFlat);
++	rootBody-&gt;engines.push_back(actionDampingDispatcher);
++	rootBody-&gt;engines.push_back(applyActionDispatcher);
++	rootBody-&gt;engines.push_back(positionIntegrator);
++	if(!rotationBlocked)
++		rootBody-&gt;engines.push_back(orientationIntegrator);
++	//rootBody-&gt;engines.push_back(resultantforceEngine);
++	//rootBody-&gt;engines.push_back(triaxialstressController);
++	
++		
++	rootBody-&gt;engines.push_back(averagePositionRecorder);
++	rootBody-&gt;engines.push_back(velocityRecorder);
++	rootBody-&gt;engines.push_back(forcerec);
++	
++	if (saveAnimationSnapshots) {
++	shared_ptr&lt;PositionOrientationRecorder&gt; positionOrientationRecorder(new PositionOrientationRecorder);
++	positionOrientationRecorder-&gt;outputFile = AnimationSnapshotsBaseName;
++	rootBody-&gt;engines.push_back(positionOrientationRecorder);}
++	
++	rootBody-&gt;initializers.clear();
++	rootBody-&gt;initializers.push_back(physicalActionInitializer);
++	rootBody-&gt;initializers.push_back(boundingVolumeDispatcher);
++	
++}
++
++
++void ModifiedTriaxialTest::positionRootBody(shared_ptr&lt;MetaBody&gt;&amp; rootBody)
++{
++	rootBody-&gt;isDynamic		= false;
++
++	Quaternionr q;
++	q.FromAxisAngle( Vector3r(0,0,1),0);
++	shared_ptr&lt;ParticleParameters&gt; physics(new ParticleParameters); // FIXME : fix indexable class PhysicalParameters
++	physics-&gt;se3			= Se3r(Vector3r(0,0,0),q);
++	physics-&gt;mass			= 0;
++	physics-&gt;velocity		= Vector3r::ZERO;
++	physics-&gt;acceleration		= Vector3r::ZERO;
++	
++	shared_ptr&lt;MetaInteractingGeometry&gt; set(new MetaInteractingGeometry());
++	
++	set-&gt;diffuseColor		= Vector3r(0,0,1);
++
++	shared_ptr&lt;AABB&gt; aabb(new AABB);
++	aabb-&gt;diffuseColor		= Vector3r(0,0,1);
++	
++	rootBody-&gt;interactingGeometry	= YADE_PTR_CAST&lt;InteractingGeometry&gt;(set);	
++	rootBody-&gt;boundingVolume	= YADE_PTR_CAST&lt;BoundingVolume&gt;(aabb);
++	rootBody-&gt;physicalParameters 	= physics;
++	
++}
++
++
++
++string GenerateCloud(vector&lt;BasicSphere&gt;&amp; sphere_list, Vector3r lowerCorner, Vector3r upperCorner, long number, Real rad_std_dev, Real porosity)
++{
++	typedef boost::minstd_rand StdGenerator;
++	static StdGenerator generator;
++	static boost::variate_generator&lt;StdGenerator&amp;, boost::uniform_real&lt;&gt; &gt;
++			random1(generator, boost::uniform_real&lt;&gt;(0,1));
++        //         static boost::variate_generator&lt;StdGenerator&amp;, boost::normal_distribution&lt;&gt; &gt;
++        //         randomN(generator, boost::normal_distribution&lt;&gt;(aggregateMeanRadius,aggregateSigmaRadius));
++
++	sphere_list.clear();
++	long tries = 1000; //nb of tries for positionning the next sphere
++	Vector3r dimensions = upperCorner - lowerCorner;
++		
++	Real mean_radius = std::pow(dimensions.X()*dimensions.Y()*dimensions.Z()*(1-porosity)/(3.1416*1.3333*number),0.333333);
++        //cerr &lt;&lt; mean_radius;
++
++	std::cerr &lt;&lt; &quot;generating aggregates ... &quot;;
++	
++	long t, i;
++	for (i=0; i&lt;number; ++i) {
++		BasicSphere s;
++		for (t=0; t&lt;tries; ++t) {
++			s.second = (random1()-0.5)*rad_std_dev*mean_radius+mean_radius;
++			s.first.X() = lowerCorner.X()+s.second+(dimensions.X()-2*s.second)*random1();
++			s.first.Y() = lowerCorner.Y()+s.second+(dimensions.Y()-2*s.second)*random1();
++			s.first.Z() = lowerCorner.Z()+s.second+(dimensions.Z()-2*s.second)*random1();
++			bool overlap=false;
++			for (long j=0; (j&lt;i &amp;&amp; !overlap); j++)
++				if ( pow(sphere_list[j].second+s.second, 2) &gt; (sphere_list[j].first-s.first).SquaredLength()) overlap=true;
++			if (!overlap)
++			{
++				sphere_list.push_back(s);
++				break;
++			}			
++		}
++		if (t==tries) return &quot;More than &quot; + lexical_cast&lt;string&gt;(tries) +
++					&quot; tries while generating sphere number &quot; +
++					lexical_cast&lt;string&gt;(i+1) + &quot;/&quot; + lexical_cast&lt;string&gt;(number) + &quot;.&quot;;
++	}
++	return &quot;Generated a sample with &quot; + lexical_cast&lt;string&gt;(number) + &quot;spheres inside box of dimensions: (&quot; 
++			+ lexical_cast&lt;string&gt;(dimensions[0]) + &quot;,&quot; 
++			+ lexical_cast&lt;string&gt;(dimensions[1]) + &quot;,&quot; 
++			+ lexical_cast&lt;string&gt;(dimensions[2]) + &quot;).&quot;;
++}
++
++
++
+
+Added: trunk/pkg/dem/PreProcessor/ModifiedTriaxialTest.hpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/ModifiedTriaxialTest.hpp	2007-07-12 22:48:34 UTC (rev 1227)
++++ trunk/pkg/dem/PreProcessor/ModifiedTriaxialTest.hpp	2007-07-16 07:50:51 UTC (rev 1228)
+@@ -0,0 +1,131 @@
++/*************************************************************************
++*  Copyright (C) 2004 by Olivier Galizzi                                 *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">olivier.galizzi at imag.fr</A>                                               *
++*  Copyright (C) 2004 by Janek Kozicki                                   *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">cosurgi at berlios.de</A>                                                    *
++*  Copyright (C) 2007 by Bruno Chareyre		                         *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">bruno.chareyre at hmg.inpg.fr</A>                                            *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#ifndef SDECIMPORT_HPP
++#define SDECIMPORT_HPP
++
++#include&lt;yade/core/FileGenerator.hpp&gt;
++#include &lt;Wm3Vector3.h&gt;
++#include&lt;yade/lib-base/yadeWm3.hpp&gt;
++
++class ForceRecorder;
++class AveragePositionRecorder;
++class VelocityRecorder;
++class TriaxialStressController;
++class TriaxialCompressionEngine;
++class WallStressRecorder;
++
++/*! \brief Isotropic compression + uniaxial compression test
++
++	detailed description...
++ */
++
++class ModifiedTriaxialTest : public FileGenerator
++{
++	private	:
++	//	Vector3r	 hydraulicForce;
++		Vector3r	 gravity
++				,lowerCorner
++				,upperCorner;
++
++		Vector3r	 spheresColor;
++
++		Real		 thickness
++				,sphereYoungModulus
++				,spherePoissonRatio
++				,sphereFrictionDeg
++				,boxYoungModulus
++				,boxPoissonRatio
++				,boxFrictionDeg
++				,density
++				,dampingForce
++				,dampingMomentum
++				,defaultDt
++
++				,bigBallRadius
++				,bigBallDensity
++				,bigBallDropTimeSeconds
++				,bigBallPoissonRatio
++				,bigBallYoungModulus
++				,bigBallFrictDeg
++				,bigBallDropHeight
++				
++				,sigma_iso
++				,strainRate
++				,StabilityCriterion
++				,maxMultiplier ///max multiplier of diameters during internal compaction
++				,finalMaxMultiplier;
++
++		bool		 wall_top
++				,wall_bottom
++				,wall_1
++				,wall_2
++				,wall_3
++				,wall_4
++				,wall_top_wire
++				,wall_bottom_wire
++				,wall_1_wire
++				,wall_2_wire
++				,wall_3_wire
++				,wall_4_wire
++				,want_2d
++				,autoCompressionActivation
++				,bigBall
++				,rotationBlocked
++				,spheresRandomColor
++				,recordBottomForce
++				,recordAveragePositions
++				,boxWalls
++				,internalCompaction
++				,saveAnimationSnapshots;
++
++		int		 recordIntervalIter
++				,timeStepUpdateInterval
++				,timeStepOutputInterval
++				,wallStiffnessUpdateInterval
++				,radiusControlInterval
++				,numberOfGrains;
++		
++		string		 forceRecordFile
++				,positionRecordFile
++				,velocityRecordFile
++				,importFilename
++				,AnimationSnapshotsBaseName
++				,WallStressRecordFile;
++	
++		shared_ptr&lt;ForceRecorder&gt; forcerec;
++		shared_ptr&lt;VelocityRecorder&gt; velocityRecorder;
++		shared_ptr&lt;AveragePositionRecorder&gt; averagePositionRecorder;
++		shared_ptr&lt;TriaxialCompressionEngine&gt; triaxialcompressionEngine;
++		shared_ptr&lt;TriaxialStressController&gt; triaxialstressController;
++		shared_ptr&lt;WallStressRecorder&gt; wallStressRecorder;
++			
++		void createBox(shared_ptr&lt;Body&gt;&amp; body, Vector3r position, Vector3r extents,bool wire);
++		void createSphere(shared_ptr&lt;Body&gt;&amp; body, Vector3r position, Real radius,bool big,bool dynamic);
++		void createActors(shared_ptr&lt;MetaBody&gt;&amp; rootBody);
++		void positionRootBody(shared_ptr&lt;MetaBody&gt;&amp; rootBody);
++	
++	public : 
++		ModifiedTriaxialTest ();
++		~ModifiedTriaxialTest ();
++		bool generate();
++	
++	protected :
++		void registerAttributes();
++	REGISTER_CLASS_NAME(ModifiedTriaxialTest);
++	REGISTER_BASE_CLASS_NAME(FileGenerator);
++};
++
++REGISTER_SERIALIZABLE(ModifiedTriaxialTest,false);
++
++#endif // SDECIMPORT_HPP
++
+
+Modified: trunk/pkg/dem/SConscript
+===================================================================
+--- trunk/pkg/dem/SConscript	2007-07-12 22:48:34 UTC (rev 1227)
++++ trunk/pkg/dem/SConscript	2007-07-16 07:50:51 UTC (rev 1228)
+@@ -763,6 +763,61 @@
+ 			'DataClass/PhysicalAction',
+ 			'$PREFIX/include',
+ 			'DataClass/PhysicalParameters']),
++			
++env.SharedLibrary('MakeItFlat',
++		['Engine/DeusExMachina/MakeItFlat.cpp'],
++		LIBS=env['LIBS']+['yade-base',  'Force', 'ParticleParameters'],
++		CPPPATH=env['CPPPATH']+['Engine/DeusExMachina',
++			'DataClass/PhysicalAction',
++			'$PREFIX/include',
++			'DataClass/PhysicalParameters']),
++			
++env.SharedLibrary('HydraulicTest',
++		['PreProcessor/HydraulicTest.cpp'],
++		LIBS=env['LIBS']+['SDECLinkGeometry',
++			'CohesiveFrictionalContactLaw',
++			'AveragePositionRecorder',
++			'VelocityRecorder',
++			'ForceRecorder',
++			'CohesiveFrictionalRelationships',
++			'ElasticCriterionTimeStepper',
++			'PhysicalActionVectorVector',
++			'InteractionVecSet',
++			'InteractionHashMap',
++			'BodyRedirectionVector',
++			'InteractingSphere',
++			'InteractingBox',
++			'CundallNonViscousMomentumDamping',
++			'CundallNonViscousForceDamping',
++			'MetaInteractingGeometry',
++			'GravityEngine',
++			'yade-serialization',
++			'PhysicalActionContainerInitializer',
++			'PhysicalActionContainerReseter',
++			'InteractionGeometryMetaEngine',
++			'InteractionPhysicsMetaEngine',
++			'PhysicalActionApplier',
++			'PhysicalParametersMetaEngine',
++			'BoundingVolumeMetaEngine',
++			'yade-multimethods',
++			'Box',
++			'Sphere',
++			'AABB',
++			'DistantPersistentSAPCollider',
++			'SAPCollider',
++			'MetaInteractingGeometry2AABB',
++			'GlobalStiffness',
++			'GlobalStiffnessCounter',
++			'ResultantForceEngine',
++			'TriaxialStressController',
++			'TriaxialCompressionEngine',
++			'GlobalStiffnessTimeStepper',
++			'yade-base',
++			'WallStressRecorder',
++			'PositionOrientationRecorder',
++			'HydraulicForceEngine',
++			'MakeItFlat',
++			'TranslationEngine']),
+ 
+ 
+ 
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000192.html">[Yade-commits] r1227 - in trunk/pkg/realtime-rigidbody: .	Engine/EngineUnit
+</A></li>
+	<LI>Next message: <A HREF="000194.html">[Yade-commits] r1229 - trunk/pkg/dem/Engine/DeusExMachina
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#193">[ date ]</a>
+              <a href="thread.html#193">[ thread ]</a>
+              <a href="subject.html#193">[ subject ]</a>
+              <a href="author.html#193">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

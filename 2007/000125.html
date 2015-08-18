@@ -1,0 +1,795 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1160 - in trunk: extra/clump	extra/spherical-dem-simulator extra/tetra gui/qt3	pkg/common/RenderingEngine/OpenGLRenderingEngine	pkg/lattice/Engine/StandAloneEngine
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2007/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1160%20-%20in%20trunk%3A%20extra/clump%0A%09extra/spherical-dem-simulator%20extra/tetra%20gui/qt3%0A%09pkg/common/RenderingEngine/OpenGLRenderingEngine%0A%09pkg/lattice/Engine/StandAloneEngine&In-Reply-To=%3C200705071355.l47Dt9XF003019%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000124.html">
+   <LINK REL="Next"  HREF="000126.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1160 - in trunk: extra/clump	extra/spherical-dem-simulator extra/tetra gui/qt3	pkg/common/RenderingEngine/OpenGLRenderingEngine	pkg/lattice/Engine/StandAloneEngine</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1160%20-%20in%20trunk%3A%20extra/clump%0A%09extra/spherical-dem-simulator%20extra/tetra%20gui/qt3%0A%09pkg/common/RenderingEngine/OpenGLRenderingEngine%0A%09pkg/lattice/Engine/StandAloneEngine&In-Reply-To=%3C200705071355.l47Dt9XF003019%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1160 - in trunk: extra/clump	extra/spherical-dem-simulator extra/tetra gui/qt3	pkg/common/RenderingEngine/OpenGLRenderingEngine	pkg/lattice/Engine/StandAloneEngine">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Mon May  7 15:55:09 CEST 2007</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000124.html">[Yade-commits] r1159 - in trunk: . core extra extra/clump	extra/tetra gui/qt3 pkg/fem/Engine/EngineUnit pkg/realtime-rigidbody
+</A></li>
+        <LI>Next message: <A HREF="000126.html">[Yade-commits] r1161 - in trunk: . extra/clump extra/tetra	pkg/common/DataClass/GeometricalModel
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#125">[ date ]</a>
+              <a href="thread.html#125">[ thread ]</a>
+              <a href="subject.html#125">[ subject ]</a>
+              <a href="author.html#125">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2007-05-07 15:55:07 +0200 (Mon, 07 May 2007)
+New Revision: 1160
+
+Modified:
+   trunk/extra/clump/Clump.cpp
+   trunk/extra/clump/Shop.cpp
+   trunk/extra/spherical-dem-simulator/Contact.hpp
+   trunk/extra/tetra/Tetra.cpp
+   trunk/extra/tetra/Tetra.hpp
+   trunk/extra/tetra/TetraTestGen.cpp
+   trunk/gui/qt3/FileDialog.cpp
+   trunk/gui/qt3/QtEngineEditor.cpp
+   trunk/gui/qt3/QtMetaDispatchingEngineProperties.cpp
+   trunk/gui/qt3/YadeQtGeneratedMainWindow.ui
+   trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.cpp
+   trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.hpp
+   trunk/pkg/lattice/Engine/StandAloneEngine/BeamRecorder.cpp
+   trunk/pkg/lattice/Engine/StandAloneEngine/MovingSupport.cpp
+   trunk/pkg/lattice/Engine/StandAloneEngine/NodeRecorder.cpp
+Log:
+1. Some type fixes (signed vs. unsigned). The Body ID mess needs to be cleaned up!!!
+2. More tetrahedron stuff; will not compile for now, though.
+3. Icon update ;-)
+
+
+
+Modified: trunk/extra/clump/Clump.cpp
+===================================================================
+--- trunk/extra/clump/Clump.cpp	2007-05-06 13:05:29 UTC (rev 1159)
++++ trunk/extra/clump/Clump.cpp	2007-05-07 13:55:07 UTC (rev 1160)
+@@ -270,7 +270,7 @@
+ 	clumpRBP-&gt;velocity=Vector3r(0,0,0);
+ 	clumpRBP-&gt;angularVelocity=Vector3r(0,0,0);
+ 
+-	// update subBodySe3s; subtract clump orientation (apply its inverse first) to subBody's orientation
++	// update subBodySe3s; subtract clump orientation (=apply its inverse first) to subBody's orientation
+ 	// Conjugate is equivalent to Inverse for normalized quaternions
+ 	for(memberMap::iterator I=members.begin(); I!=members.end(); I++){
+ 		// now, I-&gt;first is Body::id_t, I-&gt;second is Se3r of that body
+
+Modified: trunk/extra/clump/Shop.cpp
+===================================================================
+--- trunk/extra/clump/Shop.cpp	2007-05-06 13:05:29 UTC (rev 1159)
++++ trunk/extra/clump/Shop.cpp	2007-05-07 13:55:07 UTC (rev 1160)
+@@ -340,8 +340,8 @@
+ 		shared_ptr&lt;BodyMacroParameters&gt; physics(new BodyMacroParameters);
+ 		physics-&gt;angularVelocity=Vector3r(0,0,0);
+ 		physics-&gt;velocity=Vector3r(0,0,0);
+-		physics-&gt;mass=1*getDefault&lt;double&gt;(&quot;phys_density&quot;); // FIXME: mass, inertia not correct
+-		physics-&gt;inertia=Vector3r(physics-&gt;mass/12.,physics-&gt;mass/12.,physics-&gt;mass/12.);
++		physics-&gt;mass=getDefault&lt;double&gt;(&quot;phys_density&quot;)*TetrahedronVolume(v);
++		// inertia will be calculated below, by TetrahedronWithLocalAxesPrincipal
+ 		physics-&gt;se3=Se3r((v[0]+v[1]+v[2]+v[3])*.25,Quaternionr(Vector3r(0,0,1),0));
+ 		physics-&gt;young=getDefault&lt;double&gt;(&quot;phys_young&quot;);
+ 		physics-&gt;poisson=getDefault&lt;double&gt;(&quot;phys_poisson&quot;);
+@@ -367,5 +367,8 @@
+ 		mold-&gt;diffuseColor=getDefault&lt;bool&gt;(&quot;mold_randomColor&quot;)?Vector3r(Mathr::UnitRandom(),Mathr::UnitRandom(),Mathr::UnitRandom()):getDefault&lt;Vector3r&gt;(&quot;mold_color&quot;);
+ 		body-&gt;interactingGeometry=mold;
+ 
++		// make local axes coincident with principal axes
++		TetrahedronWithLocalAxesPrincipal(body);
++
+ 		return body;
+ }
+
+Modified: trunk/extra/spherical-dem-simulator/Contact.hpp
+===================================================================
+--- trunk/extra/spherical-dem-simulator/Contact.hpp	2007-05-06 13:05:29 UTC (rev 1159)
++++ trunk/extra/spherical-dem-simulator/Contact.hpp	2007-05-07 13:55:07 UTC (rev 1160)
+@@ -9,15 +9,13 @@
+ #ifndef CONTACT_HPP
+ #define CONTACT_HPP
+ 
+-#include &lt;Wm3Math.h&gt;
++#include&lt;Wm3Math.h&gt;
++#include&lt;Wm3Vector3.h&gt;
++#include&lt;Wm3Quaternion.h&gt;
+ #include&lt;yade/lib-base/yadeWm3.hpp&gt;
+-#include &lt;Wm3Vector3.h&gt;
+-#include&lt;yade/lib-base/yadeWm3.hpp&gt;
+-#include &lt;Wm3Quaternion.h&gt;
+-#include&lt;yade/lib-base/yadeWm3.hpp&gt;
+ 
+-#include &lt;vector&gt;
+-#include &lt;set&gt;
++#include&lt;vector&gt;
++#include&lt;set&gt;
+ 
+ using namespace std;
+ 
+
+Modified: trunk/extra/tetra/Tetra.cpp
+===================================================================
+--- trunk/extra/tetra/Tetra.cpp	2007-05-06 13:05:29 UTC (rev 1159)
++++ trunk/extra/tetra/Tetra.cpp	2007-05-07 13:55:07 UTC (rev 1160)
+@@ -29,123 +29,187 @@
+ #include &lt;yade/pkg-common/ElasticBodyParameters.hpp&gt;
+ #include &lt;yade/pkg-common/SimpleElasticInteraction.hpp&gt;
+ 
++#include&lt;Wm3Tetrahedron3.h&gt;
++#include&lt;Wm3IntrTetrahedron3Tetrahedron3.h&gt; // not necessary since the cpp includes it as well
++//#include&quot;Intersection/Wm3IntrTetrahedron3Tetrahedron3.cpp&quot;
++//#include&quot;Intersection/Wm3Intersector.cpp&quot;
+ 
+-bool Tetra2TetraBang::go(const shared_ptr&lt;InteractingGeometry&gt;&amp; cm1,const shared_ptr&lt;InteractingGeometry&gt;&amp; cm2,const Se3r&amp; se31,const Se3r&amp; se32,const shared_ptr&lt;Interaction&gt;&amp; c){
++
++/*! Calculate configuration of TetraMold - TetraMold intersection.
++ *
++ * Wildmagick's functions are used here: intersection is returned as a set of tetrahedra (may be empty, inwhich case there is no real intersection).
++ * Then we calcualte volumetric proeprties of this intersection volume: inertia, centroid, volume.
++ *
++ * Contact normal (the direction in which repulsive force will act) coincides with the direction of least inertia,
++ * since that is the gradient that maximizes the drop of elastic deformation energy and will reach minimum fastest.
++ *
++ * Equivalent cross section of the penetrating volume (as if it were a cuboid with the same inertia) and equivalent penetration depth are calculated;
++ * Equivalent solid size in the dimension of normal serves as reference for strain calculation and is different for solids A and B.
++ *
++ * Strain will be then approximated by equivalentPenetrationDepth/.5*(maxPenetrationDepthA+maxPenetrationDepthB) (the average of A and B)
++ *
++ * All the relevant results are fed into TetraBang which is passed to TetraLaw later that makes actual use of all this.
++ *
++ * @todo thoroughly test this for numerical correctness.
++ *
++ */
++bool Tetra2TetraBang::go(const shared_ptr&lt;InteractingGeometry&gt;&amp; cm1,const shared_ptr&lt;InteractingGeometry&gt;&amp; cm2,const Se3r&amp; se31,const Se3r&amp; se32,const shared_ptr&lt;Interaction&gt;&amp; interaction){
+ 	TetraMold* A = static_cast&lt;TetraMold*&gt;(cm1.get());
+ 	TetraMold* B = static_cast&lt;TetraMold*&gt;(cm2.get());
+-	return false;
++	//return false;
+ 	
+-/*	shared_ptr&lt;TetraBang&gt; imt;
++	shared_ptr&lt;TetraBang&gt; bang;
+ 	// depending whether it's a new interaction: create new one, or use the existing one.
+-	if (c-&gt;isNew)
+-		imt = shared_ptr&lt;TetraBang&gt;(new TetraBang());
+-	else
+-		imt = dynamic_pointer_cast&lt;TetraBang&gt;(c-&gt;interactionGeometry);	
++	if (interaction-&gt;isNew) bang=shared_ptr&lt;TetraBang&gt;(new TetraBang());
++	else bang=YADE_PTR_CAST&lt;TetraBang&gt;(interaction-&gt;interactionGeometry);	
++	interaction-&gt;interactingGeometry=bang;
+ 
+-	bool isInteracting = false;
+-	for(int i=0 ; i&lt;4 ; ++i )
+-		for(int j=0 ; j&lt;4 ; ++j)
+-		{
+-			// both spheres must be calculated in global coordinate system
+-			//
+-			// c1,c2,c3,c4 are sphere centers in local coordinate system of tetrahedron,
+-			//             they must by rotated, so that they have the rotation of tetrahedron
+-			//             they must be translated, so that they have global coordinates of tetrahedron
+-			calcTwoSpheres(	
+-				// (Quaternionr)orientation * (Vector3r)(c1)     : rotates the sphere center from local into global coordinate system.
+-				//                             + se31.position   : translates it, to stay in the x,y,z in global coordinate system
+-				se31.orientation*(&amp;(t1-&gt;c1))[i]+se31.position,
++	// transform to global coordinates, build Tetrahedron3r objects to make wm3 happy
++	Tetrahedron3r tA(se31.orientation*A-&gt;v[0]+se31.position,se31.orientation*A-&gt;v[1]+se31.position,se31.orientation*A-&gt;v[2]+se31.position,se31.orientation*A-&gt;v[3]+se31.position);
++	Tetrahedron3r tB(se32.orientation*B-&gt;v[0]+se32.position,se32.orientation*B-&gt;v[1]+se32.position,se32.orientation*B-&gt;v[2]+se32.position,se32.orientation*B-&gt;v[3]+se32.position);
+ 
+-				(&amp;(t1-&gt;r1))[i], // radius of sphere from first TetraMold
++	IntrTetrahedron3Tetrahedron3r iAB(tA,tB);
++	bool found=iAB.Find();  //calculates the intersection volume as a composition of 0 or more tetrahedra
+ 
+-				se32.orientation*(&amp;(t2-&gt;c1))[j]+se32.position,
+-				(&amp;(t2-&gt;r1))[j],
++	if(!found) return false; // no intersecting volume
+ 
+-				imt-&gt;penetrationDepths[i][j], imt-&gt;normals[i][j], imt-&gt;contactPoints[i][j] );
++	Real V(0); // volume of intersection (cummulative)
++	Vector3r Sg(0,0,0); // static moment of intersection
++	vector&lt;vector&lt;Vector3r&gt; &gt; tAB;
+ 
+-			if( imt-&gt;penetrationDepths[i][j] &gt; 0 )
+-				isInteracting = true;
+-		}
++	Wm3::TArray&lt;Wm3::Tetrahedron3d&gt; iABinfo(iAB.GetIntersection()); // retrieve the array of 4hedra
++	for(int i=0; i&lt;iABinfo.GetQuantity(); i++){
++		iABinfo[i];  // has i-th tehtrahedron as Tetrahedron3r&amp;
++		#define v0 iABinfo[i].V[0]
++		#define v1 iABinfo[i].V[1]
++		#define v2 iABinfo[i].V[2]
++		#define v3 iABinfo[i].V[3]
++		Real dV=fabs(Vector3r(v1-v0).Dot((v2-v).Cross(v3-v0)))/6.;
++		M+=dV;
++		Sg+=dV*(v0+v1+v2+v3)*.25;
++		vector&lt;Vector3r&gt; t; t.push_back(v0); t.push_back(v1); t.push_back(v2); t.push_back(v3);
++		tAB.push_back(t);
++		#undef v0
++		#undef v1
++		#undef v2
++		#undef v3
++	}
+ 
++	Vector3r centroid=Sg/V;
++	Matrix3r I(true); // zero matrix initially
++	// get total 
++	for(size_t i=0; i&lt;tAB.size(); i++){
++		tAB[i][0]-=centroid; tAB[i][1]-=centroid; tAB[i][2]-=centroid; tAB[i][3]-=centroid;
++		I+=TetrahedronInertiaTensor(tAB[i]);
++	}
++	
++	/* Now, we have the collision volumetrically described by intersection volume (V), its inertia tensor (I) and centroid (centroid; contact point).
++	 * The inertia tensor is in global coordinates; by eigendecomposition, we find principal axes, which will give us
++	 *  1. normal, the direction of the lest inertia; this is the gradient of penetration energy
++	 *  	it may have either direction mathematically, but since 4hedra are convex, 
++	 *  	normal will be always the direction pointing more towards the centroid of the other 4hedron
++	 *  2. tangent?! hopefully not neede at all. */
+ 
+-	c-&gt;interactionGeometry = imt;
+-	return isInteracting; */
++	Matrix3r I_princ, R;
++	I.EigenDecomposition(R,Ip);
++	// according to the documentation in Wm3 header, diagonal entries are in ascending order: d0&lt;=d1&lt;=d2;
++	// but keep it algorithmic for now and just assert that.
++	int ix=(Ip(0,0)&lt;Ip(1,1) &amp;&amp; Ip(0,0)&lt;Ip(2,2))?0:( (Ip(1,1)&lt;Ip(0,0) &amp;&amp; Ip(1,1)&lt;Ip(2,2))?1:2); // index of the minimum moment of inertia
++	// the other two indices, modulated by 3, since they are &#8712; {0,1,2}
++	int ixx=(ix+1)%3, ixxx=(ix+2)%3;
++	assert(ix==0);
++	Vector3r base(0,0,0); base[ix]=1;
++	Vector3r normal=R*base; normal.Normalize();
++
++	// centroid of B
++	Vector3r Bcent=se31.orientation*((B-&gt;v[0]+B-&gt;v[1]+B-&gt;v[2]+B-&gt;v[3])*.25)+se31.position;
++	// reverse direction if projection of the (contact_point-centroid_of_B) vector onto the normal is negative (i.e. the normal points more towards A)
++	if((Bcent-centroid).Dot(normal)&lt;0) normal*=-1;
++
++	/* now estimate the area of the solid that is perpendicular to the normal. This will be needed to estimate elastic force based on Young's modulus.
++	 * Suppose we have cuboid, with edgesof lengths x,y,z in the direction of respective axes.
++	 * It's inertia are Ix=(V/12)*(y^2+z^2), Iy=(V/12)*(x^2+z^2), Iz=(V/12)*(x^2+y^2) and suppose Iz is minimal; Ix, Iy and Iz are known (from decomposition above).
++	 * Then the area perpendicular to z (normal direction) is given by x*y=V/z, where V is known.
++	 * Ix+Iy-Iz=(V/12)*(y^2+z^2+x^2+z^2-x^2-y^2)=(V*z^2)/6, z=&#8730;(6*(Ix+Iy-Iz)/V)
++	 * Az=V/z=&#8730;(V^3/(6*(Ix+Iy+Iz))).
++	 *
++	 * In our case, the least inertia is along ix, the other coordinates are (ix+1)%3 and (ix+2)%3. equivalentPenetrationDepth means what was z.
++	 */
++	Real equivalentPenetrationDepth=sqrt(6*(-Ip(ix,ix)+Ip(ixx,ixx)+Ip(ixxx,ixxx))/V);
++	Real equivalentCrossSection=V/equivalentPenetrationDepth;
++
++	/* Now rotate the whole inertia tensors of A and B and estimate maxPenetrationDepth -- the length of the body in the direction of the contact normal.
++	 * This will be used to calculate relative deformation, which is needed for elastic response. */
++	const shared_ptr&lt;BodyMacroParameters&gt;&amp; physA=YADE_PTR_CAST&lt;BodyMacroParameters&gt;(Body::byId(interaction-&gt;id1)-&gt;physicalParameters);
++	const shared_ptr&lt;BodyMacroParameters&gt;&amp; physB=YADE_PTR_CAST&lt;BodyMacroParameters&gt;(Body::byId(interaction-&gt;id2)-&gt;physicalParameters);
++	Matrix3r IA(physA-&gt;inertia); Matrix3r IB(physB-&gt;inertia);
++	// see Clump::inertiaTensorRotate for references
++	IA=R.Transpose()*IA*R; IB=R.Transpose()*IB*R;
++	Real maxPenetrationDepthA=sqrt(6*(-IA(ix,ix)+IA(ixx,ixx)+IA(ixxx,ixxx))/V);
++	Real maxPenetrationDepthB=sqrt(6*(-IB(ix,ix)+IB(ixx,ixx)+IB(ixxx,ixxx))/V);
++
++	/* store calculated stuff in bang; some is redundant */
++	bang-&gt;normal=normal;
++	bang-&gt;equivalentCrossSection=equivalentCrossSection;
++	bang-&gt;contactPoint=centroid;
++	bang-&gt;penetrationVolume=V;
++
++	bang-&gt;equiavelntPenetrationDepth=equivalentPenetrationDepth;
++	bang-&gt;maxPenetrationDepthA=maxPenetrationDepthA;
++	bang-&gt;maxPenetrationDepthB=maxPenetrationDepthB;
++
++	return true;
+ }
+ 
+-bool Tetra2TetraBang::goReverse(const shared_ptr&lt;InteractingGeometry&gt;&amp; cm1,const shared_ptr&lt;InteractingGeometry&gt;&amp; cm2,const Se3r&amp; se31,const Se3r&amp; se32,const shared_ptr&lt;Interaction&gt;&amp; c){
+-	bool isInteracting = go(cm2,cm1,se32,se31,c);
+-	/*if (isInteracting)
+-	{
+-		TetraBang* itm = static_cast&lt;TetraBang*&gt;(c-&gt;interactionGeometry.get());
+-		// reverse direction of normals
+-		for(int i=0 ; i&lt;4 ; ++i )
+-			for(int j=0 ; j&lt;4 ; ++j)
+-				itm-&gt;normals[i][j] =  -1.0*( itm-&gt;normals[i][j] );
+-	}*/
++bool Tetra2TetraBang::goReverse(const shared_ptr&lt;InteractingGeometry&gt;&amp; cm1,const shared_ptr&lt;InteractingGeometry&gt;&amp; cm2,const Se3r&amp; se31,const Se3r&amp; se32,const shared_ptr&lt;Interaction&gt;&amp; interaction){
++	// reverse only normal direction, otherwise use the inverse contact
++	bool isInteracting = go(cm2,cm1,se32,se31,interaction);
++	if(isInteracting){
++		TetraBang* bang=static_cast&lt;TetraBang*&gt;(c-&gt;interactionGeometry.get());
++		bang-&gt;normal*=-1;
++	}
+ 	return isInteracting;
+ }
+ 
+-
++/*! Apply forces on tetrahedra in collision based on geometric configuration provided by Tetra2TetraBang.
++ *
++ * Comments on functionality limitations are in the code. It has not been tested at all!!! */
+ void TetraLaw::action(Body* body)
+ {
+-	return;
+-#if 0
+- 	MetaBody * ncb = dynamic_cast&lt;MetaBody*&gt;(body);
+-	shared_ptr&lt;BodyContainer&gt;&amp; bodies = ncb-&gt;bodies;
++ 	MetaBody* rootBody = dynamic_cast&lt;MetaBody*&gt;(body);
++	shared_ptr&lt;BodyContainer&gt;&amp; bodies = rootBody-&gt;bodies;
+ 
+-	Real dt = Omega::instance().getTimeStep();
++	for(InteractionContainer::iterator contactI=rootBody-&gt;transientInteractions-&gt;begin(); contactI!=rootBody-&gt;transientInteractions-&gt;end(); ++contactI){
++		if (!(*contactI)-&gt;isReal) continue; // Tetra2TetraBang::go returned false for this interaction, skip it
+ 
+-	InteractionContainer::iterator ii    = ncb-&gt;transientInteractions-&gt;begin();
+-	InteractionContainer::iterator iiEnd = ncb-&gt;transientInteractions-&gt;end();
+-	for(  ; ii!=iiEnd ; ++ii )
+-	{
+-		if ((*ii)-&gt;isReal)	// isReal means that Tetra2TetraBang returned true
+-					//                or Tetra2BoxBang           returned true
+-		{
+-			const shared_ptr&lt;Interaction&gt;&amp; contact = *ii;
+-			int id1 = contact-&gt;getId1();
+-			int id2 = contact-&gt;getId2();
++		const shared_ptr&lt;Body&gt;&amp; A=Body::byId((*contactI)-&gt;getId1());
++		const shared_ptr&lt;Body&gt;&amp; B=Body::byId((*contactI)-&gt;getId2());
+ 			
+-// you can use groups if you want for example a simulation that has different
+-// types of InteractionSolvers that talk with different bodies, for example
+-// if you want together TetraLaw (solving tetrahedrons) and ElasticContactLaw (solving spheres)
+-//
+-// I already have a better solution for that, so you will not need to check
+-// groups inside this function, but they will be checked outside. I just need
+-// time to implement this :)
+-//
+-//			if( !( (*bodies)[id1]-&gt;getGroupMask() &amp; (*bodies)[id2]-&gt;getGroupMask() &amp; sdecGroupMask)  )
+-//				continue;
+-	
+-			ElasticBodyParameters* de1 				= dynamic_cast&lt;ElasticBodyParameters*&gt;((*bodies)[id1]-&gt;physicalParameters.get());
+-			ElasticBodyParameters* de2 				= dynamic_cast&lt;ElasticBodyParameters*&gt;((*bodies)[id2]-&gt;physicalParameters.get());
+-			TetraBang* currentContactGeometry	= dynamic_cast&lt;TetraBang*&gt;(contact-&gt;interactionGeometry.get());
+-			SimpleElasticInteraction* currentContactPhysics		= dynamic_cast&lt;SimpleElasticInteraction*&gt;(contact-&gt;interactionPhysics.get());
++		if(!(A-&gt;getGroupMask()&amp;B-&gt;getGroupMask()&amp;sdecGroupMask)) continue; // no bits overlap in masks, skip this one
+ 
+-			for(int i=0 ; i&lt;4 ; ++i )
+-				for(int j=0 ; j&lt;4 ; ++j)
+-				{
+-					Real un					= currentContactGeometry-&gt;penetrationDepths[i][j];
+-					if(un &gt; 0)
+-					{
+-						Vector3r force			= currentContactPhysics-&gt;kn*un*currentContactGeometry-&gt;normals[i][j];
++		const shared_ptr&lt;ElasticBodyParameters&gt;&amp; physA(dynamic_pointer_cast&lt;ElasticBodyParameters&gt;(A-&gt;physicalParameters));
++		const shared_ptr&lt;ElasticBodyParameters&gt;&amp; physB(dynamic_pointer_cast&lt;ElasticBodyParameters&gt;(B-&gt;physicalParameters));
++		
++		const shared_prt&lt;TetraBang&gt;&amp; contactGeom(dynamic_pointer_cast&lt;TetraBang*&gt;((*contactI)-&gt;interactionGeometry));
++		const shared_prt&lt;SimpleElasticInteraction&gt;&amp; contactPhys(dynamic_pointer_cast&lt;SimpleElasticInteraction*&gt;((*contactI)-&gt;interactionPhysics));
+ 
+-						Vector3r x			= currentContactGeometry-&gt;contactPoints[i][j];
+-						Vector3r c1x			= (x - de1-&gt;se3.position);
+-						Vector3r c2x			= (x - de2-&gt;se3.position);
+ 
+-						// it will be some macro(	body-&gt;physicalActions,	ActionType , bodyId )
+-						static_cast&lt;Force*&gt;   ( ncb-&gt;physicalActions-&gt;find( id1 , actionForce   -&gt;getClassIndex() ).get() )-&gt;force    -= force;
+-						static_cast&lt;Force*&gt;   ( ncb-&gt;physicalActions-&gt;find( id2 , actionForce   -&gt;getClassIndex() ).get() )-&gt;force    += force;
++		/* Cross-section is volumetrically equivalent to the penetration configuration */
++		Real averageStrain=contactGeom-&gt;equivalentPenetrationDepth/(.5*(contactGeom-&gt;maxPenetrationDepthA+contactGeom-&gt;maxPenetrationDepthB));
+ 
+-						static_cast&lt;Momentum*&gt;( ncb-&gt;physicalActions-&gt;find( id1 , actionMomentum-&gt;getClassIndex() ).get() )-&gt;momentum -= c1x.cross(force);
+-						static_cast&lt;Momentum*&gt;( ncb-&gt;physicalActions-&gt;find( id2 , actionMomentum-&gt;getClassIndex() ).get() )-&gt;momentum += c2x.cross(force);
+-					}
+-				}
++		/* Do not use SimpleElasticInteraction::kn (as calculated by ElasticBodySimpleRelationship).
++		 * SimpleElasticInteraction::kn is not Young's modulus, it is calculated by MacroMicroElasticRelationships. So perhaps
++		 * a new InteractionPhysicsEngineUnit will be needed that will just pass the average Young's modulus here?
++		 * For now, just go back to Young's moduli directly here. */
++		Real young=.5*(physA-&gt;young+physB-&gt;young);
++		// F=&#963;A=&#949;EA
++		Vector3r F=averageStrain*contactPhys-&gt;kn*contactGeom-&gt;equivalentCrossSection;
+ 
+-		}
++		static_pointer_cast&lt;Force*&gt;(ncb-&gt;physicalActions-&gt;find(idA,actionForce-&gt;getClassIndex()))-&gt;force-=F;
++		static_pointer_cast&lt;Force*&gt;(ncb-&gt;physicalActions-&gt;find(idB,actionForce-&gt;getClassIndex()))-&gt;force+=F;
++		static_pointer_cast&lt;Momentum*&gt;(ncb-&gt;physicalActions-&gt;find(idA,actionMomentum-&gt;getClassIndex()))-&gt;momentum-=(physA-&gt;se3.position-contactGeom-contactPoint).Cross(F);
++		static_pointer_cast&lt;Momentum*&gt;(ncb-&gt;physicalActions-&gt;find(idB,actionMomentum-&gt;getClassIndex()))-&gt;momentum+=(physB-&gt;se3.position-contactGeom-contactPoint).Cross(F);
+ 	}
+-#endif
+ }
+ 
+ 
+@@ -178,8 +242,12 @@
+ 	
+ }
+ 
++/*! calculate terahedron's volume */
++Real TetrahedronVolume(const vector&lt;Vector3r&gt;&amp; v){
++	assert(v.size()==4);
++	return fabs(Vector3r(v[1]-v[0]).Dot(Vector3r(v[2]-v[0]).Cross(v[3]-v[0])))/6.;
++}
+ 
+-
+ /*! calculates tetrahedron inertia relative to the origin (0,0,0), with unit density (scales linearly)
+ See article F. Tonon, &quot;Explicit Exact Formulas for the 3-D Tetrahedron Inertia Tensor in Terms of its Vertex Coordinates&quot;, <A HREF="http://www.scipub.org/fulltext/jms2/jms2118-11.pdf">http://www.scipub.org/fulltext/jms2/jms2118-11.pdf</A>
+ 
+@@ -212,7 +280,7 @@
+ I checked &quot;a&quot; charcter by character and it is correct; it the author wrong (doubtful)?
+ 
+ */
+-Matrix3r TetrahedronInertiaTensor(vector&lt;Vector3r&gt; v){
++Matrix3r TetrahedronInertiaTensor(const vector&lt;Vector3r&gt;&amp; v){
+ 	#define x1 v[0][0]
+ 	#define y1 v[0][1]
+ 	#define z1 v[0][2]
+@@ -226,6 +294,8 @@
+ 	#define y4 v[3][1]
+ 	#define z4 v[3][2]
+ 
++	assert(v.size()==4);
++
+ 	// Jacobian of transformation to the reference 4hedron
+ 	double detJ=(x2-x1)*(y3-y1)*(z4-z1)+(x3-x1)*(y4-y1)*(z2-z1)+(x4-x1)*(y2-y1)*(z3-z1)
+ 		-(x2-x1)*(y4-y1)*(z3-z1)-(x3-x1)*(y2-y1)*(z4-z1)-(x4-x1)*(y3-y1)*(z2-z1);
+@@ -267,6 +337,57 @@
+ 	#undef x4
+ 	#undef y4
+ 	#undef z4
++}
+ 
++/*! Caluclate tetrahedron's central inertia tensor */
++Matrix3r TetrahedronCentralInertiaTensor(const vector&lt;Vector3r&gt;&amp; v){
++	assert(v.size()==4);
++	vector&lt;Vector3r&gt; vv;
++	Vector3r cg=(v[0]+v[1]+v[2]+v[3])*.25;
++	vv.push_back(v[0]-cg); vv.push_back(v[1]-cg); vv.push_back(v[2]-cg); vv.push_back(v[3]-cg);
++	return TetrahedronInertiaTensor(vv);
+ }
+ 
++/*! Rotate and translate terahedron body so that its local axes are principal, keeping global position by updating vertex positions as well.
++ * Updates all body parameters as need.
++ *
++ * @returns rotation that was done as Wm3::Quaternionr.
++ * @todo check for geometrical correctness...
++ * */
++Quaternionr TetrahedronWithLocalAxesPrincipal(shared_ptr&lt;Body&gt;&amp; tetraBody){
++	const shared_ptr&lt;Tetrahedron&gt;&amp; tShape(YADE_PTR_CAST&lt;Tetrahedron&gt;(tetraBody-&gt;geometricalModel));
++	const shared_ptr&lt;RigidBodyParameters&gt;&amp; rbp(YADE_PTR_CAST&lt;RigidBodyParameters&gt;(tetraBody-&gt;physicalParameters));
++	const shared_ptr&lt;TetraMold&gt;&amp; tMold(dynamic_pointer_cast&lt;TetraMold&gt;(tetraBody-&gt;interactingGeometry));
++
++	#define v0 tShape-&gt;v[0]
++	#define v1 tShape-&gt;v[1]
++	#define v2 tShape-&gt;v[2]
++	#define v3 tShape-&gt;v[3]
++
++	// adjust position (origin to centroid)
++	Vector3r cg=(v0+v1+v2+v3)*.25;
++	v0-=cg; v1-=cg; v2-=cg; v3-=cg;
++	//tMold-&gt;v[0]=v0; tMold-&gt;v[1]=v1; tMold-&gt;v[2]=v2; tMold-&gt;v[3]=v3;
++	rbp-&gt;se3.position+=cg;
++
++	// adjust orientation (local axes to principal axes)
++	Matrix3r I_old=TetrahedronInertiaTensor(tShape-&gt;v); //&#8801;TetrahedronCentralInertiaTensor
++	Matrix3r I_rot(true), I_new(true); 
++	I_old.EigenDecomposition(I_rot,I_new);
++	Quaternionr I_Qrot; I_Qrot.FromRotationMatrix(I_rot);
++	//! @fixme from right to left: rotate by I_rot, then add original rotation (?!!)
++	rbp-&gt;se3.orientation=rbp-&gt;se3.orientation*I_Qrot;
++	for(size_t i=0; i&lt;4; i++){
++		tShape-&gt;v[i]=I_Qrot.Conjugate()*tShape-&gt;v[i];
++		if(tMold) tMold-&gt;v[i]=tShape-&gt;v[i]; // this may have failed...
++	}
++
++	// set inertia
++	rbp-&gt;inertia=Vector3r(I_new(0,0),I_new(1,1),I_new(2,2));
++
++	return I_Qrot;
++	#undef v0
++	#undef v1
++	#undef v2
++	#undef v3
++}
+
+Modified: trunk/extra/tetra/Tetra.hpp
+===================================================================
+--- trunk/extra/tetra/Tetra.hpp	2007-05-06 13:05:29 UTC (rev 1159)
++++ trunk/extra/tetra/Tetra.hpp	2007-05-07 13:55:07 UTC (rev 1160)
+@@ -50,13 +50,21 @@
+ 
+ class TetraBang: public InteractionGeometry{
+ 	public:
+-		Real volume;
+-		Se3r overlapSe3;
+-		Vector3r inertia;
+-		
++		Real penetrationVolume;
++		Real equivalentCrossSection;
++		Real maxPenetrationDepthA, maxPenetrationDepthB, equivalentPenetrationDepth;
++		Vector3r contactPoint;
++		Vector3r normal;
++
+ 		TetraBang(): InteractionGeometry(){};
+ 		virtual ~TetraBang(){};
+ 	protected:
++		void registerAttributes(){ InteractionGeometry::registerAttributes();
++			REGISTER_ATTRIBUTE(penetrationVolume); REGISTER_ATTRIBUTE(equivalentCrossSection);
++			REGISTER_ATTRIBUTE(contactPoint); REGISTER_ATTRIBUTE(normal);
++			REGISTER_ATTRIBUTE(equivalentPenetrationDepth);
++			REGISTER_ATTRIBUTE(maxPenetrationDepthA); REGISTER_ATTRIBUTE(maxPenetrationDepthB);
++		}
+ 		REGISTER_CLASS_NAME(TetraBang);
+ 		REGISTER_BASE_CLASS_NAME(InteractionGeometry);
+ };
+@@ -158,7 +166,10 @@
+ 
+ 
+ // Miscillaneous functions
+-Matrix3r TetrahedronInertiaTensor(vector&lt;Vector3r&gt; v);
++Real TetrahedronVolume(const vector&lt;Vector3r&gt;&amp; v);
++Matrix3r TetrahedronInertiaTensor(const vector&lt;Vector3r&gt;&amp; v);
++Matrix3r TetrahedronCentralInertiaTensor(const vector&lt;Vector3r&gt;&amp; v);
++Quaternionr TetrahedronWithLocalAxesPrincipal(shared_ptr&lt;Body&gt;&amp; tetraBody);
+ 
+ 
+ #endif
+
+Modified: trunk/extra/tetra/TetraTestGen.cpp
+===================================================================
+--- trunk/extra/tetra/TetraTestGen.cpp	2007-05-06 13:05:29 UTC (rev 1159)
++++ trunk/extra/tetra/TetraTestGen.cpp	2007-05-07 13:55:07 UTC (rev 1160)
+@@ -54,10 +54,10 @@
+ 		v[1]=Vector3r(0.75523 ,5.00000, 16.37072);
+ 		v[2]=Vector3r(52.61236, 5.00000, -5.38580);
+ 		v[3]=Vector3r(2.00000, 5.00000, 3.00000);
+-		Vector3r cg=(v[0]+v[1]+v[2]+v[3])*.25;
++		/* Vector3r cg=(v[0]+v[1]+v[2]+v[3])*.25;
+ 		cerr&lt;&lt;&quot;Centroid: &quot;&lt;&lt;cg&lt;&lt;endl;
+-		v[0]-=cg; v[1]-=cg; v[2]-=cg; v[3]-=cg;
+-		Matrix3r I=TetrahedronInertiaTensor(v);
++		v[0]-=cg; v[1]-=cg; v[2]-=cg; v[3]-=cg; */
++		Matrix3r I=TetrahedronCentralInertiaTensor(v);
+ 		cerr&lt;&lt;v[0][0]&lt;&lt;&quot; &quot;&lt;&lt;v[0][1]&lt;&lt;&quot; &quot;&lt;&lt;v[0][2]&lt;&lt;endl;
+ 		cerr&lt;&lt;I(0,0)&lt;&lt;endl&lt;&lt;I(1,1)&lt;&lt;endl&lt;&lt;I(2,2)&lt;&lt;endl&lt;&lt;-I(1,2)&lt;&lt;endl&lt;&lt;-I(0,1)&lt;&lt;endl&lt;&lt;-I(0,2)&lt;&lt;endl;
+ 	#endif 
+
+Modified: trunk/gui/qt3/FileDialog.cpp
+===================================================================
+--- trunk/gui/qt3/FileDialog.cpp	2007-05-06 13:05:29 UTC (rev 1159)
++++ trunk/gui/qt3/FileDialog.cpp	2007-05-07 13:55:07 UTC (rev 1160)
+@@ -36,7 +36,7 @@
+ 	const QString f(filters[0]);
+ 	
+ 	shared_ptr&lt;FileDialog&gt; fd = shared_ptr&lt;FileDialog&gt;(new FileDialog(d,f,caption,parent));
+-	for(int i = 1 ; i&lt;filters.size() ; ++i)
++	for(size_t i = 1 ; i&lt;filters.size() ; ++i)
+ 		fd-&gt;addFilter(filters[i]);
+ 	int res=fd-&gt;exec();
+ 	selectedFilter = fd-&gt;selectedFilter().data();
+@@ -51,7 +51,7 @@
+ 		
+ 	shared_ptr&lt;FileDialog&gt; fd = shared_ptr&lt;FileDialog&gt;(new FileDialog(d,f,caption,parent));
+ 	fd-&gt;setMode( QFileDialog::AnyFile );
+-	for(int i = 1 ; i&lt;filters.size() ; ++i)
++	for(size_t i = 1 ; i&lt;filters.size() ; ++i)
+ 		fd-&gt;addFilter(filters[i]);
+ 	int res=fd-&gt;exec();
+ 	selectedFilter = fd-&gt;selectedFilter().data();
+
+Modified: trunk/gui/qt3/QtEngineEditor.cpp
+===================================================================
+--- trunk/gui/qt3/QtEngineEditor.cpp	2007-05-06 13:05:29 UTC (rev 1159)
++++ trunk/gui/qt3/QtEngineEditor.cpp	2007-05-07 13:55:07 UTC (rev 1160)
+@@ -115,7 +115,7 @@
+ 	
+ 	enginesVec.push_back(engines[next].engine);
+ 	
+-	for(int i=0;i&lt;engines.size()-1;i++)
++	for(size_t i=0;i&lt;engines.size()-1;i++)
+ 	{
+ 		next = glEngineEditor-&gt;findRelationStartingWith(next);
+ 		enginesVec.push_back(engines[next].engine);
+
+Modified: trunk/gui/qt3/QtMetaDispatchingEngineProperties.cpp
+===================================================================
+--- trunk/gui/qt3/QtMetaDispatchingEngineProperties.cpp	2007-05-06 13:05:29 UTC (rev 1159)
++++ trunk/gui/qt3/QtMetaDispatchingEngineProperties.cpp	2007-05-07 13:55:07 UTC (rev 1160)
+@@ -191,10 +191,10 @@
+ 
+ 	vector&lt;vector&lt;string&gt; &gt; functorNames = mde-&gt;getFunctorNames();
+ 
+-	for(int i=0;i&lt;functorNames.size() ;i++)
++	for(size_t i=0;i&lt;functorNames.size() ;i++)
+ 	{
+ 		pbAddClicked();
+-		for(int j=0;j&lt;functorNames[i].size();j++)
++		for(size_t j=0;j&lt;functorNames[i].size();j++)
+ 			((QComboBox*)cbs[i][j])-&gt;setCurrentText(functorNames[i][j]);
+ 		engineUnitParameters.back() = mde-&gt;findFunctorArguments(functorNames[i].back());
+ 	}
+
+Modified: trunk/gui/qt3/YadeQtGeneratedMainWindow.ui
+===================================================================
+--- trunk/gui/qt3/YadeQtGeneratedMainWindow.ui	2007-05-06 13:05:29 UTC (rev 1159)
++++ trunk/gui/qt3/YadeQtGeneratedMainWindow.ui	2007-05-07 13:55:07 UTC (rev 1160)
+@@ -88,7 +88,7 @@
+ &lt;/actions&gt;
+ &lt;images&gt;
+     &lt;image name=&quot;image0&quot;&gt;
+-        &lt;data format=&quot;PNG&quot; length=&quot;2162&quot;&gt;89504e470d0a1a0a0000000d4948445200000060000000600806000000e29877380000083949444154789ced9c6d6c1cc519c77f73765a5f8ccd39a82aa46d8249292f2594d05050548252b041101081f22240a2c5b1a005a91fa8faa1524b5fbe140921fa425bd55811127c20808810222882a0004584f21a486822040d90a46a28b9ab49623bc4d30f771be6f6766766f76677ef7cfb9756ba9d9d799e679fffce3333cfce1e7428a6a6a664d6360088ac0d481b52ca3ac70b2132f5414711e039dff3b9c7459624740c017ee72be5d4ca33f145471010e67ce53ab5eba9fb63d6136072be528f5abd547d5248535956b0f169b1584cc19246e43da0be2eb5baa9f965d61300ad4d42471000ad4b42c71000ad4942471100ad474247cc825478cef46524c2ea266e4fc71100d148a8d54b2c71d7712148452b2cd23a9a00c89e848e2700b2252127a086ac48c809509005091d390b0a83edeca8afafcf9d4e679266116c7a82ab5e90131082b448c809d0200d1272020c489a849c000b2449423e0bb280cdec28ee3090136009db296ad4c45d1e8222c2f516979c80187049421e8262c073ecdab56bc3aedbcb4af265c36c47a552a15c2e075e5bb870a1950c01e40464883c04658c9c808c91139031720232464e40c6e84!
+ e5359dfe0511c7fe520f3571cc7bcc50314bf5c44140453fba6a86cafb0fbd93dec58b38389f73f4dd3ac4c117b1d605a6c542a15fafbfb01d8ce3f59cf7ab6b1d528b740812186b99c5574d165d4d52acb18d3aa38b45d1c652a6926e70821c4a81c89e3a587816bfec67d33363a62c8770629a5d411a0b32fd618206af014988c534e3701b700a7037dc01ce0386015b0d1d7f42ae0c771ec6b273435060821b4214c08e111f414f0d331311e1483fe0dac03d68dca91df00bf50aedd718843cd98d8f268baebba4ecf8eca918dc00aeffc666e61a9384ba7bff342900ad3cdc7f0cd1fd5936d6c8bdabeade06c1de07036f2927af2211fba92db927042804d088830ddddab9e7cc27f63d9d42e48652126846046ce302a47ce0756024b8141e018e08b68c6a2fdec4fc3c4cc900a01c72e3f965ff14b80a7a3b63dcc612736b4ea8ba7c40938e1ea41861eba803dec495a55206c178d59c10901614f57ef825ece5bb39c1966d4e2ddc018d545d9bbc0c7c0e498183f2223e6ca39d4ae5674bc07673d20e8264ffbc937e99e5ba7620bb0624c8c7f122667548e38d9fbdd0ece0707b3205d6cfdeaf057fc453fd339bf86f9ae6c6a75e7439304986eb47f51bfbfe8450bb167276953ab217608b2b9d1427703bf36899d1be2dae4c1caf90501170fc3aa95f09d6fc3c2afc1d!
+ cb93039091f7c042fbf0a0faf83273724ba6fa48180a090a2643efd7f78a71!
+ 57e70ef4
+17ae7f7aa4567a2e905a372641818d20ad5c07aaaf9bde570ef5d70f2371aaff5f6c22927558f1baf83d7df841fde0a6fbe1dd72c2d0243901002210403030340f5c6d427de3b4cf8eefc73fd45bf1e95235d417547e5c862e08108b607c268d7edb75178e6f160e70761c9b728bef1021be43452cac887d15e7f812eb31705524ab6b0853ff107ffa54dc06f81cdc067c022e05ae076a04835357db9da604c8c6bf5a86971aded37ff00fe7a8f5a72982ae90f02af0315e04b54b3b13f074e55ea4e0067224aef862b888e4409a8bd0d7b0c9f4335788fea205c970fb225406bf7a927f185ad9b99febca40c5c86283d1f2cb8dc03ac052e554a37204a179a6e220a12d915e1eb7a37008f5a347b1138774c8c7f9c844d976c7d55753ec075a1ce0710a549e07ae023a57418595ee2d22ea704a871cf1bb8c7c4f8fe3131fe7de022e021e003600a9806fe45f5ddef15549dbfdba53d47f0f5419ee433b5e4694469bdb19d284d00bff7955eedd0b2462803aef5a122097b4cba4df5ee94931259568f9bec0d282ff6b57dcee5fd35f400dbd77b3b77ee6c78e25dbf1a7445e8f3f54f3fc06b119abfef3b3fb1396bea117b213631310124f7775e2e57b4efd42703015e41d6edeb1716bf3dcc6bda208382487f5a910401519c6f330bea9565b7af7544c9d93d872dc4ac15b88e!
+ fb49e4720e3a93e41eda10547bba42af7bfb7e6a4f5fe25b5ce2a21bfc53d0a311a5ff39551213a1d350ebcf2c3fff2ffed83dc19fea708de9dd0d6fe316b8922d0d30b537ae03acf2190a0951a6a37ec7279642ded1903d38c78558bfedfe43ad13062d01b6fb3f5523fc093cd3d391a8e33dfc7db3bf6465b3226d7aac8be87044806ea193e5e1dd9cd6c63316fb1762879165cb7468f3fed04505ab5444949e9015b463d61b6fc1a617d49202703fb23ca7097d89d4d5228b9eb06fdf3eab1e60b46fc9e992e9bdfe9ef038b27cb4f9c6cb02591e4296377a7aa2de47580f884c8d4dec7301d5de281f6848a9494bffe826f8f3ddfed2ff007f019e00b603fb811eaa9b034e03cea39a4e3fbe6a4cc99cfab6b0d343a25fc8c48527de26cf1f4480d6ae5b57c33dbf83ee985918c70438f942464a494f4f4f1c5175067a87a723ae6d9ebc40dc7b1f2c1b8297fe1145ec21e01160591c9b7470f2f806c537db3c8eaf4de43774614f9655a83c67295c79192c3b1b160dc2bc01281418e8ea66018233e8e27cbab99439947caeca34045928b39e2e999ef4b804a87664bd4748d7ab13d99c9b548a3a2abc31441a725a69d912543eebbf94f78f5569c3a473d61300c19386346033a148f5af0ab2864242dd30954478dab56b579dce307414011efceb8624c8b095d31283a50e!
+ cdcc82e2e8d25d2f168b4c4e4e469167fe8cd75a5a46489300931d61d7c2d4!
+ e7638043
+98d61a216df259502b4047524e8003e89e725374cc096812b6e34f536fc4729861d30b8248c80970009b5e105625272065f87b414e804398a69c41bda02dd601adbc1bc38397fab6a95b5b5c0a688395703bc1f60590ba42ce439043d8ee9f52096a8b10d44ef042d1ead5ab8d750f1c3820ff0f60db45be5b9b3ea10000000049454e44ae426082&lt;/data&gt;
++        &lt;data format=&quot;PNG&quot; length=&quot;8789&quot;&gt;89504e470d0a1a0a0000000d49484452000000640000005a08060000004e92f3890000200049444154789ced7d77705cc799e7af5f9a08609033884010004112600e12492552a4485a96759625cbe96c9f6bb7ee7ce53bbbb6ec3ad7595edddaebddf5da656ff0aed7f6d9b2d2fa646b152c2a52a2c49c4180200812390ce2e4f4deebeefbe3cd43180c801912b455a47f55af08ce3cf4ebd7bffebefefa0b0dc239c72d0c32e3670b8032c6f8defdfffd178fb7778f3601b026dc1f9324e1d2b7beb4ebf94fed5bfb32806e003100e620ddf4c1126ef603fe884824a3786422b0f9135f7ffacecb3da3e500e424bf23e93a2bfed7174e6ceeec1b5f0fa00880324f9b3705b73221261400c5472ff46efdf4379fdf7ff6d2e066ce9107404c72af08206760d4bbfe2b7ff3d2037d6eef3600c530083571534921b7b0ca223006b8f0ad139d77fee5bfbcfde0c0a8771be728c6ec599f0c2a21185e555d74f4a51f7dee15004701b861a82f133765e06e7509910194fffc77a7b60f8c7a37a7480600289ca3b8ad6b64db5ffcf0f7fb006c015080e46a6e4921ddec07fc91210270750f79ca39472e5223c384c2382f7ef150db16a75d89feef2fdd17041005300180c190c02597925b5d420c5cbfd657349d16fffad5731b7ff!
+ 0ebf7b702a8806199992d2ef97a72ab134201781b2af3fb09c10400f53adab0683a2d7bea95b31b0e1ee968c64db6bcc4279e786229dbfb30c15429b4a42013c75bfa9dfe50341b801dc92dac85da91a3aa6e3b7369506eac2e0c9717b9bc0022300837ef5912dc0e84c44a0bb2fcab9617454eb4f4d97da1a80be9932200b00623aaeb584b9fbda9b6385c5290795348b9d509018c018b9416647aeb2af3c3272ff6dbfda1d8f5902202b0072331d7c0a8cffef0bdabc300969c945b9910208194f22297b7a9ae387cec42ef0d913230ea73b5778ddaf6ef6808c1b0bac2302caf1bc6ad4e0890404a497ea677c5b2fcf0a9b61b93949ea1c9acee210ff66cab1b01308ee94de30d49c9ed400890404a4591cbbbbab6387cf442af3d709da4700e4bd7e0a4e0b0299eb5f5a56e00012c81eaba5d080192484a5d657ef8e40d480a655cb9d0312ce4baecbec69ac24918aaeb8648b99d080192484a634d61f8584bdff5480a01a0c4543de3646bbfa5bc282bb26259fe0d2ff2b71b21400229650559defaaa82f0a9d601bb3f7d935804608ba9baeb4aefb8fda37735862d8a7443a4dc8e840049acaf86aafcf0f18bfdd723292200bb2710719dbcd86f3b70d7ca882c891e5c2729b72b2140a2a414babc0d5505e113add7b5a68800ecee8940f6f1963eeb23bb9b42003c309c9!
+ 16991723b1302249194ba65f9e1e317fbec81f07591621bf38432fdc1a8b46!
+ 37db51fc
+0240c4949d92b7cbb1302ccb3d09fb84e5218e7b6b66b238e4854a77734578ec19014d3a9b9a894fc89100309ea2bcb5b5f59103e7d29ed859e009028e3d696ce61d96e5502ebea4b4790c61ee54f844c638efa5a5b5f1a3edb3e64f7f8232e7e1da4b4778f0a759505fe65c5d929ef51fe44c86ccc22a52837c3bbaaa6287cf1aadb3eee0da5232902004b38aa659c6d1fb434d515478af352f30eff8990b998454a715e8677ef1df5e19317fbeda393c17424450460f305a3ae536d03f6bb37d684b39cd64549119f78e20912ffe24fd7ec0122f1818bd82cb2f7de4dcb232d9dc38ec1315f0ed223c5ee0f465d03233efb819d2b67baeccdb8bcf92c028010ce79460a0ddfae30074c01500260c7e3ffebd98f9e68e95b4719cf42ea21705514c8f047ee5a79ecefbf7ae015002760b8ed29124c62e9e0918eed4bd4f93f1c6e340c947aaec8f40c26b0720eebce75d5e18e9eb1d884379c4ec68942192f7ef9bdf6ad8c7361f79615398240fac1a125f6862c3ff0bddfa7d1f075c14ea290a1030036c9adf1ff1b9343878809e642ab5e0306012a6444b865e106fff030558a1d401165ac98733890fed4500542c605810cc0505d0c8912a253765324a4441cc76af91a9aa44ed4497dc8160229fdde28cbc635bd1427b59568d3aa31ceb26e46f7d2c54c5d2fc5afeb915385!
+ 715ec828cfc1f4c23e9b1000ceebed6522088062711c0fdb0e61b37c0976124dbb8d02c18302c583ad4a2b7cdc810f624d782e721f42dcb654ddfc6343c4020601a97ce0bb4b967db7cf72149f75fc1ed214f9538f010801270484082064c65ac83918372497700e708e44251fe2367c3ff818ce6bb54bd5d50f2d2400c114ef3545548491e33ac5b242347cda7e107b2c2720ce2283004400916410d90651b650225b34228834de1ce79c014c274c8b816b5191e9aacca926824dab570789e06bcea7f1dde067d1a6552dd64f0a40c33c2a618931ef98a480a4fd942c8af47e1a0f1738e72e55a36500f210cfe0dba99cc3fd96131012122f1808625c464075402579b4b06acd644979599f205b270d52c019d5c06321a24ef409ba7f344b0f4e96d0d0640e8b85ac4c8b89e0469b7612c3579dcfe0cbdeaf22c413eb6ca6a04992302e0a423f001f9298954b0c8278fe30a5ac42a72c17a9e54b5300938a2cf611422667f653fad5939ff887141f4d00c893be70f93ffdfbf13b5baf0e6fe01c85b982dfbad77a5c645c8048a609e120a05c809767e090be0947022bb5f2ccea81e7bffe670701b400084ddd0a10ce99ec6b7dbb247ce9ede660c7fb2bb5c9fe6a3d3091cbb4a86292e22241ecb29cc08bd19dc97ac800781fdfdb7cf6813b1bde2104dddcf0b2ce2564e92822!
+ 001410d4feeeedd65dcfbd7e613d8054f6279a55917affeabfed79a5ac28ab!
+ 151c51b3
+57d2a655e5e94888082077cfb6bab12f7efbff798eb7f4ae5927742d57889e4308c444b3e3b4568f5f47f6c04d73c1018c77fbe9abefb77bf66d6f68033084e99941081104d7ea5d59aed5bb5a3d675f5e3df9ce4fee89f4b76ce1feb1424e5511f13a968d4a3b5e89de097dae76d0018c5614659fd9b4aafc3d003dc05c3b7f89416014f38c9f6aed2f07500320038b1342055198bc7b634d5b76a6ed288cc9691082f4d7900880e8bf7deb3f8d1c39d93a201dbef8a0dcad64086141e4faf4cd3db4183f0e7d1c513e95972c6b1a2bfc8f772f2ddfb7bd211346fd9e3933ccb6430026b3d71d18e56a58d47fff77a52c1acca1114d34c7b54eea47b610c0187325f68f010812825118bb603ffe302a4b8d3fcb8fd9f5880b8123ee9681f1ce41cc2024dd0ec7008c005037aec8cf19f860627b8850aac7d50a07018380a7c27b66920118d295d9d9375e8269b14e34a9f47807dd395b3ed1e33bf99b09cd3ba4b158c8ca298b8fc0bcdde530483117cac4b649fc99e6e27ba3fb7db34d0b80ccf86549b35d9e70a555b0337326eb0022b1b1ae10a32c1a88119d5309120744423148f3e6335145f778407eff6cb7b07d5dd5cc8e9b0347e23f6b0042b68aa640a4f77c0c44709acf5e80908520c1a8eb70c12827c81ef784a4d3ed03b8c18a3e0240e19cd75ee91baf8fb77f432!
+ 51ee95650cd1c389d30ea0bd9cb862ec786fd926e77e610bf982984714a6b98b701ca3874ba681a2c07102316479048b24a08611c444c419813cb978d45d7b008abceb60fae78ed48c79af7ce74957bfc11ab2f18c50dd6584e59599cf30aa4b67e2c881b2969d39d75778ef4f74997ffe6cdea0d9acef20b45af6843187ee6b8913e9910c098c8194b748ba70a938c627f30baf9c99fbebdf38d639d2b03e16839e7c8c6d294f3ddc83e2429aea753b30647151cd029c038c1b09e0d203bcd16e60cb6399019da445f36d7a236ce194971a933db12e26d14bc7ef4cad6bffab777f60f8efa3633ce0b60a8aea55a43961ce9109218bcb102283f7aa1b791715e88342a54394f1a1032175c054051a0f37875b8e74c218b852c60349dc19b928c57dfbfbcf95b3f7963ff8437bc1548b902f78f8a74bc9633679f0540d107e7ba1b0f9dee6ae01c3948310180838b00b70198a9d704184ece4200059eb32f2ff71ef9d54e6d72a082a96185f3944a2f4c2bca06a0f48d6357967dfb5fdedc3be95b5a3208e100e1008f9b177c69054d4af879313d68be70f1b10bbdeb9efce93b777bfce16acc3d33643e88590e6b4eae536e84a183a2aa7704d1914e599b1cc8d726faea233da7abd4d1ee62cde7aea0c1c93cc37d92b2ba72708eea23e77b32befea3d7d678fc918db801329c7!
+ 91e589d6114d577c3e28880081ccefc49d83283e04c4460cc85a8df088ba81!
+ 12b86da6
+aa0452df08fe45ecfe3004c13a200c88bc4b4f2774f5d737140a8adc8436d455ee2fd2200d73f3e7f74c52f5f3eb37edc1b5abdc0311553a89606914bfc5021c95bb3a2cb5ce7860e0c9c8edca1fb47290d79c0b488c06221278b850a592c944363212b57a30aa76a2a96d5cc772918f785b7bdf5fc51ee0d444a30c3df962a2cce304a1bafa262dd2564154e40b2ce5fb8ebc8f1cefaff8a1da7417509bee13cb82f57a1ff423d82e37336b08bbe840820efdfdf68d9fac3673eb86bdc132ae7e0b2459690e9b4625d7d29f25c76ce3927e7da8784fe51afcd1f8ce531ce8b609879b3d68e1cc18f15521f56495d582f77c02504a04142845ba042167360cf099d953338d528a71a38d501cec03913c0b90042380161902d1a0801f498c819450a52220070bd71f48abdd7ed1138878234d6485b6610b53bcea07a730b445907b8b1c9e54c309d3b00785c6501f34d1451d29153ee464eb91b0df71e8767b0101def6ec2c89565a0dae2dd31d554f9af7f7f76a77bdcbf8b73140210755d4528a2e2d531ffccfb4d3d2dc67f77cae6ce11fcd8673d8abb2d67e022d3de180e02110c32a1104409161a13f48020811042884041044e44990b92a211d91a1014bb5b90ad01d191eda4115f4574a03587458312e7893196392000946b031332d2b4a02a9a2f63f5bec3b06618fe4ece!
+ 09c0444ab8a259441b150509b224824203e51aa15c13295765ce99c0c1c0e72187081c39e56e6c79fc654cf496a0e5d59df00c142ed81753425cc363818a381969c74c775acee1f3f6579041c2539f711070104010191164cd225ba964b13251b16a44b2f8896c1917649b4f506caa60cfe25246be2ebb8a4694c2da36a568c55846cda66543bff9e66e6da27f2d53a31969585a29932188146bf6bf87eacd2d20427c5039814414cdae648fbb94e2fe7c4bb54f111c14e088d20002faa814a1feec28f3154568c0a5b1b095725de40bd47c12c2915d3e820d8fbc8e8e439be8e0c5daa8c32a47b29cd6b9592730e31ce0d7b5b1d96d39892fd85f864c4ccfa2111d14240b152cf6a868cbf48af62cb768777944bb4bb316d7474487cb2d3af3aec9b9e503a23d276c5fb69a099285c1c88175c3703ad68b8eec2ac1e2a82182e04871a79e169a1f3c84aa4d17677d260a22b58b5913a5b6c6935b5d9f3dd4e8babf17862b0700d0133c6d75c72e97f745ce340d442eacf4e9c3d5511ac8669c8bc925c5502a9c8a9480478beabb262541b9b6bdecc14b8230150b99c294521348fae6db4ecb397cc1f1f2544609404024990b16872a65e44fc8d925ddb6f235576c551b5b6c55ebfbeda50d514c7b47c7610491cc5573a6735004302128d6312229211081610976c12688c0d0b4!
+ ffbd396410100844d6eda26bb03163ef9146d7fd6fc308134cf9b12b9d1ba4!
+ 4ae786dc
+2df8d4d556cf1be3af8dfda55d65e10cc6f539fd231020109129a2232a11d764a62dbfa73c776dfbeafbf79d7ef08e2dad0066910ddc80fb205b08e04bf6ff98438668cb8a2a7915438e15db4f65ae7fe8fdcc861d9700f4c348cbd7610c3a9d71253b3e8f181d253110a2638945a36c7527aab75e48fa9d0849b7880e4f9e5cd5036018c6a449ec9b0e207b52ef5575ae0b48a2260904488245b389591e975cd253666b6a5d5ff5c8a965ce759760103181d9053d00a6ddefdc6153e8982794f28bdfa59c858d4c9fe745040182c5a12a7915838e750fbf5ff6d16f1c047006c0d88c072f7476e14c87e08c4f97564d89b28ea68fbc67584bf382804f675b24baf16500b957fd47565e0ebeb94665c17cc6a964aa2b02024244c8c4aa3aa53c779ea5f26c63c6de23db723f771ec055cc26624e274c42229b5757787b863c11183be8453d961b95f619fd2720a24c2547ce84a36ec7e93819c7018c22791875b151260024ce99159c4986d9b334a8587b19164768deef19a8a8b1a8cba3f595c270a70760480481414601800da7fdcfdd37a9f5af89b2a08b712a189d261088c42c8233962917ba4bac8d2736643dfada8acc1da761485b28ded6ccf79fb3a8eb00c6ca0bb2ae890219a38cbbb0c866aa509844b93832e3130222299ae8cce9cf58b3f7080cc918c1ece3905299e!
+ a33dd330eaec5b299aeda8dcdc0d2a0a2b97dc1ef19d7e5180b140f465bd6008f5f80b1d6856190510860fdebeeefed1e8ab46d0ae91385946bb261530a900445b30a993e975cd25765df74fedefcfff99643ce3e01830c15b38fdf483a1e020c42c6efd954d369b5c8a348586492c14a54386624c111424024854ace3c9fbd7ac3000cb19cd94e3a649833314b1bebcae75ad4c9a7766737065b5600190593f37ecfc1c140c5280db806a3ad7517bc2f35c248b2ce07b09c73b6fdd5e1270f5c0abeb5ddab0d95aaccf0b30944e216c111cb940add45d6ba136bb31e7ef123254fbee890b3cfc1588384f895e8a09d23f9120cd6c20dd585232b96e58d9cbb3c1486e1af5a70567290d9d13b227041b151d9913d33840aa44786d927576c72b0223adc51c862e174bdbdf3c29e1d80c51159f01ece195416b1fab4e1aa53dee7efb6916c098478dcb1f6657d91d31bdcb1f635017dac4865210b072792a0508be0083ba5fcd17ca5e6c2daac8fbdbbc6b5bf0dc63a510ae3143a3f0c6bcd0323043e536d91193f4f59592a80d19debabafb55c196e8aa7da2fa8b6e6845239234c8f89548dc8a26233e30d1c090f4cdad43424187a7ba5e7f02f366a9ec1b234bcbd8b62ca53bb00383828d7c4109dcc1b8ab66e7d69f49b152291233a8b664759b028c6422eca558910915a892!
+ 366175dde2cb978a0cabea97f63d6677a78348b1ebbd053d5d2e92e191e0fd!
+ 470ce330
+82123eb57965e38b06365070c0b6ba6a133730cb849880e60f44b0f6f6e7fe6b5f383a393c132186a23e9cc6410a0439c4a19e59c83ebaaa8fb47b3021d1f94b956efca85915131b3fa34712412c55706900360e5d8dbffbcc3df72709d1e18cfe3ba9aaab777c9c0c1a0b39812e6938551eacf211038c00500824024dd2664852d6286d729e50ee52955c32b1d0f8c84872bc5ef3d77bee6f099eed5fe60d4aa51964319cbe71c16421078f6e0f935fff0dcd18ec7f7ae3dfe9903eb4f02e883b136995b0100d312c200046c16b97bdff6fa2bbf7ce94c0de3dc8a79824e03341fd7f452d4497d53afc07555d603e365c196835b5dab770dc310cd31ccbf26cd0c7f5a61e8e9a691d7bebfd373e285adb1d1ae2a1609d8c0f43993429c933bbcf4e060d0b92a12ae89008148246a119d931952416fb65c315c645d315069dbdcdf98b5dbf2835f1f5ef6f46baf2f9ff4852b394726a633e4250002e7c854359a7ba577bcfc3b3f3f54a8ea7ae6171fda7caa3b7472d02e668f155a6b4388936296b421fe01adafccb7be7cb8bd381851f331fb04ce19202810bc5829f7ccf8920be04ca161af9d4683a2b3765b0cd3077b994e4c332268895f2611f5beb677b6ba5ffaabfbc7cfbe76a76ff06a0d8ffa9d02d3c46459266e968b4ebd3ced41b6670750b9a12deddf230024c1a266!
+ 49c55dbbf3ffe2e09db95f3cb82a6befa9026b8def6f7ff96edd4f7f77727320a4ae00900b63fd4d4c353243ca764a5976401b7515ae6a718ceb57c9ca8c5d5e814841c40931f721663ddd64616e46eb23bbd79cfda7df1c2bd57566c33cc1a7f7d5663c683b0c25be53e78c81c542166db2bfcc73e4a9bb62239d19994dfb8a5deb0ef4c3901673b19fca8d52bd234ab0e3bd9270e7b1e6c0b5d30dbee1ee2a1af2e42a8859443012e30aac2436e7d9072c1fe0bd583382dc9ed6c06a5105549321ca8b1a9249c14019e1c49fa1e4f500986cef1a59f5dcc1968a984a2b90420aa928eb72e1f281dc9c0dddabbac245acccd1e89604cbacb53ad1751203d0f73f3eb5fdf8f196be925397fa9d9ca3044916f8019a8f57a377e021eb7bf14f3838d5090dfbec9c6acb68d8e78c749f593ef1ce3f7b2d457531c9991b2192a2724e25168bd874ef90a28ef78a7a70222be29b2889fa3d39028b5a2da02201f0566c23aeeaa5f873c7efe6bc5881e8c18f5d3fc025ad12c32c1713cc85d7a25b161d50df703e421359c82c1a5ff4de4430aecb311a283eeefbd5664668a439fb23fd9d7de3cbfca1480116b14a455947d9ea2ba85877097657509245d9a1f20c4b91a5210863b368ae21c424c4941206a3d4eac2d73f7fb7e34b4fbea08c7b43e681f473487926bc0b0a343c603d16!
+ b7bae2a4448356a6468b686832579deca7d1c14b94488a46048972ce054e35!
+ 99aa5151
+8b4608552322619a2c8389023842dc8a1f041fc545ad0605a2071a2448a071d99f565f5924884d4a3b3c2c03edb42a254200a0ef7c3d56edf920a57b4d1896972e46983f6f34d6b9e5fdc97f2dee8d9c1e9a90cb44d91a2b8646644605306af8174549872051b84a4751b8bc0fe56bdb61cb088171018c0a90599628e899d6868cdd4e18644a885b5cc99c8b1a8091b5f525c7bff1f9bbc9fff9e9dbc41388244d14a010f17fc30f8083609ff5e8142960149c3151d75511d11008210011380701338a720838030187141f640601efc69af154642fbccc28ea1aa279381c6bc656a51512a1904141e6c41dd2b3c0face36a0feee13902ce9a92dd3f20af2f14295855d417dac9665daf4ad9f0b38c1a9a4c514448376108121ab681c19f99eb8937a1a02e7e08cc0efe7f28bafcba5c7b417b77ee5f1edeee6ba92100ccf064d3c38c05c8428804843758137d7e5081f6be9b3ab1a4d7a92018780166d392eebcb50290d234b08cdda7213708033805342382502a7440083100f61e99070525d891f873e8e83b12d89f9c0b8422b50207a91494210412112366db44340945b30ceb3715c6d4c6960f59802ce0514d6f62d7ef31c7070308142955516b65121e4906c6145b2870547ae0faee23164158fc3e28ccce3bc2460ba04bf3b4fb8f8c6064bef60c0491957776da935f7267!
+ ab2931c6691b2b2bad05b98eb0c9fbe34688fc4b479482170b35cbc1edb8256ad1a3eee84088630b7c2294420cc98c56166450f2d460f2dc60bd17bf0a3d02338ac36c3c332930e418c2b38a7ad4098db602731e4880188a0e020986099e8d64bd0a6d7e0aa5e06002ccfe5d062aa4ee35b97a47adde7ce434ed9081cb9be05877f3e70831842b94a884889205108025fc4830c8013685105677ebb1b616fa6c8014124c4f3d8dee6560003009246dd672655c7000c3f7cefea63792e07feee97eff1b6ae91cdf150af9901380b97f42a5cd28db2330bd150244cccaaac8ac282619a5e9a8cca65bc19db887762eb512a8e4ded43bc3c031e3675ee01031078e0ce3af791f33dfab581c942186994730b49620a4e3cbb0fdbbff8025c25a369f5c5c47474307595c939c1d523ebe01bca373f325350a7fc5c0b9d75324b522a4bb2bd9fdcbb36e8f147f42bbde354a7cc4c741031cf4ca410e1e34e7879c6d495a2a96ad64f98d12fc1f890cc6a2f3abb9e5d0330706047c3917b362eef387cb6cba1e92c07f3b880a82661f0e20a38f3bc86bebfc989a5948ae8787b0b2e1fda84195bbb58795156cf23bb9b4e221e3d5cecf09959a40098b86b43cd404d79aedb1f8a864726823a35883149b9dec4e8a97ec3904a3f2118b55be5499d32335372d13231007d776da8fee0d13dc!
+ d97473d415beb557741bcc03f69f8976a12065aeaa046ac70958ca5bdd0a78!
+ a58c8865
+3cf3e809ed38d98313c1c40a0b622afe3a17b569dc4022a6b2612d5d70800ef9e6d757d7bb6d5b5bf75a2b3e1e957cfad3b7b796845301c2b639c9b33529c71250d71623a866e4a820ec0274be2407951d6d00377d40fae5a5e287fe56f5fde1a55f5790735a13d0a23a074f5db7fb69b5fed9b701c6fe91319e70b662f5e3bda8ce1f66ad4df7d12258dd7607184e7bb352dd0988ca18e6a9cfbddbdd022734ea7d00542269aea4aba611c0538afd99b88c4421d73164fdeb7b9b6f7becdb5974eb50dd41c3a75adf1d4a5feca8e9e316734a6db349dba60ec5e33600c4662818e0a2040083c1659f2d96d4a70eb9a6503f76cac69f9d8bdabba01042f5e75d712426a81b49c5714465069fce9ef3c864f7efd191c6feddbca398ab0408553d89389b3bfbd0fed6f6f414963274a567621bf7a608ee99a0a82132e0c5eac45ff857af886e7647f9a88656558071fbabbb11dc644d780d4931c127df766e95914c0c4c6c6b2ae8d8d652d30bcb5d657dfbfecea1a9c28a39497b65e73170e8cf8ec9a4ea7548e2808bcac3033b4bab6d86d91a5fe75f525835bd62cf3c288170cc1d89c2a00720849ab70d38c7fc760ccbaa3cffcf527d917befd9bd807e77ad6c5cbb94de75f52447c4e5c3bba165dc79ba0d862c82e1b81ab74049245457ef520ac19a15924312a20ecc9c47857!
+ 197455c1c0c55aa8211b7475c1620095108ceebda3bea3aa34a70b46bc64ca97950e92114361103389b89adab7bdde2c1f73c1c86a9f5742600cbe37de868e699f9703e94946623f5518a1d3a33ffbd6c7033f7ef648ff4f5e38b1311c511b6038342d58400d72262016b2c1dd51097747e5757623293400231545ae935ffbcc8ec330aa85a71c76d79b0694488c99d2637e168431dbcd7564be3524311d28dd6488c5fa689212fef263770cd5571574ffe3f347b7b5758dacd275560e63c22435df6f1218007f497ee6c5ef7c79ef9bd999b69330368453a739dc685957b2a09339b066d2dbf5b4b95446a859403a0920b46b4bedf8ae2db5bd4fbd7276f56fde6c69eae81d5ba16a539e5a054b5496b60098240aa12f3eb4a97f5bd3b24e2489172df59fcdfbc386f6520783a1128701f83ebd7f5defa7f7afbbf0da918eba97de6d6b3ed1da5fe10b44f3e2d65816a663374b5dfa26e89459df3ad199f99f1fdc60471253fe56ff3b86c0ecb8be0e63dd8a0018dd7b475df7de3bea5a00e43f77f07cc51bc73b57750f4e96b9c7032e55a3458cf36c4c9bcbb35d74c6609a1be3542100709e6a1ba87af6e0f9bac7f63477c1982853e952b70321c06c3568aa311dc6608c01501eddd3ec7a744ff31900b9c75bfa0a0f9febae1f9b0c561e6be9b307c331a25146225155e07c!
+ 2afae9841121340f0c30f75f8bc1a2e974d9b3af9ddff6d89ee62118ebadb9!
+ 8e90db85
+10606e7eae2931263121189996f2963515195bd6549c87e10b530060dc1322ef9cba26a99a6e0160d319cb1f1e0d54f7b9bda57dc39e928edeb16594f1546a2d4500610227c100000210494441543997ba46d67ef7678786bff185bb0761486d08b87d2424118979c4c9c899c0f41a42f2b21d7864f71a534dcd9490028f3fb2fa812fff7c9f7b3cb006b38b59e78342192ffaed3bad4d8fee696aab2acd19443c5feb56ff4b9f8b215942b5698e9bc404675c7e18e6fc180c67600b8063d999b663db9a96b5118239f51ef38000b04ff84235dff9d93b9b0054229e5072bb1392884482925da6ff4d83419a17c0b57ddb1bce2ab2d48fd4ffbcabc439723f38d7d3f0dbb75b57c1c81b566e354248c2bf4b858508d20178eed958d35557993f80d9490b8bc11a55f5ea1f3efdc14e001b01e4df6a84fcb11003307ccfc69a0e4914dc487d432c02c81b1cf56dfcdadfbf720f8055b71a21c90a6c6ef6f300434adcfff513dbce97166675c0c8784f554a14c679e1ebc73a9b9f7ae5ec5d1f6a422421edee516ee8f09b7d925c221800bf240a1d8fef6d3e238982991c982a2cc170acfabb3f3fb4f7c34c08cf745aa92c8951182fb790f5c200c40442020eab92ce517b4b090dc0f07ff9d8e6b37595f917317dd87e2a1001b822316dc58799105a5a90e9b977d3f22b922474c2b!
+ 06692bd200710160532585f55d0f989fb9bccb2ea3fb4da62304ce32b9fd9bfeeb4228b8348cfb92a00b07c9837861a80deef7f75ff5b6beb4b5947cfa89d833b3177274c01780a7333cefff9c7b71e8191e69faae9b9d4d001781ed9dd34f88b97cef82e778fa61dcff9ff22229f1d6c4a2faa0000000049454e44ae426082&lt;/data&gt;
+     &lt;/image&gt;
+     &lt;image name=&quot;image1&quot;&gt;
+         &lt;data format=&quot;PNG&quot; length=&quot;184&quot;&gt;89504e470d0a1a0a0000000d4948445200000016000000160806000000c4b46c3b0000007f49444154388ded95510a0021084475d9db041ec0e8fa5ecbfdda852d4b11fa6b2028a3570c53a188c00edd7d819935b2504470357f5945559d36000022720f60823d11910b1fac88a894f2f599592d5b52e05aeb6f6cc153e0d6da50ebe12930e2321039f09b0c6fb3542a223ae0033ee085cc2b1d790b3ce1ae3f6f9b150f6d5433af47a4f4c20000000049454e44ae426082&lt;/data&gt;
+
+Modified: trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.cpp
+===================================================================
+--- trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.cpp	2007-05-06 13:05:29 UTC (rev 1159)
++++ trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.cpp	2007-05-07 13:55:07 UTC (rev 1160)
+@@ -105,7 +105,7 @@
+ 
+ void OpenGLRenderingEngine::render(
+ 		const shared_ptr&lt;MetaBody&gt;&amp; rootBody, 
+-		const int selection	// FIXME: not sure. maybe a list of selections, 
++		int selection	// FIXME: not sure. maybe a list of selections, 
+ 					// or maybe bodies themselves should remember if they are selected?
+ 		)
+ {	// FIXME - make a compile time flag for that. So yade can compile with different versions.
+
+Modified: trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.hpp
+===================================================================
+--- trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.hpp	2007-05-06 13:05:29 UTC (rev 1159)
++++ trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.hpp	2007-05-07 13:55:07 UTC (rev 1160)
+@@ -12,6 +12,7 @@
+ #include&lt;yade/core/RenderingEngine.hpp&gt;
+ #include&lt;yade/lib-multimethods/DynLibDispatcher.hpp&gt;
+ #include&lt;yade/core/MetaDispatchingEngine1D.hpp&gt;
++#include&lt;yade/core/Body.hpp&gt;
+ 
+ #include &quot;GLDrawStateFunctor.hpp&quot;
+ #include &quot;GLDrawBoundingVolumeFunctor.hpp&quot;
+@@ -41,8 +42,8 @@
+ 				,Interaction_physics
+ 		
+ 				,needInit;
+-		int		 current_selection
+-				,Draw_mask;
++		int 	current_selection,
++				Draw_mask;
+ 
+ 	private :
+ 		DynLibDispatcher&lt; InteractionGeometry , GLDrawInteractionGeometryFunctor, void , TYPELIST_5(const shared_ptr&lt;InteractionGeometry&gt;&amp;, const shared_ptr&lt;Interaction&gt;&amp; , const shared_ptr&lt;Body&gt;&amp;, const shared_ptr&lt;Body&gt;&amp;, bool) &gt; interactionGeometryDispatcher;
+@@ -76,7 +77,7 @@
+ 		virtual ~OpenGLRenderingEngine();
+ 	
+ 		void init();
+-		void render(const shared_ptr&lt;MetaBody&gt;&amp; body, const int selection = -1);
++		void render(const shared_ptr&lt;MetaBody&gt;&amp; body, int selection = -1);
+ 		virtual void renderWithNames(const shared_ptr&lt;MetaBody&gt;&amp; );
+ 	
+ 	private :
+
+Modified: trunk/pkg/lattice/Engine/StandAloneEngine/BeamRecorder.cpp
+===================================================================
+--- trunk/pkg/lattice/Engine/StandAloneEngine/BeamRecorder.cpp	2007-05-06 13:05:29 UTC (rev 1159)
++++ trunk/pkg/lattice/Engine/StandAloneEngine/BeamRecorder.cpp	2007-05-07 13:55:07 UTC (rev 1160)
+@@ -90,7 +90,7 @@
+ 		std::list&lt;std::pair&lt;Vector3r,std::pair&lt;Real,int&gt; &gt; &gt;::iterator i  =sections.begin();
+ 		std::list&lt;std::pair&lt;Vector3r,std::pair&lt;Real,int&gt; &gt; &gt;::iterator end=sections.end();
+ 
+-		for( int section=0 ; i != end ; ++i, ++section )
++		for(size_t section=0 ; i != end ; ++i, ++section )
+ 		{
+ 			Vector3r midpoint = i-&gt;first;
+ 			Real     half     = i-&gt;second.first;
+@@ -133,7 +133,7 @@
+ 	}
+ 
+ 
+-	for( int section=0 ; section&lt;sections.size() ; ++section )
++	for(size_t section=0 ; section&lt;sections.size() ; ++section )
+ 	{
+ 		std::list&lt;unsigned int&gt;::iterator i   = subscribedBodies[section].first.begin();
+ 		std::list&lt;unsigned int&gt;::iterator end = subscribedBodies[section].first.end();
+
+Modified: trunk/pkg/lattice/Engine/StandAloneEngine/MovingSupport.cpp
+===================================================================
+--- trunk/pkg/lattice/Engine/StandAloneEngine/MovingSupport.cpp	2007-05-06 13:05:29 UTC (rev 1159)
++++ trunk/pkg/lattice/Engine/StandAloneEngine/MovingSupport.cpp	2007-05-07 13:55:07 UTC (rev 1160)
+@@ -142,7 +142,7 @@
+ 	}
+ 
+ 
+-	for( int section=0 ; section&lt;sections.size() ; ++section )
++	for(size_t section=0 ; section&lt;sections.size() ; ++section )
+ 	{
+ 	//	std::list&lt;unsigned int&gt;::iterator i   = subscribedBodies[section].first.begin();
+ 	//	std::list&lt;unsigned int&gt;::iterator end = subscribedBodies[section].first.end();
+
+Modified: trunk/pkg/lattice/Engine/StandAloneEngine/NodeRecorder.cpp
+===================================================================
+--- trunk/pkg/lattice/Engine/StandAloneEngine/NodeRecorder.cpp	2007-05-06 13:05:29 UTC (rev 1159)
++++ trunk/pkg/lattice/Engine/StandAloneEngine/NodeRecorder.cpp	2007-05-07 13:55:07 UTC (rev 1160)
+@@ -106,7 +106,7 @@
+ 		}
+ 	}
+ 
+-	for( int region=0 ; region&lt;regions.size() ; ++region )
++	for(size_t region=0 ; region&lt;regions.size() ; ++region )
+ 	{
+ 		std::list&lt;unsigned int&gt;::iterator i   = subscribedBodies[region].begin();
+ 		std::list&lt;unsigned int&gt;::iterator end = subscribedBodies[region].end();
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000124.html">[Yade-commits] r1159 - in trunk: . core extra extra/clump	extra/tetra gui/qt3 pkg/fem/Engine/EngineUnit pkg/realtime-rigidbody
+</A></li>
+	<LI>Next message: <A HREF="000126.html">[Yade-commits] r1161 - in trunk: . extra/clump extra/tetra	pkg/common/DataClass/GeometricalModel
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#125">[ date ]</a>
+              <a href="thread.html#125">[ thread ]</a>
+              <a href="subject.html#125">[ subject ]</a>
+              <a href="author.html#125">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

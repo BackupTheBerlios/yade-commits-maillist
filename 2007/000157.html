@@ -1,0 +1,136 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1192 - in trunk/pkg: dem/Engine/StandAloneEngine	mass-spring/PreProcessor realtime-rigidbody/PreProcessor
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2007/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1192%20-%20in%20trunk/pkg%3A%20dem/Engine/StandAloneEngine%0A%09mass-spring/PreProcessor%20realtime-rigidbody/PreProcessor&In-Reply-To=%3C200706052023.l55KNRWe026156%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000156.html">
+   <LINK REL="Next"  HREF="000158.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1192 - in trunk/pkg: dem/Engine/StandAloneEngine	mass-spring/PreProcessor realtime-rigidbody/PreProcessor</H1>
+    <B>cosurgi at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1192%20-%20in%20trunk/pkg%3A%20dem/Engine/StandAloneEngine%0A%09mass-spring/PreProcessor%20realtime-rigidbody/PreProcessor&In-Reply-To=%3C200706052023.l55KNRWe026156%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1192 - in trunk/pkg: dem/Engine/StandAloneEngine	mass-spring/PreProcessor realtime-rigidbody/PreProcessor">cosurgi at mail.berlios.de
+       </A><BR>
+    <I>Tue Jun  5 22:23:27 CEST 2007</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000156.html">[Yade-commits] r1191 - trunk/scripts
+</A></li>
+        <LI>Next message: <A HREF="000158.html">[Yade-commits] r1193 - tags
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#157">[ date ]</a>
+              <a href="thread.html#157">[ thread ]</a>
+              <a href="subject.html#157">[ subject ]</a>
+              <a href="author.html#157">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: cosurgi
+Date: 2007-06-05 22:23:26 +0200 (Tue, 05 Jun 2007)
+New Revision: 1192
+
+Modified:
+   trunk/pkg/dem/Engine/StandAloneEngine/ElasticContactLaw.cpp
+   trunk/pkg/mass-spring/PreProcessor/HangingCloth.cpp
+   trunk/pkg/realtime-rigidbody/PreProcessor/RotatingBox.cpp
+Log:
+HangingCloth finally is fixed, and is not crashing in optimized build. The
+dynamic cast ought to be in HangingCloth.cpp FileGenerator ;)
+
+
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/ElasticContactLaw.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/ElasticContactLaw.cpp	2007-06-05 18:23:41 UTC (rev 1191)
++++ trunk/pkg/dem/Engine/StandAloneEngine/ElasticContactLaw.cpp	2007-06-05 20:23:26 UTC (rev 1192)
+@@ -59,7 +59,7 @@
+ 	
+ 			BodyMacroParameters* de1 				= YADE_CAST&lt;BodyMacroParameters*&gt;((*bodies)[id1]-&gt;physicalParameters.get());
+ 			BodyMacroParameters* de2 				= YADE_CAST&lt;BodyMacroParameters*&gt;((*bodies)[id2]-&gt;physicalParameters.get());
+-			SpheresContactGeometry* currentContactGeometry 	= YADE_CAST&lt;SpheresContactGeometry*&gt;(contact-&gt;interactionGeometry.get());
++			SpheresContactGeometry* currentContactGeometry		= YADE_CAST&lt;SpheresContactGeometry*&gt;(contact-&gt;interactionGeometry.get());
+ 			ElasticContactInteraction* currentContactPhysics   	= YADE_CAST&lt;ElasticContactInteraction*&gt; (contact-&gt;interactionPhysics.get());
+ 			
+ 			Vector3r&amp; shearForce 			= currentContactPhysics-&gt;shearForce;
+
+Modified: trunk/pkg/mass-spring/PreProcessor/HangingCloth.cpp
+===================================================================
+--- trunk/pkg/mass-spring/PreProcessor/HangingCloth.cpp	2007-06-05 18:23:41 UTC (rev 1191)
++++ trunk/pkg/mass-spring/PreProcessor/HangingCloth.cpp	2007-06-05 20:23:26 UTC (rev 1192)
+@@ -404,12 +404,13 @@
+ 			for( ; bi2!=biEnd ; ++bi2 )
+ 			{
+ 				shared_ptr&lt;Body&gt; bodyB = *bi2;
++
++			// FIXME - this must be a dynamic cast. it is checked afterwards..
++				shared_ptr&lt;BodyMacroParameters&gt; a =  dynamic_pointer_cast&lt;BodyMacroParameters&gt;(bodyA-&gt;physicalParameters);
++				shared_ptr&lt;BodyMacroParameters&gt; b =  dynamic_pointer_cast&lt;BodyMacroParameters&gt;(bodyB-&gt;physicalParameters);
++				shared_ptr&lt;InteractingSphere&gt;	as = dynamic_pointer_cast&lt;InteractingSphere&gt;(bodyA-&gt;interactingGeometry);
++				shared_ptr&lt;InteractingSphere&gt;	bs = dynamic_pointer_cast&lt;InteractingSphere&gt;(bodyB-&gt;interactingGeometry);
+ 	
+-				shared_ptr&lt;BodyMacroParameters&gt; a = YADE_PTR_CAST&lt;BodyMacroParameters&gt;(bodyA-&gt;physicalParameters);
+-				shared_ptr&lt;BodyMacroParameters&gt; b = YADE_PTR_CAST&lt;BodyMacroParameters&gt;(bodyB-&gt;physicalParameters);
+-				shared_ptr&lt;InteractingSphere&gt;	as = YADE_PTR_CAST&lt;InteractingSphere&gt;(bodyA-&gt;interactingGeometry);
+-				shared_ptr&lt;InteractingSphere&gt;	bs = YADE_PTR_CAST&lt;InteractingSphere&gt;(bodyB-&gt;interactingGeometry);
+-	
+ 				if ( a &amp;&amp; b &amp;&amp; as &amp;&amp; bs &amp;&amp; (a-&gt;se3.position - b-&gt;se3.position).Length() &lt; (as-&gt;radius + bs-&gt;radius))  
+ 				{
+ 					shared_ptr&lt;Interaction&gt; 		link(new Interaction( bodyA-&gt;getId() , bodyB-&gt;getId() ));
+@@ -438,7 +439,7 @@
+ 		}
+ 	}
+ 			
+-	return &quot;ATTN: This test can sometimes crash in optimized builds, fix is pending for next release\n\ntotal number of permament links created: &quot; + lexical_cast&lt;string&gt;(linksNum);
++	return &quot;total number of permament links created: &quot; + lexical_cast&lt;string&gt;(linksNum);
+ }
+ 
+ 
+
+Modified: trunk/pkg/realtime-rigidbody/PreProcessor/RotatingBox.cpp
+===================================================================
+--- trunk/pkg/realtime-rigidbody/PreProcessor/RotatingBox.cpp	2007-06-05 18:23:41 UTC (rev 1191)
++++ trunk/pkg/realtime-rigidbody/PreProcessor/RotatingBox.cpp	2007-06-05 20:23:26 UTC (rev 1192)
+@@ -127,7 +127,7 @@
+ 				rootBody-&gt;bodies-&gt;insert(box);
+  			}
+ 
+-	return &quot;\nATTN: please set smaller timestep or it will bounce like crazy.&quot;;
++	return &quot;ATTN: please set smaller timestep or it will bounce like crazy.&quot;;
+ }
+ 
+ 
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000156.html">[Yade-commits] r1191 - trunk/scripts
+</A></li>
+	<LI>Next message: <A HREF="000158.html">[Yade-commits] r1193 - tags
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#157">[ date ]</a>
+              <a href="thread.html#157">[ thread ]</a>
+              <a href="subject.html#157">[ subject ]</a>
+              <a href="author.html#157">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

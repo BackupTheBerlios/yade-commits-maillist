@@ -1,0 +1,675 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1073 - in trunk: . yade-core/src/yade	yade-extra/clump yade-guis/yade-gui-qt/src/QtGUI	yade-libs/yade-lib-serialization/src/yade-lib-serialization	yade-packages/yade-package-dem/src/Engine/DeusExMachina/ResultantForceEngine	yade-packages/yade-package-dem/src/Engine/DeusExMachina/TriaxialCompressionEngine	yade-packages/yade-package-dem/src/Engine/DeusExMachina/TriaxialStressController	yade-packages/yade-package-dem/src/Engine/EngineUnit/InteractingMyTetrahedron2AABB	yade-packages/yade-package-dem/src/Engine/StandAloneEngine/GeometricalModelForceColorizer	yade-packages/yade-package-dem/src/Engine/StandAloneEngine/MyTetrahedronLaw	yade-packages/yade-package-dem/src/RenderingEngine/GLDrawInteractingMyTetrahedron	yade-packages/yade-package-dem/src/RenderingEngine/GLDrawSDECLinkGeometry	yade-packages/yade-package-dem/src/RenderingEngine/GLDrawSpheresContactGeometry	yade-scripts
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2007/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1073%20-%20in%20trunk%3A%20.%20yade-core/src/yade%0A%09yade-extra/clump%20yade-guis/yade-gui-qt/src/QtGUI%0A%09yade-libs/yade-lib-serialization/src/yade-lib-serialization%0A%09yade-packages/yade-package-dem/src/Engine/DeusExMachina/ResultantForceEngine%0A%09yade-packages/yade-package-dem/src/Engine/DeusExMachina/TriaxialCompressionEngine%0A%09yade-packages/yade-package-dem/src/Engine/DeusExMachina/TriaxialStressController%0A%09yade-packages/yade-package-dem/src/Engine/EngineUnit/InteractingMyTetrahedron2AABB%0A%09yade-packages/yade-package-dem/src/Engine/StandAloneEngine/GeometricalModelForceColorizer%0A%09yade-packages/yade-package-dem/src/Engine/StandAloneEngine/MyTetrahedronLaw%0A%09yade-packages/yade-package-dem/src/RenderingEngine/GLDrawInteractingMyTetrahedron%0A%09yade-packages/yade-package-dem/src/RenderingEngine/GLDrawSDECLinkGeometry%0A%09yade-packages/yade-package-dem/src/RenderingEngine/GLDrawSpheresContactGeometry%0A%09yade-scripts&In-Reply-To=%3C200702241642.l1OGg2RO030566%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000037.html">
+   <LINK REL="Next"  HREF="000039.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1073 - in trunk: . yade-core/src/yade	yade-extra/clump yade-guis/yade-gui-qt/src/QtGUI	yade-libs/yade-lib-serialization/src/yade-lib-serialization	yade-packages/yade-package-dem/src/Engine/DeusExMachina/ResultantForceEngine	yade-packages/yade-package-dem/src/Engine/DeusExMachina/TriaxialCompressionEngine	yade-packages/yade-package-dem/src/Engine/DeusExMachina/TriaxialStressController	yade-packages/yade-package-dem/src/Engine/EngineUnit/InteractingMyTetrahedron2AABB	yade-packages/yade-package-dem/src/Engine/StandAloneEngine/GeometricalModelForceColorizer	yade-packages/yade-package-dem/src/Engine/StandAloneEngine/MyTetrahedronLaw	yade-packages/yade-package-dem/src/RenderingEngine/GLDrawInteractingMyTetrahedron	yade-packages/yade-package-dem/src/RenderingEngine/GLDrawSDECLinkGeometry	yade-packages/yade-package-dem/src/RenderingEngine/GLDrawSpheresContactGeometry	yade-scripts</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1073%20-%20in%20trunk%3A%20.%20yade-core/src/yade%0A%09yade-extra/clump%20yade-guis/yade-gui-qt/src/QtGUI%0A%09yade-libs/yade-lib-serialization/src/yade-lib-serialization%0A%09yade-packages/yade-package-dem/src/Engine/DeusExMachina/ResultantForceEngine%0A%09yade-packages/yade-package-dem/src/Engine/DeusExMachina/TriaxialCompressionEngine%0A%09yade-packages/yade-package-dem/src/Engine/DeusExMachina/TriaxialStressController%0A%09yade-packages/yade-package-dem/src/Engine/EngineUnit/InteractingMyTetrahedron2AABB%0A%09yade-packages/yade-package-dem/src/Engine/StandAloneEngine/GeometricalModelForceColorizer%0A%09yade-packages/yade-package-dem/src/Engine/StandAloneEngine/MyTetrahedronLaw%0A%09yade-packages/yade-package-dem/src/RenderingEngine/GLDrawInteractingMyTetrahedron%0A%09yade-packages/yade-package-dem/src/RenderingEngine/GLDrawSDECLinkGeometry%0A%09yade-packages/yade-package-dem/src/RenderingEngine/GLDrawSpheresContactGeometry%0A%09yade-scripts&In-Reply-To=%3C200702241642.l1OGg2RO030566%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1073 - in trunk: . yade-core/src/yade	yade-extra/clump yade-guis/yade-gui-qt/src/QtGUI	yade-libs/yade-lib-serialization/src/yade-lib-serialization	yade-packages/yade-package-dem/src/Engine/DeusExMachina/ResultantForceEngine	yade-packages/yade-package-dem/src/Engine/DeusExMachina/TriaxialCompressionEngine	yade-packages/yade-package-dem/src/Engine/DeusExMachina/TriaxialStressController	yade-packages/yade-package-dem/src/Engine/EngineUnit/InteractingMyTetrahedron2AABB	yade-packages/yade-package-dem/src/Engine/StandAloneEngine/GeometricalModelForceColorizer	yade-packages/yade-package-dem/src/Engine/StandAloneEngine/MyTetrahedronLaw	yade-packages/yade-package-dem/src/RenderingEngine/GLDrawInteractingMyTetrahedron	yade-packages/yade-package-dem/src/RenderingEngine/GLDrawSDECLinkGeometry	yade-packages/yade-package-dem/src/RenderingEngine/GLDrawSpheresContactGeometry	yade-scripts">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Sat Feb 24 17:42:02 CET 2007</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000037.html">[Yade-commits] r1072 - in trunk/yade-packages:	yade-package-common/src/Engine/EngineUnit/NewtonsForceLaw	yade-package-dem/src/Engine/StandAloneEngine/GlobalStiffnessTimeStepper
+</A></li>
+        <LI>Next message: <A HREF="000039.html">[Yade-commits] r1074 - in trunk: yade-core/src/yade yade-extra/clump yade-guis/yade-gui-qt/src/QtGUI yade-libs/yade-lib-opengl/src/yade-lib-opengl yade-packages/yade-package-common/src/RenderingEngine/GLDrawGeometricalModel/GLDrawBox yade-packages/yade-package-common/src/RenderingEngine/GLDrawGeometricalModel/GLDrawQuadrilateral yade-packages/yade-package-common/src/RenderingEngine/GLDrawGeometricalModel/GLDrawSphere yade-packages/yade-package-common/src/RenderingEngine/GLDrawGeometricalModel/GLDrawTetrahedron yade-packages/yade-package-common/src/RenderingEngine/GLDrawInteractingGeometry/GLDrawInteractingBox yade-packages/yade-package-common/src/RenderingEngine/GLDrawInteractingGeometry/GLDrawInteractingSphere yade-packages/yade-package-dem/src/PreProcessor/Funnel yade-packages/yade-package-dem/src/PreProcessor/SDECImpactTest yade-packages/yade-package-dem/src/PreProcessor/SDECLinkedSpheres yade-packages/yade-package-dem/src/PreProcessor/SDECMovingWall yade-packages/yade-package-! dem/src/PreProcessor/SDECSpheresPlane yade-packages/yade-package-dem/src/PreProcessor/TetrahedronsTest yade-packages/yade-package-dem/src/PreProcessor/ThreePointBending yade-packages/yade-package-dem/src/PreProcessor/TriaxialTest yade-packages/yade-package-dem/src/RenderingEngine/GLDrawInteractingMyTetrahedron yade-packages/yade-package-dem/src/RenderingEngine/GLDrawSpheresContactGeometry yade-packages/yade-package-fem/src/Engine/EngineUnit/FEMSetTextLoader yade-packages/yade-package-fem/src/PreProcessor/FEMBeam yade-packages/yade-package-lattice/src/Engine/EngineUnit/LatticeSet2LatticeBeams yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/BeamRecorder yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/MeasurePoisson yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/MovingSupport yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/NodeRecorder yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/StrainRecorder yade! -packages/yade-package-lattice/src/PreProcessor/LatticeExample! yade-pa
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#38">[ date ]</a>
+              <a href="thread.html#38">[ thread ]</a>
+              <a href="subject.html#38">[ subject ]</a>
+              <a href="author.html#38">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2007-02-24 17:42:01 +0100 (Sat, 24 Feb 2007)
+New Revision: 1073
+
+Modified:
+   trunk/Makefile
+   trunk/SConstruct
+   trunk/yade-core/src/yade/FileGenerator.hpp
+   trunk/yade-core/src/yade/Omega.hpp
+   trunk/yade-extra/clump/Clump.cpp
+   trunk/yade-extra/clump/Clump.hpp
+   trunk/yade-extra/clump/SConscript
+   trunk/yade-extra/clump/pyade.py
+   trunk/yade-guis/yade-gui-qt/src/QtGUI/GLViewer.cpp
+   trunk/yade-libs/yade-lib-serialization/src/yade-lib-serialization/FundamentalHandler.tpp
+   trunk/yade-packages/yade-package-dem/src/Engine/DeusExMachina/ResultantForceEngine/ResultantForceEngine.pro
+   trunk/yade-packages/yade-package-dem/src/Engine/DeusExMachina/TriaxialCompressionEngine/TriaxialCompressionEngine.pro
+   trunk/yade-packages/yade-package-dem/src/Engine/DeusExMachina/TriaxialStressController/TriaxialStressController.pro
+   trunk/yade-packages/yade-package-dem/src/Engine/EngineUnit/InteractingMyTetrahedron2AABB/InteractingMyTetrahedron2AABB.pro
+   trunk/yade-packages/yade-package-dem/src/Engine/StandAloneEngine/GeometricalModelForceColorizer/GeometricalModelForceColorizer.pro
+   trunk/yade-packages/yade-package-dem/src/Engine/StandAloneEngine/MyTetrahedronLaw/MyTetrahedronLaw.pro
+   trunk/yade-packages/yade-package-dem/src/RenderingEngine/GLDrawInteractingMyTetrahedron/GLDrawInteractingMyTetrahedron.pro
+   trunk/yade-packages/yade-package-dem/src/RenderingEngine/GLDrawSDECLinkGeometry/GLDrawSDECLinkGeometry.pro
+   trunk/yade-packages/yade-package-dem/src/RenderingEngine/GLDrawSpheresContactGeometry/GLDrawSpheresContactGeometry.pro
+   trunk/yade-scripts/erskine3.py
+Log:
+1. Scons changes, node enumeration gotten rid of, now uses proper Install in SConscript's. Should eliminate scons version problems we've had.
+2. Some new make targets: for repetitive compilation (with -j2) and first personalizaed target: eudoxos.
+3. Selecting clump member in GLViewer now selects the whole clump; it is moved and redrawn as well (only with HIGHLEVEL_CLUMPS).
+4. An attempts at escaping special characters beforce XML serialization (\&quot;,\n,\t,\\), doesn't work - commented out.
+5. Project files cleaned from nonexistent include directories.
+
+
+
+Modified: trunk/Makefile
+===================================================================
+--- trunk/Makefile	2007-02-23 19:18:12 UTC (rev 1072)
++++ trunk/Makefile	2007-02-24 16:42:01 UTC (rev 1073)
+@@ -45,3 +45,12 @@
+ 
+ doc:
+ 	cd yade-doc; doxygen Doxyfile
++
++#### convenience and individual targets; saves typing.
++# helper target for parallel compilation which is broken generally and needs to be tried repeatedly until it succeeds (or not)
++ci:
++	$(MAKE) compile_install || $(MAKE) compile_install || $(MAKE) compile_install || $(MAKE) compile_install || $(MAKE) compile_install || $(MAKE) compile_install || $(MAKE) compile_install || $(MAKE) compile_install || $(MAKE) compile_install || $(MAKE) compile_install || $(MAKE) compile_install || $(MAKE) compile_install || $(MAKE) compile_install || $(MAKE) compile_install
++
++eudoxos:
++	$(MAKE) ci -j4 INSTALL_DIR='/YADE' PREFIX_DIR=/tmp CXX=&quot;g++-4.0&quot; LINK=&quot;g++-4.0&quot; CXXFLAGS=&quot;-I/usr/local/include/wm3&quot;
++
+
+Modified: trunk/SConstruct
+===================================================================
+--- trunk/SConstruct	2007-02-23 19:18:12 UTC (rev 1072)
++++ trunk/SConstruct	2007-02-24 16:42:01 UTC (rev 1073)
+@@ -16,7 +16,7 @@
+ # To clean the build, run `scons -c'. Please note that it will also _uninstall_ yade from $PREFIX!
+ #
+ # TODO:
+-#  1. [DONE] retrieve target list and append install targets dynamically;
++#  1. [REMOVED] [DONE] retrieve target list and append install targets dynamically;
+ #  2. [DONE] configuration and option handling.
+ #  3. Have build.log with commands and all output...
+ #
+@@ -25,7 +25,7 @@
+ import os,os.path,string,re,sys
+ import SCons
+ # SCons version numbers are needed a few times
+-major,minor,micro=SCons.__version__.split('.')
++sconsVersion=sum([int(SCons.__version__.split('.')[ord[0]])*ord[1] for ord in [(0,10000),(1,100),(2,1)]])
+ 
+ ##########################################################################################
+ ############# OPTIONS ####################################################################
+@@ -189,12 +189,14 @@
+ # makes dynamic library loading easied (no LD_LIBRARY_PATH) and perhaps faster
+ env.Append(RPATH=[os.path.join('$PREFIX','lib','yade$POSTFIX',string.split(x,os.path.sep)[-1]) for x in libDirs])
+ # find already compiled but not yet installed libraries for linking
+-env.Append(LIBPATH=[os.path.join('#',x) for x in libDirs])
++#env.Append(LIBPATH=[os.path.join('#',x) for x in libDirs])
++env.Append(LIBPATH=env['RPATH'])
+ 
+ 
++
+ ### this workaround is only needed for scons&lt;=0.96.92, will disappear soon
+ ###  (env.Install method chokes on no-existing directories)
+-if major=='0' and int(minor)&lt;=96 and int(micro)&lt;93:
++if sconsVersion&lt;=9692:
+ 	## should reside in prepareIncludes or sth similar
+ 	def createDirs(dirList):
+ 		for d in dirList:
+@@ -266,55 +268,12 @@
+ 	env.Append(LIBPATH=[os.path.join('#',x) for x in env['extraModules']])
+ 
+ 
+-
++#env.NoClean('$PREFIX/bin/yade$POSTFIX','$PREFIX/lib/yade$POSTFIX','$PREFIX/include/yade')
+ ##########################################################################################
+ ############# INSTALLATION ###############################################################
+ ##########################################################################################
+ 
+-##### (this is UNIX specific!) ######################
+ 
+-##### (*.so pattern is UNIX specific!!) ######################
+-# the first variant will disappear once etch is out, since the other solution is cleaner
+-if major=='0' and minor=='96' and int(micro)&lt;91:
+-	def enumerateDotSoNodes(dirnode, level=0):
+-		&quot;cut&amp;paste from <A HREF="http://www.scons.org/wiki/BuildDirGlob,">http://www.scons.org/wiki/BuildDirGlob,</A> then modified&quot;
+-		ret=[]
+-		for f in dirnode.all_children():
+-			if f.dir==str(f): ret+=enumerateDotSoNodes(f,level+1)
+-			elif str(f)[-3:]=='.so': ret.append(f)
+-		return ret
+-else:
+-	def enumerateDotSoNodes(dirnode, level=0):
+-		&quot;cut&amp;paste from <A HREF="http://www.scons.org/wiki/BuildDirGlob,">http://www.scons.org/wiki/BuildDirGlob,</A> then modified&quot;
+-		ret=[]
+-		for f in dirnode.all_children():
+-			if f.isdir(): ret+=enumerateDotSoNodes(f,level+1) # isdir() is True only for existing dirs!!
+-			elif str(f)[-3:]=='.so': ret.append(f)
+-		return ret
+-
+-# since we skip this when cleaning, it means that installed files will not be cleaned
+-if not env.GetOption('clean'):
+-	installableNodes=enumerateDotSoNodes(Dir('.'))
+-	# iterate over .so nodes we got previously and call Install for each of them
+-	for n in installableNodes:
+-		# the last (/.*) is meant got extraModules, again...
+-		m=re.match(r'(^|.*/)(yade-(extra|guis|libs|package-[^/]+))(/.*)?/[^/]+$',f)
+-		if m: instDir=m.group(2)
+-		else: # older scons version have e.g. qt libs in nodes, we just skip them here
+-			# TODO: exclude system libs in node enumerator, that is much safer
+-			if major=='0' and int(minor)&lt;=96 and int(micro)&lt;90: continue
+-			# nodes not found will be installed in yade-extra; this is meant specifically for extraModules
+-			# FIXME: should be done in a clean way.
+-			instDir='yade-extra'
+-		if f.find('Clump')&gt;=0: print f,instDir
+-		env.Install('$PREFIX/lib/yade$POSTFIX/'+instDir,n)
+-	# for the one and only binary, we do it by hand
+-	env.InstallAs('$PREFIX/bin/yade$POSTFIX','yade-core/yade')
+-
+-##########################################################################################
+-############# MISCILLANEA ################################################################
+-##########################################################################################
+-
+ if env['pretty']:
+ 	## <A HREF="http://www.scons.org/wiki/HidingCommandLinesInOutput">http://www.scons.org/wiki/HidingCommandLinesInOutput</A>
+ 	env.Replace(CXXCOMSTR='C ${SOURCES}') # &#8594; ${TARGET.file}')
+
+Modified: trunk/yade-core/src/yade/FileGenerator.hpp
+===================================================================
+--- trunk/yade-core/src/yade/FileGenerator.hpp	2007-02-23 19:18:12 UTC (rev 1072)
++++ trunk/yade-core/src/yade/FileGenerator.hpp	2007-02-24 16:42:01 UTC (rev 1073)
+@@ -10,6 +10,7 @@
+ #define FILEGENERATOR_HPP
+ 
+ #include &lt;yade/yade-lib-serialization/Serializable.hpp&gt;
++#include&lt;yade/yade-lib-base/Logging.hpp&gt;
+ 
+ #include &quot;MetaBody.hpp&quot;
+ #include &quot;ThreadWorker.hpp&quot;
+
+Modified: trunk/yade-core/src/yade/Omega.hpp
+===================================================================
+--- trunk/yade-core/src/yade/Omega.hpp	2007-02-23 19:18:12 UTC (rev 1072)
++++ trunk/yade-core/src/yade/Omega.hpp	2007-02-24 16:42:01 UTC (rev 1073)
+@@ -75,8 +75,9 @@
+ 		shared_ptr&lt;Preferences&gt; preferences;
+ 		string 				 yadeConfigPath;	// FIXME - must be private and more clean
+ 		string 				 yadeVersionName;	// FIXME - public ?
+-
+-		list&lt;Body::id_t&gt; selectedBodies;
++		#ifdef HIGHLEVEL_CLUMPS
++			list&lt;Body::id_t&gt; selectedBodies;
++		#endif
+ 	
+ 		void logMessage(const string&amp; str);
+ 		void logError(const string&amp; str);
+
+Modified: trunk/yade-extra/clump/Clump.cpp
+===================================================================
+--- trunk/yade-extra/clump/Clump.cpp	2007-02-23 19:18:12 UTC (rev 1072)
++++ trunk/yade-extra/clump/Clump.cpp	2007-02-24 16:42:01 UTC (rev 1073)
+@@ -642,7 +642,8 @@
+ 		shared_ptr&lt;PythonRecorder&gt; pythonRecorder=shared_ptr&lt;PythonRecorder&gt;(new PythonRecorder);
+ 		//pythonRecorder-&gt;expression=&quot;print 'x2=',B[2].x,'v4=',B[4].I&quot;;
+ 		//pythonRecorder-&gt;expression=&quot;print 'x=',B[2].x,'v=',B[2].v,'m=',B[2].m,'energy=',B[2].Etrans+B[2].Erot+B[2].Epot,'(trans=',B[2].Etrans,'rot=',B[2].Erot,'pot=',B[2].Epot,')'&quot;;
+-		pythonRecorder-&gt;expression=&quot;if (S.i%50==0): print 'file=',S.file,'iteration =',S.i,'t= ',S.t,'x2 =',B[2].x&quot;;
++		//pythonRecorder-&gt;expression=&quot;if (S.i%50==0): print 'file=',S.file,'iteration =',S.i,'t= ',S.t,'x2 =',B[2].x&quot;;
++		pythonRecorder-&gt;expression=&quot;if (S.i%50==0) and len(S.sel)&gt;=2:\n\tprint B[S.sel[0]].E\n\tprint '=========END OF OUTPUT==============='&quot;;
+ 		rootBody-&gt;engines.push_back(pythonRecorder);
+ 	#endif
+ 
+
+Modified: trunk/yade-extra/clump/Clump.hpp
+===================================================================
+--- trunk/yade-extra/clump/Clump.hpp	2007-02-23 19:18:12 UTC (rev 1072)
++++ trunk/yade-extra/clump/Clump.hpp	2007-02-24 16:42:01 UTC (rev 1073)
+@@ -71,9 +71,10 @@
+ 
+ class Clump: public Body {
+ 		//! mapping of body IDs to their relative positions; replaces subBodies and subSe3s;
++	public:
+ 		typedef std::map&lt;Body::id_t,Se3r&gt; clumpMap;
+ 		clumpMap subBodies;
+-	public:
++
+ 		Clump();
+ 		virtual ~Clump(){};
+ 		//! \brief add Body to the Clump
+
+Modified: trunk/yade-extra/clump/SConscript
+===================================================================
+--- trunk/yade-extra/clump/SConscript	2007-02-23 19:18:12 UTC (rev 1072)
++++ trunk/yade-extra/clump/SConscript	2007-02-24 16:42:01 UTC (rev 1073)
+@@ -1,52 +1,52 @@
+ Import('*')
+-env.SharedLibrary('Clump',
+-	['Clump.cpp'],
+-	LIBS=env['LIBS']+[
+-		'ElasticContactLaw',
+-		'ElasticCohesiveLaw',
+-		'MacroMicroElasticRelationships',
+-		'ElasticCriterionTimeStepper',
+-		'PhysicalActionVectorVector',
+-		'InteractionVecSet',
+-		'BodyRedirectionVector',
+-		'InteractingSphere',
+-		'InteractingBox',
+-		'CundallNonViscousMomentumDamping',
+-		'CundallNonViscousForceDamping',
+-		'MetaInteractingGeometry',
+-		'GravityEngine',
+-		'yade-lib-serialization',
+-		'yade-lib-base',
+-		'Wm3Foundation',
+-		'PhysicalActionContainerInitializer',
+-		'PhysicalActionContainerReseter',
+-		'InteractionGeometryMetaEngine',
+-		'InteractionPhysicsMetaEngine',
+-		'PhysicalActionApplier',
+-		'PhysicalParametersMetaEngine',
+-		'BoundingVolumeMetaEngine',
+-		'Box',
+-		'Sphere',
+-		'AABB',
+-		'PersistentSAPCollider',
+-		'ParticleParameters',
+-		'SAPCollider',
+-		'MetaInteractingGeometry2AABB',
+-		'PythonRecorder',
+-		'yade-lib-multimethods'])
+-#env.Program('tryI',['tryI.cpp'],LIBS=env['LIBS']+['yade-lib-base','Wm3Foundation'])
+-#	LIBS=env['LIBS']+[
+-#		'yade-lib-serialization',
+-#		'yade-lib-base',
+-#		'Wm3Foundation',])
+-#env.Program('pyrec',['pyrec.cpp'])
+-#env.SharedLibrary('emb',['emb.cc'],SHLIBPREFIX='')
+-
+-
+-## PythonRecorder
+-env.SharedLibrary('PythonRecorder',['PythonRecorder.cpp'])
+-env.SharedLibrary('_pyade',['pyade.cpp'],SHLIBPREFIX='',
+-	LIBS=env['LIBS']+['yade-lib-base','Wm3Foundation','ParticleParameters','RigidBodyParameters'],
+-)
+-env.Install('$PREFIX/lib/yade/yade-extra','pyade.py')
+-
++env.Install('$PREFIX/lib/yade$POSTFIX/yade-extra',[
++	env.SharedLibrary('Clump',
++		['Clump.cpp'],
++		LIBS=env['LIBS']+[
++			'ElasticContactLaw',
++			'ElasticCohesiveLaw',
++			'MacroMicroElasticRelationships',
++			'ElasticCriterionTimeStepper',
++			'PhysicalActionVectorVector',
++			'InteractionVecSet',
++			'BodyRedirectionVector',
++			'InteractingSphere',
++			'InteractingBox',
++			'CundallNonViscousMomentumDamping',
++			'CundallNonViscousForceDamping',
++			'MetaInteractingGeometry',
++			'GravityEngine',
++			'yade-lib-serialization',
++			'yade-lib-base',
++			'Wm3Foundation',
++			'PhysicalActionContainerInitializer',
++			'PhysicalActionContainerReseter',
++			'InteractionGeometryMetaEngine',
++			'InteractionPhysicsMetaEngine',
++			'PhysicalActionApplier',
++			'PhysicalParametersMetaEngine',
++			'BoundingVolumeMetaEngine',
++			'Box',
++			'Sphere',
++			'AABB',
++			'PersistentSAPCollider',
++			'ParticleParameters',
++			'SAPCollider',
++			'MetaInteractingGeometry2AABB',
++			'PythonRecorder',
++			'yade-lib-multimethods'],
++		LIBPATH=env['LIBPATH']),
++	#env.Program('tryI',['tryI.cpp'],LIBS=env['LIBS']+['yade-lib-base','Wm3Foundation'])
++	#	LIBS=env['LIBS']+[
++	#		'yade-lib-serialization',
++	#		'yade-lib-base',
++	#		'Wm3Foundation',])
++	#env.Program('pyrec',['pyrec.cpp'])
++	#env.SharedLibrary('emb',['emb.cc'],SHLIBPREFIX='')
++	## PythonRecorder
++	env.SharedLibrary('PythonRecorder',['PythonRecorder.cpp']),
++	env.SharedLibrary('_pyade',['pyade.cpp'],SHLIBPREFIX='',
++		LIBS=env['LIBS']+['yade-lib-base','Wm3Foundation','ParticleParameters','RigidBodyParameters'],
++	),
++	env.File('pyade.py'),
++])
+
+Modified: trunk/yade-extra/clump/pyade.py
+===================================================================
+--- trunk/yade-extra/clump/pyade.py	2007-02-23 19:18:12 UTC (rev 1072)
++++ trunk/yade-extra/clump/pyade.py	2007-02-24 16:42:01 UTC (rev 1073)
+@@ -50,7 +50,7 @@
+ 	class Body:
+ 		&quot;&quot;&quot;Dummy class that returns a few body parameters as if they were its attributes.
+ 		C++ code in pyade.cpp is called to get the actual values.
+-		Properties calculable from those already existing may be defined here - see Etrans, Erot, Epot for examples.&quot;&quot;&quot;
++		Properties calculable from those already existing may be defined here - see Etrans, Erot, Epot, E for examples.&quot;&quot;&quot;
+ 		def __init__(self,id):
+ 			self._id=id
+ 		def __getattr__(self,name):
+@@ -58,6 +58,7 @@
+ 			elif name=='Erot': return sum([.5*self.I[i]*self.w[i]**2 for i in range(3)])
+ 			#FIXME: gravity hardcoded...
+ 			elif name=='Epot': return -sum([self.x[i]*(0,0,-10)[i] for i in range(3)])*self.m
++			elif name=='E': return self.Etrans+self.Erot+self.Epot
+ 			else: return _pyade.bodyProp(self._id,_pyade.bodyPropDict()[name])
+ 
+ class Simul:
+
+Modified: trunk/yade-guis/yade-gui-qt/src/QtGUI/GLViewer.cpp
+===================================================================
+--- trunk/yade-guis/yade-gui-qt/src/QtGUI/GLViewer.cpp	2007-02-23 19:18:12 UTC (rev 1072)
++++ trunk/yade-guis/yade-gui-qt/src/QtGUI/GLViewer.cpp	2007-02-24 16:42:01 UTC (rev 1073)
+@@ -14,6 +14,9 @@
+ #include &lt;yade/yade-core/Body.hpp&gt;
+ #include &lt;yade/yade-core/Interaction.hpp&gt;
+ #include &lt;yade/yade-core/Omega.hpp&gt;
++#ifdef HIGHLEVEL_CLUMPS
++#include&lt;yade/yade-extra/Clump.hpp&gt;
++#endif
+ 
+ 
+ GLViewer::GLViewer(int id, shared_ptr&lt;RenderingEngine&gt; rendererInit, const QGLFormat&amp; format, QWidget * parent, QGLWidget * shareWidget) : QGLViewer(format,parent,&quot;glview&quot;,shareWidget)//, qglThread(this,rendererInit)
+@@ -152,6 +155,15 @@
+ 			double q0,q1,q2,q3;
+ 			manipulatedFrame()-&gt;getOrientation(q0,q1,q2,q3);
+ 			q[0]=q0;q[1]=q1;q[2]=q2;q[3]=q3;
++
++			#ifdef HIGHLEVEL_CLUMPS
++				shared_ptr&lt;Body&gt; b=Body::byId(selection);
++				if(b-&gt;isClump()){
++					Clump* c=dynamic_cast&lt;Clump*&gt;(Body::byId(b-&gt;clumpId).get());
++					c-&gt;moveSubBodies();
++					//for(Clump::clumpMap::iterator I=c-&gt;subBodies.begin(); I!=c-&gt;subBodies.end(); I++)renderer-&gt;render(Omega::instance().getRootBody(), I-&gt;first);
++				}
++			#endif
+ 		}
+ 		
+ 	// FIXME - here we want to actually call all responsible GLDraw Actors
+@@ -184,7 +196,11 @@
+ 	if( (*(Omega::instance().getRootBody()-&gt;bodies)).exists(selection) )
+ 	{
+ 		#ifdef HIGHLEVEL_CLUMPS
+-			Omega::instance().selectedBodies.push_front(Body::byId(selection)-&gt;isClumpMember()?Body::byId(selection)-&gt;clumpId:selection);
++			if(Body::byId(selection)-&gt;isClumpMember()){ // select clump (invisible) instead of its member
++				cerr&lt;&lt;&quot;Clump member #&quot;&lt;&lt;selection&lt;&lt;&quot; selected, selecting clump instead.&quot;&lt;&lt;endl;
++				selection=Body::byId(selection)-&gt;clumpId;
++				setSelectedName(selection);
++			}
+ 		#endif
+ 		std::cerr &lt;&lt; &quot;new selection &quot; &lt;&lt; selection &lt;&lt; &quot;\n&quot;;
+ 		wasDynamic = (*(Omega::instance().getRootBody()-&gt;bodies))[selection]-&gt;isDynamic;
+
+Modified: trunk/yade-libs/yade-lib-serialization/src/yade-lib-serialization/FundamentalHandler.tpp
+===================================================================
+--- trunk/yade-libs/yade-lib-serialization/src/yade-lib-serialization/FundamentalHandler.tpp	2007-02-23 19:18:12 UTC (rev 1072)
++++ trunk/yade-libs/yade-lib-serialization/src/yade-lib-serialization/FundamentalHandler.tpp	2007-02-24 16:42:01 UTC (rev 1073)
+@@ -41,6 +41,13 @@
+ 			const string * tmpStr = any_cast&lt;const string*&gt;(a);
+ 			string * tmp = any_cast&lt;string*&gt;(ac.getAddress());
+ 			*tmp = lexical_cast&lt;string&gt;(*tmpStr);
++			/*
++			*tmp=*tmpStr; // why not like this?
++			#define _RESTORE_SPECIAL(escape,special)pos=0; while((pos=tmp-&gt;find(escape,pos))!=string::npos){tmp-&gt;replace(pos,2,special); cerr&lt;&lt;escape&lt;&lt;&quot; &quot;&lt;&lt;pos&lt;&lt;endl;}
++			unsigned int pos;
++			_RESTORE_SPECIAL(&quot;\\\\&quot;,&quot;\\&quot;); _RESTORE_SPECIAL(&quot;\\n&quot;,&quot;\n&quot;); _RESTORE_SPECIAL(&quot;\\t&quot;,&quot;\t&quot;); _RESTORE_SPECIAL(&quot;\\'&quot;,&quot;\&quot;&quot;); // order matters!
++			#undef _RESTORE_SPECIAL
++			*/
+ 		}
+ 		else if (a.type()==typeid(const vector&lt;unsigned char&gt;*)) // from binary stream to Type
+ 		{
+@@ -61,6 +68,13 @@
+ 			string * tmpStr = any_cast&lt;string*&gt;(a);
+ 			string * tmp = any_cast&lt;string*&gt;(ac.getAddress());
+ 			*tmpStr = lexical_cast&lt;string&gt;(*tmp);
++			/*
++			*tmpStr=*tmp; // why not this?
++			#define _ESCAPE_SPECIAL(special,escape) pos=0; while((pos=tmpStr-&gt;find(special,pos))!=string::npos){tmpStr-&gt;replace(pos,1,escape); pos+=2;}
++			unsigned int pos;
++			_ESCAPE_SPECIAL(&quot;\\&quot;,&quot;\\\\&quot;); _ESCAPE_SPECIAL('\n',&quot;\\n&quot;); _ESCAPE_SPECIAL('\t',&quot;\\t&quot;); _ESCAPE_SPECIAL('\&quot;',&quot;\\'&quot;); // order matters!
++			#undef _ESCAPE_SPECIAL
++			*/
+ 		}
+ 		else if (a.type()==typeid(vector&lt;unsigned char&gt;*)) // from string to binary stream
+ 		{
+
+Modified: trunk/yade-packages/yade-package-dem/src/Engine/DeusExMachina/ResultantForceEngine/ResultantForceEngine.pro
+===================================================================
+--- trunk/yade-packages/yade-package-dem/src/Engine/DeusExMachina/ResultantForceEngine/ResultantForceEngine.pro	2007-02-23 19:18:12 UTC (rev 1072)
++++ trunk/yade-packages/yade-package-dem/src/Engine/DeusExMachina/ResultantForceEngine/ResultantForceEngine.pro	2007-02-24 16:42:01 UTC (rev 1073)
+@@ -12,7 +12,6 @@
+ 	
+ INCLUDEPATH += $${YADE_QMAKE_PATH}/include/ \
+                ../../../DataClass/PhysicalAction/GlobalStiffness \
+-	       ../../../DataClass/PhysicalParameters/ParticleParameters \
+ 	       ../../../Engine/DeusExMachina/ResultantForceEngine
+                
+ QMAKE_LIBDIR = ../../../../bin \
+
+Modified: trunk/yade-packages/yade-package-dem/src/Engine/DeusExMachina/TriaxialCompressionEngine/TriaxialCompressionEngine.pro
+===================================================================
+--- trunk/yade-packages/yade-package-dem/src/Engine/DeusExMachina/TriaxialCompressionEngine/TriaxialCompressionEngine.pro	2007-02-23 19:18:12 UTC (rev 1072)
++++ trunk/yade-packages/yade-package-dem/src/Engine/DeusExMachina/TriaxialCompressionEngine/TriaxialCompressionEngine.pro	2007-02-24 16:42:01 UTC (rev 1073)
+@@ -12,7 +12,6 @@
+ 	-rdynamic
+ 	
+ INCLUDEPATH += $${YADE_QMAKE_PATH}/include \
+-		../../../DataClass/PhysicalParameters/ParticleParameters \
+ 	       ../../../Engine/DeusExMachina/TriaxialStressController \
+ 	       ../../../DataClass/InteractionPhysics/ElasticContactInteraction 
+ QMAKE_LIBDIR = ../../../../bin \
+
+Modified: trunk/yade-packages/yade-package-dem/src/Engine/DeusExMachina/TriaxialStressController/TriaxialStressController.pro
+===================================================================
+--- trunk/yade-packages/yade-package-dem/src/Engine/DeusExMachina/TriaxialStressController/TriaxialStressController.pro	2007-02-23 19:18:12 UTC (rev 1072)
++++ trunk/yade-packages/yade-package-dem/src/Engine/DeusExMachina/TriaxialStressController/TriaxialStressController.pro	2007-02-24 16:42:01 UTC (rev 1073)
+@@ -14,7 +14,6 @@
+ 	-rdynamic
+ 	
+ INCLUDEPATH += $${YADE_QMAKE_PATH}/include/ \
+-               ../../../DataClass/PhysicalParameters/ParticleParameters \
+ 	       ../../../DataClass/InteractionGeometry/SpheresContactGeometry \
+ 	       ../../../Engine/DeusExMachina/TriaxialStressController \
+ 	       ../../../DataClass/InteractionPhysics/ElasticContactInteraction \
+
+Modified: trunk/yade-packages/yade-package-dem/src/Engine/EngineUnit/InteractingMyTetrahedron2AABB/InteractingMyTetrahedron2AABB.pro
+===================================================================
+--- trunk/yade-packages/yade-package-dem/src/Engine/EngineUnit/InteractingMyTetrahedron2AABB/InteractingMyTetrahedron2AABB.pro	2007-02-23 19:18:12 UTC (rev 1072)
++++ trunk/yade-packages/yade-package-dem/src/Engine/EngineUnit/InteractingMyTetrahedron2AABB/InteractingMyTetrahedron2AABB.pro	2007-02-24 16:42:01 UTC (rev 1073)
+@@ -9,9 +9,7 @@
+         -lyade-lib-base -lWm3Foundation \
+         -rdynamic 
+ INCLUDEPATH += $${YADE_QMAKE_PATH}/include/ \
+-               ../../../DataClass/InteractingGeometry/InteractingMyTetrahedron \
+-               ../../../DataClass/BoundingVolume/AABB \
+-               ../../../Engine/MetaEngine/BoundingVolumeMetaEngine 
++               ../../../DataClass/InteractingGeometry/InteractingMyTetrahedron
+ QMAKE_LIBDIR = ../../../../bin \
+                $${YADE_QMAKE_PATH}/lib/yade/yade-libs/ \
+ 	       $${YADE_QMAKE_PATH}/lib/yade/yade-package-common 
+
+Modified: trunk/yade-packages/yade-package-dem/src/Engine/StandAloneEngine/GeometricalModelForceColorizer/GeometricalModelForceColorizer.pro
+===================================================================
+--- trunk/yade-packages/yade-package-dem/src/Engine/StandAloneEngine/GeometricalModelForceColorizer/GeometricalModelForceColorizer.pro	2007-02-23 19:18:12 UTC (rev 1072)
++++ trunk/yade-packages/yade-package-dem/src/Engine/StandAloneEngine/GeometricalModelForceColorizer/GeometricalModelForceColorizer.pro	2007-02-24 16:42:01 UTC (rev 1073)
+@@ -6,12 +6,7 @@
+ LIBS += -lRigidBodyParameters \
+         -lForce \
+         -rdynamic 
+-INCLUDEPATH += $${YADE_QMAKE_PATH}/include/ \
+-               ../../../DataClass/PhysicalParameters/LatticeNodeParameters \
+-               ../../../DataClass/PhysicalParameters/LatticeSetParameters \
+-               ../../../DataClass/PhysicalParameters/LatticeBeamParameters \
+-               ../../../DataClass/InteractionPhysics/LatticeBeamAngularSpring \
+-               ../../../DataClass/InteractionPhysics/NonLocalDependency
++INCLUDEPATH += $${YADE_QMAKE_PATH}/include/
+ QMAKE_LIBDIR = $${YADE_QMAKE_PATH}/lib/yade/yade-package-common/ \
+                $${YADE_QMAKE_PATH}/lib/yade/yade-libs/ 
+ QMAKE_CXXFLAGS_RELEASE += -lpthread \
+
+Modified: trunk/yade-packages/yade-package-dem/src/Engine/StandAloneEngine/MyTetrahedronLaw/MyTetrahedronLaw.pro
+===================================================================
+--- trunk/yade-packages/yade-package-dem/src/Engine/StandAloneEngine/MyTetrahedronLaw/MyTetrahedronLaw.pro	2007-02-23 19:18:12 UTC (rev 1072)
++++ trunk/yade-packages/yade-package-dem/src/Engine/StandAloneEngine/MyTetrahedronLaw/MyTetrahedronLaw.pro	2007-02-24 16:42:01 UTC (rev 1073)
+@@ -17,8 +17,7 @@
+         -rdynamic 
+ INCLUDEPATH += $${YADE_QMAKE_PATH}/include/ \
+                ../../../DataClass/InteractionPhysics/ElasticContactInteraction \
+-               ../../../DataClass/InteractionGeometry/InteractionOfMyTetrahedron \
+-               ../../../DataClass/PhysicalParameters/ElasticBodyParameters 
++               ../../../DataClass/InteractionGeometry/InteractionOfMyTetrahedron
+ QMAKE_LIBDIR = ../../../../bin \
+                $${YADE_QMAKE_PATH}/lib/yade/yade-package-common/ \
+                $${YADE_QMAKE_PATH}/lib/yade/yade-libs/ 
+
+Modified: trunk/yade-packages/yade-package-dem/src/RenderingEngine/GLDrawInteractingMyTetrahedron/GLDrawInteractingMyTetrahedron.pro
+===================================================================
+--- trunk/yade-packages/yade-package-dem/src/RenderingEngine/GLDrawInteractingMyTetrahedron/GLDrawInteractingMyTetrahedron.pro	2007-02-23 19:18:12 UTC (rev 1072)
++++ trunk/yade-packages/yade-package-dem/src/RenderingEngine/GLDrawInteractingMyTetrahedron/GLDrawInteractingMyTetrahedron.pro	2007-02-24 16:42:01 UTC (rev 1073)
+@@ -7,8 +7,7 @@
+         -lyade-lib-opengl \
+         -rdynamic 
+ INCLUDEPATH += $${YADE_QMAKE_PATH}/include/ \
+-               ../../DataClass/InteractingGeometry/InteractingMyTetrahedron \
+-               ../../RenderingEngine/OpenGLRenderingEngine 
++               ../../DataClass/InteractingGeometry/InteractingMyTetrahedron
+ QMAKE_LIBDIR = ../../../bin \
+                $${YADE_QMAKE_PATH}/lib/yade/yade-libs/ 
+ QMAKE_CXXFLAGS_RELEASE += -lpthread \
+
+Modified: trunk/yade-packages/yade-package-dem/src/RenderingEngine/GLDrawSDECLinkGeometry/GLDrawSDECLinkGeometry.pro
+===================================================================
+--- trunk/yade-packages/yade-package-dem/src/RenderingEngine/GLDrawSDECLinkGeometry/GLDrawSDECLinkGeometry.pro	2007-02-23 19:18:12 UTC (rev 1072)
++++ trunk/yade-packages/yade-package-dem/src/RenderingEngine/GLDrawSDECLinkGeometry/GLDrawSDECLinkGeometry.pro	2007-02-24 16:42:01 UTC (rev 1073)
+@@ -11,8 +11,7 @@
+ INCLUDEPATH += $${YADE_QMAKE_PATH}/include/ \
+                ../../DataClass/InteractionGeometry/SDECLinkGeometry \
+ 	       ../../DataClass/InteractionPhysics/SDECLinkPhysics \
+-	       ../../../../yade-package-common/src/DataClass/InteractionPhysics/SimpleElasticInteraction \
+-               ../../RenderingEngine/OpenGLRenderingEngine 
++	       ../../../../yade-package-common/src/DataClass/InteractionPhysics/SimpleElasticInteraction
+ QMAKE_LIBDIR = ../../../bin \
+                ../../../../yade-package-common/bin \
+                $${YADE_QMAKE_PATH}/lib/yade/yade-libs/ 
+
+Modified: trunk/yade-packages/yade-package-dem/src/RenderingEngine/GLDrawSpheresContactGeometry/GLDrawSpheresContactGeometry.pro
+===================================================================
+--- trunk/yade-packages/yade-package-dem/src/RenderingEngine/GLDrawSpheresContactGeometry/GLDrawSpheresContactGeometry.pro	2007-02-23 19:18:12 UTC (rev 1072)
++++ trunk/yade-packages/yade-package-dem/src/RenderingEngine/GLDrawSpheresContactGeometry/GLDrawSpheresContactGeometry.pro	2007-02-24 16:42:01 UTC (rev 1073)
+@@ -11,8 +11,7 @@
+ INCLUDEPATH += $${YADE_QMAKE_PATH}/include/ \
+                ../../DataClass/InteractionGeometry/SpheresContactGeometry \
+ 	       ../../DataClass/InteractionPhysics/ElasticContactInteraction \
+-	       ../../../../yade-package-common/src/DataClass/InteractionPhysics/SimpleElasticInteraction \
+-               ../../RenderingEngine/OpenGLRenderingEngine 
++	       ../../../../yade-package-common/src/DataClass/InteractionPhysics/SimpleElasticInteraction
+ QMAKE_LIBDIR = ../../../bin \
+                ../../../../yade-package-common/bin \
+                $${YADE_QMAKE_PATH}/lib/yade/yade-libs/ 
+
+Modified: trunk/yade-scripts/erskine3.py
+===================================================================
+--- trunk/yade-scripts/erskine3.py	2007-02-23 19:18:12 UTC (rev 1072)
++++ trunk/yade-scripts/erskine3.py	2007-02-24 16:42:01 UTC (rev 1073)
+@@ -312,9 +312,6 @@
+ 	elif buildEngine=='scons':
+ 		env=defaultEnv
+ 		if target in targetEnv: env=targetEnv[target]
+-		# assign variable to each target, so that it can be passed to the Install method later	
+-		# uncomment this and look for EXPLICIT_INSTALL below as well
+-		# ret+=&quot;%s=&quot;%pythonicTarget(target)
+ 		ret+=&quot;%s.%s('%s',%s%s&quot;%(env,{'program':'Program','shlib':'SharedLibrary','staticlib':'StaticLibrary'}[targetType],
+ 			target,fieldSep,toStr(prependDirFile(relPath,sources)))
+ 		if installable.has_key((env,targetType)): installable[(env,targetType)].append(pythonicTarget(target))
+@@ -329,6 +326,9 @@
+ 			### try the inverse:
+ 			ret+=&quot;,%sCPPPATH=%s['CPPPATH']+%s&quot;%(fieldSep,env,toStr(includePath))
+ 		ret+=')'
++		instDir=installDirs[targetType]
++		if instDirTargets.has_key((env,instDir)): instDirTargets[(env,instDir)].append((ret,target))
++		else: instDirTargets[(env,instDir)]=[(ret,target)]
+ 		
+ 	else: raise ValueError('buildEngine must be waf or scons (--waf or --scons)');
+ 
+@@ -345,12 +345,19 @@
+ 	s=''
+ 	if buildEngine=='scons':
+ 		s+=&quot;Import('*')\n&quot;
+-		s+=processVars(V,dir)
+-		for env,ttype in installable.keys(): # one of shlib, staticlib, program
+-			if len(installable[(env,ttype)])==0: continue
+-			# commented temporarily
+-			# if you need this back, uncomment also the other lines marked by EXPLICIT_INSTALL in comment
+-			# s+=&quot;\n%s.Install('%s',source=[%s])\n&quot;%(env,installDirs[ttype],string.join(installable[(env,ttype)],','))
++		processVars(V,dir) # return value of processVars discarded, results passed in instDirTarget instead
++		for env,dir in instDirTargets.keys():
++			idt=instDirTargets[(env,dir)]
++			#binary targets are handles specially: they install under _filename_ postfixed
++			if match('.*/bin$',dir): ## warhing: this is OS-specific to tell binary target!
++				s+=&quot;%s.InstallAs([&quot;%env+','.join([&quot;'%s$POSTFIX'&quot;%(join(dir,tgSpec[1])) for tgSpec in idt])+&quot;],[\n&quot;
++				s+=',\n'.join([sub(r'(?m)^','\t',tgSpec[0]) for tgSpec in idt])
++				s+='\n])'
++			#whereas other targets install under _filename_ into a dir that has been postfixed already
++			else:
++				s+=&quot;%s.Install('%s',[\n&quot;%(env,dir)
++				s+=',\n'.join([sub(r'(?m)^','\t',tgSpec[0]) for tgSpec in idt])+'\n])\n'
++				#for tgSpec in idt: print tgSpec[0]
+ 	elif buildEngine=='waf':
+ 		s+=processVars(V,dir)
+ 	return s
+@@ -378,7 +385,8 @@
+ else:
+ 	toStr=str; fieldSep='';
+ installable={} # hash indexed by (env,targetType)-&gt;pythonicTargetName
+-installDirs={'shlib':join('$PREFIX','lib','yade',string.split(scriptDir,os.sep)[-1]),'staticlib':join('$PREFIX','lib','yade'),'program':join('$PREFIX','bin')}
++instDirTargets={} # hash indexed by (env,targetDir)-&gt;str_target_spec
++installDirs={'shlib':join('$PREFIX','lib','yade$POSTFIX',string.split(scriptDir,os.sep)[-1]),'staticlib':join('$PREFIX','lib','yade$POSTFIX'),'program':join('$PREFIX','bin')}
+ 
+ print masterScriptGen(allVars,scriptDir)
+ 
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000037.html">[Yade-commits] r1072 - in trunk/yade-packages:	yade-package-common/src/Engine/EngineUnit/NewtonsForceLaw	yade-package-dem/src/Engine/StandAloneEngine/GlobalStiffnessTimeStepper
+</A></li>
+	<LI>Next message: <A HREF="000039.html">[Yade-commits] r1074 - in trunk: yade-core/src/yade yade-extra/clump yade-guis/yade-gui-qt/src/QtGUI yade-libs/yade-lib-opengl/src/yade-lib-opengl yade-packages/yade-package-common/src/RenderingEngine/GLDrawGeometricalModel/GLDrawBox yade-packages/yade-package-common/src/RenderingEngine/GLDrawGeometricalModel/GLDrawQuadrilateral yade-packages/yade-package-common/src/RenderingEngine/GLDrawGeometricalModel/GLDrawSphere yade-packages/yade-package-common/src/RenderingEngine/GLDrawGeometricalModel/GLDrawTetrahedron yade-packages/yade-package-common/src/RenderingEngine/GLDrawInteractingGeometry/GLDrawInteractingBox yade-packages/yade-package-common/src/RenderingEngine/GLDrawInteractingGeometry/GLDrawInteractingSphere yade-packages/yade-package-dem/src/PreProcessor/Funnel yade-packages/yade-package-dem/src/PreProcessor/SDECImpactTest yade-packages/yade-package-dem/src/PreProcessor/SDECLinkedSpheres yade-packages/yade-package-dem/src/PreProcessor/SDECMovingWall yade-packages/yade-package-! dem/src/PreProcessor/SDECSpheresPlane yade-packages/yade-package-dem/src/PreProcessor/TetrahedronsTest yade-packages/yade-package-dem/src/PreProcessor/ThreePointBending yade-packages/yade-package-dem/src/PreProcessor/TriaxialTest yade-packages/yade-package-dem/src/RenderingEngine/GLDrawInteractingMyTetrahedron yade-packages/yade-package-dem/src/RenderingEngine/GLDrawSpheresContactGeometry yade-packages/yade-package-fem/src/Engine/EngineUnit/FEMSetTextLoader yade-packages/yade-package-fem/src/PreProcessor/FEMBeam yade-packages/yade-package-lattice/src/Engine/EngineUnit/LatticeSet2LatticeBeams yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/BeamRecorder yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/MeasurePoisson yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/MovingSupport yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/NodeRecorder yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/StrainRecorder yade! -packages/yade-package-lattice/src/PreProcessor/LatticeExample! yade-pa
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#38">[ date ]</a>
+              <a href="thread.html#38">[ thread ]</a>
+              <a href="subject.html#38">[ subject ]</a>
+              <a href="author.html#38">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

@@ -1,0 +1,862 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1443 - in trunk: core extra gui/py gui/qt3 lib/base	lib/serialization lib/serialization-xml pkg/common	pkg/common/Engine/DeusExMachina scripts
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1443%20-%20in%20trunk%3A%20core%20extra%20gui/py%20gui/qt3%20lib/base%0A%09lib/serialization%20lib/serialization-xml%20pkg/common%0A%09pkg/common/Engine/DeusExMachina%20scripts&In-Reply-To=%3C200807230825.m6N8PE5b032350%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000402.html">
+   <LINK REL="Next"  HREF="000404.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1443 - in trunk: core extra gui/py gui/qt3 lib/base	lib/serialization lib/serialization-xml pkg/common	pkg/common/Engine/DeusExMachina scripts</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1443%20-%20in%20trunk%3A%20core%20extra%20gui/py%20gui/qt3%20lib/base%0A%09lib/serialization%20lib/serialization-xml%20pkg/common%0A%09pkg/common/Engine/DeusExMachina%20scripts&In-Reply-To=%3C200807230825.m6N8PE5b032350%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1443 - in trunk: core extra gui/py gui/qt3 lib/base	lib/serialization lib/serialization-xml pkg/common	pkg/common/Engine/DeusExMachina scripts">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Wed Jul 23 10:25:14 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000402.html">[Yade-commits] r1442 - in branches/przewdnik: core	pkg/common/RenderingEngine/OpenGLRenderingEngine
+</A></li>
+        <LI>Next message: <A HREF="000404.html">[Yade-commits] r1444 - in trunk: core extra gui/qt3	pkg/common/RenderingEngine/OpenGLRenderingEngine	pkg/dem/Engine/DeusExMachina
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#403">[ date ]</a>
+              <a href="thread.html#403">[ thread ]</a>
+              <a href="subject.html#403">[ subject ]</a>
+              <a href="author.html#403">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2008-07-23 10:25:11 +0200 (Wed, 23 Jul 2008)
+New Revision: 1443
+
+Modified:
+   trunk/core/DeusExMachina.cpp
+   trunk/core/DeusExMachina.hpp
+   trunk/core/FileGenerator.cpp
+   trunk/extra/Brefcom.cpp
+   trunk/gui/py/plot.py
+   trunk/gui/py/yadeControl.cpp
+   trunk/gui/qt3/GLViewer.cpp
+   trunk/lib/base/Logging.hpp
+   trunk/lib/serialization-xml/XMLFormatManager.cpp
+   trunk/lib/serialization/FundamentalHandler.tpp
+   trunk/lib/serialization/Serializable.hpp
+   trunk/pkg/common/Engine/DeusExMachina/JumpChangeSe3.hpp
+   trunk/pkg/common/SConscript
+   trunk/scripts/simple-scene-graph.py
+Log:
+1. Omega().interactions.nth returns n-th real interaction
+2. Export more brefcom data to python
+3. Make LOG_DEBUG and LOG_TRACE no-op in NDEBUG (optimized) builds
+4. Change linebreaks from CR+LF to unix LF in a few random diles
+5. Make DeusExMachina registerAttributes of Engine
+6. Serializer prints offending value if bad_lexical_cast.
+7. Attempt to catch exception if reading bool written as int (254 etc) and consider that &quot;true&quot; (doesn't work?)
+8. JumpChangeSe3 can set (angular)velocity if requested instead of plain moving
+
+
+Modified: trunk/core/DeusExMachina.cpp
+===================================================================
+--- trunk/core/DeusExMachina.cpp	2008-07-22 16:41:28 UTC (rev 1442)
++++ trunk/core/DeusExMachina.cpp	2008-07-23 08:25:11 UTC (rev 1443)
+@@ -13,6 +13,7 @@
+ }
+ 
+ void DeusExMachina::registerAttributes() {
++	Engine::registerAttributes();
+ 	REGISTER_ATTRIBUTE(subscribedBodies);
+ }
+ 
+
+Modified: trunk/core/DeusExMachina.hpp
+===================================================================
+--- trunk/core/DeusExMachina.hpp	2008-07-22 16:41:28 UTC (rev 1442)
++++ trunk/core/DeusExMachina.hpp	2008-07-23 08:25:11 UTC (rev 1443)
+@@ -19,7 +19,7 @@
+ 	All kinematic engines must derived from this class. A kinematic engine is used to modify the state of an object
+ 	(position,veloity ...) according to a predefined law (mathematical function, stored data ...) and not according
+ 	to a dynamic law as dynamic engines do. A kinematic engine contains a list of bodies to act on, and bodies can
+-	subscribe to several deux ex machinas.
++	subscribe to several dii ex machina.
+ */
+ 
+ class DeusExMachina : public Engine
+
+Modified: trunk/core/FileGenerator.cpp
+===================================================================
+--- trunk/core/FileGenerator.cpp	2008-07-22 16:41:28 UTC (rev 1442)
++++ trunk/core/FileGenerator.cpp	2008-07-23 08:25:11 UTC (rev 1443)
+@@ -1,112 +1,112 @@
+-/*************************************************************************
+-*  This program is free software; it is licensed under the terms of the  *
+-*  GNU General Public License v2 or later. See file LICENSE for details. *
+-*************************************************************************/
+-
+-#include&lt;cstdlib&gt;
+-#include&lt;yade/lib-multimethods/MultiMethodsExceptions.hpp&gt;
+-#include&lt;boost/date_time/posix_time/posix_time.hpp&gt;
+-
+-#include&quot;FileGenerator.hpp&quot;
+-
+-CREATE_LOGGER(FileGenerator);
+-
+-FileGenerator::FileGenerator () : Serializable() 
+-{
+-	outputFileName = &quot;./scene.xml&quot;;
+-	serializationDynlib = &quot;XMLFormatManager&quot;;
+-}
+-
+-
+-FileGenerator::~FileGenerator () 
+-{
+-
+-}
+-
+-
+-void FileGenerator::setFileName(const string&amp; fileName) 
+-{ 
+-	outputFileName=fileName;
+-}
+-
+-
+-void FileGenerator::setSerializationLibrary(const string&amp; lib) 
+-{ 
+-	serializationDynlib=lib;
+-}
+-
+-
+-void FileGenerator::postProcessAttributes(bool) 
+-{
+-
+-}
+-
+-
+-void FileGenerator::registerAttributes() 
+-{	
+-	REGISTER_ATTRIBUTE(outputFileName);
+-	REGISTER_ATTRIBUTE(serializationDynlib);
+-}
+-
+-
+-bool FileGenerator::generate() 
+-{
+-	message=&quot;FileGenerator (base class) generates nothing.&quot;;
+-	return false;
+-}
+-
+-
+-bool FileGenerator::generateAndSave()
+-{
+-	bool status;
+-	message=&quot;&quot;;
+-	boost::posix_time::ptime now = boost::posix_time::second_clock::local_time();
+-	try {
+-		status=generate(); // will modify message
+-	}
+-	catch(SerializableError&amp; e){message+=string(&quot;SeriazableError: &quot;)+e.what(); return false;}
+-	catch(FactoryError&amp; e){message+=string(&quot;FactoryError: &quot;)+e.what(); return false;}
+-	catch(MultiMethodsError&amp; e){message+=string(&quot;MultiMethodsError: &quot;)+e.what(); return false;}
+-	catch(std::exception&amp; e){
+-		LOG_FATAL(&quot;Unhandled exception: &quot;&lt;&lt;typeid(e).name()&lt;&lt;&quot; : &quot;&lt;&lt;e.what());
+-		//abort(); // use abort, since we may want to inspect core
+-		message = message + &quot;Unhandled exception: &quot; + typeid(e).name() + &quot; : &quot; + e.what();
+-		return false;
+-	}
+-
+-	if(shouldTerminate())
+-	{
+-		message+=&quot;Generation aborted.&quot;; return false;
+-	}
+-	else
+-	{
+-		boost::posix_time::ptime now2 = boost::posix_time::second_clock::local_time();
+-		boost::posix_time::time_duration generationTime = now2 - now; // generation time, without save time
+-		setStatus(&quot;saving...&quot;);
+-		setProgress(1.0);
+-		try
+-		{
+-			IOFormatManager::saveToFile(serializationDynlib, outputFileName, &quot;rootBody&quot;, rootBody);
+-		}
+-		catch(SerializableError&amp; e)
+-		{
+-			message+=std::string(&quot;File &quot;+outputFileName+&quot; cannot be saved: &quot;+e.what());
+-			return false;
+-		}
+-		boost::posix_time::ptime now3 = boost::posix_time::second_clock::local_time();
+-		boost::posix_time::time_duration saveTime = now3 - now2; // save time
+-		message=std::string(&quot;File &quot;+outputFileName+&quot; generated successfully.&quot;
+-				+ &quot;\ngeneration time: &quot; + boost::posix_time::to_simple_string(generationTime) 
+-				+ &quot;\nsave time: &quot;       + boost::posix_time::to_simple_string(saveTime)
+-				+&quot;\n\n&quot;)+message;
+-		return true;
+-	}
+-}
+-
+-void FileGenerator::singleAction()
+-{
+-	setStatus(&quot;generating model...&quot;);
+-	bool st=generateAndSave();
+-	setReturnValue(st);
+-};
+-
++/*************************************************************************
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#include&lt;cstdlib&gt;
++#include&lt;yade/lib-multimethods/MultiMethodsExceptions.hpp&gt;
++#include&lt;boost/date_time/posix_time/posix_time.hpp&gt;
++
++#include&quot;FileGenerator.hpp&quot;
++
++CREATE_LOGGER(FileGenerator);
++
++FileGenerator::FileGenerator () : Serializable() 
++{
++	outputFileName = &quot;./scene.xml&quot;;
++	serializationDynlib = &quot;XMLFormatManager&quot;;
++}
++
++
++FileGenerator::~FileGenerator () 
++{
++
++}
++
++
++void FileGenerator::setFileName(const string&amp; fileName) 
++{ 
++	outputFileName=fileName;
++}
++
++
++void FileGenerator::setSerializationLibrary(const string&amp; lib) 
++{ 
++	serializationDynlib=lib;
++}
++
++
++void FileGenerator::postProcessAttributes(bool) 
++{
++
++}
++
++
++void FileGenerator::registerAttributes() 
++{	
++	REGISTER_ATTRIBUTE(outputFileName);
++	REGISTER_ATTRIBUTE(serializationDynlib);
++}
++
++
++bool FileGenerator::generate() 
++{
++	message=&quot;FileGenerator (base class) generates nothing.&quot;;
++	return false;
++}
++
++
++bool FileGenerator::generateAndSave()
++{
++	bool status;
++	message=&quot;&quot;;
++	boost::posix_time::ptime now = boost::posix_time::second_clock::local_time();
++	try {
++		status=generate(); // will modify message
++	}
++	catch(SerializableError&amp; e){message+=string(&quot;SeriazableError: &quot;)+e.what(); return false;}
++	catch(FactoryError&amp; e){message+=string(&quot;FactoryError: &quot;)+e.what(); return false;}
++	catch(MultiMethodsError&amp; e){message+=string(&quot;MultiMethodsError: &quot;)+e.what(); return false;}
++	catch(std::exception&amp; e){
++		LOG_FATAL(&quot;Unhandled exception: &quot;&lt;&lt;typeid(e).name()&lt;&lt;&quot; : &quot;&lt;&lt;e.what());
++		//abort(); // use abort, since we may want to inspect core
++		message = message + &quot;Unhandled exception: &quot; + typeid(e).name() + &quot; : &quot; + e.what();
++		return false;
++	}
++
++	if(shouldTerminate())
++	{
++		message+=&quot;Generation aborted.&quot;; return false;
++	}
++	else
++	{
++		boost::posix_time::ptime now2 = boost::posix_time::second_clock::local_time();
++		boost::posix_time::time_duration generationTime = now2 - now; // generation time, without save time
++		setStatus(&quot;saving...&quot;);
++		setProgress(1.0);
++		try
++		{
++			IOFormatManager::saveToFile(serializationDynlib, outputFileName, &quot;rootBody&quot;, rootBody);
++		}
++		catch(SerializableError&amp; e)
++		{
++			message+=std::string(&quot;File &quot;+outputFileName+&quot; cannot be saved: &quot;+e.what());
++			return false;
++		}
++		boost::posix_time::ptime now3 = boost::posix_time::second_clock::local_time();
++		boost::posix_time::time_duration saveTime = now3 - now2; // save time
++		message=std::string(&quot;File &quot;+outputFileName+&quot; generated successfully.&quot;
++				+ &quot;\ngeneration time: &quot; + boost::posix_time::to_simple_string(generationTime) 
++				+ &quot;\nsave time: &quot;       + boost::posix_time::to_simple_string(saveTime)
++				+&quot;\n\n&quot;)+message;
++		return true;
++	}
++}
++
++void FileGenerator::singleAction()
++{
++	setStatus(&quot;generating model...&quot;);
++	bool st=generateAndSave();
++	setReturnValue(st);
++};
++
+
+Modified: trunk/extra/Brefcom.cpp
+===================================================================
+--- trunk/extra/Brefcom.cpp	2008-07-22 16:41:28 UTC (rev 1442)
++++ trunk/extra/Brefcom.cpp	2008-07-23 08:25:11 UTC (rev 1443)
+@@ -148,22 +148,27 @@
+ 
+ 		// /* TODO: recover non-cohesive contact deletion: */
+ 		if(!BC-&gt;isCohesive &amp;&amp; epsN&gt;0.){ /* delete this interaction later */ I-&gt;isReal=false; continue; }
+-
++		#define BREFCOM_DETAIL
+ 		/* shear strain: always use it, even for epsN&gt;0 */
+ 		/*if(false &amp;&amp; epsN&gt;0) { epsT=Vector3r::ZERO; } else {*/
+ 				NNANV(epsT);
+ 			/* rotate epsT to the new contact plane */
+ 				const Real&amp; dt=Omega::instance().getTimeStep();
+ 				// rotation of the contact normal
+-				//TRVAR2(epsT,BC-&gt;prevNormal.Cross(contGeom-&gt;normal));
+-				//TRVAR1((BC-&gt;prevNormal.Cross(contGeom-&gt;normal)).Cross(epsT));
++				#ifdef BREFCOM_DETAIL
++					TRVAR2(epsT,BC-&gt;prevNormal.Cross(contGeom-&gt;normal));
++					TRVAR1((BC-&gt;prevNormal.Cross(contGeom-&gt;normal)).Cross(epsT));
++				#endif
+ 				epsT+=(BC-&gt;prevNormal.Cross(contGeom-&gt;normal)).Cross(epsT);
+ 				NNANV(epsT);
+ 				
+ 				// mutual rotation
+ 				Real angle=dt*.5*contGeom-&gt;normal.Dot(rbp1-&gt;angularVelocity+rbp2-&gt;angularVelocity); /*assumes equal radii */
+-				//TRVAR1(dt*.5*contGeom-&gt;normal.Dot(rbp1-&gt;angularVelocity+rbp2-&gt;angularVelocity));
+-				//TRVAR1(epsT.Cross(angle*contGeom-&gt;normal));
++				#ifdef BREFCOM_DETAIL
++					TRVAR1(epsT);
++					TRVAR1(dt*.5*contGeom-&gt;normal.Dot(rbp1-&gt;angularVelocity+rbp2-&gt;angularVelocity));
++					TRVAR1((angle*contGeom-&gt;normal).Cross(epsT));
++				#endif
+ 				epsT+=(angle*contGeom-&gt;normal).Cross(epsT);
+ 				NNANV(epsT);
+ 
+@@ -171,15 +176,21 @@
+ 				Vector3r AtoC(contGeom-&gt;contactPoint-rbp1-&gt;se3.position), BtoC(contGeom-&gt;contactPoint-rbp2-&gt;se3.position);
+ 				//TRVAR3(contGeom-&gt;contactPoint,rbp1-&gt;se3.position,rbp2-&gt;se3.position);
+ 				Vector3r relVelocity /* at the contact point */ = 
+-					//rbp2-&gt;velocity-rbp1-&gt;velocity +
++					rbp2-&gt;velocity-rbp1-&gt;velocity +
+ 					rbp2-&gt;angularVelocity.Cross(BtoC)
+ 					-rbp1-&gt;angularVelocity.Cross(AtoC);
+ 
+ 				Vector3r tangentialDisplacement=dt*(relVelocity- /* subtract non-shear component */ contGeom-&gt;normal.Dot(relVelocity)*contGeom-&gt;normal);
+-				//TRVAR4(AtoC,BtoC,rbp2-&gt;angularVelocity,rbp1-&gt;angularVelocity);
+-				//TRVAR3(relVelocity,tangentialDisplacement,tangentialDisplacement/dist);
+-				//TRWM3VEC(contGeom-&gt;normal);
+-			epsT+=tangentialDisplacement/dist;
++				#ifdef BREFCOM_DETAIL
++					TRVAR1(epsT);
++					TRVAR4(AtoC,BtoC,rbp2-&gt;angularVelocity,rbp1-&gt;angularVelocity);
++					TRVAR3(relVelocity,tangentialDisplacement,tangentialDisplacement/dist);
++					TRWM3VEC(contGeom-&gt;normal);
++				#endif
++				epsT+=tangentialDisplacement/dist;
++				#ifdef BREFCOM_DETAIL
++					TRVAR1(epsT);
++				#endif
+ 				NNANV(epsT);
+ 			/* artificially remove residuum in the normal direction */
+ 			//epsT-=contGeom-&gt;normal*epsT.Dot(contGeom-&gt;normal);
+@@ -198,7 +209,8 @@
+ 		// store Fn (and Fs?), for use with BrefcomStiffnessCounter
+ 		NNAN(sigmaN); NNAN(sigmaT[0]);NNAN(sigmaT[1]);NNAN(sigmaT[2]);
+ 		NNAN(crossSection);
+-		Fn=sigmaN*crossSection;	Fs=sigmaT*crossSection;
++		Fn=sigmaN*crossSection;
++		Fs=sigmaT*crossSection;
+ 		//TRVAR5(epsN,epsT,sigmaN,sigmaT,crossSection*(contGeom-&gt;normal*sigmaN + sigmaT));
+ 		applyForce(crossSection*(contGeom-&gt;normal*sigmaN + sigmaT)); /* this is the force applied on the _first_ body */
+ 
+
+Modified: trunk/gui/py/plot.py
+===================================================================
+--- trunk/gui/py/plot.py	2008-07-22 16:41:28 UTC (rev 1442)
++++ trunk/gui/py/plot.py	2008-07-23 08:25:11 UTC (rev 1443)
+@@ -81,13 +81,26 @@
+ 		pylab.legend([_p[0] for _p in plots_p])
+ 		pylab.xlabel(p)
+ 	pylab.show()
++updatePeriod=0
++def periodicUpdate(period):
++	import time
++	global updatePeriod
++	while updatePeriod&gt;0:
++		doUpdate()
++		time.sleep(updatePeriod)
++def startUpdate(period=10):
++	global updatePeriod
++	updatePeriod=period
++	import threading
++	threading.Thread(target=periodicUpdate,args=(period,),name='Thread-update').start()
++def stopUpdate():
++	global updatePeriod
++	updatePeriod=0
++def doUpdate():
++	pylab.close('all')
++	plot()
+ 
+-def update():
+-	pylab.draw();
+-#	for p in plots:
+-#		pylab.plot(*sum([[data[p],data[d[0]],d[1]] for d in plots_p],[]))
+ 
+-
+ def saveGnuplot(baseName,term='wxt',extension=None,timestamp=False,comment=None,title=None):
+ 	&quot;&quot;&quot;baseName: used for creating baseName.gnuplot (command file for gnuplot),
+ 			associated baseName.data (data) and output files (if applicable) in the form baseName.[plot number].extension
+
+Modified: trunk/gui/py/yadeControl.cpp
+===================================================================
+--- trunk/gui/py/yadeControl.cpp	2008-07-22 16:41:28 UTC (rev 1442)
++++ trunk/gui/py/yadeControl.cpp	2008-07-23 08:25:11 UTC (rev 1443)
+@@ -318,9 +318,9 @@
+ 			shared_ptr&lt;Interaction&gt; i=proxee-&gt;find(id1_(),id2_());
+ 			if(i) return pyInteraction(i); else throw invalid_argument(&quot;No such interaction.&quot;);
+ 		}
+-		/* return nth iteration from the container (0-based index); this is to facilitate picking random interaction */
++		/* return nth _real_ iteration from the container (0-based index); this is to facilitate picking random interaction */
+ 		pyInteraction pyNth(long n){
+-			long i=0; FOREACH(const shared_ptr&lt;Interaction&gt;&amp; I, *proxee){ if(i++==n) return pyInteraction(I); }
++			long i=0; FOREACH(const shared_ptr&lt;Interaction&gt;&amp; I, *proxee){ if(!I-&gt;isReal) continue; if(i++==n) return pyInteraction(I); }
+ 			throw invalid_argument(string(&quot;Interaction number out of range (&quot;)+lexical_cast&lt;string&gt;(n)+&quot;&gt;=&quot;+lexical_cast&lt;string&gt;(i)+&quot;).&quot;);
+ 		}
+ };
+
+Modified: trunk/gui/qt3/GLViewer.cpp
+===================================================================
+--- trunk/gui/qt3/GLViewer.cpp	2008-07-22 16:41:28 UTC (rev 1442)
++++ trunk/gui/qt3/GLViewer.cpp	2008-07-23 08:25:11 UTC (rev 1443)
+@@ -215,8 +215,9 @@
+ 	else if(e-&gt;key()==Qt::Key_P) camera()-&gt;setFieldOfView(camera()-&gt;fieldOfView()*1.1);
+ 	else if(e-&gt;key()==Qt::Key_R){ // reverse the clipping plane; revolve around scene center if no clipping plane selected
+ 		if(manipulatedClipPlane&gt;=0 &amp;&amp; manipulatedClipPlane&lt;renderer-&gt;clipPlaneNum){
+-			manipulatedFrame()-&gt;setOrientation(qglviewer::Quaternion(qglviewer::Vec(0,1,0),Mathr::PI)*manipulatedFrame()-&gt;orientation());
+-			displayMessage(&quot;Plane #&quot;+lexical_cast&lt;string&gt;(manipulatedClipPlane-1)+&quot; reversed.&quot;);
++			//manipulatedFrame()-&gt;setOrientation(qglviewer::Quaternion(qglviewer::Vec(0,1,0),Mathr::PI)*manipulatedFrame()-&gt;orientation());
++			renderer-&gt;clipPlaneSe3[manipulatedClipPlane].orientation=Quaternionr(Vector3r(0,1,0),Mathr::PI)*renderer-&gt;clipPlaneSe3[manipulatedClipPlane].orientation; 
++			displayMessage(&quot;Plane #&quot;+lexical_cast&lt;string&gt;(manipulatedClipPlane+1)+&quot; reversed.&quot;);
+ 		}
+ 		else {
+ 			camera()-&gt;setRevolveAroundPoint(sceneCenter());
+
+Modified: trunk/lib/base/Logging.hpp
+===================================================================
+--- trunk/lib/base/Logging.hpp	2008-07-22 16:41:28 UTC (rev 1442)
++++ trunk/lib/base/Logging.hpp	2008-07-23 08:25:11 UTC (rev 1443)
+@@ -1,11 +1,10 @@
+-#ifndef LOGGING_HPP
+-#define LOGGING_HPP
+-
++// 2006-2008 &#169; V&#225;clav &#352;milauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">eudoxos at arcig.cz</A>&gt; 
++#pragma once
+ /*
+  * This file defines various useful logging-related macros - userspace stuff is
+  * - LOG_* for actual logging,
+- * - DECLARE_LOGGER, that should be used in class header to create separate logger for that class,
+- * - CREATE_LOGGER, that must be used in class implementation file to create the static variable.
++ * - DECLARE_LOGGER; that should be used in class header to create separate logger for that class,
++ * - CREATE_LOGGER(className); that must be used in class implementation file to create the static variable.
+  *
+  * Note that the latter 2 may change their name to something like LOG_DECLARE and LOG_CREATE, to be consistent.
+  * Some other macros will be very likely added, to allow for easy variable tracing etc. Suggestions welcome.
+@@ -15,13 +14,13 @@
+  * yade-core/logging.h and link with log4cxx.
+  *
+  * TODO:
+- * 1. for optimized builds, at least debugging macros should become no-ops
+- * 2. add the TRACE level; this has to be asked about on log4cxx mailing list perhaps. Other levels may follow easily.
++ * 1. [done] for optimized builds, at least debugging macros should become no-ops
++ * 2. add the TRACE level; this has to be asked about on log4cxx mailing list perhaps. Other levels may follow easily. [will be done with log4cxx 0.10, once debian ships packages and we can safely migrate]
+  *
+  * For more informations, see <A HREF="http://logging.apache.org/log4cxx/,">http://logging.apache.org/log4cxx/,</A> especially the part on configuration files, that allow
+  * very flexibe, runtime and fine-grained output redirections, filtering etc.
+  *
+- * Yade has the logging config file by default in ~/.yade/logging.conf.
++ * Yade has the logging config file by default in ~/.yade-$VERSION/logging.conf.
+  *
+  */
+ 
+@@ -35,8 +34,13 @@
+ #	define _LOG_HEAD __FILE__&quot;:&quot;&lt;&lt;__LINE__&lt;&lt;&quot; &quot;&lt;&lt;__FUNCTION__&lt;&lt;&quot;: &quot;
+ 	// logger is local for every class, but if it is missing, we will use the parent's class logger automagically.
+ // TRACE doesn't really exist ATM, will output through DEBUG
++#ifdef NDEBUG
++#	define LOG_TRACE(msg){}
++#	define LOG_DEBUG(msg){}
++#else
+ #	define LOG_TRACE(msg) {LOG4CXX_DEBUG(logger, _LOG_HEAD&lt;&lt;msg);}
+ #	define LOG_DEBUG(msg) {LOG4CXX_DEBUG(logger, _LOG_HEAD&lt;&lt;msg);}
++#endif
+ #	define LOG_INFO(msg)  {LOG4CXX_INFO(logger,  _LOG_HEAD&lt;&lt;msg);}
+ #	define LOG_WARN(msg)  {LOG4CXX_WARN(logger,  _LOG_HEAD&lt;&lt;msg);}
+ #	define LOG_ERROR(msg) {LOG4CXX_ERROR(logger, _LOG_HEAD&lt;&lt;msg);}
+@@ -83,5 +87,3 @@
+ #define TRWM3VEC(_V) LOG_TRACE(#_V &quot;=(&quot;&lt;&lt;_V[0]&lt;&lt;&quot; &quot;&lt;&lt;_V[1]&lt;&lt;&quot; &quot;&lt;&lt;_V[2]&lt;&lt;&quot;)&quot;)
+ #define TRWM3QUAT(_Q) LOG_TRACE(#_Q &quot;=(&quot;&lt;&lt;_Q[0]&lt;&lt;&quot; &quot;&lt;&lt;_Q[1]&lt;&lt;&quot; &quot;&lt;&lt;_Q[2]&lt;&lt;&quot; &quot;&lt;&lt;_Q[3]&lt;&lt;&quot;)&quot;)
+ 
+-#endif /* LOGGING_HPP */
+-
+
+Modified: trunk/lib/serialization/FundamentalHandler.tpp
+===================================================================
+--- trunk/lib/serialization/FundamentalHandler.tpp	2008-07-22 16:41:28 UTC (rev 1442)
++++ trunk/lib/serialization/FundamentalHandler.tpp	2008-07-23 08:25:11 UTC (rev 1443)
+@@ -96,13 +96,18 @@
+ 	{
+ 		const string * tmpStr = any_cast&lt;const string*&gt;(a);
+ 		Type * tmp = any_cast&lt;Type*&gt;(ac.getAddress());
+-		*tmp = lexical_cast&lt;Type&gt;(*tmpStr);
++		try{
++			*tmp = lexical_cast&lt;Type&gt;(*tmpStr);
++		} catch(boost::bad_lexical_cast&amp; e){
++			if(a.type()==typeid(bool*) &amp;&amp; atoi(tmpStr-&gt;c_str())!=0) { *tmp=lexical_cast&lt;Type&gt;(&quot;true&quot;); cerr&lt;&lt;&quot;Offensive bool value `&quot;&lt;&lt;*tmpStr&lt;&lt;&quot;' encountered.!!&quot;&lt;&lt;endl; }
++			else throw e;
++		}
+ 	}
+ 	else if (a.type()==typeid(string*)) // serialization - writing to string from some Type
+ 	{ CHK_XML();
+ 		string * tmpStr = any_cast&lt;string*&gt;(a);
+ 		Type * tmp = any_cast&lt;Type*&gt;(ac.getAddress());
+-		*tmpStr = lexical_cast&lt;string&gt;(*tmp);
++			*tmpStr = lexical_cast&lt;string&gt;(*tmp);
+ 	}
+ 	else
+ 		cerr&lt;&lt;&quot;lexical_cast(XML): (de)serialization format mismatch&quot;&lt;&lt;endl;
+
+Modified: trunk/lib/serialization/Serializable.hpp
+===================================================================
+--- trunk/lib/serialization/Serializable.hpp	2008-07-22 16:41:28 UTC (rev 1442)
++++ trunk/lib/serialization/Serializable.hpp	2008-07-23 08:25:11 UTC (rev 1443)
+@@ -1,88 +1,88 @@
+-/*************************************************************************
+-*  Copyright (C) 2004 by Olivier Galizzi                                 *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">olivier.galizzi at imag.fr</A>                                               *
+-*  Copyright (C) 2004 by Janek Kozicki                                   *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">cosurgi at berlios.de</A>                                                    *
+-*                                                                        *
+-*  This program is free software; it is licensed under the terms of the  *
+-*  GNU General Public License v2 or later. See file LICENSE for details. *
+-*************************************************************************/
+-
+-#ifndef SERIALIZABLE_HPP
+-#define SERIALIZABLE_HPP
+-
+-#include &lt;boost/any.hpp&gt;
+-#include &lt;boost/foreach.hpp&gt;
+-#include &lt;boost/shared_ptr.hpp&gt;
+-#include &lt;boost/type_traits.hpp&gt;
+-#include &lt;boost/lexical_cast.hpp&gt;
+-#include &lt;list&gt;
+-#include &lt;map&gt;
+-#include &lt;string&gt;
+-#include &lt;vector&gt;
+-#include &lt;iostream&gt;
+-#include&lt;yade/lib-factory/Factorable.hpp&gt;
+-#include &quot;SerializationExceptions.hpp&quot;
+-#include &quot;Archive.hpp&quot;
+-
+-using namespace boost;
+-using namespace std;
+-using namespace ArchiveTypes;
+-
+-#define DECLARE_POINTER_TO_MY_CUSTOM_CLASS(Type,attribute,any)		\
+-	Type * attribute=any_cast&lt; Type * &gt;(any);
+-
+-#define REGISTER_ATTRIBUTE(attribute)                                   \
+-                registerAttribute( #attribute, attribute );
+-
+-#define REGISTER_SERIALIZABLE(name,isFundamental) 						\
+-	REGISTER_FACTORABLE(name);								\
+-	REGISTER_SERIALIZABLE_DESCRIPTOR(name,name,SerializableTypes::SERIALIZABLE,isFundamental);
+-
+-#define REGISTER_CUSTOM_CLASS(name,sname,isFundamental) 					\
+-	REGISTER_FACTORABLE(sname);								\
+-	REGISTER_SERIALIZABLE_DESCRIPTOR(name,sname,SerializableTypes::CUSTOM_CLASS,isFundamental);
+-
+-
+-class Serializable : public Factorable
+-{
+-	public :
+-		typedef list&lt; shared_ptr&lt;Archive&gt; &gt;	Archives;
+-		Serializable() {};
+-		virtual ~Serializable() {};
+-	
+-		void unregisterSerializableAttributes(bool deserializing);
+-		void registerSerializableAttributes(bool deserializing);
+-		bool findAttribute(const string&amp; name,shared_ptr&lt;Archive&gt;&amp; arc);
+-		bool containsOnlyFundamentals();
+-		Archives&amp; getArchives() 	{ return archives; };
+-		
+-		virtual void serialize(any&amp; )	{ throw SerializableError(SerializationExceptions::SetFunctionNotDeclared); };
+-		virtual void deserialize(any&amp; ) { throw SerializableError(SerializationExceptions::GetFunctionNotDeclared); };
+-
+-		virtual void postProcessAttributes(bool /*deserializing*/) {};
+-
+-	private :
+-		Archives				archives;
+-		friend class Archive;
+-	
+-	protected :
+-		virtual void registerAttributes() {};
+-		virtual void preProcessAttributes(bool /*deserializing*/) {};
+-
+-		template &lt;typename Type&gt;
+-		void registerAttribute(const string&amp; name, Type&amp; attribute)
+-		{
+-			BOOST_FOREACH(shared_ptr&lt;Archive&gt; a,archives){if(a-&gt;getName()==name){ /* cerr&lt;&lt;&quot;Attribute &quot;&lt;&lt;name&lt;&lt;&quot; already registered.&quot;&lt;&lt;endl; */ return;}};
+-			shared_ptr&lt;Archive&gt; ac = Archive::create(name,attribute);
+-			archives.push_back(ac);
+-		}
+-
+-	REGISTER_CLASS_NAME(Serializable);
+-	REGISTER_BASE_CLASS_NAME(Factorable);
+-};
+-
+-#include &quot;MultiTypeHandler.tpp&quot;
+-
+-#endif // SERIALIZABLE_HPP
+-
++/*************************************************************************
++*  Copyright (C) 2004 by Olivier Galizzi                                 *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">olivier.galizzi at imag.fr</A>                                               *
++*  Copyright (C) 2004 by Janek Kozicki                                   *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">cosurgi at berlios.de</A>                                                    *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#ifndef SERIALIZABLE_HPP
++#define SERIALIZABLE_HPP
++
++#include &lt;boost/any.hpp&gt;
++#include &lt;boost/foreach.hpp&gt;
++#include &lt;boost/shared_ptr.hpp&gt;
++#include &lt;boost/type_traits.hpp&gt;
++#include &lt;boost/lexical_cast.hpp&gt;
++#include &lt;list&gt;
++#include &lt;map&gt;
++#include &lt;string&gt;
++#include &lt;vector&gt;
++#include &lt;iostream&gt;
++#include&lt;yade/lib-factory/Factorable.hpp&gt;
++#include &quot;SerializationExceptions.hpp&quot;
++#include &quot;Archive.hpp&quot;
++
++using namespace boost;
++using namespace std;
++using namespace ArchiveTypes;
++
++#define DECLARE_POINTER_TO_MY_CUSTOM_CLASS(Type,attribute,any)		\
++	Type * attribute=any_cast&lt; Type * &gt;(any);
++
++#define REGISTER_ATTRIBUTE(attribute)                                   \
++                registerAttribute( #attribute, attribute );
++
++#define REGISTER_SERIALIZABLE(name,isFundamental) 						\
++	REGISTER_FACTORABLE(name);								\
++	REGISTER_SERIALIZABLE_DESCRIPTOR(name,name,SerializableTypes::SERIALIZABLE,isFundamental);
++
++#define REGISTER_CUSTOM_CLASS(name,sname,isFundamental) 					\
++	REGISTER_FACTORABLE(sname);								\
++	REGISTER_SERIALIZABLE_DESCRIPTOR(name,sname,SerializableTypes::CUSTOM_CLASS,isFundamental);
++
++
++class Serializable : public Factorable
++{
++	public :
++		typedef list&lt; shared_ptr&lt;Archive&gt; &gt;	Archives;
++		Serializable() {};
++		virtual ~Serializable() {};
++	
++		void unregisterSerializableAttributes(bool deserializing);
++		void registerSerializableAttributes(bool deserializing);
++		bool findAttribute(const string&amp; name,shared_ptr&lt;Archive&gt;&amp; arc);
++		bool containsOnlyFundamentals();
++		Archives&amp; getArchives() 	{ return archives; };
++		
++		virtual void serialize(any&amp; )	{ throw SerializableError(SerializationExceptions::SetFunctionNotDeclared); };
++		virtual void deserialize(any&amp; ) { throw SerializableError(SerializationExceptions::GetFunctionNotDeclared); };
++
++		virtual void postProcessAttributes(bool /*deserializing*/) {};
++
++	private :
++		Archives				archives;
++		friend class Archive;
++	
++	protected :
++		virtual void registerAttributes() {};
++		virtual void preProcessAttributes(bool /*deserializing*/) {};
++
++		template &lt;typename Type&gt;
++		void registerAttribute(const string&amp; name, Type&amp; attribute)
++		{
++			BOOST_FOREACH(shared_ptr&lt;Archive&gt; a,archives){if(a-&gt;getName()==name){ /* cerr&lt;&lt;&quot;Attribute &quot;&lt;&lt;name&lt;&lt;&quot; already registered.&quot;&lt;&lt;endl; */ return;}};
++			shared_ptr&lt;Archive&gt; ac = Archive::create(name,attribute);
++			archives.push_back(ac);
++		}
++
++	REGISTER_CLASS_NAME(Serializable);
++	REGISTER_BASE_CLASS_NAME(Factorable);
++};
++
++#include &quot;MultiTypeHandler.tpp&quot;
++
++#endif // SERIALIZABLE_HPP
++
+
+Modified: trunk/lib/serialization-xml/XMLFormatManager.cpp
+===================================================================
+--- trunk/lib/serialization-xml/XMLFormatManager.cpp	2008-07-22 16:41:28 UTC (rev 1442)
++++ trunk/lib/serialization-xml/XMLFormatManager.cpp	2008-07-23 08:25:11 UTC (rev 1443)
+@@ -321,7 +321,7 @@
+ 	}
+ 	catch(boost::bad_lexical_cast&amp; )
+ 	{
+-		string error=string(IOManagerExceptions::BadAttributeValue) + &quot; (bad lexical_cast), Tag: \&quot;&quot; + saxParser.getTagName() + + &quot;\&quot;, Attribute: \&quot;&quot; + ac.getName() + &quot;\&quot;, Line: &quot; + lexical_cast&lt;string&gt;(saxParser.getLineNumber());
++		string error=string(IOManagerExceptions::BadAttributeValue) + &quot; (bad lexical_cast), Tag: \&quot;&quot; + saxParser.getTagName() + + &quot;\&quot;, Attribute: \&quot;&quot; + ac.getName() + &quot;\&quot;, offending value: `&quot;+str+&quot;', Line: &quot; + lexical_cast&lt;string&gt;(saxParser.getLineNumber());
+ 		throw SerializableError(error.c_str());
+ 	}
+ }
+
+Modified: trunk/pkg/common/Engine/DeusExMachina/JumpChangeSe3.hpp
+===================================================================
+--- trunk/pkg/common/Engine/DeusExMachina/JumpChangeSe3.hpp	2008-07-22 16:41:28 UTC (rev 1442)
++++ trunk/pkg/common/Engine/DeusExMachina/JumpChangeSe3.hpp	2008-07-23 08:25:11 UTC (rev 1443)
+@@ -3,27 +3,43 @@
+ 
+ #include&lt;yade/core/DeusExMachina.hpp&gt;
+ #include&lt;yade/core/PhysicalParameters.hpp&gt;
++#include&lt;yade/pkg-common/RigidBodyParameters.hpp&gt;
+ 
+ /* Engine that applies sudden change of se3 on subscribed bodies if active.
+  *
+  * the amount deltaSe3 will be &quot;added&quot; to the current se3 (positions vector-added,
+  * orientations composed by quaternion multiplication).
++ *
++ * if setVelocities is true, velocity and angularVelocity are modified in such a way that over one iteration (dt),
++ * the body will have prescribed se3 jump. In this case, se3 itself is not updated for dynamic bodies, since they would
++ * have the delta applied twice (here and in the integrator). For non-dynamic bodies however, se3 _is_ updated.
++ *
+  */
+ class JumpChangeSe3: public DeusExMachina {
+ 	public:
+-		JumpChangeSe3(){deltaSe3.position=Vector3r::ZERO; deltaSe3.orientation=Quaternionr::IDENTITY;};
++		JumpChangeSe3(){deltaSe3.position=Vector3r::ZERO; deltaSe3.orientation=Quaternionr::IDENTITY; setVelocities=false;};
+ 		virtual ~JumpChangeSe3(){};
+ 		virtual void applyCondition(MetaBody* mb){
+ 			FOREACH(body_id_t id, subscribedBodies){
+ 				const shared_ptr&lt;Body&gt;&amp; b=Body::byId(id,mb);
+-				Se3r&amp; se3=b-&gt;physicalParameters-&gt;se3;
+-				se3.position+=deltaSe3.position;
+-				se3.orientation=deltaSe3.orientation*se3.orientation;
++				if(setVelocities){
++					shared_ptr&lt;RigidBodyParameters&gt; rbp=YADE_PTR_CAST&lt;RigidBodyParameters&gt;(b-&gt;physicalParameters);
++					Real dt=Omega::instance().getTimeStep();
++					rbp-&gt;velocity=deltaSe3.position/dt;
++					Vector3r axis; Real angle; deltaSe3.orientation.ToAxisAngle(axis,angle); axis.Normalize();
++					rbp-&gt;angularVelocity=axis*angle/dt;
++				}
++				if(!setVelocities || (setVelocities &amp;&amp; !b-&gt;isDynamic)){
++					Se3r&amp; se3=b-&gt;physicalParameters-&gt;se3;
++					se3.position+=deltaSe3.position;
++					se3.orientation=deltaSe3.orientation*se3.orientation;
++				}
+ 			}
+ 		}
+ 		Se3r deltaSe3;
++		bool setVelocities; /* should be bool, but serializer breaks on that */
+ 	protected:
+-		virtual void registerAttributes(){DeusExMachina::registerAttributes();REGISTER_ATTRIBUTE(deltaSe3);}
++		virtual void registerAttributes(){DeusExMachina::registerAttributes();REGISTER_ATTRIBUTE(deltaSe3);REGISTER_ATTRIBUTE(setVelocities);}
+ 		REGISTER_CLASS_NAME(JumpChangeSe3);
+ 		REGISTER_BASE_CLASS_NAME(DeusExMachina);
+ };
+
+Modified: trunk/pkg/common/SConscript
+===================================================================
+--- trunk/pkg/common/SConscript	2008-07-22 16:41:28 UTC (rev 1442)
++++ trunk/pkg/common/SConscript	2008-07-23 08:25:11 UTC (rev 1443)
+@@ -55,7 +55,8 @@
+ 		LIBS=env['LIBS']+['Force','ParticleParameters']),
+ 	env.SharedLibrary('GravityEngines',['Engine/DeusExMachina/GravityEngines.cpp'],
+ 		LIBS=env['LIBS']+['Force','ParticleParameters']),
+-	env.SharedLibrary('JumpChangeSe3',['Engine/DeusExMachina/JumpChangeSe3.cpp']),
++	env.SharedLibrary('JumpChangeSe3',['Engine/DeusExMachina/JumpChangeSe3.cpp'],
++		LIBS=env['LIBS']+['RigidBodyParameters']),
+ 	env.SharedLibrary('RotationEngine',['Engine/DeusExMachina/RotationEngine.cpp'],
+ 		LIBS=env['LIBS']+['ParticleParameters','RigidBodyParameters']),
+ 	env.SharedLibrary('TranslationEngine',['Engine/DeusExMachina/TranslationEngine.cpp'],
+
+Modified: trunk/scripts/simple-scene-graph.py
+===================================================================
+--- trunk/scripts/simple-scene-graph.py	2008-07-22 16:41:28 UTC (rev 1442)
++++ trunk/scripts/simple-scene-graph.py	2008-07-23 08:25:11 UTC (rev 1443)
+@@ -41,7 +41,7 @@
+ 	### 
+ 	### The engine _must_ be labeled 'plotDataCollector', so that the reducer may find it and adjust its periods if necessary.
+ 	###
+-	StandAloneEngine('PeriodicPythonRunner',{'realTimeLim':[1,1,4],'iterLim':[50,50,200],'command':'myAddPlotData()','label':'plotDataCollector'})
++	StandAloneEngine('PeriodicPythonRunner',{'realPeriod':1,'realLim':10,'iterPeriod':1000,'iterLim':10000,'command':'myAddPlotData()','label':'plotDataCollector'})
+ ]
+ from yade import utils
+ o.bodies.append(utils.box(center=[0,0,0],extents=[.5,.5,.5],dynamic=False,color=[1,0,0],young=30e9,poisson=.3,density=2400))
+@@ -79,3 +79,4 @@
+ 
+ to see figures.
+ &quot;&quot;&quot;
++import yade.plot as yp
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000402.html">[Yade-commits] r1442 - in branches/przewdnik: core	pkg/common/RenderingEngine/OpenGLRenderingEngine
+</A></li>
+	<LI>Next message: <A HREF="000404.html">[Yade-commits] r1444 - in trunk: core extra gui/qt3	pkg/common/RenderingEngine/OpenGLRenderingEngine	pkg/dem/Engine/DeusExMachina
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#403">[ date ]</a>
+              <a href="thread.html#403">[ thread ]</a>
+              <a href="subject.html#403">[ subject ]</a>
+              <a href="author.html#403">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

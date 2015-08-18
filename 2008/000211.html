@@ -1,0 +1,908 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1246 - in trunk: core extra/clump extra/tetra	extra/usct gui/cmd gui/qt3 lib/base pkg/common/Container	pkg/dem/Engine/StandAloneEngine
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1246%20-%20in%20trunk%3A%20core%20extra/clump%20extra/tetra%0A%09extra/usct%20gui/cmd%20gui/qt3%20lib/base%20pkg/common/Container%0A%09pkg/dem/Engine/StandAloneEngine&In-Reply-To=%3C200802131456.m1DEuLJJ008697%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000210.html">
+   <LINK REL="Next"  HREF="000212.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1246 - in trunk: core extra/clump extra/tetra	extra/usct gui/cmd gui/qt3 lib/base pkg/common/Container	pkg/dem/Engine/StandAloneEngine</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1246%20-%20in%20trunk%3A%20core%20extra/clump%20extra/tetra%0A%09extra/usct%20gui/cmd%20gui/qt3%20lib/base%20pkg/common/Container%0A%09pkg/dem/Engine/StandAloneEngine&In-Reply-To=%3C200802131456.m1DEuLJJ008697%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1246 - in trunk: core extra/clump extra/tetra	extra/usct gui/cmd gui/qt3 lib/base pkg/common/Container	pkg/dem/Engine/StandAloneEngine">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Wed Feb 13 15:56:21 CET 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000210.html">[Yade-commits] r1245 - in trunk: core gui/qt3	pkg/common/Engine/EngineUnit
+</A></li>
+        <LI>Next message: <A HREF="000212.html">[Yade-commits] r1247 - in trunk: core pkg/dem/PreProcessor
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#211">[ date ]</a>
+              <a href="thread.html#211">[ thread ]</a>
+              <a href="subject.html#211">[ subject ]</a>
+              <a href="author.html#211">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2008-02-13 15:56:19 +0100 (Wed, 13 Feb 2008)
+New Revision: 1246
+
+Modified:
+   trunk/core/EngineUnit.hpp
+   trunk/core/EngineUnit1D.hpp
+   trunk/core/EngineUnit2D.hpp
+   trunk/core/InteractionContainer.hpp
+   trunk/core/MetaBody.cpp
+   trunk/core/MetaBody.hpp
+   trunk/core/MetaDispatchingEngine.hpp
+   trunk/core/Omega.cpp
+   trunk/core/Omega.hpp
+   trunk/core/SimulationFlow.cpp
+   trunk/core/ThreadRunner.cpp
+   trunk/core/ThreadWorker.hpp
+   trunk/core/yade.cpp
+   trunk/extra/clump/Shop.cpp
+   trunk/extra/tetra/Tetra.hpp
+   trunk/extra/usct/UniaxialStrainControlledTest.cpp
+   trunk/gui/cmd/cmdGui.cpp
+   trunk/gui/cmd/yadeControl.cpp
+   trunk/gui/qt3/QtMetaDispatchingEngineProperties.cpp
+   trunk/lib/base/Logging.hpp
+   trunk/pkg/common/Container/InteractionVecSet.cpp
+   trunk/pkg/common/Container/InteractionVecSet.hpp
+   trunk/pkg/dem/Engine/StandAloneEngine/GlobalStiffnessCounter.cpp
+   trunk/pkg/dem/Engine/StandAloneEngine/GlobalStiffnessTimeStepper.cpp
+Log:
+1. Preliminary recovery of simulation accross runs (try sending SIGHUP to yade)
+2. Python wrapper for body parameters.
+3. Misc fixes of engines.
+4. Allow Omega to stop at predefined iteration number (for regression tests, I work on that ;-) )
+5. ...
+
+
+
+Modified: trunk/core/EngineUnit.hpp
+===================================================================
+--- trunk/core/EngineUnit.hpp	2008-02-13 03:04:49 UTC (rev 1245)
++++ trunk/core/EngineUnit.hpp	2008-02-13 14:56:19 UTC (rev 1246)
+@@ -15,6 +15,7 @@
+ 
+ class EngineUnit : public Serializable
+ {
++	public: virtual vector&lt;std::string&gt; getFunctorTypes(){throw;}
+ 	REGISTER_CLASS_NAME(EngineUnit);
+ 	REGISTER_BASE_CLASS_NAME(Serializable);
+ };
+
+Modified: trunk/core/EngineUnit1D.hpp
+===================================================================
+--- trunk/core/EngineUnit1D.hpp	2008-02-13 03:04:49 UTC (rev 1245)
++++ trunk/core/EngineUnit1D.hpp	2008-02-13 14:56:19 UTC (rev 1246)
+@@ -23,7 +23,9 @@
+ class EngineUnit1D : 	public EngineUnit,
+ 			public FunctorWrapper&lt;ReturnType, AttributesType&gt;
+ {
+-	public: virtual std::string get1DFunctorType1(void){throw runtime_error(&quot;Class &quot;+this-&gt;getClassName()+&quot; did not use FUNCTOR1D to declare its argument type?&quot;); }
++	public:
++		virtual std::string get1DFunctorType1(void){throw runtime_error(&quot;Class &quot;+this-&gt;getClassName()+&quot; did not use FUNCTOR1D to declare its argument type?&quot;); }
++		virtual vector&lt;string&gt; getFunctorTypes(void){vector&lt;string&gt; ret; ret.push_back(get1DFunctorType1()); return ret;};
+ 	REGISTER_CLASS_NAME(EngineUnit1D);
+ 	REGISTER_BASE_CLASS_NAME(EngineUnit FunctorWrapper);
+ };
+
+Modified: trunk/core/EngineUnit2D.hpp
+===================================================================
+--- trunk/core/EngineUnit2D.hpp	2008-02-13 03:04:49 UTC (rev 1245)
++++ trunk/core/EngineUnit2D.hpp	2008-02-13 14:56:19 UTC (rev 1246)
+@@ -24,8 +24,10 @@
+ class EngineUnit2D :	public EngineUnit,
+ 			public FunctorWrapper&lt;ReturnType, AttributesType&gt;
+ {
+-	public: virtual std::string get2DFunctorType1(void){throw runtime_error(&quot;Class &quot;+this-&gt;getClassName()+&quot; did not use FUNCTOR2D to declare its argument types?&quot;);}
+-	public: virtual std::string get2DFunctorType2(void){throw runtime_error(&quot;Class &quot;+this-&gt;getClassName()+&quot; did not use FUNCTOR2D to declare its argument types?&quot;);}
++	public:
++		virtual std::string get2DFunctorType1(void){throw runtime_error(&quot;Class &quot;+this-&gt;getClassName()+&quot; did not use FUNCTOR2D to declare its argument types?&quot;);}
++		virtual std::string get2DFunctorType2(void){throw runtime_error(&quot;Class &quot;+this-&gt;getClassName()+&quot; did not use FUNCTOR2D to declare its argument types?&quot;);}
++		virtual vector&lt;string&gt; getFunctorTypes(){vector&lt;string&gt; ret; ret.push_back(get2DFunctorType1()); ret.push_back(get2DFunctorType2()); return ret;};
+ 	REGISTER_CLASS_NAME(EngineUnit2D);
+ 	REGISTER_BASE_CLASS_NAME(EngineUnit FunctorWrapper);
+ };
+
+Modified: trunk/core/InteractionContainer.hpp
+===================================================================
+--- trunk/core/InteractionContainer.hpp	2008-02-13 03:04:49 UTC (rev 1245)
++++ trunk/core/InteractionContainer.hpp	2008-02-13 14:56:19 UTC (rev 1246)
+@@ -35,8 +35,8 @@
+ 		virtual const shared_ptr&lt;Interaction&gt;&amp; find(body_id_t /*id1*/,body_id_t /*id2*/) 	{throw;};
+ 
+ 		typedef InteractionContainerIteratorPointer iterator;
+-        	virtual InteractionContainer::iterator begin()						{throw;};
+-        	virtual InteractionContainer::iterator end()						{throw;};
++      virtual InteractionContainer::iterator begin()						{throw;};
++      virtual InteractionContainer::iterator end()						{throw;};
+ 
+ 		virtual unsigned int size() 								{throw;};
+ 
+
+Modified: trunk/core/MetaBody.cpp
+===================================================================
+--- trunk/core/MetaBody.cpp	2008-02-13 03:04:49 UTC (rev 1245)
++++ trunk/core/MetaBody.cpp	2008-02-13 14:56:19 UTC (rev 1246)
+@@ -24,6 +24,7 @@
+ {	
+ 	engines.clear();
+ 	initializers.clear();
++	recover=false;
+ }
+ 
+ 
+@@ -52,6 +53,12 @@
+ 	REGISTER_ATTRIBUTE(transientInteractions);
+ 	REGISTER_ATTRIBUTE(persistentInteractions);
+ 	REGISTER_ATTRIBUTE(physicalActions); // FIXME - needed or not ? - Olivier : yes it is needed if there is no default initialization into constructor
++
++	REGISTER_ATTRIBUTE(recover);
++	REGISTER_ATTRIBUTE(recoverDt);
++	REGISTER_ATTRIBUTE(recoverCurrentIteration);
++	REGISTER_ATTRIBUTE(recoverStopAtIteration);
++	REGISTER_ATTRIBUTE(recoverSimulationTime);
+ }
+ 
+ 
+
+Modified: trunk/core/MetaBody.hpp
+===================================================================
+--- trunk/core/MetaBody.hpp	2008-02-13 03:04:49 UTC (rev 1245)
++++ trunk/core/MetaBody.hpp	2008-02-13 14:56:19 UTC (rev 1246)
+@@ -24,13 +24,23 @@
+ 		shared_ptr&lt;InteractionContainer&gt;	persistentInteractions; // disappear, reappear according to physical (or any other non-spatial) criterion
+ 		shared_ptr&lt;InteractionContainer&gt;	transientInteractions;	// disappear, reappear according to spatial criterion
+ 		shared_ptr&lt;PhysicalActionContainer&gt;	physicalActions;
+-	
++
+ 		MetaBody ();
+ 
+ 		void moveToNextTimeStep();
+ 
+ 		void setTimeSteppersActive(bool a); // FIXME - wtf ?
+ 
++		/* Recovery stuff: copy of state variables from Omega that should be copied back over. 	
++		 *	Copying is being done ine Omega::loadSimulation and Omega::saveSimulation -- keep vars in sync.
++		 * */
++		bool recover;
++		Real recoverDt;
++		long recoverCurrentIteration;
++		long recoverStopAtIteration;
++		Real recoverSimulationTime;
++
++
+ /// Serialization
+ 	protected :
+ 		virtual void postProcessAttributes(bool deserializing);
+
+Modified: trunk/core/MetaDispatchingEngine.hpp
+===================================================================
+--- trunk/core/MetaDispatchingEngine.hpp	2008-02-13 03:04:49 UTC (rev 1245)
++++ trunk/core/MetaDispatchingEngine.hpp	2008-02-13 14:56:19 UTC (rev 1246)
+@@ -25,8 +25,11 @@
+ 
+ 		typedef list&lt;shared_ptr&lt;EngineUnit&gt; &gt;::iterator EngineUnitListIterator;
+ 		
+-		virtual void add( string , string , shared_ptr&lt;EngineUnit&gt; eu = shared_ptr&lt;EngineUnit&gt;()) {throw;}
+-		virtual void add( string , string , string , shared_ptr&lt;EngineUnit&gt; eu = shared_ptr&lt;EngineUnit&gt;()) {throw;}
++		//virtual void add( string , string , shared_ptr&lt;EngineUnit&gt; eu = shared_ptr&lt;EngineUnit&gt;()) {throw;}
++		//virtual void add( string , string , string , shared_ptr&lt;EngineUnit&gt; eu = shared_ptr&lt;EngineUnit&gt;()) {throw;}
++		virtual void add(shared_ptr&lt;EngineUnit&gt; eu=shared_ptr&lt;EngineUnit&gt;()) {throw;}
++		virtual void add(EngineUnit*) {throw;}
++		virtual void add(string) {throw;}
+ 		
+ 		void storeFunctorName(const string&amp; baseClassName1, const string&amp; libName, shared_ptr&lt;EngineUnit&gt; eu);
+ 		void storeFunctorName(const string&amp; baseClassName1, const string&amp; baseClassName2, const string&amp; libName, shared_ptr&lt;EngineUnit&gt; eu);
+
+Modified: trunk/core/Omega.cpp
+===================================================================
+--- trunk/core/Omega.cpp	2008-02-13 03:04:49 UTC (rev 1245)
++++ trunk/core/Omega.cpp	2008-02-13 14:56:19 UTC (rev 1246)
+@@ -44,6 +44,7 @@
+ {
+ 	simulationFileName=&quot;&quot;;
+ 	currentIteration = 0;
++	stopAtIteration = 0;
+ 	dt = 1e-8;
+ }
+ 
+@@ -316,7 +317,7 @@
+ 
+ void Omega::loadSimulation()
+ {
+-	if(	    (Omega::instance().getSimulationFileName().size() != 0)
++	if((Omega::instance().getSimulationFileName().size() != 0)
+ 		&amp;&amp;  (filesystem::exists(simulationFileName)) 
+ 		&amp;&amp;  (filesystem::extension(simulationFileName)==&quot;.xml&quot; || filesystem::extension(simulationFileName)==&quot;.yade&quot; ))
+ 	{
+@@ -336,7 +337,17 @@
+ 		msStartingPauseTime = msStartingSimulationTime;
+ 		LOG_DEBUG(&quot;Simulation loaded&quot;);
+ 		currentIteration = 0;
+-		simulationTime = 0;	
++		simulationTime = 0;
++
++		if(rootBody-&gt;recover){
++			LOG_INFO(&quot;Simulation recovery effective.&quot;);
++			dt=rootBody-&gt;recoverDt;
++			currentIteration=rootBody-&gt;recoverCurrentIteration;
++			stopAtIteration=rootBody-&gt;recoverStopAtIteration;
++			simulationTime=rootBody-&gt;recoverSimulationTime;	
++			rootBody-&gt;recover=false;
++		}
++		
+ 	}
+ 	else
+ 	{
+@@ -346,16 +357,26 @@
+ 	}
+ }
+ 
+-void Omega::saveSimulation(const string name)
++void Omega::saveSimulation(const string name, bool recover)
+ {
+-	if(	   (name.size() != 0)
+-		&amp;&amp; (filesystem::extension(name)==&quot;.xml&quot; || filesystem::extension(name)==&quot;.yade&quot;) )
+-        {
++	if((name.size()!= 0) &amp;&amp; (filesystem::extension(name)==&quot;.xml&quot; || filesystem::extension(name)==&quot;.yade&quot;)){
+ 		LOG_INFO(&quot;Saving file &quot; &lt;&lt; name);
++
++		if(recover){
++			LOG_INFO(&quot;Simulation recovery enabled.&quot;);
++			rootBody-&gt;recover=true;
++			rootBody-&gt;recoverDt=dt;
++			rootBody-&gt;recoverCurrentIteration=currentIteration;
++			rootBody-&gt;recoverStopAtIteration=stopAtIteration;
++			rootBody-&gt;recoverSimulationTime=simulationTime;
++		}
++
+ 		if(filesystem::extension(name)==&quot;.xml&quot;)
+ 			IOFormatManager::saveToFile(&quot;XMLFormatManager&quot;,name,&quot;rootBody&quot;,rootBody);
+ 		else if(filesystem::extension(name)==&quot;.yade&quot; )
+ 			IOFormatManager::saveToFile(&quot;BINFormatManager&quot;,name,&quot;rootBody&quot;,rootBody);
++
++		if(recover) rootBody-&gt;recover=false;
+ 	}
+ 	else
+ 	{
+
+Modified: trunk/core/Omega.hpp
+===================================================================
+--- trunk/core/Omega.hpp	2008-02-13 03:04:49 UTC (rev 1245)
++++ trunk/core/Omega.hpp	2008-02-13 14:56:19 UTC (rev 1246)
+@@ -81,12 +81,12 @@
+ 		ptime				 msStartingPauseTime;
+ 		time_duration			 simulationPauseDuration;
+ 		string				 simulationFileName;
+-		long int			 currentIteration;
+-		Real				 simulationTime;
+-		
+-		
++		long int			currentIteration;
++		Real				simulationTime;
+ 		void buildDynlibDatabase(const vector&lt;string&gt;&amp; dynlibsList); // FIXME - maybe in ClassFactory ?
+ 
++		public: long int stopAtIteration;
++
+ 	public :
+ 		shared_ptr&lt;Preferences&gt; preferences;
+ 		string 				 yadeConfigPath;	// FIXME - must be private and more clean
+@@ -101,6 +101,7 @@
+ 		int     isoSec;
+ 		// dtto for gdb
+ 		string gdbCrashBatch;
++		string recoveryFilename;
+ 
+ 		// FIXME end
+ 		
+@@ -133,9 +134,9 @@
+ 		time_duration	getSimulationPauseDuration();
+ 		
+ 		void		setSimulationFileName(const string);
+-		string		getSimulationFileName();
++		string	getSimulationFileName();
+ 		void		loadSimulation();
+-		void		saveSimulation(const string name);
++		void		saveSimulation(const string name, bool recover=false);
+ 
+ 		long int	getCurrentIteration();
+ 		void		incrementCurrentIteration();
+
+Modified: trunk/core/SimulationFlow.cpp
+===================================================================
+--- trunk/core/SimulationFlow.cpp	2008-02-13 03:04:49 UTC (rev 1245)
++++ trunk/core/SimulationFlow.cpp	2008-02-13 14:56:19 UTC (rev 1246)
+@@ -17,6 +17,11 @@
+ 		Omega::instance().getRootBody()-&gt;moveToNextTimeStep();
+ 		Omega::instance().incrementCurrentIteration();
+ 		Omega::instance().incrementSimulationTime();
++		if(Omega::instance().stopAtIteration&gt;0 &amp;&amp; Omega::instance().getCurrentIteration()==Omega::instance().stopAtIteration){
++			cerr&lt;&lt;&quot;PAUSE at iteration #&quot;&lt;&lt;Omega::instance().getCurrentIteration()&lt;&lt;&quot; as requested.&quot;&lt;&lt;endl;
++			setTerminate(true);
++			return;
++		}
+ 	}
+ };
+ 
+
+Modified: trunk/core/ThreadRunner.cpp
+===================================================================
+--- trunk/core/ThreadRunner.cpp	2008-02-13 03:04:49 UTC (rev 1245)
++++ trunk/core/ThreadRunner.cpp	2008-02-13 14:56:19 UTC (rev 1246)
+@@ -17,8 +17,10 @@
+ {
+ 	// this is the body of execution of separate thread
+ 	boost::mutex::scoped_lock lock(m_runmutex);
+-	while(looping())
++	while(looping()) {
+ 		call();
++		if(m_thread_worker-&gt;shouldTerminate()){ stop(); return; }
++	}
+ }
+ 
+ void ThreadRunner::call()
+
+Modified: trunk/core/ThreadWorker.hpp
+===================================================================
+--- trunk/core/ThreadWorker.hpp	2008-02-13 03:04:49 UTC (rev 1245)
++++ trunk/core/ThreadWorker.hpp	2008-02-13 14:56:19 UTC (rev 1246)
+@@ -32,10 +32,10 @@
+ 		boost::any	m_val;
+ 		float		m_progress;
+ 		std::string	m_status;
+-		void		setTerminate(bool);
+ 		void		callSingleAction();
+ 
+ 	protected:
++		void		setTerminate(bool);
+ 		/// singleAction() can check whether someone asked for termination, and terminate if/when possible
+ 		bool		shouldTerminate();
+ 		/// if something must be returned, set the result using this method
+
+Modified: trunk/core/yade.cpp
+===================================================================
+--- trunk/core/yade.cpp	2008-02-13 03:04:49 UTC (rev 1245)
++++ trunk/core/yade.cpp	2008-02-13 14:56:19 UTC (rev 1246)
+@@ -15,17 +15,18 @@
+ 
+ #include&lt;signal.h&gt;
+ #include&lt;cstdlib&gt;
+-#include &lt;iostream&gt;
+-#include &lt;string&gt;
+-#include &lt;getopt.h&gt;
+-#include &lt;boost/filesystem/operations.hpp&gt;
+-#include &lt;boost/filesystem/convenience.hpp&gt;
+-#include &lt;boost/preprocessor/stringize.hpp&gt;
++#include&lt;iostream&gt;
++#include&lt;string&gt;
++#include&lt;getopt.h&gt;
++#include&lt;boost/filesystem/operations.hpp&gt;
++#include&lt;boost/filesystem/convenience.hpp&gt;
++#include&lt;boost/preprocessor/stringize.hpp&gt;
++#include&lt;boost/regex.hpp&gt;
+ #include&lt;yade/lib-factory/ClassFactory.hpp&gt;
+ #include&lt;yade/lib-base/Logging.hpp&gt;
+-#include &quot;Omega.hpp&quot;
+-#include &quot;FrontEnd.hpp&quot;
+-#include &quot;Preferences.hpp&quot;
++#include&quot;Omega.hpp&quot;
++#include&quot;FrontEnd.hpp&quot;
++#include&quot;Preferences.hpp&quot;
+ 
+ using namespace std;
+ 
+@@ -54,8 +55,21 @@
+ 			kill(getpid(),sig); // reemit signal after exiting gdb
+ 		}
+ 	#endif
++	if(sig==SIGHUP){
++		signal(SIGHUP,SIG_DFL);
++		LOG_INFO(&quot;Received SIGHUP.&quot;);
++		if(Omega::instance().getRootBody()){
++			LOG_INFO(&quot;Attempting emergency save to &quot;&lt;&lt;Omega::instance().recoveryFilename);
++			Omega::instance().stopSimulationLoop();
++			Omega::instance().joinSimulationLoop();
++			Omega::instance().saveSimulation(Omega::instance().recoveryFilename);
++		} else LOG_INFO(&quot;Nothing to save.&quot;);
++		LOG_INFO(&quot;Emergency exit.&quot;);
++		exit(1);
++	}
+ }
+ 
++
+ void firstRunSetup(shared_ptr&lt;Preferences&gt;&amp; pref)
+ {
+ 	const char* libDirs[]={&quot;extra&quot;,&quot;gui&quot;,&quot;lib&quot;,&quot;pkg-common&quot;,&quot;pkg-dem&quot;,&quot;pkg-fem&quot;,&quot;pkg-lattice&quot;,&quot;pkg-mass-spring&quot;,&quot;pkg-realtime-rigidbody&quot;,NULL /* sentinel */};
+@@ -73,6 +87,17 @@
+ 	IOFormatManager::saveToFile(&quot;XMLFormatManager&quot;,Omega::instance().yadeConfigPath+&quot;/preferences.xml&quot;,&quot;preferences&quot;,pref);
+ }
+ 
++string findRecoveryCandidate(filesystem::path dir, string start){
++	if(!filesystem::exists(dir)) return false;
++	filesystem::directory_iterator end;
++	for(filesystem::directory_iterator I(dir); I!=end; ++I){
++		if(filesystem::is_regular(I-&gt;status()) &amp;&amp; I-&gt;path().leaf().find(start)==0 ){
++			return (I-&gt;path()).string();
++		}
++	}
++	return &quot;&quot;;
++}
++
+ void printHelp()
+ {
+ 	string flags(&quot;&quot;);
+@@ -143,7 +168,7 @@
+ 			case '-': coreOptions=false; break;
+ 			default: printHelp(); return 1;
+ 		}
+-	// kill processed options, keep one more which will is in faact non-option (normally the binary)
++	// kill processed options, keep one more which will is in fact non-option (normally the binary)
+ 	argv=&amp;(argv[optind-1]); argc-=optind-1;
+ 	// reset getopt globals for next processing
+ 	optind=0; opterr=0;
+@@ -189,16 +214,26 @@
+ 		LOG_DEBUG(&quot;ABRT/SEGV signal handlers set, crash batch created as &quot;&lt;&lt;Omega::instance().gdbCrashBatch);
+ 	#endif
+ 
+-	LOG_INFO(&quot;Loading configuration file: &quot;&lt;&lt;yadeConfigFile.string());
+-	IOFormatManager::loadFromFile(&quot;XMLFormatManager&quot;,yadeConfigFile.string(),&quot;preferences&quot;,Omega::instance().preferences);
++	LOG_INFO(&quot;Loading configuration file: &quot;&lt;&lt;yadeConfigFile.string()); IOFormatManager::loadFromFile(&quot;XMLFormatManager&quot;,yadeConfigFile.string(),&quot;preferences&quot;,Omega::instance().preferences);
+ 
+-	LOG_INFO(&quot;Loading plugins...&quot;);
+-	Omega::instance().scanPlugins();
+-	LOG_INFO(&quot;Plugins loaded.&quot;);
++	LOG_INFO(&quot;Loading plugins...&quot;); Omega::instance().scanPlugins(); LOG_INFO(&quot;Plugins loaded.&quot;);
+ 	Omega::instance().init();
+ 
+ 	Omega::instance().setSimulationFileName(simulationFileName); //init() resets to &quot;&quot;;
+-	
++
++	// recovery file pattern
++	Omega::instance().recoveryFilename=(yadeConfigPath/&quot;recovery-pid&quot;).string()+lexical_cast&lt;string&gt;(getpid())+&quot;.xml&quot;;
++	signal(SIGHUP,sigHandler);
++
++	string recoveryCandidate=findRecoveryCandidate(/* directory */ yadeConfigPath, /* beginning of the filename */ &quot;recovery-pid&quot;);
++	if(!recoveryCandidate.empty()){
++		if(!simulationFileName.empty()) LOG_WARN(&quot;Skipping recovery of `&quot;&lt;&lt;recoveryCandidate&lt;&lt;&quot;', since the file `&quot;&lt;&lt;simulationFileName&lt;&lt;&quot;' was given on the command-line.&quot;)
++		else {
++			LOG_INFO(&quot;Will recover simulation from `&quot;&lt;&lt;recoveryCandidate&lt;&lt;&quot;'.&quot;);
++			Omega::instance().setSimulationFileName(recoveryCandidate);
++		}
++	}
++
+ 	if(gui.size()==0) gui=Omega::instance().preferences-&gt;defaultGUILibName;
+ 		
+ 	shared_ptr&lt;FrontEnd&gt; frontEnd = dynamic_pointer_cast&lt;FrontEnd&gt;(ClassFactory::instance().createShared(gui));
+
+Modified: trunk/extra/clump/Shop.cpp
+===================================================================
+--- trunk/extra/clump/Shop.cpp	2008-02-13 03:04:49 UTC (rev 1245)
++++ trunk/extra/clump/Shop.cpp	2008-02-13 14:56:19 UTC (rev 1246)
+@@ -106,7 +106,7 @@
+ 	setDefault&lt;int&gt;(&quot;body_sdecGroupMask&quot;,55);
+ 	
+ 	setDefault(&quot;phys_density&quot;,2e3);
+-	setDefault(&quot;phys_young&quot;,30e10);
++	setDefault(&quot;phys_young&quot;,30e7); // 30e10
+ 	setDefault(&quot;phys_poisson&quot;,.3);
+ 	setDefault(&quot;phys_frictionAngle&quot;,0.5236); //30&#730;
+ 	setDefault(&quot;phys_se3_orientation&quot;,Quaternionr(Vector3r(0,0,1),0));
+
+Modified: trunk/extra/tetra/Tetra.hpp
+===================================================================
+--- trunk/extra/tetra/Tetra.hpp	2008-02-13 03:04:49 UTC (rev 1245)
++++ trunk/extra/tetra/Tetra.hpp	2008-02-13 14:56:19 UTC (rev 1246)
+@@ -168,6 +168,7 @@
+ 		virtual bool go(const shared_ptr&lt;InteractingGeometry&gt;&amp; cm1, const shared_ptr&lt;InteractingGeometry&gt;&amp; cm2, const Se3r&amp; se31, const Se3r&amp; se32, const shared_ptr&lt;Interaction&gt;&amp; c);
+ 		virtual bool goReverse(	const shared_ptr&lt;InteractingGeometry&gt;&amp; cm1, const shared_ptr&lt;InteractingGeometry&gt;&amp; cm2, const Se3r&amp; se31, const Se3r&amp; se32, const shared_ptr&lt;Interaction&gt;&amp; c);
+ 
++		FUNCTOR2D(TetraMold,TetraMold);
+ 		REGISTER_CLASS_NAME(Tetra2TetraBang);
+ 		REGISTER_BASE_CLASS_NAME(InteractionGeometryEngineUnit);
+ 		DEFINE_FUNCTOR_ORDER_2D(TetraMold,TetraMold);
+
+Modified: trunk/extra/usct/UniaxialStrainControlledTest.cpp
+===================================================================
+--- trunk/extra/usct/UniaxialStrainControlledTest.cpp	2008-02-13 03:04:49 UTC (rev 1245)
++++ trunk/extra/usct/UniaxialStrainControlledTest.cpp	2008-02-13 14:56:19 UTC (rev 1246)
+@@ -122,6 +122,8 @@
+ 	// load spheres
+ 	Vector3r minXYZ,maxXYZ;
+ 	typedef vector&lt;pair&lt;Vector3r,Real&gt; &gt; vecVecReal;
++	Shop::setDefault(&quot;phys_young&quot;,30e7);
++
+ 	vecVecReal spheres=Shop::loadSpheresFromFile(spheresFile,minXYZ,maxXYZ);
+ 	TRVAR2(minXYZ,maxXYZ);
+ 	// get spheres that are &quot;close enough&quot; to the strained ends
+@@ -275,18 +277,18 @@
+ 		orientationIntegrator-&gt;add(new LeapFrogOrientationIntegrator);
+ 		rootBody-&gt;engines.push_back(orientationIntegrator);
+ 
++	shared_ptr&lt;GlobalStiffnessCounter&gt; globalStiffnessCounter(new GlobalStiffnessCounter);
++	globalStiffnessCounter-&gt;sdecGroupMask=1023;
++	globalStiffnessCounter-&gt;interval=100;
++
+ 	shared_ptr&lt;GlobalStiffnessTimeStepper&gt; globalStiffnessTimeStepper(new GlobalStiffnessTimeStepper);
+ 	globalStiffnessTimeStepper-&gt;sdecGroupMask=1023; // BIN 111111111, should always match
+ 	globalStiffnessTimeStepper-&gt;timeStepUpdateInterval=100;
+ 	globalStiffnessTimeStepper-&gt;defaultDt=1e-6;
+ 	rootBody-&gt;engines.push_back(globalStiffnessTimeStepper);
+ 
+-	shared_ptr&lt;GlobalStiffnessCounter&gt; globalStiffnessCounter(new GlobalStiffnessCounter);
+-	globalStiffnessCounter-&gt;sdecGroupMask=1023;
+-	globalStiffnessCounter-&gt;interval=100;
+ 
+ 	rootBody-&gt;engines.push_back(globalStiffnessCounter);
+-
+ }
+ 
+ 
+
+Modified: trunk/gui/cmd/cmdGui.cpp
+===================================================================
+--- trunk/gui/cmd/cmdGui.cpp	2008-02-13 03:04:49 UTC (rev 1245)
++++ trunk/gui/cmd/cmdGui.cpp	2008-02-13 14:56:19 UTC (rev 1246)
+@@ -60,6 +60,12 @@
+ 
+ 		PyRun_SimpleString(&quot;sys.excepthook=sys.__excepthook__&quot;); // apport on ubuntu overrides this, not needed
+ 
++		if(!Omega::instance().getSimulationFileName().empty()){
++			string cmd=&quot;o=Omega(); o.load('&quot;+Omega::instance().getSimulationFileName()+&quot;'); o.run(); &quot;;
++			LOG_INFO(&quot;Running command: `&quot;&lt;&lt;cmd&lt;&lt;&quot;'&quot;);
++			PyRun_SimpleString(cmd.c_str());
++		}
++
+ 		if(!runScript.empty()){
+ 			LOG_DEBUG(&quot;Will now run file `&quot;&lt;&lt;runScript&lt;&lt;&quot;'&quot;);
+ 			FILE* runScriptFILE=fopen(runScript.c_str(),&quot;r&quot;);
+
+Modified: trunk/gui/cmd/yadeControl.cpp
+===================================================================
+--- trunk/gui/cmd/yadeControl.cpp	2008-02-13 03:04:49 UTC (rev 1245)
++++ trunk/gui/cmd/yadeControl.cpp	2008-02-13 14:56:19 UTC (rev 1246)
+@@ -25,6 +25,8 @@
+ #include&lt;yade/core/StandAloneEngine.hpp&gt;
+ #include&lt;yade/core/DeusExMachina.hpp&gt;
+ #include&lt;yade/core/EngineUnit.hpp&gt;
++#include&lt;yade/core/EngineUnit1D.hpp&gt;
++#include&lt;yade/core/EngineUnit2D.hpp&gt;
+ 
+ #include&lt;qapplication.h&gt;
+ // qt3 sucks
+@@ -37,24 +39,46 @@
+ 
+ class RenderingEngine;
+ 
+-/* TODO:
+- * have engine constructors that take engine name as first argument (instead of the .clss('...') method)
+- */
++/*
++class pyBody{
++		shared_ptr&lt;AttrAccess&gt; accessor;
++	public:
++		shared_ptr&lt;Body&gt; body;
++		void ensureAcc(void){ if(!body) throw runtime_error(&quot;No proxied Body.&quot;); if(!accessor) accessor=shared_ptr&lt;AttrAccess&gt;(new AttrAccess(body));}
++		pyBody(){ body=shared_ptr&lt;Body&gt;(new Body); }
++		pyBody(const shared_ptr&lt;Body&gt;&amp; _body): body(_body) {}
++		ATTR_ACCESS_CXX(accessor,ensureEng);
++}
++*/
+ 
++#define BASIC_PY_PROXY_HEAD(pyClass,yadeClass) \
++class pyClass{shared_ptr&lt;AttrAccess&gt; accessor; \
++	public: shared_ptr&lt;yadeClass&gt; proxee; \
++		void ensureAcc(void){ if(!proxee) throw runtime_error(string(&quot;No proxied `&quot;)+#yadeClass+&quot;'.&quot;); if(!accessor) accessor=shared_ptr&lt;AttrAccess&gt;(new AttrAccess(proxee));} \
++		pyClass(string clss){proxee=dynamic_pointer_cast&lt;yadeClass&gt;(ClassFactory::instance().createShared(clss)); if(!proxee) throw runtime_error(&quot;Invalid class `&quot;+clss+&quot;': either nonexistent, or unable to cast to `&quot;+#yadeClass+&quot;'&quot;); } \
++		pyClass(const shared_ptr&lt;yadeClass&gt;&amp; _proxee): proxee(_proxee) {} \
++		std::string pyStr(void){ ensureAcc(); return string(&quot;&lt;&quot;+proxee-&gt;getClassName()+&quot; &quot;+ #yadeClass +&quot;&gt;&quot;); } \
++		string className(void){ ensureAcc(); return proxee-&gt;getClassName(); } \
++		ATTR_ACCESS_CXX(accessor,ensureAcc);
++
++#define BASIC_PY_PROXY_TAIL };
++
++#define BASIC_PY_PROXY(pyClass,yadeClass) BASIC_PY_PROXY_HEAD(pyClass,yadeClass) BASIC_PY_PROXY_TAIL
++
++BASIC_PY_PROXY(pyShape,GeometricalModel);
++BASIC_PY_PROXY(pyPhys,PhysicalParameters);
++BASIC_PY_PROXY(pyBound,BoundingVolume);
++BASIC_PY_PROXY(pyMold,InteractingGeometry);
++
+ class pyEngineUnit{
+ 		shared_ptr&lt;AttrAccess&gt; accessor;
+ 	public:	
+ 		void ensureEng(void){ if(!eng) throw runtime_error(&quot;No proxied EngineUnit.&quot;); if(!accessor) accessor=shared_ptr&lt;AttrAccess&gt;(new AttrAccess(eng));  }
+ 		shared_ptr&lt;EngineUnit&gt; eng;
+-		vector&lt;string&gt; bases; // names of classes for which we dispatch
+-		void bases_set(python::object o){ python::stl_input_iterator&lt;string&gt; oBeg(o), oEnd; bases.assign(oBeg,oEnd); }
+-		python::list bases_get(void){ python::list ret; for(size_t i=0; i&lt;bases.size();i++) ret.append(bases[i]); return ret; }
+-		pyEngineUnit(const shared_ptr&lt;EngineUnit&gt;&amp; _eng, const vector&lt;string&gt;&amp; _bases): eng(_eng), bases(_bases) {}
+-		pyEngineUnit(string clss, string base1=&quot;&quot;, string base2=&quot;&quot;){
+-			eng=dynamic_pointer_cast&lt;EngineUnit&gt;(ClassFactory::instance().createShared(clss)); if(!eng) throw runtime_error(&quot;Invalid engine class `&quot;+clss+&quot;': either nonexistent, or not unable to cast to `EngineUnit'&quot;);
+-			if(!base1.empty()){ bases.push_back(base1); if(!base2.empty()) bases.push_back(base2); }
+-		}
+-		std::string pyStr(void){ ensureEng(); string ret(&quot;&lt;&quot;+eng-&gt;getClassName()+&quot; EngineUnit {&quot;); for(size_t i=0; i&lt;bases.size(); i++) ret+=bases[i]+(i&lt;bases.size()-1?&quot;,&quot;:&quot;&quot;); return ret+&quot;}&gt;&quot;; }
++		python::list bases_get(void){ python::list ret; vector&lt;string&gt; t=eng-&gt;getFunctorTypes(); for(size_t i=0; i&lt;t.size(); i++) ret.append(t[i]); return ret; }
++		pyEngineUnit(const shared_ptr&lt;EngineUnit&gt;&amp; _eng): eng(_eng) {}
++		pyEngineUnit(string clss){ eng=dynamic_pointer_cast&lt;EngineUnit&gt;(ClassFactory::instance().createShared(clss)); if(!eng) throw runtime_error(&quot;Invalid engine class `&quot;+clss+&quot;': either nonexistent, or not unable to cast to `EngineUnit'&quot;); }
++		std::string pyStr(void){ ensureEng(); string ret(&quot;&lt;&quot;+eng-&gt;getClassName()+&quot; EngineUnit {&quot;); vector&lt;string&gt; t=eng-&gt;getFunctorTypes(); for(size_t i=0; i&lt;t.size(); i++) ret+=t[i]+(i==t.size()-1?&quot;&quot;:&quot;,&quot;); return ret+&quot;}&gt;&quot;; }
+ 		string className(void){ ensureEng(); return eng-&gt;getClassName(); }
+ 		ATTR_ACCESS_CXX(accessor,ensureEng);
+ };
+@@ -73,28 +97,30 @@
+ 		ATTR_ACCESS_CXX(accessor,ensureEng);
+ };
+ 
++#define CHECK_ENGINE_PTR_TYPE(e,T) if(!dynamic_pointer_cast&lt;T&gt;(e)) throw std::invalid_argument(string(&quot;Object of type &quot;)+e-&gt;getClassName()+&quot; could not be cast to &quot;+#T);
++
+ class pyStandAloneEngine: public pyEngine{
+ 	public:
+ 		pyStandAloneEngine(const shared_ptr&lt;StandAloneEngine&gt;&amp; _eng): pyEngine(_eng) {}
+-		pyStandAloneEngine(string clss): pyEngine(clss) {};
++		pyStandAloneEngine(string clss): pyEngine(clss) { CHECK_ENGINE_PTR_TYPE(eng,StandAloneEngine); };
+ 		std::string pyStr(void){ ensureEng(); return string(&quot;&lt;&quot;)+eng-&gt;getClassName()+&quot; StandAloneEngine&gt;&quot;; }
+ };
+ 
+ class pyDeusExMachina: public pyEngine{
+ 	public:
+ 		pyDeusExMachina(const shared_ptr&lt;DeusExMachina&gt;&amp; _eng): pyEngine(_eng) {}
+-		pyDeusExMachina(string clss): pyEngine(clss) {};
++		pyDeusExMachina(string clss): pyEngine(clss) { CHECK_ENGINE_PTR_TYPE(eng,DeusExMachina); }
+ 		std::string pyStr(void){ ensureEng(); return string(&quot;&lt;&quot;)+eng-&gt;getClassName()+&quot; DeusExMachina&gt;&quot;; }
+ };
+ 
+ class pyMetaEngine: public pyEngine{
+ 	public:
+ 		pyMetaEngine(const shared_ptr&lt;MetaDispatchingEngine&gt;&amp; _eng): pyEngine(_eng) {}
+-		pyMetaEngine(string clss): pyEngine(clss) {};
++		pyMetaEngine(string clss): pyEngine(clss) { CHECK_ENGINE_PTR_TYPE(eng,MetaDispatchingEngine);} ;
+ 		//pyMetaEngine(string clss){ eng=dynamic_pointer_cast&lt;MetaDispatchingEngine&gt;(ClassFactory::instance().createShared(clss)); if(!eng) throw runtime_error(&quot;Invalid engine class `&quot;+clss+&quot;': either nonexistent, or not unable to cast to `MetaDispatchingEngine'&quot;); };
+ 		std::string pyStr(void){ ensureEng(); return string(&quot;&lt;&quot;)+eng-&gt;getClassName()+&quot; MetaEngine&gt;&quot;; }
+ 		python::list functors_get(void){
+-			ensureEng(); shared_ptr&lt;MetaDispatchingEngine&gt; me=dynamic_pointer_cast&lt;MetaDispatchingEngine&gt;(eng); if(!me) throw runtime_error(&quot;Proxied class not a MetaDispatchingEngine (FIXME: add checks)&quot;); python::list ret;
++			ensureEng(); shared_ptr&lt;MetaDispatchingEngine&gt; me=dynamic_pointer_cast&lt;MetaDispatchingEngine&gt;(eng); if(!me) throw runtime_error(&quot;Proxied class not a MetaDispatchingEngine (WTF?)&quot;); python::list ret;
+ 			/* garbage design: functorArguments are instances of EngineUnits, but they may not be present; therefore, only use them if they exist; our pyMetaEngine, however, will always have both names and EnguneUnit objects in the same count */
+ 			for(size_t i=0; i&lt;me-&gt;functorNames.size(); i++){
+ 				shared_ptr&lt;EngineUnit&gt; eu;
+@@ -104,21 +130,17 @@
+ 				}
+ 				if(!eu) /* either list was shorter or empty pointer in the functorArguments list */ { eu=dynamic_pointer_cast&lt;EngineUnit&gt;(ClassFactory::instance().createShared(functorName)); if(!eu) throw runtime_error(&quot;Unable to construct `&quot;+string(*(me-&gt;functorNames[i].rbegin()))+&quot;' EngineUnit&quot;); }
+ 				assert(eu);
+-				vector&lt;string&gt; fn; for(size_t j=0; j&lt;me-&gt;functorNames[i].size()-1; j++) fn.push_back(me-&gt;functorNames[i][j]); // all names but the last one, which is the functor class name; TODO: use std::algo for the copy
+-				ret.append(pyEngineUnit(eu,fn));
++				//vector&lt;string&gt; fn; for(size_t j=0; j&lt;me-&gt;functorNames[i].size()-1; j++) fn.push_back(me-&gt;functorNames[i][j]); // all names but the last one, which is the functor class name; TODO: use std::algo for the copy
++				ret.append(pyEngineUnit(eu));
+ 			}
+ 			return ret;
+ 		}
+ 		void functors_set(python::object ftrs){
+-			ensureEng(); shared_ptr&lt;MetaDispatchingEngine&gt; me=dynamic_pointer_cast&lt;MetaDispatchingEngine&gt;(eng); if(!me) throw runtime_error(&quot;Proxied class not a MetaDispatchingEngine (FIXME: add checks)&quot;);
++			ensureEng(); shared_ptr&lt;MetaDispatchingEngine&gt; me=dynamic_pointer_cast&lt;MetaDispatchingEngine&gt;(eng); if(!me) throw runtime_error(&quot;Proxied class not a MetaDispatchingEngine. (WTF?)&quot;);
+ 			me-&gt;clear(); int len=python::len(ftrs);
+ 			for(int i=0; i&lt;len; i++){
+ 				const pyEngineUnit&amp; eu=python::extract&lt;pyEngineUnit&gt;(PySequence_GetItem(ftrs.ptr(),i));
+-				switch(eu.bases.size()){
+-					case 1: me-&gt;add(eu.bases[0],eu.eng-&gt;getClassName(),eu.eng);break;
+-					case 2: me-&gt;add(eu.bases[0],eu.bases[1],eu.eng-&gt;getClassName(),eu.eng);break;
+-					default: throw runtime_error(&quot;Unhandled number (&quot;+lexical_cast&lt;string&gt;(eu.bases.size())+&quot;, must be 1 or 2) of base classes for functor.&quot;);
+-				}
++				me-&gt;add(eu.eng);
+ 			}
+ 		}
+ };
+@@ -143,6 +165,10 @@
+ 	// long realTime(){return OMEGA(get...);}
+ 	double dt_get(){return OMEGA.getTimeStep();}
+ 	void dt_set(double dt){OMEGA.skipTimeStepper(true); OMEGA.setTimeStep(dt);}
++
++	long stopAtIter_get(){return OMEGA.stopAtIteration; }
++	void stopAtIter_set(long s){OMEGA.stopAtIteration=s; }
++
+ 	bool usesTimeStepper_get(){return OMEGA.timeStepperActive();}
+ 	void usesTimeStepper_set(bool use){OMEGA.skipTimeStepper(!use);}
+ 
+@@ -315,6 +341,7 @@
+ 
+ 	boost::python::class_&lt;pyOmega&gt;(&quot;Omega&quot;)
+ 		.add_property(&quot;iter&quot;,&amp;pyOmega::iter)
++		.add_property(&quot;stopAtIter&quot;,&amp;pyOmega::stopAtIter_get,&amp;pyOmega::stopAtIter_set)
+ 		.add_property(&quot;time&quot;,&amp;pyOmega::simulationTime)
+ 		.add_property(&quot;realtime&quot;,&amp;pyOmega::realTime)
+ 		.add_property(&quot;dt&quot;,&amp;pyOmega::dt_get,&amp;pyOmega::dt_set)
+@@ -352,7 +379,7 @@
+ 	python::class_&lt;pyStandAloneEngine&gt;(&quot;StandAloneEngine&quot;,python::init&lt;string&gt;())
+ 	.ATTR_ACCESS_PY(pyStandAloneEngine)
+ 	.def(&quot;__str__&quot;,&amp;pyStandAloneEngine::pyStr).def(&quot;__repr__&quot;,&amp;pyStandAloneEngine::pyStr)
+-	.add_property(&quot;name&quot;,&amp;pyEngine::className)
++	.add_property(&quot;name&quot;,&amp;pyStandAloneEngine::className)
+ 	;
+ 
+ 	python::class_&lt;pyMetaEngine&gt;(&quot;MetaEngine&quot;,python::init&lt;string&gt;())
+@@ -365,17 +392,28 @@
+ 	boost::python::class_&lt;pyDeusExMachina&gt;(&quot;DeusExMachina&quot;,python::init&lt;string&gt;())
+ 	.ATTR_ACCESS_PY(pyDeusExMachina)
+ 	.def(&quot;__str__&quot;,&amp;pyDeusExMachina::pyStr).def(&quot;__repr__&quot;,&amp;pyDeusExMachina::pyStr)
+-	.add_property(&quot;name&quot;,&amp;pyEngine::className)
++	.add_property(&quot;name&quot;,&amp;pyDeusExMachina::className)
+ 	;
+ 
+-	boost::python::class_&lt;pyEngineUnit&gt;(&quot;EngineUnit&quot;,python::init&lt;string, python::optional&lt;string,string&gt; &gt;())
++	boost::python::class_&lt;pyEngineUnit&gt;(&quot;EngineUnit&quot;,python::init&lt;string&gt;())
+ 	.ATTR_ACCESS_PY(pyEngineUnit)
+ 	.def(&quot;__str__&quot;,&amp;pyEngineUnit::pyStr).def(&quot;__repr__&quot;,&amp;pyEngineUnit::pyStr)
+ 	.add_property(&quot;name&quot;,&amp;pyEngineUnit::className)
+-	.add_property(&quot;bases&quot;,&amp;pyEngineUnit::bases_get,&amp;pyEngineUnit::bases_set)
++	.add_property(&quot;bases&quot;,&amp;pyEngineUnit::bases_get)
+ 	;
+-	
+ 
++#define BASIC_PY_PROXY_WRAPPER(pyClass,pyName)  \
++	boost::python::class_&lt;pyClass&gt;(pyName,python::init&lt;string&gt;()) \
++	.ATTR_ACCESS_PY(pyClass) \
++	.def(&quot;__str__&quot;,&amp;pyClass::pyStr).def(&quot;__repr__&quot;,&amp;pyClass::pyStr) \
++	.add_property(&quot;name&quot;,&amp;pyClass::className)
++
++	BASIC_PY_PROXY_WRAPPER(pyShape,&quot;Shape&quot;);
++	BASIC_PY_PROXY_WRAPPER(pyMold,&quot;Mold&quot;);
++	BASIC_PY_PROXY_WRAPPER(pyPhys,&quot;Phys&quot;);
++	BASIC_PY_PROXY_WRAPPER(pyBound,&quot;Bound&quot;);
++
++
+ 	//scope().attr(&quot;iter&quot;)=OMEGA(getCurrentIteration());
+ 	//scope().attr(&quot;time&quot;)=realTime(getSimulationTime());
+ 	//scope().attr(&quot;verbose&quot;)=;
+
+Modified: trunk/gui/qt3/QtMetaDispatchingEngineProperties.cpp
+===================================================================
+--- trunk/gui/qt3/QtMetaDispatchingEngineProperties.cpp	2008-02-13 03:04:49 UTC (rev 1245)
++++ trunk/gui/qt3/QtMetaDispatchingEngineProperties.cpp	2008-02-13 14:56:19 UTC (rev 1246)
+@@ -380,18 +380,18 @@
+ 		{			
+ 			string baseFunctor = ((QComboBox*)(*cbsi)[1])-&gt;currentText();
+ 			if (*eui!=shared_ptr&lt;EngineUnit&gt;())
+-				metaEngine-&gt;add(baseClass1, baseFunctor,*eui);
++				metaEngine-&gt;add(*eui);
+ 			else
+-				metaEngine-&gt;add(baseClass1, baseFunctor);
++				metaEngine-&gt;add(baseFunctor);
+ 		}
+ 		else if (metaEngine-&gt;getDimension()==2)
+ 		{
+ 			string baseClass2 = ((QComboBox*)(*cbsi)[1])-&gt;currentText();
+ 			string baseFunctor = ((QComboBox*)(*cbsi)[2])-&gt;currentText();
+ 			if (*eui!=shared_ptr&lt;EngineUnit&gt;())
+-				metaEngine-&gt;add(baseClass1, baseClass2, baseFunctor,*eui);
++				metaEngine-&gt;add(*eui);
+ 			else
+-				metaEngine-&gt;add(baseClass1, baseClass2, baseFunctor);
++				metaEngine-&gt;add(baseFunctor);
+ 		}
+ 	}
+ 
+
+Modified: trunk/lib/base/Logging.hpp
+===================================================================
+--- trunk/lib/base/Logging.hpp	2008-02-13 03:04:49 UTC (rev 1245)
++++ trunk/lib/base/Logging.hpp	2008-02-13 14:56:19 UTC (rev 1246)
+@@ -35,12 +35,12 @@
+ #	define _LOG_HEAD __FILE__&quot;:&quot;&lt;&lt;__LINE__&lt;&lt;&quot; &quot;&lt;&lt;__FUNCTION__&lt;&lt;&quot;: &quot;
+ 	// logger is local for every class, but if it is missing, we will use the parent's class logger automagically.
+ // TRACE doesn't really exist ATM, will output through DEBUG
+-#	define LOG_TRACE(msg) LOG4CXX_DEBUG(logger, _LOG_HEAD&lt;&lt;msg)
+-#	define LOG_DEBUG(msg) LOG4CXX_DEBUG(logger, _LOG_HEAD&lt;&lt;msg)
+-#	define LOG_INFO(msg)  LOG4CXX_INFO(logger,  _LOG_HEAD&lt;&lt;msg)
+-#	define LOG_WARN(msg)  LOG4CXX_WARN(logger,  _LOG_HEAD&lt;&lt;msg)
+-#	define LOG_ERROR(msg) LOG4CXX_ERROR(logger, _LOG_HEAD&lt;&lt;msg)
+-#	define LOG_FATAL(msg) LOG4CXX_FATAL(logger, _LOG_HEAD&lt;&lt;msg)
++#	define LOG_TRACE(msg) {LOG4CXX_DEBUG(logger, _LOG_HEAD&lt;&lt;msg);}
++#	define LOG_DEBUG(msg) {LOG4CXX_DEBUG(logger, _LOG_HEAD&lt;&lt;msg);}
++#	define LOG_INFO(msg)  {LOG4CXX_INFO(logger,  _LOG_HEAD&lt;&lt;msg);}
++#	define LOG_WARN(msg)  {LOG4CXX_WARN(logger,  _LOG_HEAD&lt;&lt;msg);}
++#	define LOG_ERROR(msg) {LOG4CXX_ERROR(logger, _LOG_HEAD&lt;&lt;msg);}
++#	define LOG_FATAL(msg) {LOG4CXX_FATAL(logger, _LOG_HEAD&lt;&lt;msg);}
+ 
+ #	define DECLARE_LOGGER public: static log4cxx::LoggerPtr logger
+ #	define CREATE_LOGGER(classname) log4cxx::LoggerPtr classname::logger = log4cxx::Logger::getLogger(&quot;yade.&quot; #classname)
+
+Modified: trunk/pkg/common/Container/InteractionVecSet.cpp
+===================================================================
+--- trunk/pkg/common/Container/InteractionVecSet.cpp	2008-02-13 03:04:49 UTC (rev 1245)
++++ trunk/pkg/common/Container/InteractionVecSet.cpp	2008-02-13 14:56:19 UTC (rev 1246)
+@@ -138,7 +138,6 @@
+ 	}
+ 
+ 	return InteractionContainer::iterator(it);
+-
+ }
+ 
+ 
+
+Modified: trunk/pkg/common/Container/InteractionVecSet.hpp
+===================================================================
+--- trunk/pkg/common/Container/InteractionVecSet.hpp	2008-02-13 03:04:49 UTC (rev 1245)
++++ trunk/pkg/common/Container/InteractionVecSet.hpp	2008-02-13 14:56:19 UTC (rev 1246)
+@@ -40,8 +40,8 @@
+ 		virtual const shared_ptr&lt;Interaction&gt;&amp; find(body_id_t id1,body_id_t id2);
+ 
+ 		virtual InteractionContainer::iterator begin();
+-        	virtual InteractionContainer::iterator end();
+-	
++     	virtual InteractionContainer::iterator end();
++
+ 		virtual unsigned int size();
+ 
+ 	REGISTER_CLASS_NAME(InteractionVecSet);
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/GlobalStiffnessCounter.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/GlobalStiffnessCounter.cpp	2008-02-13 03:04:49 UTC (rev 1245)
++++ trunk/pkg/dem/Engine/StandAloneEngine/GlobalStiffnessCounter.cpp	2008-02-13 14:56:19 UTC (rev 1246)
+@@ -121,7 +121,6 @@
+ 			if(!getInteractionParameters(contact,normal,kn,ks,radius1,radius2)) continue;
+ 		}
+ 
+-			
+ 		//Diagonal terms of the translational stiffness matrix
+ 		Vector3r diag_stiffness = Vector3r(std::pow(normal.X(),2),std::pow(normal.Y(),2),std::pow(normal.Z(),2));
+ 		diag_stiffness *= kn-ks;
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/GlobalStiffnessTimeStepper.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/GlobalStiffnessTimeStepper.cpp	2008-02-13 03:04:49 UTC (rev 1245)
++++ trunk/pkg/dem/Engine/StandAloneEngine/GlobalStiffnessTimeStepper.cpp	2008-02-13 14:56:19 UTC (rev 1246)
+@@ -178,9 +178,11 @@
+ 		//cerr &lt;&lt; &quot;GlobalStiffnessTimeStepper, timestep chosen is:&quot; &lt;&lt; Omega::instance().getTimeStep() &lt;&lt; endl;
+ 	}
+ 	else if (!computedOnce) Omega::instance().setTimeStep(defaultDt);
+-	if (Omega::instance().getCurrentIteration() % 100 == 0) LOG_INFO(&quot;computed timestep &quot; &lt;&lt; newDt &lt;&lt;
+-		(Omega::instance().getTimeStep()==newDt ? string(&quot;, appplied&quot;) :
+-		string(&quot;, BUT timestep is &quot;)+lexical_cast&lt;string&gt;(Omega::instance().getTimeStep()))&lt;&lt;&quot;.&quot;);
++
++	//if (Omega::instance().getCurrentIteration() % 100 == 0)
++		LOG_INFO(&quot;computed timestep &quot; &lt;&lt; newDt &lt;&lt;
++			(Omega::instance().getTimeStep()==newDt ? string(&quot;, appplied&quot;) :
++			string(&quot;, BUT timestep is &quot;)+lexical_cast&lt;string&gt;(Omega::instance().getTimeStep()))&lt;&lt;&quot;.&quot;);
+ }
+ 
+ YADE_PLUGIN();
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000210.html">[Yade-commits] r1245 - in trunk: core gui/qt3	pkg/common/Engine/EngineUnit
+</A></li>
+	<LI>Next message: <A HREF="000212.html">[Yade-commits] r1247 - in trunk: core pkg/dem/PreProcessor
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#211">[ date ]</a>
+              <a href="thread.html#211">[ thread ]</a>
+              <a href="subject.html#211">[ subject ]</a>
+              <a href="author.html#211">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

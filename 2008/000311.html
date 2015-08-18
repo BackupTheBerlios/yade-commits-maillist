@@ -1,0 +1,731 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1349 - in trunk: core extra gui/py gui/qt3 scripts
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1349%20-%20in%20trunk%3A%20core%20extra%20gui/py%20gui/qt3%20scripts&In-Reply-To=%3C200805110951.m4B9p8qm020963%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000310.html">
+   <LINK REL="Next"  HREF="000312.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1349 - in trunk: core extra gui/py gui/qt3 scripts</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1349%20-%20in%20trunk%3A%20core%20extra%20gui/py%20gui/qt3%20scripts&In-Reply-To=%3C200805110951.m4B9p8qm020963%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1349 - in trunk: core extra gui/py gui/qt3 scripts">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Sun May 11 11:51:08 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000310.html">[Yade-commits] r1348 - in trunk: core extra extra/clump extra/usct	gui gui/py gui/qt3 pkg/common/Engine/DeusExMachina
+</A></li>
+        <LI>Next message: <A HREF="000312.html">[Yade-commits] r1350 - trunk/gui/qt3
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#311">[ date ]</a>
+              <a href="thread.html#311">[ thread ]</a>
+              <a href="subject.html#311">[ subject ]</a>
+              <a href="author.html#311">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2008-05-11 11:51:07 +0200 (Sun, 11 May 2008)
+New Revision: 1349
+
+Added:
+   trunk/scripts/py2wiki.py
+Modified:
+   trunk/core/Body.cpp
+   trunk/core/Body.hpp
+   trunk/extra/Brefcom.cpp
+   trunk/extra/SConscript
+   trunk/extra/SimpleScene.cpp
+   trunk/extra/SimpleScene.hpp
+   trunk/gui/py/utils.py
+   trunk/gui/qt3/SimulationControllerUpdater.cpp
+   trunk/scripts/simple-scene.py
+Log:
+1. Added MetaBody* as optional argument to Body::byId, to avoid Omega::instance().getRootBody() lookups - took a few percent of time in valgrind-profiled run.
+2. Completed SimpleScene, a script to generate commented source py2wiki.py and put results on <A HREF="http://yade.wikia.com/wiki/SimpleSceneTutorial">http://yade.wikia.com/wiki/SimpleSceneTutorial</A>
+3. Swap argument order in utils.sphere and utils.box to match Shop::sphere and Shop::box (center first, then radius/extents and not vice versa as it used to be)
+
+
+
+Modified: trunk/core/Body.cpp
+===================================================================
+--- trunk/core/Body.cpp	2008-05-10 16:48:37 UTC (rev 1348)
++++ trunk/core/Body.cpp	2008-05-11 09:51:07 UTC (rev 1349)
+@@ -28,7 +28,7 @@
+ 	\endcode
+ 	\warning Make sure that a simulation is not running during generation, otherwise it will most likely crash. It seems that Omega::getRootBodyMutex that could be used for this purpose is just a dummy function.
+  * */
+-shared_ptr&lt;Body&gt; Body::byId(body_id_t _id){return (*(Omega::instance().getRootBody()-&gt;bodies))[_id];}
++const shared_ptr&lt;Body&gt;&amp; Body::byId(body_id_t _id, MetaBody* rb){return (*((rb?rb:Omega::instance().getRootBody().get())-&gt;bodies))[_id];}
+ 
+ // we must initialize id = 0, otherwise BodyContainer will crash.
+ Body::Body () : 
+
+Modified: trunk/core/Body.hpp
+===================================================================
+--- trunk/core/Body.hpp	2008-05-10 16:48:37 UTC (rev 1348)
++++ trunk/core/Body.hpp	2008-05-11 09:51:07 UTC (rev 1349)
+@@ -26,6 +26,7 @@
+ #include&lt;yade/lib-serialization/Serializable.hpp&gt;
+ #include&lt;yade/lib-multimethods/Indexable.hpp&gt;
+ 
++class MetaBody;
+ 
+ /*! \brief Abstract interface for bodies stored in BodyContainer, Body represents the atomic element of simulation.
+  */
+@@ -46,7 +47,7 @@
+ 		//! symbolic constant for body that doesn't exist.
+ 		static const body_id_t ID_NONE;
+ 		//! get Body pointer given its id. 
+-		static shared_ptr&lt;Body&gt; byId(body_id_t _id);
++		static const shared_ptr&lt;Body&gt;&amp; byId(body_id_t _id,MetaBody* rb=NULL);
+ 		//! Whether this Body is a Clump.
+ 		//! @note The following is always true: \code (Body::isClump() XOR Body::isClumpMember() XOR Body::isStandalone()) \endcode
+ 		bool isClump() const {return clumpId!=ID_NONE &amp;&amp; id==clumpId;}
+
+Modified: trunk/extra/Brefcom.cpp
+===================================================================
+--- trunk/extra/Brefcom.cpp	2008-05-10 16:48:37 UTC (rev 1348)
++++ trunk/extra/Brefcom.cpp	2008-05-11 09:51:07 UTC (rev 1349)
+@@ -159,15 +159,15 @@
+ }
+ 
+ void BrefcomLaw::applyForce(const Vector3r force){
+-/*	Shop::Bex::force(id1)+=force;
+-	Shop::Bex::force(id2)-=force;
+-	Shop::Bex::momentum(id1)+=(contGeom-&gt;contactPoint-rbp1-&gt;se3.position).Cross(force);
+-	Shop::Bex::momentum(id1)-=(contGeom-&gt;contactPoint-rbp2-&gt;se3.position).Cross(force);
+-*/
+-	static_pointer_cast&lt;Force&gt;(rootBody-&gt;physicalActions-&gt;find(id1,ForceClassIndex))-&gt;force+=force;
++	Shop::Bex::force(id1,rootBody)+=force;
++	Shop::Bex::force(id2,rootBody)-=force;
++	Shop::Bex::momentum(id1,rootBody)+=(contGeom-&gt;contactPoint-rbp1-&gt;se3.position).Cross(force);
++	Shop::Bex::momentum(id1,rootBody)-=(contGeom-&gt;contactPoint-rbp2-&gt;se3.position).Cross(force);
++/*	static_pointer_cast&lt;Force&gt;(rootBody-&gt;physicalActions-&gt;find(id1,ForceClassIndex))-&gt;force+=force;
+ 	static_pointer_cast&lt;Force&gt;(rootBody-&gt;physicalActions-&gt;find(id2,ForceClassIndex))-&gt;force-=force;
+ 	static_pointer_cast&lt;Momentum&gt;(rootBody-&gt;physicalActions-&gt;find(id1,MomentumClassIndex))-&gt;momentum+=(contGeom-&gt;contactPoint-rbp1-&gt;se3.position).Cross(force);
+ 	static_pointer_cast&lt;Momentum&gt;(rootBody-&gt;physicalActions-&gt;find(id2,MomentumClassIndex))-&gt;momentum-=(contGeom-&gt;contactPoint-rbp2-&gt;se3.position).Cross(force);
++*/
+ }
+ 
+ void BrefcomLaw::action(MetaBody* _rootBody){
+@@ -178,7 +178,7 @@
+ 		//TRACE;
+ 		// initialize temporaries
+ 		id1=I-&gt;getId1(); id2=I-&gt;getId2();
+-		body1=Body::byId(id1); body2=Body::byId(id2);
++		body1=Body::byId(id1,_rootBody); body2=Body::byId(id2,_rootBody);
+ 		assert(body1); assert(body2);
+ 		BC=YADE_PTR_CAST&lt;BrefcomContact&gt;(I-&gt;interactionPhysics);
+ 		contGeom=YADE_PTR_CAST&lt;SpheresContactGeometry&gt;(I-&gt;interactionGeometry);
+
+Modified: trunk/extra/SConscript
+===================================================================
+--- trunk/extra/SConscript	2008-05-10 16:48:37 UTC (rev 1348)
++++ trunk/extra/SConscript	2008-05-11 09:51:07 UTC (rev 1349)
+@@ -53,6 +53,8 @@
+ 
+ 	env.SharedLibrary('BrefcomTestGen',['BrefcomTestGen.cpp'],LIBS=env['LIBS']+['Shop','UniaxialStrainControlledTest','PositionOrientationRecorder']),
+ 
++	env.SharedLibrary('SimpleScene',['SimpleScene.cpp'],LIBS=env['LIBS']+['Shop','SimpleElasticRelationships']),
++
+ 	env.SharedLibrary('Shop',
+ 		['clump/Shop.cpp'],
+ 		LIBS=env['LIBS']+[
+
+Modified: trunk/extra/SimpleScene.cpp
+===================================================================
+--- trunk/extra/SimpleScene.cpp	2008-05-10 16:48:37 UTC (rev 1348)
++++ trunk/extra/SimpleScene.cpp	2008-05-11 09:51:07 UTC (rev 1349)
+@@ -1,48 +1,87 @@
++#include&quot;SimpleScene.hpp&quot;
++#include&lt;yade/extra/Shop.hpp&gt;
++#include&lt;yade/pkg-dem/BodyMacroParameters.hpp&gt;
++#include&lt;yade/pkg-common/InteractingSphere2AABB.hpp&gt;
++#include&lt;yade/pkg-common/InteractingBox2AABB.hpp&gt;
++#include&lt;yade/pkg-common/MetaInteractingGeometry.hpp&gt;
++#include&lt;yade/pkg-common/MetaInteractingGeometry2AABB.hpp&gt;
++#include&lt;yade/pkg-common/PhysicalActionContainerReseter.hpp&gt;
++#include&lt;yade/pkg-common/PhysicalActionContainerInitializer.hpp&gt;
++#include&lt;yade/pkg-common/PhysicalParametersMetaEngine.hpp&gt;
++#include&lt;yade/pkg-common/AABB.hpp&gt;
++#include&lt;yade/pkg-common/Box.hpp&gt;
++#include&lt;yade/pkg-common/Sphere.hpp&gt;
++#include&lt;yade/pkg-common/InteractingBox.hpp&gt;
++#include&lt;yade/pkg-common/Momentum.hpp&gt;
++#include&lt;yade/pkg-common/Force.hpp&gt;
++#include&lt;yade/pkg-common/NewtonsForceLaw.hpp&gt;
++#include&lt;yade/pkg-common/NewtonsMomentumLaw.hpp&gt;
++#include&lt;yade/pkg-common/LeapFrogPositionIntegrator.hpp&gt;
++#include&lt;yade/pkg-common/LeapFrogOrientationIntegrator.hpp&gt;
++#include&lt;yade/pkg-dem/InteractingSphere2InteractingSphere4SpheresContactGeometry.hpp&gt;
++#include&lt;yade/pkg-dem/InteractingBox2InteractingSphere4SpheresContactGeometry.hpp&gt;
++#include&lt;yade/pkg-common/PhysicalActionContainerInitializer.hpp&gt;
++#include&lt;yade/pkg-common/PhysicalParametersMetaEngine.hpp&gt;
++#include&lt;yade/pkg-common/InteractionGeometryMetaEngine.hpp&gt;
++#include&lt;yade/pkg-common/InteractionPhysicsMetaEngine.hpp&gt;
++#include&lt;yade/pkg-common/BoundingVolumeMetaEngine.hpp&gt;
++#include&lt;yade/pkg-common/PhysicalActionDamper.hpp&gt;
++#include&lt;yade/pkg-common/PhysicalActionApplier.hpp&gt;
++#include&lt;yade/pkg-common/CundallNonViscousForceDamping.hpp&gt;
++#include&lt;yade/pkg-common/CundallNonViscousMomentumDamping.hpp&gt;
++#include&lt;yade/pkg-common/GravityEngine.hpp&gt;
++#include&lt;yade/pkg-dem/ElasticContactLaw.hpp&gt;
++#include&lt;yade/pkg-dem/SpheresContactGeometry.hpp&gt;
++#include&lt;yade/pkg-dem/SimpleElasticRelationships.hpp&gt;
++#include&lt;yade/pkg-common/PersistentSAPCollider.hpp&gt;
++
++
++
++YADE_PLUGIN(&quot;SimpleScene&quot;);
++
+ bool SimpleScene::generate(){
+ 	message=&quot;&quot;;
++	//@
+ 	rootBody=Shop::rootBody();
+-
++	//@
+ 	/* initializers */
+ 		rootBody-&gt;initializers.clear();
+-
+-		shared_ptr&lt;PhysicalActionContainerInitializer&gt; physicalActionInitializer(new PhysicalActionContainerInitializer);
+-			physicalActionInitializer-&gt;physicalActionNames.push_back(&quot;Force&quot;);
+-			physicalActionInitializer-&gt;physicalActionNames.push_back(&quot;Momentum&quot;);
+-			rootBody-&gt;initializers.push_back(physicalActionInitializer);
+-	
++		//@
++		rootBody-&gt;initializers.push_back(shared_ptr&lt;PhysicalActionContainerInitializer&gt;(new PhysicalActionContainerInitializer));
++		//@
+ 		shared_ptr&lt;BoundingVolumeMetaEngine&gt; boundingVolumeDispatcher	= shared_ptr&lt;BoundingVolumeMetaEngine&gt;(new BoundingVolumeMetaEngine);
+ 			boundingVolumeDispatcher-&gt;add(new InteractingSphere2AABB);
+ 			boundingVolumeDispatcher-&gt;add(new InteractingBox2AABB);
+ 			boundingVolumeDispatcher-&gt;add(new MetaInteractingGeometry2AABB);
+ 			rootBody-&gt;initializers.push_back(boundingVolumeDispatcher);
+-
++	//@
+ 	/* engines */
+ 		rootBody-&gt;engines.clear();
+-
++		//@
+ 		rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new PhysicalActionContainerReseter));
+-			rootBody-&gt;engines.push_back(boundingVolumeDispatcher);
+-
++		//@
++		// use boundingVolumeDispatcher that we defined above
++		rootBody-&gt;engines.push_back(boundingVolumeDispatcher);
++		//@
+ 		shared_ptr&lt;PersistentSAPCollider&gt; collider(new PersistentSAPCollider);
+ 			rootBody-&gt;engines.push_back(collider);
+-
++		//@
+ 		shared_ptr&lt;InteractionGeometryMetaEngine&gt; igeomDispatcher(new InteractionGeometryMetaEngine);
+ 			igeomDispatcher-&gt;add(new InteractingSphere2InteractingSphere4SpheresContactGeometry);
+ 			igeomDispatcher-&gt;add(new InteractingBox2InteractingSphere4SpheresContactGeometry);
+ 			rootBody-&gt;engines.push_back(igeomDispatcher);
+-
++		//@
+ 		shared_ptr&lt;InteractionPhysicsMetaEngine&gt; iphysDispatcher(new InteractionPhysicsMetaEngine);
+-			shared_ptr&lt;SimpleElasticRelationships&gt; ssr(new SimpleElasticRelationships);
+-			iphysDispatcher-&gt;add(ssr);
++			iphysDispatcher-&gt;add(new SimpleElasticRelationships);
+ 			rootBody-&gt;engines.push_back(iphysDispatcher);
+-
++		//@
+ 		shared_ptr&lt;ElasticContactLaw&gt; ecl(new ElasticContactLaw);
+ 			rootBody-&gt;engines.push_back(ecl);
+-
++		//@
+ 		shared_ptr&lt;GravityEngine&gt; ge(new GravityEngine);
+ 			ge-&gt;gravity=Vector3r(0,0,-9.81);
+ 			rootBody-&gt;engines.push_back(ge);
+-
+-
++		//@
+ 		shared_ptr&lt;PhysicalActionDamper&gt; dampingDispatcher(new PhysicalActionDamper);
+ 			shared_ptr&lt;CundallNonViscousForceDamping&gt; forceDamper(new CundallNonViscousForceDamping);
+ 			forceDamper-&gt;damping=0.2;
+@@ -51,20 +90,74 @@
+ 			momentumDamper-&gt;damping=0.2;
+ 			dampingDispatcher-&gt;add(momentumDamper);
+ 			rootBody-&gt;engines.push_back(dampingDispatcher);
+-
+-
++		//@
+ 		shared_ptr&lt;PhysicalActionApplier&gt; applyActionDispatcher(new PhysicalActionApplier);
+ 			applyActionDispatcher-&gt;add(new NewtonsForceLaw);
+ 			applyActionDispatcher-&gt;add(new NewtonsMomentumLaw);
+ 			rootBody-&gt;engines.push_back(applyActionDispatcher);
+-
++		//@
+ 		shared_ptr&lt;PhysicalParametersMetaEngine&gt; positionIntegrator(new PhysicalParametersMetaEngine);
+ 			positionIntegrator-&gt;add(new LeapFrogPositionIntegrator);
+ 			rootBody-&gt;engines.push_back(positionIntegrator);
+-
++		//@
+ 		shared_ptr&lt;PhysicalParametersMetaEngine&gt; orientationIntegrator(new PhysicalParametersMetaEngine);
+ 			orientationIntegrator-&gt;add(new LeapFrogOrientationIntegrator);
+ 			rootBody-&gt;engines.push_back(orientationIntegrator);
++	//@
++	// set default values for Shop	
++	Shop::setDefault(&quot;body_sdecGroupMask&quot;,1);
++	Shop::setDefault(&quot;phys_density&quot;,2400.); Shop::setDefault(&quot;phys_young&quot;,30e9); Shop::setDefault(&quot;phys_poisson&quot;,.3);
++	Shop::setDefault(&quot;aabb_randomColor&quot;,false);Shop::setDefault(&quot;shape_randomColor&quot;,false); Shop::setDefault(&quot;mold_randomColor&quot;,false);
++	Shop::setDefault(&quot;aabb_color&quot;,Vector3r(0,1,0)); Shop::setDefault(&quot;shape_color&quot;,Vector3r(1,0,0)); Shop::setDefault(&quot;mold_color&quot;,Vector3r(1,0,0));
+ 
++	//@
++	shared_ptr&lt;Body&gt; box=Shop::box(Vector3r(0,0,0),Vector3r(.5,.5,.5));
++	box-&gt;isDynamic=false;
++	rootBody-&gt;bodies-&gt;insert(box);
++	
++	//@
++	if(false){
++		Vector3r extents(.5,.5,.5);
++		shared_ptr&lt;Body&gt; b=shared_ptr&lt;Body&gt;(new Body(body_id_t(0),0));
++		b-&gt;isDynamic=true;
++		
++		// phys
++		shared_ptr&lt;BodyMacroParameters&gt; physics(new BodyMacroParameters);
++		physics-&gt;mass=8*extents[0]*extents[1]*extents[2]*2400;
++		physics-&gt;inertia=Vector3r(physics-&gt;mass*(4*extents[1]*extents[1]+4*extents[2]*extents[2])/12.,physics-&gt;mass*(4*extents[0]*extents[0]+4*extents[2]*extents[2])/12.,physics-&gt;mass*(4*extents[0]*extents[0]+4*extents[1]*extents[1])/12.);
++		physics-&gt;se3=Se3r(Vector3r(0,0,0),Quaternionr::IDENTITY);
++		physics-&gt;young=30e9;
++		physics-&gt;poisson=.3;
++		b-&gt;physicalParameters=physics;
+ 
++		// aabb
++		shared_ptr&lt;AABB&gt; aabb(new AABB);
++		aabb-&gt;diffuseColor=Vector3r(0,1,0);
++		b-&gt;boundingVolume=aabb;
++
++		//shape
++		shared_ptr&lt;Box&gt; shape(new Box);
++		shape-&gt;extents=extents;
++		shape-&gt;diffuseColor=Vector3r(1,0,0);
++		b-&gt;geometricalModel=shape;
++
++		// mold
++		shared_ptr&lt;InteractingBox&gt; mold(new InteractingBox);
++		mold-&gt;extents=extents;
++		mold-&gt;diffuseColor=Vector3r(1,0,0);
++		b-&gt;interactingGeometry=mold;
++
++		rootBody-&gt;bodies-&gt;insert(b);
++	}
++
++	//@
++	Shop::setDefault(&quot;shape_color&quot;,Vector3r(0,1,0)); Shop::setDefault(&quot;mold_color&quot;,Vector3r(0,1,0));
++	shared_ptr&lt;Body&gt; sphere(Shop::sphere(Vector3r(0,0,2),1));
++	rootBody-&gt;bodies-&gt;insert(sphere);
++	
++	//@
++	rootBody-&gt;dt=.2*Shop::ElasticWaveTimestepEstimate(rootBody);
++
++	//@
++	return true;
+ }
+
+Modified: trunk/extra/SimpleScene.hpp
+===================================================================
+--- trunk/extra/SimpleScene.hpp	2008-05-10 16:48:37 UTC (rev 1348)
++++ trunk/extra/SimpleScene.hpp	2008-05-11 09:51:07 UTC (rev 1349)
+@@ -1,4 +1,3 @@
+-
+ #pragma once
+ #include&lt;yade/core/FileGenerator.hpp&gt;
+ #include&lt;yade/core/PhysicalAction.hpp&gt;
+@@ -12,7 +11,6 @@
+ 		virtual bool generate();
+ 	protected :
+ 		void registerAttributes(){ FileGenerator::registerAttributes(); }
+-	NEEDS_BEX(&quot;Force&quot;,&quot;Momentum&quot;);
+ 	REGISTER_CLASS_NAME(SimpleScene);
+ 	REGISTER_BASE_CLASS_NAME(FileGenerator);
+ 	DECLARE_LOGGER;
+
+Modified: trunk/gui/py/utils.py
+===================================================================
+--- trunk/gui/py/utils.py	2008-05-10 16:48:37 UTC (rev 1348)
++++ trunk/gui/py/utils.py	2008-05-11 09:51:07 UTC (rev 1349)
+@@ -13,7 +13,7 @@
+ 	psyco.full()
+ except ImportError: pass
+ 
+-def sphere(radius,center,density=1,young=3e9,poisson=.3,dynamic=True,color=[1,1,1]):
++def sphere(center,radius,density=1,young=3e9,poisson=.3,dynamic=True,color=[1,1,1]):
+ 	&quot;&quot;&quot;Create default sphere, with given parameters. Physical properties such as mass and inertia are calculated automatically.&quot;&quot;&quot;
+ 	s=Body()
+ 	s.shape=GeometricalModel('Sphere',{'radius':radius,'diffuseColor':color})
+@@ -25,7 +25,7 @@
+ 	s['isDynamic']=dynamic
+ 	return s
+ 
+-def box(extents,center,orientation=[1,0,0,0],density=1,young=3e9,poisson=.3,dynamic=True,color=[1,1,1]):
++def box(center,extents,orientation=[1,0,0,0],density=1,young=3e9,poisson=.3,dynamic=True,color=[1,1,1]):
+ 	&quot;&quot;&quot;Create default box (cuboid), with given parameters. Physical properties such as mass and inertia are calculated automatically.&quot;&quot;&quot;
+ 	b=Body()
+ 	b.shape=GeometricalModel('Box',{'extents':extents,'diffuseColor':color})
+@@ -108,7 +108,7 @@
+ 	ret=[]
+ 	for l in open(filename):
+ 		ss=[float(i) for i in l.split()]
+-		id=o.bodies.append(sphere(ss[3],[ss[0],ss[2],ss[1]],**kw))
++		id=o.bodies.append(sphere([ss[0],ss[2],ss[1]],ss[3],**kw))
+ 		ret.append(id)
+ 	return ret
+ 
+
+Modified: trunk/gui/qt3/SimulationControllerUpdater.cpp
+===================================================================
+--- trunk/gui/qt3/SimulationControllerUpdater.cpp	2008-05-10 16:48:37 UTC (rev 1348)
++++ trunk/gui/qt3/SimulationControllerUpdater.cpp	2008-05-11 09:51:07 UTC (rev 1349)
+@@ -7,10 +7,10 @@
+ *************************************************************************/
+ 
+ #include&lt;yade/core/Omega.hpp&gt;
+-#include &quot;SimulationControllerUpdater.hpp&quot;
+-#include &quot;SimulationController.hpp&quot;
++#include&quot;SimulationControllerUpdater.hpp&quot;
++#include&quot;SimulationController.hpp&quot;
+ #include&lt;qlabel.h&gt;
+-#include &lt;qspinbox.h&gt;
++#include&lt;qspinbox.h&gt;
+ #include&lt;cstdio&gt;
+ 
+ CREATE_LOGGER(SimulationControllerUpdater);
+@@ -66,7 +66,6 @@
+ 	long iterPerSec_LastAgo_ms=(microsec_clock::local_time()-iterPerSec_LastLocalTime).total_milliseconds();
+ 	if(iterPerSec_LastAgo_ms&gt;iterPerSec_TTL_ms){
+ 		iterPerSec=(1000*(Omega::instance().getCurrentIteration()-iterPerSec_LastIter))/iterPerSec_LastAgo_ms;
+-		//controller-&gt;tlIterPerSec-&gt;setText(lexical_cast&lt;string&gt;(iterPerSec));
+ 		iterPerSec_LastIter=Omega::instance().getCurrentIteration();
+ 		iterPerSec_LastLocalTime=microsec_clock::local_time();
+ 	}
+@@ -86,9 +85,6 @@
+ 		Omega::instance().setTimeStep(second*Mathr::Pow(10,powerSecond));
+ 	}
+ 
+-	//string strDt = lexical_cast&lt;string&gt;(Omega::instance().getTimeStep());
+-	//controller-&gt;tlTimeStep-&gt;setText(strDt);
+-
+ 	char strStep[64];
+ 	snprintf(strStep,64,&quot;step %g&quot;,Omega::instance().getTimeStep());
+ 	controller-&gt;labelStep-&gt;setText(string(strStep));
+
+Added: trunk/scripts/py2wiki.py
+===================================================================
+--- trunk/scripts/py2wiki.py	2008-05-10 16:48:37 UTC (rev 1348)
++++ trunk/scripts/py2wiki.py	2008-05-11 09:51:07 UTC (rev 1349)
+@@ -0,0 +1,78 @@
++#!/usr/bin/env python
++# encoding: utf-8
++#
++# 2008 &#169; V&#225;clav &#352;milauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">eudoxos at arcig.cz</A>&gt;
++
++&quot;&quot;&quot;
++Import commented python source, format it for yade.wikia.com by interspersing &lt;source&gt; and literal text in comments.
++If given a second files (which is a c++ file), the comments will be taken from the python source,
++but the code from the c++ file.
++
++There are special marks for comments in python: &quot;##&quot; for empty line
++or &quot;## some text&quot; for non-empty line (the first space is stripped)
++
++Special marks for c++ comments are //@, but their contents is flushed;
++they serve merely to synchronize with python comments.
++
++Adjacent comment lines and adjacent code lines will be merged.
++
++Leading tabs in the code are replaced by unicode non-breakable spaces
++(&lt;source&gt; would otherwise eat leading spaces of the first line)
++
++Usage 1: generate simple-scene.py formatted for wiki
++
++   ./py2wiki simple-scene.py
++
++Usasge 2: generate SimpleScene.cpp formatted for wiki with comments from simple-scene.py
++
++   ./py2wiki simple-scene.py ../extra/SimpleScene.cpp 
++&quot;&quot;&quot;
++
++import sys,re
++class Text:
++	def __init__(self,txt):
++		self.text=[txt]
++class Code(Text): pass
++class Comment(Text): pass
++pg=[]
++commentPatterns=(r'\s*##($|\s(.*)$)',r'\s*//@((.*))$')
++codeLangs=('python','cpp')
++assert(len(sys.argv)&lt;=3)
++for i in range(0,len(sys.argv)-1):
++	pg.append([Comment('')])
++	sys.stderr.write(str(i)+': '+sys.argv[i+1]+'\n')
++	for l in open(sys.argv[i+1]):
++		l=l[:-1]
++		m=re.match(commentPatterns[i],l)
++		if m: ll=Comment(m.group(1)[1:] if (len(m.group(1))&gt;0 and m.group(1)[0]==' ') else m.group(1))
++		else: ll=Code(l)
++		if pg[i][-1].__class__==ll.__class__:
++			pg[i][-1].text.append(ll.text[0])
++		else: pg[i].append(ll)
++
++# replace tabs by 8 _nonbreakable_ spaces (\xc2 in utf-8) in code
++# strip leading/trailing blank lines
++for p in pg:
++	for l in p:
++		if l.__class__==Code('').__class__:
++			l.text=[ll.replace('\t',8*'&#160;') for ll in l.text]
++			while len(l.text)&gt;0 and l.text[-1]=='': l.text=l.text[:-1]
++			while len(l.text)&gt;0 and l.text[0]=='': l.text=l.text[1:]
++
++table=False
++showCode=len(pg)-1
++for i in range(len(pg[0])):
++	ll=pg[0][i]
++	if ll.__class__==Comment('').__class__:
++		for l in ll.text: print l
++	if ll.__class__==Code('').__class__:
++		if table: print '&lt;table&gt;&lt;tr&gt;'
++		for j in (range(len(pg)) if table else [showCode]):
++			print '%s&lt;source lang=&quot;%s&quot;&gt;'%('&lt;td&gt;' if table else '',codeLangs[j])
++			#if pg[j][i].text[0][0]==' ': print '&#160;',
++			for l in pg[j][i].text: print l
++			print '&lt;/source&gt;%s'%('&lt;/td&gt;' if table else '')
++		if table: print '&lt;/tr&gt;&lt;/table&gt;'
++		
++	
++
+
+
+Property changes on: trunk/scripts/py2wiki.py
+___________________________________________________________________
+Name: svn:executable
+   + *
+
+Modified: trunk/scripts/simple-scene.py
+===================================================================
+--- trunk/scripts/simple-scene.py	2008-05-10 16:48:37 UTC (rev 1348)
++++ trunk/scripts/simple-scene.py	2008-05-11 09:51:07 UTC (rev 1349)
+@@ -1,124 +1,127 @@
+ #!/usr/local/bin/yade-trunk -x
+ # -*- encoding=utf-8 -*-
+ 
+-# Omega is the super-class that orchestrates the whole program.
+-# It holds the entire simulation (MetaBody), takes care of loading/saving,
+-# starting/stopping the simulation, loads plugins and more.
++## Omega is the super-class that orchestrates the whole program.
++## It holds the entire simulation (MetaBody), takes care of loading/saving,
++## starting/stopping the simulation, loads plugins and more.
+ 
+ o=Omega() # for advaned folks: this creates default MetaBody as well
+ 
+-# initializers are run before the simulation
++## Initializers are run before the simulation.
+ o.initializers=[
+-	# create and reset to zero container of all PhysicalActions that will be used (Force and Momentum)
++	## Create and reset to zero container of all PhysicalActions that will be used
+ 	StandAloneEngine('PhysicalActionContainerInitializer'),
+-	# create bounding boxes: before the simulation starts. Used to zoom the 3d view properly.
++	## Create bounding boxes. They are needed to zoom the 3d view properly before we start the simulation.
+ 	MetaEngine('BoundingVolumeMetaEngine',[EngineUnit('InteractingSphere2AABB'),EngineUnit('InteractingBox2AABB'),EngineUnit('MetaInteractingGeometry2AABB')])
+ 	]
+ 
+-# Engines are called consecutively at each iteration. Their order matters.
+-#
+-# Some of them work by themselves (StandAloneEngine, DeusExMachina - the difference of these two is unimportant).
+-#
+-# MetaEngines act as dispatchers and based on the type of objects they operate on, different EngineUnits are called.
++## Engines are called consecutively at each iteration. Their order matters.
++##
++## Some of them work by themselves (StandAloneEngine, DeusExMachina - the difference of these two is unimportant).
++##
++## MetaEngines act as dispatchers and based on the type of objects they operate on, different EngineUnits are called.
+ o.engines=[
+-	# resets forces and momenta the act on bodies
++	## Resets forces and momenta the act on bodies
+ 	StandAloneEngine('PhysicalActionContainerReseter'),
+-	# associates bounding volume - in this case, AxisAlignedBoundingBox (AABB) - to each body.
+-	# MetaEngine calls corresponding EngineUnit, depending on whether the body is Sphere, Box, or MetaBody (rootBody).
+-	# AABBs are used to detect collisions
++	## associates bounding volume - in this case, AxisAlignedBoundingBox (AABB) - to each body.
++	## MetaEngine calls corresponding EngineUnit, depending on whether the body is Sphere, Box, or MetaBody (rootBody).
++	## AABBs will be used to detect collisions later, by PersistentSAPCollider
+ 	MetaEngine('BoundingVolumeMetaEngine',[
+ 		EngineUnit('InteractingSphere2AABB'),
+ 		EngineUnit('InteractingBox2AABB'),
+ 		EngineUnit('MetaInteractingGeometry2AABB')
+ 	]),
+-	# Using bounding boxes created by the previous engine, find possible body collisions.
+-	# These possible collisions are inserted in Omega.interactions container (MetaBody::transientInteractions in c++).
++	## Using bounding boxes created by the previous engine, find possible body collisions.
++	## These possible collisions are inserted in Omega.interactions container (MetaBody::transientInteractions in c++).
+ 	StandAloneEngine('PersistentSAPCollider'),
+-	# Decide whether the potential collisions are real; if so, create geometry information about each potential collision.
+-	# Here, the decision about which EngineUnit to use depends on types of _both_ bodies.
+-	# Note that there is no EngineUnit for box-box collision. They are not implemented.
++	## Decide whether the potential collisions are real; if so, create geometry information about each potential collision.
++	## Here, the decision about which EngineUnit to use depends on types of _both_ bodies.
++	## Note that there is no EngineUnit for box-box collision. They are not implemented.
+ 	MetaEngine('InteractionGeometryMetaEngine',[
+ 		EngineUnit('InteractingSphere2InteractingSphere4SpheresContactGeometry'),
+ 		EngineUnit('InteractingBox2InteractingSphere4SpheresContactGeometry')
+ 	]),
+-	# Create physical information about the interaction.
+-	# This may consist in deriving contact rigidity from elastic moduli of each body, for example.
+-	# The purpose is that the contact may be &quot;solved&quot; without reference to related bodies,
+-	# only with the information contained in contact geometry and physics.
++	## Create physical information about the interaction.
++	## This may consist in deriving contact rigidity from elastic moduli of each body, for example.
++	## The purpose is that the contact may be &quot;solved&quot; without reference to related bodies,
++	## only with the information contained in contact geometry and physics.
+ 	MetaEngine('InteractionPhysicsMetaEngine',[EngineUnit('SimpleElasticRelationships')]),
+-	# &quot;Solver&quot; of the contact, also called (consitutive) law.
+-	# based on the information in interaction physics and geometry, apply corresponding forces on bodies in interaction.
++	## &quot;Solver&quot; of the contact, also called (consitutive) law.
++	## Based on the information in interaction physics and geometry, it applies corresponding forces on bodies in interaction.
+ 	StandAloneEngine('ElasticContactLaw'),
+-	# Apply gravity: all bodies will have gravity applied on them.
+-	# Note the engine parameter 'gravity', a vector the gives the acceleration.
++	## Apply gravity: all bodies will have gravity applied on them.
++	## Note the engine parameter 'gravity', a vector that gives the acceleration.
+ 	DeusExMachina('GravityEngine',{'gravity':[0,0,-9.81]}),
+-	# Forces acting on bodies are damped to artificially increase energy dissipation in simulation.
+-	# (In this model, the restitution coefficient of interaction is 1, which is not realistic.)
+-	# This MetaEngine acts on all PhysicalActions and selects the right EngineUnit base on type of the PhysicalAction.
++	## Forces acting on bodies are damped to artificially increase energy dissipation in simulation.
++	## (In this model, the restitution coefficient of interaction is 1, which is not realistic.)
++	## This MetaEngine acts on all PhysicalActions and selects the right EngineUnit base on type of the PhysicalAction.
+ 	MetaEngine('PhysicalActionDamper',[
+ 		EngineUnit('CundallNonViscousForceDamping',{'damping':0.2}),
+ 		EngineUnit('CundallNonViscousMomentumDamping',{'damping':0.2})
+ 	]),
+-	# Now we have forces and momenta acting on bodies. Newton's law calculated acceleration that corresponds to them.
++	## Now we have forces and momenta acting on bodies. Newton's law calculates acceleration that corresponds to them.
+ 	MetaEngine('PhysicalActionApplier',[
+ 		EngineUnit('NewtonsForceLaw'),
+ 		EngineUnit('NewtonsMomentumLaw'),
+ 	]),
+-	# Acceleration results in velocity change. Integrating the velocity over dt, position of the body will change.
++	## Acceleration results in velocity change. Integrating the velocity over dt, position of the body will change.
+ 	MetaEngine('PhysicalParametersMetaEngine',[EngineUnit('LeapFrogPositionIntegrator')]),
+-	# Angular acceleration changes angular velocity, resulting in position and/or orientation change of the body.
++	## Angular acceleration changes angular velocity, resulting in position and/or orientation change of the body.
+ 	MetaEngine('PhysicalParametersMetaEngine',[EngineUnit('LeapFrogOrientationIntegrator')]),
+ ]
+ 
+-# the yade.utils module contains some handy functions, like yade.utils.box and yade.utils.sphere
+-# after this import, they will be accessible as utils.box and utils.sphere
++
++## The yade.utils module contains some handy functions, like yade.utils.box and yade.utils.sphere.
++## After this import, they will be accessible as utils.box and utils.sphere.
+ from yade import utils
+ 
+-# create bodies in the simulation: one box in the origin and one floating above it.
+-#
+-# The box:
+-# * extents: half-size of the box. [.5,.5,.5] is unit cube
+-# * center: position of the center of the box
+-# * dynamic: it is not dynamic, i.e. will not move during simulation, even if forces are applied to it
+-# * color: for the 3d display; specified  within unit cube in the RGB space; [1,0,0] is, therefore, red
+-# * young: Young's modulus
+-# * poisson: Poissons's ratio
+-o.bodies.append(utils.box(extents=[.5,.5,.5],center=[0,0,0],dynamic=False,color=[1,0,0],young=30e9,poisson=.3,density=2400))
++## create bodies in the simulation: one box in the origin and one floating above it.
++##
++## The box:
++## * extents: half-size of the box. [.5,.5,.5] is unit cube
++## * center: position of the center of the box
++## * dynamic: it is not dynamic, i.e. will not move during simulation, even if forces are applied to it
++## * color: for the 3d display; specified  within unit cube in the RGB space; [1,0,0] is, therefore, red
++## * young: Young's modulus
++## * poisson: Poissons's ratio
+ 
++o.bodies.append(utils.box(center=[0,0,0],extents=[.5,.5,.5],dynamic=False,color=[1,0,0],young=30e9,poisson=.3,density=2400))
++
+ ## The above command could be actully written without the util.box function like this:
+ ## (will not be executed, since the condition is never True)
+ if False:
+ 	# Create empty body object
+ 	b=Body()
++	# set the isDynamic body attribute
++	b['isDynamic']=False
+ 	# Assign geometrical model (shape) to the body: a box of given size
+ 	b.shape=GeometricalModel('Box',{'extents':[.5,.5,.5],'diffuseColor':[1,0,0]})
+ 	# Assign computational model (mold; may be simplified form of shape) to the body
+-	b.mold=InteractingGeometry('InteractingBox',{'extents':extents,'diffuseColor':[1,0,0]})
++	b.mold=InteractingGeometry('InteractingBox',{'extents':[.5,.5,.5],'diffuseColor':[1,0,0]})
++	# physical parameters:
+ 	# store mass to a temporary
+ 	mass=8*.5*.5*.5*2400
+-	# physical parameters:
+ 	# * se3 (position &amp; orientation) as 3 position coordinates, then 3 direction axis coordinates and rotation angle
+ 	b.phys=PhysicalParameters('BodyMacroParameters',{'se3':[0,0,0,1,0,0,0],'mass':mass,'inertia':[mass*4*(.5**2+.5**2),mass*4*(.5**2+.5**2),mass*4*(.5**2+.5**2)],'young':30e9,'poisson':.3})
+ 	# other information about AABB will be updated during simulation by relevant BoundingVolumeMetaEngine
+ 	b.bound=BoundingVolume('AABB',{'diffuseColor':[0,1,0]})
+-	# set the isDynamic body attribute
+-	b['isDynamic']=False
+ 	# add the body to the simulation
+ 	o.bodies.append(b)
+ 
+ 
+-# The sphere
+-#
+-# * First two arguments are radius and center, respectively. They are used as &quot;positional arguments&quot; here:
+-#	python will deduce based on where they are what they mean.
+-#
+-# It could also be written without using utils.sphere - see gui/py/utils.py for the code of the utils.sphere function
+-o.bodies.append(utils.sphere(1,[0,0,2],color=[0,1,0],young=30e9,poisson=.3,density=2400))
++## The sphere
++##
++## * First two arguments are radius and center, respectively. They are used as &quot;positional arguments&quot; here:
++## python will deduce based on where they are what they mean.
++##
++## It could also be written without using utils.sphere - see gui/py/utils.py for the code of the utils.sphere function
++o.bodies.append(utils.sphere([0,0,2],1,color=[0,1,0],young=30e9,poisson=.3,density=2400))
+ 
+-# Estimate timestep from p-wave speed and multiply it by safety factor of .2
++## Estimate timestep from p-wave speed and multiply it by safety factor of .2
+ o.dt=.2*utils.PWaveTimeStep()
+ 
+-# Save the scene to file, so that it can be loaded later. Supported extension are: .xml, .xml.gz, .xml.bz2.
++## Save the scene to file, so that it can be loaded later. Supported extension are: .xml, .xml.gz, .xml.bz2.
+ o.save('/tmp/a.xml.bz2');
+ 
+-## utils.runInQtGui(background=False) # will run in background
++#utils.runInQtGui() # will run in background
++#quit()
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000310.html">[Yade-commits] r1348 - in trunk: core extra extra/clump extra/usct	gui gui/py gui/qt3 pkg/common/Engine/DeusExMachina
+</A></li>
+	<LI>Next message: <A HREF="000312.html">[Yade-commits] r1350 - trunk/gui/qt3
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#311">[ date ]</a>
+              <a href="thread.html#311">[ thread ]</a>
+              <a href="subject.html#311">[ subject ]</a>
+              <a href="author.html#311">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

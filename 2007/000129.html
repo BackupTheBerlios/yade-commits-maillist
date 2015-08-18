@@ -1,0 +1,424 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1164 - in trunk: doc doc/removed scripts
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2007/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1164%20-%20in%20trunk%3A%20doc%20doc/removed%20scripts&In-Reply-To=%3C200705162131.l4GLVZTD031380%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000128.html">
+   <LINK REL="Next"  HREF="000130.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1164 - in trunk: doc doc/removed scripts</H1>
+    <B>cosurgi at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1164%20-%20in%20trunk%3A%20doc%20doc/removed%20scripts&In-Reply-To=%3C200705162131.l4GLVZTD031380%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1164 - in trunk: doc doc/removed scripts">cosurgi at mail.berlios.de
+       </A><BR>
+    <I>Wed May 16 23:31:35 CEST 2007</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000128.html">[Yade-commits] r1163 - tags
+</A></li>
+        <LI>Next message: <A HREF="000130.html">[Yade-commits] r1165 - in trunk: . gui/qt3
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#129">[ date ]</a>
+              <a href="thread.html#129">[ thread ]</a>
+              <a href="subject.html#129">[ subject ]</a>
+              <a href="author.html#129">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: cosurgi
+Date: 2007-05-16 23:31:34 +0200 (Wed, 16 May 2007)
+New Revision: 1164
+
+Added:
+   trunk/doc/removed/
+   trunk/doc/removed/makeFlat
+   trunk/doc/removed/renameClassDirectories
+   trunk/doc/removed/rmFlat
+   trunk/doc/removed/setDebug
+   trunk/doc/removed/setRelease
+   trunk/doc/removed/untested/
+   trunk/scripts/repl.sh
+Removed:
+   trunk/scripts/makeFlat
+   trunk/scripts/renameClassDirectories
+   trunk/scripts/rmFlat
+   trunk/scripts/setDebug
+   trunk/scripts/setRelease
+   trunk/scripts/untested/
+Log:
+moved some obsolete scripts to doc/removed
+
+
+
+Copied: trunk/doc/removed/makeFlat (from rev 1163, trunk/scripts/makeFlat)
+
+Copied: trunk/doc/removed/renameClassDirectories (from rev 1163, trunk/scripts/renameClassDirectories)
+
+Copied: trunk/doc/removed/rmFlat (from rev 1163, trunk/scripts/rmFlat)
+
+Copied: trunk/doc/removed/setDebug (from rev 1163, trunk/scripts/setDebug)
+
+Copied: trunk/doc/removed/setRelease (from rev 1163, trunk/scripts/setRelease)
+
+Copied: trunk/doc/removed/untested (from rev 1163, trunk/scripts/untested)
+
+Deleted: trunk/scripts/makeFlat
+===================================================================
+--- trunk/scripts/makeFlat	2007-05-16 13:54:44 UTC (rev 1163)
++++ trunk/scripts/makeFlat	2007-05-16 21:31:34 UTC (rev 1164)
+@@ -1,35 +0,0 @@
+-#! /bin/sh
+-
+-# echo &quot;With this you can have flat version of yade - all files in single directory&quot;
+-# exit 0
+-
+-echo 'ORGDIR=`pwd`'										&gt; makeSymLinkFlat
+-echo 'ONLYNAME=`basename $1`'									&gt;&gt; makeSymLinkFlat
+-echo 'TMPNAME=./yade-flat/src/$ONLYNAME'							&gt;&gt; makeSymLinkFlat
+-echo 'echo symlinking $ORGDIR/$1 to `dirname $TMPNAME`'						&gt;&gt; makeSymLinkFlat
+-echo 'TMPDIR=`dirname $TMPNAME`'								&gt;&gt; makeSymLinkFlat
+-echo 'cd $TMPDIR'										&gt;&gt; makeSymLinkFlat
+-echo 'ln -s $ORGDIR/$1 `basename $TMPNAME`'							&gt;&gt; makeSymLinkFlat
+-echo 'cd $ORGDIR'										&gt;&gt; makeSymLinkFlat
+-
+-chmod a+x ./makeSymLinkFlat
+-
+-mv yade-sandbox ../
+-
+-find ./ -name &quot;*.h&quot;   -exec ./makeSymLinkFlat {} \;
+-find ./ -name &quot;*.c&quot;   -exec ./makeSymLinkFlat {} \;
+-find ./ -name &quot;*.hpp&quot; -exec ./makeSymLinkFlat {} \;
+-find ./ -name &quot;*.tpp&quot; -exec ./makeSymLinkFlat {} \;
+-find ./ -name &quot;*.ipp&quot; -exec ./makeSymLinkFlat {} \;
+-find ./ -name &quot;*.cpp&quot; -exec ./makeSymLinkFlat {} \;
+-find ./ -name &quot;*.ui&quot;  -exec ./makeSymLinkFlat {} \;
+-
+-mv ../yade-sandbox ./
+-
+-cd yade-flat
+-#symlinks -rcsd ./
+-#symlinks -rcsd ./
+-cd ..
+-
+-rm ./makeSymLinkFlat
+-
+
+Deleted: trunk/scripts/renameClassDirectories
+===================================================================
+--- trunk/scripts/renameClassDirectories	2007-05-16 13:54:44 UTC (rev 1163)
++++ trunk/scripts/renameClassDirectories	2007-05-16 21:31:34 UTC (rev 1164)
+@@ -1,65 +0,0 @@
+-#! /bin/sh
+-
+-#echo &quot;finding .pro files ... &quot;
+-#find ./  -name &quot;*.pro&quot; -exec fgrep -l &quot;$2&quot; {} \;				&gt; ./proRenameClass
+-
+-echo &quot;finding .hpp files ... &quot;
+-find ./  -name &quot;*.hpp&quot; -exec fgrep -l &quot;$2&quot; {} \;				&gt; ./hppRenameClass6
+-
+-rm ./hppRenameClass
+-touch ./hppRenameClass
+-
+-cat ./hppRenameClass6 | while read name; do
+-  if [ -L $name ]; then
+-    echo skipping .hpp symlink.. $name
+-  else
+-    echo $name									&gt;&gt; ./hppRenameClass
+-  fi;
+-done
+-
+-
+-#cat ./proRenameClass  | grep -e &quot;\&lt;$1\&gt;&quot;					&gt; ./proRenameClass2
+-cat ./hppRenameClass  | grep -e &quot;\&lt;$1\&gt;&quot;					&gt; ./hppRenameClass2
+-
+-#cat ./proRenameClass2 | grep -e &quot;\&lt;$1\&gt;&quot; | sed -e &quot;s/\&lt;$1\&gt;/$2/&quot;		&gt; ./proRenameClass3
+-cat ./hppRenameClass2 | grep -e &quot;\&lt;$1\&gt;&quot; | sed -e &quot;s/\&lt;$1\&gt;/$2/&quot;		&gt; ./hppRenameClass3
+-
+-#dirname `cat ./proRenameClass2`							&gt; ./proRenameClass4
+-dirname `cat ./hppRenameClass2`							&gt; ./hppRenameClass4
+-
+-#dirname `cat ./proRenameClass3`							&gt; ./proRenameClass5
+-dirname `cat ./hppRenameClass3`							&gt; ./hppRenameClass5
+-
+-#mv ./proRenameClass4 ./proRenameClass2
+-mv ./hppRenameClass4 ./hppRenameClass2
+-
+-#mv ./proRenameClass5 ./proRenameClass3
+-mv ./hppRenameClass5 ./hppRenameClass3
+-
+-#if [ -s ./proRenameClass2 ]; then
+-#  if [ -e `cat ./proRenameClass2` ]; then
+-#    if [ -d `cat ./proRenameClass2` ]; then
+-#      if [ -r `cat ./proRenameClass2` ]; then
+-#        svn mv `cat ./proRenameClass2` `cat ./proRenameClass3` $3
+-#      fi
+-#    fi
+-#  fi
+-#fi
+-
+-if [ -s ./hppRenameClass2 ]; then
+-  if [ -e `cat ./hppRenameClass2` ]; then
+-    if [ -d `cat ./hppRenameClass2` ]; then
+-      if [ -r `cat ./hppRenameClass2` ]; then
+-        svn mv `cat ./hppRenameClass2` `cat ./hppRenameClass3` $3
+-      fi
+-    fi
+-  fi
+-fi
+-
+-#rm ./proRenameClass*
+-rm ./hppRenameClass*
+-
+-echo &quot;&quot;
+-echo &quot;All directories modifed, you should commit now. Renaming class $1 to $2 finished!&quot;
+-echo &quot;&quot;
+-
+
+Added: trunk/scripts/repl.sh
+===================================================================
+--- trunk/scripts/repl.sh	2007-05-16 13:54:44 UTC (rev 1163)
++++ trunk/scripts/repl.sh	2007-05-16 21:31:34 UTC (rev 1164)
+@@ -0,0 +1,108 @@
++#!/bin/sh
++perl -pi -e's@\baCos\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">b at ACos</A>@g' $@
++perl -pi -e's@\baSin\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">b at ASin</A>@g' $@
++perl -pi -e's@\baTan\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">b at ATan</A>@g' $@
++perl -pi -e's@\baTan2\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">b at ATan2</A>@g' $@
++perl -pi -e's@\badjoint\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">b at Adjoint</A>@g' $@
++perl -pi -e's@\balign\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">b at Align</A>@g' $@
++perl -pi -e's@\bbidiagonalize\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">b at Bidiagonalize</A>@g' $@
++perl -pi -e's@\bcompareArrays\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">b at CompareArrays</A>@g' $@
++perl -pi -e's@\bconjugate\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">b at Conjugate</A>@g' $@
++perl -pi -e's@\bcosinus\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">b at Cos</A>@g' $@
++perl -pi -e's@\bcross\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">b at Cross</A>@g' $@
++perl -pi -e's@\bdecomposeSwingTimesTwist\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">b at DecomposeSwingTimesTwist</A>@g' $@
++perl -pi -e's@\bdecomposeTwistTimesSwing\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">b at DecomposeTwistTimesSwing</A>@g' $@
++perl -pi -e's@\bdeterminant\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">b at Determinant</A>@g' $@
++perl -pi -e's@\bdiagonalTimes\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">b at DiagonalTimes</A>@g' $@
++perl -pi -e's@\bdot\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">b at Dot</A>@g' $@
++perl -pi -e's@\bdotPerp\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">b at DotPerp</A>@g' $@
++perl -pi -e's@\beExp\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">b at Exp</A>@g' $@
++perl -pi -e's@\beigenDecomposition\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">b at EigenDecomposition</A>@g' $@
++perl -pi -e's@\bexp\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">b at Exp</A>@g' $@
++perl -pi -e's@\bfAbs\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">b at FAbs</A>@g' $@
++perl -pi -e's@\bfMod\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">b at FMod</A>@g' $@
++perl -pi -e's@\bfastCos0\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">b at FastCos0</A>@g' $@
++perl -pi -e's@\bfastCos1\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">b at FastCos1</A>@g' $@
++perl -pi -e's@\bfastInvCos0\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">b at FastInvCos0</A>@g' $@
++perl -pi -e's@\bfastInvCos1\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">b at FastInvCos1</A>@g' $@
++perl -pi -e's@\bfastInvSin0\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">b at FastInvSin0</A>@g' $@
++perl -pi -e's@\bfastInvSin1\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">b at FastInvSin1</A>@g' $@
++perl -pi -e's@\bfastInvSqrt\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">b at FastInvSqrt</A>@g' $@
++perl -pi -e's@\bfastInvTan0\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">b at FastInvTan0</A>@g' $@
++perl -pi -e's@\bfastInvTan1\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">b at FastInvTan1</A>@g' $@
++perl -pi -e's@\bfastSin0\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">b at FastSin0</A>@g' $@
++perl -pi -e's@\bfastSin1\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">b at FastSin1</A>@g' $@
++perl -pi -e's@\bfastTan0\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">b at FastTan0</A>@g' $@
++perl -pi -e's@\bfastTan1\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">b at FastTan1</A>@g' $@
++perl -pi -e's@\bfromAngle\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">b at FromAngle</A>@g' $@
++perl -pi -e's@\bfromAxisAngle\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">b at FromAxisAngle</A>@g' $@
++perl -pi -e's@\bfromEulerAnglesXYZ\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">b at FromEulerAnglesXYZ</A>@g' $@
++perl -pi -e's@\bfromEulerAnglesXZY\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">b at FromEulerAnglesXZY</A>@g' $@
++perl -pi -e's@\bfromEulerAnglesYXZ\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">b at FromEulerAnglesYXZ</A>@g' $@
++perl -pi -e's@\bfromEulerAnglesYZX\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">b at FromEulerAnglesYZX</A>@g' $@
++perl -pi -e's@\bfromEulerAnglesZXY\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">b at FromEulerAnglesZXY</A>@g' $@
++perl -pi -e's@\bfromEulerAnglesZYX\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">b at FromEulerAnglesZYX</A>@g' $@
++perl -pi -e's@\bfromRotationMatrix\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">b at FromRotationMatrix</A>@g' $@
++perl -pi -e's@\bgenerateOrthonormalBasis\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">b at GenerateOrthonormalBasis</A>@g' $@
++perl -pi -e's@\bgetBarycentrics\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">b at GetBarycentrics</A>@g' $@
++perl -pi -e's@\bgetColumn\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">b at GetColumn</A>@g' $@
++perl -pi -e's@\bgetColumnMajor\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">b at GetColumnMajor</A>@g' $@
++perl -pi -e's@\bgetRow\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">b at GetRow</A>@g' $@
++perl -pi -e's@\bgolubKahanStep\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">b at GolubKahanStep</A>@g' $@
++perl -pi -e's@\bintermediate\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">b at Intermediate</A>@g' $@
++perl -pi -e's@\bintervalRandom\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">b at IntervalRandom</A>@g' $@
++perl -pi -e's@\binvSqRoot\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">b at InvSqrt</A>@g' $@
++perl -pi -e's@\binverse\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">b at Inverse</A>@g' $@
++perl -pi -e's@\blength\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">b at Length</A>@g' $@
++perl -pi -e's@\blog\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">b at Log</A>@g' $@
++perl -pi -e's@\blogarithm\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">b at Log</A>@g' $@
++perl -pi -e's@\bmakeDiagonal\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">b at MakeDiagonal</A>@g' $@
++perl -pi -e's@\bmakeIdentity\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">b at MakeIdentity</A>@g' $@
++perl -pi -e's@\bmakeObliqueProjection\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">b at MakeObliqueProjection</A>@g' $@
++perl -pi -e's@\bmakePerspectiveProjection\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">b at MakePerspectiveProjection</A>@g' $@
++perl -pi -e's@\bmakeReflection\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">b at MakeReflection</A>@g' $@
++perl -pi -e's@\bmakeTensorProduct\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">b at MakeTensorProduct</A>@g' $@
++perl -pi -e's@\bmakeZero\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">b at MakeZero</A>@g' $@
++perl -pi -e's@\bnormalize\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">b at Normalize</A>@g' $@
++perl -pi -e's@\borthonormalize\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">b at Orthonormalize</A>@g' $@
++perl -pi -e's@\bperp\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">b at Perp</A>@g' $@
++perl -pi -e's@\bpower\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">b at Pow</A>@g' $@
++perl -pi -e's@\bqForm\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">b at QForm</A>@g' $@
++perl -pi -e's@\brotate\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">b at Rotate</A>@g' $@
++perl -pi -e's@\broundDown\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">b at Floor</A>@g' $@
++perl -pi -e's@\broundUp\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">b at Ceil</A>@g' $@
++perl -pi -e's@\bsetColumn\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">b at SetColumn</A>@g' $@
++perl -pi -e's@\bsetRow\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">b at SetRow</A>@g' $@
++perl -pi -e's@\bsign\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">b at Sign</A>@g' $@
++perl -pi -e's@\bsingularValueComposition\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">b at SingularValueComposition</A>@g' $@
++perl -pi -e's@\bsingularValueDecomposition\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">b at SingularValueDecomposition</A>@g' $@
++perl -pi -e's@\bsinus\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">b at Sin</A>@g' $@
++perl -pi -e's@\bslerp\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">b at Slerp</A>@g' $@
++perl -pi -e's@\bslerpExtraSpins\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">b at SlerpExtraSpins</A>@g' $@
++perl -pi -e's@\bsqRoot\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">b at Sqrt</A>@g' $@
++perl -pi -e's@\bsqr\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">b at Sqr</A>@g' $@
++perl -pi -e's@\bsquad\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">b at Squad</A>@g' $@
++perl -pi -e's@\bsquaredLength\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">b at SquaredLength</A>@g' $@
++perl -pi -e's@\bsymmetricRandom\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">b at SymmetricRandom</A>@g' $@
++perl -pi -e's@\btangent\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">b at Tan</A>@g' $@
++perl -pi -e's@\btimesDiagonal\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">b at TimesDiagonal</A>@g' $@
++perl -pi -e's@\btimesTranspose\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">b at TimesTranspose</A>@g' $@
++perl -pi -e's@\btoAngle\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">b at ToAngle</A>@g' $@
++perl -pi -e's@\btoAxisAngle\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">b at ToAxisAngle</A>@g' $@
++perl -pi -e's@\btoEulerAnglesXYZ\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">b at ToEulerAnglesXYZ</A>@g' $@
++perl -pi -e's@\btoEulerAnglesXZY\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">b at ToEulerAnglesXZY</A>@g' $@
++perl -pi -e's@\btoEulerAnglesYXZ\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">b at ToEulerAnglesYXZ</A>@g' $@
++perl -pi -e's@\btoEulerAnglesYZX\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">b at ToEulerAnglesYZX</A>@g' $@
++perl -pi -e's@\btoEulerAnglesZXY\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">b at ToEulerAnglesZXY</A>@g' $@
++perl -pi -e's@\btoEulerAnglesZYX\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">b at ToEulerAnglesZYX</A>@g' $@
++perl -pi -e's@\btoRotationMatrix\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">b at ToRotationMatrix</A>@g' $@
++perl -pi -e's@\btranspose\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">b at Transpose</A>@g' $@
++perl -pi -e's@\btransposeTimes\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">b at TransposeTimes</A>@g' $@
++perl -pi -e's@\btridiagonalize\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">b at Tridiagonalize</A>@g' $@
++perl -pi -e's@\bunitCross\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">b at UnitCross</A>@g' $@
++perl -pi -e's@\bunitPerp\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">b at UnitPerp</A>@g' $@
++perl -pi -e's@\bunitRandom\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">b at UnitRandom</A>@g' $@
++perl -pi -e's@\bw\(\)\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">b at W</A>()@g' $@
++perl -pi -e's@\bx\(\)\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">b at X</A>()@g' $@
++perl -pi -e's@\by\(\)\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">b at Y</A>()@g' $@
++perl -pi -e's@\bz\(\)\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">b at Z</A>()@g' $@
+
+Deleted: trunk/scripts/rmFlat
+===================================================================
+--- trunk/scripts/rmFlat	2007-05-16 13:54:44 UTC (rev 1163)
++++ trunk/scripts/rmFlat	2007-05-16 21:31:34 UTC (rev 1164)
+@@ -1,10 +0,0 @@
+-#! /bin/sh
+-
+-rm ./yade-flat/src/*.h
+-rm ./yade-flat/src/*.c
+-rm ./yade-flat/src/*.hpp
+-rm ./yade-flat/src/*.tpp
+-rm ./yade-flat/src/*.ipp
+-rm ./yade-flat/src/*.cpp
+-rm ./yade-flat/src/*.ui
+-
+
+Deleted: trunk/scripts/setDebug
+===================================================================
+--- trunk/scripts/setDebug	2007-05-16 13:54:44 UTC (rev 1163)
++++ trunk/scripts/setDebug	2007-05-16 21:31:34 UTC (rev 1164)
+@@ -1,36 +0,0 @@
+-#! /bin/sh
+-
+-find . -iname &quot;*.pro&quot; -print | while read name; do grep -l CONFIG $name; done	&gt;  ./proFilesRelease
+-echo './empty'                                                                  &gt;&gt; ./proFilesRelease
+-echo ' '                                                                        &gt;  ./empty
+-
+-echo 'echo CHANGING $1'								&gt;  ./changeSet
+-echo 'mv $1 $1.tmp'								&gt;&gt; ./changeSet
+-echo 'cat $1.tmp | sed -e &quot;s/= release/= debug/&quot; &gt; $1'				&gt;&gt; ./changeSet
+-echo 'rm $1.tmp'								&gt;&gt; ./changeSet
+-
+-chmod a+x ./changeSet
+-
+-find `cat proFilesRelease` -exec ./changeSet {} \;
+-
+-## now add CONFIG entry to all .pro that do not have it.
+-
+-find . -iname &quot;*.pro&quot; -print | while read name; do grep -L CONFIG $name; done	&gt;  ./proFilesRelease
+-echo './empty'                                                                  &gt;&gt; ./proFilesRelease
+-
+-echo 'echo CHANGING $1'								&gt;  ./changeSet
+-echo 'echo &quot;CONFIG += debug \\&quot; &gt;&gt; $1'						&gt;&gt; ./changeSet
+-echo 'echo &quot;          warn_on&quot; &gt;&gt; $1'						&gt;&gt; ./changeSet
+-echo 'echo &quot;&quot; &gt;&gt; $1'								&gt;&gt; ./changeSet
+-
+-chmod a+x ./changeSet
+-
+-find `cat proFilesRelease` -exec ./changeSet {} \;
+-
+-
+-## should also change the output dir and temporary compilation dir
+-
+-rm ./changeSet
+-rm ./empty
+-rm ./proFilesRelease
+-
+
+Deleted: trunk/scripts/setRelease
+===================================================================
+--- trunk/scripts/setRelease	2007-05-16 13:54:44 UTC (rev 1163)
++++ trunk/scripts/setRelease	2007-05-16 21:31:34 UTC (rev 1164)
+@@ -1,36 +0,0 @@
+-#! /bin/sh
+-
+-find . -iname &quot;*.pro&quot; -print | while read name; do grep -l CONFIG $name; done	&gt;  ./proFilesRelease
+-echo './empty'                                                                  &gt;&gt; ./proFilesRelease
+-echo ' '                                                                        &gt;  ./empty
+-
+-echo 'echo CHANGING $1'								&gt;  ./changeSet
+-echo 'mv $1 $1.tmp'								&gt;&gt; ./changeSet
+-echo 'cat $1.tmp | sed -e &quot;s/= debug/= release/&quot; &gt; $1'				&gt;&gt; ./changeSet
+-echo 'rm $1.tmp'								&gt;&gt; ./changeSet
+-
+-chmod a+x ./changeSet
+-
+-find `cat proFilesRelease` -exec ./changeSet {} \;
+-
+-## now add CONFIG entry to all .pro that do not have it.
+-
+-find . -iname &quot;*.pro&quot; -print | while read name; do grep -L CONFIG $name; done	&gt;  ./proFilesRelease
+-echo './empty'                                                                  &gt;&gt; ./proFilesRelease
+-
+-echo 'echo CHANGING $1'								&gt;  ./changeSet
+-echo 'echo &quot;CONFIG += release \\&quot; &gt;&gt; $1'					&gt;&gt; ./changeSet
+-echo 'echo &quot;          warn_on&quot; &gt;&gt; $1'						&gt;&gt; ./changeSet
+-echo 'echo &quot;&quot; &gt;&gt; $1'								&gt;&gt; ./changeSet
+-
+-chmod a+x ./changeSet
+-
+-find `cat proFilesRelease` -exec ./changeSet {} \;
+-
+-
+-## should also change the output dir and temporary compilation dir
+-
+-rm ./changeSet
+-rm ./empty
+-rm ./proFilesRelease
+-
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000128.html">[Yade-commits] r1163 - tags
+</A></li>
+	<LI>Next message: <A HREF="000130.html">[Yade-commits] r1165 - in trunk: . gui/qt3
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#129">[ date ]</a>
+              <a href="thread.html#129">[ thread ]</a>
+              <a href="subject.html#129">[ subject ]</a>
+              <a href="author.html#129">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

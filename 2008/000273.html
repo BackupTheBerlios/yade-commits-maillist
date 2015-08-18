@@ -1,0 +1,441 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1310 - in trunk: core pkg/common	pkg/common/Engine/StandAloneEngine
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1310%20-%20in%20trunk%3A%20core%20pkg/common%0A%09pkg/common/Engine/StandAloneEngine&In-Reply-To=%3C200804101849.m3AInxii014880%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000272.html">
+   <LINK REL="Next"  HREF="000274.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1310 - in trunk: core pkg/common	pkg/common/Engine/StandAloneEngine</H1>
+    <B>chareyre at mail.berlios.de</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1310%20-%20in%20trunk%3A%20core%20pkg/common%0A%09pkg/common/Engine/StandAloneEngine&In-Reply-To=%3C200804101849.m3AInxii014880%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1310 - in trunk: core pkg/common	pkg/common/Engine/StandAloneEngine">chareyre at mail.berlios.de
+       </A><BR>
+    <I>Thu Apr 10 20:49:59 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000272.html">[Yade-commits] r1309 - trunk/pkg/dem/Engine/DeusExMachina
+</A></li>
+        <LI>Next message: <A HREF="000274.html">[Yade-commits] r1311 - trunk/pkg/dem/Engine/StandAloneEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#273">[ date ]</a>
+              <a href="thread.html#273">[ thread ]</a>
+              <a href="subject.html#273">[ subject ]</a>
+              <a href="author.html#273">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: chareyre
+Date: 2008-04-10 20:49:54 +0200 (Thu, 10 Apr 2008)
+New Revision: 1310
+
+Added:
+   trunk/pkg/common/Engine/StandAloneEngine/PersistentTriangulationCollider.cpp
+   trunk/pkg/common/Engine/StandAloneEngine/PersistentTriangulationCollider.hpp
+Modified:
+   trunk/core/Interaction.cpp
+   trunk/core/Interaction.hpp
+   trunk/pkg/common/SConscript
+Log:
+
+This commit contains an experimental version of the collider based on the triangulation package of CGAL.org.
+Compilation is disabled for the moment, but uncommenting few lines will enable compilation if CGAL and my (me=Bruno) own libs are 
+available for linker.
+
+
+
+
+Modified: trunk/core/Interaction.cpp
+===================================================================
+--- trunk/core/Interaction.cpp	2008-04-10 18:47:03 UTC (rev 1309)
++++ trunk/core/Interaction.cpp	2008-04-10 18:49:54 UTC (rev 1310)
+@@ -17,6 +17,7 @@
+ 	id2 = 0;
+ 	isNew = true;
+ 	isReal = false; // maybe we can remove this, and check if InteractingGeometry, and InteractionPhysics are empty?
++//	isNeighbor = true;NOTE : TriangulationCollider needs that
+ }
+ 
+ 
+@@ -24,6 +25,7 @@
+ {	
+ 	isNew = true;
+ 	isReal = false;
++//	isNeighbor = true;NOTE : TriangulationCollider needs that
+ }
+ 
+ 
+
+Modified: trunk/core/Interaction.hpp
+===================================================================
+--- trunk/core/Interaction.hpp	2008-04-10 18:47:03 UTC (rev 1309)
++++ trunk/core/Interaction.hpp	2008-04-10 18:49:54 UTC (rev 1310)
+@@ -33,6 +33,7 @@
+ 		bool isNew;		// FIXME : better to test if InteractionPhysics==0 and remove this flag
+ 					// we can remove this flag, if we make another container for PotetntialInteraction with only ids
+ 		bool isReal;		// maybe we can remove this, and check if InteractingGeometry, and InteractionPhysics are empty?
++//		bool isNeighbor;	// Has a meaning only with triangulationCollider atm NOTE : TriangulationCollider needs that
+ 
+ 
+ 	// FIXME - why public ?!
+
+Added: trunk/pkg/common/Engine/StandAloneEngine/PersistentTriangulationCollider.cpp
+===================================================================
+--- trunk/pkg/common/Engine/StandAloneEngine/PersistentTriangulationCollider.cpp	2008-04-10 18:47:03 UTC (rev 1309)
++++ trunk/pkg/common/Engine/StandAloneEngine/PersistentTriangulationCollider.cpp	2008-04-10 18:49:54 UTC (rev 1310)
+@@ -0,0 +1,157 @@
++/*************************************************************************
++*  Copyright (C) 2004,2007 by
++*  	Olivier Galizzi &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">olivier.galizzi at imag.fr</A>&gt;
++*  	Bruno Chareyre &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">bruno.chareyre at hmg.inpg.fr</A>&gt;
++*  	V&#225;clav &#352;milauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">eudoxos at arcig.cz</A>&gt;
++*
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#include&quot;PersistentTriangulationCollider.hpp&quot;
++#include&lt;yade/core/Body.hpp&gt;
++#include&lt;yade/core/MetaBody.hpp&gt;
++#include&lt;yade/core/BodyContainer.hpp&gt;
++#include&lt;limits&gt;
++#include&lt;utility&gt;
++#include &lt;vector&gt;
++#include&lt;yade/pkg-common/InteractingSphere.hpp&gt;
++#include&lt;yade/pkg-common/RigidBodyParameters.hpp&gt;
++#include&quot;TesselationWrapper.h&quot;
++
++
++PersistentTriangulationCollider::PersistentTriangulationCollider() : BroadInteractor()
++{
++	noTransientIfPersistentExists=false;
++	haveDistantTransient=false;
++	isTriangulated = false;
++	Tes = new ( TesselationWrapper );
++
++	nbObjects=0;
++	xBounds.clear();
++	yBounds.clear();
++	zBounds.clear();
++	minima.clear();
++	maxima.clear();
++}
++
++
++PersistentTriangulationCollider::~PersistentTriangulationCollider()
++{
++	delete Tes;
++}
++
++void PersistentTriangulationCollider::action ( Body* body )
++{
++
++	MetaBody *ncb=YADE_CAST&lt;MetaBody*&gt; ( body );
++	shared_ptr&lt;BodyContainer&gt; bodies=ncb-&gt;bodies;
++	bool triangulationIteration = false;
++
++//BEGIN VORONOI TESSELATION
++	if ( !isTriangulated || Omega::instance().getCurrentIteration() % 50 == 0 )
++	{
++//TesselationWrapper Tes;
++		Tes-&gt;clear();
++		BodyContainer::iterator bi    = bodies-&gt;begin();
++		BodyContainer::iterator biEnd = bodies-&gt;end();
++		for ( ; bi!=biEnd ; ++bi )
++		{
++			if ( ( *bi )-&gt;isDynamic )
++			{//means &quot;is it a sphere (not a wall)&quot;
++				const InteractingSphere* s = YADE_CAST&lt;InteractingSphere*&gt; ( ( *bi )-&gt;interactingGeometry.get() );
++				const RigidBodyParameters* p = YADE_CAST&lt;RigidBodyParameters*&gt; ( ( *bi )-&gt;physicalParameters.get() );
++				Tes-&gt;insert ( p-&gt;se3.position[0],p-&gt;se3.position[1],p-&gt;se3.position[2], s-&gt;radius, ( *bi )-&gt;getId() );
++			}
++		}
++		Tes-&gt;AddBoundingPlanes();
++		isTriangulated = true;
++		triangulationIteration = true;
++		//}
++//  else
++//  {
++//   //if (Omega::instance().getCurrentIteration() % 100 == 0) {
++//   if (1) {
++//   Tes-&gt;RemoveBoundingPlanes();
++//   BodyContainer::iterator bi    = bodies-&gt;begin();
++//   BodyContainer::iterator biEnd = bodies-&gt;end();
++//   for ( ; bi!=biEnd ; ++bi )
++//   {
++//    if ( ( *bi )-&gt;isDynamic )
++//    {//means &quot;is it a sphere (not a wall)&quot;
++//     const InteractingSphere* s = YADE_CAST&lt;InteractingSphere*&gt; ( ( *bi )-&gt;interactingGeometry.get() );
++//     const RigidBodyParameters* p = YADE_CAST&lt;RigidBodyParameters*&gt; ( ( *bi )-&gt;physicalParameters.get() );
++//     Tes-&gt;move ( p-&gt;se3.position[0],p-&gt;se3.position[1],p-&gt;se3.position[2], s-&gt;radius, ( *bi )-&gt;getId() );
++// //    else {
++// //    const InteractingBox* s = YADE_CAST&lt;InteractingBox*&gt;((*bi)-&gt;interactingGeometry.get());
++// //    const RigidBodyParameters* p = YADE_CAST&lt;RigidBodyParameters*&gt;((*bi)-&gt;physicalParameters.get());
++// //    Tes.move(p-&gt;se3.position[0],p-&gt;se3.position[1],p-&gt;se3.position[2], s-&gt;radius, (*bi)-&gt;getId());
++// //    }
++//    }
++//   }
++//   Tes-&gt;AddBoundingPlanes();
++//   }
++	}
++//ENDOF VORONOI TESSELATION
++
++
++	transientInteractions = ncb-&gt;transientInteractions;
++	InteractionContainer::iterator I_end = transientInteractions-&gt;end();
++	for ( InteractionContainer::iterator I=transientInteractions-&gt;begin(); I!=I_end; ++I )
++	{
++
++		if ( ( *I )-&gt;isReal ) ( *I )-&gt;isNew=false;
++		if ( !haveDistantTransient ) ( *I )-&gt;isReal=false; // reset this flag, is used later... (??)
++		( *I )-&gt;isNeighbor = false;// will be set again just below
++	}
++
++	if ( triangulationIteration )
++	{
++		std::pair&lt;unsigned int,unsigned int&gt; interaction_pair;
++		unsigned int&amp; id1 = interaction_pair.first;
++		unsigned int&amp; id2 = interaction_pair.second;
++
++		unsigned int numberOfInteractions = Tes-&gt;NumberOfFacets();
++		for ( unsigned int i=0; i&lt;numberOfInteractions; ++i )
++		{
++			Tes-&gt;nextFacet ( interaction_pair );
++
++			// look if the pair (id1,id2) already exists in the overleppingBB collection
++			const shared_ptr&lt;Interaction&gt;&amp; interaction=transientInteractions-&gt;find ( body_id_t ( id1 ),body_id_t ( id2 ) );
++			bool found= ( interaction!=0 );//Bruno's Hack
++			// if there is persistent interaction, we will not create transient one!
++			//bool foundPersistent = noTransientIfPersistentExists ? ( persistentInteractions-&gt;find ( body_id_t ( id1 ),body_id_t ( id2 ) ) !=0 ) : false;
++
++			// inserts the pair p=(id1,id2) if the two AABB overlaps and if p does not exists in the overlappingBB
++			if ( !found )
++			{
++				transientInteractions-&gt;insert ( body_id_t ( id1 ),body_id_t ( id2 ) );
++				//cerr &lt;&lt; &quot;inserted &quot; &lt;&lt; id1 &lt;&lt; &quot;-&quot; &lt;&lt; id2&lt;&lt;endl;
++			}
++			else interaction-&gt;isNeighbor = true;
++			// removes the pair p=(id1,id2) if the two AABB do not overlapp any more and if p already exists in the overlappingBB
++		}
++
++		vector&lt; pair&lt;unsigned int,unsigned int&gt; &gt; toErase;
++		I_end = transientInteractions-&gt;end();
++		for ( InteractionContainer::iterator I=transientInteractions-&gt;begin(); I!=I_end; ++I )
++		{
++			if ( ( ! ( *I )-&gt;isNeighbor ) &amp;&amp; ( haveDistantTransient ? ! ( *I )-&gt;isReal : true ) )
++			{
++				toErase.push_back ( pair&lt;unsigned int,unsigned int&gt; ( ( *I )-&gt;getId1() , ( *I )-&gt;getId2() ) );
++				//cerr &lt;&lt; &quot;to delete &quot; &lt;&lt; ( *I )-&gt;getId1() &lt;&lt; &quot;-&quot; &lt;&lt; ( *I )-&gt;getId2() &lt;&lt; &quot;(isNeighbor=&quot; &lt;&lt; ( *I )-&gt;isNeighbor&lt;&lt; endl;
++			}
++			//transientInteractions-&gt;erase ( ( *I )-&gt;getId1() , ( *I )-&gt;getId2() );
++		}
++		vector&lt; pair&lt;unsigned int,unsigned int&gt; &gt;::iterator it = toErase.begin();
++		vector&lt; pair&lt;unsigned int,unsigned int&gt; &gt;::iterator it_end = toErase.end();
++		for ( ;it!=it_end;++it )
++		{
++			transientInteractions-&gt;erase ( it-&gt;first , it-&gt;second );
++			//cerr &lt;&lt; &quot;deleted &quot; &lt;&lt; it-&gt;first &lt;&lt; &quot;-&quot; &lt;&lt; it-&gt;second&lt;&lt;endl;
++		}
++	}
++
++}
++
++YADE_PLUGIN();
+
+Added: trunk/pkg/common/Engine/StandAloneEngine/PersistentTriangulationCollider.hpp
+===================================================================
+--- trunk/pkg/common/Engine/StandAloneEngine/PersistentTriangulationCollider.hpp	2008-04-10 18:47:03 UTC (rev 1309)
++++ trunk/pkg/common/Engine/StandAloneEngine/PersistentTriangulationCollider.hpp	2008-04-10 18:49:54 UTC (rev 1310)
+@@ -0,0 +1,133 @@
++/*************************************************************************
++*  Copyright (C) 2004 by Olivier Galizzi                                 *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">olivier.galizzi at imag.fr</A>                                               *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#ifndef __PERSISTENTTRIANGULATIONCOLLIDER_HPP__
++#define __PERSISTENTTRIANGULATIONCOLLIDER_HPP__
++
++#include&lt;yade/core/BroadInteractor.hpp&gt;
++#include&lt;yade/core/InteractionContainer.hpp&gt;
++#include &lt;list&gt;
++#include &lt;set&gt;
++#include &lt;vector&gt;
++#include &lt;algorithm&gt;
++
++
++/*! \brief Collision detection engine based on regular triangulation.
++ 
++ 	This engine is using CGAL library (see <A HREF="http://www.cgal.org/">http://www.cgal.org/</A>)
++ 	It is still experimental.
++ 	Uncoment lines in sconscript file to compile it and just change the name of the collider in an existing xml and it will (should) work.
++ 	Also needed : uncommenting lines in core/Interaction.cpp and core/Interaction.hpp (see NOTE:TriangulationCollider
++ */
++
++
++
++class TesselationWrapper;
++
++using namespace std;
++
++class PersistentTriangulationCollider : public BroadInteractor
++{
++	private :
++	
++		TesselationWrapper* Tes;	
++		// represent an extrmity of an Axis ALigned bounding box
++		struct AABBBound
++		{
++			AABBBound(int i, char l) : id(i),lower(l) {};
++			int		id;		// AABB of the &quot;id&quot; shpere
++			char		lower;		// is it the lower or upper bound of the AABB
++			Real		value;		// value of the bound
++		};
++		// strucuture that compare 2 AABBBounds =&gt; used in the sort algorithm
++		struct AABBBoundComparator
++		{
++			bool operator() (shared_ptr&lt;AABBBound&gt; b1, shared_ptr&lt;AABBBound&gt; b2)
++			{
++				return b1-&gt;value&lt;b2-&gt;value;
++			}
++		};
++
++	protected :
++		/// number of potential transientInteractions = number of interacting AABB
++		int nbPotentialInteractions;
++
++		/// number of AABB
++		unsigned int nbObjects;
++
++		/// AABB extremity of the sphere number &quot;id&quot; projected onto the X axis
++		vector&lt;shared_ptr&lt;AABBBound&gt; &gt; xBounds;
++
++		/// AABB extremity of the sphere number &quot;id&quot; projected onto the Y axis
++		vector&lt;shared_ptr&lt;AABBBound&gt; &gt; yBounds;
++
++		/// AABB extremity of the sphere number &quot;id&quot; projected onto the Z axis
++		vector&lt;shared_ptr&lt;AABBBound&gt; &gt; zBounds;
++
++		// collection of AABB that are in interaction
++		//protected : vector&lt; set&lt;unsigned int&gt; &gt; overlappingBB;
++		shared_ptr&lt;InteractionContainer&gt; transientInteractions;
++		shared_ptr&lt;InteractionContainer&gt; persistentInteractions;
++		/// upper right corner of the AABB of the objects =&gt;  for spheres = center[i]-radius
++		vector&lt;Real&gt; maxima;
++
++		/// lower left corner of the AABB of the objects =&gt;  for spheres = center[i]+radius
++		vector&lt;Real&gt; minima;
++
++		/// Used the first time broadInteractionTest is called, to initialize and sort the xBounds, yBounds,
++		/// and zBounds arrays and to initialize the overlappingBB collection
++		void updateIds(unsigned int nbElements);
++
++		/// Permutation sort the xBounds, yBounds, zBounds arrays according to the &quot;value&quot; field
++		/// Calls updateOverlapingBBSet every time a permutation between 2 AABB i and j occurs
++		void sortBounds(vector&lt;shared_ptr&lt;AABBBound&gt; &gt;&amp; bounds, int nbElements);
++
++		/// Tests if the AABBi and AABBj really overlap.
++		/// If yes, adds the pair (id1,id2) to the collection of overlapping AABBs
++		/// If no, removes the (id1,id2) to the collection of overlapping AABBs if necessary
++		void updateOverlapingBBSet(int id1,int id2);
++
++		/// update the &quot;value&quot; field of the xBounds, yBounds, zBounds arrays
++		void updateBounds(int nbElements);
++
++		/// Used the first time broadInteractionTest is called
++		/// It is necessary to initialise the overlapping AABB collection because this collection is only
++		/// incrementally udated each time step
++		void findOverlappingBB(vector&lt;shared_ptr&lt;AABBBound&gt; &gt;&amp; bounds, int nbElements);
++
++	public :
++		PersistentTriangulationCollider();
++
++		virtual ~PersistentTriangulationCollider();
++
++		/// return a list &quot;transientInteractions&quot; of pairs of Body which Bounding volume are in potential interaction
++		void action(Body * body);
++
++		//! When creating transient interaction, look first if a persistent link between the pair in question exists; in that case, skip it.
++		bool noTransientIfPersistentExists;
++		//! Don't break transient interaction once bodies don't overlap anymore; material law will be responsible for breaking it.
++		bool haveDistantTransient;
++		//! this flag is used to check if the packing has been triangulated
++		bool isTriangulated;
++
++		void registerAttributes(){
++			BroadInteractor::registerAttributes();
++			REGISTER_ATTRIBUTE(noTransientIfPersistentExists);
++			REGISTER_ATTRIBUTE(haveDistantTransient);
++		}
++
++
++	REGISTER_CLASS_NAME(PersistentTriangulationCollider);
++	REGISTER_BASE_CLASS_NAME(BroadInteractor);
++
++};
++
++REGISTER_SERIALIZABLE(PersistentTriangulationCollider,false);
++
++#endif // __PERSISTENTSAPCOLLIDER_HPP__
++
+
+Modified: trunk/pkg/common/SConscript
+===================================================================
+--- trunk/pkg/common/SConscript	2008-04-10 18:47:03 UTC (rev 1309)
++++ trunk/pkg/common/SConscript	2008-04-10 18:49:54 UTC (rev 1310)
+@@ -414,11 +414,17 @@
+ 			'Engine/EngineUnit',
+ 			'DataClass/PhysicalParameters']),
+ 
++#	env.SharedLibrary('PersistentTriangulationCollider',
++#		['Engine/StandAloneEngine/PersistentTriangulationCollider.cpp'],
++#		LIBPATH=env['LIBPATH']+['/home/bruno/micromacro/KdevMicroMacro/src'],
++#		LIBS=env['LIBS']+['yade-base', 'TesselationWrapper', 'CGAL',  'InteractingSphere', 'RigidBodyParameters'],
++#		CPPPATH=env['CPPPATH']+['Engine/StandAloneEngine', '$PREFIX/include', '/home/bruno/micromacro/KdevMicroMacro/src']),
++		
+ 	env.SharedLibrary('PersistentSAPCollider',
+ 		['Engine/StandAloneEngine/PersistentSAPCollider.cpp'],
+ 		LIBS=env['LIBS']+['yade-base'],
+ 		CPPPATH=env['CPPPATH']+['Engine/StandAloneEngine', '$PREFIX/include']),
+-		
++				
+ 	env.SharedLibrary('DistantPersistentSAPCollider',
+ 		['Engine/StandAloneEngine/DistantPersistentSAPCollider.cpp'],
+ 		LIBS=env['LIBS']+['yade-base'],
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000272.html">[Yade-commits] r1309 - trunk/pkg/dem/Engine/DeusExMachina
+</A></li>
+	<LI>Next message: <A HREF="000274.html">[Yade-commits] r1311 - trunk/pkg/dem/Engine/StandAloneEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#273">[ date ]</a>
+              <a href="thread.html#273">[ thread ]</a>
+              <a href="subject.html#273">[ subject ]</a>
+              <a href="author.html#273">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

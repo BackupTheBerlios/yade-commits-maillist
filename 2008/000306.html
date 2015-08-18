@@ -1,0 +1,187 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1344 - trunk
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1344%20-%20trunk&In-Reply-To=%3C200805071607.m47G7Bot032387%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000305.html">
+   <LINK REL="Next"  HREF="000307.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1344 - trunk</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1344%20-%20trunk&In-Reply-To=%3C200805071607.m47G7Bot032387%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1344 - trunk">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Wed May  7 18:07:11 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000305.html">[Yade-commits] r1343 - in trunk: . core extra extra/clump gui/py	gui/qt3
+</A></li>
+        <LI>Next message: <A HREF="000307.html">[Yade-commits] r1345 - in trunk: extra extra/tetra gui/py	lib/serialization
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#306">[ date ]</a>
+              <a href="thread.html#306">[ thread ]</a>
+              <a href="subject.html#306">[ subject ]</a>
+              <a href="author.html#306">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2008-05-07 18:07:10 +0200 (Wed, 07 May 2008)
+New Revision: 1344
+
+Modified:
+   trunk/SConstruct
+Log:
+Big scons updates:
+
+1. INCOMPATIBLE?\194?\160CHANGE: the &quot;profile&quot; option now decides that profile will be used on subsequent runs. Each profile is a complete set of regular options. Predefined profiles are '' (equivalent to 'default'; debug build) and 'opt' (optimized build without debugging). Other profiles may be freely used and are independently remembered.
+
+2. Use scons 0.98.3 by default (download it if needed). Update to env.Decider() instead of obsoleted env.SourceSignatures().
+
+
+
+Modified: trunk/SConstruct
+===================================================================
+--- trunk/SConstruct	2008-05-07 08:51:23 UTC (rev 1343)
++++ trunk/SConstruct	2008-05-07 16:07:10 UTC (rev 1344)
+@@ -42,10 +42,8 @@
+ ########## PROXY TO NEWER SCONS (DOWNLOADED IF NEEDED) ###################################
+ ##########################################################################################
+ #print sconsVersion
+-if sconsVersion&lt;9700.20071212: ##9700.20071212:  ##&lt;9700 ##&lt;9693: 
+-	#tgzParams=(&quot;<A HREF="http://dfn.dl.sourceforge.net/sourceforge/scons/scons-local-0.97.tar.gz">http://dfn.dl.sourceforge.net/sourceforge/scons/scons-local-0.97.tar.gz</A>&quot;,&quot;scons-local-0.97&quot;)
+-	#tgzParams=(&quot;<A HREF="http://ovh.dl.sourceforge.net/sourceforge/scons/scons-local-0.97.0d20070918.tar.gz">http://ovh.dl.sourceforge.net/sourceforge/scons/scons-local-0.97.0d20070918.tar.gz</A>&quot;,&quot;/scons-local-0.97.0d20070918&quot;) ## sconsVersion&lt;=9700
+-	tgzParams=(&quot;<A HREF="http://switch.dl.sourceforge.net/sourceforge/scons/scons-local-0.97.0d20071212.tar.gz">http://switch.dl.sourceforge.net/sourceforge/scons/scons-local-0.97.0d20071212.tar.gz</A>&quot;,&quot;/scons-local-0.97.0d20071212&quot;)
++if sconsVersion&lt;9803.0:
++	tgzParams=(&quot;<A HREF="http://kent.dl.sourceforge.net/sourceforge/scons/scons-local-0.98.3.tar.gz">http://kent.dl.sourceforge.net/sourceforge/scons/scons-local-0.98.3.tar.gz</A>&quot;,&quot;/scons-local-0.98.3&quot;)
+ 	newPrefix=&quot;./scons-local&quot;;
+ 	newUrl,newDir=tgzParams[0],newPrefix+&quot;/&quot;+tgzParams[1]
+ 	if not os.path.exists(newDir):
+@@ -65,8 +63,26 @@
+ ############# OPTIONS ####################################################################
+ ##########################################################################################
+ 
+-optsFile='scons.config'
++env=Environment(tools=['default'])
+ 
++
++profileFile='scons.current-profile'
++profOpts=Options(profileFile)
++profOpts.AddOptions(('profile','Config profile to use (predefined: default or &quot;&quot;, opt)','default'))
++profOpts.Update(env)
++profOpts.Save(profileFile,env)
++
++if env['profile']=='': env['profile']='default'
++optsFile='scons.profile-'+env['profile']
++profile=env['profile']
++print '@@@ Using profile',profile,'('+optsFile+') @@@'
++
++# defaults for various profiles
++if profile=='default': defOptions={'debug':1,'variant':'','optimize':0}
++elif profile=='opt': defOptions={'debug':0,'variant':'-opt','optimize':1}
++else: defOptions={'debug':0,'optimize':0,'variant':profile}
++
++
+ opts=Options(optsFile)
+ #
+ # The convention now is, that
+@@ -79,10 +95,10 @@
+ 	### OLD: use PathOption with PathOption.PathIsDirCreate, but that doesn't exist in 0.96.1!
+ 	('PREFIX','Install path prefix','/usr/local'),
+ 	('runtimePREFIX','Runtime path prefix; DO NOT USE, inteded for packaging only.','$PREFIX'),
+-	('variant','Build variant, will be suffixed to all files, along with version (beware: if PREFIX is the same, headers of the older version will still be overwritten','',None,lambda x:x),
+-	BoolOption('debug', 'Enable debugging information and disable optimizations',1),
+-	BoolOption('profile','Enable profiling information',0),
+-	BoolOption('optimize','Turn on heavy optimizations (generates SSE2 instructions)',0),
++	('variant','Build variant, will be suffixed to all files, along with version (beware: if PREFIX is the same, headers of the older version will still be overwritten',defOptions['variant'],None,lambda x:x),
++	BoolOption('debug', 'Enable debugging information and disable optimizations',defOptions['debug']),
++	BoolOption('gprof','Enable profiling information for gprof',0),
++	BoolOption('optimize','Turn on heavy optimizations (generates SSE2 instructions)',defOptions['optimize']),
+ 	ListOption('exclude','Yade components that will not be built','none',names=['qt3','gui','extra','common','dem','fem','lattice','mass-spring','realtime-rigidbody']),
+ 	# OK, dummy prevents bug in scons: if one selects all, it says all in scons.config, but without quotes, which generates error.
+ 	ListOption('features','Optional features that are turned on','python,log4cxx',names=['python','log4cxx','binfmt','dummy']),
+@@ -99,9 +115,10 @@
+ 	BoolOption('useMiniWm3','use local miniWm3 library instead of Wm3Foundation',1),
+ 	#BoolOption('useLocalQGLViewer','use in-tree QGLViewer library instead of the one installed in system',1),
+ )
++opts.Update(env)
++opts.Save(optsFile,env)
+ 
+-### create THE environment
+-env=Environment(tools=['default'],options=opts)
++
+ # do not propagate PATH from outside, to ensure identical builds on different machines
+ #env.Append(ENV={'PATH':['/usr/local/bin','/bin','/usr/bin']})
+ # ccache needs $HOME to be set; colorgcc needs $TERM; distcc wants DISTCC_HOSTS
+@@ -110,7 +127,6 @@
+ for v in propagatedEnvVars:
+ 	if os.environ.has_key(v): env.Append(ENV={v:os.environ[v]})
+ 
+-opts.Save(optsFile,env)
+ if sconsVersion&gt;9700: opts.FormatOptionHelpText=lambda env,opt,help,default,actual,alias: &quot;%10s: %5s [%s] (%s)\n&quot;%(opt,actual,default,help)
+ else: opts.FormatOptionHelpText=lambda env,opt,help,default,actual: &quot;%10s: %5s [%s] (%s)\n&quot;%(opt,actual,default,help)
+ Help(opts.GenerateHelpText(env))
+@@ -126,7 +142,7 @@
+ 	if os.path.exists('RELEASE'):
+ 		env['version']=file('RELEASE').readline().strip()
+ 	if not env.has_key('version'):
+-		for l in os.popen(&quot;LC_ALL=C bzr version-info&quot;).readlines():
++		for l in os.popen(&quot;LC_ALL=C bzr version-info 2&gt;/dev/null&quot;).readlines():
+ 			m=re.match(r'revno: ([0-9]+)',l)
+ 			if m: env['version']='bzr'+m.group(1)
+ 	if not env.has_key('version'):
+@@ -291,7 +307,7 @@
+ 
+ ### SCONS OPTIMIZATIONS
+ SCons.Defaults.DefaultEnvironment(tools = [])
+-env.SourceSignatures('MD5') #can be  'MD5' or 'timestamp'; 'timestamp' but is less reliable and not so much faster
++env.Decider('MD5-timestamp')
+ env.SetOption('max_drift',5) # cache md5sums of files older than 5 seconds
+ SetOption('implicit_cache',1) # cache #include files etc.
+ env.SourceCode(&quot;.&quot;,None) # skip dotted directories
+@@ -302,8 +318,8 @@
+ 	## <A HREF="http://www.scons.org/wiki/HidingCommandLinesInOutput">http://www.scons.org/wiki/HidingCommandLinesInOutput</A>
+ 	env.Replace(CXXCOMSTR='C ${SOURCES}', # &#8594; ${TARGET.file}')
+ 		SHCXXCOMSTR='C ${SOURCES}',  #&#8594; ${TARGET.file}')
+-		SHLINKCOMSTR='L ${SOURCES}', # &#8594; ${TARGET.file}')
+-		LINKCOMSTR='L ${SOURCES}', # &#8594; ${TARGET.file}')
++		SHLINKCOMSTR='L ${TARGET.file}', # &#8594; ${TARGET.file}')
++		LINKCOMSTR='L ${TARGET.file}', # &#8594; ${TARGET.file}')
+ 		INSTALLSTR='&#8658; $TARGET',
+ 		QT_UICCOMSTR='U ${SOURCES}',
+ 		QT_MOCCOMSTR='M ${SOURCES}')
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000305.html">[Yade-commits] r1343 - in trunk: . core extra extra/clump gui/py	gui/qt3
+</A></li>
+	<LI>Next message: <A HREF="000307.html">[Yade-commits] r1345 - in trunk: extra extra/tetra gui/py	lib/serialization
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#306">[ date ]</a>
+              <a href="thread.html#306">[ thread ]</a>
+              <a href="subject.html#306">[ subject ]</a>
+              <a href="author.html#306">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

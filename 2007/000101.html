@@ -1,0 +1,107 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1136 - in branches/scons-layout: . debian
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2007/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1136%20-%20in%20branches/scons-layout%3A%20.%20debian&In-Reply-To=%3C200703101044.l2AAikm2017862%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000100.html">
+   <LINK REL="Next"  HREF="000102.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1136 - in branches/scons-layout: . debian</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1136%20-%20in%20branches/scons-layout%3A%20.%20debian&In-Reply-To=%3C200703101044.l2AAikm2017862%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1136 - in branches/scons-layout: . debian">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Sat Mar 10 11:44:46 CET 2007</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000100.html">[Yade-commits] r1135 - in branches/scons-layout/lib: . miniWm3
+</A></li>
+        <LI>Next message: <A HREF="000102.html">[Yade-commits] r1137 - branches/scons-layout/lib
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#101">[ date ]</a>
+              <a href="thread.html#101">[ thread ]</a>
+              <a href="subject.html#101">[ subject ]</a>
+              <a href="author.html#101">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2007-03-10 11:44:45 +0100 (Sat, 10 Mar 2007)
+New Revision: 1136
+
+Modified:
+   branches/scons-layout/SConstruct
+   branches/scons-layout/debian/rules
+Log:
+Exclude lattice (needs lots of wm3 stuff) and realtime-rigidbody (non-functional, although it compiles now) from debian. Do not install headers for excluded stuff.
+
+Modified: branches/scons-layout/SConstruct
+===================================================================
+--- branches/scons-layout/SConstruct	2007-03-10 10:36:10 UTC (rev 1135)
++++ branches/scons-layout/SConstruct	2007-03-10 10:44:45 UTC (rev 1136)
+@@ -303,7 +303,10 @@
+ 		for d in ('.svn'): ## skip all files that are not part of sources in the proper sense!
+ 			try: dirs.remove(d)
+ 			except ValueError: pass
++		# exclude non-lib directories (like doc, scripts, ...)
+ 		if not re.match(r'\.[/\\](core|lib|pkg|gui|extra)[/\\]?.*',root): continue
++		# exclude headers from excluded stuff
++		if re.match(r'^.*/('+'|'.join(env['exclude'])+')/',root): continue
+ 		for f in files:
+ 			if f.split('.')[-1] in ('hpp','inl','ipp','tpp','h','mcr'):
+ 				#m=re.match('^\./([^/]*)/.*$',root)
+
+Modified: branches/scons-layout/debian/rules
+===================================================================
+--- branches/scons-layout/debian/rules	2007-03-10 10:36:10 UTC (rev 1135)
++++ branches/scons-layout/debian/rules	2007-03-10 10:44:45 UTC (rev 1136)
+@@ -63,11 +63,11 @@
+ 
+ 	#install headers
+ 	# WARNING: if this hangs later on, use fakeroot-tcp instead of fakeroot!!
+-	scons buildPrefix=debian runtimePREFIX=/usr PREFIX=debian/yade-dev/usr variant='' version=svn1113 debian/yade-dev/usr/include
++	scons buildPrefix=debian runtimePREFIX=/usr PREFIX=debian/yade-dev/usr variant='' version=svn1113 exclude=lattice,realtime-rigidbody debian/yade-dev/usr/include
+ 	#debug build
+-	scons buildPrefix=debian runtimePREFIX=/usr PREFIX=debian/yade-dbg/usr variant=-dbg pretty=0 optimize=0 debug=1 version=svn1113
++	scons buildPrefix=debian runtimePREFIX=/usr PREFIX=debian/yade-dbg/usr variant=-dbg pretty=0 optimize=0 debug=1 version=svn1113 exclude=lattice,realtime-rigidbody
+ 	#optimized build
+-	scons buildPrefix=debian runtimePREFIX=/usr PREFIX=debian/yade/usr variant='' pretty=0 optimize=1 debug=0 version=svn1113
++	scons buildPrefix=debian runtimePREFIX=/usr PREFIX=debian/yade/usr variant='' pretty=0 optimize=1 debug=0 version=svn1113 exclude=lattice,realtime-rigidbody
+ 
+ 
+ # Build architecture-independent files here.
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000100.html">[Yade-commits] r1135 - in branches/scons-layout/lib: . miniWm3
+</A></li>
+	<LI>Next message: <A HREF="000102.html">[Yade-commits] r1137 - branches/scons-layout/lib
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#101">[ date ]</a>
+              <a href="thread.html#101">[ thread ]</a>
+              <a href="subject.html#101">[ subject ]</a>
+              <a href="author.html#101">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

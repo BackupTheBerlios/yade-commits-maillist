@@ -1,0 +1,186 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1384 - trunk/pkg/dem/Engine/DeusExMachina
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1384%20-%20trunk/pkg/dem/Engine/DeusExMachina&In-Reply-To=%3C200806121034.m5CAYsmm017494%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000344.html">
+   <LINK REL="Next"  HREF="000346.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1384 - trunk/pkg/dem/Engine/DeusExMachina</H1>
+    <B>chareyre at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1384%20-%20trunk/pkg/dem/Engine/DeusExMachina&In-Reply-To=%3C200806121034.m5CAYsmm017494%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1384 - trunk/pkg/dem/Engine/DeusExMachina">chareyre at mail.berlios.de
+       </A><BR>
+    <I>Thu Jun 12 12:34:54 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000344.html">[Yade-commits] r1383 - in trunk: gui gui/py gui/qt3	pkg/common/Engine/StandAloneEngine scripts
+</A></li>
+        <LI>Next message: <A HREF="000346.html">[Yade-commits] r1385 - in trunk: extra gui/py gui/qt3	gui/qt3/pictures pkg/common/Engine/StandAloneEngine scripts
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#345">[ date ]</a>
+              <a href="thread.html#345">[ thread ]</a>
+              <a href="subject.html#345">[ subject ]</a>
+              <a href="author.html#345">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: chareyre
+Date: 2008-06-12 12:34:53 +0200 (Thu, 12 Jun 2008)
+New Revision: 1384
+
+Modified:
+   trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.cpp
+   trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.hpp
+Log:
+
+- Modified numerical scheme to reproduce a standard 2nd order finite 
+difference scheme integration (more stable).
+- TimeStepSafetyCoefficient can be set to 1 rather than 0.25.
+- same change still to be done in the separate LeapFrog engines (the 
+default TimeStepSafetyCoefficient is 0.25 in the meantime to prevent 
+explosions with preprocessors using those separate engines).
+
+
+
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.cpp	2008-06-10 10:28:40 UTC (rev 1383)
++++ trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.cpp	2008-06-12 10:34:53 UTC (rev 1384)
+@@ -20,6 +20,7 @@
+ 	REGISTER_ATTRIBUTE(damping);
+ }
+ 
++
+ NewtonsDampedLaw::NewtonsDampedLaw()
+ {
+ 	damping = 0.2;
+@@ -46,17 +47,18 @@
+ 		Vector3r&amp; m = ( static_cast&lt;Momentum*&gt; ( ncb-&gt;physicalActions-&gt;find ( id, momentumClassIndex ).get() ) )-&gt;momentum;
+ 		Vector3r&amp; f = ( static_cast&lt;Force*&gt; ( ncb-&gt;physicalActions-&gt;find ( id, forceClassIndex ).get() ) )-&gt;force;
+ 
++		Real dt = Omega::instance().getTimeStep();
+ 
+ 		if (!b-&gt;isClump()) {
+ 			//Damping moments
+ 			for ( int i=0; i&lt;3; ++i )
+ 			{
+-				m[i] *= 1 - damping*Mathr::Sign ( m[i]*rb-&gt;angularVelocity[i] );
++				m[i] *= 1 - damping*Mathr::Sign ( m[i]*rb-&gt;angularVelocity[i] + (Real) 0.5 *dt*rb-&gt;angularAcceleration[i] );
+ 			}
+ 			//Damping force :
+ 			for ( int i=0; i&lt;3; ++i )
+ 			{
+-				f[i] *= 1 - damping*Mathr::Sign ( f[i]*rb-&gt;velocity[i] );
++				f[i] *= 1 - damping*Mathr::Sign ( f[i]*rb-&gt;velocity[i] + (Real) 0.5 *dt*rb-&gt;acceleration[i] );
+ 			}
+ 		}
+ 
+@@ -90,25 +92,28 @@
+ 		}
+ 
+ 		//Orientation and Position Integrators :
+-		if ( prevSize &lt;=id )
+-		{
+-			prevSize = id+1;
+-			prevAngularVelocities.resize ( prevSize );
+-			prevVelocities.resize ( prevSize );
+-			firsts.resize ( prevSize,true );
+-		}
++// 		if ( prevSize &lt;=id )
++// 		{
++// 			prevSize = id+1;
++// 			prevAngularVelocities.resize ( prevSize );
++// 			prevVelocities.resize ( prevSize );
++// 			firsts.resize ( prevSize,true );
++// 		}
+ 
+-		Real dt = Omega::instance().getTimeStep();
++		
++// 		if ( !firsts[id] )
++// 		{
++// 			rb-&gt;angularVelocity = rb-&gt;angularVelocity+rb-&gt;angularAcceleration*0.5*dt;
++// 			rb-&gt;velocity = rb-&gt;velocity+ ( ( Real ) 0.5 ) *dt*rb-&gt;acceleration;
++// 		}
+ 
+-		if ( !firsts[id] )
+-		{
+-			rb-&gt;angularVelocity = prevAngularVelocities[id]+rb-&gt;angularAcceleration*0.5*dt;
+-			rb-&gt;velocity = prevVelocities[id]+ ( ( Real ) 0.5 ) *dt*rb-&gt;acceleration;
+-		}
+ 
+-		prevAngularVelocities[id] = rb-&gt;angularVelocity+ ( ( Real ) ( 0.5*dt ) ) *rb-&gt;angularAcceleration;
+-		prevVelocities[id] = rb-&gt;velocity+ ( ( Real ) 0.5 ) *dt*rb-&gt;acceleration;
++		rb-&gt;angularVelocity = rb-&gt;angularVelocity+ dt*rb-&gt;angularAcceleration;
++		rb-&gt;velocity = rb-&gt;velocity+ dt*rb-&gt;acceleration;
+ 
++// 		prevAngularVelocities[id] = rb-&gt;angularVelocity;
++// 		prevVelocities[id] = rb-&gt;velocity;
++
+ 		Vector3r axis = rb-&gt;angularVelocity;
+ 		Real angle = axis.Normalize();
+ 		Quaternionr q;
+@@ -117,9 +122,9 @@
+ 		rb-&gt;se3.orientation.Normalize();
+ 
+ 
+-		rb-&gt;se3.position += prevVelocities[id]*dt;
++		rb-&gt;se3.position += rb-&gt;velocity*dt;
+ 
+-		firsts[id] = false;
++// 		firsts[id] = false;
+ 
+ 
+ 	}
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.hpp	2008-06-10 10:28:40 UTC (rev 1383)
++++ trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.hpp	2008-06-12 10:34:53 UTC (rev 1384)
+@@ -41,8 +41,8 @@
+ 		
+ 	private :
+ 		int forceClassIndex, momentumClassIndex;
+-		vector&lt;Vector3r&gt; prevVelocities, prevAngularVelocities;
+-		vector&lt;bool&gt; firsts;
++		//vector&lt;Vector3r&gt; prevVelocities, prevAngularVelocities;
++		//vector&lt;bool&gt; firsts;
+ 		unsigned int prevSize;
+ 		//virtual void go( 	  const shared_ptr&lt;PhysicalAction&gt;&amp;
+ 		//			, const shared_ptr&lt;PhysicalParameters&gt;&amp;
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000344.html">[Yade-commits] r1383 - in trunk: gui gui/py gui/qt3	pkg/common/Engine/StandAloneEngine scripts
+</A></li>
+	<LI>Next message: <A HREF="000346.html">[Yade-commits] r1385 - in trunk: extra gui/py gui/qt3	gui/qt3/pictures pkg/common/Engine/StandAloneEngine scripts
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#345">[ date ]</a>
+              <a href="thread.html#345">[ thread ]</a>
+              <a href="subject.html#345">[ subject ]</a>
+              <a href="author.html#345">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

@@ -1,0 +1,312 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1311 - trunk/pkg/dem/Engine/StandAloneEngine
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1311%20-%20trunk/pkg/dem/Engine/StandAloneEngine&In-Reply-To=%3C200804101906.m3AJ62mP016258%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000273.html">
+   <LINK REL="Next"  HREF="000275.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1311 - trunk/pkg/dem/Engine/StandAloneEngine</H1>
+    <B>chareyre at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1311%20-%20trunk/pkg/dem/Engine/StandAloneEngine&In-Reply-To=%3C200804101906.m3AJ62mP016258%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1311 - trunk/pkg/dem/Engine/StandAloneEngine">chareyre at mail.berlios.de
+       </A><BR>
+    <I>Thu Apr 10 21:06:02 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000273.html">[Yade-commits] r1310 - in trunk: core pkg/common	pkg/common/Engine/StandAloneEngine
+</A></li>
+        <LI>Next message: <A HREF="000275.html">[Yade-commits] r1312 - in trunk/pkg/common/Engine: MetaEngine	StandAloneEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#274">[ date ]</a>
+              <a href="thread.html#274">[ thread ]</a>
+              <a href="subject.html#274">[ subject ]</a>
+              <a href="author.html#274">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: chareyre
+Date: 2008-04-10 21:06:01 +0200 (Thu, 10 Apr 2008)
+New Revision: 1311
+
+Added:
+   trunk/pkg/dem/Engine/StandAloneEngine/VolumicContactLaw.cpp
+   trunk/pkg/dem/Engine/StandAloneEngine/VolumicContactLaw.hpp
+Log:
+
+Contact law based on voronoi tesselation (using CGAL).
+Not included in compiling process now, this is for JF Jerier.
+
+
+
+Added: trunk/pkg/dem/Engine/StandAloneEngine/VolumicContactLaw.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/VolumicContactLaw.cpp	2008-04-10 18:49:54 UTC (rev 1310)
++++ trunk/pkg/dem/Engine/StandAloneEngine/VolumicContactLaw.cpp	2008-04-10 19:06:01 UTC (rev 1311)
+@@ -0,0 +1,175 @@
++/*************************************************************************
++*  Copyright (C) 2004 by Olivier Galizzi                                 *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">olivier.galizzi at imag.fr</A>                                               *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++
++#include&lt;yade/pkg-dem/BodyMacroParameters.hpp&gt;
++#include&lt;yade/pkg-dem/SpheresContactGeometry.hpp&gt;
++#include&lt;yade/pkg-dem/SDECLinkGeometry.hpp&gt;
++#include&lt;yade/pkg-dem/ElasticContactInteraction.hpp&gt;
++#include&lt;yade/pkg-dem/SDECLinkPhysics.hpp&gt;
++#include&lt;yade/core/Omega.hpp&gt;
++#include&lt;yade/core/MetaBody.hpp&gt;
++#include&lt;yade/pkg-common/Force.hpp&gt;
++#include&lt;yade/pkg-common/Momentum.hpp&gt;
++#include&lt;yade/core/PhysicalAction.hpp&gt;
++
++#include &lt;yade/pkg-common/InteractingSphere.hpp&gt;
++
++#include &quot;VolumicContactLaw.hpp&quot;
++
++#include &quot;/home/bruno/micromacro/KdevMicroMacro/src/TesselationWrapper.h&quot;
++
++
++
++
++VolumicContactLaw::VolumicContactLaw() : InteractionSolver() , actionForce(new Force) , actionMomentum(new Momentum)
++{
++	sdecGroupMask=1;
++	momentRotationLaw = true;
++	actionForceIndex = actionForce-&gt;getClassIndex();
++	actionMomentumIndex = actionMomentum-&gt;getClassIndex();
++	
++}
++
++
++void VolumicContactLaw::registerAttributes()
++{
++	InteractionSolver::registerAttributes();
++	REGISTER_ATTRIBUTE(sdecGroupMask);
++	REGISTER_ATTRIBUTE(momentRotationLaw);
++}
++
++
++void VolumicContactLaw::action(Body* body)
++{
++	MetaBody * ncb = YADE_CAST&lt;MetaBody*&gt;(body);
++	shared_ptr&lt;BodyContainer&gt;&amp; bodies = ncb-&gt;bodies;
++
++	Real dt = Omega::instance().getTimeStep();
++
++
++	//BEGIN VORONOI TESSELATION
++	TesselationWrapper T1;	
++	BodyContainer::iterator bi    = bodies-&gt;begin();
++	BodyContainer::iterator biEnd = bodies-&gt;end();
++	for(  ; bi!=biEnd ; ++bi )
++	{
++		if ((*bi)-&gt;isDynamic) {//means &quot;is it a sphere (not a wall)&quot;
++			const InteractingSphere* s = YADE_CAST&lt;InteractingSphere*&gt;((*bi)-&gt;interactingGeometry.get());
++			const RigidBodyParameters* p = YADE_CAST&lt;RigidBodyParameters*&gt;((*bi)-&gt;physicalParameters.get());
++			T1.insert(p-&gt;se3.position[0],p-&gt;se3.position[1],p-&gt;se3.position[2], s-&gt;radius, (*bi)-&gt;getId());
++		}
++	}
++	T1.ComputeVolumes();
++	//ENDOF VORONOI TESSELATION
++	
++			
++/// Non Permanents Links												///
++
++	InteractionContainer::iterator ii    = ncb-&gt;transientInteractions-&gt;begin();
++	InteractionContainer::iterator iiEnd = ncb-&gt;transientInteractions-&gt;end();
++	for(  ; ii!=iiEnd ; ++ii )
++	{
++		if ((*ii)-&gt;isReal)
++		{
++			const shared_ptr&lt;Interaction&gt;&amp; contact = *ii;
++			int id1 = contact-&gt;getId1();
++			int id2 = contact-&gt;getId2();
++			
++			if( !( (*bodies)[id1]-&gt;getGroupMask() &amp; (*bodies)[id2]-&gt;getGroupMask() &amp; sdecGroupMask) ) continue;
++
++			const SpheresContactGeometry*    currentContactGeometry= YADE_CAST&lt;SpheresContactGeometry*&gt;(contact-&gt;interactionGeometry.get());
++			ElasticContactInteraction* currentContactPhysics = YADE_CAST&lt;ElasticContactInteraction*&gt; (contact-&gt;interactionPhysics.get());
++			if((!currentContactGeometry)||(!currentContactPhysics)) continue;
++	
++			BodyMacroParameters* de1 				= YADE_CAST&lt;BodyMacroParameters*&gt;((*bodies)[id1]-&gt;physicalParameters.get());
++			BodyMacroParameters* de2 				= YADE_CAST&lt;BodyMacroParameters*&gt;((*bodies)[id2]-&gt;physicalParameters.get());
++			
++			Vector3r&amp; shearForce 			= currentContactPhysics-&gt;shearForce;
++	
++			if (contact-&gt;isNew) shearForce=Vector3r(0,0,0);
++					
++			Real un=currentContactGeometry-&gt;penetrationDepth;
++			
++			
++// 			currentContactPhysics-&gt;normalForce=currentContactPhysics-&gt;kn*std::max(un,(Real) 0) *currentContactGeometry-&gt;normal;
++									
++			//BEGIN USE VOLUME
++			Real vol1 = ((*bodies)[id1]-&gt;isDynamic ? T1.Volume(id1) : 0);
++			Real vol2 = ((*bodies)[id2]-&gt;isDynamic ? T1.Volume(id2) : 0);
++			Real solid1 = ((*bodies)[id1]-&gt;isDynamic ? 4.18 * (pow(currentContactGeometry-&gt;radius1,3)) : 0);
++			Real solid2 = ((*bodies)[id2]-&gt;isDynamic ? 4.18 * (pow(currentContactGeometry-&gt;radius2,3)) : 0);
++			Real compacity = (solid1+solid2)/(vol1+vol2);
++			//cerr &lt;&lt; &quot;compacity &quot; &lt;&lt; id1 &lt;&lt; &quot;/&quot; &lt;&lt; id2 &lt;&lt; &quot; = &quot; &lt;&lt; compacity &lt;&lt; endl;
++			
++			currentContactPhysics-&gt;normalForce=currentContactPhysics-&gt;kn*std::max(un,(Real) 0) *currentContactGeometry-&gt;normal //loi normale
++			* max((Real) 1,pow(compacity*1.42, 3)); // + effet volumique
++			//ENDOF USE VOLUME
++	
++			Vector3r axis;
++			Real angle;
++	
++	/// Here is the code with approximated rotations 	 ///
++			
++			axis = currentContactPhysics-&gt;prevNormal.Cross(currentContactGeometry-&gt;normal);
++			shearForce -= shearForce.Cross(axis);
++			angle = dt*0.5*currentContactGeometry-&gt;normal.Dot(de1-&gt;angularVelocity+de2-&gt;angularVelocity);
++			axis = angle*currentContactGeometry-&gt;normal;
++			shearForce -= shearForce.Cross(axis);
++		
++	/// Here is the code with exact rotations 		 ///
++	
++	// 		Quaternionr q;
++	//
++	// 		axis					= currentContactPhysics-&gt;prevNormal.cross(currentContactGeometry-&gt;normal);
++	// 		angle					= acos(currentContactGeometry-&gt;normal.dot(currentContactPhysics-&gt;prevNormal));
++	// 		q.fromAngleAxis(angle,axis);
++	//
++	// 		currentContactPhysics-&gt;shearForce	= currentContactPhysics-&gt;shearForce*q;
++	//
++	// 		angle					= dt*0.5*currentContactGeometry-&gt;normal.dot(de1-&gt;angularVelocity+de2-&gt;angularVelocity);
++	// 		axis					= currentContactGeometry-&gt;normal;
++	// 		q.fromAngleAxis(angle,axis);
++	// 		currentContactPhysics-&gt;shearForce	= q*currentContactPhysics-&gt;shearForce;
++	
++	/// 							 ///
++	
++			Vector3r x				= currentContactGeometry-&gt;contactPoint;
++			Vector3r c1x				= (x - de1-&gt;se3.position);
++			Vector3r c2x				= (x - de2-&gt;se3.position);
++			Vector3r relativeVelocity		= (de2-&gt;velocity+de2-&gt;angularVelocity.Cross(c2x)) - (de1-&gt;velocity+de1-&gt;angularVelocity.Cross(c1x));
++			Vector3r shearVelocity			= relativeVelocity-currentContactGeometry-&gt;normal.Dot(relativeVelocity)*currentContactGeometry-&gt;normal;
++			Vector3r shearDisplacement		= shearVelocity*dt;
++			shearForce 			       -= currentContactPhysics-&gt;ks*shearDisplacement;
++	
++	// PFC3d SlipModel, is using friction angle. CoulombCriterion
++			Real maxFs = currentContactPhysics-&gt;normalForce.SquaredLength() * std::pow(currentContactPhysics-&gt;tangensOfFrictionAngle,2);
++			if( shearForce.SquaredLength() &gt; maxFs )
++			{
++				maxFs = Mathr::Sqrt(maxFs) / shearForce.Length();
++				shearForce *= maxFs;
++			}
++	////////// PFC3d SlipModel
++	
++			Vector3r f				= currentContactPhysics-&gt;normalForce + shearForce;
++			
++	// it will be some macro(	body-&gt;physicalActions,	ActionType , bodyId )
++			static_cast&lt;Force*&gt;   ( ncb-&gt;physicalActions-&gt;find( id1 , actionForceIndex).get() )-&gt;force    -= f;
++			static_cast&lt;Force*&gt;   ( ncb-&gt;physicalActions-&gt;find( id2 , actionForceIndex ).get() )-&gt;force    += f;
++			
++			static_cast&lt;Momentum*&gt;( ncb-&gt;physicalActions-&gt;find( id1 , actionMomentumIndex ).get() )-&gt;momentum -= c1x.Cross(f);
++			static_cast&lt;Momentum*&gt;( ncb-&gt;physicalActions-&gt;find( id2 , actionMomentumIndex ).get() )-&gt;momentum += c2x.Cross(f);
++			
++			currentContactPhysics-&gt;prevNormal = currentContactGeometry-&gt;normal;
++		}
++	}
++
++}
++
++
++YADE_PLUGIN();
+
+Added: trunk/pkg/dem/Engine/StandAloneEngine/VolumicContactLaw.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/VolumicContactLaw.hpp	2008-04-10 18:49:54 UTC (rev 1310)
++++ trunk/pkg/dem/Engine/StandAloneEngine/VolumicContactLaw.hpp	2008-04-10 19:06:01 UTC (rev 1311)
+@@ -0,0 +1,44 @@
++/*************************************************************************
++*  Copyright (C) 2004 by Olivier Galizzi                                 *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">olivier.galizzi at imag.fr</A>                                               *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#ifndef VOLUMIC_CONTACT_LAW_HPP
++#define VOLUMIC_CONTACT_LAW_HPP
++
++#include&lt;yade/core/InteractionSolver.hpp&gt;
++
++#include &lt;set&gt;
++#include &lt;boost/tuple/tuple.hpp&gt;
++
++class PhysicalAction;
++
++class VolumicContactLaw : public InteractionSolver
++{
++/// Attributes
++	private :
++		shared_ptr&lt;PhysicalAction&gt; actionForce;
++		shared_ptr&lt;PhysicalAction&gt; actionMomentum;
++		int actionForceIndex;
++		int actionMomentumIndex;
++		
++	public :
++		int sdecGroupMask;
++		bool momentRotationLaw;
++	
++		VolumicContactLaw();
++		void action(Body* body);
++
++	protected :
++		void registerAttributes();
++	REGISTER_CLASS_NAME(VolumicContactLaw);
++	REGISTER_BASE_CLASS_NAME(InteractionSolver);
++};
++
++REGISTER_SERIALIZABLE(VolumicContactLaw,false);
++
++#endif // VOLUMIC_CONTACT_LAW_HPP
++
+
+
+Property changes on: trunk/pkg/dem/Engine/StandAloneEngine/VolumicContactLaw.hpp
+___________________________________________________________________
+Name: svn:executable
+   + *
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000273.html">[Yade-commits] r1310 - in trunk: core pkg/common	pkg/common/Engine/StandAloneEngine
+</A></li>
+	<LI>Next message: <A HREF="000275.html">[Yade-commits] r1312 - in trunk/pkg/common/Engine: MetaEngine	StandAloneEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#274">[ date ]</a>
+              <a href="thread.html#274">[ thread ]</a>
+              <a href="subject.html#274">[ subject ]</a>
+              <a href="author.html#274">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

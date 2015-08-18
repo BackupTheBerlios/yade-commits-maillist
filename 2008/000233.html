@@ -1,0 +1,327 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1268 - in trunk/pkg/dem: . Engine/DeusExMachina
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1268%20-%20in%20trunk/pkg/dem%3A%20.%20Engine/DeusExMachina&In-Reply-To=%3C200802271634.m1RGYba9003227%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000232.html">
+   <LINK REL="Next"  HREF="000234.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1268 - in trunk/pkg/dem: . Engine/DeusExMachina</H1>
+    <B>chareyre at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1268%20-%20in%20trunk/pkg/dem%3A%20.%20Engine/DeusExMachina&In-Reply-To=%3C200802271634.m1RGYba9003227%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1268 - in trunk/pkg/dem: . Engine/DeusExMachina">chareyre at mail.berlios.de
+       </A><BR>
+    <I>Wed Feb 27 17:34:37 CET 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000232.html">[Yade-commits] r1267 - trunk/gui/cmd
+</A></li>
+        <LI>Next message: <A HREF="000234.html">[Yade-commits] r1269 - trunk/pkg/dem/Engine/EngineUnit
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#233">[ date ]</a>
+              <a href="thread.html#233">[ thread ]</a>
+              <a href="subject.html#233">[ subject ]</a>
+              <a href="author.html#233">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: chareyre
+Date: 2008-02-27 17:34:37 +0100 (Wed, 27 Feb 2008)
+New Revision: 1268
+
+Added:
+   trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.cpp
+   trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.hpp
+Modified:
+   trunk/pkg/dem/SConscript
+Log:
+Added NewtonsDampedLaw :
+
+/*! An engine that can replace the usual series of engines used for integrating the laws of motion.
+
+The result is exactly the same as with :
+-CundallNonViscousForceDamping
+-CundallNonViscousMomentumDamping
+-NewtonsForceLaw
+-NewtonsMomentumLaw
+-LeapFrogPositionIntegrator
+-LeapFrogOrientationIntegrator
+
+But this engine is faster because it uses less loops and less dispatching. 
+ 
+Requirements :
+-All dynamic bodies must have physical parameters of type (or inheriting from) BodyMacroParameters
+-Physical actions must include forces and moments
+ 
+ */
+
+
+
+Added: trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.cpp	2008-02-26 18:13:47 UTC (rev 1267)
++++ trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.cpp	2008-02-27 16:34:37 UTC (rev 1268)
+@@ -0,0 +1,131 @@
++/*************************************************************************
++ Copyright (C) 2008 by Bruno Chareyre		                         *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">bruno.chareyre at hmg.inpg.fr</A>      					 *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#include &quot;NewtonsDampedLaw.hpp&quot;
++#include&lt;yade/core/MetaBody.hpp&gt;
++#include &lt;yade/pkg-common/RigidBodyParameters.hpp&gt;
++#include &lt;yade/pkg-common/Momentum.hpp&gt;
++#include &lt;yade/pkg-common/Force.hpp&gt;
++#include&lt;yade/lib-base/yadeWm3Extra.hpp&gt;
++
++
++void NewtonsDampedLaw::registerAttributes()
++{
++	//DeusExMachina::registerAttributes();
++	REGISTER_ATTRIBUTE(damping);
++}
++
++NewtonsDampedLaw::NewtonsDampedLaw()
++{
++	damping = 0.2;
++	forceClassIndex = (new Force)-&gt;getClassIndex();
++	momentumClassIndex = (new Momentum)-&gt;getClassIndex();
++	prevSize = 0;
++	
++}
++
++void NewtonsDampedLaw::applyCondition ( Body * body )
++{
++
++
++	MetaBody * ncb = static_cast&lt;MetaBody*&gt; ( body );
++	shared_ptr&lt;BodyContainer&gt;&amp; bodies = ncb-&gt;bodies;
++	BodyContainer::iterator bi    = bodies-&gt;begin();
++	BodyContainer::iterator biEnd = bodies-&gt;end();
++	for ( ; bi!=biEnd ; ++bi )
++	{
++
++		const shared_ptr&lt;Body&gt;&amp; b = *bi;
++
++		if (!b-&gt;isDynamic) continue;
++		
++		RigidBodyParameters * rb = YADE_CAST&lt;RigidBodyParameters*&gt; ( b-&gt;physicalParameters.get() );
++		unsigned int id = b-&gt;getId();
++		Vector3r&amp; m = ( static_cast&lt;Momentum*&gt; ( ncb-&gt;physicalActions-&gt;find ( id, momentumClassIndex ).get() ) )-&gt;momentum;
++		Vector3r&amp; f = ( static_cast&lt;Force*&gt; ( ncb-&gt;physicalActions-&gt;find ( id, forceClassIndex ).get() ) )-&gt;force;
++
++
++		if (!b-&gt;isClump()) {
++			//Damping moments
++			for ( int i=0; i&lt;3; ++i )
++			{
++				m[i] *= 1 - damping*Mathr::Sign ( m[i]*rb-&gt;angularVelocity[i] );
++			}
++			//Damping force :
++			for ( int i=0; i&lt;3; ++i )
++			{
++				f[i] *= 1 - damping*Mathr::Sign ( f[i]*rb-&gt;velocity[i] );
++			}
++		}
++
++
++
++		//Newtons mometum law :
++		if ( b-&gt;isStandalone() ) rb-&gt;angularAcceleration=diagDiv ( m,rb-&gt;inertia );
++		else if ( b-&gt;isClump() ) rb-&gt;angularAcceleration+=diagDiv ( m,rb-&gt;inertia );
++		else
++		{ // isClumpMember()
++			const shared_ptr&lt;Body&gt;&amp; clump ( Body::byId ( b-&gt;clumpId ) );
++			RigidBodyParameters* clumpRBP=YADE_CAST&lt;RigidBodyParameters*&gt; ( clump-&gt;physicalParameters.get() );
++			/* angularAcceleration is reset by ClumpMemberMover engine */
++			clumpRBP-&gt;angularAcceleration+=diagDiv ( m,clumpRBP-&gt;inertia );
++		}
++
++		// Newtons force law
++		if ( b-&gt;isStandalone() ) rb-&gt;acceleration=f/rb-&gt;mass;
++		else if ( b-&gt;isClump() )
++		{
++			// accel for clump reset in Clump::moveMembers, called by ClumpMemberMover engine
++			rb-&gt;acceleration+=f/rb-&gt;mass;
++		}
++		else
++		{ // force applied to a clump member is applied to clump itself
++			const shared_ptr&lt;Body&gt;&amp; clump ( Body::byId ( b-&gt;clumpId ) );
++			RigidBodyParameters* clumpRBP=YADE_CAST&lt;RigidBodyParameters*&gt; ( clump-&gt;physicalParameters.get() );
++			// accels reset by Clump::moveMembers in last iteration
++			clumpRBP-&gt;acceleration+=f/clumpRBP-&gt;mass;
++			clumpRBP-&gt;angularAcceleration+=diagDiv ( ( rb-&gt;se3.position-clumpRBP-&gt;se3.position ).Cross ( f ),clumpRBP-&gt;inertia ); //acceleration from torque generated by the force WRT particle centroid on the clump centroid
++		}
++
++		//Orientation and Position Integrators :
++		if ( prevSize &lt;=id )
++		{
++			prevSize = id+1;
++			prevAngularVelocities.resize ( prevSize );
++			prevVelocities.resize ( prevSize );
++			firsts.resize ( prevSize,true );
++		}
++
++		Real dt = Omega::instance().getTimeStep();
++
++		if ( !firsts[id] )
++		{
++			rb-&gt;angularVelocity = prevAngularVelocities[id]+rb-&gt;angularAcceleration*0.5*dt;
++			rb-&gt;velocity = prevVelocities[id]+ ( ( Real ) 0.5 ) *dt*rb-&gt;acceleration;
++		}
++
++		prevAngularVelocities[id] = rb-&gt;angularVelocity+ ( ( Real ) ( 0.5*dt ) ) *rb-&gt;angularAcceleration;
++		prevVelocities[id] = rb-&gt;velocity+ ( ( Real ) 0.5 ) *dt*rb-&gt;acceleration;
++
++		Vector3r axis = rb-&gt;angularVelocity;
++		Real angle = axis.Normalize();
++		Quaternionr q;
++		q.FromAxisAngle ( axis,angle*dt );
++		rb-&gt;se3.orientation = q*rb-&gt;se3.orientation;
++		rb-&gt;se3.orientation.Normalize();
++
++
++		rb-&gt;se3.position += prevVelocities[id]*dt;
++
++		firsts[id] = false;
++
++
++	}
++}
++
++YADE_PLUGIN();
+
+Added: trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.hpp	2008-02-26 18:13:47 UTC (rev 1267)
++++ trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.hpp	2008-02-27 16:34:37 UTC (rev 1268)
+@@ -0,0 +1,66 @@
++/*************************************************************************
++ Copyright (C) 2008 by Bruno Chareyre		                         *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">bruno.chareyre at hmg.inpg.fr</A>      					 *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#ifndef NEWTONSDAMPEDLAW_HPP
++#define NEWTONSDAMPEDLAW_HPP
++
++#include &lt;yade/core/DeusExMachina.hpp&gt;
++#include &lt;Wm3Vector3.h&gt;
++
++
++/*! An engine that can replace the usual series of engines used for integrating the laws of motion.
++
++The result is exactly the same as with :
++-CundallNonViscousForceDamping
++-CundallNonViscousMomentumDamping
++-NewtonsForceLaw
++-NewtonsMomentumLaw
++-LeapFrogPositionIntegrator
++-LeapFrogOrientationIntegrator
++
++But this engine is faster because it uses less loops and less dispatching 
++ 
++Requirements :
++-All dynamic bodies must have physical parameters of type (or inheriting from) BodyMacroParameters
++-Physical actions must include forces and moments
++ 
++ 
++ */
++
++
++class NewtonsDampedLaw : public DeusExMachina
++{
++	public :
++		///damping coefficient for Cundall's non viscous damping
++		Real damping;
++		
++	private :
++		int forceClassIndex, momentumClassIndex;
++		vector&lt;Vector3r&gt; prevVelocities, prevAngularVelocities;
++		vector&lt;bool&gt; firsts;
++		unsigned int prevSize;
++		//virtual void go( 	  const shared_ptr&lt;PhysicalAction&gt;&amp;
++		//			, const shared_ptr&lt;PhysicalParameters&gt;&amp;
++		//			, const Body*);
++		
++		
++	public :
++		virtual	void applyCondition(Body * body);		
++		NewtonsDampedLaw();
++	
++	protected :
++		virtual void registerAttributes();
++	
++	REGISTER_CLASS_NAME(NewtonsDampedLaw);
++	REGISTER_BASE_CLASS_NAME(DeusExMachina);
++};
++
++REGISTER_SERIALIZABLE(NewtonsDampedLaw,false);
++
++#endif // NEWTONSFORCELAW_HPP
++
+
+Modified: trunk/pkg/dem/SConscript
+===================================================================
+--- trunk/pkg/dem/SConscript	2008-02-26 18:13:47 UTC (rev 1267)
++++ trunk/pkg/dem/SConscript	2008-02-27 16:34:37 UTC (rev 1268)
+@@ -843,9 +843,19 @@
+ 			'TranslationEngine',]),
+ 
+ 
++env.SharedLibrary('NewtonsDampedLaw',
++		['Engine/DeusExMachina/NewtonsDampedLaw.cpp'],
++		LIBS=env['LIBS']+['yade-serialization',
++			'yade-base',		
++			'yade-multimethods',
++			'Force',
++			'Momentum',
++			'RigidBodyParameters'
++			 ]),
+ 
+ 
+ 
+ 
++
+ ])
+ 
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000232.html">[Yade-commits] r1267 - trunk/gui/cmd
+</A></li>
+	<LI>Next message: <A HREF="000234.html">[Yade-commits] r1269 - trunk/pkg/dem/Engine/EngineUnit
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#233">[ date ]</a>
+              <a href="thread.html#233">[ thread ]</a>
+              <a href="subject.html#233">[ subject ]</a>
+              <a href="author.html#233">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

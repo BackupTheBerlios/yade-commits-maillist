@@ -1,0 +1,356 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1036 - in trunk: . yade-core/src/yade	yade-packages/yade-package-lattice/src/PreProcessor/LatticeExample
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2007/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1036%20-%20in%20trunk%3A%20.%20yade-core/src/yade%0A%09yade-packages/yade-package-lattice/src/PreProcessor/LatticeExample&In-Reply-To=%3C200701131520.l0DFKOhQ018579%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000000.html">
+   <LINK REL="Next"  HREF="000002.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1036 - in trunk: . yade-core/src/yade	yade-packages/yade-package-lattice/src/PreProcessor/LatticeExample</H1>
+    <B>cosurgi at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1036%20-%20in%20trunk%3A%20.%20yade-core/src/yade%0A%09yade-packages/yade-package-lattice/src/PreProcessor/LatticeExample&In-Reply-To=%3C200701131520.l0DFKOhQ018579%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1036 - in trunk: . yade-core/src/yade	yade-packages/yade-package-lattice/src/PreProcessor/LatticeExample">cosurgi at mail.berlios.de
+       </A><BR>
+    <I>Sat Jan 13 16:20:24 CET 2007</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000000.html">[Yade-commits] r1035 - trunk
+</A></li>
+        <LI>Next message: <A HREF="000002.html">[Yade-commits] r1037 - trunk
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1">[ date ]</a>
+              <a href="thread.html#1">[ thread ]</a>
+              <a href="subject.html#1">[ subject ]</a>
+              <a href="author.html#1">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: cosurgi
+Date: 2007-01-13 16:20:23 +0100 (Sat, 13 Jan 2007)
+New Revision: 1036
+
+Modified:
+   trunk/Makefile
+   trunk/SConstruct
+   trunk/yade-core/src/yade/FileGenerator.cpp
+   trunk/yade-core/src/yade/yade.cpp
+   trunk/yade-packages/yade-package-lattice/src/PreProcessor/LatticeExample/LatticeExample.cpp
+Log:
+- FileGenerator reports how long the generation took
+- yade.cpp takes PREFIX and POSTFIX as #define /some/path , without &quot;
+- small change to lattice generation method
+- Makefile cleans after scons
+- SConstruct:
+   removed \&quot; from defines in PREFIX and POSTFIX line 147
+   added -pthread for g++ 3.3
+   moved env.Append(CXXFLAGS=['-pipe','-Wall','-pthread']) before invoking the tests
+   changed &quot;nor&quot; to &quot;not&quot;, line 271
+   removed PATH, becuase I couldn't get it to work. so instead I set CXX='distcc g++-3.3'
+
+   Vaclav you will want to check my changes anyway in case I made some mistake ;)
+
+
+
+
+Modified: trunk/Makefile
+===================================================================
+--- trunk/Makefile	2007-01-13 13:45:31 UTC (rev 1035)
++++ trunk/Makefile	2007-01-13 15:20:23 UTC (rev 1036)
+@@ -10,6 +10,9 @@
+ 	$(MAKE) -C yade-guis clean
+ 	$(MAKE) -C yade-packages clean
+ 	$(MAKE) -C yade-extra clean
++	rm -rf config.log scons.config .sconf_temp include
++	find -name &quot;.sconsign&quot; -exec rm -rf {} \;
++	find -name &quot;SConscript&quot; -exec rm -rf {} \;
+ 
+ compile_install:
+ 	$(MAKE) -C yade-libs compile_install
+
+Modified: trunk/SConstruct
+===================================================================
+--- trunk/SConstruct	2007-01-13 13:45:31 UTC (rev 1035)
++++ trunk/SConstruct	2007-01-13 15:20:23 UTC (rev 1036)
+@@ -58,7 +58,7 @@
+ ### create THE environment
+ env=Environment(tools=['default'],options=opts)
+ # do not propagate PATH from outside, to ensure identical builds on different machines
+-env.Append(ENV={'PATH':['/usr/local/bin','/bin','/usr/bin']})
++#env.Append(ENV={'PATH':['/usr/local/bin','/bin','/usr/bin']})
+ # ccache needs $HOME to be set; colorgcc needs $TERM
+ propagatedEnvVars=['HOME','TERM','DISTCC_HOSTS']
+ for v in propagatedEnvVars:
+@@ -102,6 +102,10 @@
+ 
+ conf=Configure(env,custom_tests={'CheckQt':CheckQt,'CheckCXX':CheckCXX})
+ 
++#I have moved it up. It is necessary, because the tests also need -pthread flag
++# -pthread is for older g++ 3.3 and 3.4
++env.Append(CXXFLAGS=['-pipe','-Wall','-pthread'])
++
+ ok=True
+ ok&amp;=conf.CheckCXX()
+ ok&amp;=conf.CheckLibWithHeader('pthread','pthread.h','c','pthread_exit(NULL);')
+@@ -140,7 +144,7 @@
+ instIncludeDirs=['yade-core']+[os.path.join('$PREFIX','include','yade',string.split(x,os.path.sep)[-1]) for x in libDirs]
+ ### PREPROCESSOR
+ env.Append(CPPPATH=['#/include'])
+-env.Append(CPPDEFINES=[('POSTFIX',r'\&quot;$POSTFIX\&quot;'),('PREFIX',r'\&quot;$PREFIX\&quot;')])
++env.Append(CPPDEFINES=[('POSTFIX',r'$POSTFIX'),('PREFIX',r'$PREFIX')])
+ 
+ ### COMPILER
+ if env['debug']: env.Append(CXXFLAGS='-ggdb3',CPPDEFINES=['DEBUG'])
+@@ -159,7 +163,8 @@
+ 	archFlags=Split('-march=pentium4 -mfpmath=sse,387') #-malign-double')
+ 	env.Append(CXXFLAGS=archFlags,LINKFLAGS=archFlags,SHLINKFLAGS=archFlags)
+ if env['profile']: env.Append(CXXFLAGS=['-pg'],LINKFLAGS=['-pg'],SHLINKFLAGS=['-pg'])
+-env.Append(CXXFLAGS=['-pipe','-Wall'])
++# -pthread is for older g++ 3.3 and 3.4
++#env.Append(CXXFLAGS=['-pipe','-Wall','-pthread'])
+ 
+ ### LINKER
+ env.Append(SHLINKFLAGS='-Wl,-soname=${TARGET.file} -rdynamic')
+@@ -263,7 +268,7 @@
+ for n in installableNodes:
+ 	f=str(n)
+ 	m=re.match(r'(^|.*/)(yade-(extra|guis|libs|package-[^/]+))/lib[^/]+\.so$',f)
+-	if nor m: # older scons version have e.g. qt libs in nodes, we just skip them here
++	if not m: # older scons version have e.g. qt libs in nodes, we just skip them here
+ 		# TODO: exclude system libs in node enumerator, that is much safer
+ 		if major=='0' and int(minor)&lt;=96 and int(micro)&lt;90: continue
+ 		else: assert(m)
+
+Modified: trunk/yade-core/src/yade/FileGenerator.cpp
+===================================================================
+--- trunk/yade-core/src/yade/FileGenerator.cpp	2007-01-13 13:45:31 UTC (rev 1035)
++++ trunk/yade-core/src/yade/FileGenerator.cpp	2007-01-13 15:20:23 UTC (rev 1036)
+@@ -1,15 +1,13 @@
+ /*************************************************************************
+-*  Copyright (C) 2004 by Olivier Galizzi                                 *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">olivier.galizzi at imag.fr</A>                                               *
+-*                                                                        *
+ *  This program is free software; it is licensed under the terms of the  *
+ *  GNU General Public License v2 or later. See file LICENSE for details. *
+ *************************************************************************/
+ 
+-#include&lt;cstdlib&gt;
+-#include&lt;yade/yade-lib-multimethods/MultiMethodsExceptions.hpp&gt;
++#include &lt;cstdlib&gt;
++#include &lt;yade/yade-lib-multimethods/MultiMethodsExceptions.hpp&gt;
++#include &lt;boost/date_time/posix_time/posix_time.hpp&gt;
+ 
+-#include&quot;FileGenerator.hpp&quot;
++#include &quot;FileGenerator.hpp&quot;
+ 
+ CREATE_LOGGER(FileGenerator);
+ 
+@@ -59,6 +57,7 @@
+ string FileGenerator::generateAndSave()
+ {
+ 	string message;
++	boost::posix_time::ptime now = boost::posix_time::second_clock::local_time();
+ 	try {
+ 		message = generate();
+ 	}
+@@ -76,6 +75,8 @@
+ 	}
+ 	else
+ 	{
++		boost::posix_time::ptime now2 = boost::posix_time::second_clock::local_time();
++		boost::posix_time::time_duration generationTime = now2 - now; // generation time, without save time
+ 		setMessage(&quot;saving...&quot;);
+ 		setProgress(1.0);
+ 		try
+@@ -86,7 +87,8 @@
+ 		{
+ 			return std::string(&quot;File &quot;+outputFileName+&quot; cannot be saved: &quot;+e.what());
+ 		}
+-		return std::string(&quot;File &quot;+outputFileName+&quot; generated successfully.\n\n&quot;)+message;
++		return std::string(&quot;File &quot;+outputFileName+&quot; generated successfully (time: &quot;
++				+ boost::posix_time::to_simple_string(generationTime) +&quot;).\n\n&quot;)+message;
+ 	}
+ }
+ 
+
+Modified: trunk/yade-core/src/yade/yade.cpp
+===================================================================
+--- trunk/yade-core/src/yade/yade.cpp	2007-01-13 13:45:31 UTC (rev 1035)
++++ trunk/yade-core/src/yade/yade.cpp	2007-01-13 15:20:23 UTC (rev 1036)
+@@ -13,6 +13,7 @@
+ #include &lt;getopt.h&gt;
+ #include &lt;boost/filesystem/operations.hpp&gt;
+ #include &lt;boost/filesystem/convenience.hpp&gt;
++#include &lt;boost/preprocessor/stringize.hpp&gt;
+ #include &lt;yade/yade-lib-factory/ClassFactory.hpp&gt;
+ #include &lt;yade/yade-lib-base/Logging.hpp&gt;
+ #include &quot;Omega.hpp&quot;
+@@ -27,6 +28,27 @@
+ log4cxx::LoggerPtr logger=log4cxx::Logger::getLogger(&quot;yade&quot;);
+ #endif
+ 
++// FIXME - those two function will be moved to some class responsible for configuration
++std::string getPrefix()
++{
++	// I had to use BOOST_PP_STRINGIZE because g++3.3 tried to insert the path verbatim (not as a string)
++	// and there was a compilation error
++	std::string tmp(BOOST_PP_STRINGIZE(PREFIX));
++	if(tmp==&quot;PREFIX&quot;) // if PREFIX is undefined, BOOST_PP_STRINGIZE returns the name instead of empty value
++	{
++		LOG_FATAL(&quot;undefined PREFIX, aborting&quot;);
++		exit(1);
++	};
++	return tmp;
++};
++
++std::string getPostfix()
++{
++	std::string tmp(BOOST_PP_STRINGIZE(POSTFIX));
++	if(tmp==&quot;POSTFIX&quot;) tmp=&quot;&quot;; // if POSTFIX is undefined, BOOST_PP_STRINGIZE returns the name instead of empty value
++	return tmp;
++};
++
+ void firstRunSetup(shared_ptr&lt;Preferences&gt;&amp; pref)
+ {
+ 	char *libDirs[]={&quot;yade-extra&quot;,&quot;yade-guis&quot;,&quot;yade-libs&quot;,&quot;yade-package-common&quot;,&quot;yade-package-dem&quot;,&quot;yade-package-fem&quot;,&quot;yade-package-lattice&quot;,&quot;yade-package-mass-spring&quot;,&quot;yade-package-realtime-rigidbody&quot;,NULL /* sentinel */};
+@@ -34,7 +56,7 @@
+ 	LOG_INFO(&quot;Creating default configuration file: &quot;&lt;&lt;cfgFile&lt;&lt;&quot;. Please tune by hand if needed.&quot;);
+ 	string expLibDir;
+ 	for(int i=0; libDirs[i+1]!=NULL; i++) {
+-		expLibDir=string( PREFIX &quot;/lib/yade&quot; POSTFIX &quot;/&quot;)+libDirs[i];
++		expLibDir=getPrefix() + &quot;/lib/yade&quot; + getPostfix() + &quot;/&quot; + libDirs[i];
+ 		LOG_INFO(&quot;Adding plugin directory &quot;&lt;&lt;expLibDir&lt;&lt;&quot;.&quot;);
+ 		pref-&gt;dynlibDirectories.push_back(expLibDir);
+ 	}
+@@ -46,6 +68,11 @@
+ void printHelp()
+ {
+ 	string flags(&quot;&quot;);
++	flags=flags+&quot;PREFIX=&quot; +getPrefix()+ &quot;\n&quot;;
++	flags=flags+&quot;POSTFIX=&quot; + getPostfix() + &quot;\n&quot;;
++#ifdef SINGLE_PRECISION
++	flags+=&quot;DOUBLE_PRECISION &quot;;
++#endif
+ #ifdef DOUBLE_PRECISION
+ 	flags+=&quot;DOUBLE_PRECISION &quot;;
+ #endif
+@@ -72,7 +99,7 @@
+ Only one option can be passed to yade, all other options are passed to the selected GUI\n\
+ &quot;;
+ 	if(flags!=&quot;&quot;)
+-		cout &lt;&lt; &quot;compilation flags: &quot;+ flags +&quot;\n\n&quot;;
++		cout &lt;&lt; &quot;compilation flags:\n&quot;+ flags +&quot;\n\n&quot;;
+ }
+ 
+ 
+@@ -81,7 +108,7 @@
+ 
+ 	int ch;
+ 	string gui = &quot;&quot;;
+-	string configPath = string(getenv(&quot;HOME&quot;)) + string(&quot;/.yade&quot; POSTFIX);
++	string configPath = string(getenv(&quot;HOME&quot;)) + &quot;/.yade&quot; + getPostfix();
+ 	string simulationFileName=&quot;&quot;;
+ 
+ 	// This makes boost stop bitching about dot-files and other files that may not exist on MS-DOS 3.3;
+
+Modified: trunk/yade-packages/yade-package-lattice/src/PreProcessor/LatticeExample/LatticeExample.cpp
+===================================================================
+--- trunk/yade-packages/yade-package-lattice/src/PreProcessor/LatticeExample/LatticeExample.cpp	2007-01-13 13:45:31 UTC (rev 1035)
++++ trunk/yade-packages/yade-package-lattice/src/PreProcessor/LatticeExample/LatticeExample.cpp	2007-01-13 15:20:23 UTC (rev 1036)
+@@ -265,20 +265,27 @@
+ 
+         unsigned int totalNodesCount = 0;
+ 
+-	setMessage(&quot;creating nodes...&quot;);
+-        for( int j=0 ; j&lt;=nbNodes[1] ; j++ )
+-        {
+-		if(shouldTerminate()) return &quot;&quot;;
++	{
++		setMessage(&quot;creating nodes...&quot;);
++		float all = nbNodes[0]*nbNodes[1]*nbNodes[2];
++		float current = 0.0;
+ 
+-                for( int i=0 ; i&lt;=nbNodes[0] ; i++ )
+-                        for( int k=0 ; k&lt;=nbNodes[2] ; k++)
+-                        {
+-                                shared_ptr&lt;Body&gt; node;
+-                                if(createNode(node,i,j,k) || quads)
+-                                        rootBody-&gt;bodies-&gt;insert(node), ++totalNodesCount;
+-                        }
+-        }
++		for( int j=0 ; j&lt;=nbNodes[1] ; j++ )
++		{
++			if(shouldTerminate()) return &quot;&quot;;
+ 
++			for( int i=0 ; i&lt;=nbNodes[0] ; i++ )
++				for( int k=0 ; k&lt;=nbNodes[2] ; k++)
++				{
++					setProgress(current++/all);
++
++					shared_ptr&lt;Body&gt; node;
++					if(createNode(node,i,j,k) || quads)
++						rootBody-&gt;bodies-&gt;insert(node), ++totalNodesCount;
++				}
++		}
++	}
++
+         BodyRedirectionVector bc;
+         bc.clear();
+ 
+@@ -289,6 +296,8 @@
+ 	float nodes_a=0;
+ 	float nodes_all = rootBody-&gt;bodies-&gt;size();
+ 	setMessage(&quot;creating beams...&quot;);
++	double r  = maxLength_in_cellsizeUnit*cellsizeUnit_in_meters;
++	double r2 = std::pow(r,2);
+ 	for(  ; bi!=biEnd ; ++bi )  // loop over all nodes, to create beams
+ 	{
+ 		Body* bodyA = (*bi).get(); // first_node
+@@ -306,7 +315,12 @@
+ 			LatticeNodeParameters* a = static_cast&lt;LatticeNodeParameters*&gt;(bodyA-&gt;physicalParameters.get());
+ 			LatticeNodeParameters* b = static_cast&lt;LatticeNodeParameters*&gt;(bodyB-&gt;physicalParameters.get());
+ 			
+-			if ((a-&gt;se3.position - b-&gt;se3.position).SquaredLength() &lt; std::pow(maxLength_in_cellsizeUnit*cellsizeUnit_in_meters,2) )  
++			//if ((a-&gt;se3.position - b-&gt;se3.position).SquaredLength() &lt; std::pow(maxLength_in_cellsizeUnit*cellsizeUnit_in_meters,2) )  
++
++			if (	   ( std::abs(a-&gt;se3.position[0] - b-&gt;se3.position[0])&lt;= r )
++				&amp;&amp; ( std::abs(a-&gt;se3.position[1] - b-&gt;se3.position[1])&lt;= r )
++				&amp;&amp; ( std::abs(a-&gt;se3.position[2] - b-&gt;se3.position[2])&lt;= r )
++				&amp;&amp; ((a-&gt;se3.position - b-&gt;se3.position).SquaredLength() &lt; r2 ) )  
+ 			{
+ 				shared_ptr&lt;Body&gt; beam;
+ 				createBeam(beam,bodyA-&gt;getId(),bodyB-&gt;getId());
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000000.html">[Yade-commits] r1035 - trunk
+</A></li>
+	<LI>Next message: <A HREF="000002.html">[Yade-commits] r1037 - trunk
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1">[ date ]</a>
+              <a href="thread.html#1">[ thread ]</a>
+              <a href="subject.html#1">[ subject ]</a>
+              <a href="author.html#1">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

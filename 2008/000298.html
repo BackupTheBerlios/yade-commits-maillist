@@ -1,0 +1,347 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1336 - trunk/core
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1336%20-%20trunk/core&In-Reply-To=%3C200805021008.m42A8NOg017848%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000297.html">
+   <LINK REL="Next"  HREF="000299.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1336 - trunk/core</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1336%20-%20trunk/core&In-Reply-To=%3C200805021008.m42A8NOg017848%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1336 - trunk/core">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Fri May  2 12:08:23 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000297.html">[Yade-commits] r1335 - in trunk: core extra extra/clump extra/tetra	extra/usct gui/py pkg/common/Engine/DeusExMachina	pkg/common/Engine/EngineUnit pkg/common/Engine/MetaEngine	pkg/common/Engine/StandAloneEngine	pkg/common/RenderingEngine/OpenGLRenderingEngine	pkg/dem/Engine/DeusExMachina pkg/dem/Engine/StandAloneEngine	pkg/fem/Engine/StandAloneEngine	pkg/mass-spring/Engine/StandAloneEngine	pkg/realtime-rigidbody/Engine/StandAloneEngine scripts
+</A></li>
+        <LI>Next message: <A HREF="000299.html">[Yade-commits] r1337 - trunk/core
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#298">[ date ]</a>
+              <a href="thread.html#298">[ thread ]</a>
+              <a href="subject.html#298">[ subject ]</a>
+              <a href="author.html#298">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2008-05-02 12:08:17 +0200 (Fri, 02 May 2008)
+New Revision: 1336
+
+Modified:
+   trunk/core/MetaDispatchingEngine.cpp
+   trunk/core/MetaDispatchingEngine.hpp
+   trunk/core/MetaDispatchingEngine1D.hpp
+   trunk/core/MetaDispatchingEngine2D.hpp
+Log:
+Svn wants to commit before moving files... :-| 
+
+
+Modified: trunk/core/MetaDispatchingEngine.cpp
+===================================================================
+--- trunk/core/MetaDispatchingEngine.cpp	2008-05-02 10:00:06 UTC (rev 1335)
++++ trunk/core/MetaDispatchingEngine.cpp	2008-05-02 10:08:17 UTC (rev 1336)
+@@ -6,27 +6,42 @@
+ *  GNU General Public License v2 or later. See file LICENSE for details. *
+ *************************************************************************/
+ 
+-#include &quot;MetaDispatchingEngine.hpp&quot;
++#include &quot;MetaEngine.hpp&quot;
+ 
+-MetaDispatchingEngine::MetaDispatchingEngine()
++#include&lt;algorithm&gt;
++#include&lt;vector&gt;
++
++list&lt;string&gt; MetaEngine::getNeededBex(){
++	list&lt;string&gt; ret;
++	BOOST_FOREACH(shared_ptr&lt;EngineUnit&gt; e, functorArguments){
++		list&lt;string&gt; eBex=e-&gt;getNeededBex();
++		ret.insert(ret.end(),eBex.begin(),eBex.end());
++	}
++	ret.sort();
++	ret.unique();
++	return ret;
++}
++
++
++MetaEngine::MetaEngine()
+ {
+ 	functorNames.clear();
+ 	functorArguments.clear();
+ }
+ 
+ 
+-MetaDispatchingEngine::~MetaDispatchingEngine()
++MetaEngine::~MetaEngine()
+ {
+ }
+ 
+ 
+-void MetaDispatchingEngine::postProcessAttributes(bool deserializing)
++void MetaEngine::postProcessAttributes(bool deserializing)
+ {
+ 	Engine::postProcessAttributes(deserializing);
+ }
+ 
+ 
+-void MetaDispatchingEngine::registerAttributes()
++void MetaEngine::registerAttributes()
+ {
+ 	Engine::registerAttributes();
+ 	REGISTER_ATTRIBUTE(functorNames);
+@@ -34,12 +49,12 @@
+ }
+ 
+ 
+-vector&lt;vector&lt;string&gt; &gt;&amp; MetaDispatchingEngine::getFunctorNames()
++vector&lt;vector&lt;string&gt; &gt;&amp; MetaEngine::getFunctorNames()
+ {
+ 	return functorNames;
+ }
+ 
+-void MetaDispatchingEngine::clear()
++void MetaEngine::clear()
+ {
+ 	functorNames.clear();
+ 	functorArguments.clear();
+@@ -47,7 +62,7 @@
+ 
+ 
+ 
+-void MetaDispatchingEngine::storeFunctorName(const string&amp; baseClassName1, const string&amp; libName, shared_ptr&lt;EngineUnit&gt; eu)
++void MetaEngine::storeFunctorName(const string&amp; baseClassName1, const string&amp; libName, shared_ptr&lt;EngineUnit&gt; eu)
+ {
+ 	vector&lt;string&gt; v;
+ 
+@@ -60,7 +75,7 @@
+ }
+ 
+ 
+-void MetaDispatchingEngine::storeFunctorName( const string&amp; baseClassName1, const string&amp; baseClassName2, const string&amp; libName, shared_ptr&lt;EngineUnit&gt; eu)
++void MetaEngine::storeFunctorName( const string&amp; baseClassName1, const string&amp; baseClassName2, const string&amp; libName, shared_ptr&lt;EngineUnit&gt; eu)
+ {
+ 	vector&lt;string&gt; v;
+ 
+@@ -74,7 +89,7 @@
+ }
+ 
+ 
+-void MetaDispatchingEngine::storeFunctorName( const string&amp; baseClassName1, const string&amp; baseClassName2, const string&amp; baseClassName3, const string&amp; libName, shared_ptr&lt;EngineUnit&gt; eu)
++void MetaEngine::storeFunctorName( const string&amp; baseClassName1, const string&amp; baseClassName2, const string&amp; baseClassName3, const string&amp; libName, shared_ptr&lt;EngineUnit&gt; eu)
+ {
+ 	vector&lt;string&gt; v;
+ 
+@@ -90,7 +105,7 @@
+ }
+ 
+ 
+-void MetaDispatchingEngine::storeFunctorArguments(shared_ptr&lt;EngineUnit&gt; eu)
++void MetaEngine::storeFunctorArguments(shared_ptr&lt;EngineUnit&gt; eu)
+ {
+ 	if (!eu) 
+ 		return;
+@@ -108,7 +123,7 @@
+ }
+ 
+ 
+-shared_ptr&lt;EngineUnit&gt; MetaDispatchingEngine::findFunctorArguments(const string&amp; libName)
++shared_ptr&lt;EngineUnit&gt; MetaEngine::findFunctorArguments(const string&amp; libName)
+ {
+ 
+ 	EngineUnitListIterator it    = functorArguments.begin();
+
+Modified: trunk/core/MetaDispatchingEngine.hpp
+===================================================================
+--- trunk/core/MetaDispatchingEngine.hpp	2008-05-02 10:00:06 UTC (rev 1335)
++++ trunk/core/MetaDispatchingEngine.hpp	2008-05-02 10:08:17 UTC (rev 1336)
+@@ -12,7 +12,7 @@
+ #include &quot;Engine.hpp&quot;
+ #include &quot;EngineUnit.hpp&quot;
+ 
+-class MetaDispatchingEngine : public Engine
++class MetaEngine : public Engine
+ {
+ 	public:
+ 		vector&lt;vector&lt;string&gt; &gt;		functorNames; // public for python interface; since there is getFunctorArguments returning RW(!) reference to this, why have it private anyway?!
+@@ -30,6 +30,8 @@
+ 		virtual void add(shared_ptr&lt;EngineUnit&gt; eu=shared_ptr&lt;EngineUnit&gt;()) {throw;}
+ 		virtual void add(EngineUnit*) {throw;}
+ 		virtual void add(string) {throw;}
++
++		virtual list&lt;string&gt; getNeededBex();
+ 		
+ 		void storeFunctorName(const string&amp; baseClassName1, const string&amp; libName, shared_ptr&lt;EngineUnit&gt; eu);
+ 		void storeFunctorName(const string&amp; baseClassName1, const string&amp; baseClassName2, const string&amp; libName, shared_ptr&lt;EngineUnit&gt; eu);
+@@ -37,8 +39,8 @@
+ 		shared_ptr&lt;EngineUnit&gt; findFunctorArguments(const string&amp; libName);
+ 		void clear();
+ 		
+-		MetaDispatchingEngine();
+-		virtual ~MetaDispatchingEngine();
++		MetaEngine();
++		virtual ~MetaEngine();
+ 		
+ 		virtual string getEngineUnitType() { throw; };
+ 		virtual int getDimension() { throw; };
+@@ -47,11 +49,11 @@
+ 	protected :
+ 		virtual void registerAttributes();
+ 		virtual void postProcessAttributes(bool deserializing);
+-	REGISTER_CLASS_NAME(MetaDispatchingEngine);
++	REGISTER_CLASS_NAME(MetaEngine);
+ 	REGISTER_BASE_CLASS_NAME(Engine);
+ };
+ 
+-REGISTER_SERIALIZABLE(MetaDispatchingEngine,false);
++REGISTER_SERIALIZABLE(MetaEngine,false);
+ 
+ #endif // METADISPATCHINGENGINE_HPP
+ 
+
+Modified: trunk/core/MetaDispatchingEngine1D.hpp
+===================================================================
+--- trunk/core/MetaDispatchingEngine1D.hpp	2008-05-02 10:00:06 UTC (rev 1335)
++++ trunk/core/MetaDispatchingEngine1D.hpp	2008-05-02 10:08:17 UTC (rev 1336)
+@@ -9,12 +9,12 @@
+ #ifndef METADISPATCHINGENGINE1D_HPP
+ #define METADISPATCHINGENGINE1D_HPP
+ 
+-#include &quot;MetaDispatchingEngine.hpp&quot;
++#include &quot;MetaEngine.hpp&quot;
+ #include&lt;yade/lib-multimethods/DynLibDispatcher.hpp&gt;
+ 
+-/*! Type-safe variant of the MetaDispatchingEngine2D::add function. Arguments are not strings, but regular typenames and will give compile-time error if not defined. They are passed to MetaDispatchingEngine1D::add in the same order as given. */
++/*! Type-safe variant of the MetaEngine2D::add function. Arguments are not strings, but regular typenames and will give compile-time error if not defined. They are passed to MetaEngine1D::add in the same order as given. */
+ #define DISPATCHER_ADD2(e1,e2) add(#e1,#e2); {/* compile-time check for class existence */ typedef e1 p1; typedef e2 p2;}
+-/*! Same as DISPATCHER_ADD2 macro, but passes the additional 3rd argument to MetaDispatchingEngine1D::add as its 3rd, optional argument */
++/*! Same as DISPATCHER_ADD2 macro, but passes the additional 3rd argument to MetaEngine1D::add as its 3rd, optional argument */
+ #define DISPATCHER_ADD2_1(e1,e2,e3) add(#e1,#e2,e3); {/* compile-time check for class existence */ typedef e1 p1; typedef e2 p2;}
+ 
+ 
+@@ -26,7 +26,7 @@
+ 	class EngineUnitArguments,
+ 	bool autoSymmetry=true
+ &gt;
+-class MetaDispatchingEngine1D : public MetaDispatchingEngine,
++class MetaEngine1D : public MetaEngine,
+ 				public DynLibDispatcher
+ 				&lt;	  TYPELIST_1(baseClass)		// base classes for dispatch
+ 					, EngineUnitType		// class that provides multivirtual call
+@@ -82,19 +82,19 @@
+ 	protected :
+ 		void registerAttributes()
+ 		{
+-			MetaDispatchingEngine::registerAttributes();
++			MetaEngine::registerAttributes();
+ 		}
+ 		void postProcessAttributes(bool deserializing)
+ 		{
+-			MetaDispatchingEngine::postProcessAttributes(deserializing);
++			MetaEngine::postProcessAttributes(deserializing);
+ 			if(deserializing)
+ 			{
+ 				for(unsigned int i=0;i&lt;functorNames.size();i++)
+ 					add1DEntry(functorNames[i][0],functorNames[i][1],static_pointer_cast&lt;EngineUnitType&gt;(findFunctorArguments(functorNames[i][1])));	
+ 			}
+ 		}
+-	REGISTER_CLASS_NAME(MetaDispatchingEngine1D);
+-	REGISTER_BASE_CLASS_NAME(MetaDispatchingEngine DynLibDispatcher);
++	REGISTER_CLASS_NAME(MetaEngine1D);
++	REGISTER_BASE_CLASS_NAME(MetaEngine DynLibDispatcher);
+ };
+ 
+ #endif // METADISPATCHINGENGINE1D_HPP
+
+Modified: trunk/core/MetaDispatchingEngine2D.hpp
+===================================================================
+--- trunk/core/MetaDispatchingEngine2D.hpp	2008-05-02 10:00:06 UTC (rev 1335)
++++ trunk/core/MetaDispatchingEngine2D.hpp	2008-05-02 10:08:17 UTC (rev 1336)
+@@ -9,12 +9,12 @@
+ #ifndef METADISPATCHINGENGINE2D_HPP
+ #define METADISPATCHINGENGINE2D_HPP
+ 
+-#include &quot;MetaDispatchingEngine.hpp&quot;
++#include &quot;MetaEngine.hpp&quot;
+ #include&lt;yade/lib-multimethods/DynLibDispatcher.hpp&gt;
+ 
+-/*! Type-safe variant of the MetaDispatchingEngine2D::add function. Arguments are not strings, but regular typenames and will give compile-time error if not defined. They are passed to MetaDispatchingEngine2D::add in the same order as given. */
++/*! Type-safe variant of the MetaEngine2D::add function. Arguments are not strings, but regular typenames and will give compile-time error if not defined. They are passed to MetaEngine2D::add in the same order as given. */
+ #define DISPATCHER_ADD3(e1,e2,e3) add(#e1,#e2,#e3); {/* compile-time check for class existence */ typedef e1 p1; typedef e2 p2; typedef e3 p3;}
+-/*! Same as DISPATCHER_ADD3 macro, but passes the additional 4th argument to MetaDispatchingEngine2D::add as its 4th, optional argument */
++/*! Same as DISPATCHER_ADD3 macro, but passes the additional 4th argument to MetaEngine2D::add as its 4th, optional argument */
+ #define DISPATCHER_ADD3_1(e1,e2,e3,e4) add(#e1,#e2,#e3,e4); {/* compile-time check for class existence */ typedef e1 p1; typedef e2 p2; typedef e3 p3;}
+ 
+ 
+@@ -28,7 +28,7 @@
+ 	class EngineUnitArguments,
+ 	bool autoSymmetry=true
+ &gt;
+-class MetaDispatchingEngine2D : public MetaDispatchingEngine,
++class MetaEngine2D : public MetaEngine,
+ 				public DynLibDispatcher
+ 				&lt;	  TYPELIST_2(baseClass1,baseClass2)	// base classes for dispatch
+ 					, EngineUnitType			// class that provides multivirtual call
+@@ -92,7 +92,7 @@
+ 	protected :
+ 		void postProcessAttributes(bool deserializing)
+ 		{
+-			MetaDispatchingEngine::postProcessAttributes(deserializing);
++			MetaEngine::postProcessAttributes(deserializing);
+ 			if(deserializing)
+ 			{
+ 				for(unsigned int i=0;i&lt;functorNames.size();i++)
+@@ -102,14 +102,14 @@
+ 
+ 		void registerAttributes()
+ 		{
+-			MetaDispatchingEngine::registerAttributes();
++			MetaEngine::registerAttributes();
+ 		}
+-	REGISTER_CLASS_NAME(MetaDispatchingEngine2D);
+-	REGISTER_BASE_CLASS_NAME(MetaDispatchingEngine DynLibDispatcher);
++	REGISTER_CLASS_NAME(MetaEngine2D);
++	REGISTER_BASE_CLASS_NAME(MetaEngine DynLibDispatcher);
+ 
+ };
+ 
+-//REGISTER_SERIALIZABLE(MetaDispatchingEngine2D,false);
++//REGISTER_SERIALIZABLE(MetaEngine2D,false);
+ 
+ /*
+ #define REGISTER_BASE_CLASS_TYPE_2D(name1,name2)			\
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000297.html">[Yade-commits] r1335 - in trunk: core extra extra/clump extra/tetra	extra/usct gui/py pkg/common/Engine/DeusExMachina	pkg/common/Engine/EngineUnit pkg/common/Engine/MetaEngine	pkg/common/Engine/StandAloneEngine	pkg/common/RenderingEngine/OpenGLRenderingEngine	pkg/dem/Engine/DeusExMachina pkg/dem/Engine/StandAloneEngine	pkg/fem/Engine/StandAloneEngine	pkg/mass-spring/Engine/StandAloneEngine	pkg/realtime-rigidbody/Engine/StandAloneEngine scripts
+</A></li>
+	<LI>Next message: <A HREF="000299.html">[Yade-commits] r1337 - trunk/core
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#298">[ date ]</a>
+              <a href="thread.html#298">[ thread ]</a>
+              <a href="subject.html#298">[ subject ]</a>
+              <a href="author.html#298">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

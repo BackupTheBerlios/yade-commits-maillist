@@ -1,0 +1,222 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1300 - in branches/przewdnik: core core/concurrent	pkg/common/Engine/StandAloneEngine
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1300%20-%20in%20branches/przewdnik%3A%20core%20core/concurrent%0A%09pkg/common/Engine/StandAloneEngine&In-Reply-To=%3C200804061752.m36Hq511003818%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000262.html">
+   <LINK REL="Next"  HREF="000264.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1300 - in branches/przewdnik: core core/concurrent	pkg/common/Engine/StandAloneEngine</H1>
+    <B>przewdnik at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1300%20-%20in%20branches/przewdnik%3A%20core%20core/concurrent%0A%09pkg/common/Engine/StandAloneEngine&In-Reply-To=%3C200804061752.m36Hq511003818%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1300 - in branches/przewdnik: core core/concurrent	pkg/common/Engine/StandAloneEngine">przewdnik at mail.berlios.de
+       </A><BR>
+    <I>Sun Apr  6 19:52:05 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000262.html">[Yade-commits] r1299 - branches/przewdnik
+</A></li>
+        <LI>Next message: <A HREF="000264.html">[Yade-commits] r1301 - in trunk/pkg/dem: . Engine/DeusExMachina	PreProcessor
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#263">[ date ]</a>
+              <a href="thread.html#263">[ thread ]</a>
+              <a href="subject.html#263">[ subject ]</a>
+              <a href="author.html#263">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: przewdnik
+Date: 2008-04-06 19:52:04 +0200 (Sun, 06 Apr 2008)
+New Revision: 1300
+
+Added:
+   branches/przewdnik/core/concurrent/
+   branches/przewdnik/core/concurrent/AbstractQueue.hpp
+   branches/przewdnik/core/concurrent/InterprocessQueue.cpp
+   branches/przewdnik/core/concurrent/InterprocessQueue.hpp
+   branches/przewdnik/pkg/common/Engine/StandAloneEngine/VisualisationEngine.cpp
+   branches/przewdnik/pkg/common/Engine/StandAloneEngine/VisualisationEngine.hpp
+Modified:
+   branches/przewdnik/core/SConscript
+Log:
+First part of queue needed for separation of calculations and visualisation
+
+Modified: branches/przewdnik/core/SConscript
+===================================================================
+--- branches/przewdnik/core/SConscript	2008-04-06 13:38:24 UTC (rev 1299)
++++ branches/przewdnik/core/SConscript	2008-04-06 17:52:04 UTC (rev 1300)
+@@ -24,7 +24,8 @@
+ 			'ThreadWorker.cpp',
+ 			'TimeStepper.cpp',
+ 			'yade.cpp',
+-			'yadeExceptions.cpp'],
++			'yadeExceptions.cpp',
++			'concurrent/InterprocessQueue.cpp'],
+ 		LIBS=env['LIBS']+['yade-base',
+ 			'yade-serialization',
+ 			'yade-factory',
+
+Added: branches/przewdnik/core/concurrent/AbstractQueue.hpp
+===================================================================
+--- branches/przewdnik/core/concurrent/AbstractQueue.hpp	2008-04-06 13:38:24 UTC (rev 1299)
++++ branches/przewdnik/core/concurrent/AbstractQueue.hpp	2008-04-06 17:52:04 UTC (rev 1300)
+@@ -0,0 +1,15 @@
++#ifndef ABSTRACTQUEUEHANDLER_H_
++#define ABSTRACTQUEUEHANDLER_H_
++
++template &lt;class T&gt; 
++class AbstractQueue
++{
++public:
++	virtual void init();
++	virtual void cleanup();
++	
++	virtual void push(const T&amp;);
++	virtual void pop(T&amp;);
++};
++
++#endif /*ABSTRACTQUEUEHANDLER_H_*/
+
+Added: branches/przewdnik/core/concurrent/InterprocessQueue.cpp
+===================================================================
+--- branches/przewdnik/core/concurrent/InterprocessQueue.cpp	2008-04-06 13:38:24 UTC (rev 1299)
++++ branches/przewdnik/core/concurrent/InterprocessQueue.cpp	2008-04-06 17:52:04 UTC (rev 1300)
+@@ -0,0 +1,28 @@
++#include &quot;InterprocessQueue.hpp&quot;
++
++
++template &lt;class T&gt;
++void InterprocessQueue&lt;T&gt;::init() {
++	queue = message_queue(open_or_create,
++						&quot;name&quot;, // FIXME
++						100,
++						100
++			);
++};
++
++template &lt;class T&gt;
++void InterprocessQueue&lt;T&gt;::cleanup() {
++	message_queue::remove(&quot;name&quot;);
++};
++
++template &lt;class T&gt;
++void InterprocessQueue&lt;T&gt;::push(const T&amp; obj) {
++	queue.send(&amp;obj, sizeof(obj), 0);
++};
++
++template &lt;class T&gt;
++void InterprocessQueue&lt;T&gt;::pop(T&amp; obj) {
++	std::size_t recvd_size;
++	unsigned int priority;
++	queue.receive(&amp;obj, 100, recvd_size, priority);
++};
+
+Added: branches/przewdnik/core/concurrent/InterprocessQueue.hpp
+===================================================================
+--- branches/przewdnik/core/concurrent/InterprocessQueue.hpp	2008-04-06 13:38:24 UTC (rev 1299)
++++ branches/przewdnik/core/concurrent/InterprocessQueue.hpp	2008-04-06 17:52:04 UTC (rev 1300)
+@@ -0,0 +1,23 @@
++#ifndef INTERPROCESSQUEUE_HPP_
++#define INTERPROCESSQUEUE_HPP_
++#include &quot;AbstractQueue.hpp&quot;
++#include &lt;boost/interprocess/ipc/message_queue.hpp&gt;
++
++using namespace boost::interprocess;
++
++template &lt;class T&gt;
++class InterprocessQueue : public AbstractQueue&lt;T&gt; 
++{
++private:
++	message_queue queue;
++public:
++	void init();
++	void cleanup();
++		
++	void push(const T&amp;);
++	void pop(T&amp;);
++	
++};
++
++#endif /*INTERPROCESSQUEUE_HPP_*/
++
+
+Added: branches/przewdnik/pkg/common/Engine/StandAloneEngine/VisualisationEngine.cpp
+===================================================================
+--- branches/przewdnik/pkg/common/Engine/StandAloneEngine/VisualisationEngine.cpp	2008-04-06 13:38:24 UTC (rev 1299)
++++ branches/przewdnik/pkg/common/Engine/StandAloneEngine/VisualisationEngine.cpp	2008-04-06 17:52:04 UTC (rev 1300)
+@@ -0,0 +1,15 @@
++#include &quot;VisualisationEngine.h&quot;
++
++VisualisationEngine::VisualisationEngine()
++{
++	
++}
++
++VisualisationEngine::~VisualisationEngine()
++{
++}
++
++VisualisationEngine::action(Body *body)
++{
++	
++}
+\ No newline at end of file
+
+Added: branches/przewdnik/pkg/common/Engine/StandAloneEngine/VisualisationEngine.hpp
+===================================================================
+--- branches/przewdnik/pkg/common/Engine/StandAloneEngine/VisualisationEngine.hpp	2008-04-06 13:38:24 UTC (rev 1299)
++++ branches/przewdnik/pkg/common/Engine/StandAloneEngine/VisualisationEngine.hpp	2008-04-06 17:52:04 UTC (rev 1300)
+@@ -0,0 +1,18 @@
++#ifndef VISUALISATIONENGINE_H_
++#define VISUALISATIONENGINE_H_
++
++#include &quot;StandAloneEngine.hpp&quot;
++
++class VisualisationEngine : public StandAloneEngine
++{
++public:
++	VisualisationEngine();
++	virtual ~VisualisationEngine();
++	void action(Body * body);
++	
++	
++	REGISTER_CLASS_NAME(VisualisationEngine);
++	REGISTER_BASE_CLASS_NAME(StandAloneEngine);
++};
++
++#endif /*VISUALISATIONENGINE_H_*/
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000262.html">[Yade-commits] r1299 - branches/przewdnik
+</A></li>
+	<LI>Next message: <A HREF="000264.html">[Yade-commits] r1301 - in trunk/pkg/dem: . Engine/DeusExMachina	PreProcessor
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#263">[ date ]</a>
+              <a href="thread.html#263">[ thread ]</a>
+              <a href="subject.html#263">[ subject ]</a>
+              <a href="author.html#263">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

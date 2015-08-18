@@ -1,0 +1,153 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1212 - trunk
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2007/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1212%20-%20trunk&In-Reply-To=%3C200706211409.l5LE905v008627%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000176.html">
+   <LINK REL="Next"  HREF="000178.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1212 - trunk</H1>
+    <B>cosurgi at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1212%20-%20trunk&In-Reply-To=%3C200706211409.l5LE905v008627%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1212 - trunk">cosurgi at mail.berlios.de
+       </A><BR>
+    <I>Thu Jun 21 16:09:00 CEST 2007</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000176.html">[Yade-commits] r1211 - tags
+</A></li>
+        <LI>Next message: <A HREF="000178.html">[Yade-commits] r1213 - trunk/pkg/dem/Engine/DeusExMachina
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#177">[ date ]</a>
+              <a href="thread.html#177">[ thread ]</a>
+              <a href="subject.html#177">[ subject ]</a>
+              <a href="author.html#177">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: cosurgi
+Date: 2007-06-21 16:08:59 +0200 (Thu, 21 Jun 2007)
+New Revision: 1212
+
+Modified:
+   trunk/ChangeLog
+Log:
+update changelog
+
+
+Modified: trunk/ChangeLog
+===================================================================
+--- trunk/ChangeLog	2007-06-21 13:16:01 UTC (rev 1211)
++++ trunk/ChangeLog	2007-06-21 14:08:59 UTC (rev 1212)
+@@ -1,4 +1,75 @@
+-r.1165
++r.1209 (Vaclav)
++  1. SCons will download new version of itself if older thatn 0.96.93 and will proxy all calls to it transparently (hopefully)
++  1a. Fix argv[0] for scons proxy.
++  2. Revamped python wrappers, now all attributes are settable as dicionary entries in respective instances from python
++  3. added example of python script that generates and runs BoxStack
++  4. Do not #define DEBUG, since it is used in log4cxx (as log4cxx::Levels::DEBUG). YADE_DEBUG is used everywhere. If you ever get weird errors about that, #undef DEBUG after including qt3 headers.
++  5. Some code cleanups.
++
++r.1206 (Vaclav)
++  1. rename ThreadWorker::message() to ThreadWorker::getStatus, ThreadWorker::setMessage() to ThreadWorker::setStatus (and private ThreadWorker::m_message to m_status)
++  2. add public: std::string FileGenerator::message that holds exit value description
++  3. FileGenerator::generate returns now bool (if the generation was successful); description in ::message
++  4. Adapted all generators and UIs for the above changes (except NullGUI - is that needed?)
++  5. Adjust other components for FileGenerator changes. Add wrapper for preprocessor in python.
++
++r.1204 (Vaclav)
++  - frontend cleanups, eperimental python console ui.
++  - Convenience functions for serialization - experimental.
++  - fix qualifiers in constructor of AttrAccess
++
++r.1200 (Janek)
++  - update yade icon, by Vaclav's suggestion (the red spheres are not so vividly red, so looks a bit better)
++  - scons will create the installation directory if it doesn't exist
++  - incorporated Bruno's fixes into 0.11 release
++
++r.1199 (Bruno)
++  - Modified definition of the interpenetration for box-spheres interractions. The previous definition was inconsistent.
++  - Some changes in the computation of critical timestep so that the triaxial samples do not explode when dt is set to the automatic value. The change mostly affects the first steps of a simulation. Now, dt is computed at each timestep during the first steps, whatever the value of the user-defined variable &quot;timeStepUpdateInterval&quot;, until a relevant value is found.
++  - Cosmetic changes in TriaxialTest.
++  - Initial zoom in the simulation player is set to 2. 
++
++r.1192 (Janek)
++  - FileGenerators try to set the timestep when TimeStepper is not used. But it
++    is still not working when simulation is running during the generation. This
++    means, that 'dt' should not be in Omega, but inside a simulation itself. At
++    last there is a clear answer for this dilemma.
++  - fixed some crashing of HangingCloth
++  - fixed warnings in capillary law.
++
++r.1186 (Vaclav)
++  - Fix scons to handle boost.*-mt well, some other cleanups.
++  - remove hardcoded linkage with boost libs from SConscript files
++  - Modify debian builds so that making source packages for release versions work as well.
++
++r.1182 (Bruno)
++  - Add files related to capillary law.
++
++r.1181 (Janek)
++  - introduced body_id_t(ype) so that bodies are not numbered as an int, but as a body_id_t
++  - added center 'scene button' on first tab of simulation controller
++
++r.1180 (Vaclav)
++  - Correct 'all' value for features
++  - Clump improvements
++  - If RELEASE file exists, get yade version from there, instead of from svn.
++  - Remove wildmagic-dev from debian deps.
++  - fixed qt3 detection (used deprecated qapp.h header instead of qapplication.h).
++
++r.1174 (Janek)
++  - timestepper is set correctly when loading file in GUI (I hope!) - no need to reload second time
++  - FileGenerator does not open SimulationController if it already exists
++
++r.1174 (mixed)
++  - don't exclude lattice with miniWm3 
++  - merge lattice from Janek's PhD
++  - SConscript uses md5sum instead of timestamp.
++  - fixed crash in SDECLinkedSpheres example
++  - fixed RotatingBox and BoxStack examples - and accidental mistake in SAPCollider
++  - Add 'features' option to scons, which can enable/disable python and log4cxx at compile-time (extensible)
++
++
++r.1165 (Janek)
+   - updated Icon
+   - updated ChangeLog
+   - moved some obsolete scripts to doc/removed
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000176.html">[Yade-commits] r1211 - tags
+</A></li>
+	<LI>Next message: <A HREF="000178.html">[Yade-commits] r1213 - trunk/pkg/dem/Engine/DeusExMachina
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#177">[ date ]</a>
+              <a href="thread.html#177">[ thread ]</a>
+              <a href="subject.html#177">[ subject ]</a>
+              <a href="author.html#177">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

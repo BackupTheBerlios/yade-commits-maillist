@@ -1,0 +1,89 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1447 - trunk/pkg/dem/PreProcessor
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1447%20-%20trunk/pkg/dem/PreProcessor&In-Reply-To=%3C200807241540.m6OFeuhA000427%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000406.html">
+   <LINK REL="Next"  HREF="000408.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1447 - trunk/pkg/dem/PreProcessor</H1>
+    <B>chareyre at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1447%20-%20trunk/pkg/dem/PreProcessor&In-Reply-To=%3C200807241540.m6OFeuhA000427%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1447 - trunk/pkg/dem/PreProcessor">chareyre at mail.berlios.de
+       </A><BR>
+    <I>Thu Jul 24 17:40:56 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000406.html">[Yade-commits] r1446 - branches
+</A></li>
+        <LI>Next message: <A HREF="000408.html">[Yade-commits] r1448 - in trunk: extra extra/usct	pkg/dem/PreProcessor scripts
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#407">[ date ]</a>
+              <a href="thread.html#407">[ thread ]</a>
+              <a href="subject.html#407">[ subject ]</a>
+              <a href="author.html#407">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: chareyre
+Date: 2008-07-24 17:40:55 +0200 (Thu, 24 Jul 2008)
+New Revision: 1447
+
+Modified:
+   trunk/pkg/dem/PreProcessor/TriaxialTest.cpp
+Log:
+Fix a problem resulting in VectSet (default)  and HashMap being used 
+simultaneously for transient/persistent interactions
+in the same simulation (which for unknown reasons is not 
+good).
+
+
+Modified: trunk/pkg/dem/PreProcessor/TriaxialTest.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/TriaxialTest.cpp	2008-07-24 14:05:34 UTC (rev 1446)
++++ trunk/pkg/dem/PreProcessor/TriaxialTest.cpp	2008-07-24 15:40:55 UTC (rev 1447)
+@@ -256,7 +256,8 @@
+ 	createActors(rootBody);
+ 	positionRootBody(rootBody);
+ 
+-	rootBody-&gt;transientInteractions		= shared_ptr&lt;InteractionContainer&gt;(new InteractionHashMap);
++	//rootBody-&gt;persistentInteractions	= shared_ptr&lt;InteractionContainer&gt;(new InteractionHashMap);
++	//rootBody-&gt;transientInteractions		= shared_ptr&lt;InteractionContainer&gt;(new InteractionHashMap);
+ 	rootBody-&gt;physicalActions		= shared_ptr&lt;PhysicalActionContainer&gt;(new PhysicalActionVectorVector);
+ 	rootBody-&gt;bodies 			= shared_ptr&lt;BodyContainer&gt;(new BodyRedirectionVector);
+ 
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000406.html">[Yade-commits] r1446 - branches
+</A></li>
+	<LI>Next message: <A HREF="000408.html">[Yade-commits] r1448 - in trunk: extra extra/usct	pkg/dem/PreProcessor scripts
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#407">[ date ]</a>
+              <a href="thread.html#407">[ thread ]</a>
+              <a href="subject.html#407">[ subject ]</a>
+              <a href="author.html#407">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

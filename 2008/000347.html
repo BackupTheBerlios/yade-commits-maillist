@@ -1,0 +1,118 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1386 - trunk/gui/qt3
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1386%20-%20trunk/gui/qt3&In-Reply-To=%3C200806121227.m5CCRjV2012497%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000346.html">
+   <LINK REL="Next"  HREF="000348.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1386 - trunk/gui/qt3</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1386%20-%20trunk/gui/qt3&In-Reply-To=%3C200806121227.m5CCRjV2012497%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1386 - trunk/gui/qt3">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Thu Jun 12 14:27:45 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000346.html">[Yade-commits] r1385 - in trunk: extra gui/py gui/qt3	gui/qt3/pictures pkg/common/Engine/StandAloneEngine scripts
+</A></li>
+        <LI>Next message: <A HREF="000348.html">[Yade-commits] r1387 - in trunk/pkg: common/Engine/EngineUnit	dem/Engine/DeusExMachina dem/Engine/StandAloneEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#347">[ date ]</a>
+              <a href="thread.html#347">[ thread ]</a>
+              <a href="subject.html#347">[ subject ]</a>
+              <a href="author.html#347">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2008-06-12 14:27:44 +0200 (Thu, 12 Jun 2008)
+New Revision: 1386
+
+Modified:
+   trunk/gui/qt3/QtGUI.cpp
+   trunk/gui/qt3/SimulationController.cpp
+Log:
+1. Fix segfault in GUI exception trap
+2. Handle .xml.gz and .xml.bz2 (in addition to .xml) as command-line argument in QtGUI
+
+
+
+Modified: trunk/gui/qt3/QtGUI.cpp
+===================================================================
+--- trunk/gui/qt3/QtGUI.cpp	2008-06-12 11:50:13 UTC (rev 1385)
++++ trunk/gui/qt3/QtGUI.cpp	2008-06-12 12:27:44 UTC (rev 1386)
+@@ -46,9 +46,11 @@
+ 			default: break;	
+ 		}
+ 	if(optind&lt;argc){ // process non-option arguments
+-		if(boost::algorithm::ends_with(string(argv[optind]),string(&quot;.xml&quot;))) Omega::instance().setSimulationFileName(string(argv[optind]));
++		if(boost::algorithm::ends_with(string(argv[optind]),string(&quot;.xml&quot;)) ||
++			boost::algorithm::ends_with(string(argv[optind]),string(&quot;.xml.gz&quot;)) ||
++			boost::algorithm::ends_with(string(argv[optind]),string(&quot;.xml.bz2&quot;))) Omega::instance().setSimulationFileName(string(argv[optind]));
+ 		#ifdef EMBED_PYTHON
+-			if(boost::algorithm::ends_with(string(argv[optind]),string(&quot;.py&quot;))) PythonUI::runScript=string(argv[optind]);
++		else if(boost::algorithm::ends_with(string(argv[optind]),string(&quot;.py&quot;))) PythonUI::runScript=string(argv[optind]);
+ 		#endif
+ 		else optind--;
+ 	}
+
+Modified: trunk/gui/qt3/SimulationController.cpp
+===================================================================
+--- trunk/gui/qt3/SimulationController.cpp	2008-06-12 11:50:13 UTC (rev 1385)
++++ trunk/gui/qt3/SimulationController.cpp	2008-06-12 12:27:44 UTC (rev 1386)
+@@ -154,7 +154,8 @@
+ 		{
+ 			Omega::instance().resetRootBody();
+ 			Omega::instance().setSimulationFileName(&quot;&quot;);
+-			shared_ptr&lt;MessageDialog&gt; md = shared_ptr&lt;MessageDialog&gt;(new MessageDialog(e.what(),this-&gt;parentWidget()-&gt;parentWidget()));
++			LOG_ERROR(e.what());
++			shared_ptr&lt;MessageDialog&gt; md = shared_ptr&lt;MessageDialog&gt;(new MessageDialog(e.what(),NULL /*this-&gt;parentWidget()-&gt;parentWidget()*/));
+ 			md-&gt;exec(); 
+ 			pbStartSimulation-&gt;setDisabled(true);
+ 			pbStopSimulation-&gt;setDisabled(true);
+@@ -165,7 +166,8 @@
+ 		{
+ 			Omega::instance().resetRootBody();
+ 			Omega::instance().setSimulationFileName(&quot;&quot;);
+-			shared_ptr&lt;MessageDialog&gt; md = shared_ptr&lt;MessageDialog&gt;(new MessageDialog(e.what(),this-&gt;parentWidget()-&gt;parentWidget()));
++			LOG_ERROR(e.what());
++			shared_ptr&lt;MessageDialog&gt; md = shared_ptr&lt;MessageDialog&gt;(new MessageDialog(e.what(),NULL /*this-&gt;parentWidget()-&gt;parentWidget()*/));
+ 			md-&gt;exec(); 
+ 			pbStartSimulation-&gt;setDisabled(true);
+ 			pbStopSimulation-&gt;setDisabled(true);
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000346.html">[Yade-commits] r1385 - in trunk: extra gui/py gui/qt3	gui/qt3/pictures pkg/common/Engine/StandAloneEngine scripts
+</A></li>
+	<LI>Next message: <A HREF="000348.html">[Yade-commits] r1387 - in trunk/pkg: common/Engine/EngineUnit	dem/Engine/DeusExMachina dem/Engine/StandAloneEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#347">[ date ]</a>
+              <a href="thread.html#347">[ thread ]</a>
+              <a href="subject.html#347">[ subject ]</a>
+              <a href="author.html#347">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

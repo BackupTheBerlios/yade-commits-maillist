@@ -1,0 +1,394 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1338 - in trunk: . core lib/serialization scripts
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1338%20-%20in%20trunk%3A%20.%20core%20lib/serialization%20scripts&In-Reply-To=%3C200805021218.m42CIdZA018373%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000299.html">
+   <LINK REL="Next"  HREF="000301.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1338 - in trunk: . core lib/serialization scripts</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1338%20-%20in%20trunk%3A%20.%20core%20lib/serialization%20scripts&In-Reply-To=%3C200805021218.m42CIdZA018373%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1338 - in trunk: . core lib/serialization scripts">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Fri May  2 14:18:39 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000299.html">[Yade-commits] r1337 - trunk/core
+</A></li>
+        <LI>Next message: <A HREF="000301.html">[Yade-commits] r1339 - in trunk: debian extra gui/py scripts
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#300">[ date ]</a>
+              <a href="thread.html#300">[ thread ]</a>
+              <a href="subject.html#300">[ subject ]</a>
+              <a href="author.html#300">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2008-05-02 14:18:38 +0200 (Fri, 02 May 2008)
+New Revision: 1338
+
+Modified:
+   trunk/SConstruct
+   trunk/core/Omega.cpp
+   trunk/lib/serialization/IOFormatManager.tpp
+   trunk/scripts/simple-scene.py
+Log:
+Support saving to .xml, .xml.gz and .xml.bz2. Loading works as well.
+
+
+
+Modified: trunk/SConstruct
+===================================================================
+--- trunk/SConstruct	2008-05-02 10:11:19 UTC (rev 1337)
++++ trunk/SConstruct	2008-05-02 12:18:38 UTC (rev 1338)
+@@ -255,6 +255,8 @@
+ 		or conf.CheckLibWithHeader('boost_thread','boost/thread/thread.hpp','c++','boost::thread::thread();',autoadd=1))
+ 	ok&amp;=(conf.CheckLibWithHeader('boost_filesystem-mt','boost/filesystem/path.hpp','c++','boost::filesystem::path();',autoadd=1)
+ 		or conf.CheckLibWithHeader('boost_filesystem','boost/filesystem/path.hpp','c++','boost::filesystem::path();',autoadd=1))
++	ok&amp;=(conf.CheckLibWithHeader('boost_iostreams-mt','boost/iostreams/device/file.hpp','c++','boost::iostreams::file_sink(&quot;&quot;);',autoadd=1)
++		or conf.CheckLibWithHeader('boost_iostreams','boost/iostreams/device/file.hpp','c++','boost::iostreams::file_sink(&quot;&quot;);',autoadd=1))
+ 
+ 	if not env['useMiniWm3']: ok&amp;=conf.CheckLibWithHeader('Wm3Foundation','Wm3Math.h','c++','Wm3::Math&lt;double&gt;::PI;',autoadd=1)
+ 
+
+Modified: trunk/core/Omega.cpp
+===================================================================
+--- trunk/core/Omega.cpp	2008-05-02 10:11:19 UTC (rev 1337)
++++ trunk/core/Omega.cpp	2008-05-02 12:18:38 UTC (rev 1338)
+@@ -23,6 +23,7 @@
+ #include&lt;cstdlib&gt;
+ #include&lt;boost/filesystem/operations.hpp&gt;
+ #include&lt;boost/filesystem/convenience.hpp&gt;
++#include&lt;boost/algorithm/string.hpp&gt;
+ 
+ #include&lt;cxxabi.h&gt;
+ 
+@@ -316,77 +317,66 @@
+ 
+ void Omega::loadSimulation()
+ {
+-	if((Omega::instance().getSimulationFileName().size() != 0)
+-		&amp;&amp;  (filesystem::exists(simulationFileName)) 
+-		&amp;&amp;  (filesystem::extension(simulationFileName)==&quot;.xml&quot; || filesystem::extension(simulationFileName)==&quot;.yade&quot; ))
+-	{
+-		// FIXME: should stop running simulation!!
+-		freeRootBody();
+-		LOG_INFO(&quot;Loading file &quot; + simulationFileName);
++	if(Omega::instance().getSimulationFileName().size()==0) throw yadeBadFile(&quot;Simulation filename to load has zero length&quot;);
++	if(filesystem::exists(simulationFileName)) throw yadeBadFile(&quot;Simulation file to load doesn't exist&quot;);
++	
++	// FIXME: should stop running simulation!!
++	LOG_INFO(&quot;Loading file &quot; + simulationFileName);
+ 		
+-		if(filesystem::extension(simulationFileName)==&quot;.xml&quot;)
+-			IOFormatManager::loadFromFile(&quot;XMLFormatManager&quot;,simulationFileName,&quot;rootBody&quot;,rootBody);
+-		else if(filesystem::extension(simulationFileName)==&quot;.yade&quot; )
+-			IOFormatManager::loadFromFile(&quot;BINFormatManager&quot;,simulationFileName,&quot;rootBody&quot;,rootBody);
+-		if( rootBody-&gt;getClassName() != &quot;MetaBody&quot;)
+-			throw yadeBadFile(string(&quot;Unrecognized extension `&quot;+filesystem::extension(simulationFileName)+&quot;': should be .xml|.yade&quot;).c_str());
++	if(algorithm::ends_with(simulationFileName,&quot;.xml&quot;) || algorithm::ends_with(simulationFileName,&quot;.xml.gz&quot;) || algorithm::ends_with(simulationFileName,&quot;.xml.bz2&quot;)){
++		freeRootBody();
++		IOFormatManager::loadFromFile(&quot;XMLFormatManager&quot;,simulationFileName,&quot;rootBody&quot;,rootBody);
++	}
++	else if(algorithm::ends_with(simulationFileName,&quot;.yade&quot;)){
++		freeRootBody();
++		IOFormatManager::loadFromFile(&quot;BINFormatManager&quot;,simulationFileName,&quot;rootBody&quot;,rootBody);
++	}
++	else throw (yadeBadFile(&quot;Extension of file not recognized.&quot;));
+ 
+-		sStartingSimulationTime = second_clock::local_time();
+-		msStartingSimulationTime = microsec_clock::local_time();
+-		simulationPauseDuration = msStartingSimulationTime-msStartingSimulationTime;
+-		msStartingPauseTime = msStartingSimulationTime;
+-		LOG_DEBUG(&quot;Simulation loaded&quot;);
+-		currentIteration = 0;
+-		simulationTime = 0;
++	if( rootBody-&gt;getClassName() != &quot;MetaBody&quot;) throw yadeBadFile(&quot;Wrong file format (rootBody is not a MetaBody!) ??&quot;);
+ 
+-		if(rootBody-&gt;recover){
+-			LOG_INFO(&quot;Simulation recovery effective.&quot;);
+-			currentIteration=rootBody-&gt;recoverCurrentIteration;
+-			stopAtIteration=rootBody-&gt;recoverStopAtIteration;
+-			simulationTime=rootBody-&gt;recoverSimulationTime;	
+-			rootBody-&gt;recover=false;
+-		}
+-		
++	sStartingSimulationTime = second_clock::local_time();
++	msStartingSimulationTime = microsec_clock::local_time();
++	simulationPauseDuration = msStartingSimulationTime-msStartingSimulationTime;
++	msStartingPauseTime = msStartingSimulationTime;
++	LOG_DEBUG(&quot;Simulation loaded&quot;);
++	currentIteration = 0;
++	simulationTime = 0;
++
++	if(rootBody-&gt;recover){
++		LOG_INFO(&quot;Simulation recovery effective.&quot;);
++		currentIteration=rootBody-&gt;recoverCurrentIteration;
++		stopAtIteration=rootBody-&gt;recoverStopAtIteration;
++		simulationTime=rootBody-&gt;recoverSimulationTime;	
++		rootBody-&gt;recover=false;
+ 	}
+-	else
+-	{
+-		std::string error = yadeExceptions::BadFile + simulationFileName;
+-		cerr &lt;&lt; error.c_str() &lt;&lt; endl;
+-		throw yadeBadFile(error.c_str());
+-	}
+ }
+ 
+ void Omega::saveSimulation(const string name, bool recover)
+ {
+-	if((name.size()!= 0) &amp;&amp; (filesystem::extension(name)==&quot;.xml&quot; || filesystem::extension(name)==&quot;.yade&quot;)){
+-		LOG_INFO(&quot;Saving file &quot; &lt;&lt; name);
++	if(name.size()==0) throw yadeBadFile(&quot;Filename with zero length.&quot;);
++	LOG_INFO(&quot;Saving file &quot; &lt;&lt; name);
++	if(recover){
++		LOG_INFO(&quot;Simulation recovery enabled.&quot;);
++		rootBody-&gt;recover=true;
++		rootBody-&gt;recoverCurrentIteration=currentIteration;
++		rootBody-&gt;recoverStopAtIteration=stopAtIteration;
++		rootBody-&gt;recoverSimulationTime=simulationTime;
++	}
+ 
+-		if(recover){
+-			LOG_INFO(&quot;Simulation recovery enabled.&quot;);
+-			rootBody-&gt;recover=true;
+-			rootBody-&gt;recoverCurrentIteration=currentIteration;
+-			rootBody-&gt;recoverStopAtIteration=stopAtIteration;
+-			rootBody-&gt;recoverSimulationTime=simulationTime;
+-		}
+-
+-		if(filesystem::extension(name)==&quot;.xml&quot;) {
+-			FormatChecker::format=FormatChecker::XML;
+-			IOFormatManager::saveToFile(&quot;XMLFormatManager&quot;,name,&quot;rootBody&quot;,rootBody);
+-		}
+-
+-		else if(filesystem::extension(name)==&quot;.yade&quot; ) {
+-			FormatChecker::format=FormatChecker::BIN;
+-			IOFormatManager::saveToFile(&quot;BINFormatManager&quot;,name,&quot;rootBody&quot;,rootBody);
+-		}
+-
+-		if(recover) rootBody-&gt;recover=false;
++	if(algorithm::ends_with(name,&quot;.xml&quot;) || algorithm::ends_with(name,&quot;.xml.gz&quot;) || algorithm::ends_with(name,&quot;.xml.bz2&quot;)){
++		FormatChecker::format=FormatChecker::XML;
++		IOFormatManager::saveToFile(&quot;XMLFormatManager&quot;,name,&quot;rootBody&quot;,rootBody);
+ 	}
+-	else
+-	{
+-		std::string error = yadeExceptions::BadFile + name;
+-		cerr &lt;&lt; error.c_str() &lt;&lt; endl;
+-		throw yadeBadFile(error.c_str());
++	else if(algorithm::ends_with(name,&quot;.yade&quot;)){
++		FormatChecker::format=FormatChecker::BIN;
++		IOFormatManager::saveToFile(&quot;BINFormatManager&quot;,name,&quot;rootBody&quot;,rootBody);
+ 	}
++	else {
++		rootBody-&gt;recover=false;
++		throw(yadeBadFile((&quot;Filename extension not recognized in `&quot;+name+&quot;'&quot;).c_str()));
++	}
++	rootBody-&gt;recover=false;
+ }
+ 
+ void Omega::freeRootBody()
+
+Modified: trunk/lib/serialization/IOFormatManager.tpp
+===================================================================
+--- trunk/lib/serialization/IOFormatManager.tpp	2008-05-02 10:11:19 UTC (rev 1337)
++++ trunk/lib/serialization/IOFormatManager.tpp	2008-05-02 12:18:38 UTC (rev 1338)
+@@ -1,3 +1,4 @@
++// vim:syn=cpp
+ /*************************************************************************
+ *  Copyright (C) 2004 by Olivier Galizzi                                 *
+ *  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">olivier.galizzi at imag.fr</A>                                               *
+@@ -14,42 +15,77 @@
+ #include &quot;Archive.hpp&quot;
+ #include &quot;SerializationExceptions.hpp&quot;
+ #include &quot;IOManagerExceptions.hpp&quot;
++#include&lt;boost/scoped_ptr.hpp&gt;
++#include&lt;boost/iostreams/filtering_stream.hpp&gt;
++#include&lt;boost/iostreams/filter/gzip.hpp&gt;
++#include&lt;boost/iostreams/filter/bzip2.hpp&gt;
++#include&lt;boost/iostreams/device/file.hpp&gt;
++#include&lt;boost/algorithm/string.hpp&gt;
+ 
+ template&lt;typename Type&gt;
+ void IOFormatManager::loadFromFile(const string&amp; libName, const string&amp; fileName,const string&amp; name, Type&amp; t)
+ {
+-	ifstream filei(fileName.c_str());
+-	if(!filei.good())
+-		throw SerializableError(IOManagerExceptions::FileNotGood);
++	std::istream* anyIn;
+ 
++	if(boost::algorithm::ends_with(fileName,&quot;.xml&quot;)){
++		anyIn=new ifstream(fileName.c_str());
++	}
++	else if(boost::algorithm::ends_with(fileName,&quot;.xml.gz&quot;)){
++		iostreams::filtering_istream* in=new iostreams::filtering_istream();
++		in-&gt;push(iostreams::gzip_decompressor());
++		in-&gt;push(iostreams::file_source(fileName));
++	}
++	else if(boost::algorithm::ends_with(fileName,&quot;.xml.bz2&quot;)){
++		iostreams::filtering_istream* in=new iostreams::filtering_istream();
++		in-&gt;push(iostreams::bzip2_decompressor());
++		in-&gt;push(iostreams::file_source(fileName));
++	}
++	
++	if(!anyIn-&gt;good()) throw SerializableError(IOManagerExceptions::FileNotGood);
++
+ 	shared_ptr&lt;IOFormatManager&gt; ioManager;
+ 	ioManager = YADE_PTR_CAST&lt;IOFormatManager&gt;(ClassFactory::instance().createShared(libName));
+ 
+ 	shared_ptr&lt;Archive&gt; ac = Archive::create(name,t);
+-	string str = ioManager-&gt;beginDeserialization(filei,*ac);
+-	ac-&gt;deserialize(filei, *ac, str);
+-	ioManager-&gt;finalizeDeserialization(filei,*ac);
++	string str = ioManager-&gt;beginDeserialization(*anyIn,*ac);
++	ac-&gt;deserialize(*anyIn, *ac, str);
++	ioManager-&gt;finalizeDeserialization(*anyIn,*ac);
+ 
+-	filei.close();
++	delete anyIn;
+ }
+ 
+ 
+ template&lt;typename Type&gt;
+ void IOFormatManager::saveToFile(const string&amp; libName, const string&amp; fileName,const string&amp; name, Type&amp; t)
+ {
+-	ofstream fileo(fileName.c_str());
+-	if(!fileo.good())
+-		throw  SerializableError(IOManagerExceptions::FileNotGood);
++	std::ostream* anyOut;
++
++	if(boost::algorithm::ends_with(fileName,&quot;.xml&quot;)){
++		anyOut=new ofstream(fileName.c_str());
++	}
++	else if(boost::algorithm::ends_with(fileName,&quot;.xml.gz&quot;)){
++		iostreams::filtering_ostream* out=new iostreams::filtering_ostream();
++		out-&gt;push(iostreams::gzip_compressor());
++		out-&gt;push(iostreams::file_sink(fileName));
++		anyOut=out;
++	}
++	else if(boost::algorithm::ends_with(fileName,&quot;.xml.bz2&quot;)){
++		iostreams::filtering_ostream* out=new iostreams::filtering_ostream();
++		out-&gt;push(iostreams::bzip2_compressor());
++		out-&gt;push(iostreams::file_sink(fileName));
++		anyOut=out;
++	}
++	if(!anyOut-&gt;good()) throw SerializableError(IOManagerExceptions::FileNotGood);
+ 	
+ 	shared_ptr&lt;IOFormatManager&gt; ioManager;
+ 	ioManager = static_pointer_cast&lt;IOFormatManager&gt;(ClassFactory::instance().createShared(libName));
+ 
+ 	shared_ptr&lt;Archive&gt; ac = Archive::create(name,t);
+-	ioManager-&gt;beginSerialization(fileo, *ac);
+-	ac-&gt;serialize(fileo, *ac, 1);
+-	ioManager-&gt;finalizeSerialization(fileo, *ac);
++	ioManager-&gt;beginSerialization(*anyOut, *ac);
++	ac-&gt;serialize(*anyOut, *ac, 1);
++	ioManager-&gt;finalizeSerialization(*anyOut, *ac);
+ 
+-	fileo.close();
++	delete anyOut;
+ }
+ 
+ 
+
+Modified: trunk/scripts/simple-scene.py
+===================================================================
+--- trunk/scripts/simple-scene.py	2008-05-02 10:11:19 UTC (rev 1337)
++++ trunk/scripts/simple-scene.py	2008-05-02 12:18:38 UTC (rev 1338)
+@@ -3,17 +3,18 @@
+ 
+ o=Omega() # this creates default rootBody as well
+ 
+-# is used in both initializers and engines, assign to a temporary
+-aabbDisp=MetaEngine('BoundingVolumeMetaEngine',[EngineUnit('InteractingSphere2AABB'),EngineUnit('InteractingBox2AABB'),EngineUnit('MetaInteractingGeometry2AABB')])
+-
+ o.initializers=[
+ 	StandAloneEngine('PhysicalActionContainerInitializer'),
+-	aabbDisp
++	MetaEngine('BoundingVolumeMetaEngine',[EngineUnit('InteractingSphere2AABB'),EngineUnit('InteractingBox2AABB'),EngineUnit('MetaInteractingGeometry2AABB')])
+ 	]
+ 
+ o.engines=[
+ 	StandAloneEngine('PhysicalActionContainerReseter'),
+-	aabbDisp,
++	MetaEngine('BoundingVolumeMetaEngine',[
++		EngineUnit('InteractingSphere2AABB'),
++		EngineUnit('InteractingBox2AABB'),
++		EngineUnit('MetaInteractingGeometry2AABB')
++	]),
+ 	StandAloneEngine('PersistentSAPCollider'),
+ 	MetaEngine('InteractionGeometryMetaEngine',[
+ 		EngineUnit('InteractingSphere2InteractingSphere4SpheresContactGeometry'),
+@@ -21,8 +22,6 @@
+ 	]),
+ 	MetaEngine('InteractionPhysicsMetaEngine',[EngineUnit('SimpleElasticRelationships')]),
+ 	StandAloneEngine('ElasticContactLaw'),
+-	StandAloneEngine('GlobalStiffnessCounter',{'interval':50}),
+-	StandAloneEngine('GlobalStiffnessTimeStepper',{'defaultDt':1e-5,'active':True,'timeStepUpdateInterval':50}),
+ 	DeusExMachina('GravityEngine',{'gravity':[0,0,-9.81]}),
+ 	MetaEngine('PhysicalActionDamper',[
+ 		EngineUnit('CundallNonViscousForceDamping',{'damping':0.2}),
+@@ -34,6 +33,8 @@
+ 	]),
+ 	MetaEngine('PhysicalParametersMetaEngine',[EngineUnit('LeapFrogPositionIntegrator')]),
+ 	MetaEngine('PhysicalParametersMetaEngine',[EngineUnit('LeapFrogOrientationIntegrator')]),
++	StandAloneEngine('GlobalStiffnessCounter',{'interval':50}),
++	StandAloneEngine('GlobalStiffnessTimeStepper',{'defaultDt':1e-5,'active':True,'timeStepUpdateInterval':50}),
+ ]
+ 
+ 
+@@ -42,13 +43,9 @@
+ o.bodies.append(utils.sphere(1,[0,0,2],color=[0,1,0]))
+ # o.dt=.2*utils.PWaveTimeStep()
+ 
+-#o.save('/tmp/a.xml')
+-#print &quot;===================== SAVING&#160;FINISHED&#160;=====================&quot;
+-#o.load('/tmp/a.xml')
+-#import sys
+-#sys.exit(0)
++o.save('/tmp/a.xml.bz2')
+ 
+-if True: # shorter, but doesn't test the (de)serializer, since binary format is used
++if True:
+ 	# will run in background
+ 	utils.runInQtGui()
+ else:
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000299.html">[Yade-commits] r1337 - trunk/core
+</A></li>
+	<LI>Next message: <A HREF="000301.html">[Yade-commits] r1339 - in trunk: debian extra gui/py scripts
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#300">[ date ]</a>
+              <a href="thread.html#300">[ thread ]</a>
+              <a href="subject.html#300">[ subject ]</a>
+              <a href="author.html#300">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

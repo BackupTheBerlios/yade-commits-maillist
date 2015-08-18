@@ -1,0 +1,297 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1340 - in branches/przewdnik: core/concurrent	pkg/common/Engine/StandAloneEngine	pkg/common/Engine/StandAloneEngine/Visualisation
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1340%20-%20in%20branches/przewdnik%3A%20core/concurrent%0A%09pkg/common/Engine/StandAloneEngine%0A%09pkg/common/Engine/StandAloneEngine/Visualisation&In-Reply-To=%3C200805021919.m42JJYxZ007323%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000301.html">
+   <LINK REL="Next"  HREF="000303.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1340 - in branches/przewdnik: core/concurrent	pkg/common/Engine/StandAloneEngine	pkg/common/Engine/StandAloneEngine/Visualisation</H1>
+    <B>przewdnik at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1340%20-%20in%20branches/przewdnik%3A%20core/concurrent%0A%09pkg/common/Engine/StandAloneEngine%0A%09pkg/common/Engine/StandAloneEngine/Visualisation&In-Reply-To=%3C200805021919.m42JJYxZ007323%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1340 - in branches/przewdnik: core/concurrent	pkg/common/Engine/StandAloneEngine	pkg/common/Engine/StandAloneEngine/Visualisation">przewdnik at mail.berlios.de
+       </A><BR>
+    <I>Fri May  2 21:19:34 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000301.html">[Yade-commits] r1339 - in trunk: debian extra gui/py scripts
+</A></li>
+        <LI>Next message: <A HREF="000303.html">[Yade-commits] r1341 - trunk/core
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#302">[ date ]</a>
+              <a href="thread.html#302">[ thread ]</a>
+              <a href="subject.html#302">[ subject ]</a>
+              <a href="author.html#302">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: przewdnik
+Date: 2008-05-02 21:19:33 +0200 (Fri, 02 May 2008)
+New Revision: 1340
+
+Added:
+   branches/przewdnik/pkg/common/Engine/StandAloneEngine/Visualisation/
+   branches/przewdnik/pkg/common/Engine/StandAloneEngine/Visualisation/VisualisationConfig.cpp
+   branches/przewdnik/pkg/common/Engine/StandAloneEngine/Visualisation/VisualisationConfig.h
+   branches/przewdnik/pkg/common/Engine/StandAloneEngine/Visualisation/VisualisationEngine.cpp
+   branches/przewdnik/pkg/common/Engine/StandAloneEngine/Visualisation/VisualisationEngine.hpp
+Removed:
+   branches/przewdnik/pkg/common/Engine/StandAloneEngine/VisualisationEngine.cpp
+   branches/przewdnik/pkg/common/Engine/StandAloneEngine/VisualisationEngine.hpp
+Modified:
+   branches/przewdnik/core/concurrent/InterprocessQueue.cpp
+   branches/przewdnik/core/concurrent/InterprocessQueue.hpp
+Log:
+Some more work in visualisationengine
+
+Modified: branches/przewdnik/core/concurrent/InterprocessQueue.cpp
+===================================================================
+--- branches/przewdnik/core/concurrent/InterprocessQueue.cpp	2008-05-02 15:17:00 UTC (rev 1339)
++++ branches/przewdnik/core/concurrent/InterprocessQueue.cpp	2008-05-02 19:19:33 UTC (rev 1340)
+@@ -2,17 +2,18 @@
+ 
+ 
+ template &lt;class T&gt;
+-void InterprocessQueue&lt;T&gt;::init() {
++void InterprocessQueue&lt;T&gt;::init(const char* name) {
++	qname = name;
+ 	queue = message_queue(open_or_create,
+-						&quot;name&quot;, // FIXME
+-						100,
++						name, 
++						100, // TODO
+ 						100
+ 			);
+ };
+ 
+ template &lt;class T&gt;
+ void InterprocessQueue&lt;T&gt;::cleanup() {
+-	message_queue::remove(&quot;name&quot;);
++	message_queue::remove(qname);
+ };
+ 
+ template &lt;class T&gt;
+
+Modified: branches/przewdnik/core/concurrent/InterprocessQueue.hpp
+===================================================================
+--- branches/przewdnik/core/concurrent/InterprocessQueue.hpp	2008-05-02 15:17:00 UTC (rev 1339)
++++ branches/przewdnik/core/concurrent/InterprocessQueue.hpp	2008-05-02 19:19:33 UTC (rev 1340)
+@@ -2,6 +2,7 @@
+ #define INTERPROCESSQUEUE_HPP_
+ #include &quot;AbstractQueue.hpp&quot;
+ #include &lt;boost/interprocess/ipc/message_queue.hpp&gt;
++#include &lt;string&gt;
+ 
+ using namespace boost::interprocess;
+ 
+@@ -9,9 +10,10 @@
+ class InterprocessQueue : public AbstractQueue&lt;T&gt; 
+ {
+ private:
++	string qname;
+ 	message_queue queue;
+ public:
+-	void init();
++	void init(const string&amp;);
+ 	void cleanup();
+ 		
+ 	void push(const T&amp;);
+
+Added: branches/przewdnik/pkg/common/Engine/StandAloneEngine/Visualisation/VisualisationConfig.cpp
+===================================================================
+--- branches/przewdnik/pkg/common/Engine/StandAloneEngine/Visualisation/VisualisationConfig.cpp	2008-05-02 15:17:00 UTC (rev 1339)
++++ branches/przewdnik/pkg/common/Engine/StandAloneEngine/Visualisation/VisualisationConfig.cpp	2008-05-02 19:19:33 UTC (rev 1340)
+@@ -0,0 +1,9 @@
++#include &quot;VisualisationConfig.h&quot;
++
++VisualisationConfig::VisualisationConfig()
++{
++}
++
++VisualisationConfig::~VisualisationConfig()
++{
++}
+
+Added: branches/przewdnik/pkg/common/Engine/StandAloneEngine/Visualisation/VisualisationConfig.h
+===================================================================
+--- branches/przewdnik/pkg/common/Engine/StandAloneEngine/Visualisation/VisualisationConfig.h	2008-05-02 15:17:00 UTC (rev 1339)
++++ branches/przewdnik/pkg/common/Engine/StandAloneEngine/Visualisation/VisualisationConfig.h	2008-05-02 19:19:33 UTC (rev 1340)
+@@ -0,0 +1,21 @@
++#ifndef VISUALISATIONCONFIG_H_
++#define VISUALISATIONCONFIG_H_
++
++#include &lt;list&gt;
++
++class VisualisationConfigElement {
++public:
++	Real dt;
++};
++
++class VisualisationConfig
++{
++public:
++	
++	std::list&lt;VisualisationConfigElement&gt; list;
++	
++	VisualisationConfig();
++	virtual ~VisualisationConfig();
++};
++
++#endif /*VISUALISATIONCONFIG_H_*/
+
+Copied: branches/przewdnik/pkg/common/Engine/StandAloneEngine/Visualisation/VisualisationEngine.cpp (from rev 1300, branches/przewdnik/pkg/common/Engine/StandAloneEngine/VisualisationEngine.cpp)
+===================================================================
+--- branches/przewdnik/pkg/common/Engine/StandAloneEngine/VisualisationEngine.cpp	2008-04-06 17:52:04 UTC (rev 1300)
++++ branches/przewdnik/pkg/common/Engine/StandAloneEngine/Visualisation/VisualisationEngine.cpp	2008-05-02 19:19:33 UTC (rev 1340)
+@@ -0,0 +1,35 @@
++#include &quot;VisualisationEngine.h&quot;
++
++VisualisationEngine::VisualisationEngine()
++{
++	queue = InterprocessQueue&lt;Body&gt;();
++	queue.init(&quot;vis_queue&quot;);
++	
++	lastDone = vector&lt;Real&gt;(config.list.size(), 0);
++}
++
++VisualisationEngine::~VisualisationEngine()
++{
++	// TODO: cleanup?
++}
++
++VisualisationEngine::action(Body *body)
++{
++	MetaBody * body = YADE_CAST&lt;MetaBody*&gt;(body);
++	
++	Real now = Omega::instance()::simulationTime;
++	list&lt;VisualisationConfig&gt;::iterator it;
++	int i = 0;
++	   for(it = config.list.begin(); it != config.list.end(); it++ ) {
++		 if (lastDone[i]==0 || now-lastDone[i]&gt;(it-&gt;dt)) {
++			 lastDone[i]=now;
++			 Body qbody = createQBody(body, *it);
++			 queue.push(qbody);
++		 }
++	   }            
++}
++
++VisualisationEngine::createQBody(Body * body, VisualisationConfigElement *config) {
++	// FIXME:
++	return body;
++}
+\ No newline at end of file
+
+Copied: branches/przewdnik/pkg/common/Engine/StandAloneEngine/Visualisation/VisualisationEngine.hpp (from rev 1300, branches/przewdnik/pkg/common/Engine/StandAloneEngine/VisualisationEngine.hpp)
+===================================================================
+--- branches/przewdnik/pkg/common/Engine/StandAloneEngine/VisualisationEngine.hpp	2008-04-06 17:52:04 UTC (rev 1300)
++++ branches/przewdnik/pkg/common/Engine/StandAloneEngine/Visualisation/VisualisationEngine.hpp	2008-05-02 19:19:33 UTC (rev 1340)
+@@ -0,0 +1,28 @@
++#ifndef VISUALISATIONENGINE_H_
++#define VISUALISATIONENGINE_H_
++
++#include &quot;StandAloneEngine.hpp&quot;
++#include &lt;vector&gt;
++
++class VisualisationEngine : public StandAloneEngine
++{
++private:
++	InterprocessQueue&lt;Body&gt; queue;
++	vector&lt;Real&gt; lastDone;
++	
++public:
++	VisualisationConfig config;
++	
++	VisualisationEngine();
++	virtual ~VisualisationEngine();
++	void action(Body * body);
++
++protected:
++	virtual Body* createQBody(Body * body, VisualisationConfigElement *config);
++	
++	
++	REGISTER_CLASS_NAME(VisualisationEngine);
++	REGISTER_BASE_CLASS_NAME(StandAloneEngine);
++};
++
++#endif /*VISUALISATIONENGINE_H_*/
+
+Deleted: branches/przewdnik/pkg/common/Engine/StandAloneEngine/VisualisationEngine.cpp
+===================================================================
+--- branches/przewdnik/pkg/common/Engine/StandAloneEngine/VisualisationEngine.cpp	2008-05-02 15:17:00 UTC (rev 1339)
++++ branches/przewdnik/pkg/common/Engine/StandAloneEngine/VisualisationEngine.cpp	2008-05-02 19:19:33 UTC (rev 1340)
+@@ -1,15 +0,0 @@
+-#include &quot;VisualisationEngine.h&quot;
+-
+-VisualisationEngine::VisualisationEngine()
+-{
+-	
+-}
+-
+-VisualisationEngine::~VisualisationEngine()
+-{
+-}
+-
+-VisualisationEngine::action(Body *body)
+-{
+-	
+-}
+\ No newline at end of file
+
+Deleted: branches/przewdnik/pkg/common/Engine/StandAloneEngine/VisualisationEngine.hpp
+===================================================================
+--- branches/przewdnik/pkg/common/Engine/StandAloneEngine/VisualisationEngine.hpp	2008-05-02 15:17:00 UTC (rev 1339)
++++ branches/przewdnik/pkg/common/Engine/StandAloneEngine/VisualisationEngine.hpp	2008-05-02 19:19:33 UTC (rev 1340)
+@@ -1,18 +0,0 @@
+-#ifndef VISUALISATIONENGINE_H_
+-#define VISUALISATIONENGINE_H_
+-
+-#include &quot;StandAloneEngine.hpp&quot;
+-
+-class VisualisationEngine : public StandAloneEngine
+-{
+-public:
+-	VisualisationEngine();
+-	virtual ~VisualisationEngine();
+-	void action(Body * body);
+-	
+-	
+-	REGISTER_CLASS_NAME(VisualisationEngine);
+-	REGISTER_BASE_CLASS_NAME(StandAloneEngine);
+-};
+-
+-#endif /*VISUALISATIONENGINE_H_*/
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000301.html">[Yade-commits] r1339 - in trunk: debian extra gui/py scripts
+</A></li>
+	<LI>Next message: <A HREF="000303.html">[Yade-commits] r1341 - trunk/core
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#302">[ date ]</a>
+              <a href="thread.html#302">[ thread ]</a>
+              <a href="subject.html#302">[ subject ]</a>
+              <a href="author.html#302">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

@@ -1,0 +1,884 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1444 - in trunk: core extra gui/qt3	pkg/common/RenderingEngine/OpenGLRenderingEngine	pkg/dem/Engine/DeusExMachina
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1444%20-%20in%20trunk%3A%20core%20extra%20gui/qt3%0A%09pkg/common/RenderingEngine/OpenGLRenderingEngine%0A%09pkg/dem/Engine/DeusExMachina&In-Reply-To=%3C200807232102.m6NL2U0e009355%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000403.html">
+   <LINK REL="Next"  HREF="000405.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1444 - in trunk: core extra gui/qt3	pkg/common/RenderingEngine/OpenGLRenderingEngine	pkg/dem/Engine/DeusExMachina</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1444%20-%20in%20trunk%3A%20core%20extra%20gui/qt3%0A%09pkg/common/RenderingEngine/OpenGLRenderingEngine%0A%09pkg/dem/Engine/DeusExMachina&In-Reply-To=%3C200807232102.m6NL2U0e009355%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1444 - in trunk: core extra gui/qt3	pkg/common/RenderingEngine/OpenGLRenderingEngine	pkg/dem/Engine/DeusExMachina">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Wed Jul 23 23:02:30 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000403.html">[Yade-commits] r1443 - in trunk: core extra gui/py gui/qt3 lib/base	lib/serialization lib/serialization-xml pkg/common	pkg/common/Engine/DeusExMachina scripts
+</A></li>
+        <LI>Next message: <A HREF="000405.html">[Yade-commits] r1445 - in trunk: extra extra/tetra gui/qt3 lib/serialization-qt pkg/common/RenderingEngine/GLDrawBoundingVolume pkg/common/RenderingEngine/GLDrawGeometricalModel pkg/common/RenderingEngine/GLDrawInteractingGeometry pkg/common/RenderingEngine/GLDrawInteractionGeometry pkg/common/RenderingEngine/GLDrawInteractionPhysics pkg/common/RenderingEngine/GLDrawShadowVolume pkg/common/RenderingEngine/GLDrawState pkg/common/RenderingEngine/OpenGLRenderingEngine pkg/dem/RenderingEngine/GLDrawCohesiveFrictionalContactInteraction pkg/dem/RenderingEngine/GLDrawElasticContactInteraction pkg/dem/RenderingEngine/GLDrawInteractingMyTetrahedron pkg/dem/RenderingEngine/GLDrawSDECLinkGeometry pkg/dem/RenderingEngine/GLDrawSimpleViscoelasticInteraction pkg/dem/RenderingEngine/GLDrawSpheresContactGeometry pkg/lattice/RenderingEngine/GLDrawLatticeBeamState pkg/lattice/RenderingEngine/GLDrawLatticeInteractingGeometry pkg/lattice/RenderingEngine/GLDrawLatticeSetGeometry pkg/lattice/RenderingE! ngine/GLDrawLineSegment
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#404">[ date ]</a>
+              <a href="thread.html#404">[ thread ]</a>
+              <a href="subject.html#404">[ subject ]</a>
+              <a href="author.html#404">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2008-07-23 23:02:29 +0200 (Wed, 23 Jul 2008)
+New Revision: 1444
+
+Modified:
+   trunk/core/Interaction.hpp
+   trunk/core/PhysicalParameters.cpp
+   trunk/core/PhysicalParameters.hpp
+   trunk/extra/Brefcom.cpp
+   trunk/gui/qt3/GLViewer.hpp
+   trunk/gui/qt3/QtGUI-python.cpp
+   trunk/gui/qt3/QtGeneratedSimulationController.ui
+   trunk/gui/qt3/SimulationController.cpp
+   trunk/gui/qt3/SimulationController.hpp
+   trunk/gui/qt3/YadeQtMainWindow.cpp
+   trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.cpp
+   trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.hpp
+   trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.cpp
+Log:
+1. Move refSe3 and dispSe3 to PhysicalParameters; this should speed up the renderer (clipping is done only once etc) and make it possible to apply clipping (via PhysicalParameters::isDisplayed) in GL functors for interactions as well.
+2. Add button for setting reference positionts to the controller
+3. Remove warnings in NewtonsDampedLaw
+
+
+Modified: trunk/core/Interaction.hpp
+===================================================================
+--- trunk/core/Interaction.hpp	2008-07-23 08:25:11 UTC (rev 1443)
++++ trunk/core/Interaction.hpp	2008-07-23 21:02:29 UTC (rev 1444)
+@@ -1,45 +1,30 @@
+-/*************************************************************************
+-*  Copyright (C) 2004 by Olivier Galizzi                                 *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">olivier.galizzi at imag.fr</A>                                               *
+-*  Copyright (C) 2004 by Janek Kozicki                                   *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">cosurgi at berlios.de</A>                                                    *
+-*                                                                        *
+-*  This program is free software; it is licensed under the terms of the  *
+-*  GNU General Public License v2 or later. See file LICENSE for details. *
+-*************************************************************************/
+-
+-#ifndef INTERACTION_HPP
+-#define INTERACTION_HPP
+-
+-#include &lt;boost/shared_ptr.hpp&gt;
++// Copyright (C) 2004 by Olivier Galizzi &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">olivier.galizzi at imag.fr</A>&gt;
++//  Copyright (C) 2004 by Janek Kozicki &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">cosurgi at berlios.de</A>&gt;
++//
++#pragma once
++#include&lt;boost/shared_ptr.hpp&gt;
+ #include&lt;yade/lib-serialization/Serializable.hpp&gt;
+-#include &quot;InteractionGeometry.hpp&quot;
+-#include &quot;InteractionPhysics.hpp&quot;
++#include&quot;InteractionGeometry.hpp&quot;
++#include&quot;InteractionPhysics.hpp&quot;
+ 
+ /////////////////////////////////
+ // FIXME - this is in wrong file!
+ //#include&lt;boost/strong_typedef.hpp&gt;
+ //BOOST_STRONG_TYPEDEF(int, body_id_t)
+ typedef int body_id_t;
+-// later we will have primitive_id_type and composite_id_type
+-/////////////////////////////////
+ 
+ class Interaction : public Serializable
+ {
+ 	private	:
+-		body_id_t id1,id2;	// FIXME  this should be vector&lt;unsigned int&gt; ids;
++		body_id_t id1,id2;	// FIXME  this should be vector&lt;body_id_t&gt; ids;
+ 
+ 	public :
+-		bool isNew;		// FIXME : better to test if InteractionPhysics==0 and remove this flag
+-					// we can remove this flag, if we make another container for PotetntialInteraction with only ids
++		bool isNew;		// FIXME : better to test if InteractionPhysics==0 and remove this flag; we can also remove this flag, if we make another container for PotetntialInteraction with only ids
+ 		bool isReal;		// maybe we can remove this, and check if InteractingGeometry, and InteractionPhysics are empty?
+ 		bool cycle; // phase flag to mark (for example, SpatialQuickSortCollider mark by it the stale interactions) 
+-
+ 		bool isNeighbor;	// Has a meaning only with triangulationCollider atm NOTE : TriangulationCollider needs that
+ 
+-
+-	// FIXME - why public ?!
+-		shared_ptr&lt;InteractionGeometry&gt; interactionGeometry; // FIXME should return InteractionGeometry* (faster, we know who is responsible for deletion)
++		shared_ptr&lt;InteractionGeometry&gt; interactionGeometry;
+ 		shared_ptr&lt;InteractionPhysics&gt; interactionPhysics;
+ 
+ 		Interaction ();
+@@ -55,6 +40,3 @@
+ };
+ 
+ REGISTER_SERIALIZABLE(Interaction,false);
+-
+-#endif // INTERACTION_HPP
+-
+
+Modified: trunk/core/PhysicalParameters.cpp
+===================================================================
+--- trunk/core/PhysicalParameters.cpp	2008-07-23 08:25:11 UTC (rev 1443)
++++ trunk/core/PhysicalParameters.cpp	2008-07-23 21:02:29 UTC (rev 1444)
+@@ -1,16 +1,3 @@
+-/*************************************************************************
+-*  Copyright (C) 2004 by Olivier Galizzi                                 *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">olivier.galizzi at imag.fr</A>                                               *
+-*                                                                        *
+-*  This program is free software; it is licensed under the terms of the  *
+-*  GNU General Public License v2 or later. See file LICENSE for details. *
+-*************************************************************************/
++// (C) 2004 by Olivier Galizzi &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">olivier.galizzi at imag.fr</A>&gt;
+ 
+ #include &quot;PhysicalParameters.hpp&quot;
+-
+-
+-void PhysicalParameters::registerAttributes()
+-{
+-	REGISTER_ATTRIBUTE(se3);
+-}
+-
+
+Modified: trunk/core/PhysicalParameters.hpp
+===================================================================
+--- trunk/core/PhysicalParameters.hpp	2008-07-23 08:25:11 UTC (rev 1443)
++++ trunk/core/PhysicalParameters.hpp	2008-07-23 21:02:29 UTC (rev 1444)
+@@ -1,16 +1,8 @@
+-/*************************************************************************
+-*  Copyright (C) 2004 by Olivier Galizzi                                 *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">olivier.galizzi at imag.fr</A>                                               *
+-*  Copyright (C) 2004 by Janek Kozicki                                   *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">cosurgi at berlios.de</A>                                                    *
+-*                                                                        *
+-*  This program is free software; it is licensed under the terms of the  *
+-*  GNU General Public License v2 or later. See file LICENSE for details. *
+-*************************************************************************/
++// Copyright (C) 2004 by Olivier Galizzi &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">olivier.galizzi at imag.fr</A>&gt;
++// Copyright (C) 2004 by Janek Kozicki &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">cosurgi at berlios.de</A>&gt;
++// &#169; 2008 V&#225;clav &#352;milauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">eudoxos at arcig.cz</A>&gt;
++#pragma once
+ 
+-#ifndef PHYSICALPARAMETERS_HPP
+-#define PHYSICALPARAMETERS_HPP
+-
+ #include&lt;yade/lib-serialization/Serializable.hpp&gt;
+ #include&lt;yade/lib-multimethods/Indexable.hpp&gt;
+ #include&lt;yade/lib-base/yadeWm3Extra.hpp&gt;
+@@ -18,17 +10,21 @@
+ class PhysicalParameters : public Serializable, public Indexable
+ {
+ 	public:
+-			PhysicalParameters() : se3(Vector3r(0,0,0), Quaternionr(1,0,0,0)) {}
+-		Se3r se3;
++			PhysicalParameters(): se3(Vector3r(0,0,0),Quaternionr(1,0,0,0)), refSe3(Vector3r(0,0,0),Quaternionr(1,0,0,0)), isDisplayed(true) {}
++		Se3r se3; //! Se3 of the body in simulation space
+ 
++		Se3r refSe3; //! Reference Se3 of body in display space
++		// the following two are recomputed at every renderering cycle, no need to save/load them via registerAttributes
++		Se3r dispSe3; //! Se3 of body in display space (!=se3 if scaling positions/orientations)
++		bool isDisplayed; //! False if the body is not displayed in this cycle (clipped, for instance)
+ 	protected :
+-		void registerAttributes();
++		void registerAttributes(){
++			REGISTER_ATTRIBUTE(se3);
++			REGISTER_ATTRIBUTE(refSe3);
++		}
+ 	REGISTER_CLASS_NAME(PhysicalParameters);
+ 	REGISTER_BASE_CLASS_NAME(Serializable Indexable);
+ 	REGISTER_INDEX_COUNTER(PhysicalParameters);
+ };
+ 
+ REGISTER_SERIALIZABLE(PhysicalParameters,false);
+-
+-#endif // __BodyPhysicalParameters_HPP__
+-
+
+Modified: trunk/extra/Brefcom.cpp
+===================================================================
+--- trunk/extra/Brefcom.cpp	2008-07-23 08:25:11 UTC (rev 1443)
++++ trunk/extra/Brefcom.cpp	2008-07-23 21:02:29 UTC (rev 1444)
+@@ -251,8 +251,8 @@
+ 		glutSolidCube(1);
+ 	} */
+ 
+-	if(contactLine) Shop::GLDrawLine(b1-&gt;physicalParameters-&gt;se3.position,b2-&gt;physicalParameters-&gt;se3.position,Vector3r(BC-&gt;omega,1-BC-&gt;omega,0.0) /* damaged links red, undamaged green */ );
+-	if(dmgLabel){ Shop::GLDrawNum(BC-&gt;omega,0.5*(b1-&gt;physicalParameters-&gt;se3.position+b2-&gt;physicalParameters-&gt;se3.position),Vector3r(BC-&gt;omega,1-BC-&gt;omega,0.)); }
++	if(contactLine) Shop::GLDrawLine(b1-&gt;physicalParameters-&gt;dispSe3.position,b2-&gt;physicalParameters-&gt;dispSe3.position,Vector3r(BC-&gt;omega,1-BC-&gt;omega,0.0) /* damaged links red, undamaged green */ );
++	if(dmgLabel){ Shop::GLDrawNum(BC-&gt;omega,0.5*(b1-&gt;physicalParameters-&gt;dispSe3.position+b2-&gt;physicalParameters-&gt;dispSe3.position),Vector3r(BC-&gt;omega,1-BC-&gt;omega,0.)); }
+ 	const Vector3r&amp; cp=static_pointer_cast&lt;SpheresContactGeometry&gt;(i-&gt;interactionGeometry)-&gt;contactPoint;
+ 	if(epsT){
+ 		Real maxShear=(BC-&gt;undamagedCohesion-BC-&gt;sigmaN*BC-&gt;tanFrictionAngle)/BC-&gt;G;
+
+Modified: trunk/gui/qt3/GLViewer.hpp
+===================================================================
+--- trunk/gui/qt3/GLViewer.hpp	2008-07-23 08:25:11 UTC (rev 1443)
++++ trunk/gui/qt3/GLViewer.hpp	2008-07-23 21:02:29 UTC (rev 1444)
+@@ -1,10 +1,5 @@
+-/*************************************************************************
+-*  Copyright (C) 2004 by Olivier Galizzi, Janek Kozicki                  *
+-*  2008 V&#225;clav &#352;milauer
+-*  *
+-*  This program is free software; it is licensed under the terms of the  *
+-*  GNU General Public License v2 or later. See file LICENSE for details. *
+-*************************************************************************/
++// Copyright (C) 2004 by Olivier Galizzi, Janek Kozicki                  *
++// &#169; 2008 V&#225;clav &#352;milauer
+ #pragma once
+ 
+ #include&lt;yade/core/Omega.hpp&gt;
+
+Modified: trunk/gui/qt3/QtGUI-python.cpp
+===================================================================
+--- trunk/gui/qt3/QtGUI-python.cpp	2008-07-23 08:25:11 UTC (rev 1443)
++++ trunk/gui/qt3/QtGUI-python.cpp	2008-07-23 21:02:29 UTC (rev 1444)
+@@ -18,7 +18,7 @@
+ using namespace boost::python;
+ 
+ BASIC_PY_PROXY_HEAD(pyOpenGLRenderingEngine,OpenGLRenderingEngine)
+-	void setRefSe3(){ proxee-&gt;setRefSe3(Omega::instance().getRootBody()); }
++	void setRefSe3(){ proxee-&gt;setBodiesRefSe3(Omega::instance().getRootBody()); }
+ BASIC_PY_PROXY_TAIL;
+ 
+ YadeQtMainWindow* ensuredMainWindow(){if(!YadeQtMainWindow::self) throw runtime_error(&quot;No instance of YadeQtMainWindow&quot;); return YadeQtMainWindow::self; }
+
+Modified: trunk/gui/qt3/QtGeneratedSimulationController.ui
+===================================================================
+--- trunk/gui/qt3/QtGeneratedSimulationController.ui	2008-07-23 08:25:11 UTC (rev 1443)
++++ trunk/gui/qt3/QtGeneratedSimulationController.ui	2008-07-23 21:02:29 UTC (rev 1444)
+@@ -8,8 +8,8 @@
+         &lt;rect&gt;
+             &lt;x&gt;0&lt;/x&gt;
+             &lt;y&gt;0&lt;/y&gt;
+-            &lt;width&gt;275&lt;/width&gt;
+-            &lt;height&gt;510&lt;/height&gt;
++            &lt;width&gt;261&lt;/width&gt;
++            &lt;height&gt;470&lt;/height&gt;
+         &lt;/rect&gt;
+     &lt;/property&gt;
+     &lt;property name=&quot;sizePolicy&quot;&gt;
+@@ -33,17 +33,94 @@
+         &lt;property name=&quot;name&quot;&gt;
+             &lt;cstring&gt;unnamed&lt;/cstring&gt;
+         &lt;/property&gt;
++        &lt;property name=&quot;margin&quot;&gt;
++            &lt;number&gt;0&lt;/number&gt;
++        &lt;/property&gt;
+         &lt;widget class=&quot;QLayoutWidget&quot; row=&quot;0&quot; column=&quot;0&quot;&gt;
+             &lt;property name=&quot;name&quot;&gt;
+-                &lt;cstring&gt;layout10&lt;/cstring&gt;
++                &lt;cstring&gt;layout11&lt;/cstring&gt;
+             &lt;/property&gt;
+             &lt;grid&gt;
+                 &lt;property name=&quot;name&quot;&gt;
+                     &lt;cstring&gt;unnamed&lt;/cstring&gt;
+                 &lt;/property&gt;
+-                &lt;property name=&quot;spacing&quot;&gt;
+-                    &lt;number&gt;0&lt;/number&gt;
+-                &lt;/property&gt;
++                &lt;widget class=&quot;QLayoutWidget&quot; row=&quot;0&quot; column=&quot;0&quot;&gt;
++                    &lt;property name=&quot;name&quot;&gt;
++                        &lt;cstring&gt;layout9&lt;/cstring&gt;
++                    &lt;/property&gt;
++                    &lt;vbox&gt;
++                        &lt;property name=&quot;name&quot;&gt;
++                            &lt;cstring&gt;unnamed&lt;/cstring&gt;
++                        &lt;/property&gt;
++                        &lt;property name=&quot;spacing&quot;&gt;
++                            &lt;number&gt;0&lt;/number&gt;
++                        &lt;/property&gt;
++                        &lt;widget class=&quot;QLabel&quot;&gt;
++                            &lt;property name=&quot;name&quot;&gt;
++                                &lt;cstring&gt;labelRealTime&lt;/cstring&gt;
++                            &lt;/property&gt;
++                            &lt;property name=&quot;sizePolicy&quot;&gt;
++                                &lt;sizepolicy&gt;
++                                    &lt;hsizetype&gt;5&lt;/hsizetype&gt;
++                                    &lt;vsizetype&gt;0&lt;/vsizetype&gt;
++                                    &lt;horstretch&gt;0&lt;/horstretch&gt;
++                                    &lt;verstretch&gt;0&lt;/verstretch&gt;
++                                &lt;/sizepolicy&gt;
++                            &lt;/property&gt;
++                            &lt;property name=&quot;text&quot;&gt;
++                                &lt;string&gt;real 0:00:00.000&lt;/string&gt;
++                            &lt;/property&gt;
++                        &lt;/widget&gt;
++                        &lt;widget class=&quot;QLabel&quot;&gt;
++                            &lt;property name=&quot;name&quot;&gt;
++                                &lt;cstring&gt;labelSimulTime&lt;/cstring&gt;
++                            &lt;/property&gt;
++                            &lt;property name=&quot;sizePolicy&quot;&gt;
++                                &lt;sizepolicy&gt;
++                                    &lt;hsizetype&gt;5&lt;/hsizetype&gt;
++                                    &lt;vsizetype&gt;0&lt;/vsizetype&gt;
++                                    &lt;horstretch&gt;0&lt;/horstretch&gt;
++                                    &lt;verstretch&gt;0&lt;/verstretch&gt;
++                                &lt;/sizepolicy&gt;
++                            &lt;/property&gt;
++                            &lt;property name=&quot;text&quot;&gt;
++                                &lt;string&gt;virt 00:000.000m000u000n&lt;/string&gt;
++                            &lt;/property&gt;
++                        &lt;/widget&gt;
++                        &lt;widget class=&quot;QLabel&quot;&gt;
++                            &lt;property name=&quot;name&quot;&gt;
++                                &lt;cstring&gt;labelIter&lt;/cstring&gt;
++                            &lt;/property&gt;
++                            &lt;property name=&quot;sizePolicy&quot;&gt;
++                                &lt;sizepolicy&gt;
++                                    &lt;hsizetype&gt;5&lt;/hsizetype&gt;
++                                    &lt;vsizetype&gt;0&lt;/vsizetype&gt;
++                                    &lt;horstretch&gt;0&lt;/horstretch&gt;
++                                    &lt;verstretch&gt;0&lt;/verstretch&gt;
++                                &lt;/sizepolicy&gt;
++                            &lt;/property&gt;
++                            &lt;property name=&quot;text&quot;&gt;
++                                &lt;string&gt;iter #0, 0/s&lt;/string&gt;
++                            &lt;/property&gt;
++                        &lt;/widget&gt;
++                        &lt;widget class=&quot;QLabel&quot;&gt;
++                            &lt;property name=&quot;name&quot;&gt;
++                                &lt;cstring&gt;labelStep&lt;/cstring&gt;
++                            &lt;/property&gt;
++                            &lt;property name=&quot;sizePolicy&quot;&gt;
++                                &lt;sizepolicy&gt;
++                                    &lt;hsizetype&gt;5&lt;/hsizetype&gt;
++                                    &lt;vsizetype&gt;0&lt;/vsizetype&gt;
++                                    &lt;horstretch&gt;0&lt;/horstretch&gt;
++                                    &lt;verstretch&gt;0&lt;/verstretch&gt;
++                                &lt;/sizepolicy&gt;
++                            &lt;/property&gt;
++                            &lt;property name=&quot;text&quot;&gt;
++                                &lt;string&gt;step 4e-3&lt;/string&gt;
++                            &lt;/property&gt;
++                        &lt;/widget&gt;
++                    &lt;/vbox&gt;
++                &lt;/widget&gt;
+                 &lt;widget class=&quot;QTabWidget&quot; row=&quot;1&quot; column=&quot;0&quot;&gt;
+                     &lt;property name=&quot;name&quot;&gt;
+                         &lt;cstring&gt;tabWidget&lt;/cstring&gt;
+@@ -57,6 +134,9 @@
+                     &lt;property name=&quot;tabShape&quot;&gt;
+                         &lt;enum&gt;Rounded&lt;/enum&gt;
+                     &lt;/property&gt;
++                    &lt;property name=&quot;margin&quot;&gt;
++                        &lt;number&gt;0&lt;/number&gt;
++                    &lt;/property&gt;
+                     &lt;widget class=&quot;QWidget&quot;&gt;
+                         &lt;property name=&quot;name&quot;&gt;
+                             &lt;cstring&gt;tab&lt;/cstring&gt;
+@@ -412,6 +492,12 @@
+                             &lt;property name=&quot;name&quot;&gt;
+                                 &lt;cstring&gt;unnamed&lt;/cstring&gt;
+                             &lt;/property&gt;
++                            &lt;property name=&quot;margin&quot;&gt;
++                                &lt;number&gt;0&lt;/number&gt;
++                            &lt;/property&gt;
++                            &lt;property name=&quot;spacing&quot;&gt;
++                                &lt;number&gt;0&lt;/number&gt;
++                            &lt;/property&gt;
+                             &lt;widget class=&quot;QLabel&quot; row=&quot;3&quot; column=&quot;0&quot;&gt;
+                                 &lt;property name=&quot;name&quot;&gt;
+                                     &lt;cstring&gt;textLabel1&lt;/cstring&gt;
+@@ -533,97 +619,47 @@
+                                 &lt;property name=&quot;frameShadow&quot;&gt;
+                                     &lt;enum&gt;Raised&lt;/enum&gt;
+                                 &lt;/property&gt;
++                                &lt;property name=&quot;margin&quot;&gt;
++                                    &lt;number&gt;0&lt;/number&gt;
++                                &lt;/property&gt;
+                             &lt;/widget&gt;
+                         &lt;/grid&gt;
+                     &lt;/widget&gt;
+                 &lt;/widget&gt;
+-                &lt;widget class=&quot;QLayoutWidget&quot; row=&quot;0&quot; column=&quot;0&quot;&gt;
++                &lt;widget class=&quot;QLayoutWidget&quot; row=&quot;2&quot; column=&quot;0&quot;&gt;
+                     &lt;property name=&quot;name&quot;&gt;
+-                        &lt;cstring&gt;layout9&lt;/cstring&gt;
++                        &lt;cstring&gt;layout8&lt;/cstring&gt;
+                     &lt;/property&gt;
+-                    &lt;vbox&gt;
++                    &lt;grid&gt;
+                         &lt;property name=&quot;name&quot;&gt;
+                             &lt;cstring&gt;unnamed&lt;/cstring&gt;
+                         &lt;/property&gt;
+-                        &lt;property name=&quot;spacing&quot;&gt;
+-                            &lt;number&gt;0&lt;/number&gt;
+-                        &lt;/property&gt;
+-                        &lt;widget class=&quot;QLabel&quot;&gt;
++                        &lt;widget class=&quot;QPushButton&quot; row=&quot;0&quot; column=&quot;1&quot;&gt;
+                             &lt;property name=&quot;name&quot;&gt;
+-                                &lt;cstring&gt;labelRealTime&lt;/cstring&gt;
++                                &lt;cstring&gt;pbReference&lt;/cstring&gt;
+                             &lt;/property&gt;
+-                            &lt;property name=&quot;sizePolicy&quot;&gt;
+-                                &lt;sizepolicy&gt;
+-                                    &lt;hsizetype&gt;5&lt;/hsizetype&gt;
+-                                    &lt;vsizetype&gt;0&lt;/vsizetype&gt;
+-                                    &lt;horstretch&gt;0&lt;/horstretch&gt;
+-                                    &lt;verstretch&gt;0&lt;/verstretch&gt;
+-                                &lt;/sizepolicy&gt;
+-                            &lt;/property&gt;
+                             &lt;property name=&quot;text&quot;&gt;
+-                                &lt;string&gt;real 0:00:00.000&lt;/string&gt;
++                                &lt;string&gt;Reference&lt;/string&gt;
+                             &lt;/property&gt;
+                         &lt;/widget&gt;
+-                        &lt;widget class=&quot;QLabel&quot;&gt;
++                        &lt;widget class=&quot;QPushButton&quot; row=&quot;0&quot; column=&quot;2&quot;&gt;
+                             &lt;property name=&quot;name&quot;&gt;
+-                                &lt;cstring&gt;labelSimulTime&lt;/cstring&gt;
++                                &lt;cstring&gt;pbCenterScene_2&lt;/cstring&gt;
+                             &lt;/property&gt;
+                             &lt;property name=&quot;sizePolicy&quot;&gt;
+                                 &lt;sizepolicy&gt;
+-                                    &lt;hsizetype&gt;5&lt;/hsizetype&gt;
++                                    &lt;hsizetype&gt;7&lt;/hsizetype&gt;
+                                     &lt;vsizetype&gt;0&lt;/vsizetype&gt;
+                                     &lt;horstretch&gt;0&lt;/horstretch&gt;
+                                     &lt;verstretch&gt;0&lt;/verstretch&gt;
+                                 &lt;/sizepolicy&gt;
+                             &lt;/property&gt;
+                             &lt;property name=&quot;text&quot;&gt;
+-                                &lt;string&gt;virt 00:000.000m000u000n&lt;/string&gt;
++                                &lt;string&gt;Center&lt;/string&gt;
+                             &lt;/property&gt;
+                         &lt;/widget&gt;
+-                        &lt;widget class=&quot;QLabel&quot;&gt;
++                        &lt;widget class=&quot;QPushButton&quot; row=&quot;0&quot; column=&quot;0&quot;&gt;
+                             &lt;property name=&quot;name&quot;&gt;
+-                                &lt;cstring&gt;labelIter&lt;/cstring&gt;
+-                            &lt;/property&gt;
+-                            &lt;property name=&quot;sizePolicy&quot;&gt;
+-                                &lt;sizepolicy&gt;
+-                                    &lt;hsizetype&gt;5&lt;/hsizetype&gt;
+-                                    &lt;vsizetype&gt;0&lt;/vsizetype&gt;
+-                                    &lt;horstretch&gt;0&lt;/horstretch&gt;
+-                                    &lt;verstretch&gt;0&lt;/verstretch&gt;
+-                                &lt;/sizepolicy&gt;
+-                            &lt;/property&gt;
+-                            &lt;property name=&quot;text&quot;&gt;
+-                                &lt;string&gt;iter #0, 0/s&lt;/string&gt;
+-                            &lt;/property&gt;
+-                        &lt;/widget&gt;
+-                        &lt;widget class=&quot;QLabel&quot;&gt;
+-                            &lt;property name=&quot;name&quot;&gt;
+-                                &lt;cstring&gt;labelStep&lt;/cstring&gt;
+-                            &lt;/property&gt;
+-                            &lt;property name=&quot;sizePolicy&quot;&gt;
+-                                &lt;sizepolicy&gt;
+-                                    &lt;hsizetype&gt;5&lt;/hsizetype&gt;
+-                                    &lt;vsizetype&gt;0&lt;/vsizetype&gt;
+-                                    &lt;horstretch&gt;0&lt;/horstretch&gt;
+-                                    &lt;verstretch&gt;0&lt;/verstretch&gt;
+-                                &lt;/sizepolicy&gt;
+-                            &lt;/property&gt;
+-                            &lt;property name=&quot;text&quot;&gt;
+-                                &lt;string&gt;step 4e-3&lt;/string&gt;
+-                            &lt;/property&gt;
+-                        &lt;/widget&gt;
+-                    &lt;/vbox&gt;
+-                &lt;/widget&gt;
+-                &lt;widget class=&quot;QLayoutWidget&quot; row=&quot;2&quot; column=&quot;0&quot;&gt;
+-                    &lt;property name=&quot;name&quot;&gt;
+-                        &lt;cstring&gt;layout5&lt;/cstring&gt;
+-                    &lt;/property&gt;
+-                    &lt;hbox&gt;
+-                        &lt;property name=&quot;name&quot;&gt;
+-                            &lt;cstring&gt;unnamed&lt;/cstring&gt;
+-                        &lt;/property&gt;
+-                        &lt;widget class=&quot;QPushButton&quot;&gt;
+-                            &lt;property name=&quot;name&quot;&gt;
+                                 &lt;cstring&gt;pbNewView_2&lt;/cstring&gt;
+                             &lt;/property&gt;
+                             &lt;property name=&quot;enabled&quot;&gt;
+@@ -631,7 +667,7 @@
+                             &lt;/property&gt;
+                             &lt;property name=&quot;sizePolicy&quot;&gt;
+                                 &lt;sizepolicy&gt;
+-                                    &lt;hsizetype&gt;0&lt;/hsizetype&gt;
++                                    &lt;hsizetype&gt;7&lt;/hsizetype&gt;
+                                     &lt;vsizetype&gt;0&lt;/vsizetype&gt;
+                                     &lt;horstretch&gt;0&lt;/horstretch&gt;
+                                     &lt;verstretch&gt;0&lt;/verstretch&gt;
+@@ -641,23 +677,7 @@
+                                 &lt;string&gt;New 3D&lt;/string&gt;
+                             &lt;/property&gt;
+                         &lt;/widget&gt;
+-                        &lt;widget class=&quot;QPushButton&quot;&gt;
+-                            &lt;property name=&quot;name&quot;&gt;
+-                                &lt;cstring&gt;pbCenterScene_2&lt;/cstring&gt;
+-                            &lt;/property&gt;
+-                            &lt;property name=&quot;sizePolicy&quot;&gt;
+-                                &lt;sizepolicy&gt;
+-                                    &lt;hsizetype&gt;0&lt;/hsizetype&gt;
+-                                    &lt;vsizetype&gt;0&lt;/vsizetype&gt;
+-                                    &lt;horstretch&gt;0&lt;/horstretch&gt;
+-                                    &lt;verstretch&gt;0&lt;/verstretch&gt;
+-                                &lt;/sizepolicy&gt;
+-                            &lt;/property&gt;
+-                            &lt;property name=&quot;text&quot;&gt;
+-                                &lt;string&gt;Center all&lt;/string&gt;
+-                            &lt;/property&gt;
+-                        &lt;/widget&gt;
+-                    &lt;/hbox&gt;
++                    &lt;/grid&gt;
+                 &lt;/widget&gt;
+             &lt;/grid&gt;
+         &lt;/widget&gt;
+@@ -771,6 +791,12 @@
+         &lt;receiver&gt;QtGeneratedSimulationController&lt;/receiver&gt;
+         &lt;slot&gt;bgTimeStepClicked(int)&lt;/slot&gt;
+     &lt;/connection&gt;
++    &lt;connection&gt;
++        &lt;sender&gt;pbReference&lt;/sender&gt;
++        &lt;signal&gt;clicked()&lt;/signal&gt;
++        &lt;receiver&gt;QtGeneratedSimulationController&lt;/receiver&gt;
++        &lt;slot&gt;pbReferenceClicked()&lt;/slot&gt;
++    &lt;/connection&gt;
+ &lt;/connections&gt;
+ &lt;includes&gt;
+     &lt;include location=&quot;local&quot; impldecl=&quot;in implementation&quot;&gt;QtGeneratedSimulationController.ui.h&lt;/include&gt;
+@@ -799,6 +825,8 @@
+     &lt;slot&gt;cbSyncToggled( bool )&lt;/slot&gt;
+     &lt;slot&gt;pbStart2Clicked()&lt;/slot&gt;
+     &lt;slot&gt;closeGLViewEvent( int )&lt;/slot&gt;
++    &lt;slot&gt;pbReference_clicked()&lt;/slot&gt;
++    &lt;slot&gt;pbReferenceClicked()&lt;/slot&gt;
+ &lt;/slots&gt;
+ &lt;layoutdefaults spacing=&quot;6&quot; margin=&quot;11&quot;/&gt;
+ &lt;/UI&gt;
+
+Modified: trunk/gui/qt3/SimulationController.cpp
+===================================================================
+--- trunk/gui/qt3/SimulationController.cpp	2008-07-23 08:25:11 UTC (rev 1443)
++++ trunk/gui/qt3/SimulationController.cpp	2008-07-23 21:02:29 UTC (rev 1444)
+@@ -211,6 +211,7 @@
+ void SimulationController::closeEvent(QCloseEvent *){ /* switch to async run if running */ if(syncRunning) cbSyncToggled(false); emit closeSignal(); }
+ void SimulationController::pbStopClicked() { Omega::instance().stopSimulationLoop(); syncRunning=false; }
+ void SimulationController::pbOneSimulationStepClicked(){pbStopClicked();Omega::instance().spawnSingleSimulationLoop();}
++void SimulationController::pbReferenceClicked() {if(YadeQtMainWindow::self-&gt;renderer) YadeQtMainWindow::self-&gt;renderer-&gt;setBodiesRefSe3(Omega::instance().getRootBody());}
+ void SimulationController::pbStart2Clicked() { pbStartClicked(); }
+ void SimulationController::pbStartClicked(){
+ 	restartTimer();
+
+Modified: trunk/gui/qt3/SimulationController.hpp
+===================================================================
+--- trunk/gui/qt3/SimulationController.hpp	2008-07-23 08:25:11 UTC (rev 1443)
++++ trunk/gui/qt3/SimulationController.hpp	2008-07-23 21:02:29 UTC (rev 1444)
+@@ -62,6 +62,7 @@
+ 		virtual void pbStopClicked();
+ 		virtual void pbStartClicked();
+ 		virtual void pbResetClicked();
++		virtual void pbReferenceClicked();
+ 		virtual void pbCenterSceneClicked();
+ 		virtual void pbOneSimulationStepClicked();
+ 		virtual void bgTimeStepClicked(int i);
+
+Modified: trunk/gui/qt3/YadeQtMainWindow.cpp
+===================================================================
+--- trunk/gui/qt3/YadeQtMainWindow.cpp	2008-07-23 08:25:11 UTC (rev 1443)
++++ trunk/gui/qt3/YadeQtMainWindow.cpp	2008-07-23 21:02:29 UTC (rev 1444)
+@@ -90,7 +90,7 @@
+ }
+ 
+ void YadeQtMainWindow::redrawAll(bool force){
+-	if(force || (controller &amp;&amp; !controller-&gt;syncRunning) || (!controller)){
++	if(renderer &amp;&amp; (force || (controller &amp;&amp; !controller-&gt;syncRunning) || (!controller))){
+ 		FOREACH(const shared_ptr&lt;GLViewer&gt;&amp; glv,glViews){ if(glv) glv-&gt;updateGL(); }
+ 	}
+ }
+@@ -115,6 +115,7 @@
+ 
+ void YadeQtMainWindow::ensureRenderer(){
+ 	if(!renderer){
++		LOG_DEBUG(&quot;Creating OpenGLRenderingEngine instance.&quot;);
+ 		shared_ptr&lt;Factorable&gt; tmpRenderer=ClassFactory::instance().createShared(&quot;OpenGLRenderingEngine&quot;);
+ 		renderer=static_pointer_cast&lt;OpenGLRenderingEngine&gt;(tmpRenderer);
+ 	}
+@@ -166,6 +167,7 @@
+ 				if(noOtherViews){
+ 					LOG_DEBUG(&quot;Deleting primary view (no other views exist).&quot;);
+ 					glViews.clear();
++					renderer=shared_ptr&lt;OpenGLRenderingEngine&gt;();
+ 				}else{LOG_INFO(&quot;Cannot close primary view, other views still exist.&quot;);}
+ 				return;
+ 			}
+
+Modified: trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.cpp
+===================================================================
+--- trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.cpp	2008-07-23 08:25:11 UTC (rev 1443)
++++ trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.cpp	2008-07-23 21:02:29 UTC (rev 1444)
+@@ -16,83 +16,63 @@
+ OpenGLRenderingEngine::OpenGLRenderingEngine() : RenderingEngine(), clipPlaneNum(3)
+ {
+ 
+-	Body_state		= false;
+-	Body_bounding_volume	= false;
+-	Body_interacting_geom	= false;
+-	Body_geometrical_model	= true;
+-	Cast_shadows		= false;
+-	Shadow_volumes	= false;
+-	Fast_shadow_volume	= true;
+-	Body_wire		= false;
+-	Interaction_wire	= false;
+-	Draw_inside		= true;
+-	needInit		= true;
+-	Draw_mask		= ~0;
+-	Light_position		= Vector3r(75.0,130.0,0.0);
+-	Background_color		= Vector3r(0.2,0.2,0.2);
+-	Interaction_geometry	= false;
+-	Interaction_physics	= false;
++	Body_state = false;
++	Body_bounding_volume = false;
++	Body_interacting_geom = false;
++	Body_geometrical_model = true;
++	Cast_shadows = false;
++	Shadow_volumes = false;
++	Fast_shadow_volume = true;
++	Body_wire = false;
++	Interaction_wire = false;
++	Draw_inside = true;
++	needInit = true;
++	Draw_mask = ~0;
++	Light_position = Vector3r(75.0,130.0,0.0);
++	Background_color = Vector3r(0.2,0.2,0.2);
++	Interaction_geometry = false;
++	Interaction_physics = false;
+ 
+ 	scaleDisplacements=false; scaleRotations=false;
+ 	displacementScale=Vector3r(1,1,1); rotationScale=1;
++	numBodiesWhenRefSe3LastSet=0;
+ 
+ 
+ 	for(int i=0; i&lt;clipPlaneNum; i++){clipPlaneSe3.push_back(Se3r(Vector3r::ZERO,Quaternionr::IDENTITY)); clipPlaneActive.push_back(false); clipPlaneNormals.push_back(Vector3r(1,0,0));}
+ 	
+-	map&lt;string,DynlibDescriptor&gt;::const_iterator di    = Omega::instance().getDynlibsDescriptor().begin();
++	map&lt;string,DynlibDescriptor&gt;::const_iterator di = Omega::instance().getDynlibsDescriptor().begin();
+ 	map&lt;string,DynlibDescriptor&gt;::const_iterator diEnd = Omega::instance().getDynlibsDescriptor().end();
+ 	for(;di!=diEnd;++di){
+ 		if (Omega::instance().isInheritingFrom((*di).first,&quot;GLDrawStateFunctor&quot;)) addStateFunctor((*di).first);
+ 		if (Omega::instance().isInheritingFrom((*di).first,&quot;GLDrawBoundingVolumeFunctor&quot;)) addBoundingVolumeFunctor((*di).first);
+ 		if (Omega::instance().isInheritingFrom((*di).first,&quot;GLDrawInteractingGeometryFunctor&quot;)) addInteractingGeometryFunctor((*di).first);
+ 		if (Omega::instance().isInheritingFrom((*di).first,&quot;GLDrawGeometricalModelFunctor&quot;)) addGeometricalModelFunctor((*di).first);
+-		if (Omega::instance().isInheritingFrom((*di).first,&quot;GLDrawShadowVolumeFunctor&quot;))	addShadowVolumeFunctor((*di).first);
++		if (Omega::instance().isInheritingFrom((*di).first,&quot;GLDrawShadowVolumeFunctor&quot;)) addShadowVolumeFunctor((*di).first);
+ 		if (Omega::instance().isInheritingFrom((*di).first,&quot;GLDrawInteractionGeometryFunctor&quot;)) addInteractionGeometryFunctor((*di).first);
+-		if (Omega::instance().isInheritingFrom((*di).first,&quot;GLDrawInteractionPhysicsFunctor&quot;))	addInteractionPhysicsFunctor((*di).first);
++		if (Omega::instance().isInheritingFrom((*di).first,&quot;GLDrawInteractionPhysicsFunctor&quot;)) addInteractionPhysicsFunctor((*di).first);
+ 	}
+ 	postProcessAttributes(true);
+ }
+ 
+-OpenGLRenderingEngine::~OpenGLRenderingEngine()
+-{
++OpenGLRenderingEngine::~OpenGLRenderingEngine(){}
++void OpenGLRenderingEngine::init(){ if (needInit)needInit = false; }
+ 
+-}
+-
+-void OpenGLRenderingEngine::init()
+-{
+-	if (needInit)
+-	{
+-		// FIXME : how to build display list now ??
+-		//shared_ptr&lt;GeometricalModel&gt; gm = dynamic_pointer_cast&lt;GeometricalModel&gt;(ClassFactory::instance().createShared(&quot;Sphere&quot;));
+-		//gm-&gt;buildDisplayList();
+-		needInit = false;
+-	}
+-}
+-
+-void OpenGLRenderingEngine::renderWithNames(const shared_ptr&lt;MetaBody&gt;&amp; rootBody)
+-{
+-	shared_ptr&lt;BodyContainer&gt;&amp; bodies = rootBody-&gt;bodies;
+-	BodyContainer::iterator bi    = bodies-&gt;begin();
+-	BodyContainer::iterator biEnd = bodies-&gt;end();
+-	for( ; bi!=biEnd ; ++bi)
+-	{
+-		if((*bi)-&gt;geometricalModel)
+-		{
+-			glPushMatrix();
+-			Se3r&amp; se3 = (*bi)-&gt;physicalParameters-&gt;se3;
+-			Real angle;
+-			Vector3r axis;	
+-			se3.orientation.ToAxisAngle(axis,angle);	
+-			glTranslatef(se3.position[0],se3.position[1],se3.position[2]);
+-			glRotatef(angle*Mathr::RAD_TO_DEG,axis[0],axis[1],axis[2]);
+-			if((*bi)-&gt;geometricalModel-&gt;getClassName() != &quot;LineSegment&quot;) // FIXME FIXME !! - so a body needs to say: I am selectable ?!?!
+-			{
+-				glPushName( (*bi)-&gt;getId() );
+-				geometricalModelDispatcher((*bi)-&gt;geometricalModel,(*bi)-&gt;physicalParameters,/* always solid, not wireframe */false);
+-				glPopName();
+-			}
+-			glPopMatrix();
++void OpenGLRenderingEngine::renderWithNames(const shared_ptr&lt;MetaBody&gt;&amp; rootBody){
++	FOREACH(const shared_ptr&lt;Body&gt;&amp; b, *rootBody-&gt;bodies){
++		if(!b-&gt;geometricalModel) continue;
++		glPushMatrix();
++		Se3r&amp; se3 = b-&gt;physicalParameters-&gt;se3;
++		Real angle;
++		Vector3r axis;	
++		se3.orientation.ToAxisAngle(axis,angle);	
++		glTranslatef(se3.position[0],se3.position[1],se3.position[2]);
++		glRotatef(angle*Mathr::RAD_TO_DEG,axis[0],axis[1],axis[2]);
++		if(b-&gt;geometricalModel-&gt;getClassName() != &quot;LineSegment&quot;){ // FIXME: a body needs to say: I am selectable ?!?!
++			glPushName(b-&gt;getId());
++			geometricalModelDispatcher(b-&gt;geometricalModel,b-&gt;physicalParameters,/* always solid, not wireframe */false);
++			glPopName();
+ 		}
++		glPopMatrix();
+ 	}
+ };
+ 
+@@ -102,23 +82,27 @@
+ 	return false;
+ }
+ 
+-void OpenGLRenderingEngine::setRefSe3(const shared_ptr&lt;MetaBody&gt;&amp; rootBody){
++void OpenGLRenderingEngine::setBodiesRefSe3(const shared_ptr&lt;MetaBody&gt;&amp; rootBody){
+ 	LOG_DEBUG(&quot;(re)initializing reference positions and orientations.&quot;);
+-	refSe3.clear(); refSe3.reserve(rootBody-&gt;bodies-&gt;size());
+-	FOREACH(const shared_ptr&lt;Body&gt;&amp; b, *rootBody-&gt;bodies) refSe3.push_back(b-&gt;physicalParameters-&gt;se3);
++	FOREACH(const shared_ptr&lt;Body&gt;&amp; b, *rootBody-&gt;bodies) b-&gt;physicalParameters-&gt;refSe3=b-&gt;physicalParameters-&gt;se3;
++	numBodiesWhenRefSe3LastSet=rootBody-&gt;bodies-&gt;size();
+ }
+ 
+-Se3r OpenGLRenderingEngine::renderedSe3(const shared_ptr&lt;Body&gt;&amp; b){
+-	if(!(scaleDisplacements||scaleRotations)) return b-&gt;physicalParameters-&gt;se3;
+-	const body_id_t&amp; id=b-&gt;getId();
+-	const Se3r&amp; se3=b-&gt;physicalParameters-&gt;se3; assert(refSe3.size()&gt;(size_t)b-&gt;getId());
+-	Quaternionr relRot=refSe3[id].orientation.Conjugate()*se3.orientation;
+-	Vector3r axis; Real angle; relRot.ToAxisAngle(axis,angle);
+-	angle*=rotationScale;
+-	return Se3r(
+-		scaleDisplacements ? diagMult(displacementScale,se3.position-refSe3[id].position)+refSe3[id].position : se3.position,
+-		scaleRotations     ? refSe3[id].orientation*Quaternionr(axis,angle) : se3.orientation
+-	);
++void OpenGLRenderingEngine::setBodiesDispSe3(const shared_ptr&lt;MetaBody&gt;&amp; rootBody){
++	FOREACH(const shared_ptr&lt;Body&gt;&amp; b, *rootBody-&gt;bodies){
++		const Se3r&amp; se3=b-&gt;physicalParameters-&gt;se3; const Se3r&amp; refSe3=b-&gt;physicalParameters-&gt;refSe3; Se3r&amp; dispSe3=b-&gt;physicalParameters-&gt;dispSe3;
++		b-&gt;physicalParameters-&gt;isDisplayed=!pointClipped(se3.position);
++		// if no scaling, return quickly
++		if(!(scaleDisplacements||scaleRotations)){ b-&gt;physicalParameters-&gt;dispSe3=b-&gt;physicalParameters-&gt;se3; continue; }
++		// apply scaling
++		dispSe3.position=(scaleDisplacements ? diagMult(displacementScale,se3.position-refSe3.position)+refSe3.position : se3.position );
++		if(scaleRotations){
++			Quaternionr relRot=refSe3.orientation.Conjugate()*se3.orientation;
++			Vector3r axis; Real angle; relRot.ToAxisAngle(axis,angle);
++			angle*=rotationScale;
++			dispSe3.orientation=refSe3.orientation*Quaternionr(axis,angle);
++		} else {dispSe3.orientation=se3.orientation;}
++	}
+ }
+ 
+ void OpenGLRenderingEngine::render(
+@@ -162,9 +146,11 @@
+ 	// TODO: do this only if clipping is effective (i.e. if clipPlaneActive[i] AND'ed together); dtto for pointClipped
+ 	for(int i=0;i&lt;clipPlaneNum; i++){ clipPlaneNormals[i]=clipPlaneSe3[i].orientation*Vector3r(0,0,1); /* glBegin(GL_LINES);glVertex3v(clipPlaneSe3[i].position);glVertex3v(clipPlaneSe3[i].position+clipPlaneNormals[i]);glEnd(); */ }
+ 
+-	// if scaling positions or orientations, _and_ if it is for the first time, save current se3 as reference values
+-	// if # of bodies changes, we have to reset those
+-	if((scaleDisplacements || scaleRotations) &amp;&amp; refSe3.size()!=rootBody-&gt;bodies-&gt;size()) setRefSe3(rootBody);
++	// if scaling positions or orientations, save reference values if not already done; if # of bodies changes, we have to reset those
++	if((scaleDisplacements || scaleRotations) &amp;&amp; rootBody-&gt;bodies-&gt;size()!=numBodiesWhenRefSe3LastSet){setBodiesRefSe3(rootBody);}
++	
++	// set displayed Se3 of body (scaling) and isDisplayed (clipping)
++	setBodiesDispSe3(rootBody);
+ 
+ 	// debugging only: show line between spatial and scaled body position
+ 	#if 0
+@@ -375,8 +361,8 @@
+ 	if((rootBody-&gt;geometricalModel || Draw_inside) &amp;&amp; Draw_inside) {
+ 		FOREACH(const shared_ptr&lt;Body&gt; b, *rootBody-&gt;bodies){
+ 			if(b-&gt;geometricalModel &amp;&amp; ((b-&gt;getGroupMask() &amp; Draw_mask) || b-&gt;getGroupMask()==0)){
+-				Se3r se3=renderedSe3(b);
+-				if(pointClipped(se3.position)) continue;
++				if(!b-&gt;physicalParameters-&gt;isDisplayed) continue;
++				const Se3r&amp; se3=b-&gt;physicalParameters-&gt;dispSe3;
+ 				glPushMatrix();
+ 				Real angle; Vector3r axis;	se3.orientation.ToAxisAngle(axis,angle);	
+ 				glTranslatef(se3.position[0],se3.position[1],se3.position[2]);
+@@ -511,8 +497,8 @@
+ 		glEnable(GL_CLIP_PLANE0);
+ 	#endif
+ 	FOREACH(const shared_ptr&lt;Body&gt;&amp; b, *rootBody-&gt;bodies){
+-		if(pointClipped(b-&gt;physicalParameters-&gt;se3.position)) continue;
+-		Se3r se3=renderedSe3(b);
++		if(!b-&gt;physicalParameters-&gt;isDisplayed) continue;
++		const Se3r&amp; se3=b-&gt;physicalParameters-&gt;dispSe3;
+ 		glPushMatrix();
+ 			Real angle;	Vector3r axis;	se3.orientation.ToAxisAngle(axis,angle);	
+ 			glTranslatef(se3.position[0],se3.position[1],se3.position[2]);
+
+Modified: trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.hpp
+===================================================================
+--- trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.hpp	2008-07-23 08:25:11 UTC (rev 1443)
++++ trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.hpp	2008-07-23 21:02:29 UTC (rev 1444)
+@@ -33,14 +33,14 @@
+ 		vector&lt;Se3r&gt; clipPlaneSe3;
+ 		vector&lt;int&gt; clipPlaneActive; // should be bool, but serialization doesn't handle vector&lt;bool&gt;
+ 		const int clipPlaneNum;
+-		vector&lt;Se3r&gt; refSe3;
+ 		bool scaleDisplacements,scaleRotations;
+ 		Vector3r displacementScale; Real rotationScale;
+ 
+ 		bool pointClipped(const Vector3r&amp; p);
+-		Se3r renderedSe3(const shared_ptr&lt;Body&gt;&amp;);
+ 		vector&lt;Vector3r&gt; clipPlaneNormals;
+-		void setRefSe3(const shared_ptr&lt;MetaBody&gt;&amp; rootBody);
++		void setBodiesRefSe3(const shared_ptr&lt;MetaBody&gt;&amp; rootBody);
++		void setBodiesDispSe3(const shared_ptr&lt;MetaBody&gt;&amp; rootBody);
++		long numBodiesWhenRefSe3LastSet;
+ 
+ 	private :
+ 		DynLibDispatcher&lt; InteractionGeometry , GLDrawInteractionGeometryFunctor, void , TYPELIST_5(const shared_ptr&lt;InteractionGeometry&gt;&amp;, const shared_ptr&lt;Interaction&gt;&amp; , const shared_ptr&lt;Body&gt;&amp;, const shared_ptr&lt;Body&gt;&amp;, bool) &gt; interactionGeometryDispatcher;
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.cpp	2008-07-23 08:25:11 UTC (rev 1443)
++++ trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.cpp	2008-07-23 21:02:29 UTC (rev 1444)
+@@ -111,8 +111,8 @@
+ :09:37] eudoxos2: enum {LOOP1,LOOP2,END}
+ [16:09:37] eudoxos2: for(int state=LOOP1; state!=END; state++){
+ [16:09:37] eudoxos2: 	FOREACH(const shared_ptr&lt;Body&gt;&amp; b, rootBody-&gt;bodies){
+-[16:09:38] eudoxos2: 		if(b-&gt;isClumpMember() &amp;&amp; LOOP1){ /* apply that on b-&gt;clumpId  }
+-[16:09:38] eudoxos2: 		if((b-&gt;isStandalone &amp;&amp; LOOP1) || (b-&gt;isClump &amp;&amp; LOOP2){ /* damping, newton, integrate }
++[16:09:38] eudoxos2: 		if(b-&gt;isClumpMember() &amp;&amp; LOOP1){ [[apply that on b-&gt;clumpId]]  }
++[16:09:38] eudoxos2: 		if((b-&gt;isStandalone &amp;&amp; LOOP1) || (b-&gt;isClump &amp;&amp; LOOP2){ [[damping, newton, integrate]] }
+ [16:09:38] eudoxos2: 		if(b-&gt;isClump() &amp;&amp; LOOP 2){ b-&gt;moveMembers(); }
+ [16:09:40] eudoxos2: 		}
+ [16:09:42] eudoxos2: 	}
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000403.html">[Yade-commits] r1443 - in trunk: core extra gui/py gui/qt3 lib/base	lib/serialization lib/serialization-xml pkg/common	pkg/common/Engine/DeusExMachina scripts
+</A></li>
+	<LI>Next message: <A HREF="000405.html">[Yade-commits] r1445 - in trunk: extra extra/tetra gui/qt3 lib/serialization-qt pkg/common/RenderingEngine/GLDrawBoundingVolume pkg/common/RenderingEngine/GLDrawGeometricalModel pkg/common/RenderingEngine/GLDrawInteractingGeometry pkg/common/RenderingEngine/GLDrawInteractionGeometry pkg/common/RenderingEngine/GLDrawInteractionPhysics pkg/common/RenderingEngine/GLDrawShadowVolume pkg/common/RenderingEngine/GLDrawState pkg/common/RenderingEngine/OpenGLRenderingEngine pkg/dem/RenderingEngine/GLDrawCohesiveFrictionalContactInteraction pkg/dem/RenderingEngine/GLDrawElasticContactInteraction pkg/dem/RenderingEngine/GLDrawInteractingMyTetrahedron pkg/dem/RenderingEngine/GLDrawSDECLinkGeometry pkg/dem/RenderingEngine/GLDrawSimpleViscoelasticInteraction pkg/dem/RenderingEngine/GLDrawSpheresContactGeometry pkg/lattice/RenderingEngine/GLDrawLatticeBeamState pkg/lattice/RenderingEngine/GLDrawLatticeInteractingGeometry pkg/lattice/RenderingEngine/GLDrawLatticeSetGeometry pkg/lattice/RenderingE! ngine/GLDrawLineSegment
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#404">[ date ]</a>
+              <a href="thread.html#404">[ thread ]</a>
+              <a href="subject.html#404">[ subject ]</a>
+              <a href="author.html#404">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

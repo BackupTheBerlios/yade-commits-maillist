@@ -1,0 +1,148 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1072 - in trunk/yade-packages:	yade-package-common/src/Engine/EngineUnit/NewtonsForceLaw	yade-package-dem/src/Engine/StandAloneEngine/GlobalStiffnessTimeStepper
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2007/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1072%20-%20in%20trunk/yade-packages%3A%0A%09yade-package-common/src/Engine/EngineUnit/NewtonsForceLaw%0A%09yade-package-dem/src/Engine/StandAloneEngine/GlobalStiffnessTimeStepper&In-Reply-To=%3C200702231918.l1NJIDd7015282%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000036.html">
+   <LINK REL="Next"  HREF="000038.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1072 - in trunk/yade-packages:	yade-package-common/src/Engine/EngineUnit/NewtonsForceLaw	yade-package-dem/src/Engine/StandAloneEngine/GlobalStiffnessTimeStepper</H1>
+    <B>chareyre at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1072%20-%20in%20trunk/yade-packages%3A%0A%09yade-package-common/src/Engine/EngineUnit/NewtonsForceLaw%0A%09yade-package-dem/src/Engine/StandAloneEngine/GlobalStiffnessTimeStepper&In-Reply-To=%3C200702231918.l1NJIDd7015282%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1072 - in trunk/yade-packages:	yade-package-common/src/Engine/EngineUnit/NewtonsForceLaw	yade-package-dem/src/Engine/StandAloneEngine/GlobalStiffnessTimeStepper">chareyre at mail.berlios.de
+       </A><BR>
+    <I>Fri Feb 23 20:18:13 CET 2007</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000036.html">[Yade-commits] r1071 -	trunk/yade-packages/yade-package-dem/src/Engine/EngineUnit
+</A></li>
+        <LI>Next message: <A HREF="000038.html">[Yade-commits] r1073 - in trunk: . yade-core/src/yade	yade-extra/clump yade-guis/yade-gui-qt/src/QtGUI	yade-libs/yade-lib-serialization/src/yade-lib-serialization	yade-packages/yade-package-dem/src/Engine/DeusExMachina/ResultantForceEngine	yade-packages/yade-package-dem/src/Engine/DeusExMachina/TriaxialCompressionEngine	yade-packages/yade-package-dem/src/Engine/DeusExMachina/TriaxialStressController	yade-packages/yade-package-dem/src/Engine/EngineUnit/InteractingMyTetrahedron2AABB	yade-packages/yade-package-dem/src/Engine/StandAloneEngine/GeometricalModelForceColorizer	yade-packages/yade-package-dem/src/Engine/StandAloneEngine/MyTetrahedronLaw	yade-packages/yade-package-dem/src/RenderingEngine/GLDrawInteractingMyTetrahedron	yade-packages/yade-package-dem/src/RenderingEngine/GLDrawSDECLinkGeometry	yade-packages/yade-package-dem/src/RenderingEngine/GLDrawSpheresContactGeometry	yade-scripts
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#37">[ date ]</a>
+              <a href="thread.html#37">[ thread ]</a>
+              <a href="subject.html#37">[ subject ]</a>
+              <a href="author.html#37">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: chareyre
+Date: 2007-02-23 20:18:12 +0100 (Fri, 23 Feb 2007)
+New Revision: 1072
+
+Modified:
+   trunk/yade-packages/yade-package-common/src/Engine/EngineUnit/NewtonsForceLaw/NewtonsForceLaw.pro
+   trunk/yade-packages/yade-package-dem/src/Engine/StandAloneEngine/GlobalStiffnessTimeStepper/GlobalStiffnessTimeStepper.cpp
+Log:
+Minor changes in the computation of the critical timestep.
+
+
+
+Modified: trunk/yade-packages/yade-package-common/src/Engine/EngineUnit/NewtonsForceLaw/NewtonsForceLaw.pro
+===================================================================
+--- trunk/yade-packages/yade-package-common/src/Engine/EngineUnit/NewtonsForceLaw/NewtonsForceLaw.pro	2007-02-23 17:59:37 UTC (rev 1071)
++++ trunk/yade-packages/yade-package-common/src/Engine/EngineUnit/NewtonsForceLaw/NewtonsForceLaw.pro	2007-02-23 19:18:12 UTC (rev 1072)
+@@ -7,11 +7,11 @@
+         -lForce \
+         -lParticleParameters \
+         -lPhysicalActionApplier \
+-		  -lRigidBodyParameters \
++	-lRigidBodyParameters \
+         -rdynamic 
+ INCLUDEPATH += $${YADE_QMAKE_PATH}/include/ \
+                ../../../DataClass/PhysicalAction/Force \
+-               ../../../DataClass/PhysicalParameters/RigidBodyParameters \					
++               ../../../DataClass/PhysicalParameters/RigidBodyParameters \
+                ../../../DataClass/PhysicalParameters/ParticleParameters \
+                ../../../Engine/MetaEngine/PhysicalActionApplier 
+ QMAKE_LIBDIR = ../../../../bin \
+
+Modified: trunk/yade-packages/yade-package-dem/src/Engine/StandAloneEngine/GlobalStiffnessTimeStepper/GlobalStiffnessTimeStepper.cpp
+===================================================================
+--- trunk/yade-packages/yade-package-dem/src/Engine/StandAloneEngine/GlobalStiffnessTimeStepper/GlobalStiffnessTimeStepper.cpp	2007-02-23 17:59:37 UTC (rev 1071)
++++ trunk/yade-packages/yade-package-dem/src/Engine/StandAloneEngine/GlobalStiffnessTimeStepper/GlobalStiffnessTimeStepper.cpp	2007-02-23 19:18:12 UTC (rev 1072)
+@@ -19,9 +19,10 @@
+ 
+ GlobalStiffnessTimeStepper::GlobalStiffnessTimeStepper() : TimeStepper() , sdecContactModel(new MacroMicroElasticRelationships), actionParameterGlobalStiffness(new GlobalStiffness)
+ {
++//cerr &lt;&lt; &quot;GlobalStiffnessTimeStepper()&quot;  &lt;&lt; endl;
+ 	globalStiffnessClassIndex = actionParameterGlobalStiffness-&gt;getClassIndex();
+ 	sdecGroupMask = 1;
+-	timestepSafetyCoefficient = 0.8;
++	timestepSafetyCoefficient = 0.4;
+ 	computedOnce = false;
+ 	defaultDt = 1;
+ 	
+@@ -87,7 +88,7 @@
+ 	//cerr &lt;&lt; &quot;sdec-&gt;inertia=&quot; &lt;&lt; sdec-&gt;inertia.x() &lt;&lt; &quot; &quot; &lt;&lt; sdec-&gt;inertia.x() &lt;&lt; &quot; &quot; &lt;&lt; sdec-&gt;inertia.x() &lt;&lt; endl;
+ 	//cerr &lt;&lt; &quot;timesteps : dt=&quot; &lt;&lt; dt &lt;&lt; &quot; / Rdt=&quot; &lt;&lt; Rdt &lt;&lt; endl;
+ 	
+-	dt = timestepSafetyCoefficient*std::min(dt,Rdt);
++	dt = 0.709*timestepSafetyCoefficient*std::min(dt,Rdt);//0.709 = 1/sqrt(2)
+ 	
+ 	newDt = std::min(dt,newDt);
+ 	computedSomething = true;
+@@ -109,8 +110,7 @@
+ 
+ void GlobalStiffnessTimeStepper::computeTimeStep(Body* body)
+ {
+-//cerr &lt;&lt; &quot;computeTimeStep(Body* body)&quot;  &lt;&lt; endl;
+-cerr &lt;&lt; &quot;phasea1 &quot;; 
++
+ 	MetaBody * ncb = dynamic_cast&lt;MetaBody*&gt;(body);
+ 	shared_ptr&lt;BodyContainer&gt;&amp; bodies = ncb-&gt;bodies;
+ // 	shared_ptr&lt;InteractionContainer&gt;&amp; persistentInteractions = ncb-&gt;persistentInteractions;
+@@ -146,17 +146,13 @@
+ 				findTimeStepFromBody(b, ncb); }
+ 		}
+ 	}	
+-	
+-	cerr &lt;&lt; &quot;phasea9 &quot;; 
+-	
++		
+ 	if(computedSomething)
+ 	{
+ 		Omega::instance().setTimeStep(min(newDt , defaultDt));
+ 		computedOnce = true;		
+ 		//cerr &lt;&lt; &quot;GlobalStiffnessTimeStepper, timestep chosen is:&quot; &lt;&lt; Omega::instance().getTimeStep() &lt;&lt; endl;
+ 	}
+-//	cerr &lt;&lt; &quot;GlobalStiffnessTimeStepper, computedSomething is:&quot; &lt;&lt; computedSomething &lt;&lt; endl;
+-	cerr &lt;&lt; &quot;GlobalGlobalStiffnessTimeStepper, newDt is:&quot; &lt;&lt; newDt &lt;&lt; endl;
+-	cerr &lt;&lt; &quot;new timestep chosen is:&quot; &lt;&lt; Omega::instance().getTimeStep() &lt;&lt; endl;
++	cerr &lt;&lt; &quot;new timestep is:&quot; &lt;&lt; Omega::instance().getTimeStep() &lt;&lt; endl;
+ }
+ 
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000036.html">[Yade-commits] r1071 -	trunk/yade-packages/yade-package-dem/src/Engine/EngineUnit
+</A></li>
+	<LI>Next message: <A HREF="000038.html">[Yade-commits] r1073 - in trunk: . yade-core/src/yade	yade-extra/clump yade-guis/yade-gui-qt/src/QtGUI	yade-libs/yade-lib-serialization/src/yade-lib-serialization	yade-packages/yade-package-dem/src/Engine/DeusExMachina/ResultantForceEngine	yade-packages/yade-package-dem/src/Engine/DeusExMachina/TriaxialCompressionEngine	yade-packages/yade-package-dem/src/Engine/DeusExMachina/TriaxialStressController	yade-packages/yade-package-dem/src/Engine/EngineUnit/InteractingMyTetrahedron2AABB	yade-packages/yade-package-dem/src/Engine/StandAloneEngine/GeometricalModelForceColorizer	yade-packages/yade-package-dem/src/Engine/StandAloneEngine/MyTetrahedronLaw	yade-packages/yade-package-dem/src/RenderingEngine/GLDrawInteractingMyTetrahedron	yade-packages/yade-package-dem/src/RenderingEngine/GLDrawSDECLinkGeometry	yade-packages/yade-package-dem/src/RenderingEngine/GLDrawSpheresContactGeometry	yade-scripts
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#37">[ date ]</a>
+              <a href="thread.html#37">[ thread ]</a>
+              <a href="subject.html#37">[ subject ]</a>
+              <a href="author.html#37">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

@@ -1,0 +1,482 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1301 - in trunk/pkg/dem: . Engine/DeusExMachina	PreProcessor
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1301%20-%20in%20trunk/pkg/dem%3A%20.%20Engine/DeusExMachina%0A%09PreProcessor&In-Reply-To=%3C200804071623.m37GNrUN001846%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000263.html">
+   <LINK REL="Next"  HREF="000265.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1301 - in trunk/pkg/dem: . Engine/DeusExMachina	PreProcessor</H1>
+    <B>chareyre at mail.berlios.de</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1301%20-%20in%20trunk/pkg/dem%3A%20.%20Engine/DeusExMachina%0A%09PreProcessor&In-Reply-To=%3C200804071623.m37GNrUN001846%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1301 - in trunk/pkg/dem: . Engine/DeusExMachina	PreProcessor">chareyre at mail.berlios.de
+       </A><BR>
+    <I>Mon Apr  7 18:23:53 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000263.html">[Yade-commits] r1300 - in branches/przewdnik: core core/concurrent	pkg/common/Engine/StandAloneEngine
+</A></li>
+        <LI>Next message: <A HREF="000265.html">[Yade-commits] r1302 - trunk/pkg/dem/Engine/StandAloneEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#264">[ date ]</a>
+              <a href="thread.html#264">[ thread ]</a>
+              <a href="subject.html#264">[ subject ]</a>
+              <a href="author.html#264">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: chareyre
+Date: 2008-04-07 18:23:28 +0200 (Mon, 07 Apr 2008)
+New Revision: 1301
+
+Modified:
+   trunk/pkg/dem/Engine/DeusExMachina/TriaxialStateRecorder.cpp
+   trunk/pkg/dem/PreProcessor/HydraulicTest.cpp
+   trunk/pkg/dem/PreProcessor/TriaxialTest.cpp
+   trunk/pkg/dem/SConscript
+Log:
+TriaxialStateRecorder : add the unbalanced force in 8th column.
+TriaxialTest : revert order of creation of spheres and boxes (boxes first), to prevent numbering problems in SAPcollider when using 
+HydraulicTest. 
+HydraulicTest : search engines and modify their parameters (desactivate stress control/activate gravity)
+dem/SConscript : link HydraulicTest with few more libs
+
+
+
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/TriaxialStateRecorder.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/TriaxialStateRecorder.cpp	2008-04-06 17:52:04 UTC (rev 1300)
++++ trunk/pkg/dem/Engine/DeusExMachina/TriaxialStateRecorder.cpp	2008-04-07 16:23:28 UTC (rev 1301)
+@@ -98,6 +98,7 @@
+     &lt;&lt; lexical_cast&lt;string&gt;(triaxialCompressionEngine-&gt;strain[0]) &lt;&lt; &quot; &quot;
+     &lt;&lt; lexical_cast&lt;string&gt;(triaxialCompressionEngine-&gt;strain[1]) &lt;&lt; &quot; &quot;
+     &lt;&lt; lexical_cast&lt;string&gt;(triaxialCompressionEngine-&gt;strain[2]) &lt;&lt; &quot; &quot;
++    &lt;&lt; lexical_cast&lt;string&gt;(triaxialCompressionEngine-&gt;ComputeUnbalancedForce(body)) &lt;&lt; &quot; &quot;
+     &lt;&lt; endl;
+ 
+ /*
+
+Modified: trunk/pkg/dem/PreProcessor/HydraulicTest.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/HydraulicTest.cpp	2008-04-06 17:52:04 UTC (rev 1300)
++++ trunk/pkg/dem/PreProcessor/HydraulicTest.cpp	2008-04-07 16:23:28 UTC (rev 1301)
+@@ -57,8 +57,10 @@
+ 
+ #include &lt;boost/filesystem/operations.hpp&gt;
+ #include &lt;boost/filesystem/convenience.hpp&gt;
++#include&lt;yade/pkg-dem/TriaxialCompressionEngine.hpp&gt;
+ 
+ 
++
+ HydraulicTest::HydraulicTest () : FileGenerator()
+ {
+ 	yadeFileWithSpheres	=&quot;./compression1.xml&quot;;
+@@ -92,41 +94,41 @@
+ 
+ bool HydraulicTest::generate()
+ {
+-	rootBody = shared_ptr&lt;MetaBody&gt;(new MetaBody);
+-	positionRootBody(rootBody);
++	rootBody = shared_ptr&lt;MetaBody&gt; ( new MetaBody );
++	positionRootBody ( rootBody );
+ 
+ ////////////////////////////////////
+-	
+-	rootBody-&gt;persistentInteractions	= shared_ptr&lt;InteractionContainer&gt;(new InteractionVecSet);
+-	rootBody-&gt;transientInteractions		= shared_ptr&lt;InteractionContainer&gt;(new InteractionVecSet);
+-	rootBody-&gt;physicalActions		= shared_ptr&lt;PhysicalActionContainer&gt;(new PhysicalActionVectorVector);
+-	rootBody-&gt;bodies 			= shared_ptr&lt;BodyContainer&gt;(new BodyRedirectionVector);
+ 
++	rootBody-&gt;persistentInteractions = shared_ptr&lt;InteractionContainer&gt; ( new InteractionVecSet );
++	rootBody-&gt;transientInteractions  = shared_ptr&lt;InteractionContainer&gt; ( new InteractionVecSet );
++	rootBody-&gt;physicalActions  = shared_ptr&lt;PhysicalActionContainer&gt; ( new PhysicalActionVectorVector );
++	rootBody-&gt;bodies    = shared_ptr&lt;BodyContainer&gt; ( new BodyRedirectionVector );
++
+ /////////////////////////////////////
+ /////////////////////////////////////
+ 	// load file
+-	
++
+ 	shared_ptr&lt;MetaBody&gt; metaBodyWithSpheres;
+ 
+-	if ( 	   yadeFileWithSpheres.size()!=0 
+-		&amp;&amp; filesystem::exists(yadeFileWithSpheres) 
+-		&amp;&amp; (filesystem::extension(yadeFileWithSpheres)==&quot;.xml&quot; || filesystem::extension(yadeFileWithSpheres)==&quot;.yade&quot;))
++	if ( yadeFileWithSpheres.size() !=0
++			&amp;&amp; filesystem::exists ( yadeFileWithSpheres )
++			&amp;&amp; ( filesystem::extension ( yadeFileWithSpheres ) ==&quot;.xml&quot; || filesystem::extension ( yadeFileWithSpheres ) ==&quot;.yade&quot; ) )
+ 	{
+ 		try
+ 		{
+-			if(filesystem::extension(yadeFileWithSpheres)==&quot;.xml&quot;)
+-				IOFormatManager::loadFromFile(&quot;XMLFormatManager&quot;,yadeFileWithSpheres,&quot;rootBody&quot;,metaBodyWithSpheres);
++			if ( filesystem::extension ( yadeFileWithSpheres ) ==&quot;.xml&quot; )
++				IOFormatManager::loadFromFile ( &quot;XMLFormatManager&quot;,yadeFileWithSpheres,&quot;rootBody&quot;,metaBodyWithSpheres );
+ 
+-			else if(filesystem::extension(yadeFileWithSpheres)==&quot;.yade&quot; )
+-				IOFormatManager::loadFromFile(&quot;BINFormatManager&quot;,yadeFileWithSpheres,&quot;rootBody&quot;,metaBodyWithSpheres);
++			else if ( filesystem::extension ( yadeFileWithSpheres ) ==&quot;.yade&quot; )
++				IOFormatManager::loadFromFile ( &quot;BINFormatManager&quot;,yadeFileWithSpheres,&quot;rootBody&quot;,metaBodyWithSpheres );
+ 
+-			if( metaBodyWithSpheres-&gt;getClassName() != &quot;MetaBody&quot;){ message=&quot;Error: cannot load the file that should contain spheres&quot;; return false; }
+-		} 
+-		catch(SerializableError&amp; e)
++		if ( metaBodyWithSpheres-&gt;getClassName() != &quot;MetaBody&quot; ) { message=&quot;Error: cannot load the file that should contain spheres&quot;; return false; }
++		}
++		catch ( SerializableError&amp; e )
+ 		{
+ 			message=&quot;Error: cannot load the file that should contain spheres&quot;; return false;
+ 		}
+-		catch(yadeError&amp; e)
++		catch ( yadeError&amp; e )
+ 		{
+ 			message=&quot;Error: cannot load the file that should contain spheres&quot;; return false;
+ 		}
+@@ -134,73 +136,73 @@
+ 	else
+ 		return &quot;Error: cannot load the file that should contain spheres&quot;;
+ /////////////////////////////////////
+-	Vector3r min(10000,10000,10000),max(-10000,-10000,-10000);
++	Vector3r min ( 10000,10000,10000 ),max ( -10000,-10000,-10000 );
+ 	{// calc min/max
+ 		BodyContainer::iterator bi    = metaBodyWithSpheres-&gt;bodies-&gt;begin();
+ 		BodyContainer::iterator biEnd = metaBodyWithSpheres-&gt;bodies-&gt;end();
+-		for( ; bi!=biEnd ; ++bi )
++		for ( ; bi!=biEnd ; ++bi )
+ 		{
+-			if((*bi)-&gt;geometricalModel-&gt;getClassName() == &quot;Sphere&quot; )
++			if ( ( *bi )-&gt;geometricalModel-&gt;getClassName() == &quot;Sphere&quot; )
+ 			{
+ 				shared_ptr&lt;Body&gt; b = *bi;
+-				min = componentMinVector(min,b-&gt;physicalParameters-&gt;se3.position - static_cast&lt;Sphere*&gt;(b-&gt;geometricalModel.get())-&gt;radius * Vector3r(1,1,1));
+-				max = componentMaxVector(max,b-&gt;physicalParameters-&gt;se3.position + static_cast&lt;Sphere*&gt;(b-&gt;geometricalModel.get())-&gt;radius * Vector3r(1,1,1));
++				min = componentMinVector ( min,b-&gt;physicalParameters-&gt;se3.position - static_cast&lt;Sphere*&gt; ( b-&gt;geometricalModel.get() )-&gt;radius * Vector3r ( 1,1,1 ) );
++				max = componentMaxVector ( max,b-&gt;physicalParameters-&gt;se3.position + static_cast&lt;Sphere*&gt; ( b-&gt;geometricalModel.get() )-&gt;radius * Vector3r ( 1,1,1 ) );
+ 
+-				BodyMacroParameters* bm = dynamic_cast&lt;BodyMacroParameters*&gt;(b-&gt;physicalParameters.get());
+-				if(!bm) {message=&quot;Error: spheres don't use BodyMacroParameters for physical parameters&quot;; return false;}
++				BodyMacroParameters* bm = dynamic_cast&lt;BodyMacroParameters*&gt; ( b-&gt;physicalParameters.get() );
++				if ( !bm ) {message=&quot;Error: spheres don't use BodyMacroParameters for physical parameters&quot;; return false;}
+ 
+ 			}
+ 		}
+ 	}
+ 
+-std::cerr &lt;&lt; min &lt;&lt; &quot; &quot; &lt;&lt; max &lt;&lt; std::endl;
++	std::cerr &lt;&lt; min &lt;&lt; &quot; &quot; &lt;&lt; max &lt;&lt; std::endl;
+ 
+ 	unsigned int nbSpheres=0;
+ 	unsigned int idSphere=6;
+ 	{// insert Spheres
+ 		BodyContainer::iterator bi    = metaBodyWithSpheres-&gt;bodies-&gt;begin();
+ 		BodyContainer::iterator biEnd = metaBodyWithSpheres-&gt;bodies-&gt;end();
+-		for( ; bi!=biEnd ; ++bi )
++		for ( ; bi!=biEnd ; ++bi )
+ 		{
+-			if(   (*bi)-&gt;geometricalModel-&gt;getClassName() == &quot;Sphere&quot;)
++			if ( ( *bi )-&gt;geometricalModel-&gt;getClassName() == &quot;Sphere&quot; )
+ 			{
+-				if(  inside((*bi)-&gt;physicalParameters-&gt;se3.position)  )
++				if ( inside ( ( *bi )-&gt;physicalParameters-&gt;se3.position ) )
+ 				{
+-				cerr &lt;&lt; &quot;insert sphere&quot; &lt;&lt; endl;
++					cerr &lt;&lt; &quot;insert sphere&quot; &lt;&lt; endl;
+ 					shared_ptr&lt;Body&gt; b = *bi;
+ 					//b-&gt;id = idSphere++;
+-			        	rootBody-&gt;bodies-&gt;insert(b, idSphere++);
++					rootBody-&gt;bodies-&gt;insert ( b, idSphere++ );
+ 					nbSpheres++;
+ 				}
+ 			}
+-			if ( (*bi)-&gt;geometricalModel-&gt;getClassName() == &quot;Box&quot; )
++			if ( ( *bi )-&gt;geometricalModel-&gt;getClassName() == &quot;Box&quot; )
+ 			{
+ 				//if(  inside((*bi)-&gt;physicalParameters-&gt;se3.position)  )
+ 				{
+-				cerr &lt;&lt; &quot;insert box&quot; &lt;&lt; endl;
++					cerr &lt;&lt; &quot;insert box&quot; &lt;&lt; endl;
+ 					shared_ptr&lt;Body&gt; b = *bi;
+-			        	rootBody-&gt;bodies-&gt;insert(b);
+-					
++					rootBody-&gt;bodies-&gt;insert ( b );
++
+ 				}
+ 			}
+ 		}
+ 	}
+-	
++
+ // saving file
+-	if(file.size() != 0 )
++	if ( file.size() != 0 )
+ 	{
+-		ofstream saveFile(file.c_str());
++		ofstream saveFile ( file.c_str() );
+ 		//saveFile &lt;&lt; nbSpheres &lt;&lt; std::endl;
+ 
+ 		//BodyContainer::iterator bi    = metaBodyWithSpheres-&gt;bodies-&gt;begin();
+ 		//BodyContainer::iterator biEnd = metaBodyWithSpheres-&gt;bodies-&gt;end();
+ 		BodyContainer::iterator bi    = rootBody-&gt;bodies-&gt;begin();
+ 		BodyContainer::iterator biEnd = rootBody-&gt;bodies-&gt;end();
+-		for( ; bi!=biEnd ; ++bi )
++		for ( ; bi!=biEnd ; ++bi )
+ 		{
+-			if(   (*bi)-&gt;geometricalModel-&gt;getClassName() == &quot;Sphere&quot; )
++			if ( ( *bi )-&gt;geometricalModel-&gt;getClassName() == &quot;Sphere&quot; )
+ 			{
+-				saveFile &lt;&lt; (*bi)-&gt;getId() &lt;&lt; &quot; &quot; &lt;&lt; YADE_PTR_CAST&lt;Sphere&gt;((*bi)-&gt;geometricalModel)-&gt;radius  &lt;&lt; &quot; &quot; &lt;&lt; (*bi)-&gt;physicalParameters-&gt;se3.position &lt;&lt; std::endl;
++				saveFile &lt;&lt; ( *bi )-&gt;getId() &lt;&lt; &quot; &quot; &lt;&lt; YADE_PTR_CAST&lt;Sphere&gt; ( ( *bi )-&gt;geometricalModel )-&gt;radius  &lt;&lt; &quot; &quot; &lt;&lt; ( *bi )-&gt;physicalParameters-&gt;se3.position &lt;&lt; std::endl;
+ 
+ 			}
+ 		}
+@@ -209,69 +211,93 @@
+ 
+ /////////////////////////////////////
+ 
+-// 	rootBody-&gt;persistentInteractions-&gt;clear();
+-// 	
+-// 	shared_ptr&lt;Body&gt; bodyA;
+-// 
+-// 	BodyContainer::iterator bi    = rootBody-&gt;bodies-&gt;begin();
+-// 	BodyContainer::iterator biEnd = rootBody-&gt;bodies-&gt;end();
+-// 	BodyContainer::iterator bi2;
+-// 
+-// 	++bi; // skips piston
+-// 	++bi; // skips supportBox1
+-// 	++bi; // skips supportBox2
+-// 		
+-		
+-// 	for( ; bi!=biEnd ; ++bi )
+-// 	{
+-// 		bodyA =*bi;
+-// 		bi2=bi;
+-// 		++bi2;
+-// 		for( ; bi2!=biEnd ; ++bi2 )
+-// 		{
+-// 			if(   (*bi)-&gt;geometricalModel-&gt;getClassName() == &quot;Sphere&quot;
+-// 			   &amp;&amp; (*bi2)-&gt;geometricalModel-&gt;getClassName() == &quot;Sphere&quot;)
+-// 			{ 
+-// 			shared_ptr&lt;Body&gt; bodyB = *bi2;
+-// 
+-// 			shared_ptr&lt;BodyMacroParameters&gt; a = YADE_PTR_CAST&lt;BodyMacroParameters&gt;(bodyA-&gt;physicalParameters);
+-// 			shared_ptr&lt;BodyMacroParameters&gt; b = YADE_PTR_CAST&lt;BodyMacroParameters&gt;(bodyB-&gt;physicalParameters);
+-// 			shared_ptr&lt;InteractingSphere&gt;	as = YADE_PTR_CAST&lt;InteractingSphere&gt;(bodyA-&gt;interactingGeometry);
+-// 			shared_ptr&lt;InteractingSphere&gt;	bs = YADE_PTR_CAST&lt;InteractingSphere&gt;(bodyB-&gt;interactingGeometry);
+-// 
+-// /*			if ((a-&gt;se3.position - b-&gt;se3.position).Length() &lt; (as-&gt;radius + bs-&gt;radius))  
+-// 			{
+-// 				shared_ptr&lt;Interaction&gt; 		link(new Interaction( bodyA-&gt;getId() , bodyB-&gt;getId() ));
+-// 				shared_ptr&lt;SDECLinkGeometry&gt;		geometry(new SDECLinkGeometry);
+-// 				shared_ptr&lt;SDECLinkPhysics&gt;	physics(new SDECLinkPhysics);
+-// 				
+-// 				geometry-&gt;radius1			= as-&gt;radius - fabs(as-&gt;radius - bs-&gt;radius)*0.5;
+-// 				geometry-&gt;radius2			= bs-&gt;radius - fabs(as-&gt;radius - bs-&gt;radius)*0.5;
+-// 
+-// 				physics-&gt;initialKn			= linkKn; // FIXME - BIG problem here.
+-// 				physics-&gt;initialKs			= linkKs;
+-// 				physics-&gt;heta				= 1;
+-// 				physics-&gt;initialEquilibriumDistance	= (a-&gt;se3.position - b-&gt;se3.position).Length();
+-// 				physics-&gt;knMax				= linkMaxNormalForce;
+-// 				physics-&gt;ksMax				= linkMaxShearForce;
+-// 
+-// 				link-&gt;interactionGeometry 		= geometry;
+-// 				link-&gt;interactionPhysics 		= physics;
+-// 				link-&gt;isReal 				= true;
+-// 				link-&gt;isNew 				= false;
+-// 				
+-// 				rootBody-&gt;persistentInteractions-&gt;insert(link);
+-// 			}*/
+-// 			}
+-// 		}
+-// 	}
+-	
+-/*	message=&quot;total number of permament links created: &quot; 
+-		+ lexical_cast&lt;string&gt;(rootBody-&gt;persistentInteractions-&gt;size()) 
+-		+ &quot;\nWARNING: link bonds are nearly working, but the formulas are waiting for total rewrite!&quot;;
+-*/
++//  rootBody-&gt;persistentInteractions-&gt;clear();
++//
++//  shared_ptr&lt;Body&gt; bodyA;
++//
++//  BodyContainer::iterator bi    = rootBody-&gt;bodies-&gt;begin();
++//  BodyContainer::iterator biEnd = rootBody-&gt;bodies-&gt;end();
++//  BodyContainer::iterator bi2;
++//
++//  ++bi; // skips piston
++//  ++bi; // skips supportBox1
++//  ++bi; // skips supportBox2
++//
++
++//  for( ; bi!=biEnd ; ++bi )
++//  {
++//   bodyA =*bi;
++//   bi2=bi;
++//   ++bi2;
++//   for( ; bi2!=biEnd ; ++bi2 )
++//   {
++//    if(   (*bi)-&gt;geometricalModel-&gt;getClassName() == &quot;Sphere&quot;
++//       &amp;&amp; (*bi2)-&gt;geometricalModel-&gt;getClassName() == &quot;Sphere&quot;)
++//    {
++//    shared_ptr&lt;Body&gt; bodyB = *bi2;
++//
++//    shared_ptr&lt;BodyMacroParameters&gt; a = YADE_PTR_CAST&lt;BodyMacroParameters&gt;(bodyA-&gt;physicalParameters);
++//    shared_ptr&lt;BodyMacroParameters&gt; b = YADE_PTR_CAST&lt;BodyMacroParameters&gt;(bodyB-&gt;physicalParameters);
++//    shared_ptr&lt;InteractingSphere&gt; as = YADE_PTR_CAST&lt;InteractingSphere&gt;(bodyA-&gt;interactingGeometry);
++//    shared_ptr&lt;InteractingSphere&gt; bs = YADE_PTR_CAST&lt;InteractingSphere&gt;(bodyB-&gt;interactingGeometry);
++//
++// /*   if ((a-&gt;se3.position - b-&gt;se3.position).Length() &lt; (as-&gt;radius + bs-&gt;radius))
++//    {
++//     shared_ptr&lt;Interaction&gt;   link(new Interaction( bodyA-&gt;getId() , bodyB-&gt;getId() ));
++//     shared_ptr&lt;SDECLinkGeometry&gt;  geometry(new SDECLinkGeometry);
++//     shared_ptr&lt;SDECLinkPhysics&gt; physics(new SDECLinkPhysics);
++//
++//     geometry-&gt;radius1   = as-&gt;radius - fabs(as-&gt;radius - bs-&gt;radius)*0.5;
++//     geometry-&gt;radius2   = bs-&gt;radius - fabs(as-&gt;radius - bs-&gt;radius)*0.5;
++//
++//     physics-&gt;initialKn   = linkKn; // FIXME - BIG problem here.
++//     physics-&gt;initialKs   = linkKs;
++//     physics-&gt;heta    = 1;
++//     physics-&gt;initialEquilibriumDistance = (a-&gt;se3.position - b-&gt;se3.position).Length();
++//     physics-&gt;knMax    = linkMaxNormalForce;
++//     physics-&gt;ksMax    = linkMaxShearForce;
++//
++//     link-&gt;interactionGeometry   = geometry;
++//     link-&gt;interactionPhysics   = physics;
++//     link-&gt;isReal     = true;
++//     link-&gt;isNew     = false;
++//
++//     rootBody-&gt;persistentInteractions-&gt;insert(link);
++//    }*/
++//    }
++//   }
++//  }
++
++	/* message=&quot;total number of permament links created: &quot;
++	  + lexical_cast&lt;string&gt;(rootBody-&gt;persistentInteractions-&gt;size())
++	  + &quot;\nWARNING: link bonds are nearly working, but the formulas are waiting for total rewrite!&quot;;
++	*/
+ 	rootBody-&gt;engines= metaBodyWithSpheres-&gt;engines; //Andrea put his dirty hands here!!
+ 	rootBody-&gt;initializers= metaBodyWithSpheres-&gt;initializers; //Bruno as well
++
++	vector&lt;shared_ptr&lt;Engine&gt; &gt;::iterator it =  rootBody-&gt;engines.begin();
++	vector&lt;shared_ptr&lt;Engine&gt; &gt;::iterator it_end =  rootBody-&gt;engines.end();
++	for ( ;it!=it_end; ++it )
++	{
++		if ( ( *it )-&gt;getClassName() == &quot;GravityEngine&quot; )
++		{
++			cerr &lt;&lt; &quot;found gravity engine&quot; &lt;&lt; endl;
++			YADE_PTR_CAST&lt;GravityEngine&gt; ( *it )-&gt;gravity = Vector3r ( 0,-9.81,0 );
++		}
++		else if ( ( *it )-&gt;getClassName() == &quot;TriaxialCompressionEngine&quot; )
++		{
++			cerr &lt;&lt; &quot;found TriaxialCompressionEngine&quot; &lt;&lt; endl;
++			YADE_PTR_CAST&lt;TriaxialCompressionEngine&gt; ( *it )-&gt;wall_bottom_activated = 0;
++			YADE_PTR_CAST&lt;TriaxialCompressionEngine&gt; ( *it )-&gt;wall_top_activated = 0;
++			YADE_PTR_CAST&lt;TriaxialCompressionEngine&gt; ( *it )-&gt;wall_left_activated = 0;
++			YADE_PTR_CAST&lt;TriaxialCompressionEngine&gt; ( *it )-&gt;wall_right_activated = 0;
++			YADE_PTR_CAST&lt;TriaxialCompressionEngine&gt; ( *it )-&gt;wall_front_activated = 0;
++			YADE_PTR_CAST&lt;TriaxialCompressionEngine&gt; ( *it )-&gt;wall_back_activated = 0;
++			YADE_PTR_CAST&lt;TriaxialCompressionEngine&gt; ( *it )-&gt;autoCompressionActivation = 0;
++			YADE_PTR_CAST&lt;TriaxialCompressionEngine&gt; ( *it )-&gt;internalCompaction = 0;
++
++		}
++	}
+ 	return true;
+ }
+ 
+
+Modified: trunk/pkg/dem/PreProcessor/TriaxialTest.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/TriaxialTest.cpp	2008-04-06 17:52:04 UTC (rev 1300)
++++ trunk/pkg/dem/PreProcessor/TriaxialTest.cpp	2008-04-07 16:23:28 UTC (rev 1301)
+@@ -281,19 +281,7 @@
+ 
+ 	shared_ptr&lt;Body&gt; body;
+ 	
+-	vector&lt;BasicSphere&gt; sphere_list;
+-	if(importFilename!=&quot;&quot;) sphere_list=Shop::loadSpheresFromFile(importFilename,lowerCorner,upperCorner);
+-	else message+=GenerateCloud(sphere_list, lowerCorner, upperCorner, numberOfGrains, 0.3, 0.75);
+ 	
+-	vector&lt;BasicSphere&gt;::iterator it = sphere_list.begin();
+-	vector&lt;BasicSphere&gt;::iterator it_end = sphere_list.end();
+-			
+-	for (;it!=it_end; ++it)
+-	{
+-		cerr &lt;&lt; &quot;sphere (&quot; &lt;&lt; it-&gt;first &lt;&lt; &quot; &quot; &lt;&lt; it-&gt;second &lt;&lt; &quot;)&quot;&lt;&lt;endl;
+-		createSphere(body,it-&gt;first,it-&gt;second,false,true);
+-		rootBody-&gt;bodies-&gt;insert(body);
+-	}
+ 	
+ 
+ // create bigBall
+@@ -413,6 +401,20 @@
+ 			 
+ 	}
+ 	
++	vector&lt;BasicSphere&gt; sphere_list;
++	if(importFilename!=&quot;&quot;) sphere_list=Shop::loadSpheresFromFile(importFilename,lowerCorner,upperCorner);
++	else message+=GenerateCloud(sphere_list, lowerCorner, upperCorner, numberOfGrains, 0.3, 0.75);
++	
++	vector&lt;BasicSphere&gt;::iterator it = sphere_list.begin();
++	vector&lt;BasicSphere&gt;::iterator it_end = sphere_list.end();
++			
++	for (;it!=it_end; ++it)
++	{
++		cerr &lt;&lt; &quot;sphere (&quot; &lt;&lt; it-&gt;first &lt;&lt; &quot; &quot; &lt;&lt; it-&gt;second &lt;&lt; &quot;)&quot;&lt;&lt;endl;
++		createSphere(body,it-&gt;first,it-&gt;second,false,true);
++		rootBody-&gt;bodies-&gt;insert(body);
++	}
++	
+ 	return true;
+ //  	return &quot;Generated a sample inside box of dimensions: (&quot; 
+ //  		+ lexical_cast&lt;string&gt;(lowerCorner[0]) + &quot;,&quot; 
+
+Modified: trunk/pkg/dem/SConscript
+===================================================================
+--- trunk/pkg/dem/SConscript	2008-04-06 17:52:04 UTC (rev 1300)
++++ trunk/pkg/dem/SConscript	2008-04-07 16:23:28 UTC (rev 1301)
+@@ -850,7 +850,7 @@
+ 		
+ env.SharedLibrary('HydraulicForceEngine',
+ 		['Engine/DeusExMachina/HydraulicForceEngine.cpp'],
+-		LIBS=env['LIBS']+['yade-base',  'Force', 'Momentum', 'ParticleParameters', 'CohesiveFrictionalBodyParameters'],
++		LIBS=env['LIBS']+['yade-base',  'Force', 'Momentum', 'ParticleParameters', 'CohesiveFrictionalBodyParameters', 'TriaxialCompressionEngine', 'GravityEngine'],
+ 		CPPPATH=env['CPPPATH']+['Engine/DeusExMachina',
+ 			'DataClass/PhysicalAction',
+ 			'$PREFIX/include',
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000263.html">[Yade-commits] r1300 - in branches/przewdnik: core core/concurrent	pkg/common/Engine/StandAloneEngine
+</A></li>
+	<LI>Next message: <A HREF="000265.html">[Yade-commits] r1302 - trunk/pkg/dem/Engine/StandAloneEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#264">[ date ]</a>
+              <a href="thread.html#264">[ thread ]</a>
+              <a href="subject.html#264">[ subject ]</a>
+              <a href="author.html#264">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

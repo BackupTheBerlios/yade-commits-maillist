@@ -1,0 +1,639 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1372 - in trunk: extra extra/usct gui/py gui/qt3
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1372%20-%20in%20trunk%3A%20extra%20extra/usct%20gui/py%20gui/qt3&In-Reply-To=%3C200806021542.m52FgfvD017797%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000332.html">
+   <LINK REL="Next"  HREF="000334.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1372 - in trunk: extra extra/usct gui/py gui/qt3</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1372%20-%20in%20trunk%3A%20extra%20extra/usct%20gui/py%20gui/qt3&In-Reply-To=%3C200806021542.m52FgfvD017797%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1372 - in trunk: extra extra/usct gui/py gui/qt3">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Mon Jun  2 17:42:41 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000332.html">[Yade-commits] r1371 - in trunk: debian extra/usct
+</A></li>
+        <LI>Next message: <A HREF="000334.html">[Yade-commits] r1373 - trunk/gui/qt3
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#333">[ date ]</a>
+              <a href="thread.html#333">[ thread ]</a>
+              <a href="subject.html#333">[ subject ]</a>
+              <a href="author.html#333">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2008-06-02 17:42:40 +0200 (Mon, 02 Jun 2008)
+New Revision: 1372
+
+Modified:
+   trunk/extra/Brefcom.cpp
+   trunk/extra/Brefcom.hpp
+   trunk/extra/usct/UniaxialStrainControlledTest.cpp
+   trunk/extra/usct/UniaxialStrainControlledTest.hpp
+   trunk/gui/py/ipython.py
+   trunk/gui/py/plot.py
+   trunk/gui/py/yadeControl.cpp
+   trunk/gui/qt3/QtGeneratedSimulationController.ui
+   trunk/gui/qt3/SimulationController.cpp
+Log:
+Fix for crashing from python-constructed rootbody. Hopfully other things are not broken.
+
+
+
+Modified: trunk/extra/Brefcom.cpp
+===================================================================
+--- trunk/extra/Brefcom.cpp	2008-05-27 13:10:25 UTC (rev 1371)
++++ trunk/extra/Brefcom.cpp	2008-06-02 15:42:40 UTC (rev 1372)
+@@ -52,7 +52,7 @@
+ 			/* epsCracking */ sigmaT/E12,
+ 			/* epsFracture */ 5*sigmaT/E12,
+ 			/* expBending */ expBending,
+-			/* xiShear*/ 0.6
++			/* xiShear*/ xiShear
+ 			));
+ 		contPhys-&gt;prevNormal=contGeom-&gt;normal;
+ 		if(cohesiveThresholdIter&lt;0 || Omega::instance().getCurrentIteration()&lt;cohesiveThresholdIter) contPhys-&gt;isCohesive=true;
+
+Modified: trunk/extra/Brefcom.hpp
+===================================================================
+--- trunk/extra/Brefcom.hpp	2008-05-27 13:10:25 UTC (rev 1371)
++++ trunk/extra/Brefcom.hpp	2008-06-02 15:42:40 UTC (rev 1372)
+@@ -38,7 +38,7 @@
+ 		Real omega, Fn, sigmaN, epsN;
+ 
+ 		BrefcomContact(): InteractionPhysics(),E(0), G(0), tanFrictionAngle(0), undamagedCohesion(0), equilibriumDist(0), crossSection(0), expBending(0), xiShear(0) { createIndex(); epsT=Vector3r::ZERO; kappaD=0; isCohesive=false; }
+-		BrefcomContact(Real _E, Real _G, Real _tanFrictionAngle, Real _undamagedCohesion, Real _equilibriumDist, Real _crossSection, Real _epsCracking, Real _epsFracture, Real _expBending, Real _xiShear=.3): InteractionPhysics(), E(_E), G(_G), tanFrictionAngle(_tanFrictionAngle), undamagedCohesion(_undamagedCohesion), equilibriumDist(_equilibriumDist), crossSection(_crossSection), epsCracking(_epsCracking), epsFracture(_epsFracture), expBending(_expBending), xiShear(_xiShear) { epsT=Vector3r::ZERO; kappaD=0; isCohesive=false; omega=0; Fn=0; /*TRVAR5(epsCracking,epsFracture,Kn,crossSection,equilibriumDist); */ }
++		BrefcomContact(Real _E, Real _G, Real _tanFrictionAngle, Real _undamagedCohesion, Real _equilibriumDist, Real _crossSection, Real _epsCracking, Real _epsFracture, Real _expBending, Real _xiShear=.6): InteractionPhysics(), E(_E), G(_G), tanFrictionAngle(_tanFrictionAngle), undamagedCohesion(_undamagedCohesion), equilibriumDist(_equilibriumDist), crossSection(_crossSection), epsCracking(_epsCracking), epsFracture(_epsFracture), expBending(_expBending), xiShear(_xiShear) { epsT=Vector3r::ZERO; kappaD=0; isCohesive=false; omega=0; Fn=0; /*TRVAR5(epsCracking,epsFracture,Kn,crossSection,equilibriumDist); */ }
+ 
+ 
+ 		void registerAttributes(){
+@@ -146,7 +146,7 @@
+ 		 * which would define just those in addition to the elastic ones.
+ 		 * This might be done later, for now hardcode that here. */
+ 		/* uniaxial traction resistance, uniaxial compression resistance, fracture energy, strain at complete fracture (calibrated in the constructor), bending parameter of the damage evolution law */
+-		Real sigmaT, sigmaC, /* Griffith's fracture energy */ Gf, expBending;
++		Real sigmaT, sigmaC, /* Griffith's fracture energy */ Gf, expBending, xiShear;
+ 		//! Should new contacts be cohesive? They will before this iter#, they will not be afterwards. If 0, they will never be. If negative, they will always be created as cohesive.
+ 		long cohesiveThresholdIter;
+ 
+@@ -181,6 +181,7 @@
+ 			REGISTER_ATTRIBUTE(cohesiveThresholdIter);
+ 			//REGISTER_ATTRIBUTE(calibratedEpsFracture);
+ 			REGISTER_ATTRIBUTE(expBending);
++			REGISTER_ATTRIBUTE(xiShear);
+ 			/* REGISTER_ATTRIBUTE(sigmaT);
+ 			REGISTER_ATTRIBUTE(sigmaC);
+ 			REGISTER_ATTRIBUTE(Gf); */
+
+Modified: trunk/extra/usct/UniaxialStrainControlledTest.cpp
+===================================================================
+--- trunk/extra/usct/UniaxialStrainControlledTest.cpp	2008-05-27 13:10:25 UTC (rev 1371)
++++ trunk/extra/usct/UniaxialStrainControlledTest.cpp	2008-06-02 15:42:40 UTC (rev 1372)
+@@ -45,6 +45,8 @@
+ 	assert(crossSectionArea&gt;0);
+ 
+ 	setupTransStrainSensors();
++
++	prepareRecStream();
+ }
+ 
+ /* Initialize UniaxialStrainSensorPusher so that subscribed bodies and forces are consistent.
+@@ -66,7 +68,7 @@
+ 		//TRVAR3(transStrainSensors.size(),sensorsPusher-&gt;subscribedBodies.size(),sensorsPusher-&gt;forces.size());
+ 	}
+ 	assert((sensorsPusher-&gt;subscribedBodies.size()==transStrainSensors.size()) &amp;&amp; (sensorsPusher-&gt;subscribedBodies.size()==sensorsPusher-&gt;forces.size()));
+-	Real forceMagnitude=.001*avgStress*transStrainSensorArea;
++	Real forceMagnitude=.001*abs(avgStress)*transStrainSensorArea;
+ 	Real maxVelocity=2*abs(strainRate)*originalLength; // move at max 5 &#215; faster than strained ends
+ 	/* reset orientation to identity and limit velocity */
+ 	FOREACH(body_id_t id, transStrainSensors){
+@@ -80,7 +82,7 @@
+ 		int transAxis=(axis+i)%3, perpTransAxis=(i==1?(axis+2)%3:/* i==2 */ (axis+1)%3);
+ 		Vector3r F; F[axis]=0; F[perpTransAxis]=0; F[transAxis]=forceMagnitude;
+ 		body_id_t n1=2*(i-1), n2=2*(i-1)+1;
+-		sensorsPusher-&gt;forces[n1]=-F; sensorsPusher-&gt;forces[n2]=+F;
++		sensorsPusher-&gt;forces[n1]=+F; sensorsPusher-&gt;forces[n2]=-F;
+ 		const shared_ptr&lt;Body&gt;&amp; lo=Body::byId(transStrainSensors[n1]), hi=Body::byId(transStrainSensors[n2]);
+ 		Real wd=hi-&gt;physicalParameters-&gt;se3.position[transAxis]-lo-&gt;physicalParameters-&gt;se3.position[transAxis]-static_pointer_cast&lt;Box&gt;(hi-&gt;geometricalModel)-&gt;extents[transAxis]-static_pointer_cast&lt;Box&gt;(lo-&gt;geometricalModel)-&gt;extents[transAxis];
+ 		// negative width? Apply no more force, reset velocity to 0
+@@ -159,20 +161,20 @@
+ 	}
+ 
+ 	Real axialLength=axisCoord(posIds[0])-axisCoord(negIds[0]);
+-	Real strain=axialLength/originalLength-1;
++	strain=axialLength/originalLength-1;
+ 	if(Omega::instance().getCurrentIteration()%400==0) TRVAR5(dAX,axialLength,originalLength,currentStrainRate,strain);
+ 
+ 	// reverse if we're over the limit strain
+ 	if(notYetReversed &amp;&amp; limitStrain!=0 &amp;&amp; ((currentStrainRate&gt;0 &amp;&amp; strain&gt;limitStrain) || (currentStrainRate&lt;0 &amp;&amp; strain&lt;limitStrain))) { currentStrainRate*=-1; notYetReversed=false; LOG_INFO(&quot;Reversed strain rate to &quot;&lt;&lt;currentStrainRate); }
+ 
+-	if(Omega::instance().getCurrentIteration()%50==0 &amp;&amp; recStream.good()) {
++	if(Omega::instance().getCurrentIteration()%50==0 ) {
+ 		computeAxialForce(rootBody);
+ 		vector&lt;Real&gt; widths;
+ 		pushTransStrainSensors(rootBody,widths);
+ 		assert(widths.size()==originalWidths.size());
+-		Real avgTransStrain; for(size_t i=0; i&lt;widths.size(); i++) avgTransStrain+=(widths[i]/originalWidths[i]-1); avgTransStrain/=widths.size();
++		for(size_t i=0; i&lt;widths.size(); i++) avgTransStrain+=(widths[i]/originalWidths[i]-1); avgTransStrain/=widths.size();
+ 		avgStress=(sumPosForces+sumNegForces)/(2*crossSectionArea); // average nominal stress
+-		recStream&lt;&lt;Omega::instance().getCurrentIteration()&lt;&lt;&quot; &quot;&lt;&lt;strain&lt;&lt;&quot; &quot;&lt;&lt;avgStress&lt;&lt;&quot; &quot;&lt;&lt;avgTransStrain&lt;&lt;endl;
++		if(recStream.good()) recStream&lt;&lt;Omega::instance().getCurrentIteration()&lt;&lt;&quot; &quot;&lt;&lt;strain&lt;&lt;&quot; &quot;&lt;&lt;avgStress&lt;&lt;&quot; &quot;&lt;&lt;avgTransStrain&lt;&lt;endl;
+ 	}
+ }
+ 
+
+Modified: trunk/extra/usct/UniaxialStrainControlledTest.hpp
+===================================================================
+--- trunk/extra/usct/UniaxialStrainControlledTest.hpp	2008-05-27 13:10:25 UTC (rev 1371)
++++ trunk/extra/usct/UniaxialStrainControlledTest.hpp	2008-06-02 15:42:40 UTC (rev 1372)
+@@ -89,7 +89,7 @@
+ 		Real limitStrain;
+ 		//! Flag whether the sense of straining has already been reversed
+ 		bool notYetReversed;
+-		Real sumPosForces,sumNegForces,avgStress;
++		Real sumPosForces,sumNegForces;
+ 		//! crossSection perpendicular to he strained axis, computed from AABB of MetaBody
+ 		Real crossSectionArea,transStrainSensorArea;
+ 		//! Apply strain along x (0), y (1) or z(2) axis
+@@ -114,6 +114,9 @@
+ 		 * */
+ 		vector&lt;body_id_t&gt; transStrainSensors;
+ 
++		//! Auxiliary vars (serializable, for recording)
++		Real strain, avgStress, avgTransStrain;
++
+ 		virtual void applyCondition(MetaBody* rootBody);
+ 		UniaxialStrainer(){axis=2; asymmetry=0; currentStrainRate=0; originalLength=-1; limitStrain=0; notYetReversed=true; crossSectionArea=-1; needsInit=true; clumped=false; sensorsPusher=shared_ptr&lt;UniaxialStrainSensorPusher&gt;(); recordFile=&quot;/tmp/usct.data&quot;; };
+ 		virtual ~UniaxialStrainer(){};
+@@ -133,8 +136,12 @@
+ 			REGISTER_ATTRIBUTE(transStrainSensorArea);
+ 			REGISTER_ATTRIBUTE(transStrainSensors);
+ 			REGISTER_ATTRIBUTE(recordFile);
++			REGISTER_ATTRIBUTE(strain);
++			REGISTER_ATTRIBUTE(avgStress);
++			REGISTER_ATTRIBUTE(avgTransStrain);
+ 		}
+-		void postProcessAttributes(bool deserializing){ if(deserializing) recStream.open(recordFile.c_str()); } 	
++		void prepareRecStream(void){ if(recordFile!=&quot;&quot;) recStream.open(recordFile.c_str()); }
++		void postProcessAttributes(bool deserializing){ if(deserializing) prepareRecStream(); } 	
+ 	NEEDS_BEX(&quot;Force&quot;,&quot;Momentum&quot;,&quot;GlobalStiffness&quot;);
+ 	REGISTER_CLASS_NAME(UniaxialStrainer);
+ 	REGISTER_BASE_CLASS_NAME(DeusExMachina);
+
+Modified: trunk/gui/py/ipython.py
+===================================================================
+--- trunk/gui/py/ipython.py	2008-05-27 13:10:25 UTC (rev 1371)
++++ trunk/gui/py/ipython.py	2008-06-02 15:42:40 UTC (rev 1372)
+@@ -10,7 +10,7 @@
+ 	objName=event.line.split('[')[0]
+ 	# print objName
+ 	obj=eval(objName)
+-	print str(type(obj))
++	# print str(type(obj))
+ 	if 'yade.wrapper.' in str(type(obj)):
+ 		return obj.keys()
+ import IPython.ipapi
+
+Modified: trunk/gui/py/plot.py
+===================================================================
+--- trunk/gui/py/plot.py	2008-05-27 13:10:25 UTC (rev 1371)
++++ trunk/gui/py/plot.py	2008-06-02 15:42:40 UTC (rev 1372)
+@@ -7,7 +7,8 @@
+ 
+ &quot;&quot;&quot;
+ import matplotlib
+-# matplotlib.use('GtkCairo')
++matplotlib.use('TkAgg') #GtkCairo
++#matplotlib.use('QtAgg') #GtkCairo
+ matplotlib.rc('axes',grid=True) # put grid in all figures
+ import pylab
+ 
+@@ -73,15 +74,22 @@
+ #			pylab.axi
+ #		fignum+=1
+ 
+-import threading,gtk
++useGtkThread=False
+ 
++if useGtkThread:
++	import threading,gtk
++
+ def killPlots():
++	print &quot;Clear figures&quot;
+ 	pylab.clf() # clear figures
+ 	needsFullReplot=True
++	return
+ 	for t in [t for t in threading.enumerate() if t.getName()=='Thread-plots']:
+ 		print &quot;GTK&#160;quit&quot;
+ 		gtk.main_quit()
+ 
++def plot(): fullPlot()
++def show(): fullPlot()
+ def fullPlot(): makePlot(update=False)
+ def updatePlot():
+ 	raise RuntimeError(&quot;Updating plot not supported in non-interactive mode!&quot;)
+@@ -95,13 +103,25 @@
+ def minMax(l): return [min(l),max(l)]
+ 
+ def makePlot(update=False):
+-	fignum=0 # figure counter
++	fignum=0 #figure counter
++	pylab.clf()
++	for p in plots:
++		#print p,fignum,plots[p]
++		pylab.figure(fignum)
++		#print &quot;2&quot;; pylab.ioff() # turn off interactive mode
++		plots_p=[fillNonSequence(o) for o in plots[p]]
++		pylab.plot(*sum([[data[p],data[d[0]],d[1]] for d in plots_p],[]))
++		pylab.legend([_p[0] for _p in plots_p])
++		pylab.xlabel(p)
++		fignum+=1
++	#print &quot;4&quot;
++	pylab.show()
++	#print &quot;5&quot;
++	return
++
+ 	if not update:
+-		killPlots() # quit gkt main loop so that GUi is not blocked
+-		pylab.clf() # clear figures, if any
+-		global needsFullReplot
+-		needsFullReplot=False
+-		print &quot;FULL plot&quot;
++		print &quot;KILLING plots&quot;
++		killPlots()
+ 	for p in plots:
+ 		print p,fignum,plots[p]
+ 		pylab.figure(fignum)
+@@ -111,6 +131,11 @@
+ 			for i in range(len(plots_p)): plotLines[p][i].set_data(data[p],data[plots_p[i][0]])
+ 			pylab.axis(minMax(data[p])+minMax(sum([data[d[0]] for d in plots_p],[])))
+ 		else:
++			#for d in plots_p:
++			#	print d
++			#	print data[p]
++			#	print data[d[0]]
++			#	print d[1]
+ 			plotLines[p]=pylab.plot(*sum([[data[p],data[d[0]],d[1]] for d in plots_p],[]))
+ 		pylab.legend([_p[0] for _p in plots_p])
+ 		pylab.xlabel(p)
+@@ -119,8 +144,6 @@
+ 	if not update:
+ 		pylab.show()
+ 		#threading.Thread(target=pylab.show,name='Thread-plots').start() # works with GTK, cool! (will it work inside yade, though?!)
+-def show():
+-	fullPlot()
+ 	
+ import random
+ if __name__ == &quot;__main__&quot;:
+
+Modified: trunk/gui/py/yadeControl.cpp
+===================================================================
+--- trunk/gui/py/yadeControl.cpp	2008-05-27 13:10:25 UTC (rev 1371)
++++ trunk/gui/py/yadeControl.cpp	2008-06-02 15:42:40 UTC (rev 1372)
+@@ -42,6 +42,7 @@
+ #include&lt;yade/pkg-common/PhysicalActionApplier.hpp&gt;
+ #include&lt;yade/pkg-common/MetaInteractingGeometry.hpp&gt;
+ #include&lt;yade/pkg-common/AABB.hpp&gt;
++#include&lt;yade/pkg-common/ParticleParameters.hpp&gt;
+ 
+ #include&lt;yade/pkg-common/BoundingVolumeEngineUnit.hpp&gt;
+ #include&lt;yade/pkg-common/GeometricalModelEngineUnit.hpp&gt;
+@@ -278,7 +279,7 @@
+ 	pyOmega(){
+ 		shared_ptr&lt;MetaBody&gt; rb=OMEGA.getRootBody();
+ 		assert(rb);
+-		if(!rb-&gt;physicalParameters){rb-&gt;physicalParameters=shared_ptr&lt;PhysicalParameters&gt;(new PhysicalParameters);}
++		if(!rb-&gt;physicalParameters){rb-&gt;physicalParameters=shared_ptr&lt;PhysicalParameters&gt;(new ParticleParameters);} /* PhysicalParameters crashes PhysicalParametersMetaEngine... why? */
+ 		if(!rb-&gt;boundingVolume){rb-&gt;boundingVolume=shared_ptr&lt;AABB&gt;(new AABB);}
+ 		if(!rb-&gt;interactingGeometry){rb-&gt;interactingGeometry=shared_ptr&lt;MetaInteractingGeometry&gt;(new MetaInteractingGeometry);}
+ 		//if(!OMEGA.getRootBody()){shared_ptr&lt;MetaBody&gt; mb=Shop::rootBody(); OMEGA.setRootBody(mb);}
+
+Modified: trunk/gui/qt3/QtGeneratedSimulationController.ui
+===================================================================
+--- trunk/gui/qt3/QtGeneratedSimulationController.ui	2008-05-27 13:10:25 UTC (rev 1371)
++++ trunk/gui/qt3/QtGeneratedSimulationController.ui	2008-06-02 15:42:40 UTC (rev 1372)
+@@ -8,8 +8,8 @@
+         &lt;rect&gt;
+             &lt;x&gt;0&lt;/x&gt;
+             &lt;y&gt;0&lt;/y&gt;
+-            &lt;width&gt;320&lt;/width&gt;
+-            &lt;height&gt;550&lt;/height&gt;
++            &lt;width&gt;319&lt;/width&gt;
++            &lt;height&gt;544&lt;/height&gt;
+         &lt;/rect&gt;
+     &lt;/property&gt;
+     &lt;property name=&quot;sizePolicy&quot;&gt;
+@@ -29,6 +29,70 @@
+     &lt;property name=&quot;frameShadow&quot;&gt;
+         &lt;enum&gt;Plain&lt;/enum&gt;
+     &lt;/property&gt;
++    &lt;widget class=&quot;QLabel&quot;&gt;
++        &lt;property name=&quot;name&quot;&gt;
++            &lt;cstring&gt;labelIter&lt;/cstring&gt;
++        &lt;/property&gt;
++        &lt;property name=&quot;geometry&quot;&gt;
++            &lt;rect&gt;
++                &lt;x&gt;10&lt;/x&gt;
++                &lt;y&gt;60&lt;/y&gt;
++                &lt;width&gt;190&lt;/width&gt;
++                &lt;height&gt;20&lt;/height&gt;
++            &lt;/rect&gt;
++        &lt;/property&gt;
++        &lt;property name=&quot;text&quot;&gt;
++            &lt;string&gt;iter #0, 0/s&lt;/string&gt;
++        &lt;/property&gt;
++    &lt;/widget&gt;
++    &lt;widget class=&quot;QLabel&quot;&gt;
++        &lt;property name=&quot;name&quot;&gt;
++            &lt;cstring&gt;labelSimulTime&lt;/cstring&gt;
++        &lt;/property&gt;
++        &lt;property name=&quot;geometry&quot;&gt;
++            &lt;rect&gt;
++                &lt;x&gt;10&lt;/x&gt;
++                &lt;y&gt;40&lt;/y&gt;
++                &lt;width&gt;190&lt;/width&gt;
++                &lt;height&gt;21&lt;/height&gt;
++            &lt;/rect&gt;
++        &lt;/property&gt;
++        &lt;property name=&quot;text&quot;&gt;
++            &lt;string&gt;virt 00:000.000m000u000n&lt;/string&gt;
++        &lt;/property&gt;
++    &lt;/widget&gt;
++    &lt;widget class=&quot;QLabel&quot;&gt;
++        &lt;property name=&quot;name&quot;&gt;
++            &lt;cstring&gt;labelRealTime&lt;/cstring&gt;
++        &lt;/property&gt;
++        &lt;property name=&quot;geometry&quot;&gt;
++            &lt;rect&gt;
++                &lt;x&gt;10&lt;/x&gt;
++                &lt;y&gt;20&lt;/y&gt;
++                &lt;width&gt;200&lt;/width&gt;
++                &lt;height&gt;21&lt;/height&gt;
++            &lt;/rect&gt;
++        &lt;/property&gt;
++        &lt;property name=&quot;text&quot;&gt;
++            &lt;string&gt;real 0:00:00.000&lt;/string&gt;
++        &lt;/property&gt;
++    &lt;/widget&gt;
++    &lt;widget class=&quot;QLabel&quot;&gt;
++        &lt;property name=&quot;name&quot;&gt;
++            &lt;cstring&gt;labelStep&lt;/cstring&gt;
++        &lt;/property&gt;
++        &lt;property name=&quot;geometry&quot;&gt;
++            &lt;rect&gt;
++                &lt;x&gt;10&lt;/x&gt;
++                &lt;y&gt;80&lt;/y&gt;
++                &lt;width&gt;140&lt;/width&gt;
++                &lt;height&gt;21&lt;/height&gt;
++            &lt;/rect&gt;
++        &lt;/property&gt;
++        &lt;property name=&quot;text&quot;&gt;
++            &lt;string&gt;step 4e-3&lt;/string&gt;
++        &lt;/property&gt;
++    &lt;/widget&gt;
+     &lt;widget class=&quot;QTabWidget&quot;&gt;
+         &lt;property name=&quot;name&quot;&gt;
+             &lt;cstring&gt;tabWidget&lt;/cstring&gt;
+@@ -37,7 +101,7 @@
+             &lt;rect&gt;
+                 &lt;x&gt;10&lt;/x&gt;
+                 &lt;y&gt;110&lt;/y&gt;
+-                &lt;width&gt;210&lt;/width&gt;
++                &lt;width&gt;290&lt;/width&gt;
+                 &lt;height&gt;420&lt;/height&gt;
+             &lt;/rect&gt;
+         &lt;/property&gt;
+@@ -385,33 +449,6 @@
+             &lt;attribute name=&quot;title&quot;&gt;
+                 &lt;string&gt;Display&lt;/string&gt;
+             &lt;/attribute&gt;
+-            &lt;widget class=&quot;QFrame&quot;&gt;
+-                &lt;property name=&quot;name&quot;&gt;
+-                    &lt;cstring&gt;scrollViewOutsideFrame&lt;/cstring&gt;
+-                &lt;/property&gt;
+-                &lt;property name=&quot;geometry&quot;&gt;
+-                    &lt;rect&gt;
+-                        &lt;x&gt;0&lt;/x&gt;
+-                        &lt;y&gt;0&lt;/y&gt;
+-                        &lt;width&gt;210&lt;/width&gt;
+-                        &lt;height&gt;200&lt;/height&gt;
+-                    &lt;/rect&gt;
+-                &lt;/property&gt;
+-                &lt;property name=&quot;sizePolicy&quot;&gt;
+-                    &lt;sizepolicy&gt;
+-                        &lt;hsizetype&gt;1&lt;/hsizetype&gt;
+-                        &lt;vsizetype&gt;1&lt;/vsizetype&gt;
+-                        &lt;horstretch&gt;0&lt;/horstretch&gt;
+-                        &lt;verstretch&gt;0&lt;/verstretch&gt;
+-                    &lt;/sizepolicy&gt;
+-                &lt;/property&gt;
+-                &lt;property name=&quot;frameShape&quot;&gt;
+-                    &lt;enum&gt;NoFrame&lt;/enum&gt;
+-                &lt;/property&gt;
+-                &lt;property name=&quot;frameShadow&quot;&gt;
+-                    &lt;enum&gt;Raised&lt;/enum&gt;
+-                &lt;/property&gt;
+-            &lt;/widget&gt;
+             &lt;widget class=&quot;QLabel&quot;&gt;
+                 &lt;property name=&quot;name&quot;&gt;
+                     &lt;cstring&gt;textLabel1&lt;/cstring&gt;
+@@ -603,72 +640,35 @@
+                     &lt;string&gt;&gt;&lt;/string&gt;
+                 &lt;/property&gt;
+             &lt;/widget&gt;
++            &lt;widget class=&quot;QFrame&quot;&gt;
++                &lt;property name=&quot;name&quot;&gt;
++                    &lt;cstring&gt;scrollViewOutsideFrame&lt;/cstring&gt;
++                &lt;/property&gt;
++                &lt;property name=&quot;geometry&quot;&gt;
++                    &lt;rect&gt;
++                        &lt;x&gt;0&lt;/x&gt;
++                        &lt;y&gt;0&lt;/y&gt;
++                        &lt;width&gt;290&lt;/width&gt;
++                        &lt;height&gt;200&lt;/height&gt;
++                    &lt;/rect&gt;
++                &lt;/property&gt;
++                &lt;property name=&quot;sizePolicy&quot;&gt;
++                    &lt;sizepolicy&gt;
++                        &lt;hsizetype&gt;1&lt;/hsizetype&gt;
++                        &lt;vsizetype&gt;1&lt;/vsizetype&gt;
++                        &lt;horstretch&gt;0&lt;/horstretch&gt;
++                        &lt;verstretch&gt;0&lt;/verstretch&gt;
++                    &lt;/sizepolicy&gt;
++                &lt;/property&gt;
++                &lt;property name=&quot;frameShape&quot;&gt;
++                    &lt;enum&gt;NoFrame&lt;/enum&gt;
++                &lt;/property&gt;
++                &lt;property name=&quot;frameShadow&quot;&gt;
++                    &lt;enum&gt;Raised&lt;/enum&gt;
++                &lt;/property&gt;
++            &lt;/widget&gt;
+         &lt;/widget&gt;
+     &lt;/widget&gt;
+-    &lt;widget class=&quot;QLabel&quot;&gt;
+-        &lt;property name=&quot;name&quot;&gt;
+-            &lt;cstring&gt;labelIter&lt;/cstring&gt;
+-        &lt;/property&gt;
+-        &lt;property name=&quot;geometry&quot;&gt;
+-            &lt;rect&gt;
+-                &lt;x&gt;10&lt;/x&gt;
+-                &lt;y&gt;60&lt;/y&gt;
+-                &lt;width&gt;190&lt;/width&gt;
+-                &lt;height&gt;20&lt;/height&gt;
+-            &lt;/rect&gt;
+-        &lt;/property&gt;
+-        &lt;property name=&quot;text&quot;&gt;
+-            &lt;string&gt;iter #0, 0/s&lt;/string&gt;
+-        &lt;/property&gt;
+-    &lt;/widget&gt;
+-    &lt;widget class=&quot;QLabel&quot;&gt;
+-        &lt;property name=&quot;name&quot;&gt;
+-            &lt;cstring&gt;labelSimulTime&lt;/cstring&gt;
+-        &lt;/property&gt;
+-        &lt;property name=&quot;geometry&quot;&gt;
+-            &lt;rect&gt;
+-                &lt;x&gt;10&lt;/x&gt;
+-                &lt;y&gt;40&lt;/y&gt;
+-                &lt;width&gt;190&lt;/width&gt;
+-                &lt;height&gt;21&lt;/height&gt;
+-            &lt;/rect&gt;
+-        &lt;/property&gt;
+-        &lt;property name=&quot;text&quot;&gt;
+-            &lt;string&gt;virt 00:000.000m000u000n&lt;/string&gt;
+-        &lt;/property&gt;
+-    &lt;/widget&gt;
+-    &lt;widget class=&quot;QLabel&quot;&gt;
+-        &lt;property name=&quot;name&quot;&gt;
+-            &lt;cstring&gt;labelRealTime&lt;/cstring&gt;
+-        &lt;/property&gt;
+-        &lt;property name=&quot;geometry&quot;&gt;
+-            &lt;rect&gt;
+-                &lt;x&gt;10&lt;/x&gt;
+-                &lt;y&gt;20&lt;/y&gt;
+-                &lt;width&gt;200&lt;/width&gt;
+-                &lt;height&gt;21&lt;/height&gt;
+-            &lt;/rect&gt;
+-        &lt;/property&gt;
+-        &lt;property name=&quot;text&quot;&gt;
+-            &lt;string&gt;real 0:00:00.000&lt;/string&gt;
+-        &lt;/property&gt;
+-    &lt;/widget&gt;
+-    &lt;widget class=&quot;QLabel&quot;&gt;
+-        &lt;property name=&quot;name&quot;&gt;
+-            &lt;cstring&gt;labelStep&lt;/cstring&gt;
+-        &lt;/property&gt;
+-        &lt;property name=&quot;geometry&quot;&gt;
+-            &lt;rect&gt;
+-                &lt;x&gt;10&lt;/x&gt;
+-                &lt;y&gt;80&lt;/y&gt;
+-                &lt;width&gt;140&lt;/width&gt;
+-                &lt;height&gt;21&lt;/height&gt;
+-            &lt;/rect&gt;
+-        &lt;/property&gt;
+-        &lt;property name=&quot;text&quot;&gt;
+-            &lt;string&gt;step 4e-3&lt;/string&gt;
+-        &lt;/property&gt;
+-    &lt;/widget&gt;
+ &lt;/widget&gt;
+ &lt;images&gt;
+     &lt;image name=&quot;image0&quot;&gt;
+
+Modified: trunk/gui/qt3/SimulationController.cpp
+===================================================================
+--- trunk/gui/qt3/SimulationController.cpp	2008-05-27 13:10:25 UTC (rev 1371)
++++ trunk/gui/qt3/SimulationController.cpp	2008-06-02 15:42:40 UTC (rev 1372)
+@@ -36,6 +36,7 @@
+ {
+ 	sync=false;
+ 	refreshTime = 40;
++	changeTimeStep=false;
+ 
+ 	iterPerSec_LastIter=Omega::instance().getCurrentIteration();
+ 	iterPerSec_LastLocalTime=microsec_clock::local_time();
+@@ -370,7 +371,7 @@
+ 	// does someone need to display that with more precision than integer?
+ 	long iterPerSec_LastAgo_ms=(microsec_clock::local_time()-iterPerSec_LastLocalTime).total_milliseconds();
+ 	if(iterPerSec_LastAgo_ms&gt;iterPerSec_TTL_ms){
+-		iterPerSec=(1000*(Omega::instance().getCurrentIteration()-iterPerSec_LastIter))/iterPerSec_LastAgo_ms;
++		iterPerSec=(1000.*(Omega::instance().getCurrentIteration()-iterPerSec_LastIter))/iterPerSec_LastAgo_ms;
+ 		iterPerSec_LastIter=Omega::instance().getCurrentIteration();
+ 		iterPerSec_LastLocalTime=microsec_clock::local_time();
+ 	}
+@@ -379,14 +380,16 @@
+ 	snprintf(strIter,64,&quot;iter #%ld, %.1f/s&quot;,Omega::instance().getCurrentIteration(),iterPerSec);
+ 	controller-&gt;labelIter-&gt;setText(strIter);
+ 
+-	if (controller-&gt;changeSkipTimeStepper)
+-			Omega::instance().skipTimeStepper(controller-&gt;skipTimeStepper);
+-
+-	if (controller-&gt;changeTimeStep)
+-	{
++	if (controller-&gt;changeSkipTimeStepper) Omega::instance().skipTimeStepper(controller-&gt;skipTimeStepper);
++	if (controller-&gt;changeTimeStep) {
+ 		Real second = (Real)(controller-&gt;sbSecond-&gt;value());
+ 		Real powerSecond = (Real)(controller-&gt;sb10PowerSecond-&gt;value());
+ 		Omega::instance().setTimeStep(second*Mathr::Pow(10,powerSecond));
++	} else {
++		Real dt=Omega::instance().getTimeStep();
++		int exp10=floor(log10(dt));
++		controller-&gt;sb10PowerSecond-&gt;setValue(exp10);
++		controller-&gt;sbSecond-&gt;setValue((int)(.1+dt/(pow((float)10,exp10)))); // .1: rounding issues
+ 	}
+ 
+ 	char strStep[64];
+@@ -396,6 +399,8 @@
+ 	controller-&gt;changeSkipTimeStepper = false;
+ 	controller-&gt;changeTimeStep = false;
+ 
++	//cerr&lt;&lt;&quot;dt=&quot;&lt;&lt;dt&lt;&lt;&quot;,exp10=&quot;&lt;&lt;exp10&lt;&lt;&quot;,10^exp10=&quot;&lt;&lt;pow((float)10,exp10)&lt;&lt;endl;
++
+ 	/* enable/disable controls here, dynamically */
+ 	bool hasSimulation=(Omega::instance().getRootBody() ? Omega::instance().getRootBody()-&gt;bodies-&gt;size()&gt;0 : false ),
+ 		isRunning=Omega::instance().isRunning(),
+@@ -409,6 +414,6 @@
+ 	controller-&gt;pbOneSimulationStep-&gt;setEnabled(hasSimulation &amp;&amp; !isRunning);
+ 	controller-&gt;rbTimeStepper-&gt;setEnabled(hasTimeStepper);
+ 	controller-&gt;rbFixed-&gt;setChecked(!usesTimeStepper);
+-	controller-&gt;rbFixed-&gt;setChecked(usesTimeStepper);
++	controller-&gt;rbTimeStepper-&gt;setChecked(usesTimeStepper);
+ }
+ 
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000332.html">[Yade-commits] r1371 - in trunk: debian extra/usct
+</A></li>
+	<LI>Next message: <A HREF="000334.html">[Yade-commits] r1373 - trunk/gui/qt3
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#333">[ date ]</a>
+              <a href="thread.html#333">[ thread ]</a>
+              <a href="subject.html#333">[ subject ]</a>
+              <a href="author.html#333">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

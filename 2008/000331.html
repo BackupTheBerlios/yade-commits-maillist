@@ -1,0 +1,280 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1370 - in trunk: . debian scripts
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1370%20-%20in%20trunk%3A%20.%20debian%20scripts&In-Reply-To=%3C200805271218.m4RCIeoH029099%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000330.html">
+   <LINK REL="Next"  HREF="000332.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1370 - in trunk: . debian scripts</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1370%20-%20in%20trunk%3A%20.%20debian%20scripts&In-Reply-To=%3C200805271218.m4RCIeoH029099%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1370 - in trunk: . debian scripts">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Tue May 27 14:18:40 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000330.html">[Yade-commits] r1368 - trunk/scripts
+</A></li>
+        <LI>Next message: <A HREF="000332.html">[Yade-commits] r1371 - in trunk: debian extra/usct
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#331">[ date ]</a>
+              <a href="thread.html#331">[ thread ]</a>
+              <a href="subject.html#331">[ subject ]</a>
+              <a href="author.html#331">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2008-05-27 14:18:39 +0200 (Tue, 27 May 2008)
+New Revision: 1370
+
+Modified:
+   trunk/SConstruct
+   trunk/debian/control-template
+   trunk/debian/rules
+   trunk/scripts/debian-prep
+Log:
+Cleanups for ubuntu package builds.
+
+
+
+Modified: trunk/SConstruct
+===================================================================
+--- trunk/SConstruct	2008-05-26 13:34:49 UTC (rev 1369)
++++ trunk/SConstruct	2008-05-27 12:18:39 UTC (rev 1370)
+@@ -42,7 +42,7 @@
+ ########## PROXY TO NEWER SCONS (DOWNLOADED IF NEEDED) ###################################
+ ##########################################################################################
+ #print sconsVersion
+-if sconsVersion&lt;9803.0:
++if sconsVersion&lt;9803.0 and not os.environ.has_key('NO_SCONS_GET_RECENT'):
+ 	tgzParams=(&quot;<A HREF="http://kent.dl.sourceforge.net/sourceforge/scons/scons-local-0.98.3.tar.gz">http://kent.dl.sourceforge.net/sourceforge/scons/scons-local-0.98.3.tar.gz</A>&quot;,&quot;/scons-local-0.98.3&quot;)
+ 	newPrefix=&quot;./scons-local&quot;;
+ 	newUrl,newDir=tgzParams[0],newPrefix+&quot;/&quot;+tgzParams[1]
+
+Modified: trunk/debian/control-template
+===================================================================
+--- trunk/debian/control-template	2008-05-26 13:34:49 UTC (rev 1369)
++++ trunk/debian/control-template	2008-05-27 12:18:39 UTC (rev 1370)
+@@ -1,33 +1,33 @@
+-Source: <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">yade at _REVISION</A>@
++Source: <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">yade at _VERSION</A>@
+ Section: x11
+ Priority: optional
+ Maintainer: Vaclav Smilauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">eudoxos at arcig.cz</A>&gt;
+ Build-Depends: debhelper (&gt;= 5), scons, libqt3-mt-dev, qt3-dev-tools, freeglut3-dev, libboost-dev (&gt;=1.34), libboost-date-time-dev (&gt;=1.34), libboost-filesystem-dev (&gt;=1.34), libboost-thread-dev (&gt;=1.34), libboost-regex-dev (&gt;=1.34), libboost-python-dev (&gt;=1.34), libboost-iostreams-dev (&gt;=1.34), liblog4cxx9-dev, docbook-to-man, python-scientific
+ Standards-Version: 3.7.2
+ 
+-Package: <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">yade at _REVISION</A>@
++Package: <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">yade at _VERSION</A>@
+ Architecture: any
+ Provides: <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">yade at SNAPSHOT</A>@
+-Depends: ${shlibs:Depends}, ${misc:Depends}, python-scientific, ipython
++Depends: ${shlibs:Depends}, ${misc:Depends}, python-scientific, ipython, python-matplotlib
+ Description: Platform for dynamical modeling.
+  Yet Another Dynamic Engine. etc.
+  .
+  This package contains speed-optimized build of yade.
+ 
+-Package: <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">yade at _REVISION</A>@-dbg
++Package: <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">yade at _VERSION</A>@-dbg
+ Architecture: any
+ Provides: <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">yade at SNAPSHOT</A>@-dbg
+-Depends: ${shlibs:Depends}, ${misc:Depends}, python-scientific, ipython, gdb
++Depends: ${shlibs:Depends}, ${misc:Depends}, python-scientific, ipython, gdb, python-matplotlib
+ Description: Platform for dynamical modeling.
+  Yet Another Dynamic Engine. etc.
+  .
+  This package contains debug build of yade.
+ 
+ 
+-Package: <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">yade at _REVISION</A>@-dev
++Package: <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">yade at _VERSION</A>@-dev
+ Architecture: all
+ Provides: <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">yade at SNAPSHOT</A>@-dev
+-Recommends: <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">yade at _REVISION</A>@ | <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">yade at _REVISION</A>@-dbg
++Recommends: <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">yade at _VERSION</A>@ | <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">yade at _VERSION</A>@-dbg
+ Depends: pkg-config
+ Description: Platform for dynamical modeling.
+  Yet Another Dynamic Engine. etc.
+
+Modified: trunk/debian/rules
+===================================================================
+--- trunk/debian/rules	2008-05-26 13:34:49 UTC (rev 1369)
++++ trunk/debian/rules	2008-05-27 12:18:39 UTC (rev 1370)
+@@ -8,12 +8,10 @@
+ 
+ # Uncomment this to turn on verbose mode.
+ #export DH_VERBOSE=1
+-export REVISION=`cat REVISION`
+-export _REVISION=-${REVISION}
++export VERSION=`cat VERSION`
++export _VERSION=-${VERSION}
+ 
+ 
+-
+-
+ ### eudoxos: FIXME: need to pass this to scons
+ #CFLAGS = -Wall -g
+ #
+@@ -37,45 +35,32 @@
+ 	#$(MAKE)
+ 	## eudoxos: noting to be done here, will be done at the same time as installation
+ 	docbook-to-man debian/yade.sgml &gt; yade.1
+-
+-	#echo &quot;svn` svn info | egrep '^Revision:' | cut -f2 -d' ' `&quot; &gt; REVISION
+-	#echo -`cat REVISION` &gt; _REVISION ## will be used later on
+-	#perl -pi~ -e&quot;s/\byade(-svn[0-9]+)?([^-]|-dbg|-dev)\b/yade`cat _REVISION`\2/g&quot; debian/control
+-
+ 	touch $@
+ 
+ clean:
+ 	dh_testdir
+ 	dh_testroot
+ 	rm -f build-stamp configure-stamp
+-
+-	# Add here commands to clean up after the build process.
+-	##
+-	#-$(MAKE) clean
+ 	## eudoxos: FIXME: scons skips config when cleaning and doesn't know where it built anything
+-	#scons -c
+ 	dh_testdir
+-	##TMP rm -rf debian/build-* debian/yade-*
+-	##TMP rm -rf scons.config
+-	#rm -rf REVISION _REVISION
+-	##TMP dh_clean 
++	# scons clean
++	rm -rf debian/build-* debian/yade-*
++	rm -rf scons.profile* scons.current-profile
++	dh_clean 
+ 
+ install: build
+ 	dh_testdir
+ 	dh_testroot
+ 	##TMP dh_clean -k 
+ 	dh_installdirs
+-
+-	## files REVISION and _REVISION contain snapshot version without/with leading '-' respectively (like svn1113 and -svn1113)
+-
++	## files VERSION and _VERSION contain snapshot version without/with leading '-' respectively (like svn1113 and -svn1113)
+ 	### WARNING: !!!!!!!!!!!!! if this hangs later on, use fakeroot-tcp instead of fakeroot !!!!!!!!
+-	## scons remembers settings, specify only those that have changed on subsequent invocations
+ 	#install headers
+-	scons buildPrefix=debian runtimePREFIX=/usr PREFIX=debian/yade${_REVISION}-dev/usr variant='' version=${REVISION} useMiniWm3=1 exclude=realtime-rigidbody CPPPATH=/usr/include/wm3 debian/yade${_REVISION}-dev/usr/include
++	NO_SCONS_GET_RECENT= scons buildPrefix=debian runtimePREFIX=/usr PREFIX=debian/yade${_VERSION}-dev/usr variant='' version=${VERSION} exclude=realtime-rigidbody,mass-spring debian/yade${_VERSION}-dev/usr/include
+ 	#debug build
+-	scons PREFIX=debian/yade${_REVISION}-dbg/usr variant=-dbg optimize=0 debug=1
++	NO_SCONS_GET_RECENT= scons PREFIX=debian/yade${_VERSION}-dbg/usr variant=-dbg optimize=0 debug=1
+ 	#optimized build
+-	scons PREFIX=debian/yade${_REVISION}/usr variant='' optimize=1 debug=0
++	NO_SCONC_GET_RECENT= scons PREFIX=debian/yade${_VERSION}/usr variant=&quot;&quot; optimize=1 debug=0
+ 
+ 
+ # Build architecture-independent files here.
+@@ -102,7 +87,7 @@
+ #	dh_installinfo
+ 	dh_installman
+ 	dh_link
+-	## do NOT use this!!! debug builds need symbols, optimized builds don't have them already.
++	## do NOT use this!!! debug builds need symbols, optimized builds don't have them at all
+ 	#dh_strip
+ 	dh_compress
+ 	dh_fixperms
+
+Modified: trunk/scripts/debian-prep
+===================================================================
+--- trunk/scripts/debian-prep	2008-05-26 13:34:49 UTC (rev 1369)
++++ trunk/scripts/debian-prep	2008-05-27 12:18:39 UTC (rev 1370)
+@@ -1,37 +1,31 @@
+ #!/bin/sh
+ # this script must be run from yade's top-level directory!
+ #
+-# if there is file RELEASE, it will be the version number ($REVISION) and SNAPSHOT will be empty.
++# if there is file RELEASE, it will be the version number ($VERSION) and SNAPSHOT will be empty.
++# Otherwise svn or bzr versioning information will be used. Errors out if RELEASE or .svn or .bzr don't exist.
+ #
+-# Othervwise svn or bzr versioning information will be used.
++# Takes one optional argument with the name of $DISTRIBUTION (default: unstable)
+ #
+-# Errors out if RELEASE or .svn or .bzr don't exist.
+-#
+-if [ -f RELEASE ]; then
+-	REVISION=`cat RELEASE`
+-	SNAPSHOT=&quot;&quot;
+-elif [ -d .svn ]; then
+-	REVISION=&quot;svn$( svn info | egrep '^Revision:' | cut -f2 -d' ')&quot;
+-	SNAPSHOT=&quot;-snapshot&quot;
+-elif [ -d .bzr ]; then
+-	REVISION=&quot;bzr$( bzr version-info | egrep '^revno:' | cut -f2 -d' ')&quot;
+-	SNAPSHOT=&quot;-snapshot&quot;
+-else
+-	echo 'Revision could not be determined (RELEASE or .svn or .bzr)' &gt;2
+-	exit 1
++
++##&#160;DISTRIBUTION (first argument, otherwise the default &quot;unstable&quot;)
++DISTRIBUTION=$1; [ -n &quot;$DISTRIBUTION&quot; ] || DISTRIBUTION=&quot;unstable&quot;
++
++## VERSION (from RELEASE or svn or bzr)
++if [ -f RELEASE ]; then	VERSION=`cat RELEASE`; SNAPSHOT=&quot;&quot;
++elif [ -d .svn ]; then VERSION=&quot;svn$( svn info | egrep '^Revision:' | cut -f2 -d' ')&quot;; SNAPSHOT=&quot;-snapshot&quot;
++elif [ -d .bzr ]; then VERSION=&quot;bzr$( bzr version-info | egrep '^revno:' | cut -f2 -d' ')&quot;; SNAPSHOT=&quot;-snapshot&quot;
++else echo 'Revision could not be determined (RELEASE or .svn or .bzr)' &gt;2; exit 1;
+ fi
+-_REVISION=&quot;-$REVISION&quot;
+-echo $REVISION &gt; REVISION
+-cp debian/control-template debian/control
+-perl -pi -e&quot;s/\@REVISION\@/$REVISION/g&quot; debian/control
+-perl -pi -e&quot;s/\@_REVISION\@/$_REVISION/g&quot; debian/control
+-perl -pi -e&quot;s/\@SNAPSHOT\@/$SNAPSHOT/g&quot; debian/control
++_VERSION=&quot;-$VERSION&quot;; echo $VERSION &gt; VERSION
++cp debian/control-template debian/control; perl -pi -e&quot;s/\@VERSION\@/$VERSION/g&quot; debian/control; perl -pi -e&quot;s/\@_VERSION\@/$_VERSION/g&quot; debian/control; perl -pi -e&quot;s/\@SNAPSHOT\@/$SNAPSHOT/g&quot; debian/control
+ 
++## debian/changelog
++DEBDATE=`date -R`
+ cat &lt;&lt;EOF &gt; debian/changelog
+-yade$_REVISION (1) unstable; urgency=low
++yade$_VERSION (1) $DISTRIBUTION; urgency=low
+ 
+-  * Building snapshots as separate debian packages.
++  * Mandatory debian changelog entry
+ 
+- -- Vaclav Smilauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">eudoxos at arcig.cz</A>&gt;  Thu,  1 Jun 2007 12:44:19 +0100
++ -- V&#225;clav &#352;milauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">eudoxos at arcig.cz</A>&gt;  $DEBDATE
+ EOF
+ 
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000330.html">[Yade-commits] r1368 - trunk/scripts
+</A></li>
+	<LI>Next message: <A HREF="000332.html">[Yade-commits] r1371 - in trunk: debian extra/usct
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#331">[ date ]</a>
+              <a href="thread.html#331">[ thread ]</a>
+              <a href="subject.html#331">[ subject ]</a>
+              <a href="author.html#331">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

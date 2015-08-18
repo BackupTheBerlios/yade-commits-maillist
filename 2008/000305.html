@@ -1,0 +1,523 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1343 - in trunk: . core extra extra/clump gui/py	gui/qt3
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1343%20-%20in%20trunk%3A%20.%20core%20extra%20extra/clump%20gui/py%0A%09gui/qt3&In-Reply-To=%3C200805070851.m478pOmA029954%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000304.html">
+   <LINK REL="Next"  HREF="000306.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1343 - in trunk: . core extra extra/clump gui/py	gui/qt3</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1343%20-%20in%20trunk%3A%20.%20core%20extra%20extra/clump%20gui/py%0A%09gui/qt3&In-Reply-To=%3C200805070851.m478pOmA029954%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1343 - in trunk: . core extra extra/clump gui/py	gui/qt3">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Wed May  7 10:51:24 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000304.html">[Yade-commits] r1342 - trunk/extra/triangulation
+</A></li>
+        <LI>Next message: <A HREF="000306.html">[Yade-commits] r1344 - trunk
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#305">[ date ]</a>
+              <a href="thread.html#305">[ thread ]</a>
+              <a href="subject.html#305">[ subject ]</a>
+              <a href="author.html#305">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2008-05-07 10:51:23 +0200 (Wed, 07 May 2008)
+New Revision: 1343
+
+Modified:
+   trunk/SConstruct
+   trunk/core/SimulationFlow.cpp
+   trunk/extra/Brefcom.cpp
+   trunk/extra/clump/Shop.cpp
+   trunk/extra/clump/Shop.hpp
+   trunk/gui/py/PythonUI.cpp
+   trunk/gui/py/PythonUI.hpp
+   trunk/gui/py/PythonUI_rc.py
+   trunk/gui/py/utils.py
+   trunk/gui/qt3/GLViewer.cpp
+   trunk/gui/qt3/YadeQtMainWindow.cpp
+Log:
+1. Ignore ^C in PythonUI (gives crashes)
+2. Shop::Bex caches physical action indices in static variables (not yet benchmarked)
+3. Check for boost/foreach.hpp in scons and suggest how to install it.
+4. Fixes in Brefcom
+5. Set initial qglview size to 550x550
+
+
+
+Modified: trunk/SConstruct
+===================================================================
+--- trunk/SConstruct	2008-05-05 14:21:04 UTC (rev 1342)
++++ trunk/SConstruct	2008-05-07 08:51:23 UTC (rev 1343)
+@@ -257,6 +257,9 @@
+ 		or conf.CheckLibWithHeader('boost_filesystem','boost/filesystem/path.hpp','c++','boost::filesystem::path();',autoadd=1))
+ 	ok&amp;=(conf.CheckLibWithHeader('boost_iostreams-mt','boost/iostreams/device/file.hpp','c++','boost::iostreams::file_sink(&quot;&quot;);',autoadd=1)
+ 		or conf.CheckLibWithHeader('boost_iostreams','boost/iostreams/device/file.hpp','c++','boost::iostreams::file_sink(&quot;&quot;);',autoadd=1))
++	foreach=conf.CheckCXXHeader('boost/foreach.hpp','&lt;&gt;')
++	if not foreach: print &quot;(You can get the foreach.hpp header from <A HREF="http://article.gmane.org/gmane.science.physics.yade.devel/367">http://article.gmane.org/gmane.science.physics.yade.devel/367</A> and save it in /usr/include/boost. It will coexist with boost 1.33 without problems.)&quot;
++	ok&amp;=foreach
+ 
+ 	if not env['useMiniWm3']: ok&amp;=conf.CheckLibWithHeader('Wm3Foundation','Wm3Math.h','c++','Wm3::Math&lt;double&gt;::PI;',autoadd=1)
+ 
+@@ -264,23 +267,13 @@
+ 		ok&amp;=conf.CheckQt(env['QTDIR'])
+ 		env.Tool('qt'); env.Replace(QT_LIB='qt-mt')
+ 		env['QGLVIEWER_LIB']='yade-QGLViewer';
+-		# one or another (QGLViewer is upstream name, 3dviewer is (teomporary) workaround for clashing name with obsolete package once in debian)
+-		# (this one has to be explicitly mentioned for each plugin that uses it, no autoadd)
+-		#if env['useLocalQGLViewer']:
+-		#	env['QGLVIEWER_LIB']='yade-QGLViewer';
+-		#else:
+-		#	if conf.CheckLibWithHeader('QGLViewer','QGLViewer/qglviewer.h','c++','QGLViewer(1);'): env['QGLVIEWER_LIB']='QGLViewer'
+-		#	elif conf.CheckLibWithHeader('qglviewer','QGLViewer/qglviewer.h','c++','QGLViewer(1);'): env['QGLVIEWER_LIB']='qglviewer'
+-		#	elif conf.CheckLibWithHeader('3dviewer','QGLViewer/qglviewer.h','c++','QGLViewer(1);'): env['QGLVIEWER_LIB']='3dviewer'
+-		#	else: ok=False
+-		#	if ok: print &quot;!!! WARNING\n!!! Using system QGLViewer is not very well tested \n!!! and if there is version mismatch, wrong headers may be included.\n!!! If you get mysterious crashes, look here for cause. &quot;
+ 
+ 	if not ok:
+ 		print &quot;\nOne of the essential libraries above was not found, unable to continue.\n\nCheck `%s' for possible causes, note that there are options that you may need to customize:\n\n&quot;%(buildDir+'/config.log')+opts.GenerateHelpText(env)
+ 		Exit(1)
+ 
+ 	# check optional libs
+-	if 'log4cxx' in env['features'] and conf.CheckLibWithHeader('log4cxx','log4cxx/logger.h','c++','log4cxx::Logger::getLogger(&quot;foo&quot;);',autoadd=1):
++	if 'log4cxx' in env['features'] and conf.CheckLibWithHeader('log4cxx','log4cxx/logger.h','c++','log4cxx::Logger::getLogger(&quot;&quot;);',autoadd=1):
+ 		env.Append(CPPDEFINES=['LOG4CXX'])
+ 	if 'python' in env['features'] and conf.CheckPython() and ( ### not needed now: and conf.CheckScientificPython() and (
+ 		conf.CheckLibWithHeader('boost_python-mt','boost/python.hpp','c++','boost::python::scope();',autoadd=1)
+
+Modified: trunk/core/SimulationFlow.cpp
+===================================================================
+--- trunk/core/SimulationFlow.cpp	2008-05-05 14:21:04 UTC (rev 1342)
++++ trunk/core/SimulationFlow.cpp	2008-05-07 08:51:23 UTC (rev 1343)
+@@ -18,7 +18,7 @@
+ 		Omega::instance().incrementCurrentIteration();
+ 		Omega::instance().incrementSimulationTime();
+ 		if(Omega::instance().stopAtIteration&gt;0 &amp;&amp; Omega::instance().getCurrentIteration()==Omega::instance().stopAtIteration){
+-			cerr&lt;&lt;&quot;PAUSE at iteration #&quot;&lt;&lt;Omega::instance().getCurrentIteration()&lt;&lt;&quot; as requested.&quot;&lt;&lt;endl;
++			//cerr&lt;&lt;&quot;PAUSE at iteration #&quot;&lt;&lt;Omega::instance().getCurrentIteration()&lt;&lt;&quot; as requested.&quot;&lt;&lt;endl;
+ 			setTerminate(true);
+ 			return;
+ 		}
+
+Modified: trunk/extra/Brefcom.cpp
+===================================================================
+--- trunk/extra/Brefcom.cpp	2008-05-05 14:21:04 UTC (rev 1342)
++++ trunk/extra/Brefcom.cpp	2008-05-07 08:51:23 UTC (rev 1343)
+@@ -34,9 +34,12 @@
+ 	assert(contGeom); // for now, don't handle anything other than SpheresContactGeometry
+ 
+ 	if(!interaction-&gt;isNew &amp;&amp; interaction-&gt;interactionPhysics){
+-		const shared_ptr&lt;BrefcomContact&gt; contPhys=dynamic_pointer_cast&lt;BrefcomContact&gt;(interaction-&gt;interactionPhysics);
+-		assert(contPhys);
+-		contPhys-&gt;prevNormal=contGeom-&gt;normal;
++		/* BrefcomContact-&gt;prevNormal is assigned in BrefcomLaw::action */
++		#if 0
++			const shared_ptr&lt;BrefcomContact&gt; contPhys=dynamic_pointer_cast&lt;BrefcomContact&gt;(interaction-&gt;interactionPhysics);
++			assert(contPhys);
++			contPhys-&gt;prevNormal=contGeom-&gt;normal;
++		#endif
+ 	} else {
+ 		interaction-&gt;isNew; // just in case
+ 		//TRACE;
+@@ -56,7 +59,7 @@
+ 		 * */
+ 		shared_ptr&lt;BrefcomContact&gt; contPhys(new BrefcomContact(
+ 			/* E */ E,
+-			/* G */ E*(1-alpha*nu12)/(1+nu12),
++			/* G */ E/2*(1+nu12), //FIXME: apply apha, beta, gamma coefficients here as well?! // !!!*(1-alpha*nu12)/(1+nu12),
+ 			/* tanFrictionAngle */ tan(.5*(elast1-&gt;frictionAngle+elast2-&gt;frictionAngle)),
+ 			/* undamagedCohesion */ S12*sigmaT,
+ 			/* equilibriumDist */ d0,
+@@ -64,7 +67,7 @@
+ 			/* epsCracking */ sigmaT/E12,
+ 			/* epsFracture */ 5*sigmaT/E12,
+ 			/* expBending */ expBending,
+-			/* xiShear*/ 0
++			/* xiShear*/ 0.
+ 			));
+ 		contPhys-&gt;prevNormal=contGeom-&gt;normal;
+ 		if(cohesiveThresholdIter&lt;0 || Omega::instance().getCurrentIteration()&lt;cohesiveThresholdIter) contPhys-&gt;isCohesive=true;
+@@ -156,10 +159,15 @@
+ }
+ 
+ void BrefcomLaw::applyForce(const Vector3r force){
+-	static_pointer_cast&lt;Force&gt;(rootBody-&gt;physicalActions-&gt;find(id1,ForceClassIndex))-&gt;force+=force;
+-	static_pointer_cast&lt;Force&gt;(rootBody-&gt;physicalActions-&gt;find(id2,ForceClassIndex))-&gt;force-=force;
+-	static_pointer_cast&lt;Momentum&gt;(rootBody-&gt;physicalActions-&gt;find(id1,MomentumClassIndex))-&gt;momentum+=(contGeom-&gt;contactPoint-rbp1-&gt;se3.position).Cross(force);
+-	static_pointer_cast&lt;Momentum&gt;(rootBody-&gt;physicalActions-&gt;find(id2,MomentumClassIndex))-&gt;momentum-=(contGeom-&gt;contactPoint-rbp2-&gt;se3.position).Cross(force);
++/*	Shop::Bex::force(id1)+=force;
++	Shop::Bex::force(id2)-=force;
++	Shop::Bex::momentum(id1)+=(contGeom-&gt;contactPoint-rbp1-&gt;se3.position).Cross(force);
++	Shop::Bex::momentum(id1)-=(contGeom-&gt;contactPoint-rbp2-&gt;se3.position).Cross(force);
++*/
++	static_cast&lt;Force*&gt;(rootBody-&gt;physicalActions-&gt;find(id1,ForceClassIndex))-&gt;force+=force;
++	static_cast&lt;Force*&gt;(rootBody-&gt;physicalActions-&gt;find(id2,ForceClassIndex))-&gt;force-=force;
++	static_cast&lt;Momentum*&gt;(rootBody-&gt;physicalActions-&gt;find(id1,MomentumClassIndex))-&gt;momentum+=(contGeom-&gt;contactPoint-rbp1-&gt;se3.position).Cross(force);
++	static_cast&lt;Momentum*&gt;(rootBody-&gt;physicalActions-&gt;find(id2,MomentumClassIndex))-&gt;momentum-=(contGeom-&gt;contactPoint-rbp2-&gt;se3.position).Cross(force);
+ }
+ 
+ void BrefcomLaw::action(MetaBody* _rootBody){
+@@ -202,26 +210,51 @@
+ 
+ 		Real dist=(rbp1-&gt;se3.position-rbp2-&gt;se3.position).Length();
+ 
++		/*LOG_DEBUG(&quot; ============= ITERATION&#160;&quot;&lt;&lt;Omega::instance().getCurrentIteration()&lt;&lt;&quot; ================&quot;);
++		TRVAR4(epsN,epsT,kappaD,equilibriumDist);
++		TRVAR2(rbp1-&gt;se3.position,rbp2-&gt;se3.position);
++		TRVAR2(rbp1-&gt;velocity,rbp2-&gt;velocity);
++		TRVAR2(rbp1-&gt;angularVelocity,rbp2-&gt;angularVelocity);
++		TRVAR3(BC-&gt;prevNormal,contGeom-&gt;normal,contGeom-&gt;contactPoint);
++		TRVAR1(Omega::instance().getTimeStep());*/
++
++
+ 		/* FIXME dist&gt;0 doesn't take into account interaction radius!!! */
+ 		// /* TODO: recover non-cohesive contact deletion: */
+ 		if(!BC-&gt;isCohesive &amp;&amp; dist&gt;0){ /* delete this interaction later */ /* (*I)-&gt;isReal=false; */ continue; }
+ 
+-		/* rotate epsT to the new contact plane */
+-			const Real&amp; dt=Omega::instance().getTimeStep();
+-			// rotation of the contact normal
+-			epsT+=BC-&gt;epsT.Cross(BC-&gt;prevNormal.Cross(contGeom-&gt;normal));
+-			// mutual rotation
+-			Real angle=dt*.5*contGeom-&gt;normal.Dot(rbp1-&gt;angularVelocity+rbp2-&gt;angularVelocity); /* broken, assumes equal radii */
+-			epsT+=epsT.Cross(angle*contGeom-&gt;normal);
++		if(dist&gt;=0) { epsT=Vector3r::ZERO; }
++		else {
++			/* rotate epsT to the new contact plane */
++				const Real&amp; dt=Omega::instance().getTimeStep();
++#if 1
++				// rotation of the contact normal
++				//TRVAR2(epsT,BC-&gt;prevNormal.Cross(contGeom-&gt;normal));
++				//TRVAR1((BC-&gt;prevNormal.Cross(contGeom-&gt;normal)).Cross(epsT));
++				epsT+=(BC-&gt;prevNormal.Cross(contGeom-&gt;normal)).Cross(epsT);
++				
++				// mutual rotation
++				Real angle=dt*.5*contGeom-&gt;normal.Dot(rbp1-&gt;angularVelocity+rbp2-&gt;angularVelocity); /*assumes equal radii */
++				//TRVAR1(dt*.5*contGeom-&gt;normal.Dot(rbp1-&gt;angularVelocity+rbp2-&gt;angularVelocity));
++				//TRVAR1(epsT.Cross(angle*contGeom-&gt;normal));
++				epsT+=(angle*contGeom-&gt;normal).Cross(epsT);
+ 
+-		/* calculate tangential strain increment */
+-			Vector3r relVelocity /* at the contact point */ = 
+-				rbp1-&gt;velocity-rbp2-&gt;velocity
+-				+rbp1-&gt;angularVelocity.Cross(contGeom-&gt;contactPoint-rbp1-&gt;se3.position)
+-				-rbp2-&gt;angularVelocity.Cross(contGeom-&gt;contactPoint-rbp2-&gt;se3.position);
+-			Vector3r tangentialDisplacement=dt*(relVelocity-contGeom-&gt;normal.Dot(relVelocity)*contGeom-&gt;normal);
+-		epsT+=tangentialDisplacement/dist;
+-		
++#endif 
++			/* calculate tangential strain increment */
++				Vector3r AtoC(contGeom-&gt;contactPoint-rbp1-&gt;se3.position), BtoC(contGeom-&gt;contactPoint-rbp2-&gt;se3.position);
++				Vector3r relVelocity /* at the contact point */ = 
++					//rbp2-&gt;velocity-rbp1-&gt;velocity +
++					rbp2-&gt;angularVelocity.Cross(BtoC)
++					-rbp1-&gt;angularVelocity.Cross(AtoC);
++				Vector3r tangentialDisplacement=dt*(relVelocity- /* subtract non-shear component */ contGeom-&gt;normal.Dot(relVelocity)*contGeom-&gt;normal);
++				//TRVAR2(AtoC,BtoC);
++				//TRVAR3(relVelocity,tangentialDisplacement,tangentialDisplacement/dist);
++			epsT+=tangentialDisplacement/dist;
++			/* artificially remove residuum in the normal direction */
++			//epsT-=contGeom-&gt;normal*epsT.Dot(contGeom-&gt;normal);
++			//TRVAR1(epsT.Dot(contGeom-&gt;normal));
++		}
++			
+ 		/* normal strain */
+ 		epsN=(dist-equilibriumDist)/equilibriumDist;
+ 
+@@ -239,6 +272,7 @@
+ 
+ 		// store Fn (and Fs?), for use with BrefcomStiffnessCounter
+ 		Fn=sigmaN*crossSection;
++		//TRVAR5(epsN,epsT,sigmaN,sigmaT,crossSection*(contGeom-&gt;normal*sigmaN + sigmaT));
+ 		applyForce(crossSection*(contGeom-&gt;normal*sigmaN + sigmaT)); /* this is the force applied on the _first_ body */
+ 
+ 		#ifdef BREFCOM_REC
+@@ -248,6 +282,9 @@
+ 			for(size_t i=0; i&lt;recValues.size(); i++) recStream&lt;&lt;recLabels[i]&lt;&lt;&quot;: &quot;&lt;&lt;recValues[i]&lt;&lt;&quot; &quot;;
+ 			recStream&lt;&lt;endl;
+ 		#endif
++
++		/* store this normal for next timestep */
++		BC-&gt;prevNormal=contGeom-&gt;normal;
+ 	}
+ 	// delete interactions that were requested to be deleted.
+ 	//for(list&lt;shared_ptr&lt;Interaction&gt; &gt;::iterator I=interactionsToBeDeleted.begin(); I!=interactionsToBeDeleted.end(); I++){ rootBody-&gt;transientInteractions-&gt;erase((*I)-&gt;getId1(),(*I)-&gt;getId2()); }
+
+Modified: trunk/extra/clump/Shop.cpp
+===================================================================
+--- trunk/extra/clump/Shop.cpp	2008-05-05 14:21:04 UTC (rev 1342)
++++ trunk/extra/clump/Shop.cpp	2008-05-07 08:51:23 UTC (rev 1343)
+@@ -35,6 +35,10 @@
+ #include&lt;yade/pkg-dem/InteractingSphere2InteractingSphere4SpheresContactGeometry.hpp&gt;
+ #include&lt;yade/pkg-dem/InteractingBox2InteractingSphere4SpheresContactGeometry.hpp&gt;
+ #include&lt;yade/pkg-dem/MacroMicroElasticRelationships.hpp&gt;
++
++#include&lt;yade/pkg-common/Force.hpp&gt;
++#include&lt;yade/pkg-common/Momentum.hpp&gt;
++#include&lt;yade/pkg-dem/GlobalStiffness.hpp&gt;
+ /*class InteractingSphere2AABB;
+ class InteractingBox2AABB;
+ class MetaInteractingGeometry;
+@@ -68,13 +72,6 @@
+ #include&lt;yade/lib-QGLViewer/qglviewer.h&gt;
+ 
+ 
+-
+-#if 0
+-#ifdef EMBED_PYTHON
+-	#include&lt;yade/extra/PythonRecorder.hpp&gt;
+-#endif
+-#endif
+-
+ #include&lt;yade/extra/Tetra.hpp&gt;
+ 
+ //#include&lt;yade/extra/Clump.hpp&gt;
+@@ -86,10 +83,26 @@
+ _SPEC_CAST(char*,string);
+ #undef _SPEC_CAST
+ 
++CREATE_LOGGER(Shop);
++
+ map&lt;string,boost::any&gt; Shop::defaults;
+ 
+-CREATE_LOGGER(Shop);
++int Shop::Bex::forceIdx=-1;
++int Shop::Bex::momentumIdx=-1;
++int Shop::Bex::globalStiffnessIdx=-1;
+ 
++void Shop::Bex::init(){
++	Shop::Bex::forceIdx=shared_ptr&lt;PhysicalAction&gt;(new Force())-&gt;getClassIndex();
++	Shop::Bex::momentumIdx=shared_ptr&lt;PhysicalAction&gt;(new Momentum())-&gt;getClassIndex();
++	Shop::Bex::globalStiffnessIdx=shared_ptr&lt;PhysicalAction&gt;(new GlobalStiffness())-&gt;getClassIndex();
++}
++
++Vector3r&amp; Shop::Bex::force(body_id_t id){ assert(forceIdx&gt;=0); return static_pointer_cast&lt;Force&gt;(Omega::instance().getRootBody()-&gt;physicalActions-&gt;find(id,forceIdx))-&gt;force; }
++Vector3r&amp; Shop::Bex::momentum(body_id_t id){ assert(momentumIdx&gt;=0); return static_pointer_cast&lt;Momentum&gt;(Omega::instance().getRootBody()-&gt;physicalActions-&gt;find(id,forceIdx))-&gt;momentum;}
++Vector3r&amp; Shop::Bex::globalStiffness(body_id_t id){ assert(globalStiffnessIdx&gt;=0); return static_pointer_cast&lt;GlobalStiffness&gt;(Omega::instance().getRootBody()-&gt;physicalActions-&gt;find(id,globalStiffnessIdx))-&gt;stiffness; }
++Vector3r&amp; Shop::Bex::globalRStiffness(body_id_t id){ assert(globalStiffnessIdx&gt;=0); return static_pointer_cast&lt;GlobalStiffness&gt;(Omega::instance().getRootBody()-&gt;physicalActions-&gt;find(id,globalStiffnessIdx))-&gt;Rstiffness; }
++
++
+ template &lt;typename valType&gt; valType Shop::getDefault(const string&amp; key) {
+ 	ensureInit();
+ 	try{return boost::any_cast&lt;valType&gt;(defaults[key]);}
+
+Modified: trunk/extra/clump/Shop.hpp
+===================================================================
+--- trunk/extra/clump/Shop.hpp	2008-05-05 14:21:04 UTC (rev 1342)
++++ trunk/extra/clump/Shop.hpp	2008-05-07 08:51:23 UTC (rev 1343)
+@@ -74,4 +74,14 @@
+ 		static void GLDrawText(std::string text, Vector3r pos, Vector3r color=Vector3r(1,1,1));
+ 		static void GLDrawNum(Real n, Vector3r pos, Vector3r color=Vector3r(1,1,1), unsigned precision=3);
+ 
++		class Bex{
++			public:
++			static int forceIdx,momentumIdx,globalStiffnessIdx;
++			static void init();
++			static Vector3r&amp; force(body_id_t);
++			static Vector3r&amp; momentum(body_id_t);
++			static Vector3r&amp; globalStiffness(body_id_t);
++			static Vector3r&amp; globalRStiffness(body_id_t);
++		};
++
+ };
+
+Modified: trunk/gui/py/PythonUI.cpp
+===================================================================
+--- trunk/gui/py/PythonUI.cpp	2008-05-05 14:21:04 UTC (rev 1342)
++++ trunk/gui/py/PythonUI.cpp	2008-05-07 08:51:23 UTC (rev 1343)
+@@ -4,14 +4,15 @@
+ #include&lt;boost/algorithm/string.hpp&gt;
+ #include&lt;errno.h&gt;
+ 
++#include&lt;stdlib.h&gt;
++
+ #include&quot;PythonUI.hpp&quot;
+ 
+ #include &lt;X11/Xlib.h&gt;
+ 
+ using namespace boost;
+ 
+-//void cmdlineThreadStart(){
+-//}
++struct termios PythonUI::tios, PythonUI::tios_orig;
+ 
+ CREATE_LOGGER(PythonUI);
+ 
+@@ -47,6 +48,11 @@
+ 	}
+ }
+ 
++void PythonUI::termRestore(void){
++	LOG_DEBUG(&quot;Restoring terminal discipline.&quot;);
++	tcsetattr(STDIN_FILENO,TCSANOW,&amp;PythonUI::tios_orig);
++}
++
+ int PythonUI::run(int argc, char *argv[]) {
+ 	string runScript;
+ 	string runCommands;
+@@ -70,7 +76,15 @@
+ 	}
+ 	for (int index = optind+1; index&lt;argc; index++) LOG_ERROR(&quot;Unprocessed non-option argument: `&quot;&lt;&lt;argv[index]&lt;&lt;&quot;'&quot;);
+ 
++   LOG_DEBUG(&quot;Setting terminal discipline (disabling ^C)&quot;);
++	tcgetattr(STDIN_FILENO,&amp;PythonUI::tios);
++   memcpy(&amp;PythonUI::tios_orig,&amp;PythonUI::tios,sizeof(struct termios));
++   atexit(PythonUI::termRestore);
++	tios.c_cc[VINTR] = 0; // disable ^C
++	tcsetattr(STDIN_FILENO,TCSANOW,&amp;PythonUI::tios);
++   tcflush(STDIN_FILENO,TCIFLUSH);
+ 
++
+ 	XInitThreads();
+ 	PyEval_InitThreads();
+ 
+@@ -96,6 +110,8 @@
+ 
+ 	PyGILState_Release(pyState);
+ 
++	tcsetattr(STDIN_FILENO,TCSANOW,&amp;tios_orig);
++
+ 	//boost::thread cmdlineThread(&amp;cmdlineThreadStart);
+ 	//cmdlineThread.join();
+ 
+
+Modified: trunk/gui/py/PythonUI.hpp
+===================================================================
+--- trunk/gui/py/PythonUI.hpp	2008-05-05 14:21:04 UTC (rev 1342)
++++ trunk/gui/py/PythonUI.hpp	2008-05-07 08:51:23 UTC (rev 1343)
+@@ -1,13 +1,16 @@
+ // &#169; 2007 V&#225;clav &#352;milauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">eudoxos at arcig.cz</A>&gt;
+ #pragma once
+ #include&lt;yade/core/FrontEnd.hpp&gt;
+-#include&lt;boost/shared_ptr.hpp&gt;
++#include&lt;boost/shared_ptr.hpp&gt;a
++#include&lt;termios.h&gt;
+ 
+ class PythonUI: public FrontEnd
+ {
+ 	private:
+ 		void help();
+ 		void execScript(string);
++		static struct termios tios,tios_orig;
++		static void termRestore();
+ 	public:
+ 		PythonUI(){};
+ 		virtual ~PythonUI(){};
+
+Modified: trunk/gui/py/PythonUI_rc.py
+===================================================================
+--- trunk/gui/py/PythonUI_rc.py	2008-05-05 14:21:04 UTC (rev 1342)
++++ trunk/gui/py/PythonUI_rc.py	2008-05-07 08:51:23 UTC (rev 1343)
+@@ -37,7 +37,14 @@
+ 	# prefer ipython, since it is colorful and cool
+ 	from IPython.Shell import IPShellEmbed
+ 	sys.argv=['&lt;embedded python interpreter&gt;']
+-	ipshell = IPShellEmbed()
++	ipshell = IPShellEmbed(banner=r&quot;&quot;&quot;__   __    ____          ____                      _      
++\ \ / /_ _|  _ \  ___   / ___|___  _ __  ___  ___ | | ___ 
++ \ V / _` | | | |/ _ \ | |   / _ \| '_ \/ __|/ _ \| |/ _ \ 
++  | | (_| | |_| |  __/ | |__| (_) | | | \__ \ (_) | |  __/
++  |_|\__,_|____/ \___|  \____\___/|_| |_|___/\___/|_|\___|
++&quot;&quot;&quot;,exit_msg='Bye.'
++	,rc_override={'execfile':[runtime.prefix+'/lib/yade'+runtime.suffix+'/gui/yade/ipython.py']})
++
+ 	ipshell()
+ except ImportError:
+ 	## no ipython :-(, let's emulate it
+
+Modified: trunk/gui/py/utils.py
+===================================================================
+--- trunk/gui/py/utils.py	2008-05-05 14:21:04 UTC (rev 1342)
++++ trunk/gui/py/utils.py	2008-05-07 08:51:23 UTC (rev 1343)
+@@ -104,6 +104,7 @@
+ 	All remaining arguments are passed the the yade.utils.sphere function that creates the bodies.
+ 	
+ 	Returns list of body ids that were inserted.&quot;&quot;&quot;
++	o=Omega()
+ 	ret=[]
+ 	for l in open(filename):
+ 		ss=[float(i) for i in l.split()]
+
+Modified: trunk/gui/qt3/GLViewer.cpp
+===================================================================
+--- trunk/gui/qt3/GLViewer.cpp	2008-05-05 14:21:04 UTC (rev 1342)
++++ trunk/gui/qt3/GLViewer.cpp	2008-05-07 08:51:23 UTC (rev 1343)
+@@ -24,7 +24,7 @@
+ 	viewId = id;
+ 	cut_plane = 0;
+ 	cut_plane_delta = -2;
+-	resize(320, 240);
++	resize(550,550);
+ 
+ 	if (id==0)
+ 		setCaption(&quot;Primary View (not closable)&quot;);
+
+Modified: trunk/gui/qt3/YadeQtMainWindow.cpp
+===================================================================
+--- trunk/gui/qt3/YadeQtMainWindow.cpp	2008-05-05 14:21:04 UTC (rev 1342)
++++ trunk/gui/qt3/YadeQtMainWindow.cpp	2008-05-07 08:51:23 UTC (rev 1343)
+@@ -60,12 +60,12 @@
+ 	resize(preferences-&gt;mainWindowSizeX,preferences-&gt;mainWindowSizeY);
+ 	move(preferences-&gt;mainWindowPositionX,preferences-&gt;mainWindowPositionY);
+ 	
+-	addMenu(&quot;Edit&quot;);
++	//addMenu(&quot;Edit&quot;);
+ 	addMenu(&quot;Preprocessor&quot;);
+ 	addMenu(&quot;Postprocessor&quot;);
+-	addMenu(&quot;Extra&quot;);
++	//addMenu(&quot;Extra&quot;);
+ 
+-	addItem(&quot;Edit&quot;,&quot;Preferences...&quot;,&quot;QtPreferencesEditor&quot;);
++	//addItem(&quot;Edit&quot;,&quot;Preferences...&quot;,&quot;QtPreferencesEditor&quot;);
+ 		
+ 	addItem(&quot;Preprocessor&quot;,&quot;File Generator...&quot;,&quot;QtFileGenerator&quot;);
+ 	//addItem(&quot;Preprocessor&quot;,&quot;Engine Editor...&quot;,&quot;QtEngineEditor&quot;);
+@@ -73,7 +73,7 @@
+ 
+ 	addItem(&quot;Postprocessor&quot;,&quot;Simulation Player...&quot;,&quot;QtSimulationPlayer&quot;);
+ 
+-	addItem(&quot;Extra&quot;,&quot;Spherical DEM Simulator...&quot;,&quot;QtSphericalDEM&quot;);
++	//addItem(&quot;Extra&quot;,&quot;Spherical DEM Simulator...&quot;,&quot;QtSphericalDEM&quot;);
+ 
+ 	createMenus();
+ 
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000304.html">[Yade-commits] r1342 - trunk/extra/triangulation
+</A></li>
+	<LI>Next message: <A HREF="000306.html">[Yade-commits] r1344 - trunk
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#305">[ date ]</a>
+              <a href="thread.html#305">[ thread ]</a>
+              <a href="subject.html#305">[ subject ]</a>
+              <a href="author.html#305">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

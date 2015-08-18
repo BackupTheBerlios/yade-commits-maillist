@@ -1,0 +1,514 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1157 - trunk/extra/tetra
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2007/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1157%20-%20trunk/extra/tetra&In-Reply-To=%3C200705021542.l42Fgv0R000244%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000121.html">
+   <LINK REL="Next"  HREF="000123.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1157 - trunk/extra/tetra</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1157%20-%20trunk/extra/tetra&In-Reply-To=%3C200705021542.l42Fgv0R000244%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1157 - trunk/extra/tetra">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Wed May  2 17:42:57 CEST 2007</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000121.html">[Yade-commits] r1156 - in trunk: core extra extra/clump extra/tetra	pkg/common/DataClass/GeometricalModel	pkg/common/RenderingEngine/GLDrawGeometricalModel	pkg/dem/Engine/EngineUnit pkg/dem/PreProcessor
+</A></li>
+        <LI>Next message: <A HREF="000123.html">[Yade-commits] r1158 - trunk/extra/tetra
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#122">[ date ]</a>
+              <a href="thread.html#122">[ thread ]</a>
+              <a href="subject.html#122">[ subject ]</a>
+              <a href="author.html#122">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2007-05-02 17:42:57 +0200 (Wed, 02 May 2007)
+New Revision: 1157
+
+Modified:
+   trunk/extra/tetra/tetra.cpp
+   trunk/extra/tetra/tetra.hpp
+   trunk/extra/tetra/tetraGen.cpp
+   trunk/extra/tetra/tetraGen.hpp
+Log:
+ough... put actual data in. Next commit will rename files as they should be (stupid svn...).
+
+Modified: trunk/extra/tetra/tetra.cpp
+===================================================================
+--- trunk/extra/tetra/tetra.cpp	2007-05-02 15:40:59 UTC (rev 1156)
++++ trunk/extra/tetra/tetra.cpp	2007-05-02 15:42:57 UTC (rev 1157)
+@@ -0,0 +1,182 @@
++// &#169; 2007 V&#225;clav &#352;milauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">eudoxos at arcig.cz</A>&gt;
++
++#include&quot;Tetra.hpp&quot;
++
++char* yadePluginClasses[]={
++	// self-contained in hpp:
++	&quot;TetraMold&quot;,
++	&quot;TetraBang&quot;, 
++	&quot;Tetrahedron2TetraMold&quot;,
++	&quot;TetraAABB&quot;, 
++	// some code in cpp (here):
++	&quot;TetraLaw&quot;,	 
++	&quot;Tetra2TetraBang&quot;,
++	&quot;TetraDraw&quot;,
++	NULL /*sentinel*/
++};
++
++#include &lt;boost/shared_ptr.hpp&gt;
++
++#include &lt;yade/core/Interaction.hpp&gt;
++#include &lt;yade/core/PhysicalAction.hpp&gt;
++#include &lt;yade/core/Omega.hpp&gt;
++#include &lt;yade/core/MetaBody.hpp&gt;
++
++#include &lt;yade/lib-opengl/OpenGLWrapper.hpp&gt;
++
++#include &lt;yade/pkg-common/AABB.hpp&gt;
++#include &lt;yade/pkg-common/Tetrahedron.hpp&gt;
++//#include &lt;yade/pkg-common/InteractingBox.hpp&gt;
++//#include &lt;yade/pkg-common/InteractingSphere.hpp&gt;
++#include &lt;yade/pkg-common/ElasticBodyParameters.hpp&gt;
++#include &lt;yade/pkg-common/SimpleElasticInteraction.hpp&gt;
++
++
++bool Tetra2TetraBang::go(const shared_ptr&lt;InteractingGeometry&gt;&amp; cm1,const shared_ptr&lt;InteractingGeometry&gt;&amp; cm2,const Se3r&amp; se31,const Se3r&amp; se32,const shared_ptr&lt;Interaction&gt;&amp; c){
++	TetraMold* A = static_cast&lt;TetraMold*&gt;(cm1.get());
++	TetraMold* B = static_cast&lt;TetraMold*&gt;(cm2.get());
++	return false;
++	
++/*	shared_ptr&lt;TetraBang&gt; imt;
++	// depending whether it's a new interaction: create new one, or use the existing one.
++	if (c-&gt;isNew)
++		imt = shared_ptr&lt;TetraBang&gt;(new TetraBang());
++	else
++		imt = dynamic_pointer_cast&lt;TetraBang&gt;(c-&gt;interactionGeometry);	
++
++	bool isInteracting = false;
++	for(int i=0 ; i&lt;4 ; ++i )
++		for(int j=0 ; j&lt;4 ; ++j)
++		{
++			// both spheres must be calculated in global coordinate system
++			//
++			// c1,c2,c3,c4 are sphere centers in local coordinate system of tetrahedron,
++			//             they must by rotated, so that they have the rotation of tetrahedron
++			//             they must be translated, so that they have global coordinates of tetrahedron
++			calcTwoSpheres(	
++				// (Quaternionr)orientation * (Vector3r)(c1)     : rotates the sphere center from local into global coordinate system.
++				//                             + se31.position   : translates it, to stay in the x,y,z in global coordinate system
++				se31.orientation*(&amp;(t1-&gt;c1))[i]+se31.position,
++
++				(&amp;(t1-&gt;r1))[i], // radius of sphere from first TetraMold
++
++				se32.orientation*(&amp;(t2-&gt;c1))[j]+se32.position,
++				(&amp;(t2-&gt;r1))[j],
++
++				imt-&gt;penetrationDepths[i][j], imt-&gt;normals[i][j], imt-&gt;contactPoints[i][j] );
++
++			if( imt-&gt;penetrationDepths[i][j] &gt; 0 )
++				isInteracting = true;
++		}
++
++
++	c-&gt;interactionGeometry = imt;
++	return isInteracting; */
++}
++
++bool Tetra2TetraBang::goReverse(const shared_ptr&lt;InteractingGeometry&gt;&amp; cm1,const shared_ptr&lt;InteractingGeometry&gt;&amp; cm2,const Se3r&amp; se31,const Se3r&amp; se32,const shared_ptr&lt;Interaction&gt;&amp; c){
++	bool isInteracting = go(cm2,cm1,se32,se31,c);
++	/*if (isInteracting)
++	{
++		TetraBang* itm = static_cast&lt;TetraBang*&gt;(c-&gt;interactionGeometry.get());
++		// reverse direction of normals
++		for(int i=0 ; i&lt;4 ; ++i )
++			for(int j=0 ; j&lt;4 ; ++j)
++				itm-&gt;normals[i][j] =  -1.0*( itm-&gt;normals[i][j] );
++	}*/
++	return isInteracting;
++}
++
++
++void TetraLaw::action(Body* body)
++{
++	return;
++#if 0
++ 	MetaBody * ncb = dynamic_cast&lt;MetaBody*&gt;(body);
++	shared_ptr&lt;BodyContainer&gt;&amp; bodies = ncb-&gt;bodies;
++
++	Real dt = Omega::instance().getTimeStep();
++
++	InteractionContainer::iterator ii    = ncb-&gt;transientInteractions-&gt;begin();
++	InteractionContainer::iterator iiEnd = ncb-&gt;transientInteractions-&gt;end();
++	for(  ; ii!=iiEnd ; ++ii )
++	{
++		if ((*ii)-&gt;isReal)	// isReal means that Tetra2TetraBang returned true
++					//                or Tetra2BoxBang           returned true
++		{
++			const shared_ptr&lt;Interaction&gt;&amp; contact = *ii;
++			int id1 = contact-&gt;getId1();
++			int id2 = contact-&gt;getId2();
++			
++// you can use groups if you want for example a simulation that has different
++// types of InteractionSolvers that talk with different bodies, for example
++// if you want together TetraLaw (solving tetrahedrons) and ElasticContactLaw (solving spheres)
++//
++// I already have a better solution for that, so you will not need to check
++// groups inside this function, but they will be checked outside. I just need
++// time to implement this :)
++//
++//			if( !( (*bodies)[id1]-&gt;getGroupMask() &amp; (*bodies)[id2]-&gt;getGroupMask() &amp; sdecGroupMask)  )
++//				continue;
++	
++			ElasticBodyParameters* de1 				= dynamic_cast&lt;ElasticBodyParameters*&gt;((*bodies)[id1]-&gt;physicalParameters.get());
++			ElasticBodyParameters* de2 				= dynamic_cast&lt;ElasticBodyParameters*&gt;((*bodies)[id2]-&gt;physicalParameters.get());
++			TetraBang* currentContactGeometry	= dynamic_cast&lt;TetraBang*&gt;(contact-&gt;interactionGeometry.get());
++			SimpleElasticInteraction* currentContactPhysics		= dynamic_cast&lt;SimpleElasticInteraction*&gt;(contact-&gt;interactionPhysics.get());
++
++			for(int i=0 ; i&lt;4 ; ++i )
++				for(int j=0 ; j&lt;4 ; ++j)
++				{
++					Real un					= currentContactGeometry-&gt;penetrationDepths[i][j];
++					if(un &gt; 0)
++					{
++						Vector3r force			= currentContactPhysics-&gt;kn*un*currentContactGeometry-&gt;normals[i][j];
++
++						Vector3r x			= currentContactGeometry-&gt;contactPoints[i][j];
++						Vector3r c1x			= (x - de1-&gt;se3.position);
++						Vector3r c2x			= (x - de2-&gt;se3.position);
++
++						// it will be some macro(	body-&gt;physicalActions,	ActionType , bodyId )
++						static_cast&lt;Force*&gt;   ( ncb-&gt;physicalActions-&gt;find( id1 , actionForce   -&gt;getClassIndex() ).get() )-&gt;force    -= force;
++						static_cast&lt;Force*&gt;   ( ncb-&gt;physicalActions-&gt;find( id2 , actionForce   -&gt;getClassIndex() ).get() )-&gt;force    += force;
++
++						static_cast&lt;Momentum*&gt;( ncb-&gt;physicalActions-&gt;find( id1 , actionMomentum-&gt;getClassIndex() ).get() )-&gt;momentum -= c1x.cross(force);
++						static_cast&lt;Momentum*&gt;( ncb-&gt;physicalActions-&gt;find( id2 , actionMomentum-&gt;getClassIndex() ).get() )-&gt;momentum += c2x.cross(force);
++					}
++				}
++
++		}
++	}
++#endif
++}
++
++
++void TetraDraw::go(const shared_ptr&lt;InteractingGeometry&gt;&amp; cm, const shared_ptr&lt;PhysicalParameters&gt;&amp; )
++{
++  	glMaterialv(GL_FRONT,GL_AMBIENT_AND_DIFFUSE,Vector3f(cm-&gt;diffuseColor[0],cm-&gt;diffuseColor[1],cm-&gt;diffuseColor[2]));
++	glColor3v(cm-&gt;diffuseColor);
++	TetraMold* t=static_cast&lt;TetraMold*&gt;(cm.get());
++	if (0) { // wireframe, as for Tetrahedron
++		glDisable(GL_LIGHTING);
++		glBegin(GL_LINES);
++			#define __ONEWIRE(a,b) glVertex3v(t-&gt;v[a]);glVertex3v(t-&gt;v[b])
++				__ONEWIRE(0,1);__ONEWIRE(0,2);__ONEWIRE(0,3);__ONEWIRE(1,2);__ONEWIRE(1,3);__ONEWIRE(2,3);
++			#undef __ONEWIRE
++		glEnd();
++	}
++	else
++	{
++		Vector3r center = (t-&gt;v[0]+t-&gt;v[1]+t-&gt;v[2]+t-&gt;v[3])*.25, faceCenter, n;
++		glDisable(GL_CULL_FACE); glEnable(GL_LIGHTING);
++		glBegin(GL_TRIANGLES);
++			#define __ONEFACE(a,b,c) n=(t-&gt;v[b]-t-&gt;v[a]).UnitCross(t-&gt;v[c]-t-&gt;v[a]); faceCenter=(t-&gt;v[a]+t-&gt;v[b]+t-&gt;v[c])/3.; if((faceCenter-center).Dot(n)&lt;0)n=-n; glNormal3v(n); glVertex3v(t-&gt;v[a]); glVertex3v(t-&gt;v[b]); glVertex3v(t-&gt;v[c]);
++				__ONEFACE(3,0,1);
++				__ONEFACE(0,1,2);
++				__ONEFACE(1,2,3);
++				__ONEFACE(2,3,0);
++			#undef __ONEFACE
++		glEnd();
++	}
++	
++}
++
+
+Modified: trunk/extra/tetra/tetra.hpp
+===================================================================
+--- trunk/extra/tetra/tetra.hpp	2007-05-02 15:40:59 UTC (rev 1156)
++++ trunk/extra/tetra/tetra.hpp	2007-05-02 15:42:57 UTC (rev 1157)
+@@ -0,0 +1,159 @@
++#ifndef TETRA_HPP
++#define TETRA_HPP
++
++#include&lt;vector&gt;
++
++#include&lt;yade/core/InteractingGeometry.hpp&gt;
++#include&lt;yade/core/InteractionGeometry.hpp&gt;
++#include&lt;yade/core/InteractionSolver.hpp&gt;
++#include&lt;yade/core/PhysicalAction.hpp&gt;
++
++#include&lt;yade/pkg-common/Tetrahedron.hpp&gt;
++#include&lt;yade/pkg-common/AABB.hpp&gt;
++#include&lt;yade/pkg-common/BoundingVolumeEngineUnit.hpp&gt;
++#include&lt;yade/pkg-common/InteractingGeometryEngineUnit.hpp&gt;
++#include&lt;yade/pkg-common/GLDrawInteractingGeometryFunctor.hpp&gt;
++#include&lt;yade/pkg-common/InteractionGeometryEngineUnit.hpp&gt;
++
++#include &lt;yade/pkg-common/Force.hpp&gt;
++#include &lt;yade/pkg-common/Momentum.hpp&gt;
++
++#include&lt;Wm3Math.h&gt;
++#include&lt;Wm3Vector3.h&gt;
++
++
++/* Our mold of tetrahedron: just 4 vertices.
++ *
++ * Self-contained. */
++class TetraMold: public InteractingGeometry{
++	public:
++		//! vertices of the tetrahedron
++		vector&lt;Vector3r&gt; v;
++		TetraMold(){createIndex(); for(size_t i=0; i&lt;4; i++) v.push_back(Vector3r(0,0,0)); }
++		TetraMold(Vector3r v1, Vector3r v2, Vector3r v3, Vector3r v4){createIndex(); v.clear(); v.push_back(v1); v.push_back(v2); v.push_back(v3); v.push_back(v4);}
++		virtual ~TetraMold (){};
++	protected :
++		void registerAttributes(){InteractingGeometry::registerAttributes(); REGISTER_ATTRIBUTE(v);}
++		REGISTER_CLASS_NAME(TetraMold);
++		REGISTER_BASE_CLASS_NAME(InteractingGeometry);
++		REGISTER_CLASS_INDEX(TetraMold,InteractingGeometry);
++};
++REGISTER_SERIALIZABLE(TetraMold,false);
++
++
++/*! Collision configuration for Tetra and something.
++ * This is expressed as penetration volume properties: centroid, volume, orientation of principal axes, inertia.
++ *
++ * Self-contained. */
++
++class TetraBang: public InteractionGeometry{
++	public:
++		Real volume;
++		Se3r overlapSe3;
++		Vector3r inertia;
++		
++		TetraBang(): InteractionGeometry(){};
++		virtual ~TetraBang(){};
++	protected:
++		REGISTER_CLASS_NAME(TetraBang);
++		REGISTER_BASE_CLASS_NAME(InteractionGeometry);
++};
++REGISTER_SERIALIZABLE(TetraBang,false);
++
++/*! Creates TetraMold from Tetrahedron.
++ *
++ * Self-contained. */
++
++class Tetrahedron2TetraMold : public InteractingGeometryEngineUnit
++{
++	public :
++		void go(const shared_ptr&lt;GeometricalModel&gt;&amp; gm,shared_ptr&lt;InteractingGeometry&gt;&amp; ig,const Se3r&amp; se3,const Body*){
++			Tetrahedron* tet=static_cast&lt;Tetrahedron*&gt;(gm.get());
++			//! @fixme this seems superfluous?!: if(!ig)
++			ig=boost::shared_ptr&lt;InteractingGeometry&gt;(new TetraMold(tet-&gt;v[0],tet-&gt;v[1],tet-&gt;v[2],tet-&gt;v[3]));
++		}
++	REGISTER_CLASS_NAME(Tetrahedron2TetraMold);
++	REGISTER_BASE_CLASS_NAME(InteractingGeometryEngineUnit);
++	DEFINE_FUNCTOR_ORDER_2D(Tetrahedron,TetraMold);
++};
++REGISTER_SERIALIZABLE(Tetrahedron2TetraMold,false);
++
++/*! Creates AABB from TetraMold. 
++ *
++ * Self-contained. */
++
++class TetraAABB : public BoundingVolumeEngineUnit
++{
++	public :
++		void go(const shared_ptr&lt;InteractingGeometry&gt;&amp; ig, shared_ptr&lt;BoundingVolume&gt;&amp; bv, const Se3r&amp; se3, const Body*){
++			TetraMold* t=static_cast&lt;TetraMold*&gt;(ig.get());
++			AABB* aabb=static_cast&lt;AABB*&gt;(bv.get());
++			#define __VOP(op,ix) op(t-&gt;v[0][ix],op(t-&gt;v[1][ix],op(t-&gt;v[2][ix],t-&gt;v[3][ix])))
++				aabb-&gt;min=Vector3r(__VOP(std::min,0),__VOP(std::min,1),__VOP(std::min,2));
++				aabb-&gt;max=Vector3r(__VOP(std::max,0),__VOP(std::max,1),__VOP(std::max,2));
++			#undef __VOP
++			aabb-&gt;center=(aabb-&gt;min+aabb-&gt;max)*0.5;
++			aabb-&gt;halfSize=(aabb-&gt;max-aabb-&gt;min)*0.5;
++		}
++		REGISTER_CLASS_NAME(TetraAABB);
++		REGISTER_BASE_CLASS_NAME(BoundingVolumeEngineUnit);
++};
++REGISTER_SERIALIZABLE(TetraAABB,false);
++
++
++/*! Draw TetraMold using OpenGL */
++
++class TetraDraw : public GLDrawInteractingGeometryFunctor
++{	
++	public :
++		virtual void go(const shared_ptr&lt;InteractingGeometry&gt;&amp;, const shared_ptr&lt;PhysicalParameters&gt;&amp;);
++
++		RENDERS(TetraMold);
++		REGISTER_CLASS_NAME(TetraDraw);
++		REGISTER_BASE_CLASS_NAME(GLDrawInteractingGeometryFunctor);
++};
++REGISTER_SERIALIZABLE(TetraDraw,false);
++
++
++/*! Calculate physical response based on penetration configuration given by TetraBang. */
++
++class TetraLaw: public InteractionSolver {
++	public:
++		//! @fixme: those two are here only because this class needs to access
++		/// the ID number of Force and Momentum. Those variables are actually not used to store a value of
++		/// Force and Momentum, just to get ID, although normally they are
++		/// used to store this value. I already have a better solution for that.
++		shared_ptr&lt;PhysicalAction&gt; actionForce;
++		shared_ptr&lt;PhysicalAction&gt; actionMomentum;
++
++		TetraLaw():InteractionSolver(),actionForce(new Force),actionMomentum(new Momentum){};
++
++		void action(Body* body);
++	protected :
++		void registerAttributes(){InteractionSolver::registerAttributes(); /* &#8230; */ }
++		REGISTER_CLASS_NAME(TetraLaw);
++		REGISTER_BASE_CLASS_NAME(InteractionSolver);
++};
++REGISTER_SERIALIZABLE(TetraLaw,false);
++
++
++
++/*! @fixme implement Tetra2BoxBang by representing box as 6 tetrahedra. */
++
++/*! Create TetraBang (collision geometry) from colliding TetraMolds. */
++class Tetra2TetraBang : public InteractionGeometryEngineUnit
++{
++	public :
++		virtual bool go(const shared_ptr&lt;InteractingGeometry&gt;&amp; cm1, const shared_ptr&lt;InteractingGeometry&gt;&amp; cm2, const Se3r&amp; se31, const Se3r&amp; se32, const shared_ptr&lt;Interaction&gt;&amp; c);
++		virtual bool goReverse(	const shared_ptr&lt;InteractingGeometry&gt;&amp; cm1, const shared_ptr&lt;InteractingGeometry&gt;&amp; cm2, const Se3r&amp; se31, const Se3r&amp; se32, const shared_ptr&lt;Interaction&gt;&amp; c);
++
++		REGISTER_CLASS_NAME(Tetra2TetraBang);
++		REGISTER_BASE_CLASS_NAME(InteractionGeometryEngineUnit);
++		DEFINE_FUNCTOR_ORDER_2D(TetraMold,TetraMold);
++};
++
++REGISTER_SERIALIZABLE(Tetra2TetraBang,false);
++
++
++
++#endif
+
+Modified: trunk/extra/tetra/tetraGen.cpp
+===================================================================
+--- trunk/extra/tetra/tetraGen.cpp	2007-05-02 15:40:59 UTC (rev 1156)
++++ trunk/extra/tetra/tetraGen.cpp	2007-05-02 15:42:57 UTC (rev 1157)
+@@ -0,0 +1,52 @@
++
++#include&lt;yade/core/MetaBody.hpp&gt;
++#include&lt;yade/extra/Shop.hpp&gt;
++
++#include&quot;TetraTestGen.hpp&quot;
++
++char* yadePluginClasses[]={
++        &quot;TetraTestGen&quot;,
++        NULL /*sentinel*/
++};
++
++string TetraTestGen::generate()
++{
++	//Shop::setDefault(&quot;param_pythonRunExpr&quot;,string(&quot;if S.i%50==0 and S.i&lt;1000 and S.i&gt;500:\n\tprint S.i,len(S.sel),B[1].x, B[1].E&quot;));
++
++	rootBody=Shop::rootBody();
++	Shop::rootBodyActors(rootBody);
++	
++	#if 0
++	shared_ptr&lt;MetaBody&gt; oldRootBody=Omega::instance().getRootBody();
++	Omega::instance().setRootBody(rootBody);
++	#endif
++
++	vector&lt;Vector3r&gt; v;
++
++	v.push_back(Vector3r(1,1,0));
++	v.push_back(Vector3r(0,-1,0));
++	v.push_back(Vector3r(-1,1,0));
++	v.push_back(Vector3r(0,0,-2));
++	shared_ptr&lt;Body&gt; ground=Shop::tetra(v);
++	ground-&gt;isDynamic=false;
++
++
++	for(size_t i=0; i&lt;gridSize[0]; i++) for(size_t j=0; j&lt;gridSize[1];j++) for(size_t k=0; k&lt;gridSize[2];k++){
++		Vector3r center=1.0*Vector3r(i-gridSize[0]/2.,j-gridSize[1]/2.,k-gridSize[2]/2.);
++		double size=.2;
++		#define __VERTEX(x,y,z) center+size*(Vector3r(x,y,z)+Vector3r(Mathr::IntervalRandom(-.5,.5),Mathr::IntervalRandom(-.5,.5),Mathr::IntervalRandom(-.5,.5)))
++			v[0]=__VERTEX(1,1,0);
++			v[1]=__VERTEX(0,-1,0);
++			v[2]=__VERTEX(-1,0,0);
++			v[3]=__VERTEX(0,0,2);
++		#undef __VERTEX
++		shared_ptr&lt;Body&gt; t=Shop::tetra(v);
++		rootBody-&gt;bodies-&gt;insert(ground);
++	}
++
++	#if 0
++	Omega::instance().setRootBody(oldRootBody);
++	#endif
++	
++	return &quot;OK&quot;;
++}
+
+Modified: trunk/extra/tetra/tetraGen.hpp
+===================================================================
+--- trunk/extra/tetra/tetraGen.hpp	2007-05-02 15:40:59 UTC (rev 1156)
++++ trunk/extra/tetra/tetraGen.hpp	2007-05-02 15:42:57 UTC (rev 1157)
+@@ -0,0 +1,24 @@
++#ifndef TETRATESTGEN_HPP
++#define TETRATESTGEN_HPP
++
++#include&lt;vector&gt;
++#include&lt;yade/core/FileGenerator.hpp&gt;
++//#include&lt;yade/pkg-common/Tetrahedron.hpp&gt;
++
++/*! Test basic tetra functionality. */
++class TetraTestGen: public FileGenerator {
++	DECLARE_LOGGER;
++	public:
++		vector&lt;size_t&gt; gridSize;
++		TetraTestGen(){ gridSize.push_back(2); gridSize.push_back(2); gridSize.push_back(2);};
++		~TetraTestGen (){};
++		string generate();
++	protected :
++		virtual void postProcessAttributes(bool deserializing){};
++		void registerAttributes(){FileGenerator::registerAttributes(); REGISTER_ATTRIBUTE(gridSize);}
++		REGISTER_CLASS_NAME(TetraTestGen);
++		REGISTER_BASE_CLASS_NAME(FileGenerator);
++};
++REGISTER_SERIALIZABLE(TetraTestGen,false);
++
++#endif
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000121.html">[Yade-commits] r1156 - in trunk: core extra extra/clump extra/tetra	pkg/common/DataClass/GeometricalModel	pkg/common/RenderingEngine/GLDrawGeometricalModel	pkg/dem/Engine/EngineUnit pkg/dem/PreProcessor
+</A></li>
+	<LI>Next message: <A HREF="000123.html">[Yade-commits] r1158 - trunk/extra/tetra
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#122">[ date ]</a>
+              <a href="thread.html#122">[ thread ]</a>
+              <a href="subject.html#122">[ subject ]</a>
+              <a href="author.html#122">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

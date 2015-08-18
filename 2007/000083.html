@@ -1,0 +1,254 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1118 - in branches/scons-layout: . core debian	extra gui pkg/common pkg/dem pkg/fem pkg/lattice	pkg/mass-spring pkg/realtime-rigidbody
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2007/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1118%20-%20in%20branches/scons-layout%3A%20.%20core%20debian%0A%09extra%20gui%20pkg/common%20pkg/dem%20pkg/fem%20pkg/lattice%0A%09pkg/mass-spring%20pkg/realtime-rigidbody&In-Reply-To=%3C200703091735.l29HZ2Zv005613%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000082.html">
+   <LINK REL="Next"  HREF="000084.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1118 - in branches/scons-layout: . core debian	extra gui pkg/common pkg/dem pkg/fem pkg/lattice	pkg/mass-spring pkg/realtime-rigidbody</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1118%20-%20in%20branches/scons-layout%3A%20.%20core%20debian%0A%09extra%20gui%20pkg/common%20pkg/dem%20pkg/fem%20pkg/lattice%0A%09pkg/mass-spring%20pkg/realtime-rigidbody&In-Reply-To=%3C200703091735.l29HZ2Zv005613%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1118 - in branches/scons-layout: . core debian	extra gui pkg/common pkg/dem pkg/fem pkg/lattice	pkg/mass-spring pkg/realtime-rigidbody">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Fri Mar  9 18:35:02 CET 2007</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000082.html">[Yade-commits] r1117 - branches/scons-layout
+</A></li>
+        <LI>Next message: <A HREF="000084.html">[Yade-commits] r1119 - in branches/scons-layout: . debian
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#83">[ date ]</a>
+              <a href="thread.html#83">[ thread ]</a>
+              <a href="subject.html#83">[ subject ]</a>
+              <a href="author.html#83">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2007-03-09 18:34:59 +0100 (Fri, 09 Mar 2007)
+New Revision: 1118
+
+Modified:
+   branches/scons-layout/SConstruct
+   branches/scons-layout/core/SConscript
+   branches/scons-layout/debian/control
+   branches/scons-layout/debian/rules
+   branches/scons-layout/extra/SConscript
+   branches/scons-layout/gui/SConscript
+   branches/scons-layout/pkg/common/SConscript
+   branches/scons-layout/pkg/dem/SConscript
+   branches/scons-layout/pkg/fem/SConscript
+   branches/scons-layout/pkg/lattice/SConscript
+   branches/scons-layout/pkg/mass-spring/SConscript
+   branches/scons-layout/pkg/realtime-rigidbody/SConscript
+Log:
+More fixes after POSTFIX-&gt;SUFFIX.
+
+
+Modified: branches/scons-layout/SConstruct
+===================================================================
+--- branches/scons-layout/SConstruct	2007-03-09 17:02:04 UTC (rev 1117)
++++ branches/scons-layout/SConstruct	2007-03-09 17:34:59 UTC (rev 1118)
+@@ -267,6 +267,7 @@
+ 
+ ### this workaround is only needed for scons&lt;=0.96.92, will disappear soon
+ ###  (env.Install method chokes on no-existing directories)
++## FIXME: seems to be non-functional even with newer scons?!!??
+ if sconsVersion&lt;=9692 or 0:
+ 	## should reside in prepareIncludes or sth similar
+ 	def createDirs(dirList):
+@@ -344,9 +345,9 @@
+ 	# how to make that executed automatically??! For now, run always.
+ 	#env.AddPreAction(installAlias,installHeaders)
+ 	installHeaders() # install to buildDir always
+-	installHeaders(env.subst('$PREFIX/include')) # install to $PREFIX if specifically requested: like &quot;scons /usr/local/include&quot;
++	installHeaders(env.subst('$PREFIX')) # install to $PREFIX if specifically requested: like &quot;scons /usr/local/include&quot;
+ 	makePkgConfig(buildDir+'/yade${SUFFIX}.pc')
+-	env.Install(pcDir,buildDir+'/yade${SUFFIX}.pc)
++	env.Install(pcDir,buildDir+'/yade${SUFFIX}.pc')
+ 	installAlias=env.Alias('install',instDirs) # build and install everything that should go to instDirs, which are $PREFIX/{bin,lib} (uses scons' Install); include pkgconfig stuff
+ 	env.Default(installAlias)
+ 
+
+Modified: branches/scons-layout/core/SConscript
+===================================================================
+--- branches/scons-layout/core/SConscript	2007-03-09 17:02:04 UTC (rev 1117)
++++ branches/scons-layout/core/SConscript	2007-03-09 17:34:59 UTC (rev 1118)
+@@ -1,5 +1,5 @@
+ Import('*')
+-env.InstallAs(['$PREFIX/bin/yade$POSTFIX'],[
++env.InstallAs(['$PREFIX/bin/yade$SUFFIX'],[
+ 	env.Program('yade',
+ 		['Body.cpp',
+ 			'BodyContainer.cpp',
+
+Modified: branches/scons-layout/debian/control
+===================================================================
+--- branches/scons-layout/debian/control	2007-03-09 17:02:04 UTC (rev 1117)
++++ branches/scons-layout/debian/control	2007-03-09 17:34:59 UTC (rev 1118)
+@@ -13,7 +13,7 @@
+  .
+  This package contains speed-optimized build of yade.
+ 
+-Package: yade-debug
++Package: yade-dbg
+ Architecture: any
+ Depends: ${shlibs:Depends}, ${misc:Depends}, python-scientific
+ Description: Platform for dynamical modeling.
+
+Modified: branches/scons-layout/debian/rules
+===================================================================
+--- branches/scons-layout/debian/rules	2007-03-09 17:02:04 UTC (rev 1117)
++++ branches/scons-layout/debian/rules	2007-03-09 17:34:59 UTC (rev 1118)
+@@ -62,7 +62,7 @@
+ 	## eudoxos: FIXME: get version from debian variables!!
+ 
+ 	#install headers
+-	scons buildPrefix=debian runtimePREFIX=/usr PREFIX=debian/yade-dev/usr variant='' version=svn1113 debian/yade-dev/usr/include
++	#scons buildPrefix=debian runtimePREFIX=/usr PREFIX=debian/yade-dev/usr variant='' version=svn1113 debian/yade-dev/usr/include
+ 	#debug build
+ 	scons buildPrefix=debian runtimePREFIX=/usr PREFIX=debian/yade-dbg/usr variant=-dbg pretty=0 optimize=0 debug=1 version=svn1113
+ 	#optimized build
+@@ -93,8 +93,8 @@
+ #	dh_installinfo
+ 	dh_installman
+ 	dh_link
+-	# do NOT use this!!! debug builds need symbols, optimized builds don't have them already.
+-	dh_strip
++	## do NOT use this!!! debug builds need symbols, optimized builds don't have them already.
++	#dh_strip
+ 	dh_compress
+ 	dh_fixperms
+ #	dh_perl
+
+Modified: branches/scons-layout/extra/SConscript
+===================================================================
+--- branches/scons-layout/extra/SConscript	2007-03-09 17:02:04 UTC (rev 1117)
++++ branches/scons-layout/extra/SConscript	2007-03-09 17:34:59 UTC (rev 1118)
+@@ -1,5 +1,5 @@
+ Import('*')
+-env.Install('$PREFIX/lib/yade$POSTFIX/extra',[
++env.Install('$PREFIX/lib/yade$SUFFIX/extra',[
+ 
+ 	env.SharedLibrary('SphericalDEMSimulator',
+ 		['spherical-dem-simulator/PersistentAloneSAPCollider.cpp',
+
+Modified: branches/scons-layout/gui/SConscript
+===================================================================
+--- branches/scons-layout/gui/SConscript	2007-03-09 17:02:04 UTC (rev 1117)
++++ branches/scons-layout/gui/SConscript	2007-03-09 17:34:59 UTC (rev 1118)
+@@ -1,5 +1,5 @@
+ Import('*')
+-env.Install('$PREFIX/lib/yade$POSTFIX/gui',[
++env.Install('$PREFIX/lib/yade$SUFFIX/gui',[
+ 
+ 	env.SharedLibrary('QtGUI',
+ 		['qt/FileDialog.cpp',
+
+Modified: branches/scons-layout/pkg/common/SConscript
+===================================================================
+--- branches/scons-layout/pkg/common/SConscript	2007-03-09 17:02:04 UTC (rev 1117)
++++ branches/scons-layout/pkg/common/SConscript	2007-03-09 17:34:59 UTC (rev 1118)
+@@ -1,5 +1,5 @@
+ Import('*')
+-env.Install('$PREFIX/lib/yade$POSTFIX/pkg-common',[
++env.Install('$PREFIX/lib/yade$SUFFIX/pkg-common',[
+ 
+ 	env.SharedLibrary('BodyAssocVector',
+ 		['Container/BodyAssocVector.cpp',
+
+Modified: branches/scons-layout/pkg/dem/SConscript
+===================================================================
+--- branches/scons-layout/pkg/dem/SConscript	2007-03-09 17:02:04 UTC (rev 1117)
++++ branches/scons-layout/pkg/dem/SConscript	2007-03-09 17:34:59 UTC (rev 1118)
+@@ -1,5 +1,5 @@
+ Import('*')
+-env.Install('$PREFIX/lib/yade$POSTFIX/pkg-dem',[
++env.Install('$PREFIX/lib/yade$SUFFIX/pkg-dem',[
+ 
+ 	env.SharedLibrary('InteractingMyTetrahedron',
+ 		['DataClass/InteractingGeometry/InteractingMyTetrahedron.cpp'],
+
+Modified: branches/scons-layout/pkg/fem/SConscript
+===================================================================
+--- branches/scons-layout/pkg/fem/SConscript	2007-03-09 17:02:04 UTC (rev 1117)
++++ branches/scons-layout/pkg/fem/SConscript	2007-03-09 17:34:59 UTC (rev 1118)
+@@ -1,5 +1,5 @@
+ Import('*')
+-env.Install('$PREFIX/lib/yade$POSTFIX/pkg-fem',[
++env.Install('$PREFIX/lib/yade$SUFFIX/pkg-fem',[
+ 
+ 	env.SharedLibrary('FEMSetGeometry',
+ 		['DataClass/GeometricalModel/FEMSetGeometry.cpp'],
+
+Modified: branches/scons-layout/pkg/lattice/SConscript
+===================================================================
+--- branches/scons-layout/pkg/lattice/SConscript	2007-03-09 17:02:04 UTC (rev 1117)
++++ branches/scons-layout/pkg/lattice/SConscript	2007-03-09 17:34:59 UTC (rev 1118)
+@@ -1,5 +1,5 @@
+ Import('*')
+-env.Install('$PREFIX/lib/yade$POSTFIX/pkg-lattice',[
++env.Install('$PREFIX/lib/yade$SUFFIX/pkg-lattice',[
+ 
+ 	env.SharedLibrary('LatticeInteractingGeometry',
+ 		['DataClass/InteractingGeometry/LatticeInteractingGeometry.cpp'],
+
+Modified: branches/scons-layout/pkg/mass-spring/SConscript
+===================================================================
+--- branches/scons-layout/pkg/mass-spring/SConscript	2007-03-09 17:02:04 UTC (rev 1117)
++++ branches/scons-layout/pkg/mass-spring/SConscript	2007-03-09 17:34:59 UTC (rev 1118)
+@@ -1,5 +1,5 @@
+ Import('*')
+-env.Install('$PREFIX/lib/yade$POSTFIX/pkg-mass-spring',[
++env.Install('$PREFIX/lib/yade$SUFFIX/pkg-mass-spring',[
+ 
+ 	env.SharedLibrary('ParticleSetParameters',
+ 		['DataClass/PhysicalParameters/ParticleSetParameters.cpp'],
+
+Modified: branches/scons-layout/pkg/realtime-rigidbody/SConscript
+===================================================================
+--- branches/scons-layout/pkg/realtime-rigidbody/SConscript	2007-03-09 17:02:04 UTC (rev 1117)
++++ branches/scons-layout/pkg/realtime-rigidbody/SConscript	2007-03-09 17:34:59 UTC (rev 1118)
+@@ -1,5 +1,5 @@
+ Import('*')
+-env.Install('$PREFIX/lib/yade$POSTFIX/pkg-realtime-rigidbody',[
++env.Install('$PREFIX/lib/yade$SUFFIX/pkg-realtime-rigidbody',[
+ 
+ 	env.SharedLibrary('ErrorTolerantContact',
+ 		['DataClass/InteractionGeometry/ErrorTolerantContact.cpp'],
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000082.html">[Yade-commits] r1117 - branches/scons-layout
+</A></li>
+	<LI>Next message: <A HREF="000084.html">[Yade-commits] r1119 - in branches/scons-layout: . debian
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#83">[ date ]</a>
+              <a href="thread.html#83">[ thread ]</a>
+              <a href="subject.html#83">[ subject ]</a>
+              <a href="author.html#83">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

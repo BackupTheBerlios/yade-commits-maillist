@@ -1,0 +1,706 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1159 - in trunk: . core extra extra/clump	extra/tetra gui/qt3 pkg/fem/Engine/EngineUnit pkg/realtime-rigidbody
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2007/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1159%20-%20in%20trunk%3A%20.%20core%20extra%20extra/clump%0A%09extra/tetra%20gui/qt3%20pkg/fem/Engine/EngineUnit%20pkg/realtime-rigidbody&In-Reply-To=%3C200705061305.l46D5UeH021836%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000123.html">
+   <LINK REL="Next"  HREF="000125.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1159 - in trunk: . core extra extra/clump	extra/tetra gui/qt3 pkg/fem/Engine/EngineUnit pkg/realtime-rigidbody</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1159%20-%20in%20trunk%3A%20.%20core%20extra%20extra/clump%0A%09extra/tetra%20gui/qt3%20pkg/fem/Engine/EngineUnit%20pkg/realtime-rigidbody&In-Reply-To=%3C200705061305.l46D5UeH021836%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1159 - in trunk: . core extra extra/clump	extra/tetra gui/qt3 pkg/fem/Engine/EngineUnit pkg/realtime-rigidbody">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Sun May  6 15:05:30 CEST 2007</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000123.html">[Yade-commits] r1158 - trunk/extra/tetra
+</A></li>
+        <LI>Next message: <A HREF="000125.html">[Yade-commits] r1160 - in trunk: extra/clump	extra/spherical-dem-simulator extra/tetra gui/qt3	pkg/common/RenderingEngine/OpenGLRenderingEngine	pkg/lattice/Engine/StandAloneEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#124">[ date ]</a>
+              <a href="thread.html#124">[ thread ]</a>
+              <a href="subject.html#124">[ subject ]</a>
+              <a href="author.html#124">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2007-05-06 15:05:29 +0200 (Sun, 06 May 2007)
+New Revision: 1159
+
+Modified:
+   trunk/SConstruct
+   trunk/core/Omega.cpp
+   trunk/core/Omega.hpp
+   trunk/core/yade.cpp
+   trunk/extra/SConscript
+   trunk/extra/clump/Shop.cpp
+   trunk/extra/clump/Shop.hpp
+   trunk/extra/tetra/Tetra.cpp
+   trunk/extra/tetra/Tetra.hpp
+   trunk/extra/tetra/TetraTestGen.cpp
+   trunk/extra/tetra/TetraTestGen.hpp
+   trunk/gui/qt3/YadeQtGeneratedMainWindow.ui
+   trunk/pkg/fem/Engine/EngineUnit/FEMSet2Tetrahedrons.cpp
+   trunk/pkg/realtime-rigidbody/SConscript
+Log:
+1. gdbCrashBatch moved to Omega (was emptry when a different thread thatn the main one crashed?!)
+2. Shop generates tetrahedra properly now, including dispatchers
+3. Tetrahedra rendering and linking fixed
+4. Added an icon to the main window (not serious ;-) )
+5. commented out STUPID_DLL overflowing loader 
+6. log4cxx has level set to INFO by default (was DEBUG, lot of garbage on screen)
+
+
+
+Modified: trunk/SConstruct
+===================================================================
+--- trunk/SConstruct	2007-05-02 15:43:52 UTC (rev 1158)
++++ trunk/SConstruct	2007-05-06 13:05:29 UTC (rev 1159)
+@@ -49,7 +49,7 @@
+ 	BoolOption('debug', 'Enable debugging information and disable optimizations',1),
+ 	BoolOption('profile','Enable profiling information',0),
+ 	BoolOption('optimize','Turn on heavy optimizations (generates SSE2 instructions)',0),
+-	ListOption('exclude','Components that will not be built','none',names=['extra','common','dem','fem','lattice','mass-spring','realtime-rigidbody']),
++	ListOption('exclude','Components that will not be built','none',names=['gui','extra','common','dem','fem','lattice','mass-spring','realtime-rigidbody']),
+ 	('jobs','Number of jobs to run at the same time (same as -j, but saved)',4,None,int),
+ 	('extraModules', 'Extra directories with their own SConscript files (must be in-tree) (whitespace separated)',None,None,Split),
+ 	('buildPrefix','Where to create build-[version][variant] directory for intermediary files','..'),
+@@ -277,8 +277,13 @@
+ env.Append(CXXFLAGS=['-pipe','-Wall'])
+ 
+ ### LINKER
+-env.Append(LIBS=[]) # ensure existence of the flag
+-env.Append(SHLINKFLAGS=['-Wl,-soname=\&quot;${TARGET.file}\&quot;','-rdynamic']) #,'-Wl,-z,defs'])
++#env['NONPLUGIN_LIBS']=env['LIBS']
++## libs for all plugins
++env.Append(LIBS=[])
++env.Append(SHLINKFLAGS=['-Wl,-soname=\&quot;${TARGET.file}\&quot;','-rdynamic'])
++
++#env.Append(LIBS=['yade-core']); env.Append(SHLINKFLAGS=['-Wl,--no-undefined']);
++
+ # if this is not present, vtables &amp; typeinfos for classes in yade binary itself are not exported; breaks plugin loading
+ env.Append(LINKFLAGS=['-rdynamic']) 
+ # makes dynamic library loading easied (no LD_LIBRARY_PATH) and perhaps faster
+@@ -384,6 +389,8 @@
+ 	env.Append(LIBPATH=[os.path.join('#',x) for x in env['extraModules']])
+ else: env['yadeModules']=libDirs+['core']
+ 
++#env['yadeModules']=['lib','core','extra']
++
+ # read top-level SConscript file. It is used only so that build_dir is set. This file reads all SConscripts from in yadeModules
+ env.SConscript(dirs=['.'],build_dir=buildDir,duplicate=0)
+ 
+
+Modified: trunk/core/Omega.cpp
+===================================================================
+--- trunk/core/Omega.cpp	2007-05-02 15:43:52 UTC (rev 1158)
++++ trunk/core/Omega.cpp	2007-05-06 13:05:29 UTC (rev 1159)
+@@ -248,9 +248,9 @@
+ 	}
+ 
+ 	bool allLoaded = false;
+-	int overflow = 30; // to prevent infinite loop
+ 	vector&lt;string&gt; dynlibsClassList; // dynlibsList holds filenames, this holds classes defined inside (may be different if using yadePuginClasses)
+ 	#ifdef STUPID_DLL
++		int overflow = 30; // to prevent infinite loop
+ 		assert(dynlibsList.size() == dynlibsListLoaded.size());
+ 		while (!allLoaded &amp;&amp; --overflow &gt; 0){
+ 		int loaded = 0;
+
+Modified: trunk/core/Omega.hpp
+===================================================================
+--- trunk/core/Omega.hpp	2007-05-02 15:43:52 UTC (rev 1158)
++++ trunk/core/Omega.hpp	2007-05-06 13:05:29 UTC (rev 1159)
+@@ -86,6 +86,9 @@
+ 		float	isoValue;
+ 		float	isoThick;
+ 		int     isoSec;
++		// dtto for gdb
++		string gdbCrashBatch;
++
+ 		// FIXME end
+ 		
+ 		boost::mutex&amp;	getRootBodyMutex();
+
+Modified: trunk/core/yade.cpp
+===================================================================
+--- trunk/core/yade.cpp	2007-05-02 15:43:52 UTC (rev 1158)
++++ trunk/core/yade.cpp	2007-05-06 13:05:29 UTC (rev 1159)
+@@ -34,8 +34,6 @@
+ 	log4cxx::LoggerPtr logger=log4cxx::Logger::getLogger(&quot;yade&quot;);
+ #endif
+ 
+-string gdbCrashBatch;
+-
+ void
+ sigHandler(int sig){
+ 	#ifdef EMBED_PYTHON
+@@ -50,8 +48,9 @@
+ 	#ifdef YADE_DEBUG
+ 		if(sig==SIGABRT || sig==SIGSEGV){
+ 			signal(SIGSEGV,SIG_DFL); signal(SIGABRT,SIG_DFL); // prevent loops - default handlers
+-			cerr&lt;&lt;&quot;SIGSEGV/SIGABRT handler&quot;;
+-			system((string(&quot;gdb -x &quot;)+gdbCrashBatch).c_str());
++			cerr&lt;&lt;&quot;SIGSEGV/SIGABRT handler called; gdb batch file is `&quot;&lt;&lt;Omega::instance().gdbCrashBatch&lt;&lt;&quot;'&quot;&lt;&lt;endl;
++			system((string(&quot;gdb -x &quot;)+Omega::instance().gdbCrashBatch).c_str());
++			unlink(Omega::instance().gdbCrashBatch.c_str()); // delete the crash batch file
+ 			kill(getpid(),sig); // reemit signal after exiting gdb
+ 		}
+ 	#endif
+@@ -119,7 +118,9 @@
+ 			LOG_INFO(&quot;Logger loaded and watches configuration file: &quot;&lt;&lt;logConf&lt;&lt;&quot;.&quot;);
+ 		} else { // otherwise use simple console-directed logging
+ 			log4cxx::BasicConfigurator::configure();
+-			LOG_INFO(&quot;Logger uses basic (console) configuration (&quot;&lt;&lt;logConf&lt;&lt;&quot; not found). Look at the file yade-doc/logging.conf.sample in the source distribution on an example how to customize logging.&quot;);
++			logger-&gt;setLevel(log4cxx::Level::INFO);
++			LOG_INFO(&quot;Logger uses basic (console) configuration since `&quot;&lt;&lt;logConf&lt;&lt;&quot;' was not found. DEBUG messages will be ommited.&quot;);
++			LOG_INFO(&quot;Look at the file doc/logging.conf.sample in the source distribution as an example on how to customize logging.&quot;);
+ 		}
+ 	#endif
+ 
+@@ -163,12 +164,13 @@
+ 	}
+ 
+ 	#ifdef YADE_DEBUG
+-		// postponed until the config dir have been created
++		// postponed until the config dir has been created
+ 		ofstream gdbBatch;
+-		gdbCrashBatch=(yadeConfigPath/&quot;gdb_crash_batch-pid&quot;).string()+lexical_cast&lt;string&gt;(getpid());
+-		gdbBatch.open(gdbCrashBatch.c_str()); gdbBatch&lt;&lt;&quot;attach &quot;&lt;&lt;lexical_cast&lt;string&gt;(getpid())&lt;&lt;&quot;\nthread info\nthread apply all backtrace\n&quot;; gdbBatch.close();
++		Omega::instance().gdbCrashBatch=(yadeConfigPath/&quot;gdb_crash_batch-pid&quot;).string()+lexical_cast&lt;string&gt;(getpid());
++		gdbBatch.open(Omega::instance().gdbCrashBatch.c_str()); gdbBatch&lt;&lt;&quot;attach &quot;&lt;&lt;lexical_cast&lt;string&gt;(getpid())&lt;&lt;&quot;\nthread info\nthread apply all backtrace\n&quot;; gdbBatch.close();
+ 		signal(SIGABRT,sigHandler);
+ 		signal(SIGSEGV,sigHandler);
++		LOG_DEBUG(&quot;ABRT/SEGV signal handlers set, crash batch created as &quot;&lt;&lt;Omega::instance().gdbCrashBatch);
+ 	#endif
+ 
+ 
+@@ -176,7 +178,7 @@
+ 
+ 	IOFormatManager::loadFromFile(&quot;XMLFormatManager&quot;,yadeConfigFile.string(),&quot;preferences&quot;,Omega::instance().preferences);
+ 
+-	LOG_INFO(&quot;Please wait while loading plugins.&quot;);
++	LOG_INFO(&quot;Loading plugins...&quot;);
+ 	Omega::instance().scanPlugins();
+ 	LOG_INFO(&quot;Plugins loaded.&quot;);
+ 	Omega::instance().init();
+@@ -195,7 +197,7 @@
+ 		Py_Finalize();
+ 	#endif
+ 	#ifdef YADE_DEBUG
+-		unlink(gdbCrashBatch.c_str());
++		unlink(Omega::instance().gdbCrashBatch.c_str());
+ 	#endif
+ 
+ 	LOG_INFO(&quot;Yade: normal exit.&quot;);
+
+Modified: trunk/extra/SConscript
+===================================================================
+--- trunk/extra/SConscript	2007-05-02 15:43:52 UTC (rev 1158)
++++ trunk/extra/SConscript	2007-05-06 13:05:29 UTC (rev 1159)
+@@ -27,9 +27,12 @@
+          'ParticleParameters',
+          'RigidBodyParameters',
+          'SimpleElasticInteraction',
++			'ElasticBodyParameters',
++			'Momentum',
++			'Force',
+          'AABB']),
+ 	
+-	env.SharedLibrary('TetraTestGen',['tetra/TetraTestGen.cpp'],LIBS=env['LIBS']+['Shop']),
++	env.SharedLibrary('TetraTestGen',['tetra/TetraTestGen.cpp'],LIBS=env['LIBS']+['Shop','Tetra']),
+ 
+ 	env.SharedLibrary('PythonRecorder',['clump/PythonRecorder.cpp']),
+ 
+
+Modified: trunk/extra/clump/Shop.cpp
+===================================================================
+--- trunk/extra/clump/Shop.cpp	2007-05-02 15:43:52 UTC (rev 1158)
++++ trunk/extra/clump/Shop.cpp	2007-05-06 13:05:29 UTC (rev 1159)
+@@ -164,6 +164,7 @@
+ 	shared_ptr&lt;BoundingVolumeMetaEngine&gt; boundingVolumeDispatcher	= shared_ptr&lt;BoundingVolumeMetaEngine&gt;(new BoundingVolumeMetaEngine);
+ 	boundingVolumeDispatcher-&gt;DISPATCHER_ADD3(InteractingSphere,AABB,InteractingSphere2AABB);
+ 	boundingVolumeDispatcher-&gt;DISPATCHER_ADD3(InteractingBox,AABB,InteractingBox2AABB);
++	boundingVolumeDispatcher-&gt;DISPATCHER_ADD3(TetraMold,AABB,TetraAABB);
+ 	boundingVolumeDispatcher-&gt;DISPATCHER_ADD3(MetaInteractingGeometry,AABB,MetaInteractingGeometry2AABB);
+ 	rootBody-&gt;initializers.push_back(boundingVolumeDispatcher);
+ 
+@@ -192,6 +193,7 @@
+ 	shared_ptr&lt;InteractionGeometryMetaEngine&gt; interactionGeometryDispatcher(new InteractionGeometryMetaEngine);
+ 	interactionGeometryDispatcher-&gt;DISPATCHER_ADD3(InteractingSphere,InteractingSphere,InteractingSphere2InteractingSphere4SpheresContactGeometry);
+ 	interactionGeometryDispatcher-&gt;DISPATCHER_ADD3(InteractingSphere,InteractingBox,InteractingBox2InteractingSphere4SpheresContactGeometry);
++	interactionGeometryDispatcher-&gt;DISPATCHER_ADD3(TetraMold,TetraMold,Tetra2TetraBang);
+ 	rootBody-&gt;engines.push_back(interactionGeometryDispatcher);
+ 
+ 	shared_ptr&lt;InteractionPhysicsMetaEngine&gt; interactionPhysicsDispatcher(new InteractionPhysicsMetaEngine);
+
+Modified: trunk/extra/clump/Shop.hpp
+===================================================================
+--- trunk/extra/clump/Shop.hpp	2007-05-02 15:43:52 UTC (rev 1158)
++++ trunk/extra/clump/Shop.hpp	2007-05-06 13:05:29 UTC (rev 1159)
+@@ -41,7 +41,8 @@
+ 		/*! Set the default value. Overrides existing value or creates new entry. Integer types are always cast to long (be careful when retrieving them). */
+ 		template &lt;typename valType&gt; static void setDefault(string key, const valType value){
+ 			ensureInit(); //cerr&lt;&lt;&quot;Shop: Setting `&quot;&lt;&lt;key&lt;&lt;&quot;'=&quot;&lt;&lt;value&lt;&lt;&quot; (type `&quot;&lt;&lt;typeid(valType).name()&lt;&lt;&quot;').&quot;&lt;&lt;endl;
+-			defaults[key]=boost::any(value);}		
++			defaults[key]=boost::any(value);}
++
+ 		static shared_ptr&lt;MetaBody&gt; rootBody();
+ 		static void rootBodyActors(shared_ptr&lt;MetaBody&gt;);
+ 		static shared_ptr&lt;Body&gt; sphere(Vector3r center, Real radius);
+
+Modified: trunk/extra/tetra/Tetra.cpp
+===================================================================
+--- trunk/extra/tetra/Tetra.cpp	2007-05-02 15:43:52 UTC (rev 1158)
++++ trunk/extra/tetra/Tetra.cpp	2007-05-06 13:05:29 UTC (rev 1159)
+@@ -8,7 +8,7 @@
+ 	&quot;TetraBang&quot;, 
+ 	&quot;Tetrahedron2TetraMold&quot;,
+ 	&quot;TetraAABB&quot;, 
+-	// some code in cpp (here):
++	// some code in cpp (this file):
+ 	&quot;TetraLaw&quot;,	 
+ 	&quot;Tetra2TetraBang&quot;,
+ 	&quot;TetraDraw&quot;,
+@@ -26,8 +26,6 @@
+ 
+ #include &lt;yade/pkg-common/AABB.hpp&gt;
+ #include &lt;yade/pkg-common/Tetrahedron.hpp&gt;
+-//#include &lt;yade/pkg-common/InteractingBox.hpp&gt;
+-//#include &lt;yade/pkg-common/InteractingSphere.hpp&gt;
+ #include &lt;yade/pkg-common/ElasticBodyParameters.hpp&gt;
+ #include &lt;yade/pkg-common/SimpleElasticInteraction.hpp&gt;
+ 
+@@ -151,7 +149,7 @@
+ }
+ 
+ 
+-void TetraDraw::go(const shared_ptr&lt;InteractingGeometry&gt;&amp; cm, const shared_ptr&lt;PhysicalParameters&gt;&amp; )
++void TetraDraw::go(const shared_ptr&lt;InteractingGeometry&gt;&amp; cm, const shared_ptr&lt;PhysicalParameters&gt;&amp;,bool)
+ {
+   	glMaterialv(GL_FRONT,GL_AMBIENT_AND_DIFFUSE,Vector3f(cm-&gt;diffuseColor[0],cm-&gt;diffuseColor[1],cm-&gt;diffuseColor[2]));
+ 	glColor3v(cm-&gt;diffuseColor);
+@@ -159,7 +157,7 @@
+ 	if (0) { // wireframe, as for Tetrahedron
+ 		glDisable(GL_LIGHTING);
+ 		glBegin(GL_LINES);
+-			#define __ONEWIRE(a,b) glVertex3v(t-&gt;v[a]);glVertex3v(t-&gt;v[b])
++			#define __ONEWIRE(a,b) glVertex3dv(t-&gt;v[a]);glVertex3dv(t-&gt;v[b])
+ 				__ONEWIRE(0,1);__ONEWIRE(0,2);__ONEWIRE(0,3);__ONEWIRE(1,2);__ONEWIRE(1,3);__ONEWIRE(2,3);
+ 			#undef __ONEWIRE
+ 		glEnd();
+@@ -169,7 +167,7 @@
+ 		Vector3r center = (t-&gt;v[0]+t-&gt;v[1]+t-&gt;v[2]+t-&gt;v[3])*.25, faceCenter, n;
+ 		glDisable(GL_CULL_FACE); glEnable(GL_LIGHTING);
+ 		glBegin(GL_TRIANGLES);
+-			#define __ONEFACE(a,b,c) n=(t-&gt;v[b]-t-&gt;v[a]).UnitCross(t-&gt;v[c]-t-&gt;v[a]); faceCenter=(t-&gt;v[a]+t-&gt;v[b]+t-&gt;v[c])/3.; if((faceCenter-center).Dot(n)&lt;0)n=-n; glNormal3v(n); glVertex3v(t-&gt;v[a]); glVertex3v(t-&gt;v[b]); glVertex3v(t-&gt;v[c]);
++			#define __ONEFACE(a,b,c) n=(t-&gt;v[b]-t-&gt;v[a]).UnitCross(t-&gt;v[c]-t-&gt;v[a]); faceCenter=(t-&gt;v[a]+t-&gt;v[b]+t-&gt;v[c])/3.; if((faceCenter-center).Dot(n)&lt;0)n=-n; glNormal3dv(n); glVertex3dv(t-&gt;v[a]); glVertex3dv(t-&gt;v[b]); glVertex3dv(t-&gt;v[c]);
+ 				__ONEFACE(3,0,1);
+ 				__ONEFACE(0,1,2);
+ 				__ONEFACE(1,2,3);
+@@ -180,3 +178,95 @@
+ 	
+ }
+ 
++
++
++/*! calculates tetrahedron inertia relative to the origin (0,0,0), with unit density (scales linearly)
++See article F. Tonon, &quot;Explicit Exact Formulas for the 3-D Tetrahedron Inertia Tensor in Terms of its Vertex Coordinates&quot;, <A HREF="http://www.scipub.org/fulltext/jms2/jms2118-11.pdf">http://www.scipub.org/fulltext/jms2/jms2118-11.pdf</A>
++
++Numerical example to check:
++
++vertices:
++	(8.33220, 11.86875, 0.93355)
++	(0.75523 ,5.00000, 16.37072)
++	(52.61236, 5.00000, 5.38580)
++	(2.00000, 5.00000, 3.00000)
++centroid:
++	(15.92492, 0.78281, 3.72962)
++intertia/density WRT centroid:
++	a/&#956; = 43520.33257 m&#8309;
++	b/&#956; = 194711.28938 m&#8309;
++	c/&#956; = 191168.76173 m&#8309;
++	a&#8217;/&#956;= 4417.66150 m&#8309;
++	b&#8217;/&#956;=-46343.16662 m&#8309;
++	c&#8217;/&#956;= 11996.20119 m&#8309;
++
+<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">+ at fixme</A>: failing numerical testcase (in TetraTestGen::generate) ?! centroid is correct, for inertia we get:
++
++63509.2
++193465
++191169
++4417.66
++-52950.8
++-11971.3
++
++I checked &quot;a&quot; charcter by character and it is correct; it the author wrong (doubtful)?
++
++*/
++Matrix3r TetrahedronInertiaTensor(vector&lt;Vector3r&gt; v){
++	#define x1 v[0][0]
++	#define y1 v[0][1]
++	#define z1 v[0][2]
++	#define x2 v[1][0]
++	#define y2 v[1][1]
++	#define z2 v[1][2]
++	#define x3 v[2][0]
++	#define y3 v[2][1]
++	#define z3 v[2][2]
++	#define x4 v[3][0]
++	#define y4 v[3][1]
++	#define z4 v[3][2]
++
++	// Jacobian of transformation to the reference 4hedron
++	double detJ=(x2-x1)*(y3-y1)*(z4-z1)+(x3-x1)*(y4-y1)*(z2-z1)+(x4-x1)*(y2-y1)*(z3-z1)
++		-(x2-x1)*(y4-y1)*(z3-z1)-(x3-x1)*(y2-y1)*(z4-z1)-(x4-x1)*(y3-y1)*(z2-z1);
++	detJ=fabs(detJ);
++	double a=detJ*(y1*y1-y1*y2+y2*y2+y1*y3+y2*y3+
++		y3*y3+y1*y4+y2*y4+y3*y4+y4*y4+z1*z1+z1*z2+
++		z2*z2+z1*z3+z2*z3+z3*z3+z1*z4+z2*z4+z3*z4+z4*z4)/60.;
++	double b=detJ*(x1*x1+x1*x2+x2*x2+x1*x3+x2*x3+x3*x3+
++		x1*x4+x2*x4+x3*x4+x4*x4+z1*z1+z1*z2+z2*z2+z1*z3+
++		z2*z3+z3*z3+z1*z4+z2*z4+z4*z4)/60.;
++	double c=detJ*(x1*x1+x1*x2+x2*x2+x1*x3+x2*x3+x3*x3+x1*x4+
++		x2*x4+x3*x4+x4*x4+y1*y1+y1*y2+y2*y2+y1*y3+
++		y2*y3+y3*y3+y1*y4+y2*y4+y3*y4+y4*y4)/60.;
++	// a' in the article etc.
++	double a__=detJ*(2*y1*z1+y2*z1+y3*z1+y4*z1+y1*z2+
++		2*y2*z2+y3*z2+y4*z2+y1*z3+y2*z3+2*y3*z3+
++		y4*z3+y1*z4+y2*z4+y3*z4+2*y4*z4)/120.;
++	double b__=detJ*(2*z1*z1+x2*z1+x3*z1+x4*z1+x1*z2+
++		2*x2*z2+x3*z2+x4*z2+z1*z3+x2*z3+2*x3*z3+
++		x4*z3+x1*z4+x2*z4+x3*z4+2*x4*z4)/120.;
++	double c__=detJ*(2*x1*y1+x2*y2+x3*y1+x4*y1+x1*y2+
++		2*x2*y2+x3*y2+x4*y2+x1*y3+x2*y3+2*x3*y3+
++		x4*y3+x1*y4+x2*y4+x3*y4+2*x4*y4)/120.;
++
++	return Matrix3r(
++		a   , -b__, -c__,
++		-b__, b   , -a__,
++		-c__, -a__, c    );
++
++	#undef x1
++	#undef y1
++	#undef z1
++	#undef x2
++	#undef y2
++	#undef z2
++	#undef x3
++	#undef y3
++	#undef z3
++	#undef x4
++	#undef y4
++	#undef z4
++
++}
++
+
+Modified: trunk/extra/tetra/Tetra.hpp
+===================================================================
+--- trunk/extra/tetra/Tetra.hpp	2007-05-02 15:43:52 UTC (rev 1158)
++++ trunk/extra/tetra/Tetra.hpp	2007-05-06 13:05:29 UTC (rev 1159)
+@@ -1,3 +1,5 @@
++// &#169; 2007 V&#225;clav &#352;milauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">eudoxos at arcig.cz</A>&gt;
++
+ #ifndef TETRA_HPP
+ #define TETRA_HPP
+ 
+@@ -15,8 +17,8 @@
+ #include&lt;yade/pkg-common/GLDrawInteractingGeometryFunctor.hpp&gt;
+ #include&lt;yade/pkg-common/InteractionGeometryEngineUnit.hpp&gt;
+ 
+-#include &lt;yade/pkg-common/Force.hpp&gt;
+-#include &lt;yade/pkg-common/Momentum.hpp&gt;
++#include&lt;yade/pkg-common/Force.hpp&gt;
++#include&lt;yade/pkg-common/Momentum.hpp&gt;
+ 
+ #include&lt;Wm3Math.h&gt;
+ #include&lt;Wm3Vector3.h&gt;
+@@ -27,12 +29,12 @@
+  * Self-contained. */
+ class TetraMold: public InteractingGeometry{
+ 	public:
+-		//! vertices of the tetrahedron
++		//! vertices of the tetrahedron. All constructors _must_ create exactly 4 elements of the vector.
+ 		vector&lt;Vector3r&gt; v;
+ 		TetraMold(){createIndex(); for(size_t i=0; i&lt;4; i++) v.push_back(Vector3r(0,0,0)); }
+ 		TetraMold(Vector3r v1, Vector3r v2, Vector3r v3, Vector3r v4){createIndex(); v.clear(); v.push_back(v1); v.push_back(v2); v.push_back(v3); v.push_back(v4);}
+ 		virtual ~TetraMold (){};
+-	protected :
++	protected:
+ 		void registerAttributes(){InteractingGeometry::registerAttributes(); REGISTER_ATTRIBUTE(v);}
+ 		REGISTER_CLASS_NAME(TetraMold);
+ 		REGISTER_BASE_CLASS_NAME(InteractingGeometry);
+@@ -64,9 +66,9 @@
+  *
+  * Self-contained. */
+ 
+-class Tetrahedron2TetraMold : public InteractingGeometryEngineUnit
++class Tetrahedron2TetraMold: public InteractingGeometryEngineUnit
+ {
+-	public :
++	public:
+ 		void go(const shared_ptr&lt;GeometricalModel&gt;&amp; gm,shared_ptr&lt;InteractingGeometry&gt;&amp; ig,const Se3r&amp; se3,const Body*){
+ 			Tetrahedron* tet=static_cast&lt;Tetrahedron*&gt;(gm.get());
+ 			//! @fixme this seems superfluous?!: if(!ig)
+@@ -82,15 +84,15 @@
+  *
+  * Self-contained. */
+ 
+-class TetraAABB : public BoundingVolumeEngineUnit
++class TetraAABB: public BoundingVolumeEngineUnit
+ {
+-	public :
++	public:
+ 		void go(const shared_ptr&lt;InteractingGeometry&gt;&amp; ig, shared_ptr&lt;BoundingVolume&gt;&amp; bv, const Se3r&amp; se3, const Body*){
+ 			TetraMold* t=static_cast&lt;TetraMold*&gt;(ig.get());
+ 			AABB* aabb=static_cast&lt;AABB*&gt;(bv.get());
+ 			#define __VOP(op,ix) op(t-&gt;v[0][ix],op(t-&gt;v[1][ix],op(t-&gt;v[2][ix],t-&gt;v[3][ix])))
+-				aabb-&gt;min=Vector3r(__VOP(std::min,0),__VOP(std::min,1),__VOP(std::min,2));
+-				aabb-&gt;max=Vector3r(__VOP(std::max,0),__VOP(std::max,1),__VOP(std::max,2));
++				aabb-&gt;min=se3.position+Vector3r(__VOP(std::min,0),__VOP(std::min,1),__VOP(std::min,2));
++				aabb-&gt;max=se3.position+Vector3r(__VOP(std::max,0),__VOP(std::max,1),__VOP(std::max,2));
+ 			#undef __VOP
+ 			aabb-&gt;center=(aabb-&gt;min+aabb-&gt;max)*0.5;
+ 			aabb-&gt;halfSize=(aabb-&gt;max-aabb-&gt;min)*0.5;
+@@ -103,10 +105,10 @@
+ 
+ /*! Draw TetraMold using OpenGL */
+ 
+-class TetraDraw : public GLDrawInteractingGeometryFunctor
++class TetraDraw: public GLDrawInteractingGeometryFunctor
+ {	
+-	public :
+-		virtual void go(const shared_ptr&lt;InteractingGeometry&gt;&amp;, const shared_ptr&lt;PhysicalParameters&gt;&amp;);
++	public:
++		virtual void go(const shared_ptr&lt;InteractingGeometry&gt;&amp;, const shared_ptr&lt;PhysicalParameters&gt;&amp;,bool);
+ 
+ 		RENDERS(TetraMold);
+ 		REGISTER_CLASS_NAME(TetraDraw);
+@@ -129,7 +131,7 @@
+ 		TetraLaw():InteractionSolver(),actionForce(new Force),actionMomentum(new Momentum){};
+ 
+ 		void action(Body* body);
+-	protected :
++	protected:
+ 		void registerAttributes(){InteractionSolver::registerAttributes(); /* &#8230; */ }
+ 		REGISTER_CLASS_NAME(TetraLaw);
+ 		REGISTER_BASE_CLASS_NAME(InteractionSolver);
+@@ -141,9 +143,9 @@
+ /*! @fixme implement Tetra2BoxBang by representing box as 6 tetrahedra. */
+ 
+ /*! Create TetraBang (collision geometry) from colliding TetraMolds. */
+-class Tetra2TetraBang : public InteractionGeometryEngineUnit
++class Tetra2TetraBang: public InteractionGeometryEngineUnit
+ {
+-	public :
++	public:
+ 		virtual bool go(const shared_ptr&lt;InteractingGeometry&gt;&amp; cm1, const shared_ptr&lt;InteractingGeometry&gt;&amp; cm2, const Se3r&amp; se31, const Se3r&amp; se32, const shared_ptr&lt;Interaction&gt;&amp; c);
+ 		virtual bool goReverse(	const shared_ptr&lt;InteractingGeometry&gt;&amp; cm1, const shared_ptr&lt;InteractingGeometry&gt;&amp; cm2, const Se3r&amp; se31, const Se3r&amp; se32, const shared_ptr&lt;Interaction&gt;&amp; c);
+ 
+@@ -155,5 +157,8 @@
+ REGISTER_SERIALIZABLE(Tetra2TetraBang,false);
+ 
+ 
++// Miscillaneous functions
++Matrix3r TetrahedronInertiaTensor(vector&lt;Vector3r&gt; v);
+ 
++
+ #endif
+
+Modified: trunk/extra/tetra/TetraTestGen.cpp
+===================================================================
+--- trunk/extra/tetra/TetraTestGen.cpp	2007-05-02 15:43:52 UTC (rev 1158)
++++ trunk/extra/tetra/TetraTestGen.cpp	2007-05-06 13:05:29 UTC (rev 1159)
+@@ -4,6 +4,8 @@
+ 
+ #include&quot;TetraTestGen.hpp&quot;
+ 
++#include&quot;Tetra.hpp&quot;
++
+ char* yadePluginClasses[]={
+         &quot;TetraTestGen&quot;,
+         NULL /*sentinel*/
+@@ -24,16 +26,17 @@
+ 	vector&lt;Vector3r&gt; v;
+ 
+ 	v.push_back(Vector3r(1,1,0));
+-	v.push_back(Vector3r(0,-1,0));
++	v.push_back(Vector3r(0,-2,0));
+ 	v.push_back(Vector3r(-1,1,0));
+ 	v.push_back(Vector3r(0,0,-2));
+ 	shared_ptr&lt;Body&gt; ground=Shop::tetra(v);
+ 	ground-&gt;isDynamic=false;
++	rootBody-&gt;bodies-&gt;insert(ground);
+ 
+ 
+ 	for(size_t i=0; i&lt;gridSize[0]; i++) for(size_t j=0; j&lt;gridSize[1];j++) for(size_t k=0; k&lt;gridSize[2];k++){
+-		Vector3r center=1.0*Vector3r(i-gridSize[0]/2.,j-gridSize[1]/2.,k-gridSize[2]/2.);
+-		double size=.2;
++		Vector3r center=(1./std::max(gridSize[0],gridSize[1]))*Vector3r(i-gridSize[0]/2.,j-gridSize[1]/2.,k);
++		double size=.5/std::max(gridSize[0],gridSize[1]);
+ 		#define __VERTEX(x,y,z) center+size*(Vector3r(x,y,z)+Vector3r(Mathr::IntervalRandom(-.5,.5),Mathr::IntervalRandom(-.5,.5),Mathr::IntervalRandom(-.5,.5)))
+ 			v[0]=__VERTEX(1,1,0);
+ 			v[1]=__VERTEX(0,-1,0);
+@@ -41,10 +44,25 @@
+ 			v[3]=__VERTEX(0,0,2);
+ 		#undef __VERTEX
+ 		shared_ptr&lt;Body&gt; t=Shop::tetra(v);
+-		rootBody-&gt;bodies-&gt;insert(ground);
++		rootBody-&gt;bodies-&gt;insert(t);
+ 	}
+ 
++	// test inertia calculation
+ 	#if 0
++		assert(v.size()==4);
++		v[0]=Vector3r(8.33220, -11.86875, 0.93355);
++		v[1]=Vector3r(0.75523 ,5.00000, 16.37072);
++		v[2]=Vector3r(52.61236, 5.00000, -5.38580);
++		v[3]=Vector3r(2.00000, 5.00000, 3.00000);
++		Vector3r cg=(v[0]+v[1]+v[2]+v[3])*.25;
++		cerr&lt;&lt;&quot;Centroid: &quot;&lt;&lt;cg&lt;&lt;endl;
++		v[0]-=cg; v[1]-=cg; v[2]-=cg; v[3]-=cg;
++		Matrix3r I=TetrahedronInertiaTensor(v);
++		cerr&lt;&lt;v[0][0]&lt;&lt;&quot; &quot;&lt;&lt;v[0][1]&lt;&lt;&quot; &quot;&lt;&lt;v[0][2]&lt;&lt;endl;
++		cerr&lt;&lt;I(0,0)&lt;&lt;endl&lt;&lt;I(1,1)&lt;&lt;endl&lt;&lt;I(2,2)&lt;&lt;endl&lt;&lt;-I(1,2)&lt;&lt;endl&lt;&lt;-I(0,1)&lt;&lt;endl&lt;&lt;-I(0,2)&lt;&lt;endl;
++	#endif 
++
++	#if 0
+ 	Omega::instance().setRootBody(oldRootBody);
+ 	#endif
+ 	
+
+Modified: trunk/extra/tetra/TetraTestGen.hpp
+===================================================================
+--- trunk/extra/tetra/TetraTestGen.hpp	2007-05-02 15:43:52 UTC (rev 1158)
++++ trunk/extra/tetra/TetraTestGen.hpp	2007-05-06 13:05:29 UTC (rev 1159)
+@@ -10,7 +10,7 @@
+ 	DECLARE_LOGGER;
+ 	public:
+ 		vector&lt;size_t&gt; gridSize;
+-		TetraTestGen(){ gridSize.push_back(2); gridSize.push_back(2); gridSize.push_back(2);};
++		TetraTestGen(){ gridSize.push_back(3); gridSize.push_back(3); gridSize.push_back(3);};
+ 		~TetraTestGen (){};
+ 		string generate();
+ 	protected :
+
+Modified: trunk/gui/qt3/YadeQtGeneratedMainWindow.ui
+===================================================================
+--- trunk/gui/qt3/YadeQtGeneratedMainWindow.ui	2007-05-02 15:43:52 UTC (rev 1158)
++++ trunk/gui/qt3/YadeQtGeneratedMainWindow.ui	2007-05-06 13:05:29 UTC (rev 1159)
+@@ -15,6 +15,9 @@
+     &lt;property name=&quot;caption&quot;&gt;
+         &lt;string&gt;YaDe&lt;/string&gt;
+     &lt;/property&gt;
++    &lt;property name=&quot;icon&quot;&gt;
++        &lt;pixmap&gt;image0&lt;/pixmap&gt;
++    &lt;/property&gt;
+ &lt;/widget&gt;
+ &lt;menubar&gt;
+     &lt;property name=&quot;name&quot;&gt;
+@@ -25,7 +28,7 @@
+             &lt;x&gt;0&lt;/x&gt;
+             &lt;y&gt;0&lt;/y&gt;
+             &lt;width&gt;839&lt;/width&gt;
+-            &lt;height&gt;33&lt;/height&gt;
++            &lt;height&gt;23&lt;/height&gt;
+         &lt;/rect&gt;
+     &lt;/property&gt;
+     &lt;item text=&quot;&amp;File&quot; name=&quot;fileMenu&quot;&gt;
+@@ -42,7 +45,7 @@
+             &lt;cstring&gt;fileNewSimulationAction&lt;/cstring&gt;
+         &lt;/property&gt;
+         &lt;property name=&quot;iconSet&quot;&gt;
+-            &lt;iconset&gt;image0&lt;/iconset&gt;
++            &lt;iconset&gt;image1&lt;/iconset&gt;
+         &lt;/property&gt;
+         &lt;property name=&quot;text&quot;&gt;
+             &lt;string&gt;New Simulation ...&lt;/string&gt;
+@@ -85,6 +88,9 @@
+ &lt;/actions&gt;
+ &lt;images&gt;
+     &lt;image name=&quot;image0&quot;&gt;
++        &lt;data format=&quot;PNG&quot; length=&quot;2162&quot;&gt;89504e470d0a1a0a0000000d4948445200000060000000600806000000e29877380000083949444154789ced9c6d6c1cc519c77f73765a5f8ccd39a82aa46d8249292f2594d05050548252b041101081f22240a2c5b1a005a91fa8faa1524b5fbe140921fa425bd55811127c20808810222882a0004584f21a486822040d90a46a28b9ab49623bc4d30f771be6f6766766f76677ef7cfb9756ba9d9d799e679fffce3333cfce1e7428a6a6a664d6360088ac0d481b52ca3ac70b2132f5414711e039dff3b9c7459624740c017ee72be5d4ca33f145471010e67ce53ab5eba9fb63d6136072be528f5abd547d5248535956b0f169b1584cc19246e43da0be2eb5baa9f965d61300ad4d42471000ad4b42c71000ad4942471100ad474247cc825478cef46524c2ea266e4fc71100d148a8d54b2c71d7712148452b2cd23a9a00c89e848e2700b2252127a086ac48c809509005091d390b0a83edeca8afafcf9d4e679266116c7a82ab5e90131082b448c809d0200d1272020c489a849c000b2449423e0bb280cdec28ee3090136009db296ad4c45d1e8222c2f516979c80187049421e8262c073ecdab56bc3aedbcb4af265c36c47a552a15c2e075e5bb870a1950c01e40464883c04658c9c808c91139031720232464e40c6e84!
+ e5359dfe0511c7fe520f3571cc7bcc50314bf5c44140453fba6a86cafb0fbd93dec58b38389f73f4dd3ac4c117b1d605a6c542a15fafbfb01d8ce3f59cf7ab6b1d528b740812186b99c5574d165d4d52acb18d3aa38b45d1c652a6926e70821c4a81c89e3a587816bfec67d33363a62c8770629a5d411a0b32fd618206af014988c534e3701b700a7037dc01ce0386015b0d1d7f42ae0c771ec6b273435060821b4214c08e111f414f0d331311e1483fe0dac03d68dca91df00bf50aedd718843cd98d8f268baebba4ecf8eca918dc00aeffc666e61a9384ba7bff342900ad3cdc7f0cd1fd5936d6c8bdabeade06c1de07036f2927af2211fba92db927042804d088830ddddab9e7cc27f63d9d42e48652126846046ce302a47ce0756024b8141e018e08b68c6a2fdec4fc3c4cc900a01c72e3f965ff14b80a7a3b63dcc612736b4ea8ba7c40938e1ea41861eba803dec495a55206c178d59c10901614f57ef825ece5bb39c1966d4e2ddc018d545d9bbc0c7c0e498183f2223e6ca39d4ae5674bc07673d20e8264ffbc937e99e5ba7620bb0624c8c7f122667548e38d9fbdd0ece0707b3205d6cfdeaf057fc453fd339bf86f9ae6c6a75e7439304986eb47f51bfbfe8450bb167276953ab217608b2b9d1427703bf36899d1be2dae4c1caf90501170fc3aa95f09d6fc3c2afc1d!
+ cb93039091f7c042fbf0a0faf83273724ba6fa48180a090a2643efd7f78a71!
+ 57e70ef4
+17ae7f7aa4567a2e905a372641818d20ad5c07aaaf9bde570ef5d70f2371aaff5f6c22927558f1baf83d7df841fde0a6fbe1dd72c2d0243901002210403030340f5c6d427de3b4cf8eefc73fd45bf1e95235d417547e5c862e08108b607c268d7edb75178e6f160e70761c9b728bef1021be43452cac887d15e7f812eb31705524ab6b0853ff107ffa54dc06f81cdc067c022e05ae076a04835357db9da604c8c6bf5a86971aded37ff00fe7a8f5a72982ae90f02af0315e04b54b3b13f074e55ea4e0067224aef862b888e4409a8bd0d7b0c9f4335788fea205c970fb225406bf7a927f185ad9b99febca40c5c86283d1f2cb8dc03ac052e554a37204a179a6e220a12d915e1eb7a37008f5a347b1138774c8c7f9c844d976c7d55753ec075a1ce0710a549e07ae023a57418595ee2d22ea704a871cf1bb8c7c4f8fe3131fe7de022e021e003600a9806fe45f5ddef15549dbfdba53d47f0f5419ee433b5e4694469bdb19d284d00bff7955eedd0b2462803aef5a122097b4cba4df5ee94931259568f9bec0d282ff6b57dcee5fd35f400dbd77b3b77ee6c78e25dbf1a7445e8f3f54f3fc06b119abfef3b3fb1396bea117b213631310124f7775e2e57b4efd42703015e41d6edeb1716bf3dcc6bda208382487f5a910401519c6f330bea9565b7af7544c9d93d872dc4ac15b88e!
+ fb49e4720e3a93e41eda10547bba42af7bfb7e6a4f5fe25b5ce2a21bfc53d0a311a5ff39551213a1d350ebcf2c3fff2ffed83dc19fea708de9dd0d6fe316b8922d0d30b537ae03acf2190a0951a6a37ec7279642ded1903d38c78558bfedfe43ad13062d01b6fb3f5523fc093cd3d391a8e33dfc7db3bf6465b3226d7aac8be87044806ea193e5e1dd9cd6c63316fb1762879165cb7468f3fed04505ab5444949e9015b463d61b6fc1a617d49202703fb23ca7097d89d4d5228b9eb06fdf3eab1e60b46fc9e992e9bdfe9ef038b27cb4f9c6cb02591e4296377a7aa2de47580f884c8d4dec7301d5de281f6848a9494bffe826f8f3ddfed2ff007f019e00b603fb811eaa9b034e03cea39a4e3fbe6a4cc99cfab6b0d343a25fc8c48527de26cf1f4480d6ae5b57c33dbf83ee985918c70438f942464a494f4f4f1c5175067a87a723ae6d9ebc40dc7b1f2c1b8297fe1145ec21e01160591c9b7470f2f806c537db3c8eaf4de43774614f9655a83c67295c79192c3b1b160dc2bc01281418e8ea66018233e8e27cbab99439947caeca34045928b39e2e999ef4b804a87664bd4748d7ab13d99c9b548a3a2abc31441a725a69d912543eebbf94f78f5569c3a473d61300c19386346033a148f5af0ab2864242dd30954478dab56b579dce307414011efceb8624c8b095d31283a50e!
+ cdcc82e2e8d25d2f168b4c4e4e469167fe8cd75a5a46489300931d61d7c2d4!
+ e7638043
+98d61a216df259502b4047524e8003e89e725374cc096812b6e34f536fc4729861d30b8248c80970009b5e105625272065f87b414e804398a69c41bda02dd601adbc1bc38397fab6a95b5b5c0a688395703bc1f60590ba42ce439043d8ee9f52096a8b10d44ef042d1ead5ab8d750f1c3820ff0f60db45be5b9b3ea10000000049454e44ae426082&lt;/data&gt;
++    &lt;/image&gt;
++    &lt;image name=&quot;image1&quot;&gt;
+         &lt;data format=&quot;PNG&quot; length=&quot;184&quot;&gt;89504e470d0a1a0a0000000d4948445200000016000000160806000000c4b46c3b0000007f49444154388ded95510a0021084475d9db041ec0e8fa5ecbfdda852d4b11fa6b2028a3570c53a188c00edd7d819935b2504470357f5945559d36000022720f60823d11910b1fac88a894f2f599592d5b52e05aeb6f6cc153e0d6da50ebe12930e2321039f09b0c6fb3542a223ae0033ee085cc2b1d790b3ce1ae3f6f9b150f6d5433af47a4f4c20000000049454e44ae426082&lt;/data&gt;
+     &lt;/image&gt;
+ &lt;/images&gt;
+
+Modified: trunk/pkg/fem/Engine/EngineUnit/FEMSet2Tetrahedrons.cpp
+===================================================================
+--- trunk/pkg/fem/Engine/EngineUnit/FEMSet2Tetrahedrons.cpp	2007-05-02 15:43:52 UTC (rev 1158)
++++ trunk/pkg/fem/Engine/EngineUnit/FEMSet2Tetrahedrons.cpp	2007-05-06 13:05:29 UTC (rev 1159)
+@@ -35,10 +35,10 @@
+ 			Tetrahedron* tet 		= YADE_CAST&lt;Tetrahedron*&gt;        (b-&gt;geometricalModel.get());
+ 			FEMTetrahedronData* tetData	= YADE_CAST&lt;FEMTetrahedronData*&gt; (b-&gt;physicalParameters.get());
+ 			
+-			tet-&gt;v1 			= (*(cb-&gt;bodies))[tetData-&gt;ids[0]]-&gt;physicalParameters-&gt;se3.position;
+-			tet-&gt;v2 			= (*(cb-&gt;bodies))[tetData-&gt;ids[1]]-&gt;physicalParameters-&gt;se3.position;
+-			tet-&gt;v3 			= (*(cb-&gt;bodies))[tetData-&gt;ids[2]]-&gt;physicalParameters-&gt;se3.position;
+-			tet-&gt;v4 			= (*(cb-&gt;bodies))[tetData-&gt;ids[3]]-&gt;physicalParameters-&gt;se3.position;
++			tet-&gt;v[0] 			= (*(cb-&gt;bodies))[tetData-&gt;ids[0]]-&gt;physicalParameters-&gt;se3.position;
++			tet-&gt;v[1] 			= (*(cb-&gt;bodies))[tetData-&gt;ids[1]]-&gt;physicalParameters-&gt;se3.position;
++			tet-&gt;v[2] 			= (*(cb-&gt;bodies))[tetData-&gt;ids[2]]-&gt;physicalParameters-&gt;se3.position;
++			tet-&gt;v[3] 			= (*(cb-&gt;bodies))[tetData-&gt;ids[3]]-&gt;physicalParameters-&gt;se3.position;
+ 		}
+ 	}
+ }
+
+Modified: trunk/pkg/realtime-rigidbody/SConscript
+===================================================================
+--- trunk/pkg/realtime-rigidbody/SConscript	2007-05-02 15:43:52 UTC (rev 1158)
++++ trunk/pkg/realtime-rigidbody/SConscript	2007-05-06 13:05:29 UTC (rev 1159)
+@@ -65,6 +65,7 @@
+ 		LIBS=env['LIBS']+['yade-base',
+ 			'ErrorTolerantContact',
+ 			'InteractionGeometryMetaEngine',
++			'InteractingSphere',
+ 			'yade-multimethods',
+ 			'yade-factory',
+ 			'Sphere'],
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000123.html">[Yade-commits] r1158 - trunk/extra/tetra
+</A></li>
+	<LI>Next message: <A HREF="000125.html">[Yade-commits] r1160 - in trunk: extra/clump	extra/spherical-dem-simulator extra/tetra gui/qt3	pkg/common/RenderingEngine/OpenGLRenderingEngine	pkg/lattice/Engine/StandAloneEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#124">[ date ]</a>
+              <a href="thread.html#124">[ thread ]</a>
+              <a href="subject.html#124">[ subject ]</a>
+              <a href="author.html#124">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

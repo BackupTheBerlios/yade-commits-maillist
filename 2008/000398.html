@@ -1,0 +1,1223 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1438 - in trunk/pkg: common/Engine/DeusExMachina	common/Engine/EngineUnit common/Engine/MetaEngine	common/RenderingEngine/GLDrawBoundingVolume	common/RenderingEngine/GLDrawGeometricalModel	common/RenderingEngine/GLDrawInteractingGeometry	common/RenderingEngine/GLDrawInteractionGeometry	common/RenderingEngine/GLDrawInteractionPhysics	common/RenderingEngine/GLDrawShadowVolume	common/RenderingEngine/GLDrawState	common/RenderingEngine/OpenGLRenderingEngine	dem/Engine/StandAloneEngine
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1438%20-%20in%20trunk/pkg%3A%20common/Engine/DeusExMachina%0A%09common/Engine/EngineUnit%20common/Engine/MetaEngine%0A%09common/RenderingEngine/GLDrawBoundingVolume%0A%09common/RenderingEngine/GLDrawGeometricalModel%0A%09common/RenderingEngine/GLDrawInteractingGeometry%0A%09common/RenderingEngine/GLDrawInteractionGeometry%0A%09common/RenderingEngine/GLDrawInteractionPhysics%0A%09common/RenderingEngine/GLDrawShadowVolume%0A%09common/RenderingEngine/GLDrawState%0A%09common/RenderingEngine/OpenGLRenderingEngine%0A%09dem/Engine/StandAloneEngine&In-Reply-To=%3C200807212114.m6LLEMeJ016791%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000397.html">
+   <LINK REL="Next"  HREF="000399.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1438 - in trunk/pkg: common/Engine/DeusExMachina	common/Engine/EngineUnit common/Engine/MetaEngine	common/RenderingEngine/GLDrawBoundingVolume	common/RenderingEngine/GLDrawGeometricalModel	common/RenderingEngine/GLDrawInteractingGeometry	common/RenderingEngine/GLDrawInteractionGeometry	common/RenderingEngine/GLDrawInteractionPhysics	common/RenderingEngine/GLDrawShadowVolume	common/RenderingEngine/GLDrawState	common/RenderingEngine/OpenGLRenderingEngine	dem/Engine/StandAloneEngine</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1438%20-%20in%20trunk/pkg%3A%20common/Engine/DeusExMachina%0A%09common/Engine/EngineUnit%20common/Engine/MetaEngine%0A%09common/RenderingEngine/GLDrawBoundingVolume%0A%09common/RenderingEngine/GLDrawGeometricalModel%0A%09common/RenderingEngine/GLDrawInteractingGeometry%0A%09common/RenderingEngine/GLDrawInteractionGeometry%0A%09common/RenderingEngine/GLDrawInteractionPhysics%0A%09common/RenderingEngine/GLDrawShadowVolume%0A%09common/RenderingEngine/GLDrawState%0A%09common/RenderingEngine/OpenGLRenderingEngine%0A%09dem/Engine/StandAloneEngine&In-Reply-To=%3C200807212114.m6LLEMeJ016791%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1438 - in trunk/pkg: common/Engine/DeusExMachina	common/Engine/EngineUnit common/Engine/MetaEngine	common/RenderingEngine/GLDrawBoundingVolume	common/RenderingEngine/GLDrawGeometricalModel	common/RenderingEngine/GLDrawInteractingGeometry	common/RenderingEngine/GLDrawInteractionGeometry	common/RenderingEngine/GLDrawInteractionPhysics	common/RenderingEngine/GLDrawShadowVolume	common/RenderingEngine/GLDrawState	common/RenderingEngine/OpenGLRenderingEngine	dem/Engine/StandAloneEngine">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Mon Jul 21 23:14:22 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000397.html">[Yade-commits] r1437 - in trunk: gui gui/py	pkg/common/Engine/EngineUnit
+</A></li>
+        <LI>Next message: <A HREF="000399.html">[Yade-commits] r1439 - trunk/pkg/common/Engine/DeusExMachina
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#398">[ date ]</a>
+              <a href="thread.html#398">[ thread ]</a>
+              <a href="subject.html#398">[ subject ]</a>
+              <a href="author.html#398">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2008-07-21 23:14:18 +0200 (Mon, 21 Jul 2008)
+New Revision: 1438
+
+Modified:
+   trunk/pkg/common/Engine/DeusExMachina/CinemCisEngine.cpp
+   trunk/pkg/common/Engine/DeusExMachina/CinemCisEngine.hpp
+   trunk/pkg/common/Engine/DeusExMachina/DisplacementToForceEngine.cpp
+   trunk/pkg/common/Engine/DeusExMachina/ForceEngine.cpp
+   trunk/pkg/common/Engine/DeusExMachina/MomentEngine.cpp
+   trunk/pkg/common/Engine/DeusExMachina/RotationEngine.cpp
+   trunk/pkg/common/Engine/DeusExMachina/StaticAttractionEngine.cpp
+   trunk/pkg/common/Engine/DeusExMachina/TranslationEngine.cpp
+   trunk/pkg/common/Engine/EngineUnit/CundallNonViscousMomentumDamping.cpp
+   trunk/pkg/common/Engine/EngineUnit/CundallNonViscousMomentumDamping.hpp
+   trunk/pkg/common/Engine/EngineUnit/ElasticBodySimpleRelationship.cpp
+   trunk/pkg/common/Engine/EngineUnit/ElasticBodySimpleRelationship.hpp
+   trunk/pkg/common/Engine/EngineUnit/InteractingBox2AABB.cpp
+   trunk/pkg/common/Engine/EngineUnit/InteractingBox2AABB.hpp
+   trunk/pkg/common/Engine/EngineUnit/InteractingSphere2AABB.cpp
+   trunk/pkg/common/Engine/EngineUnit/InteractingSphere2AABB.hpp
+   trunk/pkg/common/Engine/EngineUnit/LeapFrogOrientationIntegrator.cpp
+   trunk/pkg/common/Engine/EngineUnit/LeapFrogOrientationIntegrator.hpp
+   trunk/pkg/common/Engine/EngineUnit/LeapFrogPositionIntegrator.cpp
+   trunk/pkg/common/Engine/EngineUnit/LeapFrogPositionIntegrator.hpp
+   trunk/pkg/common/Engine/EngineUnit/MetaInteractingGeometry2AABB.cpp
+   trunk/pkg/common/Engine/EngineUnit/MetaInteractingGeometry2AABB.hpp
+   trunk/pkg/common/Engine/EngineUnit/NewtonsForceLaw.cpp
+   trunk/pkg/common/Engine/EngineUnit/NewtonsForceLaw.hpp
+   trunk/pkg/common/Engine/EngineUnit/NewtonsMomentumLaw.cpp
+   trunk/pkg/common/Engine/EngineUnit/NewtonsMomentumLaw.hpp
+   trunk/pkg/common/Engine/MetaEngine/BoundingVolumeMetaEngine.hpp
+   trunk/pkg/common/Engine/MetaEngine/GeometricalModelMetaEngine.hpp
+   trunk/pkg/common/Engine/MetaEngine/InteractingGeometryMetaEngine.hpp
+   trunk/pkg/common/Engine/MetaEngine/InteractionGeometryMetaEngine.hpp
+   trunk/pkg/common/Engine/MetaEngine/InteractionPhysicsMetaEngine.hpp
+   trunk/pkg/common/Engine/MetaEngine/PhysicalActionApplier.hpp
+   trunk/pkg/common/Engine/MetaEngine/PhysicalActionDamper.hpp
+   trunk/pkg/common/Engine/MetaEngine/PhysicalParametersMetaEngine.hpp
+   trunk/pkg/common/RenderingEngine/GLDrawBoundingVolume/GLDrawAABB.cpp
+   trunk/pkg/common/RenderingEngine/GLDrawBoundingVolume/GLDrawAABB.hpp
+   trunk/pkg/common/RenderingEngine/GLDrawBoundingVolume/GLDrawBoundingSphere.cpp
+   trunk/pkg/common/RenderingEngine/GLDrawBoundingVolume/GLDrawBoundingSphere.hpp
+   trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawBox.cpp
+   trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawBox.hpp
+   trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawMesh2D.cpp
+   trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawMesh2D.hpp
+   trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawQuadrilateral.cpp
+   trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawQuadrilateral.hpp
+   trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawSphere.cpp
+   trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawSphere.hpp
+   trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawTetrahedron.cpp
+   trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawTetrahedron.hpp
+   trunk/pkg/common/RenderingEngine/GLDrawInteractingGeometry/GLDrawInteractingBox.cpp
+   trunk/pkg/common/RenderingEngine/GLDrawInteractingGeometry/GLDrawInteractingBox.hpp
+   trunk/pkg/common/RenderingEngine/GLDrawInteractingGeometry/GLDrawInteractingSphere.cpp
+   trunk/pkg/common/RenderingEngine/GLDrawInteractingGeometry/GLDrawInteractingSphere.hpp
+   trunk/pkg/common/RenderingEngine/GLDrawInteractingGeometry/GLDrawMetaInteractingGeometry.hpp
+   trunk/pkg/common/RenderingEngine/GLDrawInteractionGeometry/GLDrawClosestFeatures.cpp
+   trunk/pkg/common/RenderingEngine/GLDrawInteractionGeometry/GLDrawClosestFeatures.hpp
+   trunk/pkg/common/RenderingEngine/GLDrawInteractionPhysics/GLDrawSimpleElasticInteraction.cpp
+   trunk/pkg/common/RenderingEngine/GLDrawInteractionPhysics/GLDrawSimpleElasticInteraction.hpp
+   trunk/pkg/common/RenderingEngine/GLDrawShadowVolume/GLDrawBoxShadowVolume.cpp
+   trunk/pkg/common/RenderingEngine/GLDrawShadowVolume/GLDrawBoxShadowVolume.hpp
+   trunk/pkg/common/RenderingEngine/GLDrawShadowVolume/GLDrawSphereShadowVolume.cpp
+   trunk/pkg/common/RenderingEngine/GLDrawShadowVolume/GLDrawSphereShadowVolume.hpp
+   trunk/pkg/common/RenderingEngine/GLDrawState/GLDrawParticleState.cpp
+   trunk/pkg/common/RenderingEngine/GLDrawState/GLDrawParticleState.hpp
+   trunk/pkg/common/RenderingEngine/GLDrawState/GLDrawRigidBodyState.cpp
+   trunk/pkg/common/RenderingEngine/GLDrawState/GLDrawRigidBodyState.hpp
+   trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.hpp
+   trunk/pkg/dem/Engine/StandAloneEngine/SQLiteRecorder.cpp
+Log:
+Fix #includes in affected files.
+
+
+Modified: trunk/pkg/common/Engine/DeusExMachina/CinemCisEngine.cpp
+===================================================================
+--- trunk/pkg/common/Engine/DeusExMachina/CinemCisEngine.cpp	2008-07-21 13:27:29 UTC (rev 1437)
++++ trunk/pkg/common/Engine/DeusExMachina/CinemCisEngine.cpp	2008-07-21 21:14:18 UTC (rev 1438)
+@@ -6,14 +6,14 @@
+ *  GNU General Public License v2 or later. See file LICENSE for details. *
+ *************************************************************************/
+ 
+-
+-#include &quot;CinemCisEngine.hpp&quot;
+-#include &quot;RigidBodyParameters.hpp&quot;
++#include&lt;yade/pkg-common/RigidBodyParameters.hpp&gt;
+ #include&lt;yade/core/MetaBody.hpp&gt;
+ #include&lt;yade/lib-base/yadeWm3Extra.hpp&gt;
+-#include &lt;yade/lib-miniWm3/Wm3Math.h&gt;
++#include&lt;yade/lib-miniWm3/Wm3Math.h&gt;
+ 
++#include&quot;CinemCisEngine.hpp&quot;
+ 
++
+ CinemCisEngine::CinemCisEngine()
+ {
+ 	rotationAxis=Vector3r(0,0,1);
+
+Modified: trunk/pkg/common/Engine/DeusExMachina/CinemCisEngine.hpp
+===================================================================
+--- trunk/pkg/common/Engine/DeusExMachina/CinemCisEngine.hpp	2008-07-21 13:27:29 UTC (rev 1437)
++++ trunk/pkg/common/Engine/DeusExMachina/CinemCisEngine.hpp	2008-07-21 21:14:18 UTC (rev 1438)
+@@ -11,7 +11,7 @@
+ 
+ #include&lt;yade/core/Omega.hpp&gt;
+ #include&lt;yade/core/DeusExMachina.hpp&gt;
+-#include &lt;Wm3Vector3.h&gt;
++#include&lt;Wm3Vector3.h&gt;
+ #include&lt;yade/lib-base/yadeWm3.hpp&gt;
+ 
+ /*! \brief To apply a zero normal displacement shear for a parallelogram box
+
+Modified: trunk/pkg/common/Engine/DeusExMachina/DisplacementToForceEngine.cpp
+===================================================================
+--- trunk/pkg/common/Engine/DeusExMachina/DisplacementToForceEngine.cpp	2008-07-21 13:27:29 UTC (rev 1437)
++++ trunk/pkg/common/Engine/DeusExMachina/DisplacementToForceEngine.cpp	2008-07-21 21:14:18 UTC (rev 1438)
+@@ -6,10 +6,10 @@
+ *  GNU General Public License v2 or later. See file LICENSE for details. *
+ *************************************************************************/
+ 
+-#include &quot;DisplacementToForceEngine.hpp&quot;
++#include&quot;DisplacementToForceEngine.hpp&quot;
+ #include&lt;yade/core/MetaBody.hpp&gt;
+-#include &quot;ParticleParameters.hpp&quot;
+-#include &quot;Force.hpp&quot;
++#include&lt;yade/pkg-common/ParticleParameters.hpp&gt;
++#include&lt;yade/pkg-common/Force.hpp&gt;
+ 
+ DisplacementToForceEngine::DisplacementToForceEngine() : actionParameterForce(new Force), targetForce(Vector3r::ZERO), targetForceMask(Vector3r::ZERO) 
+ {
+
+Modified: trunk/pkg/common/Engine/DeusExMachina/ForceEngine.cpp
+===================================================================
+--- trunk/pkg/common/Engine/DeusExMachina/ForceEngine.cpp	2008-07-21 13:27:29 UTC (rev 1437)
++++ trunk/pkg/common/Engine/DeusExMachina/ForceEngine.cpp	2008-07-21 21:14:18 UTC (rev 1438)
+@@ -6,9 +6,9 @@
+ *  GNU General Public License v2 or later. See file LICENSE for details. *
+ *************************************************************************/
+ 
+-#include &quot;ForceEngine.hpp&quot;
+-#include &quot;ParticleParameters.hpp&quot;
+-#include &quot;Force.hpp&quot;
++#include&quot;ForceEngine.hpp&quot;
++#include&lt;yade/pkg-common/ParticleParameters.hpp&gt;
++#include&lt;yade/pkg-common/Force.hpp&gt;
+ #include&lt;yade/core/MetaBody.hpp&gt;
+ 
+ #include&lt;boost/foreach.hpp&gt;
+
+Modified: trunk/pkg/common/Engine/DeusExMachina/MomentEngine.cpp
+===================================================================
+--- trunk/pkg/common/Engine/DeusExMachina/MomentEngine.cpp	2008-07-21 13:27:29 UTC (rev 1437)
++++ trunk/pkg/common/Engine/DeusExMachina/MomentEngine.cpp	2008-07-21 21:14:18 UTC (rev 1438)
+@@ -6,9 +6,9 @@
+ *  GNU General Public License v2 or later. See file LICENSE for details. *
+ *************************************************************************/
+ 
+-#include &quot;MomentEngine.hpp&quot;
+-#include &quot;ParticleParameters.hpp&quot;
+-#include &quot;Momentum.hpp&quot;
++#include&quot;MomentEngine.hpp&quot;
++#include&lt;yade/pkg-common/ParticleParameters.hpp&gt;
++#include&lt;yade/pkg-common/Momentum.hpp&gt;
+ 
+ 
+ #include&lt;yade/core/MetaBody.hpp&gt;
+
+Modified: trunk/pkg/common/Engine/DeusExMachina/RotationEngine.cpp
+===================================================================
+--- trunk/pkg/common/Engine/DeusExMachina/RotationEngine.cpp	2008-07-21 13:27:29 UTC (rev 1437)
++++ trunk/pkg/common/Engine/DeusExMachina/RotationEngine.cpp	2008-07-21 21:14:18 UTC (rev 1438)
+@@ -10,7 +10,7 @@
+ 
+ 
+ #include &quot;RotationEngine.hpp&quot;
+-#include &quot;RigidBodyParameters.hpp&quot;
++#include&lt;yade/pkg-common/RigidBodyParameters.hpp&gt;
+ #include&lt;yade/core/MetaBody.hpp&gt;
+ #include&lt;yade/lib-base/yadeWm3Extra.hpp&gt;
+ 
+
+Modified: trunk/pkg/common/Engine/DeusExMachina/StaticAttractionEngine.cpp
+===================================================================
+--- trunk/pkg/common/Engine/DeusExMachina/StaticAttractionEngine.cpp	2008-07-21 13:27:29 UTC (rev 1437)
++++ trunk/pkg/common/Engine/DeusExMachina/StaticAttractionEngine.cpp	2008-07-21 21:14:18 UTC (rev 1438)
+@@ -6,7 +6,7 @@
+ *  GNU General Public License v2 or later. See file LICENSE for details. *
+ *************************************************************************/
+ 
+-#include &quot;StaticAttractionEngine.hpp&quot;
++#include&quot;StaticAttractionEngine.hpp&quot;
+ #include&lt;yade/core/MetaBody.hpp&gt;
+ 
+ void StaticAttractionEngine::registerAttributes()
+
+Modified: trunk/pkg/common/Engine/DeusExMachina/TranslationEngine.cpp
+===================================================================
+--- trunk/pkg/common/Engine/DeusExMachina/TranslationEngine.cpp	2008-07-21 13:27:29 UTC (rev 1437)
++++ trunk/pkg/common/Engine/DeusExMachina/TranslationEngine.cpp	2008-07-21 21:14:18 UTC (rev 1438)
+@@ -7,7 +7,7 @@
+ *************************************************************************/
+ 
+ #include &quot;TranslationEngine.hpp&quot;
+-#include &quot;ParticleParameters.hpp&quot;
++#include&lt;yade/pkg-common/ParticleParameters.hpp&gt;
+ #include&lt;yade/core/MetaBody.hpp&gt;
+ 
+ void TranslationEngine::postProcessAttributes(bool deserializing)
+
+Modified: trunk/pkg/common/Engine/EngineUnit/CundallNonViscousMomentumDamping.cpp
+===================================================================
+--- trunk/pkg/common/Engine/EngineUnit/CundallNonViscousMomentumDamping.cpp	2008-07-21 13:27:29 UTC (rev 1437)
++++ trunk/pkg/common/Engine/EngineUnit/CundallNonViscousMomentumDamping.cpp	2008-07-21 21:14:18 UTC (rev 1438)
+@@ -6,9 +6,9 @@
+ *  GNU General Public License v2 or later. See file LICENSE for details. *
+ *************************************************************************/
+ 
+-#include &quot;CundallNonViscousMomentumDamping.hpp&quot;
+-#include &quot;RigidBodyParameters.hpp&quot;
+-#include &quot;Momentum.hpp&quot;
++#include&quot;CundallNonViscousMomentumDamping.hpp&quot;
++#include&lt;yade/pkg-common/RigidBodyParameters.hpp&gt;
++#include&lt;yade/pkg-common/Momentum.hpp&gt;
+ 
+ 
+ CundallNonViscousMomentumDamping::CundallNonViscousMomentumDamping() : damping(0)
+
+Modified: trunk/pkg/common/Engine/EngineUnit/CundallNonViscousMomentumDamping.hpp
+===================================================================
+--- trunk/pkg/common/Engine/EngineUnit/CundallNonViscousMomentumDamping.hpp	2008-07-21 13:27:29 UTC (rev 1437)
++++ trunk/pkg/common/Engine/EngineUnit/CundallNonViscousMomentumDamping.hpp	2008-07-21 21:14:18 UTC (rev 1438)
+@@ -9,7 +9,7 @@
+ #ifndef ACTION_MOMENTUM_DAMPING_HPP
+ #define ACTION_MOMENTUM_DAMPING_HPP
+ 
+-#include &quot;PhysicalActionDamperUnit.hpp&quot;
++#include&lt;yade/pkg-common/PhysicalActionDamperUnit.hpp&gt;
+ 
+ class CundallNonViscousMomentumDamping : public PhysicalActionDamperUnit
+ {
+
+Modified: trunk/pkg/common/Engine/EngineUnit/ElasticBodySimpleRelationship.cpp
+===================================================================
+--- trunk/pkg/common/Engine/EngineUnit/ElasticBodySimpleRelationship.cpp	2008-07-21 13:27:29 UTC (rev 1437)
++++ trunk/pkg/common/Engine/EngineUnit/ElasticBodySimpleRelationship.cpp	2008-07-21 21:14:18 UTC (rev 1438)
+@@ -6,9 +6,9 @@
+ *  GNU General Public License v2 or later. See file LICENSE for details. *
+ *************************************************************************/
+ 
+-#include &quot;ElasticBodySimpleRelationship.hpp&quot;
+-#include &quot;SimpleElasticInteraction.hpp&quot;
+-#include &quot;ElasticBodyParameters.hpp&quot;
++#include&quot;ElasticBodySimpleRelationship.hpp&quot;
++#include&lt;yade/pkg-common/SimpleElasticInteraction.hpp&gt;
++#include&lt;yade/pkg-common/ElasticBodyParameters.hpp&gt;
+ #include&lt;yade/core/Omega.hpp&gt;
+ #include&lt;yade/core/MetaBody.hpp&gt;
+ 
+
+Modified: trunk/pkg/common/Engine/EngineUnit/ElasticBodySimpleRelationship.hpp
+===================================================================
+--- trunk/pkg/common/Engine/EngineUnit/ElasticBodySimpleRelationship.hpp	2008-07-21 13:27:29 UTC (rev 1437)
++++ trunk/pkg/common/Engine/EngineUnit/ElasticBodySimpleRelationship.hpp	2008-07-21 21:14:18 UTC (rev 1438)
+@@ -9,7 +9,7 @@
+ #ifndef ELASTICBODYSIMPLERELATIONSHIP_HPP
+ #define ELASTICBODYSIMPLERELATIONSHIP_HPP
+ 
+-#include &quot;InteractionPhysicsEngineUnit.hpp&quot;
++#include&lt;yade/pkg-common/InteractionPhysicsEngineUnit.hpp&gt;
+ 
+ class ElasticBodySimpleRelationship : public InteractionPhysicsEngineUnit
+ {
+
+Modified: trunk/pkg/common/Engine/EngineUnit/InteractingBox2AABB.cpp
+===================================================================
+--- trunk/pkg/common/Engine/EngineUnit/InteractingBox2AABB.cpp	2008-07-21 13:27:29 UTC (rev 1437)
++++ trunk/pkg/common/Engine/EngineUnit/InteractingBox2AABB.cpp	2008-07-21 21:14:18 UTC (rev 1438)
+@@ -7,8 +7,8 @@
+ *************************************************************************/
+  
+ #include &quot;InteractingBox2AABB.hpp&quot;
+-#include &quot;InteractingBox.hpp&quot;
+-#include &quot;AABB.hpp&quot;
++#include&lt;yade/pkg-common/InteractingBox.hpp&gt;
++#include&lt;yade/pkg-common/AABB.hpp&gt;
+ 
+ 
+ void InteractingBox2AABB::go(	const shared_ptr&lt;InteractingGeometry&gt;&amp; cm,
+
+Modified: trunk/pkg/common/Engine/EngineUnit/InteractingBox2AABB.hpp
+===================================================================
+--- trunk/pkg/common/Engine/EngineUnit/InteractingBox2AABB.hpp	2008-07-21 13:27:29 UTC (rev 1437)
++++ trunk/pkg/common/Engine/EngineUnit/InteractingBox2AABB.hpp	2008-07-21 21:14:18 UTC (rev 1438)
+@@ -10,7 +10,7 @@
+ #define INTERACTINGBOX2AABB_HPP
+ 
+ 
+-#include &quot;BoundingVolumeEngineUnit.hpp&quot;
++#include&lt;yade/pkg-common/BoundingVolumeEngineUnit.hpp&gt;
+ 
+ 
+ class InteractingBox2AABB : public BoundingVolumeEngineUnit
+
+Modified: trunk/pkg/common/Engine/EngineUnit/InteractingSphere2AABB.cpp
+===================================================================
+--- trunk/pkg/common/Engine/EngineUnit/InteractingSphere2AABB.cpp	2008-07-21 13:27:29 UTC (rev 1437)
++++ trunk/pkg/common/Engine/EngineUnit/InteractingSphere2AABB.cpp	2008-07-21 21:14:18 UTC (rev 1438)
+@@ -7,8 +7,8 @@
+ *************************************************************************/
+  
+ #include &quot;InteractingSphere2AABB.hpp&quot;
+-#include &quot;InteractingSphere.hpp&quot;
+-#include &quot;AABB.hpp&quot;
++#include&lt;yade/pkg-common/InteractingSphere.hpp&gt;
++#include&lt;yade/pkg-common/AABB.hpp&gt;
+ 
+ void InteractingSphere2AABB::go(const shared_ptr&lt;InteractingGeometry&gt;&amp; cm, shared_ptr&lt;BoundingVolume&gt;&amp; bv, const Se3r&amp; se3, const Body*){
+ 	InteractingSphere* sphere = static_cast&lt;InteractingSphere*&gt;(cm.get());
+
+Modified: trunk/pkg/common/Engine/EngineUnit/InteractingSphere2AABB.hpp
+===================================================================
+--- trunk/pkg/common/Engine/EngineUnit/InteractingSphere2AABB.hpp	2008-07-21 13:27:29 UTC (rev 1437)
++++ trunk/pkg/common/Engine/EngineUnit/InteractingSphere2AABB.hpp	2008-07-21 21:14:18 UTC (rev 1438)
+@@ -9,7 +9,7 @@
+ #ifndef SPHERE2AABB_HPP
+ #define SPHERE2AABB_HPP
+ 
+-#include &quot;BoundingVolumeEngineUnit.hpp&quot;
++#include&lt;yade/pkg-common/BoundingVolumeEngineUnit.hpp&gt;
+ 
+ class InteractingSphere2AABB : public BoundingVolumeEngineUnit
+ {
+
+Modified: trunk/pkg/common/Engine/EngineUnit/LeapFrogOrientationIntegrator.cpp
+===================================================================
+--- trunk/pkg/common/Engine/EngineUnit/LeapFrogOrientationIntegrator.cpp	2008-07-21 13:27:29 UTC (rev 1437)
++++ trunk/pkg/common/Engine/EngineUnit/LeapFrogOrientationIntegrator.cpp	2008-07-21 21:14:18 UTC (rev 1438)
+@@ -7,7 +7,7 @@
+ *************************************************************************/
+ 
+ #include &quot;LeapFrogOrientationIntegrator.hpp&quot;
+-#include &quot;RigidBodyParameters.hpp&quot;
++#include&lt;yade/pkg-common/RigidBodyParameters.hpp&gt;
+ #include&lt;yade/core/Omega.hpp&gt;
+ 
+ // FIXME : should we pass timestep as parameter of functor
+
+Modified: trunk/pkg/common/Engine/EngineUnit/LeapFrogOrientationIntegrator.hpp
+===================================================================
+--- trunk/pkg/common/Engine/EngineUnit/LeapFrogOrientationIntegrator.hpp	2008-07-21 13:27:29 UTC (rev 1437)
++++ trunk/pkg/common/Engine/EngineUnit/LeapFrogOrientationIntegrator.hpp	2008-07-21 21:14:18 UTC (rev 1438)
+@@ -9,7 +9,7 @@
+ #ifndef LEAP_FROG_ORIENTATION_INTEGRATOR_HPP
+ #define LEAP_FROG_ORIENTATION_INTEGRATOR_HPP 
+ 
+-#include &quot;PhysicalParametersEngineUnit.hpp&quot;
++#include&lt;yade/pkg-common/PhysicalParametersEngineUnit.hpp&gt;
+ 
+ class LeapFrogOrientationIntegrator : public PhysicalParametersEngineUnit 
+ {
+
+Modified: trunk/pkg/common/Engine/EngineUnit/LeapFrogPositionIntegrator.cpp
+===================================================================
+--- trunk/pkg/common/Engine/EngineUnit/LeapFrogPositionIntegrator.cpp	2008-07-21 13:27:29 UTC (rev 1437)
++++ trunk/pkg/common/Engine/EngineUnit/LeapFrogPositionIntegrator.cpp	2008-07-21 21:14:18 UTC (rev 1438)
+@@ -7,7 +7,7 @@
+ *************************************************************************/
+ 
+ #include &quot;LeapFrogPositionIntegrator.hpp&quot; 
+-#include &quot;ParticleParameters.hpp&quot;
++#include&lt;yade/pkg-common/ParticleParameters.hpp&gt;
+ #include&lt;yade/core/Omega.hpp&gt;
+ 
+ 
+
+Modified: trunk/pkg/common/Engine/EngineUnit/LeapFrogPositionIntegrator.hpp
+===================================================================
+--- trunk/pkg/common/Engine/EngineUnit/LeapFrogPositionIntegrator.hpp	2008-07-21 13:27:29 UTC (rev 1437)
++++ trunk/pkg/common/Engine/EngineUnit/LeapFrogPositionIntegrator.hpp	2008-07-21 21:14:18 UTC (rev 1438)
+@@ -9,7 +9,7 @@
+ #ifndef LEAPFROG_POSITION_INTEGRATOR_HPP
+ #define LEAPFROG_POSITION_INTEGRATOR_HPP 
+ 
+-#include &quot;PhysicalParametersEngineUnit.hpp&quot;
++#include&lt;yade/pkg-common/PhysicalParametersEngineUnit.hpp&gt;
+ 
+ class LeapFrogPositionIntegrator : public PhysicalParametersEngineUnit
+ {
+
+Modified: trunk/pkg/common/Engine/EngineUnit/MetaInteractingGeometry2AABB.cpp
+===================================================================
+--- trunk/pkg/common/Engine/EngineUnit/MetaInteractingGeometry2AABB.cpp	2008-07-21 13:27:29 UTC (rev 1437)
++++ trunk/pkg/common/Engine/EngineUnit/MetaInteractingGeometry2AABB.cpp	2008-07-21 21:14:18 UTC (rev 1438)
+@@ -9,8 +9,8 @@
+ #include &quot;MetaInteractingGeometry2AABB.hpp&quot;
+ 
+ 
+-#include &quot;MetaInteractingGeometry.hpp&quot;
+-#include &quot;AABB.hpp&quot;
++#include&lt;yade/pkg-common/MetaInteractingGeometry.hpp&gt;
++#include&lt;yade/pkg-common/AABB.hpp&gt;
+ #include&lt;yade/lib-base/yadeWm3Extra.hpp&gt;
+ 
+ 
+
+Modified: trunk/pkg/common/Engine/EngineUnit/MetaInteractingGeometry2AABB.hpp
+===================================================================
+--- trunk/pkg/common/Engine/EngineUnit/MetaInteractingGeometry2AABB.hpp	2008-07-21 13:27:29 UTC (rev 1437)
++++ trunk/pkg/common/Engine/EngineUnit/MetaInteractingGeometry2AABB.hpp	2008-07-21 21:14:18 UTC (rev 1438)
+@@ -9,7 +9,7 @@
+ #ifndef METAINTERACTINGGEOMETRY2AABB_HPP
+ #define METAINTERACTINGGEOMETRY2AABB_HPP
+ 
+-#include &quot;BoundingVolumeEngineUnit.hpp&quot;
++#include&lt;yade/pkg-common/BoundingVolumeEngineUnit.hpp&gt;
+ 
+ class MetaInteractingGeometry2AABB : public BoundingVolumeEngineUnit
+ {
+
+Modified: trunk/pkg/common/Engine/EngineUnit/NewtonsForceLaw.cpp
+===================================================================
+--- trunk/pkg/common/Engine/EngineUnit/NewtonsForceLaw.cpp	2008-07-21 13:27:29 UTC (rev 1437)
++++ trunk/pkg/common/Engine/EngineUnit/NewtonsForceLaw.cpp	2008-07-21 21:14:18 UTC (rev 1438)
+@@ -9,9 +9,9 @@
+ *************************************************************************/
+ 
+ #include &quot;NewtonsForceLaw.hpp&quot;
+-#include &quot;ParticleParameters.hpp&quot;
+-#include &quot;RigidBodyParameters.hpp&quot;
+-#include &quot;Force.hpp&quot;
++#include&lt;yade/pkg-common/ParticleParameters.hpp&gt;
++#include&lt;yade/pkg-common/RigidBodyParameters.hpp&gt;
++#include&lt;yade/pkg-common/Force.hpp&gt;
+ 
+ 
+ void NewtonsForceLaw::go( const shared_ptr&lt;PhysicalAction&gt;&amp; a
+
+Modified: trunk/pkg/common/Engine/EngineUnit/NewtonsForceLaw.hpp
+===================================================================
+--- trunk/pkg/common/Engine/EngineUnit/NewtonsForceLaw.hpp	2008-07-21 13:27:29 UTC (rev 1437)
++++ trunk/pkg/common/Engine/EngineUnit/NewtonsForceLaw.hpp	2008-07-21 21:14:18 UTC (rev 1438)
+@@ -9,7 +9,7 @@
+ #ifndef NEWTONSFORCELAW_HPP
+ #define NEWTONSFORCELAW_HPP
+ 
+-#include &quot;PhysicalActionApplierUnit.hpp&quot;
++#include&lt;yade/pkg-common/PhysicalActionApplierUnit.hpp&gt;
+ 
+ class NewtonsForceLaw : public PhysicalActionApplierUnit
+ {
+
+Modified: trunk/pkg/common/Engine/EngineUnit/NewtonsMomentumLaw.cpp
+===================================================================
+--- trunk/pkg/common/Engine/EngineUnit/NewtonsMomentumLaw.cpp	2008-07-21 13:27:29 UTC (rev 1437)
++++ trunk/pkg/common/Engine/EngineUnit/NewtonsMomentumLaw.cpp	2008-07-21 21:14:18 UTC (rev 1438)
+@@ -9,8 +9,8 @@
+ *************************************************************************/
+ 
+ #include &quot;NewtonsMomentumLaw.hpp&quot;
+-#include &quot;RigidBodyParameters.hpp&quot;
+-#include &quot;Momentum.hpp&quot;
++#include&lt;yade/pkg-common/RigidBodyParameters.hpp&gt;
++#include&lt;yade/pkg-common/Momentum.hpp&gt;
+ #include&lt;yade/lib-base/yadeWm3Extra.hpp&gt;
+ 
+ 
+
+Modified: trunk/pkg/common/Engine/EngineUnit/NewtonsMomentumLaw.hpp
+===================================================================
+--- trunk/pkg/common/Engine/EngineUnit/NewtonsMomentumLaw.hpp	2008-07-21 13:27:29 UTC (rev 1437)
++++ trunk/pkg/common/Engine/EngineUnit/NewtonsMomentumLaw.hpp	2008-07-21 21:14:18 UTC (rev 1438)
+@@ -9,7 +9,7 @@
+ #ifndef NEWTONSMOMENTUMLAW_HPP
+ #define NEWTONSMOMENTUMLAW_HPP
+ 
+-#include &quot;PhysicalActionApplierUnit.hpp&quot;
++#include&lt;yade/pkg-common/PhysicalActionApplierUnit.hpp&gt;
+ 
+ class NewtonsMomentumLaw : public PhysicalActionApplierUnit
+ {
+
+Modified: trunk/pkg/common/Engine/MetaEngine/BoundingVolumeMetaEngine.hpp
+===================================================================
+--- trunk/pkg/common/Engine/MetaEngine/BoundingVolumeMetaEngine.hpp	2008-07-21 13:27:29 UTC (rev 1437)
++++ trunk/pkg/common/Engine/MetaEngine/BoundingVolumeMetaEngine.hpp	2008-07-21 21:14:18 UTC (rev 1438)
+@@ -9,7 +9,7 @@
+ #ifndef BOUNDINGVOLUMEUPDATOR_HPP
+ #define BOUNDINGVOLUMEUPDATOR_HPP
+ 
+-#include &quot;BoundingVolumeEngineUnit.hpp&quot;
++#include&lt;yade/pkg-common/BoundingVolumeEngineUnit.hpp&gt;
+ 
+ #include&lt;yade/core/MetaEngine2D.hpp&gt;
+ #include&lt;yade/lib-multimethods/DynLibDispatcher.hpp&gt;
+
+Modified: trunk/pkg/common/Engine/MetaEngine/GeometricalModelMetaEngine.hpp
+===================================================================
+--- trunk/pkg/common/Engine/MetaEngine/GeometricalModelMetaEngine.hpp	2008-07-21 13:27:29 UTC (rev 1437)
++++ trunk/pkg/common/Engine/MetaEngine/GeometricalModelMetaEngine.hpp	2008-07-21 21:14:18 UTC (rev 1438)
+@@ -9,7 +9,7 @@
+ #ifndef GEOMETRICAL_MODEL_DISPATCHER_HPP
+ #define GEOMETRICAL_MODEL_DISPATCHER_HPP
+ 
+-#include &quot;GeometricalModelEngineUnit.hpp&quot;
++#include&lt;yade/pkg-common/GeometricalModelEngineUnit.hpp&gt;
+ #include&lt;yade/core/MetaEngine2D.hpp&gt;
+ #include&lt;yade/lib-multimethods/DynLibDispatcher.hpp&gt;
+ #include&lt;yade/core/PhysicalParameters.hpp&gt;
+
+Modified: trunk/pkg/common/Engine/MetaEngine/InteractingGeometryMetaEngine.hpp
+===================================================================
+--- trunk/pkg/common/Engine/MetaEngine/InteractingGeometryMetaEngine.hpp	2008-07-21 13:27:29 UTC (rev 1437)
++++ trunk/pkg/common/Engine/MetaEngine/InteractingGeometryMetaEngine.hpp	2008-07-21 21:14:18 UTC (rev 1438)
+@@ -1,43 +1,43 @@
+-/*************************************************************************
+-*  Copyright (C) 2004 by Olivier Galizzi                                 *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">olivier.galizzi at imag.fr</A>                                               *
+-*                                                                        *
+-*  This program is free software; it is licensed under the terms of the  *
+-*  GNU General Public License v2 or later. See file LICENSE for details. *
+-*************************************************************************/
+- 
+-#ifndef INTERACTINGGEOMETRYMETAENGINE_HPP
+-#define INTERACTINGGEOMETRYMETAENGINE_HPP
+-
+-#include &quot;InteractingGeometryEngineUnit.hpp&quot;
+-
+-#include&lt;yade/core/MetaEngine2D.hpp&gt;
+-#include&lt;yade/lib-multimethods/DynLibDispatcher.hpp&gt;
+-#include&lt;yade/core/GeometricalModel.hpp&gt;
+-#include&lt;yade/core/InteractingGeometry.hpp&gt;
+-#include&lt;yade/core/Body.hpp&gt;
+-
+-class InteractingGeometryMetaEngine : 	public MetaEngine2D
+-					&lt;	
+-						GeometricalModel,						// base classe for dispatch
+-						InteractingGeometry,						// base classe for dispatch
+-						InteractingGeometryEngineUnit,					// class that provides multivirtual call
+-						void ,								// return type
+-						TYPELIST_4(	  const shared_ptr&lt;GeometricalModel&gt;&amp;		// arguments
+-								, shared_ptr&lt;InteractingGeometry&gt;&amp; 		// is not working when const, because functors are supposed to modify it!
+-								, const Se3r&amp;
+-								, const Body* 					// with that - functors have all the data they may need
+-							  )
+-					&gt;
+-{
+-	public :
+-		virtual void action(MetaBody*);
+-
+-	REGISTER_CLASS_NAME(InteractingGeometryMetaEngine);
+-	REGISTER_BASE_CLASS_NAME(MetaEngine2D);
+-};
+-
+-REGISTER_SERIALIZABLE(InteractingGeometryMetaEngine,false);
+-
+-#endif //  INTERACTINGGEOMETRYMETAENGINE_HPP
+-
++/*************************************************************************
++*  Copyright (C) 2004 by Olivier Galizzi                                 *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">olivier.galizzi at imag.fr</A>                                               *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++ 
++#ifndef INTERACTINGGEOMETRYMETAENGINE_HPP
++#define INTERACTINGGEOMETRYMETAENGINE_HPP
++
++#include&lt;yade/pkg-common/InteractingGeometryEngineUnit.hpp&gt;
++
++#include&lt;yade/core/MetaEngine2D.hpp&gt;
++#include&lt;yade/lib-multimethods/DynLibDispatcher.hpp&gt;
++#include&lt;yade/core/GeometricalModel.hpp&gt;
++#include&lt;yade/core/InteractingGeometry.hpp&gt;
++#include&lt;yade/core/Body.hpp&gt;
++
++class InteractingGeometryMetaEngine : 	public MetaEngine2D
++					&lt;	
++						GeometricalModel,						// base classe for dispatch
++						InteractingGeometry,						// base classe for dispatch
++						InteractingGeometryEngineUnit,					// class that provides multivirtual call
++						void ,								// return type
++						TYPELIST_4(	  const shared_ptr&lt;GeometricalModel&gt;&amp;		// arguments
++								, shared_ptr&lt;InteractingGeometry&gt;&amp; 		// is not working when const, because functors are supposed to modify it!
++								, const Se3r&amp;
++								, const Body* 					// with that - functors have all the data they may need
++							  )
++					&gt;
++{
++	public :
++		virtual void action(MetaBody*);
++
++	REGISTER_CLASS_NAME(InteractingGeometryMetaEngine);
++	REGISTER_BASE_CLASS_NAME(MetaEngine2D);
++};
++
++REGISTER_SERIALIZABLE(InteractingGeometryMetaEngine,false);
++
++#endif //  INTERACTINGGEOMETRYMETAENGINE_HPP
++
+
+Modified: trunk/pkg/common/Engine/MetaEngine/InteractionGeometryMetaEngine.hpp
+===================================================================
+--- trunk/pkg/common/Engine/MetaEngine/InteractionGeometryMetaEngine.hpp	2008-07-21 13:27:29 UTC (rev 1437)
++++ trunk/pkg/common/Engine/MetaEngine/InteractionGeometryMetaEngine.hpp	2008-07-21 21:14:18 UTC (rev 1438)
+@@ -16,7 +16,7 @@
+ #include&lt;yade/lib-multimethods/DynLibDispatcher.hpp&gt;
+ #include&lt;yade/core/MetaEngine2D.hpp&gt;
+ #include&lt;yade/core/InteractingGeometry.hpp&gt;
+-#include &quot;InteractionGeometryEngineUnit.hpp&quot;
++#include&lt;yade/pkg-common/InteractionGeometryEngineUnit.hpp&gt;
+ 
+ class Body;
+ 
+
+Modified: trunk/pkg/common/Engine/MetaEngine/InteractionPhysicsMetaEngine.hpp
+===================================================================
+--- trunk/pkg/common/Engine/MetaEngine/InteractionPhysicsMetaEngine.hpp	2008-07-21 13:27:29 UTC (rev 1437)
++++ trunk/pkg/common/Engine/MetaEngine/InteractionPhysicsMetaEngine.hpp	2008-07-21 21:14:18 UTC (rev 1438)
+@@ -14,7 +14,7 @@
+ #include&lt;yade/lib-multimethods/DynLibDispatcher.hpp&gt;
+ #include&lt;yade/core/PhysicalParameters.hpp&gt;
+ #include&lt;yade/core/Interaction.hpp&gt;
+-#include &quot;InteractionPhysicsEngineUnit.hpp&quot;
++#include&lt;yade/pkg-common/InteractionPhysicsEngineUnit.hpp&gt;
+ 
+ class InteractionPhysicsMetaEngine : 	public MetaEngine2D
+ 					&lt;	
+
+Modified: trunk/pkg/common/Engine/MetaEngine/PhysicalActionApplier.hpp
+===================================================================
+--- trunk/pkg/common/Engine/MetaEngine/PhysicalActionApplier.hpp	2008-07-21 13:27:29 UTC (rev 1437)
++++ trunk/pkg/common/Engine/MetaEngine/PhysicalActionApplier.hpp	2008-07-21 21:14:18 UTC (rev 1438)
+@@ -16,7 +16,7 @@
+ #include&lt;yade/lib-multimethods/DynLibDispatcher.hpp&gt;
+ #include&lt;yade/core/PhysicalAction.hpp&gt;
+ 
+-#include &quot;PhysicalActionApplierUnit.hpp&quot;
++#include&lt;yade/pkg-common/PhysicalActionApplierUnit.hpp&gt;
+ 
+ class Body;
+ 
+
+Modified: trunk/pkg/common/Engine/MetaEngine/PhysicalActionDamper.hpp
+===================================================================
+--- trunk/pkg/common/Engine/MetaEngine/PhysicalActionDamper.hpp	2008-07-21 13:27:29 UTC (rev 1437)
++++ trunk/pkg/common/Engine/MetaEngine/PhysicalActionDamper.hpp	2008-07-21 21:14:18 UTC (rev 1438)
+@@ -12,7 +12,7 @@
+ #include&lt;yade/core/MetaEngine2D.hpp&gt;
+ #include&lt;yade/lib-multimethods/DynLibDispatcher.hpp&gt;
+ #include&lt;yade/core/PhysicalAction.hpp&gt;
+-#include &quot;PhysicalActionDamperUnit.hpp&quot;
++#include&lt;yade/pkg-common/PhysicalActionDamperUnit.hpp&gt;
+ 
+ class Body;
+ 
+
+Modified: trunk/pkg/common/Engine/MetaEngine/PhysicalParametersMetaEngine.hpp
+===================================================================
+--- trunk/pkg/common/Engine/MetaEngine/PhysicalParametersMetaEngine.hpp	2008-07-21 13:27:29 UTC (rev 1437)
++++ trunk/pkg/common/Engine/MetaEngine/PhysicalParametersMetaEngine.hpp	2008-07-21 21:14:18 UTC (rev 1438)
+@@ -9,7 +9,7 @@
+ #ifndef BODY_PHYSICAL_PARAMETERS_DISPATCHER_HPP
+ #define BODY_PHYSICAL_PARAMETERS_DISPATCHER_HPP 
+ 
+-#include &quot;PhysicalParametersEngineUnit.hpp&quot;
++#include&lt;yade/pkg-common/PhysicalParametersEngineUnit.hpp&gt;
+ #include&lt;yade/core/MetaEngine1D.hpp&gt;
+ #include&lt;yade/lib-multimethods/DynLibDispatcher.hpp&gt;
+ #include&lt;yade/core/PhysicalParameters.hpp&gt;
+
+Modified: trunk/pkg/common/RenderingEngine/GLDrawBoundingVolume/GLDrawAABB.cpp
+===================================================================
+--- trunk/pkg/common/RenderingEngine/GLDrawBoundingVolume/GLDrawAABB.cpp	2008-07-21 13:27:29 UTC (rev 1437)
++++ trunk/pkg/common/RenderingEngine/GLDrawBoundingVolume/GLDrawAABB.cpp	2008-07-21 21:14:18 UTC (rev 1438)
+@@ -6,13 +6,10 @@
+ *  GNU General Public License v2 or later. See file LICENSE for details. *
+ *************************************************************************/
+ 
+-#include &quot;GLDrawAABB.hpp&quot;
+-#include &quot;AABB.hpp&quot;
+-
+-
++#include&quot;GLDrawAABB.hpp&quot;
+ #include&lt;yade/lib-opengl/OpenGLWrapper.hpp&gt;
++#include&lt;yade/pkg-common/AABB.hpp&gt;
+ 
+-
+ void GLDrawAABB::go(const shared_ptr&lt;BoundingVolume&gt;&amp; bv)
+ {
+ 	AABB * aabb = static_cast&lt;AABB*&gt;(bv.get());
+
+Modified: trunk/pkg/common/RenderingEngine/GLDrawBoundingVolume/GLDrawAABB.hpp
+===================================================================
+--- trunk/pkg/common/RenderingEngine/GLDrawBoundingVolume/GLDrawAABB.hpp	2008-07-21 13:27:29 UTC (rev 1437)
++++ trunk/pkg/common/RenderingEngine/GLDrawBoundingVolume/GLDrawAABB.hpp	2008-07-21 21:14:18 UTC (rev 1438)
+@@ -9,7 +9,7 @@
+ #ifndef GLDRAWAABB_HPP
+ #define GLDRAWAABB_HPP
+ 
+-#include &quot;GLDrawBoundingVolumeFunctor.hpp&quot;
++#include&lt;yade/pkg-common/GLDrawBoundingVolumeFunctor.hpp&gt;
+ 
+ class GLDrawAABB : public GLDrawBoundingVolumeFunctor
+ {
+
+Modified: trunk/pkg/common/RenderingEngine/GLDrawBoundingVolume/GLDrawBoundingSphere.cpp
+===================================================================
+--- trunk/pkg/common/RenderingEngine/GLDrawBoundingVolume/GLDrawBoundingSphere.cpp	2008-07-21 13:27:29 UTC (rev 1437)
++++ trunk/pkg/common/RenderingEngine/GLDrawBoundingVolume/GLDrawBoundingSphere.cpp	2008-07-21 21:14:18 UTC (rev 1438)
+@@ -6,8 +6,8 @@
+ *  GNU General Public License v2 or later. See file LICENSE for details. *
+ *************************************************************************/
+ 
+-#include &quot;GLDrawBoundingSphere.hpp&quot;
+-#include &quot;BoundingSphere.hpp&quot;
++#include&quot;GLDrawBoundingSphere.hpp&quot;
++#include&lt;yade/pkg-common/BoundingSphere.hpp&gt;
+ #include&lt;yade/lib-opengl/OpenGLWrapper.hpp&gt;
+ 
+ void GLDrawBoundingSphere::go(const shared_ptr&lt;BoundingVolume&gt;&amp; bv)
+
+Modified: trunk/pkg/common/RenderingEngine/GLDrawBoundingVolume/GLDrawBoundingSphere.hpp
+===================================================================
+--- trunk/pkg/common/RenderingEngine/GLDrawBoundingVolume/GLDrawBoundingSphere.hpp	2008-07-21 13:27:29 UTC (rev 1437)
++++ trunk/pkg/common/RenderingEngine/GLDrawBoundingVolume/GLDrawBoundingSphere.hpp	2008-07-21 21:14:18 UTC (rev 1438)
+@@ -9,7 +9,7 @@
+ #ifndef GLDRAWBOUNDINGSPHERE_HPP
+ #define GLDRAWBOUNDINGSPHERE_HPP
+ 
+-#include &quot;GLDrawBoundingVolumeFunctor.hpp&quot;
++#include&lt;yade/pkg-common/GLDrawBoundingVolumeFunctor.hpp&gt;
+ 
+ class GLDrawBoundingSphere : public GLDrawBoundingVolumeFunctor
+ {	
+
+Modified: trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawBox.cpp
+===================================================================
+--- trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawBox.cpp	2008-07-21 13:27:29 UTC (rev 1437)
++++ trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawBox.cpp	2008-07-21 21:14:18 UTC (rev 1438)
+@@ -7,7 +7,7 @@
+ *************************************************************************/
+ 
+ #include &quot;GLDrawBox.hpp&quot;
+-#include &quot;Box.hpp&quot;
++#include&lt;yade/pkg-common/Box.hpp&gt;
+ 
+ 
+ #include&lt;yade/lib-opengl/OpenGLWrapper.hpp&gt;
+
+Modified: trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawBox.hpp
+===================================================================
+--- trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawBox.hpp	2008-07-21 13:27:29 UTC (rev 1437)
++++ trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawBox.hpp	2008-07-21 21:14:18 UTC (rev 1438)
+@@ -9,7 +9,7 @@
+ #ifndef GLDRAWBOX_HPP
+ #define GLDRAWBOX_HPP
+ 
+-#include &quot;GLDrawGeometricalModelFunctor.hpp&quot;
++#include&lt;yade/pkg-common/GLDrawGeometricalModelFunctor.hpp&gt;
+ 
+ class GLDrawBox : public GLDrawGeometricalModelFunctor
+ {
+
+Modified: trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawMesh2D.cpp
+===================================================================
+--- trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawMesh2D.cpp	2008-07-21 13:27:29 UTC (rev 1437)
++++ trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawMesh2D.cpp	2008-07-21 21:14:18 UTC (rev 1438)
+@@ -7,7 +7,7 @@
+ *************************************************************************/
+ 
+ #include &quot;GLDrawMesh2D.hpp&quot;
+-#include &quot;Mesh2D.hpp&quot;
++#include&lt;yade/pkg-common/Mesh2D.hpp&gt;
+ #include&lt;yade/lib-opengl/OpenGLWrapper.hpp&gt;
+ 
+ 
+
+Modified: trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawMesh2D.hpp
+===================================================================
+--- trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawMesh2D.hpp	2008-07-21 13:27:29 UTC (rev 1437)
++++ trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawMesh2D.hpp	2008-07-21 21:14:18 UTC (rev 1438)
+@@ -9,7 +9,7 @@
+ #ifndef GLDRAWMESH2D_HPP
+ #define GLDRAWMESH2D_HPP
+ 
+-#include &quot;GLDrawGeometricalModelFunctor.hpp&quot;
++#include&lt;yade/pkg-common/GLDrawGeometricalModelFunctor.hpp&gt;
+ 
+ class GLDrawMesh2D : public GLDrawGeometricalModelFunctor
+ {	
+
+Modified: trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawQuadrilateral.cpp
+===================================================================
+--- trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawQuadrilateral.cpp	2008-07-21 13:27:29 UTC (rev 1437)
++++ trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawQuadrilateral.cpp	2008-07-21 21:14:18 UTC (rev 1438)
+@@ -7,7 +7,7 @@
+ *************************************************************************/
+ 
+ #include &quot;GLDrawQuadrilateral.hpp&quot;
+-#include &quot;Quadrilateral.hpp&quot;
++#include&lt;yade/pkg-common/Quadrilateral.hpp&gt;
+ #include&lt;yade/core/MetaBody.hpp&gt;
+ #include&lt;yade/lib-opengl/OpenGLWrapper.hpp&gt;
+ 
+
+Modified: trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawQuadrilateral.hpp
+===================================================================
+--- trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawQuadrilateral.hpp	2008-07-21 13:27:29 UTC (rev 1437)
++++ trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawQuadrilateral.hpp	2008-07-21 21:14:18 UTC (rev 1438)
+@@ -9,7 +9,7 @@
+ #ifndef GLDRAW_QUADRILATERAL_HPP
+ #define GLDRAW_QUADRILATERAL_HPP
+ 
+-#include &quot;GLDrawGeometricalModelFunctor.hpp&quot;
++#include&lt;yade/pkg-common/GLDrawGeometricalModelFunctor.hpp&gt;
+ 
+ class GLDrawQuadrilateral : public GLDrawGeometricalModelFunctor
+ {
+
+Modified: trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawSphere.cpp
+===================================================================
+--- trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawSphere.cpp	2008-07-21 13:27:29 UTC (rev 1437)
++++ trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawSphere.cpp	2008-07-21 21:14:18 UTC (rev 1438)
+@@ -7,7 +7,7 @@
+ *************************************************************************/
+ 
+ #include &quot;GLDrawSphere.hpp&quot;
+-#include &quot;Sphere.hpp&quot;
++#include&lt;yade/pkg-common/Sphere.hpp&gt;
+ #include&lt;yade/lib-opengl/OpenGLWrapper.hpp&gt;
+ 
+ 
+
+Modified: trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawSphere.hpp
+===================================================================
+--- trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawSphere.hpp	2008-07-21 13:27:29 UTC (rev 1437)
++++ trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawSphere.hpp	2008-07-21 21:14:18 UTC (rev 1438)
+@@ -9,7 +9,7 @@
+ #ifndef GLDRAWSPHERE_HPP
+ #define GLDRAWSPHERE_HPP
+ 
+-#include &quot;GLDrawGeometricalModelFunctor.hpp&quot;
++#include&lt;yade/pkg-common/GLDrawGeometricalModelFunctor.hpp&gt;
+ 
+ class GLDrawSphere : public GLDrawGeometricalModelFunctor
+ {
+
+Modified: trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawTetrahedron.cpp
+===================================================================
+--- trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawTetrahedron.cpp	2008-07-21 13:27:29 UTC (rev 1437)
++++ trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawTetrahedron.cpp	2008-07-21 21:14:18 UTC (rev 1438)
+@@ -7,7 +7,7 @@
+ *************************************************************************/
+ 
+ #include &quot;GLDrawTetrahedron.hpp&quot;
+-#include &quot;Tetrahedron.hpp&quot;
++#include&lt;yade/pkg-common/Tetrahedron.hpp&gt;
+ #include&lt;yade/lib-opengl/OpenGLWrapper.hpp&gt;
+ #include&lt;yade/lib-base/yadeWm3.hpp&gt;
+ 
+
+Modified: trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawTetrahedron.hpp
+===================================================================
+--- trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawTetrahedron.hpp	2008-07-21 13:27:29 UTC (rev 1437)
++++ trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawTetrahedron.hpp	2008-07-21 21:14:18 UTC (rev 1438)
+@@ -9,7 +9,7 @@
+ #ifndef GLDRAW_TETRAHEDRON_HPP
+ #define GLDRAW_TETRAHEDRON_HPP 
+ 
+-#include &quot;GLDrawGeometricalModelFunctor.hpp&quot;
++#include&lt;yade/pkg-common/GLDrawGeometricalModelFunctor.hpp&gt;
+ 
+ class GLDrawTetrahedron : public GLDrawGeometricalModelFunctor
+ {
+
+Modified: trunk/pkg/common/RenderingEngine/GLDrawInteractingGeometry/GLDrawInteractingBox.cpp
+===================================================================
+--- trunk/pkg/common/RenderingEngine/GLDrawInteractingGeometry/GLDrawInteractingBox.cpp	2008-07-21 13:27:29 UTC (rev 1437)
++++ trunk/pkg/common/RenderingEngine/GLDrawInteractingGeometry/GLDrawInteractingBox.cpp	2008-07-21 21:14:18 UTC (rev 1438)
+@@ -7,7 +7,7 @@
+ *************************************************************************/
+ 
+ #include &quot;GLDrawInteractingBox.hpp&quot;
+-#include &quot;InteractingBox.hpp&quot;
++#include&lt;yade/pkg-common/InteractingBox.hpp&gt;
+ #include&lt;yade/lib-opengl/OpenGLWrapper.hpp&gt;
+ 
+ void GLDrawInteractingBox::go(const shared_ptr&lt;InteractingGeometry&gt;&amp; cg, const shared_ptr&lt;PhysicalParameters&gt;&amp;,bool)
+
+Modified: trunk/pkg/common/RenderingEngine/GLDrawInteractingGeometry/GLDrawInteractingBox.hpp
+===================================================================
+--- trunk/pkg/common/RenderingEngine/GLDrawInteractingGeometry/GLDrawInteractingBox.hpp	2008-07-21 13:27:29 UTC (rev 1437)
++++ trunk/pkg/common/RenderingEngine/GLDrawInteractingGeometry/GLDrawInteractingBox.hpp	2008-07-21 21:14:18 UTC (rev 1438)
+@@ -9,7 +9,7 @@
+ #ifndef GLDRAWINTERACTIONBOX_HPP
+ #define GLDRAWINTERACTIONBOX_HPP
+ 
+-#include &quot;GLDrawInteractingGeometryFunctor.hpp&quot;
++#include&lt;yade/pkg-common/GLDrawInteractingGeometryFunctor.hpp&gt;
+ 
+ class GLDrawInteractingBox : public GLDrawInteractingGeometryFunctor
+ {
+
+Modified: trunk/pkg/common/RenderingEngine/GLDrawInteractingGeometry/GLDrawInteractingSphere.cpp
+===================================================================
+--- trunk/pkg/common/RenderingEngine/GLDrawInteractingGeometry/GLDrawInteractingSphere.cpp	2008-07-21 13:27:29 UTC (rev 1437)
++++ trunk/pkg/common/RenderingEngine/GLDrawInteractingGeometry/GLDrawInteractingSphere.cpp	2008-07-21 21:14:18 UTC (rev 1438)
+@@ -7,7 +7,7 @@
+ *************************************************************************/
+ 
+ #include &quot;GLDrawInteractingSphere.hpp&quot;
+-#include &quot;InteractingSphere.hpp&quot;
++#include&lt;yade/pkg-common/InteractingSphere.hpp&gt;
+ #include&lt;yade/lib-opengl/OpenGLWrapper.hpp&gt;
+ 
+ 
+
+Modified: trunk/pkg/common/RenderingEngine/GLDrawInteractingGeometry/GLDrawInteractingSphere.hpp
+===================================================================
+--- trunk/pkg/common/RenderingEngine/GLDrawInteractingGeometry/GLDrawInteractingSphere.hpp	2008-07-21 13:27:29 UTC (rev 1437)
++++ trunk/pkg/common/RenderingEngine/GLDrawInteractingGeometry/GLDrawInteractingSphere.hpp	2008-07-21 21:14:18 UTC (rev 1438)
+@@ -9,7 +9,7 @@
+ #ifndef __GLDRAWINTERACTIONSPHERE_HPP__
+ #define __GLDRAWINTERACTIONSPHERE_HPP__
+ 
+-#include &quot;GLDrawInteractingGeometryFunctor.hpp&quot;
++#include&lt;yade/pkg-common/GLDrawInteractingGeometryFunctor.hpp&gt;
+ 
+ class GLDrawInteractingSphere : public GLDrawInteractingGeometryFunctor
+ {	
+
+Modified: trunk/pkg/common/RenderingEngine/GLDrawInteractingGeometry/GLDrawMetaInteractingGeometry.hpp
+===================================================================
+--- trunk/pkg/common/RenderingEngine/GLDrawInteractingGeometry/GLDrawMetaInteractingGeometry.hpp	2008-07-21 13:27:29 UTC (rev 1437)
++++ trunk/pkg/common/RenderingEngine/GLDrawInteractingGeometry/GLDrawMetaInteractingGeometry.hpp	2008-07-21 21:14:18 UTC (rev 1438)
+@@ -9,7 +9,7 @@
+ #ifndef GLDRAWCOLLISIONGEOMETRYSET_HPP
+ #define GLDRAWCOLLISIONGEOMETRYSET_HPP
+ 
+-#include &quot;GLDrawInteractingGeometryFunctor.hpp&quot;
++#include&lt;yade/pkg-common/GLDrawInteractingGeometryFunctor.hpp&gt;
+ 
+ class GLDrawMetaInteractingGeometry : public GLDrawInteractingGeometryFunctor
+ {
+
+Modified: trunk/pkg/common/RenderingEngine/GLDrawInteractionGeometry/GLDrawClosestFeatures.cpp
+===================================================================
+--- trunk/pkg/common/RenderingEngine/GLDrawInteractionGeometry/GLDrawClosestFeatures.cpp	2008-07-21 13:27:29 UTC (rev 1437)
++++ trunk/pkg/common/RenderingEngine/GLDrawInteractionGeometry/GLDrawClosestFeatures.cpp	2008-07-21 21:14:18 UTC (rev 1438)
+@@ -7,7 +7,7 @@
+ *************************************************************************/
+ 
+ #include &quot;GLDrawClosestFeatures.hpp&quot;
+-#include &quot;ClosestFeatures.hpp&quot;
++#include&lt;yade/pkg-common/ClosestFeatures.hpp&gt;
+ 
+ 
+ #include&lt;yade/lib-opengl/OpenGLWrapper.hpp&gt;
+
+Modified: trunk/pkg/common/RenderingEngine/GLDrawInteractionGeometry/GLDrawClosestFeatures.hpp
+===================================================================
+--- trunk/pkg/common/RenderingEngine/GLDrawInteractionGeometry/GLDrawClosestFeatures.hpp	2008-07-21 13:27:29 UTC (rev 1437)
++++ trunk/pkg/common/RenderingEngine/GLDrawInteractionGeometry/GLDrawClosestFeatures.hpp	2008-07-21 21:14:18 UTC (rev 1438)
+@@ -9,7 +9,7 @@
+ #ifndef GLDRAW_CLOSEST_FEATURES_HPP
+ #define GLDRAW_CLOSEST_FEATURES_HPP
+ 
+-#include &quot;GLDrawInteractionGeometryFunctor.hpp&quot;
++#include&lt;yade/pkg-common/GLDrawInteractionGeometryFunctor.hpp&gt;
+ 
+ class GLDrawClosestFeatures : public GLDrawInteractionGeometryFunctor
+ {
+
+Modified: trunk/pkg/common/RenderingEngine/GLDrawInteractionPhysics/GLDrawSimpleElasticInteraction.cpp
+===================================================================
+--- trunk/pkg/common/RenderingEngine/GLDrawInteractionPhysics/GLDrawSimpleElasticInteraction.cpp	2008-07-21 13:27:29 UTC (rev 1437)
++++ trunk/pkg/common/RenderingEngine/GLDrawInteractionPhysics/GLDrawSimpleElasticInteraction.cpp	2008-07-21 21:14:18 UTC (rev 1438)
+@@ -7,7 +7,7 @@
+ *************************************************************************/
+ 
+ #include &quot;GLDrawSimpleElasticInteraction.hpp&quot;
+-#include &quot;SimpleElasticInteraction.hpp&quot;
++#include&lt;yade/pkg-common/SimpleElasticInteraction.hpp&gt;
+ 
+ 
+ #include&lt;yade/lib-opengl/OpenGLWrapper.hpp&gt;
+
+Modified: trunk/pkg/common/RenderingEngine/GLDrawInteractionPhysics/GLDrawSimpleElasticInteraction.hpp
+===================================================================
+--- trunk/pkg/common/RenderingEngine/GLDrawInteractionPhysics/GLDrawSimpleElasticInteraction.hpp	2008-07-21 13:27:29 UTC (rev 1437)
++++ trunk/pkg/common/RenderingEngine/GLDrawInteractionPhysics/GLDrawSimpleElasticInteraction.hpp	2008-07-21 21:14:18 UTC (rev 1438)
+@@ -9,7 +9,7 @@
+ #ifndef GLDRAW_SIMPLE_ELASTIC_INTERACTION_HPP
+ #define GLDRAW_SIMPLE_ELASTIC_INTERACTION_HPP
+ 
+-#include &quot;GLDrawInteractionPhysicsFunctor.hpp&quot;
++#include&lt;yade/pkg-common/GLDrawInteractionPhysicsFunctor.hpp&gt;
+ 
+ class GLDrawSimpleElasticInteraction : public GLDrawInteractionPhysicsFunctor
+ {
+
+Modified: trunk/pkg/common/RenderingEngine/GLDrawShadowVolume/GLDrawBoxShadowVolume.cpp
+===================================================================
+--- trunk/pkg/common/RenderingEngine/GLDrawShadowVolume/GLDrawBoxShadowVolume.cpp	2008-07-21 13:27:29 UTC (rev 1437)
++++ trunk/pkg/common/RenderingEngine/GLDrawShadowVolume/GLDrawBoxShadowVolume.cpp	2008-07-21 21:14:18 UTC (rev 1438)
+@@ -7,7 +7,7 @@
+ *************************************************************************/
+ 
+ #include &quot;GLDrawBoxShadowVolume.hpp&quot;
+-#include &quot;Box.hpp&quot;
++#include&lt;yade/pkg-common/Box.hpp&gt;
+ #include&lt;yade/lib-opengl/OpenGLWrapper.hpp&gt;
+ 
+ void GLDrawBoxShadowVolume::go(const shared_ptr&lt;GeometricalModel&gt;&amp; gm , const shared_ptr&lt;PhysicalParameters&gt;&amp; pp, const Vector3r&amp; lightPos)
+
+Modified: trunk/pkg/common/RenderingEngine/GLDrawShadowVolume/GLDrawBoxShadowVolume.hpp
+===================================================================
+--- trunk/pkg/common/RenderingEngine/GLDrawShadowVolume/GLDrawBoxShadowVolume.hpp	2008-07-21 13:27:29 UTC (rev 1437)
++++ trunk/pkg/common/RenderingEngine/GLDrawShadowVolume/GLDrawBoxShadowVolume.hpp	2008-07-21 21:14:18 UTC (rev 1438)
+@@ -9,7 +9,7 @@
+ #ifndef GLDRAWBOXSHADOWVOLUME_HPP
+ #define GLDRAWBOXSHADOWVOLUME_HPP
+ 
+-#include &quot;GLDrawShadowVolumeFunctor.hpp&quot;
++#include&lt;yade/pkg-common/GLDrawShadowVolumeFunctor.hpp&gt;
+ 
+ class GLDrawBoxShadowVolume : public GLDrawShadowVolumeFunctor
+ {
+
+Modified: trunk/pkg/common/RenderingEngine/GLDrawShadowVolume/GLDrawSphereShadowVolume.cpp
+===================================================================
+--- trunk/pkg/common/RenderingEngine/GLDrawShadowVolume/GLDrawSphereShadowVolume.cpp	2008-07-21 13:27:29 UTC (rev 1437)
++++ trunk/pkg/common/RenderingEngine/GLDrawShadowVolume/GLDrawSphereShadowVolume.cpp	2008-07-21 21:14:18 UTC (rev 1438)
+@@ -7,7 +7,7 @@
+ *************************************************************************/
+ 
+ #include &quot;GLDrawSphereShadowVolume.hpp&quot;
+-#include &quot;Sphere.hpp&quot;
++#include&lt;yade/pkg-common/Sphere.hpp&gt;
+ #include&lt;yade/lib-opengl/OpenGLWrapper.hpp&gt;
+ 
+ 
+
+Modified: trunk/pkg/common/RenderingEngine/GLDrawShadowVolume/GLDrawSphereShadowVolume.hpp
+===================================================================
+--- trunk/pkg/common/RenderingEngine/GLDrawShadowVolume/GLDrawSphereShadowVolume.hpp	2008-07-21 13:27:29 UTC (rev 1437)
++++ trunk/pkg/common/RenderingEngine/GLDrawShadowVolume/GLDrawSphereShadowVolume.hpp	2008-07-21 21:14:18 UTC (rev 1438)
+@@ -9,7 +9,7 @@
+ #ifndef GLDRAWSPHERESHADOWVOLUME_HPP
+ #define GLDRAWSPHERESHADOWVOLUME_HPP
+ 
+-#include &quot;GLDrawShadowVolumeFunctor.hpp&quot;
++#include&lt;yade/pkg-common/GLDrawShadowVolumeFunctor.hpp&gt;
+ 
+ class GLDrawSphereShadowVolume : public GLDrawShadowVolumeFunctor
+ {
+
+Modified: trunk/pkg/common/RenderingEngine/GLDrawState/GLDrawParticleState.cpp
+===================================================================
+--- trunk/pkg/common/RenderingEngine/GLDrawState/GLDrawParticleState.cpp	2008-07-21 13:27:29 UTC (rev 1437)
++++ trunk/pkg/common/RenderingEngine/GLDrawState/GLDrawParticleState.cpp	2008-07-21 21:14:18 UTC (rev 1438)
+@@ -7,7 +7,7 @@
+ *************************************************************************/
+ 
+ #include &quot;GLDrawParticleState.hpp&quot;
+-#include &quot;ParticleParameters.hpp&quot;
++#include&lt;yade/pkg-common/ParticleParameters.hpp&gt;
+ 
+ 
+ #include&lt;yade/lib-opengl/OpenGLWrapper.hpp&gt;
+
+Modified: trunk/pkg/common/RenderingEngine/GLDrawState/GLDrawParticleState.hpp
+===================================================================
+--- trunk/pkg/common/RenderingEngine/GLDrawState/GLDrawParticleState.hpp	2008-07-21 13:27:29 UTC (rev 1437)
++++ trunk/pkg/common/RenderingEngine/GLDrawState/GLDrawParticleState.hpp	2008-07-21 21:14:18 UTC (rev 1438)
+@@ -9,7 +9,7 @@
+ #ifndef GLDRAWPARTICLESTATE_HPP
+ #define GLDRAWPARTICLESTATE_HPP
+ 
+-#include &quot;GLDrawStateFunctor.hpp&quot;
++#include&lt;yade/pkg-common/GLDrawStateFunctor.hpp&gt;
+ 
+ class GLDrawParticleState : public GLDrawStateFunctor
+ {
+
+Modified: trunk/pkg/common/RenderingEngine/GLDrawState/GLDrawRigidBodyState.cpp
+===================================================================
+--- trunk/pkg/common/RenderingEngine/GLDrawState/GLDrawRigidBodyState.cpp	2008-07-21 13:27:29 UTC (rev 1437)
++++ trunk/pkg/common/RenderingEngine/GLDrawState/GLDrawRigidBodyState.cpp	2008-07-21 21:14:18 UTC (rev 1438)
+@@ -7,8 +7,8 @@
+ *************************************************************************/
+ 
+ #include &quot;GLDrawRigidBodyState.hpp&quot;
+-#include &quot;GLDrawParticleState.hpp&quot;
+-#include &quot;RigidBodyParameters.hpp&quot;
++#include&lt;yade/pkg-common/GLDrawParticleState.hpp&gt;
++#include&lt;yade/pkg-common/RigidBodyParameters.hpp&gt;
+ 
+ 
+ #include&lt;yade/lib-opengl/OpenGLWrapper.hpp&gt;
+
+Modified: trunk/pkg/common/RenderingEngine/GLDrawState/GLDrawRigidBodyState.hpp
+===================================================================
+--- trunk/pkg/common/RenderingEngine/GLDrawState/GLDrawRigidBodyState.hpp	2008-07-21 13:27:29 UTC (rev 1437)
++++ trunk/pkg/common/RenderingEngine/GLDrawState/GLDrawRigidBodyState.hpp	2008-07-21 21:14:18 UTC (rev 1438)
+@@ -9,7 +9,7 @@
+ #ifndef GLDRAWRIGIDBODYSTATE_HPP
+ #define GLDRAWRIGIDBODYSTATE_HPP
+ 
+-#include &quot;GLDrawStateFunctor.hpp&quot;
++#include&lt;yade/pkg-common/GLDrawStateFunctor.hpp&gt;
+ 
+ class GLDrawRigidBodyState : public GLDrawStateFunctor
+ {
+
+Modified: trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.hpp
+===================================================================
+--- trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.hpp	2008-07-21 13:27:29 UTC (rev 1437)
++++ trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.hpp	2008-07-21 21:14:18 UTC (rev 1438)
+@@ -14,13 +14,13 @@
+ #include&lt;yade/core/MetaEngine1D.hpp&gt;
+ #include&lt;yade/core/Body.hpp&gt;
+ 
+-#include &quot;GLDrawStateFunctor.hpp&quot;
+-#include &quot;GLDrawBoundingVolumeFunctor.hpp&quot;
+-#include &quot;GLDrawInteractingGeometryFunctor.hpp&quot;
+-#include &quot;GLDrawGeometricalModelFunctor.hpp&quot;
+-#include &quot;GLDrawShadowVolumeFunctor.hpp&quot;
+-#include &quot;GLDrawInteractionPhysicsFunctor.hpp&quot;
+-#include &quot;GLDrawInteractionGeometryFunctor.hpp&quot;
++#include&lt;yade/pkg-common/GLDrawStateFunctor.hpp&gt;
++#include&lt;yade/pkg-common/GLDrawBoundingVolumeFunctor.hpp&gt;
++#include&lt;yade/pkg-common/GLDrawInteractingGeometryFunctor.hpp&gt;
++#include&lt;yade/pkg-common/GLDrawGeometricalModelFunctor.hpp&gt;
++#include&lt;yade/pkg-common/GLDrawShadowVolumeFunctor.hpp&gt;
++#include&lt;yade/pkg-common/GLDrawInteractionPhysicsFunctor.hpp&gt;
++#include&lt;yade/pkg-common/GLDrawInteractionGeometryFunctor.hpp&gt;
+ 
+ class OpenGLRenderingEngine : public RenderingEngine
+ {	
+@@ -33,7 +33,6 @@
+ 		vector&lt;Se3r&gt; clipPlaneSe3;
+ 		vector&lt;int&gt; clipPlaneActive; // should be bool, but serialization doesn't handle vector&lt;bool&gt;
+ 		const int clipPlaneNum;
+-
+ 		vector&lt;Se3r&gt; refSe3;
+ 		bool scaleDisplacements,scaleRotations;
+ 		Vector3r displacementScale; Real rotationScale;
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/SQLiteRecorder.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/SQLiteRecorder.cpp	2008-07-21 13:27:29 UTC (rev 1437)
++++ trunk/pkg/dem/Engine/StandAloneEngine/SQLiteRecorder.cpp	2008-07-21 21:14:18 UTC (rev 1438)
+@@ -1,3 +1,4 @@
++// 2008 &#169; V&#225;clav &#352;milauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">eudoxos at arcig.cz</A>&gt; 
+ #include&quot;SQLiteRecorder.hpp&quot;
+ #include&lt;boost/algorithm/string.hpp&gt;
+ #include&lt;boost/filesystem/operations.hpp&gt;
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000397.html">[Yade-commits] r1437 - in trunk: gui gui/py	pkg/common/Engine/EngineUnit
+</A></li>
+	<LI>Next message: <A HREF="000399.html">[Yade-commits] r1439 - trunk/pkg/common/Engine/DeusExMachina
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#398">[ date ]</a>
+              <a href="thread.html#398">[ thread ]</a>
+              <a href="subject.html#398">[ subject ]</a>
+              <a href="author.html#398">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

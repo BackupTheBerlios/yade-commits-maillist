@@ -1,0 +1,137 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1312 - in trunk/pkg/common/Engine: MetaEngine	StandAloneEngine
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1312%20-%20in%20trunk/pkg/common/Engine%3A%20MetaEngine%0A%09StandAloneEngine&In-Reply-To=%3C200804140309.m3E39oLt021962%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000274.html">
+   <LINK REL="Next"  HREF="000276.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1312 - in trunk/pkg/common/Engine: MetaEngine	StandAloneEngine</H1>
+    <B>chareyre at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1312%20-%20in%20trunk/pkg/common/Engine%3A%20MetaEngine%0A%09StandAloneEngine&In-Reply-To=%3C200804140309.m3E39oLt021962%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1312 - in trunk/pkg/common/Engine: MetaEngine	StandAloneEngine">chareyre at mail.berlios.de
+       </A><BR>
+    <I>Mon Apr 14 05:09:50 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000274.html">[Yade-commits] r1311 - trunk/pkg/dem/Engine/StandAloneEngine
+</A></li>
+        <LI>Next message: <A HREF="000276.html">[Yade-commits] r1313 - trunk/pkg/dem/Engine/DeusExMachina
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#275">[ date ]</a>
+              <a href="thread.html#275">[ thread ]</a>
+              <a href="subject.html#275">[ subject ]</a>
+              <a href="author.html#275">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: chareyre
+Date: 2008-04-14 05:09:50 +0200 (Mon, 14 Apr 2008)
+New Revision: 1312
+
+Modified:
+   trunk/pkg/common/Engine/MetaEngine/InteractionGeometryMetaEngine.cpp
+   trunk/pkg/common/Engine/StandAloneEngine/PersistentSAPCollider.cpp
+Log:
+This reverts a previous change in IGMetaEngine from Janek (interactions were set &quot;new&quot; when not real - problem was that 
+non-distant interactions are ALWAYS &quot;not real&quot; when starting IG dispatching - so they were set new and reseted at 
+each timestep, which disabled friction).
+What was supposed to be done in IGMetaengine is now replaced by something almost equivalent in the SAPcollider (the 
+difference is that if an interaction is not real before being reseted by the collider, it really means that it is 
+not-overlaping and not-physicaly-interacting).
+
+To summarize current behaviour :
+
+1- if (!haveDistantTransient), isReal=false at the begining of each iteration, and isReal=(collision detected?) after 
+geometry dispatching.
+
+2- if (haveDistantTransient), isReal=false until a collision is detected or a physical link is created. Once 
+isReal=true, it will not be resetted by the collider, and neither will geometry dispatching affect it, it can be 
+set to false only by the constitutive law.
+
+Note : We can't mix, e.g. ElasticContactLaw and CohesiveFrictionalContactLaw currently, since one needs 
+(!haveDistantTransient) and the other needs (haveDistantTransient). Perhaps define one &quot;isDistant&quot; flag for 
+each interaction rather than one global flag in the collider? Then the collider would reset isReal only for not-distant 
+interactions.
+
+Note (2) : The meaning of (isDistant) is close to &quot;isPersistent&quot; while (!isDistant) means &quot;transient&quot;. There is no 
+point keeping the old persistentInteractions now, except for compatibility with old users code (like Wen Jie).
+
+
+
+
+
+Modified: trunk/pkg/common/Engine/MetaEngine/InteractionGeometryMetaEngine.cpp
+===================================================================
+--- trunk/pkg/common/Engine/MetaEngine/InteractionGeometryMetaEngine.cpp	2008-04-10 19:06:01 UTC (rev 1311)
++++ trunk/pkg/common/Engine/MetaEngine/InteractionGeometryMetaEngine.cpp	2008-04-14 03:09:50 UTC (rev 1312)
+@@ -42,7 +42,7 @@
+ 		shared_ptr&lt;Body&gt;&amp; b1 = (*bodies)[interaction-&gt;getId1()];
+ 		shared_ptr&lt;Body&gt;&amp; b2 = (*bodies)[interaction-&gt;getId2()];
+ 		
+-		bool wasReal = interaction-&gt;isReal;
++		//bool wasReal = interaction-&gt;isReal;
+ 		interaction-&gt;isReal =
+ 			b1-&gt;interactingGeometry &amp;&amp; b2-&gt;interactingGeometry &amp;&amp; // some bodies do not have interactingGeometry
+ 			// FIXME put this inside VolatileInteractionCriterion dynlib
+@@ -51,8 +51,8 @@
+ 			operator()( b1-&gt;interactingGeometry , b2-&gt;interactingGeometry , b1-&gt;physicalParameters-&gt;se3 , b2-&gt;physicalParameters-&gt;se3 , interaction );
+ 
+ 
+-		if(wasReal==false &amp;&amp; interaction-&gt;isReal)
+-			interaction-&gt;isNew=true;
++		//if(wasReal==false &amp;&amp; interaction-&gt;isReal)
++		//	interaction-&gt;isNew=true;
+ 		//cerr&lt;&lt;&quot;isReal=&quot;&lt;&lt;interaction-&gt;isReal&lt;&lt;&quot;, wasReal=&quot;&lt;&lt;wasReal&lt;&lt;&quot;, isNew=&quot;&lt;&lt;interaction-&gt;isNew&lt;&lt;endl;
+ 
+ 		//tmp
+
+Modified: trunk/pkg/common/Engine/StandAloneEngine/PersistentSAPCollider.cpp
+===================================================================
+--- trunk/pkg/common/Engine/StandAloneEngine/PersistentSAPCollider.cpp	2008-04-10 19:06:01 UTC (rev 1311)
++++ trunk/pkg/common/Engine/StandAloneEngine/PersistentSAPCollider.cpp	2008-04-14 03:09:50 UTC (rev 1312)
+@@ -74,7 +74,8 @@
+ 	transientInteractions = ncb-&gt;transientInteractions;	
+ 	InteractionContainer::iterator I_end = transientInteractions-&gt;end();
+ 	for(InteractionContainer::iterator I=transientInteractions-&gt;begin(); I!=I_end; ++I) {
+-		if ((*I)-&gt;isReal) (*I)-&gt;isNew=false; // FIXME : remove this isNew flag and test if interactionPhysic ?
++		if ((*I)-&gt;isReal) (*I)-&gt;isNew=false; // 
++		else (*I)-&gt;isNew=true;
+ 		if(!haveDistantTransient) (*I)-&gt;isReal=false; // reset this flag, is used later... (??)
+ 	}
+ 	
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000274.html">[Yade-commits] r1311 - trunk/pkg/dem/Engine/StandAloneEngine
+</A></li>
+	<LI>Next message: <A HREF="000276.html">[Yade-commits] r1313 - trunk/pkg/dem/Engine/DeusExMachina
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#275">[ date ]</a>
+              <a href="thread.html#275">[ thread ]</a>
+              <a href="subject.html#275">[ subject ]</a>
+              <a href="author.html#275">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

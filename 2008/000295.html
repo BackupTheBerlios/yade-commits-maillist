@@ -1,0 +1,1022 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1333 - in trunk/gui: . py
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1333%20-%20in%20trunk/gui%3A%20.%20py&In-Reply-To=%3C200805010623.m416NbOu001667%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000294.html">
+   <LINK REL="Next"  HREF="000296.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1333 - in trunk/gui: . py</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1333%20-%20in%20trunk/gui%3A%20.%20py&In-Reply-To=%3C200805010623.m416NbOu001667%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1333 - in trunk/gui: . py">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Thu May  1 08:23:37 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000294.html">[Yade-commits] r1332 - trunk/gui/cmd
+</A></li>
+        <LI>Next message: <A HREF="000296.html">[Yade-commits] r1334 - in trunk: core gui gui/py scripts
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#295">[ date ]</a>
+              <a href="thread.html#295">[ thread ]</a>
+              <a href="subject.html#295">[ subject ]</a>
+              <a href="author.html#295">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2008-05-01 08:23:36 +0200 (Thu, 01 May 2008)
+New Revision: 1333
+
+Added:
+   trunk/gui/py/
+   trunk/gui/py/__init__.py
+   trunk/gui/py/attrUtils.cpp
+   trunk/gui/py/cmdGui.cpp
+   trunk/gui/py/cmdGuiInit.py
+   trunk/gui/py/runtime.py
+   trunk/gui/py/utils.py
+   trunk/gui/py/yadeControl.cpp
+Removed:
+   trunk/gui/cmd/
+   trunk/gui/py/attrUtils.cpp
+   trunk/gui/py/cmdGui.cpp
+   trunk/gui/py/cmdGuiInit.py
+   trunk/gui/py/yadeControl.cpp
+Modified:
+   trunk/gui/SConscript
+Log:
+1. Commit before other changes.
+
+
+Modified: trunk/gui/SConscript
+===================================================================
+--- trunk/gui/SConscript	2008-04-30 14:28:23 UTC (rev 1332)
++++ trunk/gui/SConscript	2008-05-01 06:23:36 UTC (rev 1333)
+@@ -38,13 +38,13 @@
+ 
+ if 'EMBED_PYTHON' in env['CPPDEFINES']:
+ 	env.Install('$PREFIX/lib/yade$SUFFIX/gui',[
+-		env.SharedLibrary('cmdGui',['cmd/cmdGui.cpp']),
+-		env.File('cmdGuiInit.py','cmd'),
++		env.SharedLibrary('PythonUI',['py/PythonUI.cpp']),
++		# env.File('PythonUIInit.py','py'),
+ 	])
+ 	# one level deeper so that you can say: from yade.wrapper import *
+ 	# (more submodules to come)
+ 	env.Install('$PREFIX/lib/yade$SUFFIX/gui/yade',[
+-		env.SharedLibrary('wrapper',['cmd/yadeControl.cpp','cmd/GLViewer4.cpp'],SHLIBPREFIX='',
++		env.SharedLibrary('wrapper',['py/yadeControl.cpp','py/GLViewer4.cpp'],SHLIBPREFIX='',
+ 			LIBS=env['LIBS']+['yade-base','libboost_python','XMLFormatManager','yade-factory','yade-serialization','Shop',
+ 				'BoundingVolumeMetaEngine',
+ 				'GeometricalModelMetaEngine',
+@@ -57,8 +57,8 @@
+ 			#CPPPATH=env['CPPPATH']+['/usr/include/qt4','/usr/include/qt4/Qt','/usr/include/qt4/QtXml','/usr/include/qt4/QtOpenGL','/usr/include/qt4/QtCore','/usr/include/qt4/QtGui'],
+ 			CPPDEFINES=env['CPPDEFINES']+['NO_PYGLVIEWER'],
+ 			),
+-		env.File('__init__.py','cmd'),
+-		env.File('utils.py','cmd'),
+-		env.File('runtime.py','cmd'),
++		env.File('__init__.py','py'),
++		env.File('utils.py','py'),
++		env.File('runtime.py','py'),
+ 	])
+ 
+
+Copied: trunk/gui/py (from rev 1328, trunk/gui/cmd)
+
+Copied: trunk/gui/py/__init__.py (from rev 1332, trunk/gui/cmd/__init__.py)
+
+Deleted: trunk/gui/py/attrUtils.cpp
+===================================================================
+--- trunk/gui/cmd/attrUtils.cpp	2008-04-18 15:58:17 UTC (rev 1328)
++++ trunk/gui/py/attrUtils.cpp	2008-05-01 06:23:36 UTC (rev 1333)
+@@ -1,142 +0,0 @@
+-#include&lt;sstream&gt;
+-#include&lt;boost/any.hpp&gt;
+-#include&lt;map&gt;
+-#include&lt;vector&gt;
+-#include&lt;boost/shared_ptr.hpp&gt;
+-#include&lt;yade/lib-serialization-xml/XMLFormatManager.hpp&gt;
+-#include&lt;boost/python.hpp&gt;
+-
+-using namespace std;
+-using namespace boost;
+-
+-/*! Define inline proxy functions that access attributes of some object associated with this class.
+- * \param accessor is an shared_ptr&lt;AttrAccess&gt; (or AttrAccess*), properly initialized and associated with the object of your choice
+- * \param ensureFunc is member function called before every attribute access. It typically would check whether acessor is not NULL, otherwise instantiate it.
+- */
+-#define ATTR_ACCESS_CXX(accessor,ensureFunc) \
+-	boost::python::object wrappedPyGet(std::string key){ensureFunc();return accessor-&gt;pyGet(key);} \
+-	void wrappedPySet(std::string key,python::object val){ensureFunc(); accessor-&gt;pySet(key,val);} \
+-	boost::python::list wrappedPyKeys(){ensureFunc(); return accessor-&gt;pyKeys();} 
+-	
+-/*! Python special functions complementing proxies defined by ATTR_ACCESS_CXX, to be used with boost::python::class_&lt;&gt;.
+- *
+- * They define python special functions that support dictionary operations on this object and calls proxies for them. */
+-#define ATTR_ACCESS_PY(cxxClass) \
+-	def(&quot;__getitem__&quot;,&amp;cxxClass::wrappedPyGet).def(&quot;__setitem__&quot;,&amp;cxxClass::wrappedPySet).def(&quot;keys&quot;,&amp;cxxClass::wrappedPyKeys)
+-	//def(&quot;__getattr__&quot;,&amp;cxxClass::wrappedPyGet).def(&quot;__setattr__&quot;,&amp;cxxClass::wrappedPySet).def(&quot;attrs&quot;,&amp;cxxClass::wrappedPyKeys)
+-
+-
+-/*! Helper class for accessing registered attributes through the serialization interface.
+- *
+- * 4 possible types of attributes are supported: bool, string, number, array of numbers.
+- * This class exposes pySet, pyGet and pyKeys methods to python so that associated object supports python syntax for dictionary member access.
+- */
+-class AttrAccess{
+-	struct AttrDesc{int type; shared_ptr&lt;Archive&gt; archive;};
+-	private:
+-		const shared_ptr&lt;Serializable&gt; ser;
+-		Serializable::Archives archives;
+-	public:
+-		DECLARE_LOGGER;
+-		typedef map&lt;string,AttrDesc&gt; DescriptorMap;
+-		//! maps attribute name to its archive and vector of its types (given as ints, from the following enum)
+-		DescriptorMap descriptors;
+-		//! allowed types
+-		enum {BOOL,STRING,NUMBER, SEQ_NUMBER, SEQ_STRING }; // allowed types
+-		
+-		AttrAccess(Serializable* _ser): ser(shared_ptr&lt;Serializable&gt;(_ser)){init();}
+-		AttrAccess(shared_ptr&lt;Serializable&gt; _ser):ser(_ser){init();}
+-
+-		//! create archives and descriptors, always called from the constructor
+-		void init(){
+-			if(ser-&gt;getArchives().empty()) ser-&gt;registerSerializableAttributes(false);
+-			archives=ser-&gt;getArchives();
+-			for(Serializable::Archives::iterator ai=archives.begin();ai!=archives.end();++ai){
+-				if((*ai)-&gt;isFundamental() &amp;&amp; (*ai)-&gt;getName()!=&quot;serializationDynlib&quot;){
+-					AttrDesc desc; 
+-					desc.archive=*ai;
+-					any instance=(*ai)-&gt;getAddress(); // gets pointer to the stored value
+-					// 3 possibilities: one BOOL, one STRING, one or more NUMBERs
+-					if      (any_cast&lt;string*&gt;(&amp;instance)) desc.type=AttrAccess::STRING;
+-					else if (any_cast&lt;bool*&gt;(&amp;instance))   desc.type=AttrAccess::BOOL;
+-					else if (any_cast&lt;Real*&gt;(&amp;instance) || any_cast&lt;int*&gt;(&amp;instance) || any_cast&lt;unsigned int*&gt;(&amp;instance) || any_cast&lt;long*&gt;(&amp;instance) || any_cast&lt;unsigned long*&gt;(&amp;instance)) desc.type=AttrAccess::NUMBER;
+-					else if (any_cast&lt;vector&lt;string&gt;*&gt;(&amp;instance)) desc.type=AttrAccess::SEQ_STRING;
+-					//else if (any_cast&lt;vector&lt;Real&gt;*&gt;(&amp;instance)) desc.type=AttrAccess::SEQ_NUMBER;
+-					else desc.type=AttrAccess::SEQ_NUMBER;
+-					descriptors[(*ai)-&gt;getName()]=desc;
+-				}
+-			}
+-		}
+-		
+-		//! Return serialized attribute by its name, as vector of strings
+-		vector&lt;string&gt; getAttrStr(string name){
+-			vector&lt;string&gt; ret;
+-			shared_ptr&lt;Archive&gt; arch=descriptors[name].archive;
+-			stringstream stream;
+-			arch-&gt;serialize(stream,*arch,0);
+-			IOFormatManager::parseFundamental(stream.str(),ret);
+-			return ret;
+-		}
+-		//! name, values and types of given attribute, on one line as string
+-		string dumpAttr(string name){
+-			string vals,types; AttrDesc desc=descriptors[name]; vector&lt;string&gt; values=getAttrStr(name);
+-			for(size_t i=0; i&lt;values.size(); i++) vals+=(i&gt;0?&quot; &quot;:&quot;&quot;)+values[i];
+-			string typeDesc(desc.type==BOOL?&quot;BOOL&quot;:(desc.type==STRING?&quot;STRING&quot;:(desc.type==NUMBER?&quot;NUMBER&quot;:(desc.type==SEQ_NUMBER?&quot;SEQ_NUMBER&quot;:(desc.type==SEQ_STRING?&quot;SEQ_STRING&quot;:&quot;&lt;unknown&gt;&quot;)))));
+-			return name+&quot; =\t&quot;+vals+&quot;\t (&quot;+typeDesc+&quot;)&quot;;
+-		}
+-		//! call dumpAttr for all attributes (used for debugging)
+-		string dumpAttrs(){ string ret; for(DescriptorMap::iterator I=descriptors.begin();I!=descriptors.end();I++) ret+=dumpAttr(I-&gt;first)+&quot;\n&quot;; return ret;}
+-		//! set attribute by name from its serialized value
+-		void setAttrStr(string name, string value){
+-			LOG_DEBUG(&quot;Will set `&quot;&lt;&lt;name&lt;&lt;&quot;' to `&quot;&lt;&lt;value&lt;&lt;&quot;'.&quot;);
+-			stringstream voidStream;
+-			descriptors[name].archive-&gt;deserialize(voidStream,*(descriptors[name].archive),value);
+-		}
+-		//! return python list of keys (attribute names)
+-		boost::python::list pyKeys(){boost::python::list ret; for(DescriptorMap::iterator I=descriptors.begin();I!=descriptors.end();I++)ret.append(I-&gt;first); return ret;}
+-
+-		//! return attribute value as python object
+-		boost::python::object pyGet(std::string key){
+-			DescriptorMap::iterator I=descriptors.find(key);
+-			if(I==descriptors.end()) throw std::invalid_argument(string(&quot;Invalid key: `&quot;)+key+&quot;'.&quot;);
+-			vector&lt;string&gt; raw=getAttrStr(key);
+-			LOG_DEBUG(&quot;Got raw attribute `&quot;&lt;&lt;key&lt;&lt;&quot;'&quot;);
+-			switch(descriptors[key].type){
+-				case BOOL: return python::object(lexical_cast&lt;bool&gt;(raw[0]));
+-				case NUMBER: return python::object(lexical_cast&lt;double&gt;(raw[0]));
+-				case STRING: return python::object(raw[0]);
+-				case SEQ_STRING: {python::list ret; for(size_t i=0; i&lt;raw.size(); i++) ret.append(python::object(raw[i])); return ret;}
+-				case SEQ_NUMBER: {python::list ret; for(size_t i=0; i&lt;raw.size(); i++){ ret.append(python::object(lexical_cast&lt;double&gt;(raw[i]))); LOG_TRACE(&quot;Appended &quot;&lt;&lt;raw[i]);} return ret; }
+-				default: throw runtime_error(&quot;Unhandled attribute type!&quot;);
+-			}
+-		}
+-		//! set attribute value from python object
+-		void pySet(std::string key, python::object val){
+-			DescriptorMap::iterator I=descriptors.find(key);
+-			if(I==descriptors.end()) throw std::invalid_argument(string(&quot;Invalid key: `&quot;)+key+&quot;'.&quot;);
+-			#define SAFE_EXTRACT(from,to,type) python::extract&lt;type&gt; to(from); if(!to.check()) throw invalid_argument(string(&quot;Could not extract type &quot;)+#type);
+-			switch(descriptors[key].type){
+-				case BOOL: {SAFE_EXTRACT(val.ptr(),extr,bool); setAttrStr(key,extr()?&quot;1&quot;:&quot;0&quot;); break;}
+-				case NUMBER: {SAFE_EXTRACT(val.ptr(),extr,double); setAttrStr(key,lexical_cast&lt;string&gt;(extr())); break; }
+-				case STRING: {SAFE_EXTRACT(val.ptr(),extr,string); setAttrStr(key,extr()); break;}
+-				case SEQ_STRING:{
+-					if(!PySequence_Check(val.ptr())) throw invalid_argument(&quot;String sequence argument required.&quot;);
+-					string strVal(&quot;[&quot;);
+-					for(int i=0; i&lt;PySequence_Size(val.ptr()); i++){SAFE_EXTRACT(PySequence_GetItem(val.ptr(),i),extr,string); strVal+=extr()+&quot; &quot;;}
+-					setAttrStr(key,strVal+&quot;]&quot;);
+-				} 
+-				break;
+-				case SEQ_NUMBER:{
+-					if(!PySequence_Check(val.ptr())) throw invalid_argument(&quot;Number sequence argument required.&quot;);
+-					string strVal(&quot;{&quot;);
+-					for(int i=0; i&lt;PySequence_Size(val.ptr()); i++){SAFE_EXTRACT(PySequence_GetItem(val.ptr(),i),extr,double); strVal+=lexical_cast&lt;string&gt;(extr())+&quot; &quot;;}
+-					setAttrStr(key,strVal+&quot;}&quot;);
+-				}
+-				break;
+-				default: throw runtime_error(&quot;Invalid argument types!!&quot;);
+-			}
+-		}
+-};
+-
+-CREATE_LOGGER(AttrAccess);
+-
+
+Copied: trunk/gui/py/attrUtils.cpp (from rev 1332, trunk/gui/cmd/attrUtils.cpp)
+
+Deleted: trunk/gui/py/cmdGui.cpp
+===================================================================
+--- trunk/gui/cmd/cmdGui.cpp	2008-04-18 15:58:17 UTC (rev 1328)
++++ trunk/gui/py/cmdGui.cpp	2008-05-01 06:23:36 UTC (rev 1333)
+@@ -1,87 +0,0 @@
+-//#include&lt;Python.h&gt;
+-#include&lt;boost/thread/thread.hpp&gt;
+-#include&lt;boost/python.hpp&gt;
+-#include&lt;errno.h&gt;
+-
+-#include&quot;cmdGui.hpp&quot;
+-
+-#include &lt;X11/Xlib.h&gt;
+-
+-using namespace boost;
+-
+-//void cmdlineThreadStart(){
+-//}
+-
+-CREATE_LOGGER(cmdGui);
+-
+-void cmdGui::help(){
+-	cerr&lt;&lt;&quot; cmdGui (python console) frontend.\n\
+-\n\
+-	-h       print this help\n\
+-	-s file  run this python script before entering interactive prompt\n\
+-	/* -c cmd   run python command (may be specified multiple times, newline is appended every time) */ \n\
+-\n\
+-	Sample session:\n\
+-\n\
+-	&gt;&gt;&gt; p=Preprocessor\n\
+-	&gt;&gt;&gt; p.generator='Funnel'\n\
+-	&gt;&gt;&gt; p['density']=2000\n\
+-	&gt;&gt;&gt; p.output='/tmp/funnel.xml'\n\
+-	&gt;&gt;&gt; p.generate()\n\
+-	&gt;&gt;&gt; o=Omega()\n\
+-	&gt;&gt;&gt; o.run()\n\
+-	&gt;&gt;&gt; # ^D to exit\n\
+-&quot;;
+-}
+-
+-void cmdGui::execScript(string script){
+-	LOG_DEBUG(&quot;Python will now run file `&quot;&lt;&lt;script&lt;&lt;&quot;'.&quot;);
+-	FILE* scriptFILE=fopen(script.c_str(),&quot;r&quot;);
+-	if(scriptFILE){
+-		PyRun_SimpleFile(scriptFILE,script.c_str());
+-	}
+-	else{
+-		string strerr(strerror(errno));
+-		LOG_ERROR(&quot;Unable to open file `&quot;&lt;&lt;script&lt;&lt;&quot;': &quot;&lt;&lt;strerr&lt;&lt;&quot;.&quot;);
+-	}
+-}
+-
+-int cmdGui::run(int argc, char *argv[]) {
+-	string runScript;
+-	string runCommands;
+-	
+-	int ch;
+-	while((ch=getopt(argc,argv,&quot;hs:&quot;))!=-1)
+-	switch(ch){
+-		case 'h': help(); return 1;
+-		case 's': runScript=string(optarg); break;
+-		//case 'c': runCommands+=string(optarg)+&quot;\n&quot;; break;
+-		default: break;
+-	}
+-
+-	XInitThreads();
+-	PyEval_InitThreads();
+-
+-	PyGILState_STATE pyState = PyGILState_Ensure();
+-
+-		#define PYTHON_DEFINE_STRING(pyName,cxxName) PyRun_SimpleString((string(pyName)+&quot;='&quot;+string(cxxName)+&quot;'&quot;).c_str())
+-		// wrap those in python::handle&lt;&gt; ??
+-		PYTHON_DEFINE_STRING(&quot;yadePrefix&quot;,PREFIX);
+-		PYTHON_DEFINE_STRING(&quot;yadeSuffix&quot;,SUFFIX);
+-		PYTHON_DEFINE_STRING(&quot;yadeExecutable&quot;,Omega::instance().origArgv[0]);
+-		PYTHON_DEFINE_STRING(&quot;yadeRunSimulation&quot;,Omega::instance().getSimulationFileName());
+-		PYTHON_DEFINE_STRING(&quot;yadeRunScript&quot;,runScript);
+-		PYTHON_DEFINE_STRING(&quot;yadeRunCommands&quot;,runCommands);
+-		#undef PYTHON_DEFINE_STRING
+-		execScript(PREFIX &quot;/lib/yade&quot; SUFFIX &quot;/gui/cmdGuiInit.py&quot;);
+-		
+-		//PyRun_InteractiveLoop(stdin,&quot;&lt;console&gt;&quot;);
+-
+-	PyGILState_Release(pyState);
+-
+-	//boost::thread cmdlineThread(&amp;cmdlineThreadStart);
+-	//cmdlineThread.join();
+-
+-	return 0;
+-}
+-
+
+Copied: trunk/gui/py/cmdGui.cpp (from rev 1332, trunk/gui/cmd/cmdGui.cpp)
+
+Deleted: trunk/gui/py/cmdGuiInit.py
+===================================================================
+--- trunk/gui/cmd/cmdGuiInit.py	2008-04-18 15:58:17 UTC (rev 1328)
++++ trunk/gui/py/cmdGuiInit.py	2008-05-01 06:23:36 UTC (rev 1333)
+@@ -1,50 +0,0 @@
+-# os.path contains $PREFIX/lib/yade$SUFFIX/{extra,gui}
+-# YADE_CONFIG_DIR=~/.yade$SUFFIX is defined
+-#
+-
+-## initialization
+-import sys
+-sys.path.insert(0,yadePrefix+'/lib/yade'+yadeSuffix+'/extra')
+-sys.path.insert(0,yadePrefix+'/lib/yade'+yadeSuffix+'/gui')
+-from yadeControl import *
+-sys.excepthook=sys.__excepthook__ # apport on ubuntu override this, we don't need it
+-
+-## run simulation if requested from the command line
+-if yadeRunSimulation:
+-	print &quot;Running simulation &quot;+yadeRunSimulation
+-	o=Omega(); o.load(yadeRunSimulation); o.run();
+-
+-## run script if requested from the command line
+-if yadeRunScript:
+-	print &quot;Running script &quot;+yadeRunScript
+-	execfile(yadeRunScript)
+-
+-# run commands if requested from the command line
+-#if yadeRunCommands:
+-#	print &quot;Running commands from commandline: &quot;+yadeRunCommands
+-#	exec(yadeRunCommands)
+-
+-try:
+-	# prefer ipython, since it is colorful and cool
+-	from IPython.Shell import IPShellEmbed
+-	sys.argv=['&lt;embedded python interpreter&gt;']
+-	ipshell = IPShellEmbed()
+-	ipshell()
+-except ImportError:
+-	## no ipython :-(, let's emulate it
+-	# <A HREF="http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/473900">http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/473900</A>
+-	import os, readline, rlcompleter, atexit
+-	history_file = os.path.join(os.environ['HOME']+'/.yade_python_history')
+-	try:
+-	    readline.read_history_file(history_file)
+-	except IOError:
+-	    pass
+-	readline.parse_and_bind(&quot;tab: complete&quot;)
+-	readline.set_history_length(1000)
+-	atexit.register(readline.write_history_file, history_file) # FIXME: this will probably not work!
+-	#del os, readline, rlcompleter, atexit, history_file, __file__
+-
+-	# run interactive loop
+-	import code
+-	code.InteractiveConsole(globals()).interact()
+-	
+
+Copied: trunk/gui/py/cmdGuiInit.py (from rev 1332, trunk/gui/cmd/cmdGuiInit.py)
+
+Copied: trunk/gui/py/runtime.py (from rev 1332, trunk/gui/cmd/runtime.py)
+
+Copied: trunk/gui/py/utils.py (from rev 1332, trunk/gui/cmd/utils.py)
+
+Deleted: trunk/gui/py/yadeControl.cpp
+===================================================================
+--- trunk/gui/cmd/yadeControl.cpp	2008-04-18 15:58:17 UTC (rev 1328)
++++ trunk/gui/py/yadeControl.cpp	2008-05-01 06:23:36 UTC (rev 1333)
+@@ -1,583 +0,0 @@
+-#include&lt;sstream&gt;
+-#include&lt;map&gt;
+-#include&lt;vector&gt;
+-#include&lt;unistd.h&gt;
+-#include&lt;list&gt;
+-
+-#include&lt;boost/python.hpp&gt;
+-#include&lt;boost/python/suite/indexing/vector_indexing_suite.hpp&gt;
+-#include&lt;boost/bind.hpp&gt;
+-#include&lt;boost/thread/thread.hpp&gt;
+-#include&lt;boost/filesystem/operations.hpp&gt;
+-#include&lt;boost/date_time/posix_time/posix_time.hpp&gt;
+-#include&lt;boost/any.hpp&gt;
+-#include&lt;boost/shared_ptr.hpp&gt;
+-#include&lt;boost/python.hpp&gt;
+-#include&lt;boost/foreach.hpp&gt;
+-// [boost1.34] #include&lt;boost/python/stl_iterator.hpp&gt;
+-
+-#include&lt;yade/lib-base/Logging.hpp&gt;
+-#include&lt;yade/lib-serialization-xml/XMLFormatManager.hpp&gt;
+-#include&lt;yade/core/Omega.hpp&gt;
+-#include&lt;yade/core/FileGenerator.hpp&gt;
+-
+-
+-#include&lt;yade/core/MetaDispatchingEngine.hpp&gt;
+-#include&lt;yade/core/MetaDispatchingEngine1D.hpp&gt;
+-#include&lt;yade/core/MetaDispatchingEngine2D.hpp&gt;
+-#include&lt;yade/core/StandAloneEngine.hpp&gt;
+-#include&lt;yade/core/DeusExMachina.hpp&gt;
+-#include&lt;yade/core/EngineUnit.hpp&gt;
+-#include&lt;yade/core/EngineUnit1D.hpp&gt;
+-#include&lt;yade/core/EngineUnit2D.hpp&gt;
+-
+-#include&lt;yade/pkg-common/BoundingVolumeMetaEngine.hpp&gt;
+-#include&lt;yade/pkg-common/GeometricalModelMetaEngine.hpp&gt;
+-#include&lt;yade/pkg-common/InteractingGeometryMetaEngine.hpp&gt;
+-#include&lt;yade/pkg-common/InteractionGeometryMetaEngine.hpp&gt;
+-#include&lt;yade/pkg-common/InteractionPhysicsMetaEngine.hpp&gt;
+-#include&lt;yade/pkg-common/PhysicalParametersMetaEngine.hpp&gt;
+-#include&lt;yade/pkg-common/PhysicalActionDamper.hpp&gt;
+-#include&lt;yade/pkg-common/PhysicalActionApplier.hpp&gt;
+-
+-#include&lt;yade/pkg-common/BoundingVolumeEngineUnit.hpp&gt;
+-#include&lt;yade/pkg-common/GeometricalModelEngineUnit.hpp&gt;
+-#include&lt;yade/pkg-common/InteractingGeometryEngineUnit.hpp&gt;
+-#include&lt;yade/pkg-common/InteractionGeometryEngineUnit.hpp&gt;
+-#include&lt;yade/pkg-common/InteractionPhysicsEngineUnit.hpp&gt;
+-#include&lt;yade/pkg-common/PhysicalParametersEngineUnit.hpp&gt;
+-#include&lt;yade/pkg-common/PhysicalActionDamperUnit.hpp&gt;
+-#include&lt;yade/pkg-common/PhysicalActionApplierUnit.hpp&gt;
+-
+-#include&lt;yade/extra/Shop.hpp&gt;
+-
+-#ifdef USE_PYGLVIEWER
+-	#include&quot;GLViewer4.hpp&quot;
+-	#include&lt;Qt/qapplication.h&gt;
+-	#include&lt;Qt/qthread.h&gt;
+-#endif
+-
+-using namespace boost;
+-using namespace std;
+-
+-#include&quot;attrUtils.cpp&quot;
+-
+-class RenderingEngine;
+-
+-/*!
+-	
+-	A regular class (not Omega) is instantiated like this:
+-
+-		RootClass('optional class name as quoted string',{optional dictionary of attributes})
+-		
+-	if class name is not given, the RootClass itself is instantiated
+-
+-		p=PhysicalParameters() # p is now instance of PhysicalParameters
+-		p=PhysicalParameters('RigidBodyParameters') # p is now instance of RigidBodyParameters, which has PhysicalParameters as the &quot;root&quot; class
+-		p=PhysicalParameters('RigidBodyParameters',{'mass':100,'se3':[1,1,2,1,0,0,0]}) # convenience constructor
+-
+-	The last statement is equivalent to:
+-
+-		p=PhysicalParameters('RigidBodyParameters')
+-		p['mass']=100; 
+-		p['se3']=[1,1,2,1,0,0,0]
+-
+-	Class attributes are those that are registered as serializable, are accessed using the [] operator and are always read-write (be careful)
+-
+-		p['se3'] # this will show you the se3 attribute inside p
+-		p['se3']=[1,2,3,1,0,0,0] # this sets se3 of p
+-
+-	Those attributes that are not fundamental types (strings, numbers, booleans, se3, vectors, quaternions, arrays of numbers, arrays of strings) can be accessed only through explicit python data members, for example:
+-		
+-		b=Body()
+-		b.mold=InteractingGeometry(&quot;InteractingSphere&quot;,{'radius':1})
+-		b.shape=GeometricalModel(&quot;Sphere&quot;,{'radius':1})
+-		b.mold # will give you the interactingGeometry of body
+-	
+-	Instances can be queried about attributes and data members they have:
+-
+-		b.keys() # serializable attributes, accessible via b['attribute']
+-		dir(b) # python data members, accessible via b.attribute; the __something__ attributes are python internal attributes/metods -- methods are just callable members
+-
+-	MetaEngine class has special constructor (for convenience):
+-
+-		m=MetaEngine('class name as string',[list of engine units])
+-
+-	and it is equivalent to
+-
+-		m=MetaEntine('class name as string')
+-		m.functors=[list of engine units]
+-
+-	It is your responsibility to pass the right engineUnits, otherwise crash will results. There is currently no way I know of to prevent that. 
+-
+-*/
+-
+-/*
+-TODO:
+-	1. PhysicalActionContainer (constructor with actionName) with iteration
+-	2. from yadeControl import Omega as _Omega, inherit from that and add other convenience functions
+-*/
+-
+-#ifdef LOG4CXX
+-	log4cxx::LoggerPtr logger=log4cxx::Logger::getLogger(&quot;yade.python&quot;);
+-#endif
+-
+-
+-#define BASIC_PY_PROXY_HEAD(pyClass,yadeClass) \
+-class pyClass{shared_ptr&lt;AttrAccess&gt; accessor; \
+-	private: void init(string clss){ proxee=dynamic_pointer_cast&lt;yadeClass&gt;(ClassFactory::instance().createShared(clss.empty()? #yadeClass : clss)); if(!proxee) throw runtime_error(&quot;Invalid class `&quot;+clss+&quot;': either nonexistent, or unable to cast to `&quot;+#yadeClass+&quot;'&quot;); } \
+-	public: shared_ptr&lt;yadeClass&gt; proxee; \
+-		void ensureAcc(void){ if(!proxee) throw runtime_error(string(&quot;No proxied `&quot;)+#yadeClass+&quot;'.&quot;); if(!accessor) accessor=shared_ptr&lt;AttrAccess&gt;(new AttrAccess(proxee));} \
+-		pyClass(string clss=&quot;&quot;, python::dict attrs=python::dict()){ init(clss); python::list l=attrs.items(); int len=PySequence_Size(l.ptr()); for(int i=0; i&lt;len; i++){ python::extract&lt;python::tuple&gt; t(l[i]); python::extract&lt;string&gt; keyEx(t()[0]); if(!keyEx.check()) throw invalid_argument(&quot;Attribute keys must be strings.&quot;); wrappedPySet(keyEx(),t()[1]); } } \
+-		pyClass(const shared_ptr&lt;yadeClass&gt;&amp; _proxee): proxee(_proxee) {} \
+-		std::string pyStr(void){ ensureAcc(); return string(proxee-&gt;getClassName()==#yadeClass ? &quot;&lt;&quot;+proxee-&gt;getClassName()+&quot;&gt;&quot; : &quot;&lt;&quot;+proxee-&gt;getClassName()+&quot; &quot;+ #yadeClass +&quot;&gt;&quot;); } \
+-		string className(void){ ensureAcc(); return proxee-&gt;getClassName(); } \
+-		ATTR_ACCESS_CXX(accessor,ensureAcc);
+-
+-#define BASIC_PY_PROXY_TAIL };
+-
+-#define BASIC_PY_PROXY(pyClass,yadeClass) BASIC_PY_PROXY_HEAD(pyClass,yadeClass) BASIC_PY_PROXY_TAIL
+-
+-
+-BASIC_PY_PROXY(pyInteractionGeometry,InteractionGeometry);
+-BASIC_PY_PROXY(pyInteractionPhysics,InteractionPhysics);
+-
+-BASIC_PY_PROXY(pyGeometricalModel,GeometricalModel);
+-BASIC_PY_PROXY(pyPhysicalParameters,PhysicalParameters);
+-BASIC_PY_PROXY(pyBoundingVolume,BoundingVolume);
+-BASIC_PY_PROXY(pyInteractingGeometry,InteractingGeometry);
+-
+-BASIC_PY_PROXY(pyStandAloneEngine,StandAloneEngine);
+-BASIC_PY_PROXY(pyDeusExMachina,DeusExMachina);
+-
+-BASIC_PY_PROXY_HEAD(pyEngineUnit,EngineUnit)
+-	python::list bases_get(void){ python::list ret; vector&lt;string&gt; t=proxee-&gt;getFunctorTypes(); for(size_t i=0; i&lt;t.size(); i++) ret.append(t[i]); return ret; }
+-BASIC_PY_PROXY_TAIL;
+-
+-
+-BASIC_PY_PROXY_HEAD(pyMetaEngine,MetaDispatchingEngine)
+-		// additional constructor
+-		pyMetaEngine(string clss, python::list functors){init(clss); functors_set(functors);}
+-		python::list functors_get(void){
+-			ensureAcc(); shared_ptr&lt;MetaDispatchingEngine&gt; me=dynamic_pointer_cast&lt;MetaDispatchingEngine&gt;(proxee); if(!me) throw runtime_error(&quot;Proxied class not a MetaDispatchingEngine (WTF?)&quot;); python::list ret;
+-			/* garbage design: functorArguments are instances of EngineUnits, but they may not be present; therefore, only use them if they exist; our pyMetaEngine, however, will always have both names and EnguneUnit objects in the same count */
+-			for(size_t i=0; i&lt;me-&gt;functorNames.size(); i++){
+-				shared_ptr&lt;EngineUnit&gt; eu;
+-				string functorName(*(me-&gt;functorNames[i].rbegin()));
+-				if(i&lt;=me-&gt;functorArguments.size()){ /* count i-th list member */ size_t j=0;
+-					for(list&lt;shared_ptr&lt;EngineUnit&gt; &gt;::iterator I=me-&gt;functorArguments.begin(); I!=me-&gt;functorArguments.end(); I++, j++) { if(j==i) { eu=(*I); break;}}
+-				}
+-				if(!eu) /* either list was shorter or empty pointer in the functorArguments list */ { eu=dynamic_pointer_cast&lt;EngineUnit&gt;(ClassFactory::instance().createShared(functorName)); if(!eu) throw runtime_error(&quot;Unable to construct `&quot;+string(*(me-&gt;functorNames[i].rbegin()))+&quot;' EngineUnit&quot;); }
+-				assert(eu);
+-				ret.append(pyEngineUnit(eu));
+-			}
+-			return ret;
+-		}
+-		void functors_set(python::list ftrs){
+-			ensureAcc(); shared_ptr&lt;MetaDispatchingEngine&gt; me=dynamic_pointer_cast&lt;MetaDispatchingEngine&gt;(proxee); if(!me) throw runtime_error(&quot;Proxied class not a MetaDispatchingEngine. (WTF?)&quot;);
+-			me-&gt;clear(); int len=PySequence_Size(ftrs.ptr()) /*[boost1.34] python::len(ftrs)*/;
+-			for(int i=0; i&lt;len; i++){
+-				python::extract&lt;pyEngineUnit&gt; euEx(ftrs[i]); if(!euEx.check()) throw invalid_argument(&quot;Unable to extract type EngineUnit from sequence.&quot;);
+-				bool ok=false;
+-				/* FIXME: casting engine unit to the right type via dynamic_cast doesn't work (always unusuccessful),
+-				 * do static_cast and if the EngineUnit is of wrong type, it will crash badly immediately. */
+-				#define TRY_ADD_FUNCTOR(P,Q) {shared_ptr&lt;P&gt; p(dynamic_pointer_cast&lt;P&gt;(me)); shared_ptr&lt;EngineUnit&gt; eu(euEx().proxee); if(p&amp;&amp;eu){p-&gt;add(static_pointer_cast&lt;Q&gt;(eu)); ok=true; }}
+-				// shared_ptr&lt;Q&gt; q(dynamic_pointer_cast&lt;Q&gt;(eu)); cerr&lt;&lt;#P&lt;&lt;&quot; &quot;&lt;&lt;#Q&lt;&lt;&quot;:&quot;&lt;&lt;(bool)p&lt;&lt;&quot; &quot;&lt;&lt;(bool)q&lt;&lt;endl;
+-				TRY_ADD_FUNCTOR(BoundingVolumeMetaEngine,BoundingVolumeEngineUnit);
+-				TRY_ADD_FUNCTOR(GeometricalModelMetaEngine,GeometricalModelEngineUnit);
+-				TRY_ADD_FUNCTOR(InteractingGeometryMetaEngine,InteractingGeometryEngineUnit);
+-				TRY_ADD_FUNCTOR(InteractionGeometryMetaEngine,InteractionGeometryEngineUnit);
+-				TRY_ADD_FUNCTOR(InteractionPhysicsMetaEngine,InteractionPhysicsEngineUnit);
+-				TRY_ADD_FUNCTOR(PhysicalParametersMetaEngine,PhysicalParametersEngineUnit);
+-				TRY_ADD_FUNCTOR(PhysicalActionDamper,PhysicalActionDamperUnit);
+-				TRY_ADD_FUNCTOR(PhysicalActionApplier,PhysicalActionApplierUnit);
+-				if(!ok) throw runtime_error(string(&quot;Unable to cast to suitable MetaEngine type when adding functor (MetaEngine: &quot;)+me-&gt;getClassName()+&quot;, functor: &quot;+euEx().proxee-&gt;getClassName()+&quot;)&quot;);
+-				#undef TRY_ADD_FUNCTOR
+-			}
+-		}
+-BASIC_PY_PROXY_TAIL;
+-
+-#define NONPOD_ATTRIBUTE_ACCESS(pyName,pyClass,yadeName) \
+-	python::object pyName##_get(void){ensureAcc(); return proxee-&gt;yadeName ? python::object(pyClass(proxee-&gt;yadeName)) : python::object(); } \
+-	void pyName##_set(pyClass proxy){ensureAcc(); proxee-&gt;yadeName=proxy.proxee; }
+-
+-BASIC_PY_PROXY_HEAD(pyInteraction,Interaction)
+-	NONPOD_ATTRIBUTE_ACCESS(geom,pyInteractionGeometry,interactionGeometry);
+-	NONPOD_ATTRIBUTE_ACCESS(phys,pyInteractionPhysics,interactionPhysics);
+-	/* shorthands */ unsigned id1_get(void){ensureAcc(); return proxee-&gt;getId1();} unsigned id2_get(void){ensureAcc(); return proxee-&gt;getId2();}
+-BASIC_PY_PROXY_TAIL;
+-
+-BASIC_PY_PROXY_HEAD(pyBody,Body)
+-	NONPOD_ATTRIBUTE_ACCESS(shape,pyGeometricalModel,geometricalModel);
+-	NONPOD_ATTRIBUTE_ACCESS(mold,pyInteractingGeometry,interactingGeometry);
+-	NONPOD_ATTRIBUTE_ACCESS(bound,pyBoundingVolume,boundingVolume);
+-	NONPOD_ATTRIBUTE_ACCESS(phys,pyPhysicalParameters,physicalParameters);
+-	unsigned id_get(){ensureAcc(); return proxee-&gt;getId();}
+-	bool isStandalone(){ensureAcc(); return proxee-&gt;isStandalone();} bool isClumpMember(){ensureAcc(); return proxee-&gt;isClumpMember();} bool isClump(){ensureAcc(); return proxee-&gt;isClump();}
+-BASIC_PY_PROXY_TAIL;
+-
+-class pyBodyContainer{
+-	public:
+-	const shared_ptr&lt;BodyContainer&gt; proxee;
+-	pyBodyContainer(const shared_ptr&lt;BodyContainer&gt;&amp; _proxee): proxee(_proxee){}
+-	pyBody pyGetitem(unsigned id){
+-		if(id&gt;=proxee-&gt;size()){ PyErr_SetString(PyExc_IndexError, &quot;Body id out of range.&quot;); python::throw_error_already_set(); /* make compiler happy; never reached */ return pyBody(); }
+-		else return pyBody(proxee-&gt;operator[](id));
+-	}
+-	body_id_t insert(pyBody b){return proxee-&gt;insert(b.proxee);}
+-	void clear(){proxee-&gt;clear();}
+-};
+-
+-class pyInteractionIterator{
+-	InteractionContainer::iterator I, Iend;
+-	public:
+-	pyInteractionIterator(const shared_ptr&lt;InteractionContainer&gt;&amp; ic){ I=ic-&gt;begin(); Iend=ic-&gt;end(); }
+-	pyInteractionIterator pyIter(){return *this;}
+-	pyInteraction pyNext(){ if(!(I!=Iend)){ PyErr_SetNone(PyExc_StopIteration); python::throw_error_already_set(); }
+-		InteractionContainer::iterator ret=I; ++I; return pyInteraction(*ret); }
+-};
+-
+-class pyInteractionContainer{
+-	public:
+-		const shared_ptr&lt;InteractionContainer&gt; proxee;
+-		pyInteractionContainer(const shared_ptr&lt;InteractionContainer&gt;&amp; _proxee): proxee(_proxee){}
+-		pyInteractionIterator pyIter(){return pyInteractionIterator(proxee);}
+-		pyInteraction pyGetitem(python::object id12){
+-			if(!PySequence_Check(id12.ptr())) throw invalid_argument(&quot;Key must be a tuple&quot;);
+-			if(PySequence_Size(id12.ptr())!=2) throw invalid_argument(&quot;Key must be a 2-tuple: id1,id2.&quot;);
+-			python::extract&lt;body_id_t&gt; id1_(PySequence_GetItem(id12.ptr(),0)), id2_(PySequence_GetItem(id12.ptr(),1));
+-			if(!id1_.check()) throw invalid_argument(&quot;Could not extract id1&quot;);
+-			if(!id2_.check()) throw invalid_argument(&quot;Could not extract id2&quot;);
+-			shared_ptr&lt;Interaction&gt; i=proxee-&gt;find(id1_(),id2_());
+-			if(i) return pyInteraction(i); else throw invalid_argument(&quot;No such interaction.&quot;);
+-		}
+-};
+-
+-
+-BASIC_PY_PROXY(pyPhysicalAction,PhysicalAction);
+-
+-class pyPhysicalActionContainer{
+-	public:
+-		const shared_ptr&lt;PhysicalActionContainer&gt; proxee;
+-		pyPhysicalActionContainer(const shared_ptr&lt;PhysicalActionContainer&gt;&amp; _proxee): proxee(_proxee){}
+-		pyPhysicalAction pyGetitem(python::object action_and_id){
+-			if(!PySequence_Check(action_and_id.ptr())) throw invalid_argument(&quot;Key must be a tuple&quot;);
+-			if(PySequence_Size(action_and_id.ptr())!=2) throw invalid_argument(&quot;Key must be a 2-tuple: [action-name , body id].&quot;);
+-			python::extract&lt;string&gt; actionName_(PySequence_GetItem(action_and_id.ptr(),0));
+-			python::extract&lt;body_id_t&gt; id_(PySequence_GetItem(action_and_id.ptr(),1));
+-			if(!actionName_.check()) throw invalid_argument(&quot;Could not extract action-name.&quot;);
+-			if(!id_.check()) throw invalid_argument(&quot;Could not extract body id.&quot;);
+-			// FIXME: this may be rather slow (at every lookup!)
+-			int actionClassIndex=dynamic_pointer_cast&lt;Indexable&gt;(ClassFactory::instance().createShared(actionName_()))-&gt;getClassIndex();
+-			LOG_DEBUG(&quot;Got class index &quot;&lt;&lt;actionClassIndex&lt;&lt;&quot; for &quot;&lt;&lt;actionName_());
+-			return pyPhysicalAction(proxee-&gt;find(id_(),actionClassIndex));
+-		}
+-};
+-
+-
+-BASIC_PY_PROXY_HEAD(pyFileGenerator,FileGenerator)
+-	bool generate(string outFile){ensureAcc(); proxee-&gt;setFileName(outFile); proxee-&gt;setSerializationLibrary(&quot;XMLFormatManager&quot;); bool ret=proxee-&gt;generateAndSave(); LOG_INFO((ret?&quot;SUCCESS:\n&quot;:&quot;FAILURE:\n&quot;)&lt;&lt;proxee-&gt;message); return ret; };
+-BASIC_PY_PROXY_TAIL;
+-
+-
+-class pyOmega{
+-	#define OMEGA Omega::instance()
+-	private:
+-		// can be safely removed now, since pyOmega makes an empty rootBody in the constructor, if there is none
+-		void assertRootBody(){if(!OMEGA.getRootBody()) throw std::runtime_error(&quot;No root body.&quot;); }
+-		void maybeRunInitializers(){if(needsInitializers){OMEGA.getRootBody()-&gt;runInitializers(); needsInitializers=false;}}
+-		/*! do we need initializers before running?
+-		 * This is set to true in constructor (if we create simulation from scratch) and when we load a simulation.
+-		 * Initializers are run ad this flag set to false by maybeRunInitializers when running (step or run) */
+-		bool needsInitializers;
+-	public:
+-	pyOmega(){ if(!OMEGA.getRootBody()){shared_ptr&lt;MetaBody&gt; mb=Shop::rootBody(); OMEGA.setRootBody(mb);} OMEGA.createSimulationLoop(); /* this is not true if another instance of Omega is created; flag should be stored inside the Omega singleton for clean solution. */ needsInitializers=true; };
+-
+-	long iter(){ return OMEGA.getCurrentIteration();}
+-	double simulationTime(){return OMEGA.getSimulationTime();}
+-	double realTime(){
+-		posix_time::time_duration duration=microsec_clock::local_time()-OMEGA.getMsStartingSimulationTime();
+-		duration-=OMEGA.getSimulationPauseDuration();
+-		return double(duration.total_seconds())+double(duration.total_milliseconds()%1000)/1000; // FIXME: fractional_seconds are usec or msec or compile-time dependent?! documentation not clear on that.
+-	}
+-	// long realTime(){return OMEGA(get...);}
+-	double dt_get(){return OMEGA.getTimeStep();}
+-	void dt_set(double dt){OMEGA.skipTimeStepper(true); OMEGA.setTimeStep(dt);}
+-
+-	long stopAtIter_get(){return OMEGA.stopAtIteration; }
+-	void stopAtIter_set(long s){OMEGA.stopAtIteration=s; }
+-
+-	bool usesTimeStepper_get(){return OMEGA.timeStepperActive();}
+-	void usesTimeStepper_set(bool use){OMEGA.skipTimeStepper(!use);}
+-
+-	void run(long int numIter=-1){
+-		if(numIter&gt;0) OMEGA.stopAtIteration=OMEGA.getCurrentIteration()+numIter;
+-		maybeRunInitializers();
+-		//else OMEGA.stopAtIteration=-1;
+-		OMEGA.startSimulationLoop();
+-		long toGo=OMEGA.stopAtIteration-OMEGA.getCurrentIteration();
+-		LOG_DEBUG(&quot;RUN&quot;&lt;&lt;(toGo&gt;0?string(&quot; (&quot;+lexical_cast&lt;string&gt;(toGo)+&quot; to go)&quot;):string(&quot;&quot;))&lt;&lt;&quot;!&quot;);
+-	}
+-	void pause(){OMEGA.stopSimulationLoop(); LOG_DEBUG(&quot;PAUSE!&quot;);}
+-	void step() {OMEGA.spawnSingleSimulationLoop(); maybeRunInitializers(); LOG_DEBUG(&quot;STEP!&quot;);}
+-
+-	void load(std::string fileName) {
+-		OMEGA.finishSimulationLoop();
+-		OMEGA.joinSimulationLoop();
+-		OMEGA.setSimulationFileName(fileName);
+-		OMEGA.loadSimulation();
+-		OMEGA.createSimulationLoop();
+-		LOG_DEBUG(&quot;LOAD!&quot;);
+-		needsInitializers=true;
+-	}
+-
+-	void save(std::string fileName){
+-		assertRootBody();
+-		OMEGA.saveSimulation(fileName);
+-		LOG_DEBUG(&quot;SAVE!&quot;);
+-	}
+-
+-	void saveSpheres(std::string fileName){ Shop::saveSpheresToFile(fileName); }
+-
+-	python::list anyEngines_get(vector&lt;shared_ptr&lt;Engine&gt; &gt;&amp; engContainer){
+-		python::list ret; 
+-		BOOST_FOREACH(shared_ptr&lt;Engine&gt;&amp; eng, engContainer){
+-			#define APPEND_ENGINE_IF_POSSIBLE(engineType,pyEngineType) { shared_ptr&lt;engineType&gt; e=dynamic_pointer_cast&lt;engineType&gt;(eng); if(e) { ret.append(pyEngineType(e)); continue; } }
+-			APPEND_ENGINE_IF_POSSIBLE(MetaDispatchingEngine,pyMetaEngine); APPEND_ENGINE_IF_POSSIBLE(StandAloneEngine,pyStandAloneEngine); APPEND_ENGINE_IF_POSSIBLE(DeusExMachina,pyDeusExMachina);
+-			throw std::runtime_error(&quot;Unknown engine type: `&quot;+eng-&gt;getClassName()+&quot;' (only MetaDispatchingEngine, StandAloneEngine and DeusExMachina are supported)&quot;);
+-		}
+-		return ret;
+-	}
+-
+-	void anyEngines_set(vector&lt;shared_ptr&lt;Engine&gt; &gt;&amp; engContainer, python::object egs){
+-		assertRootBody(); int len=PySequence_Size(egs.ptr()) /*[boost1.34] python::len(egs)*/;
+-		//const shared_ptr&lt;MetaBody&gt;&amp; rootBody=OMEGA.getRootBody(); rootBody-&gt;engines.clear();
+-		engContainer.clear();
+-		for(int i=0; i&lt;len; i++){
+-			#define PUSH_BACK_ENGINE_IF_POSSIBLE(pyEngineType) if(python::extract&lt;pyEngineType&gt;(PySequence_GetItem(egs.ptr(),i)).check()){ pyEngineType e=python::extract&lt;pyEngineType&gt;(PySequence_GetItem(egs.ptr(),i)); engContainer.push_back(e.proxee); /* cerr&lt;&lt;&quot;added &quot;&lt;&lt;e.pyStr()&lt;&lt;&quot;, a &quot;&lt;&lt;#pyEngineType&lt;&lt;endl; */ continue; }
+-			PUSH_BACK_ENGINE_IF_POSSIBLE(pyStandAloneEngine); PUSH_BACK_ENGINE_IF_POSSIBLE(pyMetaEngine); PUSH_BACK_ENGINE_IF_POSSIBLE(pyDeusExMachina);
+-			throw std::runtime_error(&quot;Encountered unknown engine type (unable to extract from python object)&quot;);
+-		}
+-	}
+-	python::list engines_get(void){assertRootBody(); return anyEngines_get(OMEGA.getRootBody()-&gt;engines);}
+-	void engines_set(python::object egs){assertRootBody(); anyEngines_set(OMEGA.getRootBody()-&gt;engines,egs);}
+-	python::list initializers_get(void){assertRootBody(); return anyEngines_get(OMEGA.getRootBody()-&gt;initializers);}
+-	void initializers_set(python::object egs){assertRootBody(); anyEngines_set(OMEGA.getRootBody()-&gt;initializers,egs);}
+-
+-
+-	void wait(){ if(OMEGA.isRunning()){LOG_DEBUG(&quot;WAIT!&quot;);} while(OMEGA.isRunning()) usleep(50000 /*20 ms*/); }
+-	
+-	pyBodyContainer bodies_get(void){assertRootBody(); return pyBodyContainer(OMEGA.getRootBody()-&gt;bodies); }
+-	pyInteractionContainer interactions_get(void){assertRootBody(); return pyInteractionContainer(OMEGA.getRootBody()-&gt;transientInteractions); }
+-
+-	pyPhysicalActionContainer actions_get(void){return pyPhysicalActionContainer(OMEGA.getRootBody()-&gt;physicalActions); }
+-
+-	boost::python::list listChildClasses(const string&amp; base){
+-		boost::python::list ret;
+-		for(map&lt;string,DynlibDescriptor&gt;::const_iterator di=Omega::instance().getDynlibsDescriptor().begin();di!=Omega::instance().getDynlibsDescriptor().end();++di) if (Omega::instance().isInheritingFrom((*di).first,base)) ret.append(di-&gt;first);
+-		return ret;
+-	}
+-	#undef OMEGA
+-};
+-
+-BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(omega_overloads,run,0,1);
+-
+-#ifdef USE_PYGLVIEWER 
+-/*! GL viewer wrapper, with full attribute access. CURRENTLY&#160;DOESN'T EVEN&#160;COMPILE!!!
+- *
+- * Creates the 3D view on instantiation. Currently displays nothing (why???), although it redraws just fine.
+- * Has many bugs: multiple views will lead to crash, explicit delete crashes (somewhere in qt) as well.
+- */
+-class pyGLViewer{
+-	//DECLARE_LOGGER;
+-	shared_ptr&lt;RenderingEngine&gt; renderer;
+-	shared_ptr&lt;GLViewer4&gt; viewer;
+-#if 0
+-	shared_ptr&lt;boost::thread&gt; redrawThread,appThread;
+-	QApplication* app;
+-	void redrawAlarm(void){
+-		while(true){
+-			//Omega::instance().stopSimulationLoop();
+-			viewer-&gt;updateGL();
+-			//Omega::instance().startSimulationLoop();
+-			usleep(10000000);
+-		}
+-	}
+-#endif 
+-	class DrawThread: public QThread{
+-		//Q_OBJECT;
+-		const shared_ptr&lt;GLViewer4&gt; vw;
+-		shared_ptr&lt;QTimer&gt; timer;
+-		public:
+-			DrawThread(shared_ptr&lt;GLViewer4&gt; _viewer): vw(_viewer){}
+-			virtual void run(){
+-				LOG_WARN(&quot;drawThread::run() with viewer &quot;&lt;&lt;vw);
+-				timer=shared_ptr&lt;QTimer&gt;(new QTimer());
+-				connect(timer.get(),SIGNAL(timeout()),vw.get(),SLOT(callUpdateGL()));
+-				timer-&gt;start(100);
+-				//while(true){ cerr&lt;&lt;&quot;@&quot;; vw-&gt;updateGL(); usleep(50000);}
+-				exec();
+-			};
+-		//public slots:
+-		//	void updateGL(){cerr&lt;&lt;&quot;@&quot;;}
+-	};
+-	shared_ptr&lt;AttrAccess&gt; accessor;
+-	void ensureAcc(){if(!accessor)accessor=shared_ptr&lt;AttrAccess&gt;(new AttrAccess(renderer));}
+-	shared_ptr&lt;DrawThread&gt; drawThread;
+-public:
+-	DECLARE_LOGGER;
+-	ATTR_ACCESS_CXX(accessor,ensureAcc);	
+-	pyGLViewer(){
+-		//throw std::runtime_error(&quot;Programming error: Threading in pyGLViewer is broken and crashes; ignored.&quot;);
+-		// LOG_WARN(&quot;Thread locking not correctly implemented, will pause Omega for redraw every 10s instead!&quot;);
+-		shared_ptr&lt;Factorable&gt; _renderer=ClassFactory::instance().createShared(&quot;OpenGLRenderingEngine&quot;);
+-		renderer=static_pointer_cast&lt;RenderingEngine&gt;(_renderer);
+-
+-		/* this is broken:
+-			Type of instance is: 15RenderingEngine
+-			RuntimeError: Cannot determine type with findType()
+-		*/
+-		#if 0
+-		if(renderer){// TODO: handle exceptions
+-			filesystem::path rendererConfig=filesystem::path(Omega::instance().yadeConfigPath+&quot;/OpenGLRendererPref.xml&quot;);
+-			if(filesystem::exists(rendererConfig)){
+-				try{IOFormatManager::loadFromFile(&quot;XMLFormatManager&quot;,rendererConfig.string(),&quot;renderer&quot;,renderer);}
+-				catch(SerializableError&amp; e){LOG_WARN(&quot;Unable to load renderer preferences from `&quot;&lt;&lt;rendererConfig.string()&lt;&lt;&quot;': &quot;&lt;&lt;e.what());}
+-			}
+-		} else throw runtime_error(&quot;Unable to create renderer!&quot;);
+-		#endif
+-		if(!renderer) throw runtime_error(&quot;Unable to create renderer!&quot;);
+-
+-		int viewId=0;
+-		//if(viewId==0){	int _argc=0; char _argvv[]=&quot;foo&quot;; app=new QApplication(_argc,(char**) &amp;_argvv);}
+-		//app-&gt;setMainWidget(viewer.get());
+-		int _argc=0; char _argvv[]=&quot;foo&quot;; //QApplication* app=new 
+-		QApplication* app=new QApplication(_argc,(char**) &amp;_argvv);
+-
+-		QGLFormat format;	QGLFormat::setDefaultFormat(format); format.setStencil(TRUE); format.setAlpha(TRUE);
+-		viewer=shared_ptr&lt;GLViewer4&gt;(new GLViewer4(viewId,renderer,format,/*parent*/0,0/* non-primary views will have to share widgets, though */)); //
+-		viewer-&gt;setWindowTitle(&quot;GL Viewer&quot;);
+-		viewer-&gt;centerScene();
+-		viewer-&gt;show();
+-		drawThread=shared_ptr&lt;DrawThread&gt;(new DrawThread(viewer));
+-		drawThread-&gt;start(); // is the same as DrawThread-&gt;run() except for check that it isn't running already?!
+-
+-		/*if(viewId==0){
+-			app-&gt;setMainWidget(viewer.get());
+-			redrawThread=shared_ptr&lt;boost::thread&gt;(new boost::thread(boost::bind(&amp;pyGLViewer::redrawAlarm,this)));
+-		}
+-		appThread=shared_ptr&lt;boost::thread&gt;(new boost::thread(boost::bind(&amp;QApplication::exec,app))); */
+-	}
+-	~pyGLViewer(){// redrawThread and appThread deleted by the descructor
+-		//viewer-&gt;close();
+-		//app-&gt;quit();
+-	}
+-};
+-CREATE_LOGGER(pyGLViewer);
+-#endif /* USE_PYGLVIEWER&#160;*/
+-
+-
+-BOOST_PYTHON_MODULE(yadeControl)
+-{
+-	/* <A HREF="http://mail.python.org/pipermail/c++-sig/2004-March/007025.html">http://mail.python.org/pipermail/c++-sig/2004-March/007025.html</A>
+-	<A HREF="http://mail.python.org/pipermail/c++-sig/2004-March/007029.html">http://mail.python.org/pipermail/c++-sig/2004-March/007029.html</A>
+-
+-	UNUSED, deal with boost::python::list instead
+-
+-	python::class_&lt;std::vector&lt;std::string&gt; &gt;(&quot;_vectSs&quot;)
+-		.def(python::vector_indexing_suite&lt;std::vector&lt;std::string&gt;,true&gt;());   */
+-
+-	boost::python::class_&lt;pyOmega&gt;(&quot;Omega&quot;)
+-		.add_property(&quot;iter&quot;,&amp;pyOmega::iter)
+-		.add_property(&quot;stopAtIter&quot;,&amp;pyOmega::stopAtIter_get,&amp;pyOmega::stopAtIter_set)
+-		.add_property(&quot;time&quot;,&amp;pyOmega::simulationTime)
+-		.add_property(&quot;realtime&quot;,&amp;pyOmega::realTime)
+-		.add_property(&quot;dt&quot;,&amp;pyOmega::dt_get,&amp;pyOmega::dt_set)
+-		.add_property(&quot;usesTimeStepper&quot;,&amp;pyOmega::usesTimeStepper_get,&amp;pyOmega::usesTimeStepper_set)
+-		.def(&quot;load&quot;,&amp;pyOmega::load)
+-		.def(&quot;save&quot;,&amp;pyOmega::save)
+-		.def(&quot;saveSpheres&quot;,&amp;pyOmega::saveSpheres)
+-		.def(&quot;run&quot;,&amp;pyOmega::run,omega_overloads())
+-		.def(&quot;pause&quot;,&amp;pyOmega::pause)
+-		.def(&quot;step&quot;,&amp;pyOmega::step)
+-		.def(&quot;wait&quot;,&amp;pyOmega::wait)
+-		.add_property(&quot;engines&quot;,&amp;pyOmega::engines_get,&amp;pyOmega::engines_set)
+-		.add_property(&quot;initializers&quot;,&amp;pyOmega::initializers_get,&amp;pyOmega::initializers_set)
+-		.add_property(&quot;bodies&quot;,&amp;pyOmega::bodies_get)
+-		.add_property(&quot;interactions&quot;,&amp;pyOmega::interactions_get)
+-		.add_property(&quot;actions&quot;,&amp;pyOmega::actions_get)
+-		.def(&quot;childClasses&quot;,&amp;pyOmega::listChildClasses)
+-		;
+-	
+-	boost::python::class_&lt;pyBodyContainer&gt;(&quot;BodyContainer&quot;,python::init&lt;pyBodyContainer&amp;&gt;())
+-		.def(&quot;__getitem__&quot;,&amp;pyBodyContainer::pyGetitem)
+-		.def(&quot;append&quot;,&amp;pyBodyContainer::insert)
+-		.def(&quot;clear&quot;, &amp;pyBodyContainer::clear);
+-	boost::python::class_&lt;pyInteractionContainer&gt;(&quot;InteractionContainer&quot;,python::init&lt;pyInteractionContainer&amp;&gt;())
+-		.def(&quot;__iter__&quot;,&amp;pyInteractionContainer::pyIter)
+-		.def(&quot;__getitem__&quot;,&amp;pyInteractionContainer::pyGetitem);
+-	boost::python::class_&lt;pyInteractionIterator&gt;(&quot;InteractionIterator&quot;,python::init&lt;pyInteractionIterator&amp;&gt;())
+-		.def(&quot;__iter__&quot;,&amp;pyInteractionIterator::pyIter)
+-		.def(&quot;next&quot;,&amp;pyInteractionIterator::pyNext);
+-
+-	boost::python::class_&lt;pyPhysicalActionContainer&gt;(&quot;ActionContainer&quot;,python::init&lt;pyPhysicalActionContainer&amp;&gt;())
+-		.def(&quot;__getitem__&quot;,&amp;pyPhysicalActionContainer::pyGetitem);
+-	
+-
+-//	boost::python::class_&lt;pyBodyContainer&gt;(&quot;BodyContainer&quot;,python::init&lt;pyBodyContainer&amp;&gt;())
+-//		.def(&quot;__getitem__&quot;,&amp;pyBodyContainer::pyGetitem);
+-
+-		#if 0
+-			.def(&quot;oneStep&quot;,&amp;oneStep)
+-			.def(&quot;newView&quot;, &amp;newView)
+-			.def(&quot;centerScene&quot;, &amp;centerScene)
+-		#endif
+-#ifdef USE_PYGLVIEWER
+-	boost::python::class_&lt;pyGLViewer&gt;(&quot;View&quot;)
+-		.ATTR_ACCESS_PY(pyGLViewer);
+-#endif
+-
+-#define BASIC_PY_PROXY_WRAPPER(pyClass,pyName)  \
+-	boost::python::class_&lt;pyClass&gt;(pyName,python::init&lt;python::optional&lt;string,python::dict&gt; &gt;()) \
+-	.ATTR_ACCESS_PY(pyClass) \
+-	.def(&quot;__str__&quot;,&amp;pyClass::pyStr).def(&quot;__repr__&quot;,&amp;pyClass::pyStr) \
+-	.add_property(&quot;name&quot;,&amp;pyClass::className)
+-
+-	BASIC_PY_PROXY_WRAPPER(pyStandAloneEngine,&quot;StandAloneEngine&quot;);
+-	BASIC_PY_PROXY_WRAPPER(pyMetaEngine,&quot;MetaEngine&quot;)
+-		.add_property(&quot;functors&quot;,&amp;pyMetaEngine::functors_get,&amp;pyMetaEngine::functors_set)
+-		.def(python::init&lt;string,python::list&gt;());
+-	BASIC_PY_PROXY_WRAPPER(pyDeusExMachina,&quot;DeusExMachina&quot;);
+-	BASIC_PY_PROXY_WRAPPER(pyEngineUnit,&quot;EngineUnit&quot;)
+-		.add_property(&quot;bases&quot;,&amp;pyEngineUnit::bases_get);
+-
+-	BASIC_PY_PROXY_WRAPPER(pyGeometricalModel,&quot;GeometricalModel&quot;);
+-	BASIC_PY_PROXY_WRAPPER(pyInteractingGeometry,&quot;InteractingGeometry&quot;);
+-	BASIC_PY_PROXY_WRAPPER(pyPhysicalParameters,&quot;PhysicalParameters&quot;);
+-	BASIC_PY_PROXY_WRAPPER(pyBoundingVolume,&quot;BoundingVolume&quot;);
+-	BASIC_PY_PROXY_WRAPPER(pyInteractionGeometry,&quot;InteractionGeometry&quot;);
+-	BASIC_PY_PROXY_WRAPPER(pyInteractionPhysics,&quot;InteractionPhysics&quot;);
+-
+-	BASIC_PY_PROXY_WRAPPER(pyBody,&quot;Body&quot;)
+-		.add_property(&quot;shape&quot;,&amp;pyBody::shape_get,&amp;pyBody::shape_set)
+-		.add_property(&quot;mold&quot;,&amp;pyBody::mold_get,&amp;pyBody::mold_set)
+-		.add_property(&quot;bound&quot;,&amp;pyBody::bound_get,&amp;pyBody::bound_set)
+-		.add_property(&quot;phys&quot;,&amp;pyBody::phys_get,&amp;pyBody::phys_set)
+-		.add_property(&quot;id&quot;,&amp;pyBody::id_get)
+-		.add_property(&quot;isStandalone&quot;,&amp;pyBody::isStandalone)
+-		.add_property(&quot;isClumpMember&quot;,&amp;pyBody::isClumpMember)
+-		.add_property(&quot;isClump&quot;,&amp;pyBody::isClump);
+-
+-	BASIC_PY_PROXY_WRAPPER(pyInteraction,&quot;Interaction&quot;)
+-		.add_property(&quot;phys&quot;,&amp;pyInteraction::phys_get,&amp;pyInteraction::phys_set)
+-		.add_property(&quot;geom&quot;,&amp;pyInteraction::geom_get,&amp;pyInteraction::geom_set)
+-		.add_property(&quot;id1&quot;,&amp;pyInteraction::id1_get)
+-		.add_property(&quot;id2&quot;,&amp;pyInteraction::id2_get);
+-
+-	BASIC_PY_PROXY_WRAPPER(pyPhysicalAction,&quot;Action&quot;);
+-
+-	BASIC_PY_PROXY_WRAPPER(pyFileGenerator,&quot;Preprocessor&quot;)
+-		.def(&quot;generate&quot;,&amp;pyFileGenerator::generate);
+-
+-}
+-
+
+Copied: trunk/gui/py/yadeControl.cpp (from rev 1332, trunk/gui/cmd/yadeControl.cpp)
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000294.html">[Yade-commits] r1332 - trunk/gui/cmd
+</A></li>
+	<LI>Next message: <A HREF="000296.html">[Yade-commits] r1334 - in trunk: core gui gui/py scripts
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#295">[ date ]</a>
+              <a href="thread.html#295">[ thread ]</a>
+              <a href="subject.html#295">[ subject ]</a>
+              <a href="author.html#295">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

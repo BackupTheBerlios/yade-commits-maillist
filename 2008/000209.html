@@ -1,0 +1,1391 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1244 - in trunk: core extra extra/clump extra/tetra	extra/usct pkg/common/Engine/EngineUnit	pkg/dem/Engine/EngineUnit pkg/dem/PreProcessor	pkg/fem/Engine/EngineUnit pkg/fem/PreProcessor	pkg/lattice/Engine/EngineUnit pkg/lattice/PreProcessor	pkg/mass-spring/Engine/EngineUnit pkg/mass-spring/PreProcessor	pkg/realtime-rigidbody/Engine/EngineUnit	pkg/realtime-rigidbody/PreProcessor
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1244%20-%20in%20trunk%3A%20core%20extra%20extra/clump%20extra/tetra%0A%09extra/usct%20pkg/common/Engine/EngineUnit%0A%09pkg/dem/Engine/EngineUnit%20pkg/dem/PreProcessor%0A%09pkg/fem/Engine/EngineUnit%20pkg/fem/PreProcessor%0A%09pkg/lattice/Engine/EngineUnit%20pkg/lattice/PreProcessor%0A%09pkg/mass-spring/Engine/EngineUnit%20pkg/mass-spring/PreProcessor%0A%09pkg/realtime-rigidbody/Engine/EngineUnit%0A%09pkg/realtime-rigidbody/PreProcessor&In-Reply-To=%3C200802111653.m1BGrnql029442%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000208.html">
+   <LINK REL="Next"  HREF="000210.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1244 - in trunk: core extra extra/clump extra/tetra	extra/usct pkg/common/Engine/EngineUnit	pkg/dem/Engine/EngineUnit pkg/dem/PreProcessor	pkg/fem/Engine/EngineUnit pkg/fem/PreProcessor	pkg/lattice/Engine/EngineUnit pkg/lattice/PreProcessor	pkg/mass-spring/Engine/EngineUnit pkg/mass-spring/PreProcessor	pkg/realtime-rigidbody/Engine/EngineUnit	pkg/realtime-rigidbody/PreProcessor</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1244%20-%20in%20trunk%3A%20core%20extra%20extra/clump%20extra/tetra%0A%09extra/usct%20pkg/common/Engine/EngineUnit%0A%09pkg/dem/Engine/EngineUnit%20pkg/dem/PreProcessor%0A%09pkg/fem/Engine/EngineUnit%20pkg/fem/PreProcessor%0A%09pkg/lattice/Engine/EngineUnit%20pkg/lattice/PreProcessor%0A%09pkg/mass-spring/Engine/EngineUnit%20pkg/mass-spring/PreProcessor%0A%09pkg/realtime-rigidbody/Engine/EngineUnit%0A%09pkg/realtime-rigidbody/PreProcessor&In-Reply-To=%3C200802111653.m1BGrnql029442%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1244 - in trunk: core extra extra/clump extra/tetra	extra/usct pkg/common/Engine/EngineUnit	pkg/dem/Engine/EngineUnit pkg/dem/PreProcessor	pkg/fem/Engine/EngineUnit pkg/fem/PreProcessor	pkg/lattice/Engine/EngineUnit pkg/lattice/PreProcessor	pkg/mass-spring/Engine/EngineUnit pkg/mass-spring/PreProcessor	pkg/realtime-rigidbody/Engine/EngineUnit	pkg/realtime-rigidbody/PreProcessor">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Mon Feb 11 17:53:49 CET 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000208.html">[Yade-commits] r1243 - in trunk: . core extra extra/clump	extra/tetra extra/usct gui/cmd lib/base	pkg/common/Engine/EngineUnit pkg/dem/Engine/DeusExMachina	pkg/dem/Engine/EngineUnit
+</A></li>
+        <LI>Next message: <A HREF="000210.html">[Yade-commits] r1245 - in trunk: core gui/qt3	pkg/common/Engine/EngineUnit
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#209">[ date ]</a>
+              <a href="thread.html#209">[ thread ]</a>
+              <a href="subject.html#209">[ subject ]</a>
+              <a href="author.html#209">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2008-02-11 17:53:41 +0100 (Mon, 11 Feb 2008)
+New Revision: 1244
+
+Modified:
+   trunk/core/MetaDispatchingEngine1D.hpp
+   trunk/core/MetaDispatchingEngine2D.hpp
+   trunk/extra/Brefcom.cpp
+   trunk/extra/BrefcomTestGen.cpp
+   trunk/extra/clump/Shop.cpp
+   trunk/extra/tetra/Tetra.hpp
+   trunk/extra/usct/UniaxialStrainControlledTest.cpp
+   trunk/extra/usct/UniaxialStrainControlledTest.hpp
+   trunk/pkg/common/Engine/EngineUnit/ElasticBodySimpleRelationship.hpp
+   trunk/pkg/dem/Engine/EngineUnit/CohesiveFrictionalRelationships.hpp
+   trunk/pkg/dem/Engine/EngineUnit/InteractingMyTetrahedron2AABB.hpp
+   trunk/pkg/dem/Engine/EngineUnit/InteractingMyTetrahedron2InteractingBox4InteractionOfMyTetrahedron.hpp
+   trunk/pkg/dem/Engine/EngineUnit/InteractingMyTetrahedron2InteractingMyTetrahedron4InteractionOfMyTetrahedron.hpp
+   trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2AABBwater.hpp
+   trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2InteractingSphere4SpheresContactGeometryWater.hpp
+   trunk/pkg/dem/Engine/EngineUnit/MacroMicroElasticRelationshipsWater.hpp
+   trunk/pkg/dem/Engine/EngineUnit/SimpleElasticRelationships.hpp
+   trunk/pkg/dem/Engine/EngineUnit/Tetrahedron2InteractingMyTetrahedron.hpp
+   trunk/pkg/dem/PreProcessor/CohesiveTriaxialTest.cpp
+   trunk/pkg/dem/PreProcessor/Funnel.cpp
+   trunk/pkg/dem/PreProcessor/ModifiedTriaxialTest.cpp
+   trunk/pkg/dem/PreProcessor/SDECImpactTest.cpp
+   trunk/pkg/dem/PreProcessor/SDECLinkedSpheres.cpp
+   trunk/pkg/dem/PreProcessor/SDECMovingWall.cpp
+   trunk/pkg/dem/PreProcessor/SDECSpheresPlane.cpp
+   trunk/pkg/dem/PreProcessor/TetrahedronsTest.cpp
+   trunk/pkg/dem/PreProcessor/ThreePointBending.cpp
+   trunk/pkg/dem/PreProcessor/TriaxialTest.cpp
+   trunk/pkg/dem/PreProcessor/TriaxialTestWater.cpp
+   trunk/pkg/fem/Engine/EngineUnit/FEMSet2Tetrahedrons.hpp
+   trunk/pkg/fem/Engine/EngineUnit/FEMTetrahedronStiffness.hpp
+   trunk/pkg/fem/PreProcessor/FEMBeam.cpp
+   trunk/pkg/lattice/Engine/EngineUnit/LatticeSet2LatticeBeams.hpp
+   trunk/pkg/lattice/PreProcessor/LatticeExample.cpp
+   trunk/pkg/mass-spring/Engine/EngineUnit/ParticleSet2Mesh2D.hpp
+   trunk/pkg/mass-spring/PreProcessor/HangingCloth.cpp
+   trunk/pkg/realtime-rigidbody/Engine/EngineUnit/InteractingBox2InteractingBox4ClosestFeatures.hpp
+   trunk/pkg/realtime-rigidbody/Engine/EngineUnit/InteractingBox2InteractingSphere4ClosestFeatures.hpp
+   trunk/pkg/realtime-rigidbody/Engine/EngineUnit/InteractingSphere2InteractingSphere4ClosestFeatures.hpp
+   trunk/pkg/realtime-rigidbody/PreProcessor/BoxStack.cpp
+   trunk/pkg/realtime-rigidbody/PreProcessor/RotatingBox.cpp
+Log:
+1. Remove the old prototype for adding EngineUnits to dispatchers add(string,string,string)
+2. All EngineUnits now have FUNCTOR1D(...) or FUNCTOR2D(...,...) in their headers.
+
+
+
+Modified: trunk/core/MetaDispatchingEngine1D.hpp
+===================================================================
+--- trunk/core/MetaDispatchingEngine1D.hpp	2008-02-09 15:21:41 UTC (rev 1243)
++++ trunk/core/MetaDispatchingEngine1D.hpp	2008-02-11 16:53:41 UTC (rev 1244)
+@@ -37,10 +37,12 @@
+ {
+ 
+ 	public :
++		#if 0
+ 		virtual void __attribute__((deprecated)) add(string baseClassName1, string libName, shared_ptr&lt;EngineUnit&gt; eu = shared_ptr&lt;EngineUnitType&gt;()) {
+ 			storeFunctorName(baseClassName1,libName,static_pointer_cast&lt;EngineUnitType&gt;(eu));
+ 			add1DEntry(baseClassName1,libName,static_pointer_cast&lt;EngineUnitType&gt;(eu));
+ 		}
++		#endif
+ 
+ 		virtual void add(EngineUnitType* eu){ add(shared_ptr&lt;EngineUnitType&gt;(eu)); }
+ 		virtual void add(shared_ptr&lt;EngineUnitType&gt; eu){
+
+Modified: trunk/core/MetaDispatchingEngine2D.hpp
+===================================================================
+--- trunk/core/MetaDispatchingEngine2D.hpp	2008-02-09 15:21:41 UTC (rev 1243)
++++ trunk/core/MetaDispatchingEngine2D.hpp	2008-02-11 16:53:41 UTC (rev 1244)
+@@ -38,12 +38,14 @@
+ 				&gt;
+ {
+ 	public :
++		#if 0
+ 		__attribute__((deprecated))
+ 		virtual void add ( string baseClassName1, string baseClassName2, string libName, shared_ptr&lt;EngineUnit&gt; eu = shared_ptr&lt;EngineUnitType&gt;())  
+ 		{
+ 			storeFunctorName(baseClassName1,baseClassName2,libName,static_pointer_cast&lt;EngineUnitType&gt;(eu));
+ 			add2DEntry(baseClassName1,baseClassName2,libName,static_pointer_cast&lt;EngineUnitType&gt;(eu));
+ 		}
++		#endif
+ 
+ 		/* add functor by pointer: this is convenience for calls like foo-&gt;add(new SomeFunctor); */
+ 		virtual void add(EngineUnitType* eu){ add(shared_ptr&lt;EngineUnitType&gt;(eu)); }
+
+Modified: trunk/extra/Brefcom.cpp
+===================================================================
+--- trunk/extra/Brefcom.cpp	2008-02-09 15:21:41 UTC (rev 1243)
++++ trunk/extra/Brefcom.cpp	2008-02-11 16:53:41 UTC (rev 1244)
+@@ -140,7 +140,7 @@
+ 		Real envRetFactor=max(1e-3 /*guard numerical stability*/,min(1. /*guard sane solution*/,
+ 			(BC-&gt;FnMax_curr - (Fn - BC-&gt;FnMax_curr)/BC-&gt;zeta) / Fn ));
+ 		//if(isnan(envRetFactor)){TRVAR3(fn,Fn,contGeom-&gt;normal); exit(0);}
+-		Real d=(rbp1-&gt;se3.position - rbp2-&gt;se3.position).Length();
++		// Real d=(rbp1-&gt;se3.position - rbp2-&gt;se3.position).Length();
+ 		//TRVAR6(BC-&gt;d0,BC-&gt;dPeak,BC-&gt;dPeak_curr,BC-&gt;dBreak,BC-&gt;d0_curr,d);
+ 		//TRVAR5(Fn,BC-&gt;FnMax_curr,envRetFactor,BC-&gt;omegaPl,(BC-&gt;FnMax_curr - (Fn - BC-&gt;FnMax_curr)/BC-&gt;zeta) / Fn );
+ 		// if((d&lt;BC-&gt;d0_curr &amp;&amp; Fn&lt;0) || (d&gt;BC-&gt;d0_curr &amp;&amp; Fn&gt;0)) exit(1);
+@@ -267,8 +267,9 @@
+ 	glTranslatev(mid);
+ 	glPushMatrix();
+ 		glRasterPos2i(0,0);
+-		std::string str=std::string(&quot;omegaPl=&quot;)+boost::lexical_cast&lt;std::string&gt;((float)(BC-&gt;omegaPl));
+-		for(unsigned int i=0;i&lt;str.length();i++) glutBitmapCharacter(GLUT_BITMAP_HELVETICA_12,str[i]);
++		ostringstream oss; oss&lt;&lt;setw(2)&lt;&lt; /* &quot;w=&quot;&lt;&lt; */ BC-&gt;omegaPl;
++		//std::string str=std::string(&quot;omegaPl=&quot;)+boost::lexical_cast&lt;std::string&gt;((float)(BC-&gt;omegaPl));
++		for(unsigned int i=0;i&lt;oss.str().length();i++) glutBitmapCharacter(GLUT_BITMAP_HELVETICA_12,oss.str()[i]);
+ 	glPopMatrix();
+ 
+ }
+
+Modified: trunk/extra/BrefcomTestGen.cpp
+===================================================================
+--- trunk/extra/BrefcomTestGen.cpp	2008-02-09 15:21:41 UTC (rev 1243)
++++ trunk/extra/BrefcomTestGen.cpp	2008-02-11 16:53:41 UTC (rev 1244)
+@@ -76,8 +76,8 @@
+ 	rootBody-&gt;initializers.push_back(physicalActionInitializer);
+ 	
+ 	shared_ptr&lt;BoundingVolumeMetaEngine&gt; boundingVolumeDispatcher	= shared_ptr&lt;BoundingVolumeMetaEngine&gt;(new BoundingVolumeMetaEngine);
+-	boundingVolumeDispatcher-&gt;DISPATCHER_ADD3(InteractingSphere,AABB,InteractingSphere2AABB);
+-	boundingVolumeDispatcher-&gt;DISPATCHER_ADD3(MetaInteractingGeometry,AABB,MetaInteractingGeometry2AABB);
++	boundingVolumeDispatcher-&gt;add(new InteractingSphere2AABB);
++	boundingVolumeDispatcher-&gt;add(new MetaInteractingGeometry2AABB);
+ 	rootBody-&gt;initializers.push_back(boundingVolumeDispatcher);
+ 
+ 	rootBody-&gt;engines.clear();
+@@ -90,27 +90,27 @@
+ 	rootBody-&gt;engines.push_back(collider);
+ 
+ 	shared_ptr&lt;InteractionGeometryMetaEngine&gt; igeomDispatcher(new InteractionGeometryMetaEngine);
+-	igeomDispatcher-&gt;DISPATCHER_ADD3(InteractingSphere,InteractingSphere,InteractingSphere2InteractingSphere4DistantSpheresContactGeometry);
++	igeomDispatcher-&gt;add(new InteractingSphere2InteractingSphere4DistantSpheresContactGeometry);
+ 	rootBody-&gt;engines.push_back(igeomDispatcher);
+ 
+ 	shared_ptr&lt;InteractionPhysicsMetaEngine&gt; iphysDispatcher(new InteractionPhysicsMetaEngine);
+-	iphysDispatcher-&gt;DISPATCHER_ADD3(BodyMacroParameters,BodyMacroParameters,BrefcomMakeContact);
++	iphysDispatcher-&gt;add(new BrefcomMakeContact);
+ 	rootBody-&gt;engines.push_back(iphysDispatcher);
+ 
+ 	shared_ptr&lt;BrefcomLaw&gt; bLaw(new BrefcomLaw);
+ 	rootBody-&gt;engines.push_back(bLaw);
+ 
+ 	shared_ptr&lt;PhysicalActionApplier&gt; applyActionDispatcher(new PhysicalActionApplier);
+-	applyActionDispatcher-&gt;DISPATCHER_ADD3(Force,ParticleParameters,NewtonsForceLaw);
+-	applyActionDispatcher-&gt;DISPATCHER_ADD3(Momentum,RigidBodyParameters,NewtonsMomentumLaw);
++	applyActionDispatcher-&gt;add(new NewtonsForceLaw);
++	applyActionDispatcher-&gt;add(new NewtonsMomentumLaw);
+ 	rootBody-&gt;engines.push_back(applyActionDispatcher);
+ 	
+ 	shared_ptr&lt;PhysicalParametersMetaEngine&gt; positionIntegrator(new PhysicalParametersMetaEngine);
+-	positionIntegrator-&gt;DISPATCHER_ADD2(ParticleParameters,LeapFrogPositionIntegrator);
++	positionIntegrator-&gt;add(new LeapFrogPositionIntegrator);
+ 	rootBody-&gt;engines.push_back(positionIntegrator);
+ 
+ 	shared_ptr&lt;PhysicalParametersMetaEngine&gt; orientationIntegrator(new PhysicalParametersMetaEngine);
+-	orientationIntegrator-&gt;DISPATCHER_ADD2(RigidBodyParameters,LeapFrogOrientationIntegrator);
++	orientationIntegrator-&gt;add(new LeapFrogOrientationIntegrator);
+ 	rootBody-&gt;engines.push_back(orientationIntegrator);
+ }
+ 
+
+Modified: trunk/extra/clump/Shop.cpp
+===================================================================
+--- trunk/extra/clump/Shop.cpp	2008-02-09 15:21:41 UTC (rev 1243)
++++ trunk/extra/clump/Shop.cpp	2008-02-11 16:53:41 UTC (rev 1244)
+@@ -106,7 +106,7 @@
+ 	setDefault&lt;int&gt;(&quot;body_sdecGroupMask&quot;,55);
+ 	
+ 	setDefault(&quot;phys_density&quot;,2e3);
+-	setDefault(&quot;phys_young&quot;,4e7);
++	setDefault(&quot;phys_young&quot;,30e10);
+ 	setDefault(&quot;phys_poisson&quot;,.3);
+ 	setDefault(&quot;phys_frictionAngle&quot;,0.5236); //30&#730;
+ 	setDefault(&quot;phys_se3_orientation&quot;,Quaternionr(Vector3r(0,0,1),0));
+
+Modified: trunk/extra/tetra/Tetra.hpp
+===================================================================
+--- trunk/extra/tetra/Tetra.hpp	2008-02-09 15:21:41 UTC (rev 1243)
++++ trunk/extra/tetra/Tetra.hpp	2008-02-11 16:53:41 UTC (rev 1244)
+@@ -85,6 +85,7 @@
+ 			//! @fixme this seems superfluous?!: if(!ig)
+ 			ig=boost::shared_ptr&lt;InteractingGeometry&gt;(new TetraMold(tet-&gt;v[0],tet-&gt;v[1],tet-&gt;v[2],tet-&gt;v[3]));
+ 		}
++	FUNCTOR2D(Tetrahedron,TetraMold);
+ 	REGISTER_CLASS_NAME(Tetrahedron2TetraMold);
+ 	REGISTER_BASE_CLASS_NAME(InteractingGeometryEngineUnit);
+ 	DEFINE_FUNCTOR_ORDER_2D(Tetrahedron,TetraMold);
+
+Modified: trunk/extra/usct/UniaxialStrainControlledTest.cpp
+===================================================================
+--- trunk/extra/usct/UniaxialStrainControlledTest.cpp	2008-02-09 15:21:41 UTC (rev 1243)
++++ trunk/extra/usct/UniaxialStrainControlledTest.cpp	2008-02-11 16:53:41 UTC (rev 1244)
+@@ -2,6 +2,7 @@
+ #include&quot;UniaxialStrainControlledTest.hpp&quot;
+ #include&lt;yade/pkg-common/Force.hpp&gt;
+ #include&lt;yade/pkg-common/InteractingSphere.hpp&gt;
++#include&lt;yade/pkg-common/AABB.hpp&gt;
+ #include&lt;yade/pkg-dem/SDECLinkGeometry.hpp&gt;
+ #include&lt;yade/pkg-dem/SDECLinkPhysics.hpp&gt;
+ #include&lt;yade/extra/Brefcom.hpp&gt;
+@@ -21,6 +22,18 @@
+ 			&quot;; negative #&quot;&lt;&lt;negIds[0]&lt;&lt;&quot; at &quot;&lt;&lt;USCT_AXIS_COORD(negIds[0]));
+ 		LOG_INFO(&quot;Setting initial length to &quot;&lt;&lt;originalLength);
+ 	}
++	
++	shared_ptr&lt;AABB&gt; rbAABB;
++	if(crossSectionArea&lt;=0){
++		if (_rootBody-&gt;boundingVolume &amp;&amp; (rbAABB=dynamic_pointer_cast&lt;AABB&gt;(_rootBody-&gt;boundingVolume))){
++			int axis2=(axis+1)%3, axis3=(axis+2)%3; // perpendicular axes indices
++			crossSectionArea=4*rbAABB-&gt;halfSize[axis2]*rbAABB-&gt;halfSize[axis3];
++			LOG_INFO(&quot;Setting crossSectionArea=&quot;&lt;&lt;crossSectionArea&lt;&lt;&quot;, using axes #&quot;&lt;&lt;axis2&lt;&lt;&quot; and #&quot;&lt;&lt;axis3&lt;&lt;&quot;.&quot;);
++		} else {
++			LOG_WARN(&quot;No Axis Aligned Bounding Box for rootBody, using garbage value (&quot;&lt;&lt;crossSectionArea&lt;&lt;&quot;) for crossSectionArea!&quot;);
++		}
++	}
++
+ 	// linearly increase strain to the desired value
+ 	if(abs(currentStrainRate)&lt;abs(strainRate))currentStrainRate+=strainRate*.01; else currentStrainRate=strainRate;
+ 
+@@ -47,7 +60,8 @@
+ 	if(Omega::instance().getCurrentIteration()%50==0 &amp;&amp; recStream.good()) {
+ 		computeAxialForce(rootBody);
+ 		Real midPos=Body::byId(1)-&gt;physicalParameters-&gt;se3.position[axis];
+-		recStream&lt;&lt;Omega::instance().getCurrentIteration()&lt;&lt;&quot; &quot;&lt;&lt;strain&lt;&lt;&quot; &quot;&lt;&lt;sumPosForces&lt;&lt;&quot; &quot;&lt;&lt;sumNegForces&lt;&lt;&quot; &quot;&lt;&lt;posCoords[0]&lt;&lt;&quot; &quot;&lt;&lt;negCoords[0]&lt;&lt;&quot; &quot;&lt;&lt;midPos&lt;&lt;endl;
++		Real avgStress=(sumPosForces+sumNegForces)/(2*crossSectionArea); // average nominal stress
++		recStream&lt;&lt;Omega::instance().getCurrentIteration()&lt;&lt;&quot; &quot;&lt;&lt;strain&lt;&lt;&quot; &quot;&lt;&lt;avgStress&lt;&lt;&quot; &quot;&lt;&lt;sumPosForces&lt;&lt;&quot; &quot;&lt;&lt;sumNegForces&lt;&lt;&quot; &quot;&lt;&lt;posCoords[0]&lt;&lt;&quot; &quot;&lt;&lt;negCoords[0]&lt;&lt;&quot; &quot;&lt;&lt;midPos&lt;&lt;endl;
+ 	}
+ }
+ 
+@@ -249,9 +263,8 @@
+ 
+ 
+ 	shared_ptr&lt;PhysicalActionApplier&gt; applyActionDispatcher(new PhysicalActionApplier);
+-		//applyActionDispatcher-&gt;add(new NewtonsForceLaw); //DISPATCHER_ADD3(Force,ParticleParameters,NewtonsForceLaw);
+-		applyActionDispatcher-&gt;add(&quot;Force&quot;,&quot;ParticleParameters&quot;,&quot;NewtonsForceLaw&quot;);
+-		applyActionDispatcher-&gt;add(new NewtonsMomentumLaw); //DISPATCHER_ADD3(Momentum,RigidBodyParameters,NewtonsMomentumLaw);
++		applyActionDispatcher-&gt;add(new NewtonsForceLaw);
++		applyActionDispatcher-&gt;add(new NewtonsMomentumLaw);
+ 		rootBody-&gt;engines.push_back(applyActionDispatcher);
+ 	
+ 	shared_ptr&lt;PhysicalParametersMetaEngine&gt; positionIntegrator(new PhysicalParametersMetaEngine);
+
+Modified: trunk/extra/usct/UniaxialStrainControlledTest.hpp
+===================================================================
+--- trunk/extra/usct/UniaxialStrainControlledTest.hpp	2008-02-09 15:21:41 UTC (rev 1243)
++++ trunk/extra/usct/UniaxialStrainControlledTest.hpp	2008-02-11 16:53:41 UTC (rev 1244)
+@@ -1,6 +1,7 @@
+ // 2008 &#169; V&#225;clav &#352;milauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">eudoxos at arcig.cz</A>&gt; 
+ #pragma once
+ #include&lt;fstream&gt;
++#include&lt;limits&gt;
+ #include&lt;yade/extra/Shop.hpp&gt;
+ #include&lt;yade/core/FileGenerator.hpp&gt;
+ #include&lt;yade/core/DeusExMachina.hpp&gt;
+@@ -39,13 +40,14 @@
+ 	public:
+ 		Real strainRate,currentStrainRate,originalLength,limitStrain;
+ 		Real sumPosForces,sumNegForces;
++		Real crossSectionArea;
+ 		int axis;
+ 		bool notYetReversed;
+ 		vector&lt;body_id_t&gt; posIds, negIds;
+ 		vector&lt;Real&gt; posCoords,negCoords;
+ 
+ 		virtual void applyCondition(Body* _rootBody);
+-		UniaxialStrainer(){axis=2; currentStrainRate=0; originalLength=-1; limitStrain=-1; notYetReversed=true; };
++		UniaxialStrainer(){axis=2; currentStrainRate=0; originalLength=-1; limitStrain=-1; notYetReversed=true; crossSectionArea=-1; };
+ 		virtual ~UniaxialStrainer(){};
+ 		void registerAttributes(){
+ 			DeusExMachina::registerAttributes();
+@@ -59,6 +61,7 @@
+ 			REGISTER_ATTRIBUTE(originalLength);
+ 			REGISTER_ATTRIBUTE(limitStrain);
+ 			REGISTER_ATTRIBUTE(notYetReversed);
++			REGISTER_ATTRIBUTE(crossSectionArea);
+ 		}
+ 		void postProcessAttributes(bool deserializing){if(deserializing) recStream.open(&quot;/tmp/usct.data&quot;); };
+ 	REGISTER_CLASS_NAME(UniaxialStrainer);
+
+Modified: trunk/pkg/common/Engine/EngineUnit/ElasticBodySimpleRelationship.hpp
+===================================================================
+--- trunk/pkg/common/Engine/EngineUnit/ElasticBodySimpleRelationship.hpp	2008-02-09 15:21:41 UTC (rev 1243)
++++ trunk/pkg/common/Engine/EngineUnit/ElasticBodySimpleRelationship.hpp	2008-02-11 16:53:41 UTC (rev 1244)
+@@ -21,6 +21,8 @@
+ 	protected :
+ 		virtual void registerAttributes();
+ 
++	FUNCTOR2D(ElasticBodyParameters,ElasticBodyParameters);
++
+ 	REGISTER_CLASS_NAME(ElasticBodySimpleRelationship);
+ 	REGISTER_BASE_CLASS_NAME(InteractionPhysicsEngineUnit);
+ 
+
+Modified: trunk/pkg/dem/Engine/EngineUnit/CohesiveFrictionalRelationships.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/EngineUnit/CohesiveFrictionalRelationships.hpp	2008-02-09 15:21:41 UTC (rev 1243)
++++ trunk/pkg/dem/Engine/EngineUnit/CohesiveFrictionalRelationships.hpp	2008-02-11 16:53:41 UTC (rev 1244)
+@@ -31,6 +31,8 @@
+ 
+ 	protected :
+ 		virtual void registerAttributes();
++
++	FUNCTOR2D(CohesiveFrictionalBodyParameters,CohesiveFrictionalBodyParameters);
+ 	REGISTER_CLASS_NAME(CohesiveFrictionalRelationships);
+ 	REGISTER_BASE_CLASS_NAME(InteractionPhysicsEngineUnit);
+ 
+
+Modified: trunk/pkg/dem/Engine/EngineUnit/InteractingMyTetrahedron2AABB.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/EngineUnit/InteractingMyTetrahedron2AABB.hpp	2008-02-09 15:21:41 UTC (rev 1243)
++++ trunk/pkg/dem/Engine/EngineUnit/InteractingMyTetrahedron2AABB.hpp	2008-02-11 16:53:41 UTC (rev 1244)
+@@ -29,6 +29,7 @@
+ 				, shared_ptr&lt;BoundingVolume&gt;&amp; bv
+ 				, const Se3r&amp; se3
+ 				, const Body*	);
++	FUNCTOR2D(InteractingMyTetrahedron,AABB);
+ 	REGISTER_CLASS_NAME(InteractingMyTetrahedron2AABB);
+ 	REGISTER_BASE_CLASS_NAME(BoundingVolumeEngineUnit);
+ };
+
+Modified: trunk/pkg/dem/Engine/EngineUnit/InteractingMyTetrahedron2InteractingBox4InteractionOfMyTetrahedron.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/EngineUnit/InteractingMyTetrahedron2InteractingBox4InteractionOfMyTetrahedron.hpp	2008-02-09 15:21:41 UTC (rev 1243)
++++ trunk/pkg/dem/Engine/EngineUnit/InteractingMyTetrahedron2InteractingBox4InteractionOfMyTetrahedron.hpp	2008-02-11 16:53:41 UTC (rev 1244)
+@@ -37,6 +37,8 @@
+ 		
+ 		void calcSphereAndBox(	Vector3r c1, Real r1, Vector3r&amp; extents, const Se3r&amp; se3Box, Real&amp; penetrationDepth, Vector3r&amp; normal, Vector3r&amp; cp);
+ 
++	FUNCTOR2D(InteractingMyTetrahedron,InteractingBox);
++
+ 	REGISTER_CLASS_NAME(InteractingMyTetrahedron2InteractingBox4InteractionOfMyTetrahedron);
+ 	REGISTER_BASE_CLASS_NAME(InteractionGeometryEngineUnit);
+ 
+
+Modified: trunk/pkg/dem/Engine/EngineUnit/InteractingMyTetrahedron2InteractingMyTetrahedron4InteractionOfMyTetrahedron.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/EngineUnit/InteractingMyTetrahedron2InteractingMyTetrahedron4InteractionOfMyTetrahedron.hpp	2008-02-09 15:21:41 UTC (rev 1243)
++++ trunk/pkg/dem/Engine/EngineUnit/InteractingMyTetrahedron2InteractingMyTetrahedron4InteractionOfMyTetrahedron.hpp	2008-02-11 16:53:41 UTC (rev 1244)
+@@ -40,6 +40,8 @@
+ 		
+ 		void calcTwoSpheres(	Vector3r c1, Real r1, Vector3r c2, Real r2, Real&amp; penetrationDepth, Vector3r&amp; normal, Vector3r&amp; cp);
+ 
++	FUNCTOR2D(InteractingMyTetrahedron,InteractingMyTetrahedron);
++
+ 	REGISTER_CLASS_NAME(InteractingMyTetrahedron2InteractingMyTetrahedron4InteractionOfMyTetrahedron);
+ 	REGISTER_BASE_CLASS_NAME(InteractionGeometryEngineUnit);
+ 
+
+Modified: trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2AABBwater.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2AABBwater.hpp	2008-02-09 15:21:41 UTC (rev 1243)
++++ trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2AABBwater.hpp	2008-02-11 16:53:41 UTC (rev 1244)
+@@ -18,6 +18,7 @@
+ 				, shared_ptr&lt;BoundingVolume&gt;&amp; bv
+ 				, const Se3r&amp; se3
+ 				, const Body*	);
++	FUNCTOR2D(InteractingSphere,AABB);
+ 	REGISTER_CLASS_NAME(InteractingSphere2AABBwater);
+ 	REGISTER_BASE_CLASS_NAME(BoundingVolumeEngineUnit);
+ };
+
+Modified: trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2InteractingSphere4SpheresContactGeometryWater.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2InteractingSphere4SpheresContactGeometryWater.hpp	2008-02-09 15:21:41 UTC (rev 1243)
++++ trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2InteractingSphere4SpheresContactGeometryWater.hpp	2008-02-11 16:53:41 UTC (rev 1244)
+@@ -25,6 +25,8 @@
+ 					const Se3r&amp; se32,
+ 					const shared_ptr&lt;Interaction&gt;&amp; c);
+ 
++	FUNCTOR2D(InteractingSphere,InteractingSphere);
++
+ 	REGISTER_CLASS_NAME(InteractingSphere2InteractingSphere4SpheresContactGeometryWater);
+ 	REGISTER_BASE_CLASS_NAME(InteractionGeometryEngineUnit);
+ 
+
+Modified: trunk/pkg/dem/Engine/EngineUnit/MacroMicroElasticRelationshipsWater.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/EngineUnit/MacroMicroElasticRelationshipsWater.hpp	2008-02-09 15:21:41 UTC (rev 1243)
++++ trunk/pkg/dem/Engine/EngineUnit/MacroMicroElasticRelationshipsWater.hpp	2008-02-11 16:53:41 UTC (rev 1244)
+@@ -26,6 +26,9 @@
+ 
+ 	protected :
+ 		virtual void registerAttributes();
++
++	FUNCTOR2D(BodyMacroParameters,BodyMacroParameters);
++	
+ 	REGISTER_CLASS_NAME(MacroMicroElasticRelationshipsWater);
+ 	REGISTER_BASE_CLASS_NAME(InteractionPhysicsEngineUnit);
+ 
+
+Modified: trunk/pkg/dem/Engine/EngineUnit/SimpleElasticRelationships.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/EngineUnit/SimpleElasticRelationships.hpp	2008-02-09 15:21:41 UTC (rev 1243)
++++ trunk/pkg/dem/Engine/EngineUnit/SimpleElasticRelationships.hpp	2008-02-11 16:53:41 UTC (rev 1244)
+@@ -22,6 +22,8 @@
+ 
+ 	protected :
+ 		virtual void registerAttributes();
++
++	FUNCTOR2D(BodyMacroParameters,BodyMacroParameters);
+ 	REGISTER_CLASS_NAME(SimpleElasticRelationships);
+ 	REGISTER_BASE_CLASS_NAME(InteractionPhysicsEngineUnit);
+ 
+
+Modified: trunk/pkg/dem/Engine/EngineUnit/Tetrahedron2InteractingMyTetrahedron.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/EngineUnit/Tetrahedron2InteractingMyTetrahedron.hpp	2008-02-09 15:21:41 UTC (rev 1243)
++++ trunk/pkg/dem/Engine/EngineUnit/Tetrahedron2InteractingMyTetrahedron.hpp	2008-02-11 16:53:41 UTC (rev 1244)
+@@ -35,6 +35,8 @@
+ 				, shared_ptr&lt;InteractingGeometry&gt;&amp; ig
+ 				, const Se3r&amp; se3
+ 				, const Body*	);
++
++	FUNCTOR2D(Tetrahedron,InteractingMyTetrahedron);
+ 	REGISTER_CLASS_NAME(Tetrahedron2InteractingMyTetrahedron);
+ 	REGISTER_BASE_CLASS_NAME(InteractingGeometryEngineUnit);
+ 	
+
+Modified: trunk/pkg/dem/PreProcessor/CohesiveTriaxialTest.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/CohesiveTriaxialTest.cpp	2008-02-09 15:21:41 UTC (rev 1243)
++++ trunk/pkg/dem/PreProcessor/CohesiveTriaxialTest.cpp	2008-02-11 16:53:41 UTC (rev 1244)
+@@ -575,20 +575,20 @@
+ 	physicalActionInitializer-&gt;physicalActionNames.push_back(&quot;GlobalStiffness&quot;);
+ 	
+ 	shared_ptr&lt;InteractionGeometryMetaEngine&gt; interactionGeometryDispatcher(new InteractionGeometryMetaEngine);
+-	interactionGeometryDispatcher-&gt;add(&quot;InteractingSphere&quot;,&quot;InteractingSphere&quot;,&quot;InteractingSphere2InteractingSphere4DistantSpheresContactGeometry&quot;);
+-	interactionGeometryDispatcher-&gt;add(&quot;InteractingSphere&quot;,&quot;InteractingBox&quot;,&quot;InteractingBox2InteractingSphere4SpheresContactGeometry&quot;);
++	interactionGeometryDispatcher-&gt;add(&quot;InteractingSphere2InteractingSphere4DistantSpheresContactGeometry&quot;);
++	interactionGeometryDispatcher-&gt;add(&quot;InteractingBox2InteractingSphere4SpheresContactGeometry&quot;);
+ 
+ 	shared_ptr&lt;CohesiveFrictionalRelationships&gt; cohesiveFrictionalRelationships = shared_ptr&lt;CohesiveFrictionalRelationships&gt; (new CohesiveFrictionalRelationships);
+ 	cohesiveFrictionalRelationships-&gt;shearCohesion = shearCohesion;
+ 	cohesiveFrictionalRelationships-&gt;normalCohesion = normalCohesion;
+ 	cohesiveFrictionalRelationships-&gt;setCohesionOnNewContacts = setCohesionOnNewContacts;
+ 	shared_ptr&lt;InteractionPhysicsMetaEngine&gt; interactionPhysicsDispatcher(new InteractionPhysicsMetaEngine);
+-	interactionPhysicsDispatcher-&gt;add(&quot;CohesiveFrictionalBodyParameters&quot;,&quot;CohesiveFrictionalBodyParameters&quot;,&quot;CohesiveFrictionalRelationships&quot;, cohesiveFrictionalRelationships);
++	interactionPhysicsDispatcher-&gt;add(cohesiveFrictionalRelationships);
+ 		
+ 	shared_ptr&lt;BoundingVolumeMetaEngine&gt; boundingVolumeDispatcher	= shared_ptr&lt;BoundingVolumeMetaEngine&gt;(new BoundingVolumeMetaEngine);
+-	boundingVolumeDispatcher-&gt;add(&quot;InteractingSphere&quot;,&quot;AABB&quot;,&quot;InteractingSphere2AABB&quot;);
+-	boundingVolumeDispatcher-&gt;add(&quot;InteractingBox&quot;,&quot;AABB&quot;,&quot;InteractingBox2AABB&quot;);
+-	boundingVolumeDispatcher-&gt;add(&quot;MetaInteractingGeometry&quot;,&quot;AABB&quot;,&quot;MetaInteractingGeometry2AABB&quot;);
++	boundingVolumeDispatcher-&gt;add(&quot;InteractingSphere2AABB&quot;);
++	boundingVolumeDispatcher-&gt;add(&quot;InteractingBox2AABB&quot;);
++	boundingVolumeDispatcher-&gt;add(&quot;MetaInteractingGeometry2AABB&quot;);
+ 
+ 	
+ 
+@@ -601,17 +601,17 @@
+ 	shared_ptr&lt;CundallNonViscousMomentumDamping&gt; actionMomentumDamping(new CundallNonViscousMomentumDamping);
+ 	actionMomentumDamping-&gt;damping = dampingMomentum;
+ 	shared_ptr&lt;PhysicalActionDamper&gt; actionDampingDispatcher(new PhysicalActionDamper);
+-	actionDampingDispatcher-&gt;add(&quot;Force&quot;,&quot;ParticleParameters&quot;,&quot;CundallNonViscousForceDamping&quot;,actionForceDamping);
+-	actionDampingDispatcher-&gt;add(&quot;Momentum&quot;,&quot;RigidBodyParameters&quot;,&quot;CundallNonViscousMomentumDamping&quot;,actionMomentumDamping);
++	actionDampingDispatcher-&gt;add(actionForceDamping);
++	actionDampingDispatcher-&gt;add(actionMomentumDamping);
+ 	
+ 	shared_ptr&lt;PhysicalActionApplier&gt; applyActionDispatcher(new PhysicalActionApplier);
+-	applyActionDispatcher-&gt;add(&quot;Force&quot;,&quot;ParticleParameters&quot;,&quot;NewtonsForceLaw&quot;);
+-	applyActionDispatcher-&gt;add(&quot;Momentum&quot;,&quot;RigidBodyParameters&quot;,&quot;NewtonsMomentumLaw&quot;);
++	applyActionDispatcher-&gt;add(&quot;NewtonsForceLaw&quot;);
++	applyActionDispatcher-&gt;add(&quot;NewtonsMomentumLaw&quot;);
+ 		
+ 	shared_ptr&lt;PhysicalParametersMetaEngine&gt; positionIntegrator(new PhysicalParametersMetaEngine);
+-	positionIntegrator-&gt;add(&quot;ParticleParameters&quot;,&quot;LeapFrogPositionIntegrator&quot;);
++	positionIntegrator-&gt;add(&quot;LeapFrogPositionIntegrator&quot;);
+ 	shared_ptr&lt;PhysicalParametersMetaEngine&gt; orientationIntegrator(new PhysicalParametersMetaEngine);
+-	orientationIntegrator-&gt;add(&quot;RigidBodyParameters&quot;,&quot;LeapFrogOrientationIntegrator&quot;);
++	orientationIntegrator-&gt;add(&quot;LeapFrogOrientationIntegrator&quot;);
+ 
+ 	//shared_ptr&lt;ElasticCriterionTimeStepper&gt; sdecTimeStepper(new ElasticCriterionTimeStepper);
+ 	//sdecTimeStepper-&gt;sdecGroupMask = 2;
+
+Modified: trunk/pkg/dem/PreProcessor/Funnel.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/Funnel.cpp	2008-02-09 15:21:41 UTC (rev 1243)
++++ trunk/pkg/dem/PreProcessor/Funnel.cpp	2008-02-11 16:53:41 UTC (rev 1244)
+@@ -274,16 +274,16 @@
+ 	physicalActionInitializer-&gt;physicalActionNames.push_back(&quot;Momentum&quot;);
+ 	
+ 	shared_ptr&lt;InteractionGeometryMetaEngine&gt; interactionGeometryDispatcher(new InteractionGeometryMetaEngine);
+-	interactionGeometryDispatcher-&gt;add(&quot;InteractingSphere&quot;,&quot;InteractingSphere&quot;,&quot;InteractingSphere2InteractingSphere4SpheresContactGeometry&quot;);
+-	interactionGeometryDispatcher-&gt;add(&quot;InteractingSphere&quot;,&quot;InteractingBox&quot;,&quot;InteractingBox2InteractingSphere4SpheresContactGeometry&quot;);
++	interactionGeometryDispatcher-&gt;add(&quot;InteractingSphere2InteractingSphere4SpheresContactGeometry&quot;);
++	interactionGeometryDispatcher-&gt;add(&quot;InteractingBox2InteractingSphere4SpheresContactGeometry&quot;);
+ 
+ 	shared_ptr&lt;InteractionPhysicsMetaEngine&gt; interactionPhysicsDispatcher(new InteractionPhysicsMetaEngine);
+-	interactionPhysicsDispatcher-&gt;add(&quot;BodyMacroParameters&quot;,&quot;BodyMacroParameters&quot;,&quot;MacroMicroElasticRelationships&quot;);
++	interactionPhysicsDispatcher-&gt;add(&quot;MacroMicroElasticRelationships&quot;);
+ 		
+ 	shared_ptr&lt;BoundingVolumeMetaEngine&gt; boundingVolumeDispatcher	= shared_ptr&lt;BoundingVolumeMetaEngine&gt;(new BoundingVolumeMetaEngine);
+-	boundingVolumeDispatcher-&gt;add(&quot;InteractingSphere&quot;,&quot;AABB&quot;,&quot;InteractingSphere2AABB&quot;);
+-	boundingVolumeDispatcher-&gt;add(&quot;InteractingBox&quot;,&quot;AABB&quot;,&quot;InteractingBox2AABB&quot;);
+-	boundingVolumeDispatcher-&gt;add(&quot;MetaInteractingGeometry&quot;,&quot;AABB&quot;,&quot;MetaInteractingGeometry2AABB&quot;);
++	boundingVolumeDispatcher-&gt;add(&quot;InteractingSphere2AABB&quot;);
++	boundingVolumeDispatcher-&gt;add(&quot;InteractingBox2AABB&quot;);
++	boundingVolumeDispatcher-&gt;add(&quot;MetaInteractingGeometry2AABB&quot;);
+ 	
+ 	shared_ptr&lt;GravityEngine&gt; gravityCondition(new GravityEngine);
+ 	gravityCondition-&gt;gravity = gravity;
+@@ -293,17 +293,17 @@
+ 	shared_ptr&lt;CundallNonViscousMomentumDamping&gt; actionMomentumDamping(new CundallNonViscousMomentumDamping);
+ 	actionMomentumDamping-&gt;damping = dampingMomentum;
+ 	shared_ptr&lt;PhysicalActionDamper&gt; actionDampingDispatcher(new PhysicalActionDamper);
+-	actionDampingDispatcher-&gt;add(&quot;Force&quot;,&quot;RigidBodyParameters&quot;,&quot;CundallNonViscousForceDamping&quot;,actionForceDamping);
+-	actionDampingDispatcher-&gt;add(&quot;Momentum&quot;,&quot;RigidBodyParameters&quot;,&quot;CundallNonViscousMomentumDamping&quot;,actionMomentumDamping);
++	actionDampingDispatcher-&gt;add(actionForceDamping);
++	actionDampingDispatcher-&gt;add(actionMomentumDamping);
+ 	
+ 	shared_ptr&lt;PhysicalActionApplier&gt; applyActionDispatcher(new PhysicalActionApplier);
+-	applyActionDispatcher-&gt;add(&quot;Force&quot;,&quot;RigidBodyParameters&quot;,&quot;NewtonsForceLaw&quot;);
+-	applyActionDispatcher-&gt;add(&quot;Momentum&quot;,&quot;RigidBodyParameters&quot;,&quot;NewtonsMomentumLaw&quot;);
++	applyActionDispatcher-&gt;add(&quot;NewtonsForceLaw&quot;);
++	applyActionDispatcher-&gt;add(&quot;NewtonsMomentumLaw&quot;);
+ 	
+ 	shared_ptr&lt;PhysicalParametersMetaEngine&gt; positionIntegrator(new PhysicalParametersMetaEngine);
+-	positionIntegrator-&gt;add(&quot;ParticleParameters&quot;,&quot;LeapFrogPositionIntegrator&quot;);
++	positionIntegrator-&gt;add(&quot;LeapFrogPositionIntegrator&quot;);
+ 	shared_ptr&lt;PhysicalParametersMetaEngine&gt; orientationIntegrator(new PhysicalParametersMetaEngine);
+-	orientationIntegrator-&gt;add(&quot;RigidBodyParameters&quot;,&quot;LeapFrogOrientationIntegrator&quot;);
++	orientationIntegrator-&gt;add(&quot;LeapFrogOrientationIntegrator&quot;);
+  	
+ 
+ 	shared_ptr&lt;ElasticCriterionTimeStepper&gt; sdecTimeStepper(new ElasticCriterionTimeStepper);
+
+Modified: trunk/pkg/dem/PreProcessor/ModifiedTriaxialTest.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/ModifiedTriaxialTest.cpp	2008-02-09 15:21:41 UTC (rev 1243)
++++ trunk/pkg/dem/PreProcessor/ModifiedTriaxialTest.cpp	2008-02-11 16:53:41 UTC (rev 1244)
+@@ -581,16 +581,16 @@
+ 	physicalActionInitializer-&gt;physicalActionNames.push_back(&quot;GlobalStiffness&quot;);
+ 	
+ 	shared_ptr&lt;InteractionGeometryMetaEngine&gt; interactionGeometryDispatcher(new InteractionGeometryMetaEngine);
+-	interactionGeometryDispatcher-&gt;add(&quot;InteractingSphere&quot;,&quot;InteractingSphere&quot;,&quot;InteractingSphere2InteractingSphere4SpheresContactGeometry&quot;);
+-	interactionGeometryDispatcher-&gt;add(&quot;InteractingSphere&quot;,&quot;InteractingBox&quot;,&quot;InteractingBox2InteractingSphere4SpheresContactGeometry&quot;);
++	interactionGeometryDispatcher-&gt;add(&quot;InteractingSphere2InteractingSphere4SpheresContactGeometry&quot;);
++	interactionGeometryDispatcher-&gt;add(&quot;InteractingBox2InteractingSphere4SpheresContactGeometry&quot;);
+ 
+ 	shared_ptr&lt;InteractionPhysicsMetaEngine&gt; interactionPhysicsDispatcher(new InteractionPhysicsMetaEngine);
+-	interactionPhysicsDispatcher-&gt;add(&quot;BodyMacroParameters&quot;,&quot;BodyMacroParameters&quot;,&quot;SimpleElasticRelationships&quot;);
++	interactionPhysicsDispatcher-&gt;add(&quot;SimpleElasticRelationships&quot;);
+ 		
+ 	shared_ptr&lt;BoundingVolumeMetaEngine&gt; boundingVolumeDispatcher	= shared_ptr&lt;BoundingVolumeMetaEngine&gt;(new BoundingVolumeMetaEngine);
+-	boundingVolumeDispatcher-&gt;add(&quot;InteractingSphere&quot;,&quot;AABB&quot;,&quot;InteractingSphere2AABB&quot;);
+-	boundingVolumeDispatcher-&gt;add(&quot;InteractingBox&quot;,&quot;AABB&quot;,&quot;InteractingBox2AABB&quot;);
+-	boundingVolumeDispatcher-&gt;add(&quot;MetaInteractingGeometry&quot;,&quot;AABB&quot;,&quot;MetaInteractingGeometry2AABB&quot;);
++	boundingVolumeDispatcher-&gt;add(&quot;InteractingSphere2AABB&quot;);
++	boundingVolumeDispatcher-&gt;add(&quot;InteractingBox2AABB&quot;);
++	boundingVolumeDispatcher-&gt;add(&quot;MetaInteractingGeometry2AABB&quot;);
+ 	
+ 	shared_ptr&lt;GravityEngine&gt; gravityCondition(new GravityEngine);
+ 	gravityCondition-&gt;gravity = gravity;
+@@ -604,17 +604,17 @@
+ 	shared_ptr&lt;CundallNonViscousMomentumDamping&gt; actionMomentumDamping(new CundallNonViscousMomentumDamping);
+ 	actionMomentumDamping-&gt;damping = dampingMomentum;
+ 	shared_ptr&lt;PhysicalActionDamper&gt; actionDampingDispatcher(new PhysicalActionDamper);
+-	actionDampingDispatcher-&gt;add(&quot;Force&quot;,&quot;ParticleParameters&quot;,&quot;CundallNonViscousForceDamping&quot;,actionForceDamping);
+-	actionDampingDispatcher-&gt;add(&quot;Momentum&quot;,&quot;RigidBodyParameters&quot;,&quot;CundallNonViscousMomentumDamping&quot;,actionMomentumDamping);
++	actionDampingDispatcher-&gt;add(actionForceDamping);
++	actionDampingDispatcher-&gt;add(actionMomentumDamping);
+ 	
+ 	shared_ptr&lt;PhysicalActionApplier&gt; applyActionDispatcher(new PhysicalActionApplier);
+-	applyActionDispatcher-&gt;add(&quot;Force&quot;,&quot;ParticleParameters&quot;,&quot;NewtonsForceLaw&quot;);
+-	applyActionDispatcher-&gt;add(&quot;Momentum&quot;,&quot;RigidBodyParameters&quot;,&quot;NewtonsMomentumLaw&quot;);
++	applyActionDispatcher-&gt;add(&quot;NewtonsForceLaw&quot;);
++	applyActionDispatcher-&gt;add(&quot;NewtonsMomentumLaw&quot;);
+ 		
+ 	shared_ptr&lt;PhysicalParametersMetaEngine&gt; positionIntegrator(new PhysicalParametersMetaEngine);
+-	positionIntegrator-&gt;add(&quot;ParticleParameters&quot;,&quot;LeapFrogPositionIntegrator&quot;);
++	positionIntegrator-&gt;add(&quot;LeapFrogPositionIntegrator&quot;);
+ 	shared_ptr&lt;PhysicalParametersMetaEngine&gt; orientationIntegrator(new PhysicalParametersMetaEngine);
+-	orientationIntegrator-&gt;add(&quot;RigidBodyParameters&quot;,&quot;LeapFrogOrientationIntegrator&quot;);
++	orientationIntegrator-&gt;add(&quot;LeapFrogOrientationIntegrator&quot;);
+ 
+ 	//shared_ptr&lt;ElasticCriterionTimeStepper&gt; sdecTimeStepper(new ElasticCriterionTimeStepper);
+ 	//sdecTimeStepper-&gt;sdecGroupMask = 2;
+
+Modified: trunk/pkg/dem/PreProcessor/SDECImpactTest.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/SDECImpactTest.cpp	2008-02-09 15:21:41 UTC (rev 1243)
++++ trunk/pkg/dem/PreProcessor/SDECImpactTest.cpp	2008-02-11 16:53:41 UTC (rev 1244)
+@@ -468,16 +468,16 @@
+ 	physicalActionInitializer-&gt;physicalActionNames.push_back(&quot;Momentum&quot;);
+ 	
+ 	shared_ptr&lt;InteractionGeometryMetaEngine&gt; interactionGeometryDispatcher(new InteractionGeometryMetaEngine);
+-	interactionGeometryDispatcher-&gt;add(&quot;InteractingSphere&quot;,&quot;InteractingSphere&quot;,&quot;InteractingSphere2InteractingSphere4SpheresContactGeometry&quot;);
+-	interactionGeometryDispatcher-&gt;add(&quot;InteractingSphere&quot;,&quot;InteractingBox&quot;,&quot;InteractingBox2InteractingSphere4SpheresContactGeometry&quot;);
++	interactionGeometryDispatcher-&gt;add(&quot;InteractingSphere2InteractingSphere4SpheresContactGeometry&quot;);
++	interactionGeometryDispatcher-&gt;add(&quot;InteractingBox2InteractingSphere4SpheresContactGeometry&quot;);
+ 
+ 	shared_ptr&lt;InteractionPhysicsMetaEngine&gt; interactionPhysicsDispatcher(new InteractionPhysicsMetaEngine);
+-	interactionPhysicsDispatcher-&gt;add(&quot;BodyMacroParameters&quot;,&quot;BodyMacroParameters&quot;,&quot;MacroMicroElasticRelationships&quot;);
++	interactionPhysicsDispatcher-&gt;add(&quot;MacroMicroElasticRelationships&quot;);
+ 		
+ 	shared_ptr&lt;BoundingVolumeMetaEngine&gt; boundingVolumeDispatcher	= shared_ptr&lt;BoundingVolumeMetaEngine&gt;(new BoundingVolumeMetaEngine);
+-	boundingVolumeDispatcher-&gt;add(&quot;InteractingSphere&quot;,&quot;AABB&quot;,&quot;InteractingSphere2AABB&quot;);
+-	boundingVolumeDispatcher-&gt;add(&quot;InteractingBox&quot;,&quot;AABB&quot;,&quot;InteractingBox2AABB&quot;);
+-	boundingVolumeDispatcher-&gt;add(&quot;MetaInteractingGeometry&quot;,&quot;AABB&quot;,&quot;MetaInteractingGeometry2AABB&quot;);
++	boundingVolumeDispatcher-&gt;add(&quot;InteractingSphere2AABB&quot;);
++	boundingVolumeDispatcher-&gt;add(&quot;InteractingBox2AABB&quot;);
++	boundingVolumeDispatcher-&gt;add(&quot;MetaInteractingGeometry2AABB&quot;);
+ 
+ 	
+ 
+@@ -490,17 +490,17 @@
+ 	shared_ptr&lt;CundallNonViscousMomentumDamping&gt; actionMomentumDamping(new CundallNonViscousMomentumDamping);
+ 	actionMomentumDamping-&gt;damping = dampingMomentum;
+ 	shared_ptr&lt;PhysicalActionDamper&gt; actionDampingDispatcher(new PhysicalActionDamper);
+-	actionDampingDispatcher-&gt;add(&quot;Force&quot;,&quot;ParticleParameters&quot;,&quot;CundallNonViscousForceDamping&quot;,actionForceDamping);
+-	actionDampingDispatcher-&gt;add(&quot;Momentum&quot;,&quot;RigidBodyParameters&quot;,&quot;CundallNonViscousMomentumDamping&quot;,actionMomentumDamping);
++	actionDampingDispatcher-&gt;add(actionForceDamping);
++	actionDampingDispatcher-&gt;add(actionMomentumDamping);
+ 	
+ 	shared_ptr&lt;PhysicalActionApplier&gt; applyActionDispatcher(new PhysicalActionApplier);
+-	applyActionDispatcher-&gt;add(&quot;Force&quot;,&quot;ParticleParameters&quot;,&quot;NewtonsForceLaw&quot;);
+-	applyActionDispatcher-&gt;add(&quot;Momentum&quot;,&quot;RigidBodyParameters&quot;,&quot;NewtonsMomentumLaw&quot;);
++	applyActionDispatcher-&gt;add(&quot;NewtonsForceLaw&quot;);
++	applyActionDispatcher-&gt;add(&quot;NewtonsMomentumLaw&quot;);
+ 	
+ 	shared_ptr&lt;PhysicalParametersMetaEngine&gt; positionIntegrator(new PhysicalParametersMetaEngine);
+-	positionIntegrator-&gt;add(&quot;ParticleParameters&quot;,&quot;LeapFrogPositionIntegrator&quot;);
++	positionIntegrator-&gt;add(&quot;LeapFrogPositionIntegrator&quot;);
+ 	shared_ptr&lt;PhysicalParametersMetaEngine&gt; orientationIntegrator(new PhysicalParametersMetaEngine);
+-	orientationIntegrator-&gt;add(&quot;RigidBodyParameters&quot;,&quot;LeapFrogOrientationIntegrator&quot;);
++	orientationIntegrator-&gt;add(&quot;LeapFrogOrientationIntegrator&quot;);
+ 
+ 	shared_ptr&lt;ElasticCriterionTimeStepper&gt; sdecTimeStepper(new ElasticCriterionTimeStepper);
+ 	sdecTimeStepper-&gt;sdecGroupMask = 2;
+
+Modified: trunk/pkg/dem/PreProcessor/SDECLinkedSpheres.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/SDECLinkedSpheres.cpp	2008-02-09 15:21:41 UTC (rev 1243)
++++ trunk/pkg/dem/PreProcessor/SDECLinkedSpheres.cpp	2008-02-11 16:53:41 UTC (rev 1244)
+@@ -319,16 +319,16 @@
+ 	physicalActionInitializer-&gt;physicalActionNames.push_back(&quot;Momentum&quot;);
+ 	
+ 	shared_ptr&lt;InteractionGeometryMetaEngine&gt; interactionGeometryDispatcher(new InteractionGeometryMetaEngine);
+-	interactionGeometryDispatcher-&gt;add(&quot;InteractingSphere&quot;,&quot;InteractingSphere&quot;,&quot;InteractingSphere2InteractingSphere4SpheresContactGeometry&quot;);
+-	interactionGeometryDispatcher-&gt;add(&quot;InteractingSphere&quot;,&quot;InteractingBox&quot;,&quot;InteractingBox2InteractingSphere4SpheresContactGeometry&quot;);
++	interactionGeometryDispatcher-&gt;add(&quot;InteractingSphere2InteractingSphere4SpheresContactGeometry&quot;);
++	interactionGeometryDispatcher-&gt;add(&quot;InteractingBox2InteractingSphere4SpheresContactGeometry&quot;);
+ 
+ 	shared_ptr&lt;InteractionPhysicsMetaEngine&gt; interactionPhysicsDispatcher(new InteractionPhysicsMetaEngine);
+-	interactionPhysicsDispatcher-&gt;add(&quot;BodyMacroParameters&quot;,&quot;BodyMacroParameters&quot;,&quot;MacroMicroElasticRelationships&quot;);
++	interactionPhysicsDispatcher-&gt;add(&quot;MacroMicroElasticRelationships&quot;);
+ 		
+ 	shared_ptr&lt;BoundingVolumeMetaEngine&gt; boundingVolumeDispatcher	= shared_ptr&lt;BoundingVolumeMetaEngine&gt;(new BoundingVolumeMetaEngine);
+-	boundingVolumeDispatcher-&gt;add(&quot;InteractingSphere&quot;,&quot;AABB&quot;,&quot;InteractingSphere2AABB&quot;);
+-	boundingVolumeDispatcher-&gt;add(&quot;InteractingBox&quot;,&quot;AABB&quot;,&quot;InteractingBox2AABB&quot;);
+-	boundingVolumeDispatcher-&gt;add(&quot;MetaInteractingGeometry&quot;,&quot;AABB&quot;,&quot;MetaInteractingGeometry2AABB&quot;);
++	boundingVolumeDispatcher-&gt;add(&quot;InteractingSphere2AABB&quot;);
++	boundingVolumeDispatcher-&gt;add(&quot;InteractingBox2AABB&quot;);
++	boundingVolumeDispatcher-&gt;add(&quot;MetaInteractingGeometry2AABB&quot;);
+ 		
+ 	shared_ptr&lt;GravityEngine&gt; gravityCondition(new GravityEngine);
+ 	gravityCondition-&gt;gravity = gravity;
+@@ -338,17 +338,17 @@
+ 	shared_ptr&lt;CundallNonViscousMomentumDamping&gt; actionMomentumDamping(new CundallNonViscousMomentumDamping);
+ 	actionMomentumDamping-&gt;damping = dampingMomentum;
+ 	shared_ptr&lt;PhysicalActionDamper&gt; actionDampingDispatcher(new PhysicalActionDamper);
+-	actionDampingDispatcher-&gt;add(&quot;Force&quot;,&quot;ParticleParameters&quot;,&quot;CundallNonViscousForceDamping&quot;,actionForceDamping);
+-	actionDampingDispatcher-&gt;add(&quot;Momentum&quot;,&quot;RigidBodyParameters&quot;,&quot;CundallNonViscousMomentumDamping&quot;,actionMomentumDamping);
++	actionDampingDispatcher-&gt;add(actionForceDamping);
++	actionDampingDispatcher-&gt;add(actionMomentumDamping);
+ 	
+ 	shared_ptr&lt;PhysicalActionApplier&gt; applyActionDispatcher(new PhysicalActionApplier);
+-	applyActionDispatcher-&gt;add(&quot;Force&quot;,&quot;ParticleParameters&quot;,&quot;NewtonsForceLaw&quot;);
+-	applyActionDispatcher-&gt;add(&quot;Momentum&quot;,&quot;RigidBodyParameters&quot;,&quot;NewtonsMomentumLaw&quot;);
++	applyActionDispatcher-&gt;add(&quot;NewtonsForceLaw&quot;);
++	applyActionDispatcher-&gt;add(&quot;NewtonsMomentumLaw&quot;);
+ 	
+ 	shared_ptr&lt;PhysicalParametersMetaEngine&gt; positionIntegrator(new PhysicalParametersMetaEngine);
+-	positionIntegrator-&gt;add(&quot;ParticleParameters&quot;,&quot;LeapFrogPositionIntegrator&quot;);
++	positionIntegrator-&gt;add(&quot;LeapFrogPositionIntegrator&quot;);
+ 	shared_ptr&lt;PhysicalParametersMetaEngine&gt; orientationIntegrator(new PhysicalParametersMetaEngine);
+-	orientationIntegrator-&gt;add(&quot;RigidBodyParameters&quot;,&quot;LeapFrogOrientationIntegrator&quot;);
++	orientationIntegrator-&gt;add(&quot;LeapFrogOrientationIntegrator&quot;);
+  	
+ 	shared_ptr&lt;ElasticCriterionTimeStepper&gt; sdecTimeStepper(new ElasticCriterionTimeStepper);
+ 	sdecTimeStepper-&gt;sdecGroupMask = 55;
+
+Modified: trunk/pkg/dem/PreProcessor/SDECMovingWall.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/SDECMovingWall.cpp	2008-02-09 15:21:41 UTC (rev 1243)
++++ trunk/pkg/dem/PreProcessor/SDECMovingWall.cpp	2008-02-11 16:53:41 UTC (rev 1244)
+@@ -357,16 +357,16 @@
+ 	physicalActionInitializer-&gt;physicalActionNames.push_back(&quot;Momentum&quot;);
+ 	
+ 	shared_ptr&lt;InteractionGeometryMetaEngine&gt; interactionGeometryDispatcher(new InteractionGeometryMetaEngine);
+-	interactionGeometryDispatcher-&gt;add(&quot;InteractingSphere&quot;,&quot;InteractingSphere&quot;,&quot;InteractingSphere2InteractingSphere4SpheresContactGeometry&quot;);
+-	interactionGeometryDispatcher-&gt;add(&quot;InteractingSphere&quot;,&quot;InteractingBox&quot;,&quot;InteractingBox2InteractingSphere4SpheresContactGeometry&quot;);
++	interactionGeometryDispatcher-&gt;add(&quot;InteractingSphere2InteractingSphere4SpheresContactGeometry&quot;);
++	interactionGeometryDispatcher-&gt;add(&quot;InteractingBox2InteractingSphere4SpheresContactGeometry&quot;);
+ 
+ 	shared_ptr&lt;InteractionPhysicsMetaEngine&gt; interactionPhysicsDispatcher(new InteractionPhysicsMetaEngine);
+-	interactionPhysicsDispatcher-&gt;add(&quot;BodyMacroParameters&quot;,&quot;BodyMacroParameters&quot;,&quot;MacroMicroElasticRelationships&quot;);
++	interactionPhysicsDispatcher-&gt;add(&quot;MacroMicroElasticRelationships&quot;);
+ 		
+ 	shared_ptr&lt;BoundingVolumeMetaEngine&gt; boundingVolumeDispatcher	= shared_ptr&lt;BoundingVolumeMetaEngine&gt;(new BoundingVolumeMetaEngine);
+-	boundingVolumeDispatcher-&gt;add(&quot;InteractingSphere&quot;,&quot;AABB&quot;,&quot;InteractingSphere2AABB&quot;);
+-	boundingVolumeDispatcher-&gt;add(&quot;InteractingBox&quot;,&quot;AABB&quot;,&quot;InteractingBox2AABB&quot;);
+-	boundingVolumeDispatcher-&gt;add(&quot;MetaInteractingGeometry&quot;,&quot;AABB&quot;,&quot;MetaInteractingGeometry2AABB&quot;);
++	boundingVolumeDispatcher-&gt;add(&quot;InteractingSphere2AABB&quot;);
++	boundingVolumeDispatcher-&gt;add(&quot;InteractingBox2AABB&quot;);
++	boundingVolumeDispatcher-&gt;add(&quot;MetaInteractingGeometry2AABB&quot;);
+ 	
+ 	shared_ptr&lt;GravityEngine&gt; gravityCondition(new GravityEngine);
+ 	gravityCondition-&gt;gravity = gravity;
+@@ -376,17 +376,17 @@
+ 	shared_ptr&lt;CundallNonViscousMomentumDamping&gt; actionMomentumDamping(new CundallNonViscousMomentumDamping);
+ 	actionMomentumDamping-&gt;damping = dampingMomentum;
+ 	shared_ptr&lt;PhysicalActionDamper&gt; actionDampingDispatcher(new PhysicalActionDamper);
+-	actionDampingDispatcher-&gt;add(&quot;Force&quot;,&quot;RigidBodyParameters&quot;,&quot;CundallNonViscousForceDamping&quot;,actionForceDamping);
+-	actionDampingDispatcher-&gt;add(&quot;Momentum&quot;,&quot;RigidBodyParameters&quot;,&quot;CundallNonViscousMomentumDamping&quot;,actionMomentumDamping);
++	actionDampingDispatcher-&gt;add(actionForceDamping);
++	actionDampingDispatcher-&gt;add(actionMomentumDamping);
+ 	
+ 	shared_ptr&lt;PhysicalActionApplier&gt; applyActionDispatcher(new PhysicalActionApplier);
+-	applyActionDispatcher-&gt;add(&quot;Force&quot;,&quot;RigidBodyParameters&quot;,&quot;NewtonsForceLaw&quot;);
+-	applyActionDispatcher-&gt;add(&quot;Momentum&quot;,&quot;RigidBodyParameters&quot;,&quot;NewtonsMomentumLaw&quot;);
++	applyActionDispatcher-&gt;add(&quot;NewtonsForceLaw&quot;);
++	applyActionDispatcher-&gt;add(&quot;NewtonsMomentumLaw&quot;);
+ 	
+ 	shared_ptr&lt;PhysicalParametersMetaEngine&gt; positionIntegrator(new PhysicalParametersMetaEngine);
+-	positionIntegrator-&gt;add(&quot;ParticleParameters&quot;,&quot;LeapFrogPositionIntegrator&quot;);
++	positionIntegrator-&gt;add(&quot;LeapFrogPositionIntegrator&quot;);
+ 	shared_ptr&lt;PhysicalParametersMetaEngine&gt; orientationIntegrator(new PhysicalParametersMetaEngine);
+-	orientationIntegrator-&gt;add(&quot;RigidBodyParameters&quot;,&quot;LeapFrogOrientationIntegrator&quot;);
++	orientationIntegrator-&gt;add(&quot;LeapFrogOrientationIntegrator&quot;);
+ // moving wall
+ 	shared_ptr&lt;TranslationEngine&gt; kinematic = shared_ptr&lt;TranslationEngine&gt;(new TranslationEngine);
+ 	kinematic-&gt;velocity  = wallVelocity;
+
+Modified: trunk/pkg/dem/PreProcessor/SDECSpheresPlane.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/SDECSpheresPlane.cpp	2008-02-09 15:21:41 UTC (rev 1243)
++++ trunk/pkg/dem/PreProcessor/SDECSpheresPlane.cpp	2008-02-11 16:53:41 UTC (rev 1244)
+@@ -327,16 +327,16 @@
+ 	physicalActionInitializer-&gt;physicalActionNames.push_back(&quot;Momentum&quot;);
+ 	
+ 	shared_ptr&lt;InteractionGeometryMetaEngine&gt; interactionGeometryDispatcher(new InteractionGeometryMetaEngine);
+-	interactionGeometryDispatcher-&gt;add(&quot;InteractingSphere&quot;,&quot;InteractingSphere&quot;,&quot;InteractingSphere2InteractingSphere4SpheresContactGeometry&quot;);
+-	interactionGeometryDispatcher-&gt;add(&quot;InteractingSphere&quot;,&quot;InteractingBox&quot;,&quot;InteractingBox2InteractingSphere4SpheresContactGeometry&quot;);
++	interactionGeometryDispatcher-&gt;add(&quot;InteractingSphere2InteractingSphere4SpheresContactGeometry&quot;);
++	interactionGeometryDispatcher-&gt;add(&quot;InteractingBox2InteractingSphere4SpheresContactGeometry&quot;);
+ 
+ 	shared_ptr&lt;InteractionPhysicsMetaEngine&gt; interactionPhysicsDispatcher(new InteractionPhysicsMetaEngine);
+-	interactionPhysicsDispatcher-&gt;add(&quot;BodyMacroParameters&quot;,&quot;BodyMacroParameters&quot;,&quot;MacroMicroElasticRelationships&quot;);
++	interactionPhysicsDispatcher-&gt;add(&quot;MacroMicroElasticRelationships&quot;);
+ 		
+ 	shared_ptr&lt;BoundingVolumeMetaEngine&gt; boundingVolumeDispatcher	= shared_ptr&lt;BoundingVolumeMetaEngine&gt;(new BoundingVolumeMetaEngine);
+-	boundingVolumeDispatcher-&gt;add(&quot;InteractingSphere&quot;,&quot;AABB&quot;,&quot;InteractingSphere2AABB&quot;);
+-	boundingVolumeDispatcher-&gt;add(&quot;InteractingBox&quot;,&quot;AABB&quot;,&quot;InteractingBox2AABB&quot;);
+-	boundingVolumeDispatcher-&gt;add(&quot;MetaInteractingGeometry&quot;,&quot;AABB&quot;,&quot;MetaInteractingGeometry2AABB&quot;);
++	boundingVolumeDispatcher-&gt;add(&quot;InteractingSphere2AABB&quot;);
++	boundingVolumeDispatcher-&gt;add(&quot;InteractingBox2AABB&quot;);
++	boundingVolumeDispatcher-&gt;add(&quot;MetaInteractingGeometry2AABB&quot;);
+ 	
+ 	shared_ptr&lt;GravityEngine&gt; gravityCondition(new GravityEngine);
+ 	gravityCondition-&gt;gravity = gravity;
+@@ -346,17 +346,17 @@
+ 	shared_ptr&lt;CundallNonViscousMomentumDamping&gt; actionMomentumDamping(new CundallNonViscousMomentumDamping);
+ 	actionMomentumDamping-&gt;damping = dampingMomentum;
+ 	shared_ptr&lt;PhysicalActionDamper&gt; actionDampingDispatcher(new PhysicalActionDamper);
+-	actionDampingDispatcher-&gt;add(&quot;Force&quot;,&quot;RigidBodyParameters&quot;,&quot;CundallNonViscousForceDamping&quot;,actionForceDamping);
+-	actionDampingDispatcher-&gt;add(&quot;Momentum&quot;,&quot;RigidBodyParameters&quot;,&quot;CundallNonViscousMomentumDamping&quot;,actionMomentumDamping);
++	actionDampingDispatcher-&gt;add(actionForceDamping);
++	actionDampingDispatcher-&gt;add(actionMomentumDamping);
+ 	
+ 	shared_ptr&lt;PhysicalActionApplier&gt; applyActionDispatcher(new PhysicalActionApplier);
+-	applyActionDispatcher-&gt;add(&quot;Force&quot;,&quot;RigidBodyParameters&quot;,&quot;NewtonsForceLaw&quot;);
+-	applyActionDispatcher-&gt;add(&quot;Momentum&quot;,&quot;RigidBodyParameters&quot;,&quot;NewtonsMomentumLaw&quot;);
++	applyActionDispatcher-&gt;add(&quot;NewtonsForceLaw&quot;);
++	applyActionDispatcher-&gt;add(&quot;NewtonsMomentumLaw&quot;);
+ 	
+ 	shared_ptr&lt;PhysicalParametersMetaEngine&gt; positionIntegrator(new PhysicalParametersMetaEngine);
+-	positionIntegrator-&gt;add(&quot;ParticleParameters&quot;,&quot;LeapFrogPositionIntegrator&quot;);
++	positionIntegrator-&gt;add(&quot;LeapFrogPositionIntegrator&quot;);
+ 	shared_ptr&lt;PhysicalParametersMetaEngine&gt; orientationIntegrator(new PhysicalParametersMetaEngine);
+-	orientationIntegrator-&gt;add(&quot;RigidBodyParameters&quot;,&quot;LeapFrogOrientationIntegrator&quot;);
++	orientationIntegrator-&gt;add(&quot;LeapFrogOrientationIntegrator&quot;);
+  	
+ 
+ 	shared_ptr&lt;ElasticCriterionTimeStepper&gt; sdecTimeStepper(new ElasticCriterionTimeStepper);
+
+Modified: trunk/pkg/dem/PreProcessor/TetrahedronsTest.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/TetrahedronsTest.cpp	2008-02-09 15:21:41 UTC (rev 1243)
++++ trunk/pkg/dem/PreProcessor/TetrahedronsTest.cpp	2008-02-11 16:53:41 UTC (rev 1244)
+@@ -319,20 +319,20 @@
+ 	//
+ 	// Vaclav, it is very likely that you will need some other physical representation of interaction than SimpleElasticInteraction
+ 	//
+-	interactionPhysicsDispatcher-&gt;add(&quot;ElasticBodyParameters&quot;,&quot;ElasticBodyParameters&quot;,&quot;ElasticBodySimpleRelationship&quot;);
++	interactionPhysicsDispatcher-&gt;add(&quot;ElasticBodySimpleRelationship&quot;);
+ 		
+ 	shared_ptr&lt;InteractionGeometryMetaEngine&gt; interactionGeometryDispatcher(new InteractionGeometryMetaEngine);
+-	interactionGeometryDispatcher-&gt;add(&quot;InteractingMyTetrahedron&quot;,&quot;InteractingMyTetrahedron&quot;,&quot;InteractingMyTetrahedron2InteractingMyTetrahedron4InteractionOfMyTetrahedron&quot;);
+-	interactionGeometryDispatcher-&gt;add(&quot;InteractingMyTetrahedron&quot;,&quot;InteractingBox&quot;,&quot;InteractingMyTetrahedron2InteractingBox4InteractionOfMyTetrahedron&quot;);
++	interactionGeometryDispatcher-&gt;add(&quot;InteractingMyTetrahedron2InteractingMyTetrahedron4InteractionOfMyTetrahedron&quot;);
++	interactionGeometryDispatcher-&gt;add(&quot;InteractingMyTetrahedron2InteractingBox4InteractionOfMyTetrahedron&quot;);
+ 
+ 	shared_ptr&lt;InteractingGeometryMetaEngine&gt; interactingGeometryDispatcher	= shared_ptr&lt;InteractingGeometryMetaEngine&gt;(new InteractingGeometryMetaEngine);
+-	interactingGeometryDispatcher-&gt;add(&quot;Tetrahedron&quot;,&quot;InteractingMyTetrahedron&quot;,&quot;Tetrahedron2InteractingMyTetrahedron&quot;);
++	interactingGeometryDispatcher-&gt;add(&quot;Tetrahedron2InteractingMyTetrahedron&quot;);
+ 	
+ 	shared_ptr&lt;BoundingVolumeMetaEngine&gt; boundingVolumeDispatcher	= shared_ptr&lt;BoundingVolumeMetaEngine&gt;(new BoundingVolumeMetaEngine);
+-	boundingVolumeDispatcher-&gt;add(&quot;InteractingSphere&quot;,&quot;AABB&quot;,&quot;InteractingSphere2AABB&quot;);
+-	boundingVolumeDispatcher-&gt;add(&quot;InteractingBox&quot;,&quot;AABB&quot;,&quot;InteractingBox2AABB&quot;);
+-	boundingVolumeDispatcher-&gt;add(&quot;InteractingMyTetrahedron&quot;,&quot;AABB&quot;,&quot;InteractingMyTetrahedron2AABB&quot;);
+-	boundingVolumeDispatcher-&gt;add(&quot;MetaInteractingGeometry&quot;,&quot;AABB&quot;,&quot;MetaInteractingGeometry2AABB&quot;);
++	boundingVolumeDispatcher-&gt;add(&quot;InteractingSphere2AABB&quot;);
++	boundingVolumeDispatcher-&gt;add(&quot;InteractingBox2AABB&quot;);
++	boundingVolumeDispatcher-&gt;add(&quot;InteractingMyTetrahedron2AABB&quot;);
++	boundingVolumeDispatcher-&gt;add(&quot;MetaInteractingGeometry2AABB&quot;);
+ 	
+ 	shared_ptr&lt;GravityEngine&gt; gravityCondition(new GravityEngine);
+ 	gravityCondition-&gt;gravity = gravity;
+@@ -344,12 +344,12 @@
+ 	actionMomentumDamping-&gt;damping = dampingMomentum;
+ 
+ 	shared_ptr&lt;PhysicalActionDamper&gt; actionDampingDispatcher(new PhysicalActionDamper);
+-	actionDampingDispatcher-&gt;add(&quot;Force&quot;,&quot;RigidBodyParameters&quot;,&quot;CundallNonViscousForceDamping&quot;,actionForceDamping);
+-	actionDampingDispatcher-&gt;add(&quot;Momentum&quot;,&quot;RigidBodyParameters&quot;,&quot;CundallNonViscousMomentumDamping&quot;,actionMomentumDamping);
++	actionDampingDispatcher-&gt;add(actionForceDamping);
++	actionDampingDispatcher-&gt;add(actionMomentumDamping);
+ 	
+ 	shared_ptr&lt;PhysicalActionApplier&gt; applyActionDispatcher(new PhysicalActionApplier);
+-	applyActionDispatcher-&gt;add(&quot;Force&quot;,&quot;RigidBodyParameters&quot;,&quot;NewtonsForceLaw&quot;);
+-	applyActionDispatcher-&gt;add(&quot;Momentum&quot;,&quot;RigidBodyParameters&quot;,&quot;NewtonsMomentumLaw&quot;);
++	applyActionDispatcher-&gt;add(&quot;NewtonsForceLaw&quot;);
++	applyActionDispatcher-&gt;add(&quot;NewtonsMomentumLaw&quot;);
+ 
+ 	// 
+ 	// they must be separate, because for each body both of those integrators must perform the necessary work.
+@@ -359,11 +359,11 @@
+ 	//
+ 	// And the bodies would ONLY rotate...
+ 	shared_ptr&lt;PhysicalParametersMetaEngine&gt; positionIntegrator(new PhysicalParametersMetaEngine);
+-	positionIntegrator-&gt;add(&quot;ParticleParameters&quot;,&quot;LeapFrogPositionIntegrator&quot;);
++	positionIntegrator-&gt;add(&quot;LeapFrogPositionIntegrator&quot;);
+ 
+ 	// so another separate MetaEngine
+ 	shared_ptr&lt;PhysicalParametersMetaEngine&gt; orientationIntegrator(new PhysicalParametersMetaEngine);
+-	orientationIntegrator-&gt;add(&quot;RigidBodyParameters&quot;,&quot;LeapFrogOrientationIntegrator&quot;);
++	orientationIntegrator-&gt;add(&quot;LeapFrogOrientationIntegrator&quot;);
+ 	//////////////////
+  	
+ /*
+
+Modified: trunk/pkg/dem/PreProcessor/ThreePointBending.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/ThreePointBending.cpp	2008-02-09 15:21:41 UTC (rev 1243)
++++ trunk/pkg/dem/PreProcessor/ThreePointBending.cpp	2008-02-11 16:53:41 UTC (rev 1244)
+@@ -336,16 +336,16 @@
+ 	physicalActionInitializer-&gt;physicalActionNames.push_back(&quot;Momentum&quot;);
+ 	
+ 	shared_ptr&lt;InteractionGeometryMetaEngine&gt; interactionGeometryDispatcher(new InteractionGeometryMetaEngine);
+-	interactionGeometryDispatcher-&gt;add(&quot;InteractingSphere&quot;,&quot;InteractingSphere&quot;,&quot;InteractingSphere2InteractingSphere4SpheresContactGeometry&quot;);
+-	interactionGeometryDispatcher-&gt;add(&quot;InteractingSphere&quot;,&quot;InteractingBox&quot;,&quot;InteractingBox2InteractingSphere4SpheresContactGeometry&quot;);
++	interactionGeometryDispatcher-&gt;add(&quot;InteractingSphere2InteractingSphere4SpheresContactGeometry&quot;);
++	interactionGeometryDispatcher-&gt;add(&quot;InteractingBox2InteractingSphere4SpheresContactGeometry&quot;);
+ 
+ 	shared_ptr&lt;InteractionPhysicsMetaEngine&gt; interactionPhysicsDispatcher(new InteractionPhysicsMetaEngine);
+-	interactionPhysicsDispatcher-&gt;add(&quot;BodyMacroParameters&quot;,&quot;BodyMacroParameters&quot;,&quot;MacroMicroElasticRelationships&quot;);
++	interactionPhysicsDispatcher-&gt;add(&quot;MacroMicroElasticRelationships&quot;);
+ 		
+ 	shared_ptr&lt;BoundingVolumeMetaEngine&gt; boundingVolumeDispatcher	= shared_ptr&lt;BoundingVolumeMetaEngine&gt;(new BoundingVolumeMetaEngine);
+-	boundingVolumeDispatcher-&gt;add(&quot;InteractingSphere&quot;,&quot;AABB&quot;,&quot;InteractingSphere2AABB&quot;);
+-	boundingVolumeDispatcher-&gt;add(&quot;InteractingBox&quot;,&quot;AABB&quot;,&quot;InteractingBox2AABB&quot;);
+-	boundingVolumeDispatcher-&gt;add(&quot;MetaInteractingGeometry&quot;,&quot;AABB&quot;,&quot;MetaInteractingGeometry2AABB&quot;);
++	boundingVolumeDispatcher-&gt;add(&quot;InteractingSphere2AABB&quot;);
++	boundingVolumeDispatcher-&gt;add(&quot;InteractingBox2AABB&quot;);
++	boundingVolumeDispatcher-&gt;add(&quot;MetaInteractingGeometry2AABB&quot;);
+ 		
+ 	shared_ptr&lt;GravityEngine&gt; gravityCondition(new GravityEngine);
+ 	gravityCondition-&gt;gravity = gravity;
+@@ -355,17 +355,17 @@
+ 	shared_ptr&lt;CundallNonViscousMomentumDamping&gt; actionMomentumDamping(new CundallNonViscousMomentumDamping);
+ 	actionMomentumDamping-&gt;damping = dampingMomentum;
+ 	shared_ptr&lt;PhysicalActionDamper&gt; actionDampingDispatcher(new PhysicalActionDamper);
+-	actionDampingDispatcher-&gt;add(&quot;Force&quot;,&quot;ParticleParameters&quot;,&quot;CundallNonViscousForceDamping&quot;,actionForceDamping);
+-	actionDampingDispatcher-&gt;add(&quot;Momentum&quot;,&quot;RigidBodyParameters&quot;,&quot;CundallNonViscousMomentumDamping&quot;,actionMomentumDamping);
++	actionDampingDispatcher-&gt;add(actionForceDamping);
++	actionDampingDispatcher-&gt;add(actionMomentumDamping);
+ 	
+ 	shared_ptr&lt;PhysicalActionApplier&gt; applyActionDispatcher(new PhysicalActionApplier);
+-	applyActionDispatcher-&gt;add(&quot;Force&quot;,&quot;ParticleParameters&quot;,&quot;NewtonsForceLaw&quot;);
+-	applyActionDispatcher-&gt;add(&quot;Momentum&quot;,&quot;RigidBodyParameters&quot;,&quot;NewtonsMomentumLaw&quot;);
++	applyActionDispatcher-&gt;add(&quot;NewtonsForceLaw&quot;);
++	applyActionDispatcher-&gt;add(&quot;NewtonsMomentumLaw&quot;);
+ 	
+ 	shared_ptr&lt;PhysicalParametersMetaEngine&gt; positionIntegrator(new PhysicalParametersMetaEngine);
+-	positionIntegrator-&gt;add(&quot;ParticleParameters&quot;,&quot;LeapFrogPositionIntegrator&quot;);
++	positionIntegrator-&gt;add(&quot;LeapFrogPositionIntegrator&quot;);
+ 	shared_ptr&lt;PhysicalParametersMetaEngine&gt; orientationIntegrator(new PhysicalParametersMetaEngine);
+-	orientationIntegrator-&gt;add(&quot;RigidBodyParameters&quot;,&quot;LeapFrogOrientationIntegrator&quot;);
++	orientationIntegrator-&gt;add(&quot;LeapFrogOrientationIntegrator&quot;);
+  	
+ 	shared_ptr&lt;ElasticCriterionTimeStepper&gt; sdecTimeStepper(new ElasticCriterionTimeStepper);
+ 	sdecTimeStepper-&gt;sdecGroupMask = 55;
+
+Modified: trunk/pkg/dem/PreProcessor/TriaxialTest.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/TriaxialTest.cpp	2008-02-09 15:21:41 UTC (rev 1243)
++++ trunk/pkg/dem/PreProcessor/TriaxialTest.cpp	2008-02-11 16:53:41 UTC (rev 1244)
+@@ -546,16 +546,16 @@
+ 	physicalActionInitializer-&gt;physicalActionNames.push_back(&quot;GlobalStiffness&quot;);
+ 	
+ 	shared_ptr&lt;InteractionGeometryMetaEngine&gt; interactionGeometryDispatcher(new InteractionGeometryMetaEngine);
+-	interactionGeometryDispatcher-&gt;add(&quot;InteractingSphere&quot;,&quot;InteractingSphere&quot;,&quot;InteractingSphere2InteractingSphere4SpheresContactGeometry&quot;);
+-	interactionGeometryDispatcher-&gt;add(&quot;InteractingSphere&quot;,&quot;InteractingBox&quot;,&quot;InteractingBox2InteractingSphere4SpheresContactGeometry&quot;);
++	interactionGeometryDispatcher-&gt;add(&quot;InteractingSphere2InteractingSphere4SpheresContactGeometry&quot;);
++	interactionGeometryDispatcher-&gt;add(&quot;InteractingBox2InteractingSphere4SpheresContactGeometry&quot;);
+ 
+ 	shared_ptr&lt;InteractionPhysicsMetaEngine&gt; interactionPhysicsDispatcher(new InteractionPhysicsMetaEngine);
+-	interactionPhysicsDispatcher-&gt;add(&quot;BodyMacroParameters&quot;,&quot;BodyMacroParameters&quot;,&quot;SimpleElasticRelationships&quot;);
++	interactionPhysicsDispatcher-&gt;add(&quot;SimpleElasticRelationships&quot;);
+ 		
+ 	shared_ptr&lt;BoundingVolumeMetaEngine&gt; boundingVolumeDispatcher	= shared_ptr&lt;BoundingVolumeMetaEngine&gt;(new BoundingVolumeMetaEngine);
+-	boundingVolumeDispatcher-&gt;add(&quot;InteractingSphere&quot;,&quot;AABB&quot;,&quot;InteractingSphere2AABB&quot;);
+-	boundingVolumeDispatcher-&gt;add(&quot;InteractingBox&quot;,&quot;AABB&quot;,&quot;InteractingBox2AABB&quot;);
+-	boundingVolumeDispatcher-&gt;add(&quot;MetaInteractingGeometry&quot;,&quot;AABB&quot;,&quot;MetaInteractingGeometry2AABB&quot;);
++	boundingVolumeDispatcher-&gt;add(&quot;InteractingSphere2AABB&quot;);
++	boundingVolumeDispatcher-&gt;add(&quot;InteractingBox2AABB&quot;);
++	boundingVolumeDispatcher-&gt;add(&quot;MetaInteractingGeometry2AABB&quot;);
+ 
+ 	
+ 
+@@ -568,17 +568,17 @@
+ 	shared_ptr&lt;CundallNonViscousMomentumDamping&gt; actionMomentumDamping(new CundallNonViscousMomentumDamping);
+ 	actionMomentumDamping-&gt;damping = dampingMomentum;
+ 	shared_ptr&lt;PhysicalActionDamper&gt; actionDampingDispatcher(new PhysicalActionDamper);
+-	actionDampingDispatcher-&gt;add(&quot;Force&quot;,&quot;ParticleParameters&quot;,&quot;CundallNonViscousForceDamping&quot;,actionForceDamping);
+-	actionDampingDispatcher-&gt;add(&quot;Momentum&quot;,&quot;RigidBodyParameters&quot;,&quot;CundallNonViscousMomentumDamping&quot;,actionMomentumDamping);
++	actionDampingDispatcher-&gt;add(actionForceDamping);
++	actionDampingDispatcher-&gt;add(actionMomentumDamping);
+ 	
+ 	shared_ptr&lt;PhysicalActionApplier&gt; applyActionDispatcher(new PhysicalActionApplier);
+-	applyActionDispatcher-&gt;add(&quot;Force&quot;,&quot;ParticleParameters&quot;,&quot;NewtonsForceLaw&quot;);
+-	applyActionDispatcher-&gt;add(&quot;Momentum&quot;,&quot;RigidBodyParameters&quot;,&quot;NewtonsMomentumLaw&quot;);
++	applyActionDispatcher-&gt;add(&quot;NewtonsForceLaw&quot;);
++	applyActionDispatcher-&gt;add(&quot;NewtonsMomentumLaw&quot;);
+ 		
+ 	shared_ptr&lt;PhysicalParametersMetaEngine&gt; positionIntegrator(new PhysicalParametersMetaEngine);
+-	positionIntegrator-&gt;add(&quot;ParticleParameters&quot;,&quot;LeapFrogPositionIntegrator&quot;);
++	positionIntegrator-&gt;add(&quot;LeapFrogPositionIntegrator&quot;);
+ 	shared_ptr&lt;PhysicalParametersMetaEngine&gt; orientationIntegrator(new PhysicalParametersMetaEngine);
+-	orientationIntegrator-&gt;add(&quot;RigidBodyParameters&quot;,&quot;LeapFrogOrientationIntegrator&quot;);
++	orientationIntegrator-&gt;add(&quot;LeapFrogOrientationIntegrator&quot;);
+ 
+ 	//shared_ptr&lt;ElasticCriterionTimeStepper&gt; sdecTimeStepper(new ElasticCriterionTimeStepper);
+ 	//sdecTimeStepper-&gt;sdecGroupMask = 2;
+
+Modified: trunk/pkg/dem/PreProcessor/TriaxialTestWater.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/TriaxialTestWater.cpp	2008-02-09 15:21:41 UTC (rev 1243)
++++ trunk/pkg/dem/PreProcessor/TriaxialTestWater.cpp	2008-02-11 16:53:41 UTC (rev 1244)
+@@ -529,20 +529,16 @@
+ 	physicalActionInitializer-&gt;physicalActionNames.push_back(&quot;GlobalStiffness&quot;);
+ 	
+ 	shared_ptr&lt;InteractionGeometryMetaEngine&gt; interactionGeometryDispatcher(new InteractionGeometryMetaEngine);
+-	interactionGeometryDispatcher-&gt;add(&quot;InteractingSphere&quot;,
+-&quot;InteractingSphere&quot;,
+-&quot;InteractingSphere2InteractingSphere4SpheresContactGeometryWater&quot;);
+-	interactionGeometryDispatcher-&gt;add(&quot;InteractingSphere&quot;,&quot;InteractingBox&quot;,&quot;InteractingBox2InteractingSphere4SpheresContactGeometry&quot;);
++	interactionGeometryDispatcher-&gt;add(&quot;InteractingSphere2InteractingSphere4SpheresContactGeometryWater&quot;);
++	interactionGeometryDispatcher-&gt;add(&quot;InteractingBox2InteractingSphere4SpheresContactGeometry&quot;);
+ 
+ 	shared_ptr&lt;InteractionPhysicsMetaEngine&gt; interactionPhysicsDispatcher(new InteractionPhysicsMetaEngine);
+-	interactionPhysicsDispatcher-&gt;add(&quot;BodyMacroParameters&quot;,
+-&quot;BodyMacroParameters&quot;,&quot;MacroMicroElasticRelationshipsWater&quot;);
++	interactionPhysicsDispatcher-&gt;add(&quot;MacroMicroElasticRelationshipsWater&quot;);
+ 		
+ 	shared_ptr&lt;BoundingVolumeMetaEngine&gt; boundingVolumeDispatcher	= shared_ptr&lt;BoundingVolumeMetaEngine&gt;(new BoundingVolumeMetaEngine);
+-	boundingVolumeDispatcher-&gt;add(&quot;InteractingSphere&quot;,&quot;AABB&quot;,
+-&quot;InteractingSphere2AABBwater&quot;);
+-	boundingVolumeDispatcher-&gt;add(&quot;InteractingBox&quot;,&quot;AABB&quot;,&quot;InteractingBox2AABB&quot;);
+-	boundingVolumeDispatcher-&gt;add(&quot;MetaInteractingGeometry&quot;,&quot;AABB&quot;,&quot;MetaInteractingGeometry2AABB&quot;);
++	boundingVolumeDispatcher-&gt;add(&quot;InteractingSphere2AABBwater&quot;);
++	boundingVolumeDispatcher-&gt;add(&quot;InteractingBox2AABB&quot;);
++	boundingVolumeDispatcher-&gt;add(&quot;MetaInteractingGeometry2AABB&quot;);
+ 
+ 	
+ 
+@@ -555,17 +551,17 @@
+ 	shared_ptr&lt;CundallNonViscousMomentumDamping&gt; actionMomentumDamping(new CundallNonViscousMomentumDamping);
+ 	actionMomentumDamping-&gt;damping = dampingMomentum;
+ 	shared_ptr&lt;PhysicalActionDamper&gt; actionDampingDispatcher(new PhysicalActionDamper);
+-	actionDampingDispatcher-&gt;add(&quot;Force&quot;,&quot;ParticleParameters&quot;,&quot;CundallNonViscousForceDamping&quot;,actionForceDamping);
+-	actionDampingDispatcher-&gt;add(&quot;Momentum&quot;,&quot;RigidBodyParameters&quot;,&quot;CundallNonViscousMomentumDamping&quot;,actionMomentumDamping);
++	actionDampingDispatcher-&gt;add(actionForceDamping);
++	actionDampingDispatcher-&gt;add(actionMomentumDamping);
+ 	
+ 	shared_ptr&lt;PhysicalActionApplier&gt; applyActionDispatcher(new PhysicalActionApplier);
+-	applyActionDispatcher-&gt;add(&quot;Force&quot;,&quot;ParticleParameters&quot;,&quot;NewtonsForceLaw&quot;);
+-	applyActionDispatcher-&gt;add(&quot;Momentum&quot;,&quot;RigidBodyParameters&quot;,&quot;NewtonsMomentumLaw&quot;);
++	applyActionDispatcher-&gt;add(&quot;NewtonsForceLaw&quot;);
++	applyActionDispatcher-&gt;add(&quot;NewtonsMomentumLaw&quot;);
+ 		
+ 	shared_ptr&lt;PhysicalParametersMetaEngine&gt; positionIntegrator(new PhysicalParametersMetaEngine);
+-	positionIntegrator-&gt;add(&quot;ParticleParameters&quot;,&quot;LeapFrogPositionIntegrator&quot;);
++	positionIntegrator-&gt;add(&quot;LeapFrogPositionIntegrator&quot;);
+ 	shared_ptr&lt;PhysicalParametersMetaEngine&gt; orientationIntegrator(new PhysicalParametersMetaEngine);
+-	orientationIntegrator-&gt;add(&quot;RigidBodyParameters&quot;,&quot;LeapFrogOrientationIntegrator&quot;);
++	orientationIntegrator-&gt;add(&quot;LeapFrogOrientationIntegrator&quot;);
+ 
+ 
+ 	shared_ptr&lt;GlobalStiffnessTimeStepper&gt; globalStiffnessTimeStepper(new
+
+Modified: trunk/pkg/fem/Engine/EngineUnit/FEMSet2Tetrahedrons.hpp
+===================================================================
+--- trunk/pkg/fem/Engine/EngineUnit/FEMSet2Tetrahedrons.hpp	2008-02-09 15:21:41 UTC (rev 1243)
++++ trunk/pkg/fem/Engine/EngineUnit/FEMSet2Tetrahedrons.hpp	2008-02-11 16:53:41 UTC (rev 1244)
+@@ -17,6 +17,7 @@
+ 		void go(	  const shared_ptr&lt;PhysicalParameters&gt;&amp;
+ 				, shared_ptr&lt;GeometricalModel&gt;&amp;
+ 				, const Body*);
++	FUNCTOR2D(FEMSetParameters,FEMSetGeometry);
+ 	REGISTER_CLASS_NAME(FEMSet2Tetrahedrons);
+ 	REGISTER_BASE_CLASS_NAME(GeometricalModelEngineUnit);
+ 
+
+Modified: trunk/pkg/fem/Engine/EngineUnit/FEMTetrahedronStiffness.hpp
+===================================================================
+--- trunk/pkg/fem/Engine/EngineUnit/FEMTetrahedronStiffness.hpp	2008-02-09 15:21:41 UTC (rev 1243)
++++ trunk/pkg/fem/Engine/EngineUnit/FEMTetrahedronStiffness.hpp	2008-02-11 16:53:41 UTC (rev 1244)
+@@ -23,7 +23,8 @@
+ 	public :
+ 		virtual void go(	  const shared_ptr&lt;PhysicalParameters&gt;&amp;
+ 					, Body*);
+-	
++
++	FUNCTOR1D(FEMSetParameters);	
+ 	REGISTER_CLASS_NAME(FEMTetrahedronStiffness);
+ 	REGISTER_BASE_CLASS_NAME(PhysicalParametersEngineUnit);
+ 
+
+Modified: trunk/pkg/fem/PreProcessor/FEMBeam.cpp
+===================================================================
+--- trunk/pkg/fem/PreProcessor/FEMBeam.cpp	2008-02-09 15:21:41 UTC (rev 1243)
++++ trunk/pkg/fem/PreProcessor/FEMBeam.cpp	2008-02-11 16:53:41 UTC (rev 1244)
+@@ -137,19 +137,19 @@
+ void FEMBeam::createActors(shared_ptr&lt;MetaBody&gt;&amp; rootBody)
+ {
+ 	shared_ptr&lt;BoundingVolumeMetaEngine&gt; boundingVolumeDispatcher	= shared_ptr&lt;BoundingVolumeMetaEngine&gt;(new BoundingVolumeMetaEngine);
+-	boundingVolumeDispatcher-&gt;add(&quot;MetaInteractingGeometry&quot;,&quot;AABB&quot;,&quot;MetaInteractingGeometry2AABB&quot;);
++	boundingVolumeDispatcher-&gt;add(&quot;MetaInteractingGeometry2AABB&quot;);
+ 
+ 	shared_ptr&lt;FEMSetTextLoader&gt; femSetTextLoaderFunctor	= shared_ptr&lt;FEMSetTextLoader&gt;(new FEMSetTextLoader);
+ 	femSetTextLoaderFunctor-&gt;fileName = femTxtFile;
+ 
+ 	shared_ptr&lt;PhysicalParametersMetaEngine&gt; bodyPhysicalParametersDispatcher(new PhysicalParametersMetaEngine);
+-	bodyPhysicalParametersDispatcher-&gt;add(&quot;FEMSetParameters&quot;,&quot;FEMTetrahedronStiffness&quot;);
++	bodyPhysicalParametersDispatcher-&gt;add(&quot;FEMTetrahedronStiffness&quot;);
+ 	
+ 	shared_ptr&lt;GeometricalModelMetaEngine&gt; geometricalModelDispatcher	= shared_ptr&lt;GeometricalModelMetaEngine&gt;(new GeometricalModelMetaEngine);
+-	geometricalModelDispatcher-&gt;add(&quot;FEMSetParameters&quot;,&quot;FEMSetGeometry&quot;,&quot;FEMSet2Tetrahedrons&quot;);
++	geometricalModelDispatcher-&gt;add(&quot;FEMSet2Tetrahedrons&quot;);
+ 	
+ 	shared_ptr&lt;PhysicalParametersMetaEngine&gt; positionIntegrator(new PhysicalParametersMetaEngine);
+-	positionIntegrator-&gt;add(&quot;ParticleParameters&quot;,&quot;LeapFrogPositionIntegrator&quot;);
++	positionIntegrator-&gt;add(&quot;LeapFrogPositionIntegrator&quot;);
+ 	
+ 	shared_ptr&lt;FEMLaw&gt; femLaw(new FEMLaw);
+ 	femLaw-&gt;nodeGroupMask = nodeGroupMask;
+@@ -159,7 +159,7 @@
+ 	gravityCondition-&gt;gravity = gravity;
+ 	
+ 	shared_ptr&lt;PhysicalActionApplier&gt; applyActionDispatcher(new PhysicalActionApplier);
+-	applyActionDispatcher-&gt;add(&quot;Force&quot;,&quot;ParticleParameters&quot;,&quot;NewtonsForceLaw&quot;);
++	applyActionDispatcher-&gt;add(&quot;NewtonsForceLaw&quot;);
+ 	
+ 	shared_ptr&lt;PhysicalActionContainerInitializer&gt; physicalActionInitializer(new PhysicalActionContainerInitializer);
+ 	physicalActionInitializer-&gt;physicalActionNames.push_back(&quot;Force&quot;);
+
+Modified: trunk/pkg/lattice/Engine/EngineUnit/LatticeSet2LatticeBeams.hpp
+===================================================================
+--- trunk/pkg/lattice/Engine/EngineUnit/LatticeSet2LatticeBeams.hpp	2008-02-09 15:21:41 UTC (rev 1243)
++++ trunk/pkg/lattice/Engine/EngineUnit/LatticeSet2LatticeBeams.hpp	2008-02-11 16:53:41 UTC (rev 1244)
+@@ -20,7 +20,8 @@
+ 		void go(	  const shared_ptr&lt;PhysicalParameters&gt;&amp;
+ 				, shared_ptr&lt;GeometricalModel&gt;&amp;
+ 				, const Body*);
+-
++	
++	FUNCTOR2D(LatticeSetParameters,LatticeSetGeometry);
+ 	REGISTER_CLASS_NAME(LatticeSet2LatticeBeams);
+ 	REGISTER_BASE_CLASS_NAME(GeometricalModelEngineUnit);
+ 
+
+Modified: trunk/pkg/lattice/PreProcessor/LatticeExample.cpp
+===================================================================
+--- trunk/pkg/lattice/PreProcessor/LatticeExample.cpp	2008-02-09 15:21:41 UTC (rev 1243)
++++ trunk/pkg/lattice/PreProcessor/LatticeExample.cpp	2008-02-11 16:53:41 UTC (rev 1244)
+@@ -1114,10 +1114,10 @@
+ void LatticeExample::createActors(shared_ptr&lt;MetaBody&gt;&amp; )
+ {
+         shared_ptr&lt;BoundingVolumeMetaEngine&gt; boundingVolumeDispatcher   = shared_ptr&lt;BoundingVolumeMetaEngine&gt;(new BoundingVolumeMetaEngine);
+-	boundingVolumeDispatcher-&gt;add(&quot;MetaInteractingGeometry&quot;,&quot;AABB&quot;,&quot;MetaInteractingGeometry2AABB&quot;);
++	boundingVolumeDispatcher-&gt;add(&quot;MetaInteractingGeometry2AABB&quot;);
+ 
+         shared_ptr&lt;GeometricalModelMetaEngine&gt; geometricalModelDispatcher       = shared_ptr&lt;GeometricalModelMetaEngine&gt;(new GeometricalModelMetaEngine);
+-        geometricalModelDispatcher-&gt;add(&quot;LatticeSetParameters&quot;,&quot;LatticeSetGeometry&quot;,&quot;LatticeSet2LatticeBeams&quot;);
++        geometricalModelDispatcher-&gt;add(&quot;LatticeSet2LatticeBeams&quot;);
+         
+         strainRecorder = shared_ptr&lt;StrainRecorder&gt;(new StrainRecorder);
+         strainRecorder-&gt;outputFile              = outputFile;
+
+Modified: trunk/pkg/mass-spring/Engine/EngineUnit/ParticleSet2Mesh2D.hpp
+===================================================================
+--- trunk/pkg/mass-spring/Engine/EngineUnit/ParticleSet2Mesh2D.hpp	2008-02-09 15:21:41 UTC (rev 1243)
++++ trunk/pkg/mass-spring/Engine/EngineUnit/ParticleSet2Mesh2D.hpp	2008-02-11 16:53:41 UTC (rev 1244)
+@@ -19,6 +19,7 @@
+ 				, shared_ptr&lt;GeometricalModel&gt;&amp;
+ 				, const Body*);
+ 
++	FUNCTOR2D(ParticleSetParameters,Mesh2D);
+ 	REGISTER_CLASS_NAME(ParticleSet2Mesh2D);
+ 	REGISTER_BASE_CLASS_NAME(GeometricalModelEngineUnit);
+ };
+
+Modified: trunk/pkg/mass-spring/PreProcessor/HangingCloth.cpp
+===================================================================
+--- trunk/pkg/mass-spring/PreProcessor/HangingCloth.cpp	2008-02-09 15:21:41 UTC (rev 1243)
++++ trunk/pkg/mass-spring/PreProcessor/HangingCloth.cpp	2008-02-11 16:53:41 UTC (rev 1244)
+@@ -156,39 +156,39 @@
+ 	physicalActionInitializer-&gt;physicalActionNames.push_back(&quot;Momentum&quot;);
+ 	
+ 	shared_ptr&lt;InteractionGeometryMetaEngine&gt; interactionGeometryDispatcher(new InteractionGeometryMetaEngine);
+-	interactionGeometryDispatcher-&gt;add(&quot;InteractingSphere&quot;,&quot;InteractingSphere&quot;,&quot;InteractingSphere2InteractingSphere4SpheresContactGeometry&quot;);
+-	interactionGeometryDispatcher-&gt;add(&quot;InteractingSphere&quot;,&quot;InteractingBox&quot;,&quot;InteractingBox2InteractingSphere4SpheresContactGeometry&quot;);
++	interactionGeometryDispatcher-&gt;add(&quot;InteractingSphere2InteractingSphere4SpheresContactGeometry&quot;);
++	interactionGeometryDispatcher-&gt;add(&quot;InteractingBox2InteractingSphere4SpheresContactGeometry&quot;);
+ 
+ 	shared_ptr&lt;InteractionPhysicsMetaEngine&gt; interactionPhysicsDispatcher(new InteractionPhysicsMetaEngine);
+-	interactionPhysicsDispatcher-&gt;add(&quot;BodyMacroParameters&quot;,&quot;BodyMacroParameters&quot;,&quot;MacroMicroElasticRelationships&quot;);
++	interactionPhysicsDispatcher-&gt;add(&quot;MacroMicroElasticRelationships&quot;);
+ 
+ 	shared_ptr&lt;GravityEngine&gt; gravityCondition(new GravityEngine);
+ 	gravityCondition-&gt;gravity = gravity;
+ 	
+ 	shared_ptr&lt;BoundingVolumeMetaEngine&gt; boundingVolumeDispatcher	= shared_ptr&lt;BoundingVolumeMetaEngine&gt;(new BoundingVolumeMetaEngine);
+-	boundingVolumeDispatcher-&gt;add(&quot;InteractingSphere&quot;,&quot;AABB&quot;,&quot;InteractingSphere2AABB&quot;);
+-	boundingVolumeDispatcher-&gt;add(&quot;InteractingBox&quot;,&quot;AABB&quot;,&quot;InteractingBox2AABB&quot;);
+-	boundingVolumeDispatcher-&gt;add(&quot;MetaInteractingGeometry&quot;,&quot;AABB&quot;,&quot;MetaInteractingGeometry2AABB&quot;);
++	boundingVolumeDispatcher-&gt;add(&quot;InteractingSphere2AABB&quot;);
++	boundingVolumeDispatcher-&gt;add(&quot;InteractingBox2AABB&quot;);
++	boundingVolumeDispatcher-&gt;add(&quot;MetaInteractingGeometry2AABB&quot;);
+ 
+ 	shared_ptr&lt;GeometricalModelMetaEngine&gt; geometricalModelDispatcher	= shared_ptr&lt;GeometricalModelMetaEngine&gt;(new GeometricalModelMetaEngine);
+-	geometricalModelDispatcher-&gt;add(&quot;ParticleSetParameters&quot;,&quot;Mesh2D&quot;,&quot;ParticleSet2Mesh2D&quot;);
++	geometricalModelDispatcher-&gt;add(&quot;ParticleSet2Mesh2D&quot;);
+ 
+ 	shared_ptr&lt;CundallNonViscousForceDamping&gt; actionForceDamping(new CundallNonViscousForceDamping);
+ 	actionForceDamping-&gt;damping = dampingForce;
+ 	shared_ptr&lt;CundallNonViscousMomentumDamping&gt; actionMomentumDamping(new CundallNonViscousMomentumDamping);
+ 	actionMomentumDamping-&gt;damping = dampingMomentum;
+ 	shared_ptr&lt;PhysicalActionDamper&gt; actionDampingDispatcher(new PhysicalActionDamper);
+-	actionDampingDispatcher-&gt;add(&quot;Force&quot;,&quot;ParticleParameters&quot;,&quot;CundallNonViscousForceDamping&quot;,actionForceDamping);
+-	actionDampingDispatcher-&gt;add(&quot;Momentum&quot;,&quot;RigidBodyParameters&quot;,&quot;CundallNonViscousMomentumDamping&quot;,actionMomentumDamping);
++	actionDampingDispatcher-&gt;add(actionForceDamping);
++	actionDampingDispatcher-&gt;add(actionMomentumDamping);
+ 	
+ 	shared_ptr&lt;PhysicalActionApplier&gt; applyActionDispatcher(new PhysicalActionApplier);
+-	applyActionDispatcher-&gt;add(&quot;Force&quot;,&quot;ParticleParameters&quot;,&quot;NewtonsForceLaw&quot;);
+-	applyActionDispatcher-&gt;add(&quot;Momentum&quot;,&quot;RigidBodyParameters&quot;,&quot;NewtonsMomentumLaw&quot;);
++	applyActionDispatcher-&gt;add(&quot;NewtonsForceLaw&quot;);
++	applyActionDispatcher-&gt;add(&quot;NewtonsMomentumLaw&quot;);
+ 
+ 	shared_ptr&lt;PhysicalParametersMetaEngine&gt; positionIntegrator(new PhysicalParametersMetaEngine);
+-	positionIntegrator-&gt;add(&quot;ParticleParameters&quot;,&quot;LeapFrogPositionIntegrator&quot;);
++	positionIntegrator-&gt;add(&quot;LeapFrogPositionIntegrator&quot;);
+ 	shared_ptr&lt;PhysicalParametersMetaEngine&gt; orientationIntegrator(new PhysicalParametersMetaEngine);
+-	orientationIntegrator-&gt;add(&quot;RigidBodyParameters&quot;,&quot;LeapFrogOrientationIntegrator&quot;);
++	orientationIntegrator-&gt;add(&quot;LeapFrogOrientationIntegrator&quot;);
+  	
+ 	shared_ptr&lt;MassSpringLaw&gt; explicitMassSpringConstitutiveLaw(new MassSpringLaw);
+ 	explicitMassSpringConstitutiveLaw-&gt;springGroupMask = 1;
+
+Modified: trunk/pkg/realtime-rigidbody/Engine/EngineUnit/InteractingBox2InteractingBox4ClosestFeatures.hpp
+===================================================================
+--- trunk/pkg/realtime-rigidbody/Engine/EngineUnit/InteractingBox2InteractingBox4ClosestFeatures.hpp	2008-02-09 15:21:41 UTC (rev 1243)
++++ trunk/pkg/realtime-rigidbody/Engine/EngineUnit/InteractingBox2InteractingBox4ClosestFeatures.hpp	2008-02-11 16:53:41 UTC (rev 1244)
+@@ -39,6 +39,8 @@
+ 	private :
+ 		bool testSeparatingAxis(Real expr1, Real expr2, Vector3r n,int c,BoxBoxInteractionInfo* bbInfo);
+ 
++	FUNCTOR2D(InteractingBox,InteractingBox);
++
+ 	REGISTER_CLASS_NAME(InteractingBox2InteractingBox4ClosestFeatures);
+ 	REGISTER_BASE_CLASS_NAME(InteractionGeometryEngineUnit);
+ 	DEFINE_FUNCTOR_ORDER_2D(InteractingBox,InteractingBox);
+
+Modified: trunk/pkg/realtime-rigidbody/Engine/EngineUnit/InteractingBox2InteractingSphere4ClosestFeatures.hpp
+===================================================================
+--- trunk/pkg/realtime-rigidbody/Engine/EngineUnit/InteractingBox2InteractingSphere4ClosestFeatures.hpp	2008-02-09 15:21:41 UTC (rev 1243)
++++ trunk/pkg/realtime-rigidbody/Engine/EngineUnit/InteractingBox2InteractingSphere4ClosestFeatures.hpp	2008-02-11 16:53:41 UTC (rev 1244)
+@@ -25,7 +25,8 @@
+ 					const Se3r&amp; se31,
+ 					const Se3r&amp; se32,
+ 					const shared_ptr&lt;Interaction&gt;&amp; c);
+-
++	
++	FUNCTOR2D(InteractingBox,InteractingSphere);
+ 	REGISTER_CLASS_NAME(InteractingBox2InteractingSphere4ClosestFeatures);
+ 	REGISTER_BASE_CLASS_NAME(InteractionGeometryEngineUnit);
+ 	DEFINE_FUNCTOR_ORDER_2D(InteractingBox,InteractingSphere);
+
+Modified: trunk/pkg/realtime-rigidbody/Engine/EngineUnit/InteractingSphere2InteractingSphere4ClosestFeatures.hpp
+===================================================================
+--- trunk/pkg/realtime-rigidbody/Engine/EngineUnit/InteractingSphere2InteractingSphere4ClosestFeatures.hpp	2008-02-09 15:21:41 UTC (rev 1243)
++++ trunk/pkg/realtime-rigidbody/Engine/EngineUnit/InteractingSphere2InteractingSphere4ClosestFeatures.hpp	2008-02-11 16:53:41 UTC (rev 1244)
+@@ -25,7 +25,8 @@
+ 					const Se3r&amp; se31,
+ 					const Se3r&amp; se32,
+ 					const shared_ptr&lt;Interaction&gt;&amp; c);
+-
++	
++	FUNCTOR2D(InteractingSphere,InteractingSphere);
+ 	REGISTER_CLASS_NAME(InteractingSphere2InteractingSphere4ClosestFeatures);
+ 	REGISTER_BASE_CLASS_NAME(InteractionGeometryEngineUnit);
+ 	DEFINE_FUNCTOR_ORDER_2D(InteractingSphere,InteractingSphere);
+
+Modified: trunk/pkg/realtime-rigidbody/PreProcessor/BoxStack.cpp
+===================================================================
+--- trunk/pkg/realtime-rigidbody/PreProcessor/BoxStack.cpp	2008-02-09 15:21:41 UTC (rev 1243)
++++ trunk/pkg/realtime-rigidbody/PreProcessor/BoxStack.cpp	2008-02-11 16:53:41 UTC (rev 1244)
+@@ -249,14 +249,14 @@
+ 	physicalActionInitializer-&gt;physicalActionNames.push_back(&quot;Momentum&quot;);
+ 	
+ 	shared_ptr&lt;InteractionGeometryMetaEngine&gt; interactionGeometryDispatcher(new InteractionGeometryMetaEngine);
+-	interactionGeometryDispatcher-&gt;add(&quot;InteractingSphere&quot;,&quot;InteractingSphere&quot;,&quot;InteractingSphere2InteractingSphere4ClosestFeatures&quot;);
+-	interactionGeometryDispatcher-&gt;add(&quot;InteractingSphere&quot;,&quot;InteractingBox&quot;,&quot;InteractingBox2InteractingSphere4ClosestFeatures&quot;);
+-	interactionGeometryDispatcher-&gt;add(&quot;InteractingBox&quot;,&quot;InteractingBox&quot;,&quot;InteractingBox2InteractingBox4ClosestFeatures&quot;);
++	interactionGeometryDispatcher-&gt;add(&quot;InteractingSphere2InteractingSphere4ClosestFeatures&quot;);
++	interactionGeometryDispatcher-&gt;add(&quot;InteractingBox2InteractingSphere4ClosestFeatures&quot;);
++	interactionGeometryDispatcher-&gt;add(&quot;InteractingBox2InteractingBox4ClosestFeatures&quot;);
+ 
+ 	shared_ptr&lt;BoundingVolumeMetaEngine&gt; boundingVolumeDispatcher	= shared_ptr&lt;BoundingVolumeMetaEngine&gt;(new BoundingVolumeMetaEngine);
+-	boundingVolumeDispatcher-&gt;add(&quot;InteractingSphere&quot;,&quot;AABB&quot;,&quot;InteractingSphere2AABB&quot;);
+-	boundingVolumeDispatcher-&gt;add(&quot;InteractingBox&quot;,&quot;AABB&quot;,&quot;InteractingBox2AABB&quot;);
+-	boundingVolumeDispatcher-&gt;add(&quot;MetaInteractingGeometry&quot;,&quot;AABB&quot;,&quot;MetaInteractingGeometry2AABB&quot;);
++	boundingVolumeDispatcher-&gt;add(&quot;InteractingSphere2AABB&quot;);
++	boundingVolumeDispatcher-&gt;add(&quot;InteractingBox2AABB&quot;);
++	boundingVolumeDispatcher-&gt;add(&quot;MetaInteractingGeometry2AABB&quot;);
+ 		
+ 	shared_ptr&lt;GravityEngine&gt; gravityCondition(new GravityEngine);
+ 	gravityCondition-&gt;gravity = gravity;
+@@ -266,17 +266,17 @@
+ 	shared_ptr&lt;CundallNonViscousMomentumDamping&gt; actionMomentumDamping(new CundallNonViscousMomentumDamping);
+ 	actionMomentumDamping-&gt;damping = dampingMomentum;
+ 	shared_ptr&lt;PhysicalActionDamper&gt; actionDampingDispatcher(new PhysicalActionDamper);
+-	actionDampingDispatcher-&gt;add(&quot;Force&quot;,&quot;ParticleParameters&quot;,&quot;CundallNonViscousForceDamping&quot;,actionForceDamping);
+-	actionDampingDispatcher-&gt;add(&quot;Momentum&quot;,&quot;RigidBodyParameters&quot;,&quot;CundallNonViscousMomentumDamping&quot;,actionMomentumDamping);
++	actionDampingDispatcher-&gt;add(actionForceDamping);
++	actionDampingDispatcher-&gt;add(actionMomentumDamping);
+ 	
+ 	shared_ptr&lt;PhysicalActionApplier&gt; applyActionDispatcher(new PhysicalActionApplier);
+-	applyActionDispatcher-&gt;add(&quot;Force&quot;,&quot;ParticleParameters&quot;,&quot;NewtonsForceLaw&quot;);
+-	applyActionDispatcher-&gt;add(&quot;Momentum&quot;,&quot;RigidBodyParameters&quot;,&quot;NewtonsMomentumLaw&quot;);
++	applyActionDispatcher-&gt;add(&quot;NewtonsForceLaw&quot;);
++	applyActionDispatcher-&gt;add(&quot;NewtonsMomentumLaw&quot;);
+ 	
+ 	shared_ptr&lt;PhysicalParametersMetaEngine&gt; positionIntegrator(new PhysicalParametersMetaEngine);
+-	positionIntegrator-&gt;add(&quot;ParticleParameters&quot;,&quot;LeapFrogPositionIntegrator&quot;);
++	positionIntegrator-&gt;add(&quot;LeapFrogPositionIntegrator&quot;);
+ 	shared_ptr&lt;PhysicalParametersMetaEngine&gt; orientationIntegrator(new PhysicalParametersMetaEngine);
+-	orientationIntegrator-&gt;add(&quot;RigidBodyParameters&quot;,&quot;LeapFrogOrientationIntegrator&quot;);
++	orientationIntegrator-&gt;add(&quot;LeapFrogOrientationIntegrator&quot;);
+  	
+ // 	shared_ptr&lt;RotationEngine&gt; kinematic = shared_ptr&lt;RotationEngine&gt;(new RotationEngine);
+ // 	kinematic-&gt;angularVelocity  = rotationSpeed;
+
+Modified: trunk/pkg/realtime-rigidbody/PreProcessor/RotatingBox.cpp
+===================================================================
+--- trunk/pkg/realtime-rigidbody/PreProcessor/RotatingBox.cpp	2008-02-09 15:21:41 UTC (rev 1243)
++++ trunk/pkg/realtime-rigidbody/PreProcessor/RotatingBox.cpp	2008-02-11 16:53:41 UTC (rev 1244)
+@@ -269,14 +269,14 @@
+ 	physicalActionInitializer-&gt;physicalActionNames.push_back(&quot;Momentum&quot;);
+ 	
+ 	shared_ptr&lt;InteractionGeometryMetaEngine&gt; interactionGeometryDispatcher(new InteractionGeometryMetaEngine);
+-	interactionGeometryDispatcher-&gt;add(&quot;InteractingSphere&quot;,&quot;InteractingSphere&quot;,&quot;InteractingSphere2InteractingSphere4ClosestFeatures&quot;);
+-	interactionGeometryDispatcher-&gt;add(&quot;InteractingSphere&quot;,&quot;InteractingBox&quot;,&quot;InteractingBox2InteractingSphere4ClosestFeatures&quot;);
+-	interactionGeometryDispatcher-&gt;add(&quot;InteractingBox&quot;,&quot;InteractingBox&quot;,&quot;InteractingBox2InteractingBox4ClosestFeatures&quot;);
++	interactionGeometryDispatcher-&gt;add(&quot;InteractingSphere2InteractingSphere4ClosestFeatures&quot;);
++	interactionGeometryDispatcher-&gt;add(&quot;InteractingBox2InteractingSphere4ClosestFeatures&quot;);
++	interactionGeometryDispatcher-&gt;add(&quot;InteractingBox2InteractingBox4ClosestFeatures&quot;);
+ 
+ 	shared_ptr&lt;BoundingVolumeMetaEngine&gt; boundingVolumeDispatcher	= shared_ptr&lt;BoundingVolumeMetaEngine&gt;(new BoundingVolumeMetaEngine);
+-	boundingVolumeDispatcher-&gt;add(&quot;InteractingSphere&quot;,&quot;AABB&quot;,&quot;InteractingSphere2AABB&quot;);
+-	boundingVolumeDispatcher-&gt;add(&quot;InteractingBox&quot;,&quot;AABB&quot;,&quot;InteractingBox2AABB&quot;);
+-	boundingVolumeDispatcher-&gt;add(&quot;MetaInteractingGeometry&quot;,&quot;AABB&quot;,&quot;MetaInteractingGeometry2AABB&quot;);
++	boundingVolumeDispatcher-&gt;add(&quot;InteractingSphere2AABB&quot;);
++	boundingVolumeDispatcher-&gt;add(&quot;InteractingBox2AABB&quot;);
++	boundingVolumeDispatcher-&gt;add(&quot;MetaInteractingGeometry2AABB&quot;);
+ 		
+ 	shared_ptr&lt;GravityEngine&gt; gravityCondition(new GravityEngine);
+ 	gravityCondition-&gt;gravity = gravity;
+@@ -286,17 +286,17 @@
+ 	shared_ptr&lt;CundallNonViscousMomentumDamping&gt; actionMomentumDamping(new CundallNonViscousMomentumDamping);
+ 	actionMomentumDamping-&gt;damping = dampingMomentum;
+ 	shared_ptr&lt;PhysicalActionDamper&gt; actionDampingDispatcher(new PhysicalActionDamper);
+-	actionDampingDispatcher-&gt;add(&quot;Force&quot;,&quot;ParticleParameters&quot;,&quot;CundallNonViscousForceDamping&quot;,actionForceDamping);
+-	actionDampingDispatcher-&gt;add(&quot;Momentum&quot;,&quot;RigidBodyParameters&quot;,&quot;CundallNonViscousMomentumDamping&quot;,actionMomentumDamping);
++	actionDampingDispatcher-&gt;add(actionForceDamping);
++	actionDampingDispatcher-&gt;add(actionMomentumDamping);
+ 	
+ 	shared_ptr&lt;PhysicalActionApplier&gt; applyActionDispatcher(new PhysicalActionApplier);
+-	applyActionDispatcher-&gt;add(&quot;Force&quot;,&quot;ParticleParameters&quot;,&quot;NewtonsForceLaw&quot;);
+-	applyActionDispatcher-&gt;add(&quot;Momentum&quot;,&quot;RigidBodyParameters&quot;,&quot;NewtonsMomentumLaw&quot;);
++	applyActionDispatcher-&gt;add(&quot;NewtonsForceLaw&quot;);
++	applyActionDispatcher-&gt;add(&quot;NewtonsMomentumLaw&quot;);
+ 	
+ 	shared_ptr&lt;PhysicalParametersMetaEngine&gt; positionIntegrator(new PhysicalParametersMetaEngine);
+-	positionIntegrator-&gt;add(&quot;ParticleParameters&quot;,&quot;LeapFrogPositionIntegrator&quot;);
++	positionIntegrator-&gt;add(&quot;LeapFrogPositionIntegrator&quot;);
+ 	shared_ptr&lt;PhysicalParametersMetaEngine&gt; orientationIntegrator(new PhysicalParametersMetaEngine);
+-	orientationIntegrator-&gt;add(&quot;RigidBodyParameters&quot;,&quot;LeapFrogOrientationIntegrator&quot;);
++	orientationIntegrator-&gt;add(&quot;LeapFrogOrientationIntegrator&quot;);
+  	
+ 	shared_ptr&lt;RotationEngine&gt; kinematic = shared_ptr&lt;RotationEngine&gt;(new RotationEngine);
+  	kinematic-&gt;angularVelocity  = rotationSpeed;
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000208.html">[Yade-commits] r1243 - in trunk: . core extra extra/clump	extra/tetra extra/usct gui/cmd lib/base	pkg/common/Engine/EngineUnit pkg/dem/Engine/DeusExMachina	pkg/dem/Engine/EngineUnit
+</A></li>
+	<LI>Next message: <A HREF="000210.html">[Yade-commits] r1245 - in trunk: core gui/qt3	pkg/common/Engine/EngineUnit
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#209">[ date ]</a>
+              <a href="thread.html#209">[ thread ]</a>
+              <a href="subject.html#209">[ subject ]</a>
+              <a href="author.html#209">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

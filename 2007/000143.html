@@ -1,0 +1,99 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1178 - trunk
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2007/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1178%20-%20trunk&In-Reply-To=%3C200705291423.l4TENeZK016087%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000142.html">
+   <LINK REL="Next"  HREF="000144.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1178 - trunk</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1178%20-%20trunk&In-Reply-To=%3C200705291423.l4TENeZK016087%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1178 - trunk">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Tue May 29 16:23:40 CEST 2007</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000142.html">[Yade-commits] r1177 - in trunk: . extra/clump
+</A></li>
+        <LI>Next message: <A HREF="000144.html">[Yade-commits] r1179 - trunk/debian
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#143">[ date ]</a>
+              <a href="thread.html#143">[ thread ]</a>
+              <a href="subject.html#143">[ subject ]</a>
+              <a href="author.html#143">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2007-05-29 16:23:40 +0200 (Tue, 29 May 2007)
+New Revision: 1178
+
+Modified:
+   trunk/SConstruct
+Log:
+If RELEASE file exists, get yade version from there, instead of from svn.
+
+
+Modified: trunk/SConstruct
+===================================================================
+--- trunk/SConstruct	2007-05-29 14:15:27 UTC (rev 1177)
++++ trunk/SConstruct	2007-05-29 14:23:40 UTC (rev 1178)
+@@ -86,12 +86,16 @@
+ ##ALL generated stuff should go here - therefore we must determine it very early!!
+ 
+ if not env.has_key('version'):
+-	&quot;Attempts to get yade version from local svn tree; should be extended so that it works for releases as well (not yet applicable).&quot;
+-	svnRevision=None
+-	for l in os.popen(&quot;LC_ALL=C svn info&quot;).readlines():
+-		m=re.match(r'Revision: ([0-9]+)',l)
+-		if m: env['version']='svn'+m.group(1)
+-	if not env.has_key('version'): env['version']='unknown'
++	&quot;Attempts to get yade version from RELEASE file if it exists or from svn.&quot;
++	if os.path.exists('RELEASE'):
++		env['version']=file('RELEASE').readline().strip()
++	if not env.has_key('version'):
++		for l in os.popen(&quot;LC_ALL=C svn info&quot;).readlines():
++			m=re.match(r'Revision: ([0-9]+)',l)
++			if m: env['version']='svn'+m.group(1)
++	if not env.has_key('version'):
++		env['version']='unknown'
++
+ env['SUFFIX']='-'+env['version']+env['variant']
+ print &quot;Yade version is `%s', installed files will be suffixed with `%s'.&quot;%(env['version'],env['SUFFIX'])
+ # make buildDir absolute, saves hassles later
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000142.html">[Yade-commits] r1177 - in trunk: . extra/clump
+</A></li>
+	<LI>Next message: <A HREF="000144.html">[Yade-commits] r1179 - trunk/debian
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#143">[ date ]</a>
+              <a href="thread.html#143">[ thread ]</a>
+              <a href="subject.html#143">[ subject ]</a>
+              <a href="author.html#143">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

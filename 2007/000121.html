@@ -1,0 +1,520 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1156 - in trunk: core extra extra/clump extra/tetra	pkg/common/DataClass/GeometricalModel	pkg/common/RenderingEngine/GLDrawGeometricalModel	pkg/dem/Engine/EngineUnit pkg/dem/PreProcessor
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2007/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1156%20-%20in%20trunk%3A%20core%20extra%20extra/clump%20extra/tetra%0A%09pkg/common/DataClass/GeometricalModel%0A%09pkg/common/RenderingEngine/GLDrawGeometricalModel%0A%09pkg/dem/Engine/EngineUnit%20pkg/dem/PreProcessor&In-Reply-To=%3C200705021541.l42Ff0EX032576%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000120.html">
+   <LINK REL="Next"  HREF="000122.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1156 - in trunk: core extra extra/clump extra/tetra	pkg/common/DataClass/GeometricalModel	pkg/common/RenderingEngine/GLDrawGeometricalModel	pkg/dem/Engine/EngineUnit pkg/dem/PreProcessor</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1156%20-%20in%20trunk%3A%20core%20extra%20extra/clump%20extra/tetra%0A%09pkg/common/DataClass/GeometricalModel%0A%09pkg/common/RenderingEngine/GLDrawGeometricalModel%0A%09pkg/dem/Engine/EngineUnit%20pkg/dem/PreProcessor&In-Reply-To=%3C200705021541.l42Ff0EX032576%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1156 - in trunk: core extra extra/clump extra/tetra	pkg/common/DataClass/GeometricalModel	pkg/common/RenderingEngine/GLDrawGeometricalModel	pkg/dem/Engine/EngineUnit pkg/dem/PreProcessor">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Wed May  2 17:41:00 CEST 2007</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000120.html">[Yade-commits] r1155 - in trunk: core extra/clump lib/serialization
+</A></li>
+        <LI>Next message: <A HREF="000122.html">[Yade-commits] r1157 - trunk/extra/tetra
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#121">[ date ]</a>
+              <a href="thread.html#121">[ thread ]</a>
+              <a href="subject.html#121">[ subject ]</a>
+              <a href="author.html#121">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2007-05-02 17:40:59 +0200 (Wed, 02 May 2007)
+New Revision: 1156
+
+Added:
+   trunk/extra/tetra/
+   trunk/extra/tetra/tetra.cpp
+   trunk/extra/tetra/tetra.hpp
+   trunk/extra/tetra/tetraGen.cpp
+   trunk/extra/tetra/tetraGen.hpp
+Modified:
+   trunk/core/Omega.cpp
+   trunk/extra/SConscript
+   trunk/extra/clump/Shop.cpp
+   trunk/extra/clump/Shop.hpp
+   trunk/pkg/common/DataClass/GeometricalModel/Tetrahedron.cpp
+   trunk/pkg/common/DataClass/GeometricalModel/Tetrahedron.hpp
+   trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawTetrahedron.cpp
+   trunk/pkg/dem/Engine/EngineUnit/Tetrahedron2InteractingMyTetrahedron.cpp
+   trunk/pkg/dem/PreProcessor/TetrahedronsTest.cpp
+Log:
+1. Remove cyclic plugin loading forever (undefined STUPID_DLL)
+2. Tetrahedron has vector&lt;Vector3r&gt; v instead of Vector3r v1,v2,v3,v4; (fem will probably not compile because of this for now - will be fixed)
+3. Added experimental tetra class &amp; friends.
+
+
+
+
+Modified: trunk/core/Omega.cpp
+===================================================================
+--- trunk/core/Omega.cpp	2007-03-31 11:26:16 UTC (rev 1155)
++++ trunk/core/Omega.cpp	2007-05-02 15:40:59 UTC (rev 1156)
+@@ -186,7 +186,7 @@
+ 
+ void Omega::scanPlugins()
+ {
+-#define STUPID_DLL
++// #define STUPID_DLL
+ //	ClassFactory::instance().unloadAll();
+ 
+ 	// TODO: remove all comments of the form /*DLL ... */, they comment the old code that whould not be needed any more
+
+Modified: trunk/extra/SConscript
+===================================================================
+--- trunk/extra/SConscript	2007-03-31 11:26:16 UTC (rev 1155)
++++ trunk/extra/SConscript	2007-05-02 15:40:59 UTC (rev 1156)
+@@ -5,7 +5,6 @@
+ 		['spherical-dem-simulator/PersistentAloneSAPCollider.cpp',
+ 			'spherical-dem-simulator/SphericalDEMSimulator.cpp'],
+ 		LIBS=env['LIBS']+['yade-base',
+-			
+ 			'MacroMicroElasticRelationships',
+ 			'BodyMacroParameters',
+ 			'CundallNonViscousMomentumDamping',
+@@ -23,6 +22,14 @@
+ 	env.SharedLibrary('Clump',
+ 		['clump/Clump.cpp'],
+ 		LIBS=env['LIBS']+['Shop']),
++		
++	env.SharedLibrary('Tetra',['tetra/Tetra.cpp'],LIBS=env['LIBS']+['Tetrahedron',
++         'ParticleParameters',
++         'RigidBodyParameters',
++         'SimpleElasticInteraction',
++         'AABB']),
++	
++	env.SharedLibrary('TetraTestGen',['tetra/TetraTestGen.cpp'],LIBS=env['LIBS']+['Shop']),
+ 
+ 	env.SharedLibrary('PythonRecorder',['clump/PythonRecorder.cpp']),
+ 
+@@ -58,6 +65,7 @@
+ 			'BoundingVolumeMetaEngine',
+ 			'Box',
+ 			'Sphere',
++			'Tetra',
+ 			'AABB',
+ 			'PersistentSAPCollider',
+ 			'ParticleParameters',
+
+Modified: trunk/extra/clump/Shop.cpp
+===================================================================
+--- trunk/extra/clump/Shop.cpp	2007-03-31 11:26:16 UTC (rev 1155)
++++ trunk/extra/clump/Shop.cpp	2007-05-02 15:40:59 UTC (rev 1156)
+@@ -58,6 +58,8 @@
+ 	#include&lt;yade/extra/PythonRecorder.hpp&gt;
+ #endif
+ 
++#include&lt;yade/extra/Tetra.hpp&gt;
++
+ //#include&lt;yade/extra/Clump.hpp&gt;
+ //#include &quot;BodyMacroParameters.hpp&quot;
+ 
+@@ -327,3 +329,41 @@
+ 
+ 		return body;
+ }
++
++/*! Create body - tetrahedron. */
++shared_ptr&lt;Body&gt; Shop::tetra(vector&lt;Vector3r&gt;&amp; v){
++		shared_ptr&lt;Body&gt; body=shared_ptr&lt;Body&gt;(new Body(0,getDefault&lt;int&gt;(&quot;body_sdecGroupMask&quot;)));
++		body-&gt;isDynamic=true;
++
++		shared_ptr&lt;BodyMacroParameters&gt; physics(new BodyMacroParameters);
++		physics-&gt;angularVelocity=Vector3r(0,0,0);
++		physics-&gt;velocity=Vector3r(0,0,0);
++		physics-&gt;mass=1*getDefault&lt;double&gt;(&quot;phys_density&quot;); // FIXME: mass, inertia not correct
++		physics-&gt;inertia=Vector3r(physics-&gt;mass/12.,physics-&gt;mass/12.,physics-&gt;mass/12.);
++		physics-&gt;se3=Se3r((v[0]+v[1]+v[2]+v[3])*.25,Quaternionr(Vector3r(0,0,1),0));
++		physics-&gt;young=getDefault&lt;double&gt;(&quot;phys_young&quot;);
++		physics-&gt;poisson=getDefault&lt;double&gt;(&quot;phys_poisson&quot;);
++		physics-&gt;frictionAngle=getDefault&lt;double&gt;(&quot;phys_frictionAngle&quot;);
++		body-&gt;physicalParameters=physics;
++
++		// aabb
++		shared_ptr&lt;AABB&gt; aabb(new AABB);
++		aabb-&gt;diffuseColor=getDefault&lt;bool&gt;(&quot;aabb_randomColor&quot;)?Vector3r(Mathr::UnitRandom(),Mathr::UnitRandom(),Mathr::UnitRandom()):getDefault&lt;Vector3r&gt;(&quot;aabb_color&quot;);
++		body-&gt;boundingVolume=aabb;
++
++		//shape
++		shared_ptr&lt;Tetrahedron&gt; shape(new Tetrahedron);
++		shape-&gt;v[0]=v[0]; shape-&gt;v[1]=v[1]; shape-&gt;v[2]=v[2]; shape-&gt;v[3]=v[3];
++		shape-&gt;diffuseColor=getDefault&lt;bool&gt;(&quot;shape_randomColor&quot;)?Vector3r(Mathr::UnitRandom(),Mathr::UnitRandom(),Mathr::UnitRandom()):getDefault&lt;Vector3r&gt;(&quot;shape_color&quot;);
++		shape-&gt;wire=getDefault&lt;bool&gt;(&quot;shape_wire&quot;);
++		shape-&gt;visible=getDefault&lt;bool&gt;(&quot;shape_visible&quot;);
++		shape-&gt;shadowCaster=getDefault&lt;bool&gt;(&quot;shape_shadowCaster&quot;);
++		body-&gt;geometricalModel=shape;
++
++		// mold
++		shared_ptr&lt;TetraMold&gt; mold(new TetraMold(v[0],v[1],v[2],v[3]));
++		mold-&gt;diffuseColor=getDefault&lt;bool&gt;(&quot;mold_randomColor&quot;)?Vector3r(Mathr::UnitRandom(),Mathr::UnitRandom(),Mathr::UnitRandom()):getDefault&lt;Vector3r&gt;(&quot;mold_color&quot;);
++		body-&gt;interactingGeometry=mold;
++
++		return body;
++}
+
+Modified: trunk/extra/clump/Shop.hpp
+===================================================================
+--- trunk/extra/clump/Shop.hpp	2007-03-31 11:26:16 UTC (rev 1155)
++++ trunk/extra/clump/Shop.hpp	2007-05-02 15:40:59 UTC (rev 1156)
+@@ -46,5 +46,6 @@
+ 		static void rootBodyActors(shared_ptr&lt;MetaBody&gt;);
+ 		static shared_ptr&lt;Body&gt; sphere(Vector3r center, Real radius);
+ 		static shared_ptr&lt;Body&gt; box(Vector3r center, Vector3r extents);
++		static shared_ptr&lt;Body&gt; tetra(vector&lt;Vector3r&gt;&amp; v);
+ };
+ 
+
+Added: trunk/extra/tetra/tetra.cpp
+===================================================================
+
+Added: trunk/extra/tetra/tetra.hpp
+===================================================================
+
+Added: trunk/extra/tetra/tetraGen.cpp
+===================================================================
+
+Added: trunk/extra/tetra/tetraGen.hpp
+===================================================================
+
+Modified: trunk/pkg/common/DataClass/GeometricalModel/Tetrahedron.cpp
+===================================================================
+--- trunk/pkg/common/DataClass/GeometricalModel/Tetrahedron.cpp	2007-03-31 11:26:16 UTC (rev 1155)
++++ trunk/pkg/common/DataClass/GeometricalModel/Tetrahedron.cpp	2007-05-02 15:40:59 UTC (rev 1156)
+@@ -1,6 +1,7 @@
+ /*************************************************************************
+ *  Copyright (C) 2004 by Janek Kozicki                                   *
+ *  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">cosurgi at berlios.de</A>                                                    *
++*  &#169; 2007 V&#225;clav &#352;milauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">eudoxos at arcig.cz</A>&gt;
+ *                                                                        *
+ *  This program is free software; it is licensed under the terms of the  *
+ *  GNU General Public License v2 or later. See file LICENSE for details. *
+@@ -9,18 +10,17 @@
+ #include &quot;Tetrahedron.hpp&quot;
+ 
+ 
+-Tetrahedron::Tetrahedron() : GeometricalModel()
++Tetrahedron::Tetrahedron(): GeometricalModel()
+ {
+ 	createIndex();
++	// FIXME: something like v(4,Vector3r(0,0,0)) should work...
++	for(size_t i=0; i&lt;4; i++) v.push_back(Vector3r(0,0,0));
+ }
+ 
+-Tetrahedron::Tetrahedron(Vector3r&amp; p1,Vector3r&amp; p2,Vector3r&amp; p3,Vector3r&amp; p4) : GeometricalModel()
++Tetrahedron::Tetrahedron(Vector3r&amp; v1,Vector3r&amp; v2,Vector3r&amp; v3,Vector3r&amp; v4) : GeometricalModel()
+ {
+ 	createIndex();
+-	v1 = p1;
+-	v2 = p2;
+-	v3 = p3;
+-	v4 = p4;
++	v.push_back(v1); v.push_back(v2); v.push_back(v3); v.push_back(v4);
+ }
+ 
+ Tetrahedron::~Tetrahedron()
+@@ -31,8 +31,5 @@
+ {
+ 	GeometricalModel::registerAttributes();
+ 	// FIXME
+-	REGISTER_ATTRIBUTE(v1); // no need to save them (?)
+-	REGISTER_ATTRIBUTE(v2); // no need to save them (?)
+-	REGISTER_ATTRIBUTE(v3); // no need to save them (?)
+-	REGISTER_ATTRIBUTE(v4); // no need to save them (?)
++	REGISTER_ATTRIBUTE(v);
+ }
+
+Modified: trunk/pkg/common/DataClass/GeometricalModel/Tetrahedron.hpp
+===================================================================
+--- trunk/pkg/common/DataClass/GeometricalModel/Tetrahedron.hpp	2007-03-31 11:26:16 UTC (rev 1155)
++++ trunk/pkg/common/DataClass/GeometricalModel/Tetrahedron.hpp	2007-05-02 15:40:59 UTC (rev 1156)
+@@ -9,17 +9,18 @@
+ #ifndef TETRAHEDRON_HPP
+ #define TETRAHEDRON_HPP
+ 
++#include&lt;vector&gt;
+ #include&lt;yade/core/GeometricalModel.hpp&gt;
+-#include &lt;Wm3Math.h&gt;
++#include&lt;Wm3Math.h&gt;
+ #include&lt;yade/lib-base/yadeWm3.hpp&gt;
+ 
+ class Tetrahedron : public GeometricalModel
+ {
+ 	public :
+-		Vector3r	v1,v2,v3,v4; // vertices of tetrahedron
++		std::vector&lt;Vector3r&gt; v; // vertices of tetrahedron
+ 
+ 		Tetrahedron();
+-		Tetrahedron(Vector3r&amp; p1,Vector3r&amp; p2,Vector3r&amp; p3,Vector3r&amp; p4);
++		Tetrahedron(Vector3r&amp; v1,Vector3r&amp; v2,Vector3r&amp; v3,Vector3r&amp; v4);
+ 		virtual ~Tetrahedron();
+ 
+ 	protected :
+
+Modified: trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawTetrahedron.cpp
+===================================================================
+--- trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawTetrahedron.cpp	2007-03-31 11:26:16 UTC (rev 1155)
++++ trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawTetrahedron.cpp	2007-05-02 15:40:59 UTC (rev 1156)
+@@ -3,7 +3,7 @@
+ *  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">cosurgi at berlios.de</A>                                                    *
+ *                                                                        *
+ *  This program is free software; it is licensed under the terms of the  *
+-*  GNU General Public License v2 or later. See file LICENSE for details. *
++*  GNU General Public License v[1] or later. See file LICENSE for details. *
+ *************************************************************************/
+ 
+ #include &quot;GLDrawTetrahedron.hpp&quot;
+@@ -26,23 +26,23 @@
+ 			glDisable(GL_LIGHTING);
+ 			
+ 			// FIXME - stupid method to draw lines of tetrahedron
+-			glVertex3v(tet-&gt;v1);
+-			glVertex3v(tet-&gt;v2);
++			glVertex3v(tet-&gt;v[0]);
++			glVertex3v(tet-&gt;v[1]);
+ 			
+-			glVertex3v(tet-&gt;v1);
+-			glVertex3v(tet-&gt;v3);
++			glVertex3v(tet-&gt;v[0]);
++			glVertex3v(tet-&gt;v[2]);
+ 			
+-			glVertex3v(tet-&gt;v1);
+-			glVertex3v(tet-&gt;v4);
++			glVertex3v(tet-&gt;v[0]);
++			glVertex3v(tet-&gt;v[3]);
+ 			
+-			glVertex3v(tet-&gt;v3);
+-			glVertex3v(tet-&gt;v4);
++			glVertex3v(tet-&gt;v[2]);
++			glVertex3v(tet-&gt;v[3]);
+ 			
+-			glVertex3v(tet-&gt;v2);
+-			glVertex3v(tet-&gt;v4);
++			glVertex3v(tet-&gt;v[1]);
++			glVertex3v(tet-&gt;v[3]);
+ 			
+-			glVertex3v(tet-&gt;v2);
+-			glVertex3v(tet-&gt;v3);
++			glVertex3v(tet-&gt;v[1]);
++			glVertex3v(tet-&gt;v[2]);
+ 			
+ 		glEnd();
+ 	}
+@@ -51,24 +51,24 @@
+ // 		glBegin(GL_TRIANGLE_STRIP);
+ // 			glEnable(GL_LIGHTING); 
+ // 			
+-// 			glNormal3v (tet-&gt;v4);
+-// 			glVertex3fv(tet-&gt;v4);
++// 			glNormal3v (tet-&gt;v[3]);
++// 			glVertex3fv(tet-&gt;v[3]);
+ // 			
+-// 			glNormal3v (tet-&gt;v1);
+-// 			glVertex3fv(tet-&gt;v1);
++// 			glNormal3v (tet-&gt;v[0]);
++// 			glVertex3fv(tet-&gt;v[0]);
+ // 			
+-// 			glNormal3v (tet-&gt;v2);
+-// 			glVertex3fv(tet-&gt;v2);
++// 			glNormal3v (tet-&gt;v[1]);
++// 			glVertex3fv(tet-&gt;v[1]);
+ // 			
+ // 			
+-// 			glNormal3v (tet-&gt;v3);
+-// 			glVertex3fv(tet-&gt;v3);
++// 			glNormal3v (tet-&gt;v[2]);
++// 			glVertex3fv(tet-&gt;v[2]);
+ // 			
+-// 			glNormal3v (tet-&gt;v4);
+-// 			glVertex3fv(tet-&gt;v4);
++// 			glNormal3v (tet-&gt;v[3]);
++// 			glVertex3fv(tet-&gt;v[3]);
+ // 			
+-// 			glNormal3v (tet-&gt;v1);
+-// 			glVertex3fv(tet-&gt;v1);
++// 			glNormal3v (tet-&gt;v[0]);
++// 			glVertex3fv(tet-&gt;v[0]);
+ // 		glEnd();
+ 
+ /*		glDisable(GL_CULL_FACE);
+@@ -76,69 +76,69 @@
+ 			glEnable(GL_LIGHTING); 
+ 		
+ 
+-				glVertex3fv(tet-&gt;v4);
++				glVertex3fv(tet-&gt;v[3]);
+ 			
+ 			
+-				glVertex3fv(tet-&gt;v1);			
++				glVertex3fv(tet-&gt;v[0]);			
+ 
+ 			
+-			Vector3r n = (tet-&gt;v1-tet-&gt;v4).unitCross(tet-&gt;v2-tet-&gt;v4);
++			Vector3r n = (tet-&gt;v[0]-tet-&gt;v[3]).unitCross(tet-&gt;v[1]-tet-&gt;v[3]);
+ 			glNormal3v (n);
+-				glVertex3fv(tet-&gt;v2);
++				glVertex3fv(tet-&gt;v[1]);
+ 			
+-			n = (tet-&gt;v2-tet-&gt;v1).unitCross(tet-&gt;v3-tet-&gt;v1);
++			n = (tet-&gt;v[1]-tet-&gt;v[0]).unitCross(tet-&gt;v[2]-tet-&gt;v[0]);
+ 			glNormal3v (n);
+ 			
+-				glVertex3fv(tet-&gt;v3);
+-			n = (tet-&gt;v3-tet-&gt;v2).unitCross(tet-&gt;v4-tet-&gt;v2);
++				glVertex3fv(tet-&gt;v[2]);
++			n = (tet-&gt;v[2]-tet-&gt;v[1]).unitCross(tet-&gt;v[3]-tet-&gt;v[1]);
+ 			glNormal3v (n);
+ 			
+-				glVertex3fv(tet-&gt;v4);
+-			n = (tet-&gt;v4-tet-&gt;v3).unitCross(tet-&gt;v1-tet-&gt;v3);
++				glVertex3fv(tet-&gt;v[3]);
++			n = (tet-&gt;v[3]-tet-&gt;v[2]).unitCross(tet-&gt;v[0]-tet-&gt;v[2]);
+ 			glNormal3v (n);
+-				glVertex3fv(tet-&gt;v1);
++				glVertex3fv(tet-&gt;v[0]);
+ 		glEnd();*/
+ 		glDisable(GL_CULL_FACE);
+ 		glEnable(GL_LIGHTING);
+ 
+-		Vector3r center = (tet-&gt;v1+tet-&gt;v2+tet-&gt;v3+tet-&gt;v4)*.25;
++		Vector3r center = (tet-&gt;v[0]+tet-&gt;v[1]+tet-&gt;v[2]+tet-&gt;v[3])*.25;
+ 		
+ 		glBegin(GL_TRIANGLES);
+-			Vector3r n = (tet-&gt;v1-tet-&gt;v4).UnitCross(tet-&gt;v2-tet-&gt;v4);
+-			Vector3r faceCenter = (tet-&gt;v4+tet-&gt;v1+tet-&gt;v2)/3.0;
++			Vector3r n = (tet-&gt;v[0]-tet-&gt;v[3]).UnitCross(tet-&gt;v[1]-tet-&gt;v[3]);
++			Vector3r faceCenter = (tet-&gt;v[3]+tet-&gt;v[0]+tet-&gt;v[1])/3.0;
+ 			if ((faceCenter-center).Dot(n)&lt;0)
+ 				n = -n;
+ 			glNormal3v (n);
+-			glVertex3v(tet-&gt;v4);
+-			glVertex3v(tet-&gt;v1);
+-			glVertex3v(tet-&gt;v2);
++			glVertex3v(tet-&gt;v[3]);
++			glVertex3v(tet-&gt;v[0]);
++			glVertex3v(tet-&gt;v[1]);
+ 			
+-			n = (tet-&gt;v2-tet-&gt;v1).UnitCross(tet-&gt;v3-tet-&gt;v1);
+-			faceCenter = (tet-&gt;v1+tet-&gt;v2+tet-&gt;v3)/3.0;
++			n = (tet-&gt;v[1]-tet-&gt;v[0]).UnitCross(tet-&gt;v[2]-tet-&gt;v[0]);
++			faceCenter = (tet-&gt;v[0]+tet-&gt;v[1]+tet-&gt;v[2])/3.0;
+ 			if ((faceCenter-center).Dot(n)&lt;0)
+ 				n = -n;
+ 			glNormal3v (n);
+-			glVertex3v(tet-&gt;v1);
+-			glVertex3v(tet-&gt;v2);
+-			glVertex3v(tet-&gt;v3);
++			glVertex3v(tet-&gt;v[0]);
++			glVertex3v(tet-&gt;v[1]);
++			glVertex3v(tet-&gt;v[2]);
+ 
+-			n = (tet-&gt;v3-tet-&gt;v2).UnitCross(tet-&gt;v4-tet-&gt;v2);
+-			faceCenter = (tet-&gt;v2+tet-&gt;v3+tet-&gt;v4)/3.0;
++			n = (tet-&gt;v[2]-tet-&gt;v[1]).UnitCross(tet-&gt;v[3]-tet-&gt;v[1]);
++			faceCenter = (tet-&gt;v[1]+tet-&gt;v[2]+tet-&gt;v[3])/3.0;
+ 			if ((faceCenter-center).Dot(n)&lt;0)
+ 				n = -n;
+ 			glNormal3v (n);
+-			glVertex3v(tet-&gt;v2);
+-			glVertex3v(tet-&gt;v3);
+-			glVertex3v(tet-&gt;v4);
++			glVertex3v(tet-&gt;v[1]);
++			glVertex3v(tet-&gt;v[2]);
++			glVertex3v(tet-&gt;v[3]);
+ 			
+-			n = (tet-&gt;v4-tet-&gt;v3).UnitCross(tet-&gt;v1-tet-&gt;v3);
+-			faceCenter = (tet-&gt;v3+tet-&gt;v4+tet-&gt;v1)/3.0;
++			n = (tet-&gt;v[3]-tet-&gt;v[2]).UnitCross(tet-&gt;v[0]-tet-&gt;v[2]);
++			faceCenter = (tet-&gt;v[2]+tet-&gt;v[3]+tet-&gt;v[0])/3.0;
+ 			if ((faceCenter-center).Dot(n)&lt;0)
+ 				n = -n;
+ 			glNormal3v (n);
+-			glVertex3v(tet-&gt;v3);
+-			glVertex3v(tet-&gt;v4);
+-			glVertex3v(tet-&gt;v1);
++			glVertex3v(tet-&gt;v[2]);
++			glVertex3v(tet-&gt;v[3]);
++			glVertex3v(tet-&gt;v[0]);
+ 		glEnd();
+ 	}
+ }
+
+Modified: trunk/pkg/dem/Engine/EngineUnit/Tetrahedron2InteractingMyTetrahedron.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/EngineUnit/Tetrahedron2InteractingMyTetrahedron.cpp	2007-03-31 11:26:16 UTC (rev 1155)
++++ trunk/pkg/dem/Engine/EngineUnit/Tetrahedron2InteractingMyTetrahedron.cpp	2007-05-02 15:40:59 UTC (rev 1156)
+@@ -21,10 +21,10 @@
+ 
+ 	InteractingMyTetrahedron* it = YADE_CAST&lt;InteractingMyTetrahedron*&gt;(ig.get());
+ 	
+-	it-&gt;c1 = tet-&gt;v1*0.5;
+-	it-&gt;c2 = tet-&gt;v2*0.5;
+-	it-&gt;c3 = tet-&gt;v3*0.5;
+-	it-&gt;c4 = tet-&gt;v4*0.5;
++	it-&gt;c1 = tet-&gt;v[0]*0.5;
++	it-&gt;c2 = tet-&gt;v[1]*0.5;
++	it-&gt;c3 = tet-&gt;v[2]*0.5;
++	it-&gt;c4 = tet-&gt;v[3]*0.5;
+ 
+ 	it-&gt;r1 = it-&gt;c1.Length();
+ 	it-&gt;r2 = it-&gt;c2.Length();
+
+Modified: trunk/pkg/dem/PreProcessor/TetrahedronsTest.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/TetrahedronsTest.cpp	2007-03-31 11:26:16 UTC (rev 1155)
++++ trunk/pkg/dem/PreProcessor/TetrahedronsTest.cpp	2007-05-02 15:40:59 UTC (rev 1156)
+@@ -421,9 +421,9 @@
+ 
+ void TetrahedronsTest::makeTet(shared_ptr&lt;Tetrahedron&gt;&amp; tet, Real size)
+ {
+-	tet-&gt;v1=size*(Mathr::UnitRandom()*0.7+1.0)*Vector3r(0,0,1);
+-	tet-&gt;v2=size*(Mathr::UnitRandom()*0.7+1.0)*Vector3r(0.73,-0.6,-0.33);
+-	tet-&gt;v3=size*(Mathr::UnitRandom()*0.7+1.0)*Vector3r(-0.88,-0.33,-0.33);
+-	tet-&gt;v4=size*(Mathr::UnitRandom()*0.7+1.0)*Vector3r(0.16,0.93,-0.33);
++	tet-&gt;v[0]=size*(Mathr::UnitRandom()*0.7+1.0)*Vector3r(0,0,1);
++	tet-&gt;v[1]=size*(Mathr::UnitRandom()*0.7+1.0)*Vector3r(0.73,-0.6,-0.33);
++	tet-&gt;v[2]=size*(Mathr::UnitRandom()*0.7+1.0)*Vector3r(-0.88,-0.33,-0.33);
++	tet-&gt;v[3]=size*(Mathr::UnitRandom()*0.7+1.0)*Vector3r(0.16,0.93,-0.33);
+ }
+ 
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000120.html">[Yade-commits] r1155 - in trunk: core extra/clump lib/serialization
+</A></li>
+	<LI>Next message: <A HREF="000122.html">[Yade-commits] r1157 - trunk/extra/tetra
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#121">[ date ]</a>
+              <a href="thread.html#121">[ thread ]</a>
+              <a href="subject.html#121">[ subject ]</a>
+              <a href="author.html#121">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

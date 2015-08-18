@@ -1,0 +1,200 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1325 - trunk/pkg/dem/PreProcessor
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1325%20-%20trunk/pkg/dem/PreProcessor&In-Reply-To=%3C200804171610.m3HGA4vu018997%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000287.html">
+   <LINK REL="Next"  HREF="000289.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1325 - trunk/pkg/dem/PreProcessor</H1>
+    <B>chareyre at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1325%20-%20trunk/pkg/dem/PreProcessor&In-Reply-To=%3C200804171610.m3HGA4vu018997%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1325 - trunk/pkg/dem/PreProcessor">chareyre at mail.berlios.de
+       </A><BR>
+    <I>Thu Apr 17 18:10:04 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000287.html">[Yade-commits] r1324 - trunk/pkg/dem/Engine/StandAloneEngine
+</A></li>
+        <LI>Next message: <A HREF="000289.html">[Yade-commits] r1327 - in trunk/pkg: common/Engine/DeusExMachina	dem/Engine/EngineUnit dem/Engine/StandAloneEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#288">[ date ]</a>
+              <a href="thread.html#288">[ thread ]</a>
+              <a href="subject.html#288">[ subject ]</a>
+              <a href="author.html#288">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: chareyre
+Date: 2008-04-17 18:10:04 +0200 (Thu, 17 Apr 2008)
+New Revision: 1325
+
+Modified:
+   trunk/pkg/dem/PreProcessor/TriaxialTest.cpp
+   trunk/pkg/dem/PreProcessor/TriaxialTest.hpp
+Log:
+Added a code that will be common to all output filenames to help sorting different simulation results.  
+
+
+
+
+Modified: trunk/pkg/dem/PreProcessor/TriaxialTest.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/TriaxialTest.cpp	2008-04-17 16:00:12 UTC (rev 1324)
++++ trunk/pkg/dem/PreProcessor/TriaxialTest.cpp	2008-04-17 16:10:04 UTC (rev 1325)
+@@ -98,7 +98,8 @@
+ 	upperCorner 		= Vector3r(1,1,1);
+ 	thickness 		= 0.001;
+ 	importFilename 		= &quot;&quot;; // &quot;./small.sdec.xyz&quot;;
+-	outputFileName 		= &quot;./TriaxialTest.xml&quot;;
++	Key			=&quot;&quot;;
++	outputFileName 		= &quot;./TriaxialTest&quot;+Key+&quot;.xml&quot;;
+ 	//nlayers = 1;
+ 	wall_top 		= true;
+ 	wall_bottom 		= true;
+@@ -116,8 +117,8 @@
+ 	spheresRandomColor	= false;
+ 	recordIntervalIter	= 20;
+ 	saveAnimationSnapshots = false;
+-	AnimationSnapshotsBaseName = &quot;./snapshots/snap&quot;;
+-	WallStressRecordFile = &quot;./WallStresses&quot;;
++	AnimationSnapshotsBaseName = &quot;./snapshots_&quot;+Key+&quot;/snap&quot;;
++	WallStressRecordFile = &quot;./WallStresses&quot;+Key;
+ 
+ 	rotationBlocked = false;
+ 	//	boxWalls 		= false;
+@@ -141,8 +142,9 @@
+ 	finalMaxMultiplier = 1.001;
+ 	
+ 	sphereYoungModulus  = 15000000.0;
+-	spherePoissonRatio  = 0.5;
+-	sphereFrictionDeg   = 18.0;
++	spherePoissonRatio  = 0.5;	
++	sphereFrictionDeg = 18.0;
++	compactionFrictionDeg   = sphereFrictionDeg;
+ 	density			= 2600;
+ 	
+ 	boxYoungModulus   = 15000000.0;
+@@ -177,6 +179,7 @@
+ 	REGISTER_ATTRIBUTE(upperCorner);
+ 	REGISTER_ATTRIBUTE(thickness);
+ 	REGISTER_ATTRIBUTE(importFilename);
++	REGISTER_ATTRIBUTE(outputFileName);
+ 	//REGISTER_ATTRIBUTE(nlayers);
+ 	//REGISTER_ATTRIBUTE(boxWalls);
+ 	REGISTER_ATTRIBUTE(internalCompaction);
+@@ -186,7 +189,7 @@
+ 	REGISTER_ATTRIBUTE(sphereYoungModulus);
+ 	REGISTER_ATTRIBUTE(spherePoissonRatio);
+ 	REGISTER_ATTRIBUTE(sphereFrictionDeg);
+-
++	REGISTER_ATTRIBUTE(compactionFrictionDeg);
+ 	REGISTER_ATTRIBUTE(boxYoungModulus);
+ 	REGISTER_ATTRIBUTE(boxPoissonRatio);
+ 	REGISTER_ATTRIBUTE(boxFrictionDeg);
+@@ -239,6 +242,7 @@
+ 	//REGISTER_ATTRIBUTE(sigma_iso);
+ 	REGISTER_ATTRIBUTE(sigmaIsoCompaction);
+ 	REGISTER_ATTRIBUTE(sigmaLateralConfinement);
++	REGISTER_ATTRIBUTE(Key);
+ 
+ }
+ 
+@@ -417,14 +421,14 @@
+ 	physics-&gt;se3			= Se3r(position,q);
+ 	physics-&gt;young			= sphereYoungModulus;
+ 	physics-&gt;poisson		= spherePoissonRatio;
+-	physics-&gt;frictionAngle		= sphereFrictionDeg * Mathr::PI/180.0;
++	physics-&gt;frictionAngle		= compactionFrictionDeg * Mathr::PI/180.0;
+ 
+-	if((!big) &amp;&amp; (!dynamic) &amp;&amp; (!boxWalls))
+-	{
+-		physics-&gt;young			= boxYoungModulus;
+-		physics-&gt;poisson		= boxPoissonRatio;
+-		physics-&gt;frictionAngle		= boxFrictionDeg * Mathr::PI/180.0;
+-	}
++// 	if((!big) &amp;&amp; (!dynamic) &amp;&amp; (!boxWalls))
++// 	{
++// 		physics-&gt;young			= boxYoungModulus;
++// 		physics-&gt;poisson		= boxPoissonRatio;
++// 		physics-&gt;frictionAngle		= boxFrictionDeg * Mathr::PI/180.0;
++// 	}
+ 	
+ 	aabb-&gt;diffuseColor		= Vector3r(0,1,0);
+ 
+@@ -585,13 +589,15 @@
+ 	triaxialcompressionEngine-&gt;internalCompaction = internalCompaction;
+ 	triaxialcompressionEngine-&gt;maxMultiplier = maxMultiplier;
+ 	triaxialcompressionEngine-&gt;finalMaxMultiplier = finalMaxMultiplier;
++	triaxialcompressionEngine-&gt;Key = Key;
++	triaxialcompressionEngine-&gt;frictionAngleDegree = sphereFrictionDeg;
+ 		
+ 	//cerr &lt;&lt; &quot;fin de section triaxialcompressionEngine = shared_ptr&lt;TriaxialCompressionEngine&gt; (new TriaxialCompressionEngine);&quot; &lt;&lt; std::endl;
+ 	
+ // recording global stress
+ 	triaxialStateRecorder = shared_ptr&lt;TriaxialStateRecorder&gt;(new
+ 	TriaxialStateRecorder);
+-	triaxialStateRecorder-&gt; outputFile 	= WallStressRecordFile;
++	triaxialStateRecorder-&gt; outputFile 		= WallStressRecordFile + Key;
+ 	triaxialStateRecorder-&gt; interval 		= recordIntervalIter;
+ 	//triaxialStateRecorderer-&gt; thickness 		= thickness;
+ 	
+
+Modified: trunk/pkg/dem/PreProcessor/TriaxialTest.hpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/TriaxialTest.hpp	2008-04-17 16:00:12 UTC (rev 1324)
++++ trunk/pkg/dem/PreProcessor/TriaxialTest.hpp	2008-04-17 16:10:04 UTC (rev 1325)
+@@ -56,6 +56,8 @@
+ 				,sphereYoungModulus
+ 				,spherePoissonRatio
+ 				,sphereFrictionDeg
++				//! If a different value of friction is to be used during the compaction phase
++				,compactionFrictionDeg
+ 				,boxYoungModulus
+ 				,boxPoissonRatio
+ 				,boxFrictionDeg
+@@ -110,7 +112,8 @@
+ 		
+ 		string		importFilename
+ 				,AnimationSnapshotsBaseName
+-				,WallStressRecordFile;
++				,WallStressRecordFile
++				,Key;//A code that is added to output filenames
+ 	
+ 		shared_ptr&lt;TriaxialCompressionEngine&gt; triaxialcompressionEngine;
+ 		shared_ptr&lt;TriaxialStressController&gt; triaxialstressController;
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000287.html">[Yade-commits] r1324 - trunk/pkg/dem/Engine/StandAloneEngine
+</A></li>
+	<LI>Next message: <A HREF="000289.html">[Yade-commits] r1327 - in trunk/pkg: common/Engine/DeusExMachina	dem/Engine/EngineUnit dem/Engine/StandAloneEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#288">[ date ]</a>
+              <a href="thread.html#288">[ thread ]</a>
+              <a href="subject.html#288">[ subject ]</a>
+              <a href="author.html#288">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

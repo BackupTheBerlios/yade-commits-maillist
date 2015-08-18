@@ -1,0 +1,1389 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1189 - in trunk/pkg/dem:	DataClass/InteractionPhysics Engine/DeusExMachina	Engine/EngineUnit Engine/StandAloneEngine PreProcessor
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2007/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1189%20-%20in%20trunk/pkg/dem%3A%0A%09DataClass/InteractionPhysics%20Engine/DeusExMachina%0A%09Engine/EngineUnit%20Engine/StandAloneEngine%20PreProcessor&In-Reply-To=%3C200706051622.l55GMZ1R020741%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000153.html">
+   <LINK REL="Next"  HREF="000155.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1189 - in trunk/pkg/dem:	DataClass/InteractionPhysics Engine/DeusExMachina	Engine/EngineUnit Engine/StandAloneEngine PreProcessor</H1>
+    <B>chareyre at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1189%20-%20in%20trunk/pkg/dem%3A%0A%09DataClass/InteractionPhysics%20Engine/DeusExMachina%0A%09Engine/EngineUnit%20Engine/StandAloneEngine%20PreProcessor&In-Reply-To=%3C200706051622.l55GMZ1R020741%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1189 - in trunk/pkg/dem:	DataClass/InteractionPhysics Engine/DeusExMachina	Engine/EngineUnit Engine/StandAloneEngine PreProcessor">chareyre at mail.berlios.de
+       </A><BR>
+    <I>Tue Jun  5 18:22:35 CEST 2007</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000153.html">[Yade-commits] r1188 - in trunk: . lib/base pkg/dem	pkg/dem/DataClass/InteractionGeometry	pkg/dem/DataClass/InteractionPhysics	pkg/dem/DataClass/PhysicalParameters	pkg/dem/Engine/StandAloneEngine scripts
+</A></li>
+        <LI>Next message: <A HREF="000155.html">[Yade-commits] r1190 - in trunk/pkg: dem dem/Engine/DeusExMachina	dem/Engine/EngineUnit dem/Engine/StandAloneEngine	dem/PreProcessor mass-spring/PreProcessor
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#154">[ date ]</a>
+              <a href="thread.html#154">[ thread ]</a>
+              <a href="subject.html#154">[ subject ]</a>
+              <a href="author.html#154">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: chareyre
+Date: 2007-06-05 18:22:34 +0200 (Tue, 05 Jun 2007)
+New Revision: 1189
+
+Modified:
+   trunk/pkg/dem/DataClass/InteractionPhysics/CapillaryParameters.cpp
+   trunk/pkg/dem/DataClass/InteractionPhysics/CapillaryParameters.hpp
+   trunk/pkg/dem/Engine/DeusExMachina/CapillaryStressRecorder.cpp
+   trunk/pkg/dem/Engine/DeusExMachina/CapillaryStressRecorder.hpp
+   trunk/pkg/dem/Engine/DeusExMachina/ContactStressRecorder.cpp
+   trunk/pkg/dem/Engine/DeusExMachina/ContactStressRecorder.hpp
+   trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.cpp
+   trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.hpp
+   trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.cpp
+   trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.hpp
+   trunk/pkg/dem/Engine/DeusExMachina/WallStressRecorder.cpp
+   trunk/pkg/dem/Engine/DeusExMachina/WallStressRecorder.hpp
+   trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2AABBwater.cpp
+   trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2InteractingSphere4SpheresContactGeometryWater.cpp
+   trunk/pkg/dem/Engine/EngineUnit/MacroMicroElasticRelationships.cpp
+   trunk/pkg/dem/Engine/EngineUnit/MacroMicroElasticRelationships.hpp
+   trunk/pkg/dem/Engine/EngineUnit/MacroMicroElasticRelationshipsWater.cpp
+   trunk/pkg/dem/Engine/StandAloneEngine/CapillaryCohesiveLaw.cpp
+   trunk/pkg/dem/Engine/StandAloneEngine/CapillaryCohesiveLaw.hpp
+   trunk/pkg/dem/Engine/StandAloneEngine/ForceRecorder.cpp
+   trunk/pkg/dem/Engine/StandAloneEngine/GlobalStiffnessCounter.cpp
+   trunk/pkg/dem/PreProcessor/TriaxialTest.cpp
+   trunk/pkg/dem/PreProcessor/TriaxialTest.hpp
+   trunk/pkg/dem/PreProcessor/TriaxialTestWater.cpp
+Log:
+Update of all classes related to dry and unsaturated triaxial tests.
+
+
+
+
+Modified: trunk/pkg/dem/DataClass/InteractionPhysics/CapillaryParameters.cpp
+===================================================================
+--- trunk/pkg/dem/DataClass/InteractionPhysics/CapillaryParameters.cpp	2007-06-05 15:46:51 UTC (rev 1188)
++++ trunk/pkg/dem/DataClass/InteractionPhysics/CapillaryParameters.cpp	2007-06-05 16:22:34 UTC (rev 1189)
+@@ -1,6 +1,6 @@
+ /*************************************************************************
+-*  Copyright (C) 2004 by Olivier Galizzi                                 *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">olivier.galizzi at imag.fr</A>                                               *
++*  Copyright (C) 2006 by luc Scholtes                                    *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">luc.scholtes at hmg.inpg.fr</A>                                              *
+ *                                                                        *
+ *  This program is free software; it is licensed under the terms of the  *
+ *  GNU General Public License v2 or later. See file LICENSE for details. *
+
+Modified: trunk/pkg/dem/DataClass/InteractionPhysics/CapillaryParameters.hpp
+===================================================================
+--- trunk/pkg/dem/DataClass/InteractionPhysics/CapillaryParameters.hpp	2007-06-05 15:46:51 UTC (rev 1188)
++++ trunk/pkg/dem/DataClass/InteractionPhysics/CapillaryParameters.hpp	2007-06-05 16:22:34 UTC (rev 1189)
+@@ -1,6 +1,6 @@
+ /*************************************************************************
+-*  Copyright (C) 2004 by Olivier Galizzi                                 *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">olivier.galizzi at imag.fr</A>                                               *
++*  Copyright (C) 2006 by luc Scholtes                                    *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">luc.scholtes at hmg.inpg.fr</A>                                              *
+ *                                                                        *
+ *  This program is free software; it is licensed under the terms of the  *
+ *  GNU General Public License v2 or later. See file LICENSE for details. *
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/CapillaryStressRecorder.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/CapillaryStressRecorder.cpp	2007-06-05 15:46:51 UTC (rev 1188)
++++ trunk/pkg/dem/Engine/DeusExMachina/CapillaryStressRecorder.cpp	2007-06-05 16:22:34 UTC (rev 1189)
+@@ -1,5 +1,5 @@
+ /*************************************************************************
+-*  Copyright (C) 2006 by luc scholt&#239;&#191;&#189;                                    *
++*  Copyright (C) 2006 by luc scholtes                                    *
+ *  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">luc.scholtes at hmg.inpg.fr</A>                                              *
+ *                                                                        *
+ *  This program is free software; it is licensed under the terms of the  *
+@@ -72,7 +72,7 @@
+ 
+ bool CapillaryStressRecorder::isActivated()
+ {
+-	return ((Omega::instance().getCurrentIteration() % interval == 0) &amp;&amp; (ofile)); // active le truc tout les &quot;interval&quot; !??
++	return ((Omega::instance().getCurrentIteration() % interval == 0) &amp;&amp; (ofile));
+ }
+ 
+ 
+@@ -203,15 +203,9 @@
+ 		}
+ 	}
+ 	
+-// 	Real Rmoy = SR/N;
+-// 	Real V = (height-2*Rmoy) * (width-2*Rmoy) * (depth-2*Rmoy);
+-	
+ 	Real Vv = Vech - Vs;
+ 	
+-// 	cerr &lt;&lt; &quot;Vw = &quot; &lt;&lt; Vwater &lt;&lt; &quot;Vv = &quot; &lt;&lt; Vv &lt;&lt; endl;
+-// 	cerr &lt;&lt; &quot;V = &quot; &lt;&lt; V &lt;&lt; &quot;Vs = &quot; &lt;&lt; Vs &lt;&lt; endl;
+-	
+-//	Real n = Vv/Vech;
++	Real n = Vv/Vech;
+ 	Real Sr = 100*Vwater/Vv;
+ 	if (Sr&gt;100) Sr=100;
+ 	Real w = 100*Vwater/Vech;
+@@ -229,25 +223,6 @@
+ 	SIG_13_cap = sig13_cap/Vech;
+ 	SIG_23_cap = sig23_cap/Vech;
+ 	
+-// 	// calcul des d&#239;&#191;&#189;ormations
+-// 	
+-// 	Real EPS_11=0, EPS_22=0, EPS_33=0;
+-// 	
+-// 	Real width_0 = upperCorner[0]-lowerCorner[0], height_0 =
+-// 	upperCorner[1]-lowerCorner[1],
+-// 	depth_0 = upperCorner[2]-lowerCorner[2];
+-// 	
+-// 	//cerr &lt;&lt; &quot;width_0 = &quot; &lt;&lt; width_0 &lt;&lt; &quot; width = &quot; &lt;&lt; width &lt;&lt; endl;
+-// 	
+-// 	EPS_11 = (width_0 - width)/width_0;
+-// 	EPS_22 = (height_0 - height)/height_0;
+-// 	EPS_33 = (depth_0 - depth)/depth_0;
+-	
+-// 	if (Omega::instance().getCurrentIteration() % 100 == 0) 
+-// 	{cerr &lt;&lt; &quot;Vwater = &quot; &lt;&lt; Vwater;
+-// 	cerr &lt;&lt; &quot; | CapillaryPressure= &quot; &lt;&lt; CapillaryPressure &lt;&lt; &quot; | Sr= &quot; &lt;&lt; Sr
+-// 	&lt;&lt;endl;}
+-
+ 	ofile &lt;&lt; lexical_cast&lt;string&gt;(Omega::instance().getSimulationTime()) &lt;&lt; &quot; &quot; 
+ 		&lt;&lt; lexical_cast&lt;string&gt;(SIG_11_cap) &lt;&lt; &quot; &quot; 
+ 		&lt;&lt; lexical_cast&lt;string&gt;(SIG_22_cap) &lt;&lt; &quot; &quot; 
+@@ -255,9 +230,6 @@
+ 		&lt;&lt; lexical_cast&lt;string&gt;(SIG_12_cap) &lt;&lt; &quot; &quot;
+ 		&lt;&lt; lexical_cast&lt;string&gt;(SIG_13_cap)&lt;&lt; &quot; &quot;
+ 		&lt;&lt; lexical_cast&lt;string&gt;(SIG_23_cap)&lt;&lt; &quot;   &quot;
+-// 		&lt;&lt; lexical_cast&lt;string&gt;(EPS_11) &lt;&lt; &quot; &quot;
+-// 		&lt;&lt; lexical_cast&lt;string&gt;(EPS_22) &lt;&lt; &quot; &quot;
+-// 		&lt;&lt; lexical_cast&lt;string&gt;(EPS_33) &lt;&lt; &quot;   &quot;
+ 		&lt;&lt; lexical_cast&lt;string&gt;(CapillaryPressure) &lt;&lt; &quot; &quot;
+ 		&lt;&lt; lexical_cast&lt;string&gt;(Sr)&lt;&lt; &quot; &quot; 
+ 		&lt;&lt; lexical_cast&lt;string&gt;(w)&lt;&lt; &quot; &quot;
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/CapillaryStressRecorder.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/CapillaryStressRecorder.hpp	2007-06-05 15:46:51 UTC (rev 1188)
++++ trunk/pkg/dem/Engine/DeusExMachina/CapillaryStressRecorder.hpp	2007-06-05 16:22:34 UTC (rev 1189)
+@@ -1,6 +1,6 @@
+ /*************************************************************************
+-*  Copyright (C) 2004 by Olivier Galizzi                                 *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">olivier.galizzi at imag.fr</A>                                               *
++*  Copyright (C) 2006 by luc Scholtes                                    *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">luc.scholtes at hmg.inpg.fr</A>                                              *
+ *                                                                        *
+ *  This program is free software; it is licensed under the terms of the  *
+ *  GNU General Public License v2 or later. See file LICENSE for details. *
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/ContactStressRecorder.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/ContactStressRecorder.cpp	2007-06-05 15:46:51 UTC (rev 1188)
++++ trunk/pkg/dem/Engine/DeusExMachina/ContactStressRecorder.cpp	2007-06-05 16:22:34 UTC (rev 1189)
+@@ -1,5 +1,5 @@
+ /*************************************************************************
+-*  Copyright (C) 2006 by luc scholt&#239;&#191;&#189;                                    *
++*  Copyright (C) 2006 by luc scholtes                                    *
+ *  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">luc.scholtes at hmg.inpg.fr</A>                                              *
+ *                                                                        *
+ *  This program is free software; it is licensed under the terms of the  *
+@@ -23,8 +23,6 @@
+ #include &lt;yade/core/MetaBody.hpp&gt;
+ #include &lt;boost/lexical_cast.hpp&gt;
+ 
+-//#include &lt;yade/core/GeometricalModel.hpp&gt;
+-
+ ContactStressRecorder::ContactStressRecorder () : DataRecorder(), actionForce(new Force)
+ 
+ {
+@@ -81,7 +79,7 @@
+ 
+ bool ContactStressRecorder::isActivated()
+ {
+-	return ((Omega::instance().getCurrentIteration() % interval == 0) &amp;&amp; (ofile)); // active le truc tout les &quot;interval&quot; !??
++	return ((Omega::instance().getCurrentIteration() % interval == 0) &amp;&amp; (ofile));
+ }
+ 
+ 
+@@ -93,16 +91,13 @@
+ 	Real f1_el_x=0, f1_el_y=0, f1_el_z=0, x1=0, y1=0, z1=0, x2=0, y2=0, z2=0;
+ 	
+ 	Real sig11_el=0, sig22_el=0, sig33_el=0, sig12_el=0, sig13_el=0,
+-	sig23_el=0, /*Vwater = 0,*/ kinematicE = 0;
++	sig23_el=0, Vwater = 0, kinematicE = 0;
+ 	
+ 	InteractionContainer::iterator ii    = ncb-&gt;transientInteractions-&gt;begin();
+         InteractionContainer::iterator iiEnd = ncb-&gt;transientInteractions-&gt;end();
+         
+         Real j = 0;
+-        //Real fabricTensor[3][3] = {{0,0,0},{0,0,0},{0,0,0}};
+         Real FT[3][3] = {{0,0,0},{0,0,0},{0,0,0}};
+-//         cerr &lt;&lt; &quot;FabricTensorInit= &quot; &lt;&lt; FabricTensor[0][0] &lt;&lt; endl;
+-			;
+         
+         for(  ; ii!=iiEnd ; ++ii ) 
+         {
+@@ -157,7 +152,7 @@
+ 			y2 = de2-&gt;se3.position[1];
+ 			z2 = de2-&gt;se3.position[2];
+ 			
+-			///Calcul des contraintes &#239;&#191;&#189;astiques spheres/spheres
++			///Calcul des contraintes elastiques spheres/spheres
+ 			
+ 			sig11_el = sig11_el + f1_el_x*(x2 - x1);
+ 			sig22_el = sig22_el + f1_el_y*(y2 - y1);
+@@ -176,7 +171,7 @@
+ 		currentContactGeometry-&gt;radius1)	
+ 			*currentContactGeometry-&gt;normal;
+ 			
+-			/// Calcul des contraintes &#239;&#191;&#189;astiques spheres/parois
++			/// Calcul des contraintes elastiques spheres/parois
+ 			
+ 			sig11_el = sig11_el + f1_el_x*l[0];
+ 			sig22_el = sig22_el + f1_el_y*l[1];
+@@ -188,25 +183,16 @@
+ 			}
+ 
+ 			/// fabric tensor
+-//  			if (Omega::instance().getCurrentIteration() % 100 == 0)
+-// 			{cerr &lt;&lt; &quot;normal = &quot;&lt;&lt; currentContactGeometry-&gt;normal &lt;&lt;
+-// 			endl;}
++
+ 			Vector3r normal = currentContactGeometry-&gt;normal;
+ 			
+ 			for (int i=0; i&lt;3; ++i)
+-			{	/*cerr &lt;&lt; &quot;boucle i&quot; &lt;&lt; endl;*/
++			{	
+ 				for (int n=0; n&lt;3; ++n)
+ 				{	
+ 					//fabricTensor[i][n]
+ 					FT[i][n]
+ 					+= normal[i]*normal[n];
+-					
+-// 					cerr &lt;&lt; &quot;n = &quot; &lt;&lt; n &lt;&lt; endl;
+-// 					cerr &lt;&lt; &quot;normal[i]=&quot; &lt;&lt; normal[i]
+-// 					&lt;&lt; &quot; normal[n]=&quot; &lt;&lt; normal[n] &lt;&lt; 
+-// 					&quot; FabricTensor[i][n]=&quot; &lt;&lt;
+-// 					FabricTensor[i][n] &lt;&lt; endl;
+-					
+ 				}
+ 			}
+ 			
+@@ -216,14 +202,10 @@
+ 
+ 	/// FabricTensor
+ 	
+-	//FT = (fabricTensor/j);
+-//	Real traceFT = (FT[0][0]+FT[1][1]+FT[2][2])/j;
++	Real traceFT = (FT[0][0]+FT[1][1]+FT[2][2])/j;
+ 	
+-// 	if (Omega::instance().getCurrentIteration() % 100 == 0) 
+-// 	{cerr &lt;&lt; &quot;interactions de contact = &quot; &lt;&lt; j &lt;&lt; endl;}
+-// 	 cerr &lt;&lt; &quot;TracefabricTensor =&quot; &lt;&lt; traceFT &lt;&lt; endl;}
++	/// calcul de l'energie cinetique:
+ 
+-	/// calcul de l'&#239;&#191;&#189;ergie cin&#239;&#191;&#189;ique:
+ 	Real nbElt = 0, SR = 0, Vs=0, Rbody=0, Rmin=1, Rmax=0;
+ 	
+ 	BodyContainer::iterator bi = bodies-&gt;begin();
+@@ -235,8 +217,7 @@
+ 		shared_ptr&lt;Body&gt; b = *bi;
+ 		
+ 		int geometryIndex = b-&gt;geometricalModel-&gt;getClassIndex();
+-		//cerr &lt;&lt; &quot;model = &quot; &lt;&lt; geometryIndex &lt;&lt; endl;
+-		
++	
+ 		if (geometryIndex == SpheresClassIndex)
+ 		{
+ 			nbElt +=1;
+@@ -258,23 +239,16 @@
+ 		}
+ 	}
+ 
+-// 	if (Omega::instance().getCurrentIteration() % 100 == 0)
+-// 	{cerr &lt;&lt; &quot;Ek = &quot; &lt;&lt; kinematicE ;}
+-	
+ 	/// coordination number
+ 	
+ 	Real coordN = 0;
+ 	coordN = 2*(j/nbElt);	// ????????????????????????????????????????????
+ 	
+-// 	if (Omega::instance().getCurrentIteration() % 100 == 0)
+-// 	{cerr /*&lt;&lt; &quot; j =&quot; &lt;&lt; j &lt;&lt; &quot; nbElt =&quot; &lt;&lt; nbElt */&lt;&lt; &quot; coordN = &quot; &lt;&lt;
+-// 	coordN &lt;&lt; endl;}
+-
+ 	/// Calcul des contraintes &quot;globales&quot;
+ 	
+ 	Real SIG_11_el=0, SIG_22_el=0, SIG_33_el=0, SIG_12_el=0, SIG_13_el=0, SIG_23_el=0;
+ 	
+-	// volume de l'&#239;&#191;&#189;hantillon
++	// volume de l'echantillon
+ 	
+ 	PhysicalParameters* p_bottom = static_cast&lt;PhysicalParameters*&gt;((*bodies)[wall_bottom_id]-&gt;physicalParameters.get());
+ 	PhysicalParameters* p_top   =	 static_cast&lt;PhysicalParameters*&gt;((*bodies)[wall_top_id]-&gt;physicalParameters.get());
+@@ -296,9 +270,6 @@
+ // 	Real V = (height-2*Rmoy) * (width-2*Rmoy) * (depth-2*Rmoy);
+ 	Real V = (height) * (width) * (depth);
+ 	
+-// 	if (Omega::instance().getCurrentIteration() % 100 == 0) 
+-// 	{cerr &lt;&lt; &quot;Vsample = &quot; &lt;&lt; V &lt;&lt; endl;}
+-	
+ 	SIG_11_el = sig11_el/V;
+ 	SIG_22_el = sig22_el/V;
+ 	SIG_33_el = sig33_el/V;
+@@ -306,7 +277,7 @@
+ 	SIG_13_el = sig13_el/V;
+ 	SIG_23_el = sig23_el/V;
+ 	
+-	// calcul des d&#239;&#191;&#189;ormations
++	/// calcul des deformations
+ 	
+ 	Real EPS_11=0, EPS_22=0, EPS_33=0;
+ 	
+@@ -328,24 +299,14 @@
+ 	Real n = Vv/V;
+ // 	Real e = Vv/Vs;
+ 
+-// 	cerr &lt;&lt; &quot;Vw1 = &quot; &lt;&lt; Vwater &lt;&lt; &quot;Vv1 = &quot; &lt;&lt; Vv &lt;&lt; endl;
+-// 	cerr &lt;&lt; &quot;V1 = &quot; &lt;&lt; V &lt;&lt; &quot;Vs1 = &quot; &lt;&lt; Vs &lt;&lt; endl;
+-
+-
+-// 	if (Omega::instance().getCurrentIteration() % 100 == 0)
+-// 	{cerr &lt;&lt; &quot;n = &quot; &lt;&lt; n &lt;&lt; &quot;e =&quot; &lt;&lt; e &lt;&lt; endl;}
+-	
+-// 	// mise &#239;&#191;&#189;zero des deformations qd comp triaxiale commence
++// 	mise a zero des deformations qd comp triaxiale commence
+ // 	if (triaxCompEng-&gt;compressionActivated) {  }
+ 	
+-	/// r&#239;&#191;&#189;up&#239;&#191;&#189;ation de UnbalancedForce
++	/// UnbalancedForce
+ 	
+ 	Real equilibriumForce = triaxCompEng-&gt;ComputeUnbalancedForce(body);
+ // 	Real equilibriumForce = sampleCapPressEng-&gt;ComputeUnbalancedForce(body);
+ 
+-// 	if (Omega::instance().getCurrentIteration() % 100 == 0)
+-// 	{cerr &lt;&lt; &quot;r&#239;&#191;&#189;upUnbalancedForce = &quot; &lt;&lt; equilibriumForce &lt;&lt; endl;}
+-
+ 	if (Omega::instance().getCurrentIteration() % 100 == 0)
+ 	{cerr &lt;&lt; &quot;current Iteration &quot; &lt;&lt; Omega::instance().getCurrentIteration()
+ 	&lt;&lt; endl;}
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/ContactStressRecorder.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/ContactStressRecorder.hpp	2007-06-05 15:46:51 UTC (rev 1188)
++++ trunk/pkg/dem/Engine/DeusExMachina/ContactStressRecorder.hpp	2007-06-05 16:22:34 UTC (rev 1189)
+@@ -1,6 +1,6 @@
+ /*************************************************************************
+-*  Copyright (C) 2004 by Olivier Galizzi                                 *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">olivier.galizzi at imag.fr</A>                                               *
++*  Copyright (C) 2006 by luc Scholtes                                    *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">luc.scholtes at hmg.inpg.fr</A>                                              *
+ *                                                                        *
+ *  This program is free software; it is licensed under the terms of the  *
+ *  GNU General Public License v2 or later. See file LICENSE for details. *
+@@ -18,8 +18,8 @@
+ class GeometricalModel;
+ class TriaxialCompressionEngine;
+ // class SampleCapillaryPressureEngine;
+-//class TriaxialStressController;
+ 
++
+ class ContactStressRecorder : public DataRecorder
+ {
+ 	private :
+@@ -41,7 +41,6 @@
+ 		Vector3r upperCorner, lowerCorner;
+ 		
+ 		TriaxialCompressionEngine* triaxCompEng;
+-		//TriaxialStressController* triaxStressCont;
+ 		//SampleCapillaryPressureEngine* sampleCapPressEng; 
+ 		
+ 		int wall_bottom_id, wall_top_id, wall_left_id, wall_right_id, wall_front_id, wall_back_id;
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.cpp	2007-06-05 15:46:51 UTC (rev 1188)
++++ trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.cpp	2007-06-05 16:22:34 UTC (rev 1189)
+@@ -1,6 +1,6 @@
+ /*************************************************************************
+-*  Copyright (C) 2004 by Janek Kozicki                                   *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">cosurgi at berlios.de</A>                                                    *
++*  Copyright (C) 2006 by Bruno Chareyre                                  *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">bruno.chareyre at hmg.inpg.fr</A>                                            *
+ *                                                                        *
+ *  This program is free software; it is licensed under the terms of the  *
+ *  GNU General Public License v2 or later. See file LICENSE for details. *
+@@ -24,7 +24,7 @@
+ 	Phase1=false;
+ 	Phase1End = &quot;Phase1End&quot;;
+ 	FinalIterationPhase1 = 0;
+-// 	Phase2End = &quot;Phase2End&quot;;
++	Iteration = 0;
+ 	compressionActivated=false;
+ 	autoCompressionActivation=true;
+ 	for (int i=0; i&lt;3; ++i) strain[i]=0;
+@@ -65,37 +65,36 @@
+ 	UnbalancedForce=ComputeUnbalancedForce(body);
+ 	if (Omega::instance().getCurrentIteration() % 100 == 0) cerr &lt;&lt; &quot;UnbalancedForce=&quot; &lt;&lt; UnbalancedForce &lt;&lt; endl;
+ 	
+-	// new test
+-	//cerr &lt;&lt; &quot;1&quot; &lt;&lt; endl;
+ 	if (!Phase1 &amp;&amp; autoCompressionActivation &amp;&amp;
+-	UnbalancedForce&lt;=StabilityCriterion)		//Start 
++	UnbalancedForce&lt;=StabilityCriterion)
++
+ 	{	
+-// 		// saving snapshot.xml
+-// 	string fileName = &quot;../data/&quot; + Phase1End + &quot;_&quot; + 
+-// 	lexical_cast&lt;string&gt;(Omega::instance().getCurrentIteration()) + &quot;.xml&quot;;
+-// 	cerr &lt;&lt; &quot;saving snapshot: &quot; &lt;&lt; fileName &lt;&lt; &quot; ...&quot;;
+-// 	Omega::instance().saveSimulation(fileName);
+-		
+ 		internalCompaction = false;
+ 		Phase1 = true;
+-		FinalIterationPhase1 =
+-		Omega::instance().getCurrentIteration();
++// 		FinalIterationPhase1 =
++// 		Omega::instance().getCurrentIteration();
+ 	}
+ 	
+-	if (autoCompressionActivation &amp;&amp; Phase1
+-	&amp;&amp; ((Omega::instance().getCurrentIteration()) &gt;=
+-	(FinalIterationPhase1+1000)))
++	if (autoCompressionActivation &amp;&amp; Phase1 &amp;&amp; UnbalancedForce&lt;=StabilityCriterion)
+ 	
+ 	{
+-		if (UnbalancedForce&lt;=StabilityCriterion)
++		Metabody * ncb = static_cast&lt;Metabody*&gt;(body);
++
++		Real S = computeStress(ncb);
++
++		if (S &gt;= sigma_iso)
+ 		{
+-		// saving snapshot.xml
+-	string fileName = &quot;../data/&quot; + Phase1End + &quot;_&quot; + 
+-	lexical_cast&lt;string&gt;(Omega::instance().getCurrentIteration()) + &quot;.xml&quot;;
+-	cerr &lt;&lt; &quot;saving snapshot: &quot; &lt;&lt; fileName &lt;&lt; &quot; ...&quot;;
+-	Omega::instance().saveSimulation(fileName);
++			Iteration = Omega::instance().getCurrentIteration();
++			
++			//if ((Omega::instance().getCurrentIteration()) &gt;= (Iteration + 1000));
++		
++			// saving snapshot.xml
++			string fileName = &quot;../data/&quot; + Phase1End + &quot;_&quot; + 
++			lexical_cast&lt;string&gt;(Omega::instance().getCurrentIteration()) + &quot;.xml&quot;;
++			cerr &lt;&lt; &quot;saving snapshot: &quot; &lt;&lt; fileName &lt;&lt; &quot; ...&quot;;
++			Omega::instance().saveSimulation(fileName);
+ 	
+-	compressionActivated = true;
++			compressionActivated = true;
+ 		}
+ 	
+ 	}
+@@ -122,14 +121,15 @@
+ 
+         if (compressionActivated)
+         {
+-		if (Omega::instance().getCurrentIteration() % 50 == 0) 
++		if (Omega::instance().getCurrentIteration() % 100 == 0) 
+  		cerr &lt;&lt; &quot;Compression started!!&quot; &lt;&lt; endl;
+         	Real dt = Omega::instance().getTimeStep();
+                   MetaBody * ncb = static_cast&lt;MetaBody*&gt;(body);
+                   shared_ptr&lt;BodyContainer&gt;&amp; bodies = ncb-&gt;bodies;
+                   
+-                  if (currentStrainRate &lt; strainRate) currentStrainRate
+-			+= strainRate*0.0003;	// !!! si d&#233;charge
++                if (currentStrainRate &lt; strainRate) currentStrainRate
++			+= strainRate*0.0003;	// !!! si decharge
++		else currentStrainRate = strainRate;
+                 
+                   PhysicalParameters* p =
+ 		static_cast&lt;PhysicalParameters*&gt;((*bodies)[wall_bottom_id]-&gt;
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.hpp	2007-06-05 15:46:51 UTC (rev 1188)
++++ trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.hpp	2007-06-05 16:22:34 UTC (rev 1189)
+@@ -1,11 +1,12 @@
+ /*************************************************************************
+-*  Copyright (C) 2004 by Janek Kozicki                                   *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">cosurgi at berlios.de</A>                                                    *
++*  Copyright (C) 2006 by Bruno Chareyre                                  *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">bruno.chareyre at hmg.inpg.fr</A>                                            *
+ *                                                                        *
+ *  This program is free software; it is licensed under the terms of the  *
+ *  GNU General Public License v2 or later. See file LICENSE for details. *
+ *************************************************************************/
+ 
++
+ #ifndef TRIAXIALCOMPRESSIONENGINE_HPP
+ #define TRIAXIALCOMPRESSIONENGINE_HPP
+ 
+@@ -42,7 +43,7 @@
+ 		Vector3r translationAxis;
+ 		//! is isotropicInternalCompactionFinished?
+ 		bool Phase1;
+-		int FinalIterationPhase1;
++		int FinalIterationPhase1, Iteration;
+ 		std::string Phase1End; //,Phase2End;
+ 		//! Is uniaxial compression currently activated?
+ 		bool compressionActivated;
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.cpp	2007-06-05 15:46:51 UTC (rev 1188)
++++ trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.cpp	2007-06-05 16:22:34 UTC (rev 1189)
+@@ -1,6 +1,6 @@
+ /*************************************************************************
+-*  Copyright (C) 2004 by Janek Kozicki                                   *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">cosurgi at berlios.de</A>                                                    *
++*  Copyright (C) 2006 by Bruno Chareyre                                  *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">bruno.chareyre at hmg.inpg.fr</A>                                            *
+ *                                                                        *
+ *  This program is free software; it is licensed under the terms of the  *
+ *  GNU General Public License v2 or later. See file LICENSE for details. *
+@@ -12,9 +12,8 @@
+ #include&lt;yade/pkg-dem/SpheresContactGeometry.hpp&gt;
+ #include&lt;yade/pkg-dem/ElasticContactInteraction.hpp&gt;
+ #include&lt;yade/pkg-common/Force.hpp&gt;
+-//#include&lt;yade/pkg-dem/StiffnessMatrix.hpp&gt;
+-//#include&lt;yade/lib-wm3-math/Math.hpp&gt;
+ 
++
+ #include&lt;yade/core/MetaBody.hpp&gt;
+ #include&lt;yade/pkg-common/Sphere.hpp&gt;
+ 
+@@ -187,15 +186,7 @@
+ 
+ void TriaxialStressController::controlExternalStress(int wall, MetaBody* ncb, int id, Vector3r resultantForce, PhysicalParameters* p, Real wall_max_vel) //FIXME remove parameter &quot;id&quot;
+ {
+-	//cerr &lt;&lt; &quot;controlExternalStress&quot; &lt;&lt; endl;
+-    //Update stiffness only if it has been computed by StiffnessCounter (see &quot;interval&quot;)
+-    //if (Omega::instance().getCurrentIteration() % interval == 0)	stiffness =
+-    //(static_cast&lt;StiffnessMatrix*&gt;( ncb-&gt;physicalActions-&gt;find (id, StiffnessMatrixClassIndex).get()))-&gt;stiffness;
+-    // 		Vector3r effectiveforce =
+-    // 		 	static_cast&lt;Force*&gt;( ncb-&gt;physicalActions-&gt;find(wall_id[wall],ForceClassIndex).get() )-&gt;force;
+-    //Vector3r deltaf (effectiveforce - resultantForce);
+-    
+-        Real translation= normal[wall].Dot(static_cast&lt;Force*&gt;( ncb-&gt;physicalActions-&gt;find(wall_id[wall],ForceClassIndex).get() )-&gt;force - resultantForce);
++	Real translation= normal[wall].Dot(static_cast&lt;Force*&gt;( ncb-&gt;physicalActions-&gt;find(wall_id[wall],ForceClassIndex).get() )-&gt;force - resultantForce);
+         if (translation!=0)
+         {
+         //cerr &lt;&lt; &quot;translation!=0&quot; &lt;&lt; endl;
+@@ -203,7 +194,7 @@
+             {
+             //cerr &lt;&lt; &quot;stiffness[wall]!=0&quot; &lt;&lt; endl;
+                 translation /= stiffness[wall];
+-                translation = std::min( abs(translation), max_vel ) * Mathr::Sign(translation);
++                translation = std::min( abs(translation), wall_max_vel ) * Mathr::Sign(translation);
+             	//cerr &lt;&lt; &quot;translation=&quot; &lt;&lt; translation &lt;&lt; endl;
+             }
+             else
+@@ -211,33 +202,8 @@
+                 
+         }
+ 
+-
+-        // 		cerr &lt;&lt; &quot;dint wall = &quot; &lt;&lt;  wall ;
+-        // 		cerr &lt;&lt; &quot; deltaf.X() = &quot; &lt;&lt;  deltaf.X() ;
+-        // 		if  (deltaf.X()!=0) translation.X() =
+-        // 		Mathr::Sign(deltaf.X())*(stiffness.X()==0 ? wall_max_vel : std::min( abs(deltaf.X()/stiffness.X()), wall_max_vel));
+-        // 		else translation.X() = 0;
+-        // 		cerr &lt;&lt; &quot; deltaf.Y() = &quot; &lt;&lt;  deltaf.Y() ;
+-        // 		cerr &lt;&lt; &quot; deltaf.Z() = &quot; &lt;&lt;  deltaf.Z() &lt;&lt; endl;
+-        //
+-        // 		if  (deltaf.Y()!=0) translation.Y() =
+-        // 		Mathr::Sign(deltaf.Y())*(stiffness.Y()==0 ? wall_max_vel : std::min( abs(deltaf.Y()/stiffness.Y()), wall_max_vel));
+-        // 		else translation.Y() = 0;
+-        // 		if  (deltaf.Z()!=0) translation.Z() =
+-        // 		Mathr::Sign(deltaf.Z())*(stiffness.Z()==0 ? wall_max_vel : std::min( abs(deltaf.Z()/stiffness.Z()), wall_max_vel));
+-        // 		else translation.Z() = 0;
+-
+-        // 			(stiffness.X()==0 ? Mathr::Sign(deltaf.X())*wall_max_vel : Mathr::Sign(deltaf.X())*std::min( abs(deltaf.X()/stiffness.X()), wall_max_vel),
+-        // 			stiffness.Y()==0 ? Mathr::Sign(deltaf.Y())*wall_max_vel : Mathr::Sign(deltaf.Y())*std::min( abs(deltaf.Y()/stiffness.Y()), wall_max_vel),
+-        // 			stiffness.Z()==0 ? Mathr::Sign(deltaf.Z())*wall_max_vel : Mathr::Sign(deltaf.Z())*std::min( abs(deltaf.Z()/stiffness.Z()), wall_max_vel) );
+-
+         previousTranslation[wall] = (1-wallDamping)*translation*normal[wall];// + 0.7*previousTranslation[wall];// formula for &quot;steady-flow&quot; evolution with fluctuations
+         p-&gt;se3.position	+= previousTranslation[wall];
+-    
+-    //if (wall==1) cerr &lt;&lt; &quot;Force=&quot; &lt;&lt; normal[wall].Dot(static_cast&lt;Force*&gt;( ncb-&gt;physicalActions-&gt;find(wall_id[wall],ForceClassIndex).get() )-&gt;force) &lt;&lt; &quot; -&gt; &quot; &lt;&lt; resultantForce &lt;&lt; &quot;Translation[wall]=&quot; &lt;&lt; previousTranslation[wall] &lt;&lt; endl;
+-    //p-&gt;velocity		=  previousTranslation/dt;//FIXME : useless???
+-    //}
+-
+ }
+ 
+ 
+@@ -257,17 +223,6 @@
+ 
+         shared_ptr&lt;BodyContainer&gt;&amp; bodies = ncb-&gt;bodies;
+ 
+-        //if(PhysicalParameters* p = dynamic_cast&lt;PhysicalParameters*&gt;((*bodies)[*ii]-&gt;physicalParameters.get()))
+-
+-        // 	if(PhysicalParameters* p_bottom = static_cast&lt;PhysicalParameters*&gt;((*bodies)[wall_bottom_id]-&gt;physicalParameters.get()) &amp;&amp;
+-        // 	PhysicalParameters* p_top   =	 static_cast&lt;PhysicalParameters*&gt;((*bodies)[wall_top_id]-&gt;physicalParameters.get()) &amp;&amp;
+-        // 	PhysicalParameters* p_left 	= static_cast&lt;PhysicalParameters*&gt;((*bodies)[wall_left_id]-&gt;physicalParameters.get()) &amp;&amp;
+-        // 	PhysicalParameters* p_right = static_cast&lt;PhysicalParameters*&gt;((*bodies)[wall_right_id]-&gt;physicalParameters.get()) &amp;&amp;
+-        // 	PhysicalParameters* p_front = static_cast&lt;PhysicalParameters*&gt;((*bodies)[wall_front_id]-&gt;physicalParameters.get()) &amp;&amp;
+-        // 	PhysicalParameters* p_back 	= static_cast&lt;PhysicalParameters*&gt;((*bodies)[wall_back_id]-&gt;physicalParameters.get()))
+-
+-
+-
+         PhysicalParameters* p_bottom = static_cast&lt;PhysicalParameters*&gt;((*bodies)[wall_bottom_id]-&gt;physicalParameters.get());
+         PhysicalParameters* p_top   =	 static_cast&lt;PhysicalParameters*&gt;((*bodies)[wall_top_id]-&gt;physicalParameters.get());
+         PhysicalParameters* p_left 	= static_cast&lt;PhysicalParameters*&gt;((*bodies)[wall_left_id]-&gt;physicalParameters.get());
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.hpp	2007-06-05 15:46:51 UTC (rev 1188)
++++ trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.hpp	2007-06-05 16:22:34 UTC (rev 1189)
+@@ -1,6 +1,6 @@
+ /*************************************************************************
+-*  Copyright (C) 2004 by Janek Kozicki                                   *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">cosurgi at berlios.de</A>                                                    *
++*  Copyright (C) 2006 by Bruno Chareyre                                  *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">bruno.chareyre at hmg.inpg.fr</A>                                            *
+ *                                                                        *
+ *  This program is free software; it is licensed under the terms of the  *
+ *  GNU General Public License v2 or later. See file LICENSE for details. *
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/WallStressRecorder.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/WallStressRecorder.cpp	2007-06-05 15:46:51 UTC (rev 1188)
++++ trunk/pkg/dem/Engine/DeusExMachina/WallStressRecorder.cpp	2007-06-05 16:22:34 UTC (rev 1189)
+@@ -1,5 +1,5 @@
+ /*************************************************************************
+-*  Copyright (C) 2006 by luc scholt&#239;&#191;&#189;                                    *
++*  Copyright (C) 2006 by luc scholtes                                    *
+ *  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">luc.scholtes at hmg.inpg.fr</A>                                              *
+ *                                                                        *
+ *  This program is free software; it is licensed under the terms of the  *
+@@ -66,7 +66,7 @@
+ 
+ bool WallStressRecorder::isActivated()
+ {
+-	return ((Omega::instance().getCurrentIteration() % interval == 0) &amp;&amp; (ofile)); // active le truc tout les &quot;interval&quot; !??
++	return ((Omega::instance().getCurrentIteration() % interval == 0) &amp;&amp; (ofile));
+ }
+ 
+ 
+@@ -75,82 +75,8 @@
+ 	MetaBody * ncb = static_cast&lt;MetaBody*&gt;(body);
+ 	shared_ptr&lt;BodyContainer&gt;&amp; bodies = ncb-&gt;bodies;
+ 		
+-	Real F_wall_left=0, F_wall_top=0, F_wall_front=0;
+-	int i=0;
++	/// dimensions de l'echantillon
+ 	
+-	InteractionContainer::iterator ii    = ncb-&gt;transientInteractions-&gt;begin();
+-        InteractionContainer::iterator iiEnd = ncb-&gt;transientInteractions-&gt;end();
+-        
+-        
+-        for(  ; ii!=iiEnd ; ++ii ) 
+-        {
+-                if ((*ii)-&gt;isReal)
+-                {	
+-                	const shared_ptr&lt;Interaction&gt;&amp; interaction = *ii;
+-                
+-                	SpheresContactGeometry* currentContactGeometry 	=
+-	static_cast&lt;SpheresContactGeometry*&gt;(interaction-&gt;interactionGeometry.
+-	get());
+-
+-			if (currentContactGeometry-&gt;penetrationDepth &gt;= 0)
+-
+-			{
+-			int id1 = interaction -&gt; getId1();
+-			int id2 = interaction -&gt; getId2();
+-
+-			ElasticContactInteraction* currentContactPhysics   
+-			= static_cast&lt;ElasticContactInteraction*&gt;
+-			(interaction-&gt;interactionPhysics.get());
+-
+-			Vector3r fel = currentContactPhysics-&gt;normalForce;
+-			
+-			// wall_left
+-
+-			if ((id1 == wall_left_id) || (id2 == wall_left_id))
+-
+-			{	
+-				i=i+1;
+-				if (id1 == wall_left_id)  F_wall_left = F_wall_left + fel[0];
+-				if (id2 == wall_left_id)  F_wall_left = F_wall_left - fel[0];
+-			}
+-			
+-			// wall_top
+-
+-			if ((id1 == wall_top_id) || (id2 == wall_top_id))
+-
+-			{	
+-				i=i+1;
+-				if (id1 == wall_top_id)  F_wall_top = F_wall_top - fel[1];
+-				if (id2 == wall_top_id)  F_wall_top = F_wall_top + fel[1];
+-			}
+-	
+-			// wall_front
+-
+-			if ((id1 == wall_front_id) || (id2 == wall_front_id))
+-
+-			{	
+-				i=i+1;
+-				if (id1 == wall_front_id)  F_wall_front = F_wall_front - fel[2];
+-				if (id2 == wall_front_id)  F_wall_front = F_wall_front + fel[2];
+-			}
+-			
+-			if ((id1 == wall_right_id) || (id2 == wall_right_id)) i=i+1;
+-			if ((id1 == wall_bottom_id) || (id2 == wall_bottom_id)) i=i+1;
+-			if ((id1 == wall_back_id) || (id2 == wall_back_id)) i=i+1;
+-			
+-			}
+-                }
+-        }	
+-
+-// 	if (Omega::instance().getCurrentIteration() % 100 == 0)
+-// 	{cerr &lt;&lt; &quot;interactions spheres/murs = &quot; &lt;&lt; i &lt;&lt; endl;}
+-
+-	/// Calcul des contraintes &quot;globales&quot;
+-	
+-	Real SIG_11_wall=0, SIG_22_wall=0, SIG_33_wall=0;
+-	
+-	// dimensions de l'&#239;&#191;&#189;hantillon
+-	
+ 	PhysicalParameters* p_bottom = static_cast&lt;PhysicalParameters*&gt;((*bodies)[wall_bottom_id]-&gt;physicalParameters.get());
+ 	PhysicalParameters* p_top   =	 static_cast&lt;PhysicalParameters*&gt;((*bodies)[wall_top_id]-&gt;physicalParameters.get());
+ 	PhysicalParameters* p_left 	= static_cast&lt;PhysicalParameters*&gt;((*bodies)[wall_left_id]-&gt;physicalParameters.get());
+@@ -163,21 +89,14 @@
+ 	width = p_right-&gt;se3.position.X() - p_left-&gt;se3.position.X() - thickness;
+ 	depth = p_front-&gt;se3.position.Z() - p_back-&gt;se3.position.Z() - thickness;
+ 	
+-	SIG_11_wall = F_wall_left / (height*depth);
+-	SIG_22_wall = F_wall_top / (depth*width);
+-	SIG_33_wall = F_wall_front / (height*width);
+-		
++	/// calcul des contraintes via forces resultantes sur murs
+ 	
+-	// calcul des contraintes via forces resultantes sur murs
+-	
+ 	Real SIG_wall_11 = 0, SIG_wall_22 = 0, SIG_wall_33 = 0;
+ 	
+ 	Vector3r F_wall_11 = static_cast&lt;Force*&gt;( ncb-&gt;physicalActions-&gt;find(wall_left_id, actionForce-&gt;getClassIndex() ). get() )-&gt;force;
+ 	
+ 	SIG_wall_11 = F_wall_11[0]/(depth*height);
+ 	
+-	//cerr &lt;&lt; &quot; SIG_wall_11 = &quot; &lt;&lt; SIG_wall_11 &lt;&lt; &quot; SIG_11_el = &quot; &lt;&lt; SIG_11_el &lt;&lt; endl;
+-	
+ 	Vector3r F_wall_22 = static_cast&lt;Force*&gt;( ncb-&gt;physicalActions-&gt;find(wall_top_id, actionForce-&gt;getClassIndex() ). get() )-&gt;force;
+ 	
+ 	SIG_wall_22 = F_wall_22[1]/(depth*width);
+@@ -187,13 +106,10 @@
+ 	SIG_wall_33 = F_wall_33[2]/(width*height);
+ 	
+ 	ofile &lt;&lt; lexical_cast&lt;string&gt;(Omega::instance().getSimulationTime()) &lt;&lt; &quot; &quot; 
+-		&lt;&lt; lexical_cast&lt;string&gt;(SIG_11_wall) &lt;&lt; &quot; &quot;
+ 		&lt;&lt; lexical_cast&lt;string&gt;(SIG_wall_11) &lt;&lt; &quot; &quot;
+ 		&lt;&lt; lexical_cast&lt;string&gt;(p_left-&gt;se3.position.X()) &lt;&lt; &quot; &quot;
+- 		&lt;&lt; lexical_cast&lt;string&gt;(SIG_22_wall) &lt;&lt; &quot; &quot;
+  		&lt;&lt; lexical_cast&lt;string&gt;(SIG_wall_22) &lt;&lt; &quot; &quot;
+  		&lt;&lt; lexical_cast&lt;string&gt;(p_top-&gt;se3.position.Y()) &lt;&lt; &quot; &quot;
+-		&lt;&lt; lexical_cast&lt;string&gt;(SIG_33_wall) &lt;&lt; &quot; &quot;
+ 		&lt;&lt; lexical_cast&lt;string&gt;(SIG_wall_33) &lt;&lt; &quot; &quot;
+ 		&lt;&lt; lexical_cast&lt;string&gt;(p_front-&gt;se3.position.Z()) &lt;&lt; &quot; &quot;
+ 		&lt;&lt; endl;
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/WallStressRecorder.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/WallStressRecorder.hpp	2007-06-05 15:46:51 UTC (rev 1188)
++++ trunk/pkg/dem/Engine/DeusExMachina/WallStressRecorder.hpp	2007-06-05 16:22:34 UTC (rev 1189)
+@@ -1,6 +1,6 @@
+ /*************************************************************************
+-*  Copyright (C) 2004 by Olivier Galizzi                                 *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">olivier.galizzi at imag.fr</A>                                               *
++*  Copyright (C) 2006 by luc Scholtes                                    *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">luc.scholtes at hmg.inpg.fr</A>                                              *
+ *                                                                        *
+ *  This program is free software; it is licensed under the terms of the  *
+ *  GNU General Public License v2 or later. See file LICENSE for details. *
+
+Modified: trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2AABBwater.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2AABBwater.cpp	2007-06-05 15:46:51 UTC (rev 1188)
++++ trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2AABBwater.cpp	2007-06-05 16:22:34 UTC (rev 1189)
+@@ -1,6 +1,6 @@
+ /*************************************************************************
+-*  Copyright (C) 2004 by Olivier Galizzi                                 *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">olivier.galizzi at imag.fr</A>                                               *
++*  Copyright (C) 2006 by luc Scholtes                                    *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">luc.scholtes at hmg.inpg.fr</A>                                              *
+ *                                                                        *
+ *  This program is free software; it is licensed under the terms of the  *
+ *  GNU General Public License v2 or later. See file LICENSE for details. *
+@@ -20,7 +20,7 @@
+ 	
+ 	aabb-&gt;center = se3.position;
+ 	
+-	aabb-&gt;halfSize = Vector3r(1.5*sphere-&gt;radius,1.5*sphere-&gt;radius,1.5*sphere-&gt;radius); //&#239;&#191;&#189;a n'est peut ere pas la solution!!!!
++	aabb-&gt;halfSize = Vector3r(1.5*sphere-&gt;radius,1.5*sphere-&gt;radius,1.5*sphere-&gt;radius);
+ 	
+ 	aabb-&gt;min = aabb-&gt;center-aabb-&gt;halfSize;
+ 	aabb-&gt;max = aabb-&gt;center+aabb-&gt;halfSize;	
+
+Modified: trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2InteractingSphere4SpheresContactGeometryWater.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2InteractingSphere4SpheresContactGeometryWater.cpp	2007-06-05 15:46:51 UTC (rev 1188)
++++ trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2InteractingSphere4SpheresContactGeometryWater.cpp	2007-06-05 16:22:34 UTC (rev 1189)
+@@ -1,6 +1,6 @@
+ /*************************************************************************
+-*  Copyright (C) 2004 by Olivier Galizzi                                 *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">olivier.galizzi at imag.fr</A>                                               *
++*  Copyright (C) 2006 by luc Scholtes                                    *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">luc.scholtes at hmg.inpg.fr</A>                                              *
+ *  Copyright (C) 2004 by Janek Kozicki                                   *
+ *  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">cosurgi at berlios.de</A>                                                    *
+ *                                                                        *
+@@ -24,7 +24,7 @@
+ 	InteractingSphere* s1 = static_cast&lt;InteractingSphere*&gt;(cm1.get());
+ 	InteractingSphere* s2 = static_cast&lt;InteractingSphere*&gt;(cm2.get());
+ 
+-	/// c'est ce calcul qui semble poser pb !!!
++	/// pb ???
+ 	Vector3r normal = se32.position-se31.position;
+ 	Real penetrationDepth = s1-&gt;radius+s2-&gt;radius-normal.Normalize();
+ 	
+
+Modified: trunk/pkg/dem/Engine/EngineUnit/MacroMicroElasticRelationships.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/EngineUnit/MacroMicroElasticRelationships.cpp	2007-06-05 15:46:51 UTC (rev 1188)
++++ trunk/pkg/dem/Engine/EngineUnit/MacroMicroElasticRelationships.cpp	2007-06-05 16:22:34 UTC (rev 1189)
+@@ -8,14 +8,14 @@
+ *  GNU General Public License v2 or later. See file LICENSE for details. *
+ *************************************************************************/
+ 
+-#include&quot;MacroMicroElasticRelationships.hpp&quot;
+-#include&lt;yade/pkg-dem/SpheresContactGeometry.hpp&gt;
+-#include&lt;yade/pkg-dem/ElasticContactInteraction.hpp&gt;
+-#include&lt;yade/pkg-dem/SDECLinkGeometry.hpp&gt; // FIXME - I can't dispatch by SDECLinkGeometry &lt;-&gt; SpheresContactGeometry !!?
+-#include&lt;yade/pkg-dem/SDECLinkPhysics.hpp&gt; // FIXME
+-#include&lt;yade/pkg-dem/BodyMacroParameters.hpp&gt;
+-#include&lt;yade/core/Omega.hpp&gt;
+-#include&lt;yade/core/MetaBody.hpp&gt;
++#include &quot;MacroMicroElasticRelationships.hpp&quot;
++#include &quot;SpheresContactGeometry.hpp&quot;
++#include &quot;ElasticContactInteraction.hpp&quot;
++#include &quot;SDECLinkGeometry.hpp&quot; // FIXME - I can't dispatch by SDECLinkGeometry &lt;-&gt; SpheresContactGeometry !!?
++#include &quot;SDECLinkPhysics.hpp&quot; // FIXME
++#include &quot;BodyMacroParameters.hpp&quot;
++#include &lt;yade/yade-core/Omega.hpp&gt;
++#include &lt;yade/yade-core/MetaBody.hpp&gt;
+ 
+ 
+ MacroMicroElasticRelationships::MacroMicroElasticRelationships()
+@@ -40,7 +40,7 @@
+ {
+ 	BodyMacroParameters* sdec1 = static_cast&lt;BodyMacroParameters*&gt;(b1.get());
+ 	BodyMacroParameters* sdec2 = static_cast&lt;BodyMacroParameters*&gt;(b2.get());
+-	SpheresContactGeometry* interactionGeometry = dynamic_cast&lt;SpheresContactGeometry*&gt;(interaction-&gt;interactionGeometry.get());
++	SpheresContactGeometry* interactionGeometry = static_cast&lt;SpheresContactGeometry*&gt;(interaction-&gt;interactionGeometry.get());
+ 	
+ 	if(interactionGeometry) // so it is SpheresContactGeometry  - NON PERMANENT LINK
+ 	{
+@@ -53,7 +53,7 @@
+ 		if ( interaction-&gt;isNew)
+ 		{
+ 			interaction-&gt;interactionPhysics = shared_ptr&lt;ElasticContactInteraction&gt;(new ElasticContactInteraction());
+-			contactPhysics = YADE_PTR_CAST&lt;ElasticContactInteraction&gt;(interaction-&gt;interactionPhysics);
++			contactPhysics = dynamic_pointer_cast&lt;ElasticContactInteraction&gt;(interaction-&gt;interactionPhysics);
+ 			
+ 			contactPhysics-&gt;initialKn			= 2*(sdec1-&gt;kn*sdec2-&gt;kn)/(sdec1-&gt;kn+sdec2-&gt;kn);
+ 			contactPhysics-&gt;initialKs			= 2*(sdec1-&gt;ks*sdec2-&gt;ks)/(sdec1-&gt;ks+sdec2-&gt;ks);
+@@ -61,7 +61,7 @@
+ 			contactPhysics-&gt;initialEquilibriumDistance	= interactionGeometry-&gt;radius1+interactionGeometry-&gt;radius2;
+ 		}
+ 		else
+-			contactPhysics = YADE_PTR_CAST&lt;ElasticContactInteraction&gt;(interaction-&gt;interactionPhysics);
++			contactPhysics = dynamic_pointer_cast&lt;ElasticContactInteraction&gt;(interaction-&gt;interactionPhysics);
+ 		
+ 		contactPhysics-&gt;kn = contactPhysics-&gt;initialKn;
+ 		contactPhysics-&gt;ks = contactPhysics-&gt;initialKs;
+@@ -70,7 +70,7 @@
+ 		if( interaction-&gt;isNew)
+ 		{
+ 			interaction-&gt;interactionPhysics = shared_ptr&lt;ElasticContactInteraction&gt;(new ElasticContactInteraction());
+-			ElasticContactInteraction* contactPhysics = YADE_CAST&lt;ElasticContactInteraction*&gt;(interaction-&gt;interactionPhysics.get());
++			ElasticContactInteraction* contactPhysics = static_cast&lt;ElasticContactInteraction*&gt;(interaction-&gt;interactionPhysics.get());
+ 
+ 			Real Ea 	= sdec1-&gt;young;
+ 			Real Eb 	= sdec2-&gt;young;
+@@ -105,19 +105,17 @@
+ 		}
+ 		else
+ 		{	// FIXME - are those lines necessary ???? what they are doing in fact ???
+-			ElasticContactInteraction* contactPhysics = dynamic_cast&lt;ElasticContactInteraction*&gt;(interaction-&gt;interactionPhysics.get());
+-			if(contactPhysics)
+-			{
+-				contactPhysics-&gt;kn = contactPhysics-&gt;initialKn;
+-				contactPhysics-&gt;ks = contactPhysics-&gt;initialKs;
+-				contactPhysics-&gt;equilibriumDistance = contactPhysics-&gt;initialEquilibriumDistance;
+-			}
++			ElasticContactInteraction* contactPhysics = static_cast&lt;ElasticContactInteraction*&gt;(interaction-&gt;interactionPhysics.get());
++
++			contactPhysics-&gt;kn = contactPhysics-&gt;initialKn;
++			contactPhysics-&gt;ks = contactPhysics-&gt;initialKs;
++			contactPhysics-&gt;equilibriumDistance = contactPhysics-&gt;initialEquilibriumDistance;
+ 		}	
+ 		
+ 	}
+-	else   // this is PERMANENT LINK because previous dynamic_cast failed, dispatcher should do this job
++	else   // this is PERMANENT LINK because previous static_cast failed, dispatcher should do this job
+ 	{
+-		SDECLinkGeometry* sdecLinkGeometry =  dynamic_cast&lt;SDECLinkGeometry*&gt;(interaction-&gt;interactionGeometry.get());
++		SDECLinkGeometry* sdecLinkGeometry =  static_cast&lt;SDECLinkGeometry*&gt;(interaction-&gt;interactionGeometry.get());
+ 		if (sdecLinkGeometry)
+ 		{		
+ 			SDECLinkPhysics* linkPhysics = static_cast&lt;SDECLinkPhysics*&gt;(interaction-&gt;interactionPhysics.get());
+
+Modified: trunk/pkg/dem/Engine/EngineUnit/MacroMicroElasticRelationships.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/EngineUnit/MacroMicroElasticRelationships.hpp	2007-06-05 15:46:51 UTC (rev 1188)
++++ trunk/pkg/dem/Engine/EngineUnit/MacroMicroElasticRelationships.hpp	2007-06-05 16:22:34 UTC (rev 1189)
+@@ -9,7 +9,7 @@
+ #ifndef SDECLINEARCONTACTMODEL_HPP
+ #define SDECLINEARCONTACTMODEL_HPP
+ 
+-#include&lt;yade/pkg-common/InteractionPhysicsEngineUnit.hpp&gt;
++#include &lt;yade/yade-package-common/InteractionPhysicsEngineUnit.hpp&gt;
+ 
+ class MacroMicroElasticRelationships : public InteractionPhysicsEngineUnit
+ {
+
+Modified: trunk/pkg/dem/Engine/EngineUnit/MacroMicroElasticRelationshipsWater.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/EngineUnit/MacroMicroElasticRelationshipsWater.cpp	2007-06-05 15:46:51 UTC (rev 1188)
++++ trunk/pkg/dem/Engine/EngineUnit/MacroMicroElasticRelationshipsWater.cpp	2007-06-05 16:22:34 UTC (rev 1189)
+@@ -75,18 +75,18 @@
+ 
+ 			Real Ea 	= sdec1-&gt;young;
+ 			Real Eb 	= sdec2-&gt;young;
+-//			Real Va 	= sdec1-&gt;poisson;
+-//			Real Vb 	= sdec2-&gt;poisson;
++			Real Va 	= sdec1-&gt;poisson;
++			Real Vb 	= sdec2-&gt;poisson;
+ 			Real Da 	= interactionGeometry-&gt;radius1; // FIXME - multiply by factor of sphere interaction distance (so sphere intaracts at bigger range that its geometrical size)
+ 			Real Db 	= interactionGeometry-&gt;radius2; // FIXME - as above
+ 			Real fa 	= sdec1-&gt;frictionAngle;
+ 			Real fb 	= sdec2-&gt;frictionAngle;
+ 
+-//			Real Eab	= 2*Ea*Eb/(Ea+Eb);
+-//			Real Vab	= 2*Va*Vb/(Va+Vb);
++			Real Eab	= 2*Ea*Eb/(Ea+Eb);
++			Real Vab	= 2*Va*Vb/(Va+Vb);
+ 
+ 			Real Dinit 	= Da+Db; 			// FIXME - is it just a sum?
+-//			Real Sinit 	= Mathr::PI * std::pow( std::min(Da,Db) , 2);
++			Real Sinit 	= Mathr::PI * std::pow( std::min(Da,Db) , 2);
+ 
+ 			//Real Kn						= (Eab*Sinit/Dinit)*( (1+alpha)/(beta*(1+Vab) + gamma*(1-alpha*Vab) ) );
+ 			Real ksOnkn = 0.5;
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/CapillaryCohesiveLaw.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/CapillaryCohesiveLaw.cpp	2007-06-05 15:46:51 UTC (rev 1188)
++++ trunk/pkg/dem/Engine/StandAloneEngine/CapillaryCohesiveLaw.cpp	2007-06-05 16:22:34 UTC (rev 1189)
+@@ -1,6 +1,6 @@
+ /*************************************************************************
+-*  Copyright (C) 2004 by Olivier Galizzi                                 *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">olivier.galizzi at imag.fr</A>                                               *
++*  Copyright (C) 2006 by luc Scholtes                                    *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">luc.scholtes at hmg.inpg.fr</A>                                              *
+ *                                                                        *
+ *  This program is free software; it is licensed under the terms of the  *
+ *  GNU General Public License v2 or later. See file LICENSE for details. *
+@@ -147,15 +147,15 @@
+ 
+                         /// Capillary components definition:
+ 
+-                        Real liquidTension = 0.073; 	// superficial
+-                        //tension of water N/m (20&#239;&#191;&#189;C)
++                        Real liquidTension = 0.073; 	// superficial water tension N/m (20&#176;C)
+ 
+                         //Real teta = 0;		// mouillage parfait (eau pure/billes de verre)
+ 
+                         /// Interacting Grains:
+-                        // d&#239;&#191;&#189;finition du rapport tailleR&#239;&#191;&#189;elle/TailleYADE
+-                        Real alpha=1; // OK si pas de gravit&#239;&#191;&#189;!!!
++                        // definition du rapport tailleReelle/TailleYADE
+ 
++                        Real alpha=1; // OK si pas de gravite!!!
++
+                         Real R1 = 0;
+                         R1=alpha*std::min(currentContactGeometry-&gt;radius2,currentContactGeometry-&gt;
+                                           radius1 ) ;
+@@ -166,7 +166,8 @@
+ 
+                         /// intergranular distance
+ 
+-//                        Real intergranularDistance = currentContactGeometry-&gt;penetrationDepth;
++                        Real intergranularDistance =
++                                currentContactGeometry-&gt;penetrationDepth;
+ 
+                         Real D =
+                                 alpha*(de2-&gt;se3.position-de1-&gt;se3.position).Length()-alpha*(
+@@ -175,40 +176,29 @@
+ 
+                         if
+                         ((currentContactGeometry-&gt;penetrationDepth&gt;=0)||(D&lt;=0)||CapillaryPressure&lt;=300||
+-                                        (Omega::instance().getCurrentIteration() &lt; 2) ) {
+-                                //                         			cerr &lt;&lt; &quot;if (currentContactGeometry-&gt;penetrationDepth &gt;= 0)&quot; &lt;&lt; endl ;
+-                                D = 0;	// defin Fcap when spheres interpenetrate
++                                        (Omega::instance().getCurrentIteration() &lt; 2) ) 
++			{ 
++                                D = 0;	// def Fcap when spheres interpenetrate
+                                 currentContactPhysics-&gt;meniscus=true;
+                                 //meniscusParameters-&gt;meniscus=true;
+-                                //                         				cerr &lt;&lt; &quot;END ## if (currentContactGeometry-&gt;penetrationDepth &gt;= 0)&quot; &lt;&lt; endl ;
++
+                         }
+-                        //                         cerr &lt;&lt; &quot;D = &quot; &lt;&lt; D &lt;&lt; &quot; | Depth = &quot; &lt;&lt;
+-                        // currentContactGeometry-&gt;penetrationDepth &lt;&lt; endl;
+-                        //
+-                        //                       	cerr &lt;&lt; &quot;meniscus = &quot; &lt;&lt;
+-                        // 			currentContactPhysics-&gt;meniscus &lt;&lt; endl;
+ 
++
+                         Real Dinterpol = D/R2;
+ 
+                         /// Suction (Capillary pressure):
+ 
+                         Real Pinterpol =CapillaryPressure*(R2/liquidTension);
+-                        //cerr &lt;&lt; &quot;CapillaryPressure LAW = &quot;&lt;&lt;
+-                        //CapillaryPressure&lt;&lt; endl;
+-                        //meniscusParameters-&gt;CapillaryPressure = CapillaryPressure;
+                         currentContactPhysics-&gt;CapillaryPressure = CapillaryPressure;
+ 
+-//                        Real r = R2/R1;
++                        Real r = R2/R1;
+ 
+-                        //cerr &lt;&lt; &quot;r = &quot;&lt;&lt; R2/R1 &lt;&lt; endl ;
+-                        //cerr &lt;&lt; &quot;Dinterpol = &quot; &lt;&lt; Dinterpol &lt;&lt; endl;
+-
+                         /// Capillary solution finder:
+ 
+                         //cerr &lt;&lt; &quot;solution finder &quot; &lt;&lt; endl;
+ 
+                         if ((Pinterpol&gt;=0) &amp;&amp; (currentContactPhysics-&gt;meniscus==true))
+-                                //if (Pinterpol&gt;=0)
+ 
+                         {	//cerr &lt;&lt; &quot;Pinterpol = &quot;&lt;&lt; Pinterpol &lt;&lt; endl;
+ 
+@@ -225,34 +215,13 @@
+ 
+                                 currentContactPhysics-&gt;Fcap = Fcap;
+ 
+-                                // 				cerr &lt;&lt; &quot;CapillaryPressure = &quot;&lt;&lt; CapillaryPressure &lt;&lt; endl;
+-
+-                                //cerr &lt;&lt; &quot;Finterpol = &quot; &lt;&lt; Finterpol &lt;&lt; endl ;
+-
+                                 /// meniscus volume
+ 
+                                 Real Vinterpol = solution.V;
+                                 currentContactPhysics-&gt;Vmeniscus =
+                                         Vinterpol*(R2*R2*R2)/(alpha*alpha*alpha);
+-                                //meniscusParameters-&gt;Vmeniscus = Vinterpol*(R2*R2*R2);
+-
+-                                //Vtotal = (Vtotal+meniscusParameters-&gt;Vmeniscus);
+-
+-                                //                                 if (meniscusParameters-&gt;Vmeniscus != 0) {
+-                                //                                         meniscusParameters-&gt;meniscus = true;
+-                                //                                 } else {
+-                                //                                         meniscusParameters-&gt;meniscus = false;
+-                                //                                 }
+-                                //
+-                                //                                 cerr &lt;&lt; &quot; | meniscus = &quot;&lt;&lt; meniscusParameters-&gt;meniscus &lt;&lt; &quot; | V = &quot; &lt;&lt; meniscusParameters-&gt;Vmeniscus &lt;&lt; endl ;
+-                                //
+-                                //                                 /// wetting angles
+-                                //                                 meniscusParameters-&gt;Delta1 = max(solution.delta1,solution.delta2);
+-                                //                                 meniscusParameters-&gt;Delta2 = min(solution.delta1,solution.delta2);
+-                                //
+-                                //                                 cerr &lt;&lt; &quot;delta1 = &quot; &lt;&lt; meniscusParameters-&gt;Delta1 &lt;&lt; &quot;| delta2 = &quot; &lt;&lt; meniscusParameters-&gt;Delta2 &lt;&lt; endl;
+-
+-                                if (currentContactPhysics-&gt;Vmeniscus != 0)
++                                
++				if (currentContactPhysics-&gt;Vmeniscus != 0)
+                                 {
+                                         currentContactPhysics-&gt;meniscus = true;
+                                 } else
+@@ -260,16 +229,10 @@
+                                         currentContactPhysics-&gt;meniscus = false;
+                                 }
+ 
+-                                //                                 cerr &lt;&lt; &quot; | meniscus = &quot;&lt;&lt;
+-                                // 				currentContactPhysics-&gt;meniscus &lt;&lt; &quot; | V = &quot; &lt;&lt;
+-                                // 				currentContactPhysics-&gt;Vmeniscus &lt;&lt; endl ;
+-
+                                 /// wetting angles
+                                 currentContactPhysics-&gt;Delta1 = max(solution.delta1,solution.delta2);
+                                 currentContactPhysics-&gt;Delta2 = min(solution.delta1,solution.delta2);
+ 
+-                                //cerr &lt;&lt; &quot;delta1 = &quot; &lt;&lt; currentContactPhysics-&gt;Delta1 &lt;&lt; &quot;| delta2 = &quot; &lt;&lt; currentContactPhysics-&gt;Delta2 &lt;&lt; endl;
+-
+                                 static_cast&lt;Force*&gt;   (ncb-&gt;physicalActions-&gt;find( id1 , actionForce  -&gt;getClassIndex()).get())-&gt;force    += Fcap;
+                                 static_cast&lt;Force*&gt;   (ncb-&gt;physicalActions-&gt;find( id2 , actionForce  -&gt;getClassIndex()).get())-&gt;force    -= Fcap;
+ 
+@@ -306,8 +269,9 @@
+         Parameters result_inf;
+         Parameters result_sup;
+         Parameters result;
++        int i = 0;
+ 
+-        for ( int i=0; i &lt; (NB_R_VALUES); i++)
++        for ( i; i &lt; (NB_R_VALUES); i++)
+         {
+                 Real data_R = data_complete[i].R;
+                 //cerr &lt;&lt; &quot;i = &quot; &lt;&lt; i &lt;&lt; endl;
+@@ -356,10 +320,7 @@
+         file &gt;&gt; n_D;
+ 
+         if (!file.is_open())
+-	{
+-                cout &lt;&lt; &quot;ERROR: problem opening file for capillary law&quot; &lt;&lt; endl;
+-		return;
+-	}
++                cout &lt;&lt; &quot;problem opening file for capillary law&quot; &lt;&lt; endl;
+         for (int i=0; i&lt;n_D; i++)
+                 full_data.push_back(TableauD(file));
+         file.close();
+@@ -376,7 +337,7 @@
+         Parameters result_inf;
+         Parameters result_sup;
+ 
+-        for ( unsigned int i=0; i &lt; full_data.size(); ++i)
++        for ( int i=0; i &lt; full_data.size(); ++i)
+         {
+                 if (full_data[i].D &gt; D )	// ok si D rang&#239;&#191;&#189;s ds l'ordre croissant
+ 
+@@ -419,7 +380,7 @@
+         file.ignore(200, '\n'); // saute les caract&#239;&#191;&#189;res (200 au maximum) jusque au caract&#239;&#191;&#189;re \n (fin de ligne)*_
+ 
+         if (n_lines!=0)
+-                for (; i&lt;n_lines; ++i) {
++                for (i; i&lt;n_lines; ++i) {
+                         data.push_back(vector&lt;Real&gt; ());
+                         for (int j=0; j &lt; 6; ++j)	// [D,P,V,F,delta1,delta2]
+                         {
+@@ -510,10 +471,10 @@
+ std::ostream&amp; operator&lt;&lt;(std::ostream&amp; os, Tableau&amp; T)
+ {
+         os &lt;&lt; &quot;Tableau : R=&quot; &lt;&lt; T.R &lt;&lt; endl;
+-        for (unsigned int i=0; i&lt;T.full_data.size(); i++) {
++        for (int i=0; i&lt;T.full_data.size(); i++) {
+                 os &lt;&lt; &quot;TableauD : D=&quot; &lt;&lt; T.full_data[i].D &lt;&lt; endl;
+-                for (unsigned int j=0; j&lt;T.full_data[i].data.size();j++) {
+-                        for (unsigned int k=0; k&lt;T.full_data[i].data[j].size(); k++)
++                for (int j=0; j&lt;T.full_data[i].data.size();j++) {
++                        for (int k=0; k&lt;T.full_data[i].data[j].size(); k++)
+                                 os &lt;&lt; T.full_data[i].data[j][k] &lt;&lt; &quot; &quot;;
+                         os &lt;&lt; endl;
+                 }
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/CapillaryCohesiveLaw.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/CapillaryCohesiveLaw.hpp	2007-06-05 15:46:51 UTC (rev 1188)
++++ trunk/pkg/dem/Engine/StandAloneEngine/CapillaryCohesiveLaw.hpp	2007-06-05 16:22:34 UTC (rev 1189)
+@@ -1,8 +1,8 @@
+ //
+ // C++ Interface: CapillaryCohesiveLaw
+ /*************************************************************************
+-*  Copyright (C) 2004 by Olivier Galizzi                                 *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">olivier.galizzi at imag.fr</A>                                               *
++*  Copyright (C) 2006 by luc Scholtes                                    *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">luc.scholtes at hmg.inpg.fr</A>                                              *
+ *                                                                        *
+ *  This program is free software; it is licensed under the terms of the  *
+ *  GNU General Public License v2 or later. See file LICENSE for details. *
+@@ -36,7 +36,7 @@
+   int index2;
+ 
+   Parameters();
+-  Parameters(const Parameters &amp;source); // construction par recopie
++  Parameters(const Parameters &amp;source);
+   ~Parameters();
+ } ;
+ 
+@@ -44,7 +44,7 @@
+ const int NB_R_VALUES = 10;
+ 
+ class PhysicalAction;
+-class capillarylaw; // fait appel &#239;&#191;&#189; la classe def plus bas
++class capillarylaw; // fait appel a la classe def plus bas
+ 
+ class CapillaryCohesiveLaw : public InteractionSolver
+ {
+@@ -79,7 +79,7 @@
+   		~TableauD();
+ };
+ 
+-// Fonction d'&#239;&#191;&#189;criture de tableau, utilis&#239;&#191;&#189;e dans le constructeur pour test 
++// Fonction d'ecriture de tableau, utilisee dans le constructeur pour test 
+ class Tableau;
+ std::ostream&amp; operator&lt;&lt;(std::ostream&amp; os, Tableau&amp; T);
+ 
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/ForceRecorder.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/ForceRecorder.cpp	2007-06-05 15:46:51 UTC (rev 1188)
++++ trunk/pkg/dem/Engine/StandAloneEngine/ForceRecorder.cpp	2007-06-05 16:22:34 UTC (rev 1189)
+@@ -58,18 +58,11 @@
+ 	
+ 	for( int i = startId ; i &lt;= endId ; ++i )
+ 	{
+-		if(ncb-&gt;bodies-&gt;exists(i))
+-		{
+-			Vector3r force = YADE_CAST&lt;Force*&gt;(ncb-&gt;physicalActions-&gt;find( i , actionForce-&gt;getClassIndex() ) . get() )-&gt;force;
++		Vector3r force = YADE_CAST&lt;Force*&gt;(ncb-&gt;physicalActions-&gt;find( i , actionForce-&gt;getClassIndex() ) . get() )-&gt;force;
+ 		
+-			x+=force[0];
+-			y+=force[1];
+-			z+=force[2];
+-		}
+-		else
+-		{
+-			cerr &lt;&lt; &quot;Warning: trying to record force on non-existing &quot;&lt;&lt; i &lt;&lt;&quot; body!&quot; &lt;&lt; endl;
+-		}
++		x+=force[0];
++		y+=force[1];
++		z+=force[2];
+ 	}
+ 	//cerr &lt;&lt; &quot;record force&quot; &lt;&lt; endl;
+ 	ofile &lt;&lt; lexical_cast&lt;string&gt;(Omega::instance().getSimulationTime()) &lt;&lt; &quot; &quot; 
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/GlobalStiffnessCounter.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/GlobalStiffnessCounter.cpp	2007-06-05 15:46:51 UTC (rev 1188)
++++ trunk/pkg/dem/Engine/StandAloneEngine/GlobalStiffnessCounter.cpp	2007-06-05 16:22:34 UTC (rev 1189)
+@@ -95,14 +95,14 @@
+                                 //cerr &lt;&lt; &quot;diag_Rstifness=&quot; &lt;&lt; diag_Rstiffness &lt;&lt; endl;
+ 
+ 
+-                                PhysicalAction* st = ncb-&gt;physicalActions-&gt;find(id1,actionStiffness-&gt;getClassIndex()).get();
+-                                GlobalStiffness* s = static_cast&lt;GlobalStiffness*&gt;(st);
+-                                s-&gt;stiffness += diag_stiffness;
+-                                s-&gt;Rstiffness += diag_Rstiffness;
+-                                st = ncb-&gt;physicalActions-&gt;find(id2,actionStiffness-&gt;getClassIndex()).get();
+-                                s = static_cast&lt;GlobalStiffness*&gt;(st);
+-                                s-&gt;stiffness += diag_stiffness;
+-                                s-&gt;Rstiffness += diag_Rstiffness;
++                               PhysicalAction* st = ncb-&gt;physicalActions-&gt;find(id1,actionStiffness-&gt;getClassIndex()).get();
++				GlobalStiffness* s = static_cast&lt;GlobalStiffness*&gt;(st);
++				s-&gt;stiffness += diag_stiffness;
++				s-&gt;Rstiffness += diag_Rstiffness*pow(currentContactGeometry-&gt;radius1,2);	
++				st = ncb-&gt;physicalActions-&gt;find(id2,actionStiffness-&gt;getClassIndex()).get();
++				s = static_cast&lt;GlobalStiffness*&gt;(st);
++				s-&gt;stiffness += diag_stiffness;
++				s-&gt;Rstiffness += diag_Rstiffness*pow(currentContactGeometry-&gt;radius2,2);
+                                 //____________________________
+                         }
+                 }
+
+Modified: trunk/pkg/dem/PreProcessor/TriaxialTest.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/TriaxialTest.cpp	2007-06-05 15:46:51 UTC (rev 1188)
++++ trunk/pkg/dem/PreProcessor/TriaxialTest.cpp	2007-06-05 16:22:34 UTC (rev 1189)
+@@ -17,9 +17,6 @@
+ #include&lt;yade/pkg-dem/BodyMacroParameters.hpp&gt;
+ #include&lt;yade/pkg-dem/SDECLinkGeometry.hpp&gt;
+ #include&lt;yade/pkg-dem/SDECLinkPhysics.hpp&gt;
+-//#include&lt;yade/pkg-dem/ElasticCriterionTimeStepper.hpp&gt;
+-//#include&lt;yade/pkg-dem/StiffnessMatrixTimeStepper.hpp&gt;
+-//#include&lt;yade/pkg-dem/StiffnessCounter.hpp&gt;
+ #include&lt;yade/pkg-dem/GlobalStiffnessCounter.hpp&gt;
+ #include&lt;yade/pkg-dem/GlobalStiffnessTimeStepper.hpp&gt;
+ 
+
+Modified: trunk/pkg/dem/PreProcessor/TriaxialTest.hpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/TriaxialTest.hpp	2007-06-05 15:46:51 UTC (rev 1188)
++++ trunk/pkg/dem/PreProcessor/TriaxialTest.hpp	2007-06-05 16:22:34 UTC (rev 1189)
+@@ -1,6 +1,10 @@
+ /*************************************************************************
+ *  Copyright (C) 2004 by Olivier Galizzi                                 *
+ *  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">olivier.galizzi at imag.fr</A>                                               *
++*  Copyright (C) 2004 by Janek Kozicki                                   *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">cosurgi at berlios.de</A>                                                    *
++*  Copyright (C) 2007 by Bruno Chareyre		                         *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">bruno.chareyre at hmg.inpg.fr</A>                                            *
+ *                                                                        *
+ *  This program is free software; it is licensed under the terms of the  *
+ *  GNU General Public License v2 or later. See file LICENSE for details. *
+
+Modified: trunk/pkg/dem/PreProcessor/TriaxialTestWater.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/TriaxialTestWater.cpp	2007-06-05 15:46:51 UTC (rev 1188)
++++ trunk/pkg/dem/PreProcessor/TriaxialTestWater.cpp	2007-06-05 16:22:34 UTC (rev 1189)
+@@ -13,7 +13,7 @@
+ #include &lt;yade/pkg-dem/ElasticContactLaw.hpp&gt;
+ #include &lt;yade/pkg-dem/CapillaryCohesiveLaw.hpp&gt;
+ 
+-#include &lt;yade/pkg-dem/MacroMicroElasticRelationships.hpp&gt;
++#include &lt;yade/pkg-dem/MacroMicroElasticRelationshipsWater.hpp&gt;
+ #include &lt;yade/pkg-dem/BodyMacroParameters.hpp&gt;
+ 
+ #include &lt;yade/pkg-dem/GlobalStiffnessCounter.hpp&gt;
+@@ -223,7 +223,7 @@
+ 
+ string TriaxialTestWater::generate()
+ {
+-//	unsigned int startId=boost::numeric::bounds&lt;unsigned int&gt;::highest(), endId=0; // record forces from group 2
++	unsigned int startId=boost::numeric::bounds&lt;unsigned int&gt;::highest(), endId=0; // record forces from group 2
+ 	
+ 	rootBody = shared_ptr&lt;MetaBody&gt;(new MetaBody);
+ 	createActors(rootBody);
+@@ -385,7 +385,7 @@
+ 
+ void TriaxialTestWater::createSphere(shared_ptr&lt;Body&gt;&amp; body, Vector3r position, Real radius, bool big, bool dynamic )
+ {
+-	body = shared_ptr&lt;Body&gt;(new Body(body_id_t(0),2));
++	body = shared_ptr&lt;Body&gt;(new Body(0,2));
+ 	shared_ptr&lt;BodyMacroParameters&gt; physics(new BodyMacroParameters);
+ 	shared_ptr&lt;AABB&gt; aabb(new AABB);
+ 	shared_ptr&lt;Sphere&gt; gSphere(new Sphere);
+@@ -436,7 +436,7 @@
+ 
+ void TriaxialTestWater::createBox(shared_ptr&lt;Body&gt;&amp; body, Vector3r position, Vector3r extents, bool wire)
+ {
+-	body = shared_ptr&lt;Body&gt;(new Body(body_id_t(0),2));
++	body = shared_ptr&lt;Body&gt;(new Body(0,2));
+ 	shared_ptr&lt;BodyMacroParameters&gt; physics(new BodyMacroParameters);
+ 	shared_ptr&lt;AABB&gt; aabb(new AABB);
+ 	shared_ptr&lt;Box&gt; gBox(new Box);
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000153.html">[Yade-commits] r1188 - in trunk: . lib/base pkg/dem	pkg/dem/DataClass/InteractionGeometry	pkg/dem/DataClass/InteractionPhysics	pkg/dem/DataClass/PhysicalParameters	pkg/dem/Engine/StandAloneEngine scripts
+</A></li>
+	<LI>Next message: <A HREF="000155.html">[Yade-commits] r1190 - in trunk/pkg: dem dem/Engine/DeusExMachina	dem/Engine/EngineUnit dem/Engine/StandAloneEngine	dem/PreProcessor mass-spring/PreProcessor
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#154">[ date ]</a>
+              <a href="thread.html#154">[ thread ]</a>
+              <a href="subject.html#154">[ subject ]</a>
+              <a href="author.html#154">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

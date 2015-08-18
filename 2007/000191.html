@@ -1,0 +1,436 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1226 - in trunk/pkg/lattice:	Engine/StandAloneEngine PreProcessor
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2007/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1226%20-%20in%20trunk/pkg/lattice%3A%0A%09Engine/StandAloneEngine%20PreProcessor&In-Reply-To=%3C200707111730.l6BHUruE003623%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000190.html">
+   <LINK REL="Next"  HREF="000192.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1226 - in trunk/pkg/lattice:	Engine/StandAloneEngine PreProcessor</H1>
+    <B>cosurgi at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1226%20-%20in%20trunk/pkg/lattice%3A%0A%09Engine/StandAloneEngine%20PreProcessor&In-Reply-To=%3C200707111730.l6BHUruE003623%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1226 - in trunk/pkg/lattice:	Engine/StandAloneEngine PreProcessor">cosurgi at mail.berlios.de
+       </A><BR>
+    <I>Wed Jul 11 19:30:53 CEST 2007</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000190.html">[Yade-commits] r1225 - trunk/pkg/dem/Engine/DeusExMachina
+</A></li>
+        <LI>Next message: <A HREF="000192.html">[Yade-commits] r1227 - in trunk/pkg/realtime-rigidbody: .	Engine/EngineUnit
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#191">[ date ]</a>
+              <a href="thread.html#191">[ thread ]</a>
+              <a href="subject.html#191">[ subject ]</a>
+              <a href="author.html#191">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: cosurgi
+Date: 2007-07-11 19:30:52 +0200 (Wed, 11 Jul 2007)
+New Revision: 1226
+
+Modified:
+   trunk/pkg/lattice/Engine/StandAloneEngine/BeamRecorder.cpp
+   trunk/pkg/lattice/Engine/StandAloneEngine/BeamRecorder.hpp
+   trunk/pkg/lattice/Engine/StandAloneEngine/LatticeLaw.cpp
+   trunk/pkg/lattice/Engine/StandAloneEngine/MovingSupport.cpp
+   trunk/pkg/lattice/Engine/StandAloneEngine/MovingSupport.hpp
+   trunk/pkg/lattice/Engine/StandAloneEngine/NodeRecorder.cpp
+   trunk/pkg/lattice/Engine/StandAloneEngine/NodeRecorder.hpp
+   trunk/pkg/lattice/PreProcessor/LatticeExample.cpp
+Log:
+Some fixes in lattice regarding yade::serialization problems (function findType()) that started to occur when using g++ newer than 3.4
+The offending code was commented because it wasn't working. Now I uncommented and modified it, so it works.
+
+
+
+Modified: trunk/pkg/lattice/Engine/StandAloneEngine/BeamRecorder.cpp
+===================================================================
+--- trunk/pkg/lattice/Engine/StandAloneEngine/BeamRecorder.cpp	2007-07-11 14:48:39 UTC (rev 1225)
++++ trunk/pkg/lattice/Engine/StandAloneEngine/BeamRecorder.cpp	2007-07-11 17:30:52 UTC (rev 1226)
+@@ -41,15 +41,50 @@
+ }
+ 
+ 
++void BeamRecorder::preProcessAttributes(bool deserializing)
++{
++	if(deserializing)
++	{
++	}
++	else
++	{
++		sections_midpoints.clear();
++		sections_halflength.clear();
++		sections_directions.clear();
++		
++		std::list&lt;std::pair&lt;Vector3r,std::pair&lt; Real, int &gt; &gt; &gt;::iterator i=sections.begin();
++		std::list&lt;std::pair&lt;Vector3r,std::pair&lt; Real, int &gt; &gt; &gt;::iterator e=sections.end();
++		for( ; i!=e ; ++i)
++		{
++			sections_midpoints.push_back(i-&gt;first);
++			sections_halflength.push_back(i-&gt;second.first);
++			sections_directions.push_back(i-&gt;second.second);
++		}
++	}
++}
++
+ void BeamRecorder::postProcessAttributes(bool deserializing)
+ {
+ 	if(deserializing)
+ 	{
++		sections.clear();
++		std::vector&lt;Vector3r&gt;::iterator i1=sections_midpoints.begin();
++		std::vector&lt;Vector3r&gt;::iterator e1=sections_midpoints.end();
++		std::vector&lt;Real&gt;::iterator     i2=sections_halflength.begin();
++		std::vector&lt;int&gt;::iterator      i3=sections_directions.begin();
++		//std::vector&lt;Vector3r&gt;::iterator ea region_max.end();
++		for( ; i1!=e1 ; ++i1 , ++i2 , ++i3 )
++		{
++			sections.push_back(std::make_pair(*i1,std::make_pair(*i2,*i3)));
++		}
++
+ 	//	outputFile += &quot;_&quot;+boost::lexical_cast&lt;std::string&gt;(Omega::instance().getTimeStep());
+ 	//	std::cerr &lt;&lt; &quot;using dt for BeamRecorder output file: &quot; &lt;&lt; outputFile &lt;&lt; &quot;\n&quot;;
+ 
+ 		ofile.open(outputFile.c_str());
+ 
++		first = true;
++		subscribedBodies.clear();
+ 	}
+ }
+ 
+@@ -59,10 +94,13 @@
+ 	DataRecorder::registerAttributes();
+ 	REGISTER_ATTRIBUTE(outputFile);
+ 	REGISTER_ATTRIBUTE(interval);
+-	REGISTER_ATTRIBUTE(sections);
++//	REGISTER_ATTRIBUTE(sections);
++	REGISTER_ATTRIBUTE(sections_midpoints);
++	REGISTER_ATTRIBUTE(sections_halflength);
++	REGISTER_ATTRIBUTE(sections_directions);
+ 
+-	REGISTER_ATTRIBUTE(first);
+-	REGISTER_ATTRIBUTE(subscribedBodies);
++//	REGISTER_ATTRIBUTE(first);
++//	REGISTER_ATTRIBUTE(subscribedBodies);
+ }
+ 
+ 
+
+Modified: trunk/pkg/lattice/Engine/StandAloneEngine/BeamRecorder.hpp
+===================================================================
+--- trunk/pkg/lattice/Engine/StandAloneEngine/BeamRecorder.hpp	2007-07-11 14:48:39 UTC (rev 1225)
++++ trunk/pkg/lattice/Engine/StandAloneEngine/BeamRecorder.hpp	2007-07-11 17:30:52 UTC (rev 1226)
+@@ -32,6 +32,9 @@
+ 		unsigned int	 interval;
+ 		std::list&lt;std::pair&lt;Vector3r,std::pair&lt; Real, int &gt; &gt; &gt; sections; // a list of section planes: &lt;a midpoint, half length, direction &gt;
+ 		// int direction refers to: which coordinate to take from the Beam's.direction: x, y or z (0, 1 or 2)
++		std::vector&lt;Vector3r&gt; sections_midpoints;
++		std::vector&lt;Real&gt; sections_halflength;
++		std::vector&lt;int&gt; sections_directions;
+ 
+ 		BeamRecorder ();
+ 
+@@ -40,6 +43,7 @@
+ 		virtual bool isActivated();
+ 
+ 	protected :
++		virtual void preProcessAttributes(bool deserializing);
+ 		virtual void postProcessAttributes(bool deserializing);
+ 	REGISTER_CLASS_NAME(BeamRecorder);
+ 	REGISTER_BASE_CLASS_NAME(DataRecorder);
+
+Modified: trunk/pkg/lattice/Engine/StandAloneEngine/LatticeLaw.cpp
+===================================================================
+--- trunk/pkg/lattice/Engine/StandAloneEngine/LatticeLaw.cpp	2007-07-11 14:48:39 UTC (rev 1225)
++++ trunk/pkg/lattice/Engine/StandAloneEngine/LatticeLaw.cpp	2007-07-11 17:30:52 UTC (rev 1226)
+@@ -335,11 +335,11 @@
+ 			static bool first=true;
+ 			if(first)
+ 			{
+-				//std::cerr &lt;&lt; &quot;\nusing k.b tension=0.6, k.b compression=0.2 !\n/beam-&gt;initialLength !\n&quot;;
+-				std::cerr &lt;&lt; &quot;\nNOT! using k.b tension=0.6, k.b compression=0.2 ! (just a classical formula)\n\n&quot;;
++				std::cerr &lt;&lt; &quot;\nusing k.b tension=0.6, k.b compression=0.2 !\n/beam-&gt;initialLength !\n&quot;;
++				//std::cerr &lt;&lt; &quot;\nNOT! using k.b tension=0.6, k.b compression=0.2 ! (just a classical formula)\n\n&quot;;
+ 				first=false;
+ 			}
+-/*
++
+ 			Real kb = beam-&gt;bendingStiffness;
+ 			Real Em = beam-&gt;criticalTensileStrain/3.0;
+ 			Real x  = beam-&gt;strain();
+@@ -360,13 +360,13 @@
+ 			node1-&gt;displacementAlignmental += ((beam-&gt;bendingRotation * ( beam_vec) - beam_vec) * kb)/(beam-&gt;initialLength);
+ 			node2-&gt;displacementAlignmental += ((beam-&gt;bendingRotation * (-beam_vec) + beam_vec) * kb)/(beam-&gt;initialLength);
+ 
+-*/
+-			node1-&gt;countStiffness += (beam-&gt;bendingStiffness)/(beam-&gt;initialLength);
++
++/*			node1-&gt;countStiffness += (beam-&gt;bendingStiffness)/(beam-&gt;initialLength);
+ 			node2-&gt;countStiffness += (beam-&gt;bendingStiffness)/(beam-&gt;initialLength);
+ 
+ 			node1-&gt;displacementAlignmental += ((beam-&gt;bendingRotation * ( beam_vec) - beam_vec) * beam-&gt;bendingStiffness)/(beam-&gt;initialLength);
+ 			node2-&gt;displacementAlignmental += ((beam-&gt;bendingRotation * (-beam_vec) + beam_vec) * beam-&gt;bendingStiffness)/(beam-&gt;initialLength);
+-
++*/
+ 			beam-&gt;shearing_strain = ((beam-&gt;bendingRotation * (-beam_vec) + beam_vec) * beam-&gt;bendingStiffness)/(beam-&gt;initialLength);
+ 
+ 		}
+@@ -382,6 +382,8 @@
+ 		}
+ 		}
+ 	}
++
++	std::cout &lt;&lt; &quot;iter:&quot; &lt;&lt; Omega::instance().getCurrentIteration() &lt;&lt; &quot; beams_deleted: &quot; &lt;&lt; futureDeletes.size() &lt;&lt; std::endl;
+ 	
+ 	{ // move nodes
+ 		bi    = bodies-&gt;begin();
+
+Modified: trunk/pkg/lattice/Engine/StandAloneEngine/MovingSupport.cpp
+===================================================================
+--- trunk/pkg/lattice/Engine/StandAloneEngine/MovingSupport.cpp	2007-07-11 14:48:39 UTC (rev 1225)
++++ trunk/pkg/lattice/Engine/StandAloneEngine/MovingSupport.cpp	2007-07-11 17:30:52 UTC (rev 1226)
+@@ -23,12 +23,45 @@
+ }
+ 
+ 
++void MovingSupport::preProcessAttributes(bool deserializing)
++{
++	if(deserializing)
++	{
++	}
++	else
++	{
++		sections_midpoints.clear();
++		sections_halflength.clear();
++		sections_directions.clear();
++		
++		std::list&lt;std::pair&lt;Vector3r,std::pair&lt; int, Real &gt; &gt; &gt;::iterator i=sections.begin();
++		std::list&lt;std::pair&lt;Vector3r,std::pair&lt; int, Real &gt; &gt; &gt;::iterator e=sections.end();
++		for( ; i!=e ; ++i)
++		{
++			sections_midpoints.push_back(i-&gt;first);
++			sections_halflength.push_back(i-&gt;second.second);
++			sections_directions.push_back(i-&gt;second.first);
++		}
++	}
++}
++
+ void MovingSupport::postProcessAttributes(bool deserializing)
+ {
+ 	if(deserializing)
+ 	{
+-//		first = true;
+-//		subscribedBodies.clear();
++		sections.clear();
++		std::vector&lt;Vector3r&gt;::iterator i1=sections_midpoints.begin();
++		std::vector&lt;Vector3r&gt;::iterator e1=sections_midpoints.end();
++		std::vector&lt;Real&gt;::iterator     i2=sections_halflength.begin();
++		std::vector&lt;int&gt;::iterator      i3=sections_directions.begin();
++		//std::vector&lt;Vector3r&gt;::iterator ea region_max.end();
++		for( ; i1!=e1 ; ++i1 , ++i2 , ++i3 )
++		{
++			sections.push_back(std::make_pair(*i1,std::make_pair(*i3,*i2)));
++		}
++
++		first = true;
++		subscribedBodies.clear();
+ 	}
+ }
+ 
+@@ -36,10 +69,13 @@
+ void MovingSupport::registerAttributes()
+ {
+ 	DataRecorder::registerAttributes();
+-	REGISTER_ATTRIBUTE(sections);
++//	REGISTER_ATTRIBUTE(sections);
++	REGISTER_ATTRIBUTE(sections_midpoints);
++	REGISTER_ATTRIBUTE(sections_halflength);
++	REGISTER_ATTRIBUTE(sections_directions);
+ 
+-	REGISTER_ATTRIBUTE(first);
+-	REGISTER_ATTRIBUTE(subscribedBodies);
++//	REGISTER_ATTRIBUTE(first);
++//	REGISTER_ATTRIBUTE(subscribedBodies);
+ }
+ 
+ 
+
+Modified: trunk/pkg/lattice/Engine/StandAloneEngine/MovingSupport.hpp
+===================================================================
+--- trunk/pkg/lattice/Engine/StandAloneEngine/MovingSupport.hpp	2007-07-11 14:48:39 UTC (rev 1225)
++++ trunk/pkg/lattice/Engine/StandAloneEngine/MovingSupport.hpp	2007-07-11 17:30:52 UTC (rev 1226)
+@@ -33,6 +33,9 @@
+ 	public :
+ 		std::list&lt;std::pair&lt;Vector3r,std::pair&lt; int , Real &gt; &gt; &gt; sections; // a list of section planes: &lt;a midpoint, direction , half length &gt;
+ 		// int direction refers to: which coordinate to take from the Beam's.direction: x, y or z (0, 1 or 2)
++		std::vector&lt;Vector3r&gt; sections_midpoints;
++		std::vector&lt;int&gt; sections_directions;
++		std::vector&lt;Real&gt; sections_halflength;
+ 
+ 		MovingSupport ();
+ 
+@@ -41,6 +44,7 @@
+ 		virtual bool isActivated();
+ 
+ 	protected :
++		virtual void preProcessAttributes(bool deserializing);
+ 		virtual void postProcessAttributes(bool deserializing);
+ 	REGISTER_CLASS_NAME(MovingSupport);
+ 	REGISTER_BASE_CLASS_NAME(DataRecorder);
+
+Modified: trunk/pkg/lattice/Engine/StandAloneEngine/NodeRecorder.cpp
+===================================================================
+--- trunk/pkg/lattice/Engine/StandAloneEngine/NodeRecorder.cpp	2007-07-11 14:48:39 UTC (rev 1225)
++++ trunk/pkg/lattice/Engine/StandAloneEngine/NodeRecorder.cpp	2007-07-11 17:30:52 UTC (rev 1226)
+@@ -26,15 +26,46 @@
+ }
+ 
+ 
++void NodeRecorder::preProcessAttributes(bool deserializing)
++{
++	if(deserializing)
++	{
++	}
++	else
++	{
++		regions_min.clear();
++		regions_max.clear();
++		std::list&lt;std::pair&lt;Vector3r,Vector3r&gt; &gt;::iterator i=regions.begin();
++		std::list&lt;std::pair&lt;Vector3r,Vector3r&gt; &gt;::iterator e=regions.end();
++		for( ; i!=e ; ++i)
++		{
++			regions_min.push_back(i-&gt;first);
++			regions_max.push_back(i-&gt;second);
++		}
++	}
++}
++
+ void NodeRecorder::postProcessAttributes(bool deserializing)
+ {
+ 	if(deserializing)
+ 	{
++		regions.clear();
++		std::vector&lt;Vector3r&gt;::iterator ii=regions_min.begin();
++		std::vector&lt;Vector3r&gt;::iterator ei=regions_min.end();
++		std::vector&lt;Vector3r&gt;::iterator ia=regions_max.begin();
++		//std::vector&lt;Vector3r&gt;::iterator ea region_max.end();
++		for( ; ii!=ei ; ++ii , ++ia )
++		{
++			regions.push_back(std::make_pair(*ii,*ia));
++		}
++
+ 	//	outputFile += &quot;_&quot;+boost::lexical_cast&lt;std::string&gt;(Omega::instance().getTimeStep());
+ 	//	std::cerr &lt;&lt; &quot;using dt for NodeRecorder output file: &quot; &lt;&lt; outputFile &lt;&lt; &quot;\n&quot;;
+ 
+ 		ofile.open(outputFile.c_str());
+ 
++		first = true;
++		subscribedBodies.clear();
+ 	}
+ }
+ 
+@@ -44,10 +75,12 @@
+ 	DataRecorder::registerAttributes();
+ 	REGISTER_ATTRIBUTE(outputFile);
+ 	REGISTER_ATTRIBUTE(interval);
+-	REGISTER_ATTRIBUTE(regions);
++	//REGISTER_ATTRIBUTE(regions);
++	REGISTER_ATTRIBUTE(regions_min);
++	REGISTER_ATTRIBUTE(regions_max);
+ 
+-	REGISTER_ATTRIBUTE(first);
+-	REGISTER_ATTRIBUTE(subscribedBodies);
++//	REGISTER_ATTRIBUTE(first);
++//	REGISTER_ATTRIBUTE(subscribedBodies);
+ }
+ 
+ 
+
+Modified: trunk/pkg/lattice/Engine/StandAloneEngine/NodeRecorder.hpp
+===================================================================
+--- trunk/pkg/lattice/Engine/StandAloneEngine/NodeRecorder.hpp	2007-07-11 14:48:39 UTC (rev 1225)
++++ trunk/pkg/lattice/Engine/StandAloneEngine/NodeRecorder.hpp	2007-07-11 17:30:52 UTC (rev 1226)
+@@ -31,6 +31,8 @@
+ 		std::string	 outputFile;
+ 		unsigned int	 interval;
+ 		std::list&lt;std::pair&lt;Vector3r,Vector3r&gt; &gt; regions; // a list of min/max pairs describing each region.
++		std::vector&lt;Vector3r&gt; regions_min;
++		std::vector&lt;Vector3r&gt; regions_max;
+ 
+ 		NodeRecorder ();
+ 
+@@ -39,6 +41,7 @@
+ 		virtual bool isActivated();
+ 
+ 	protected :
++		virtual void preProcessAttributes(bool deserializing);
+ 		virtual void postProcessAttributes(bool deserializing);
+ 	REGISTER_CLASS_NAME(NodeRecorder);
+ 	REGISTER_BASE_CLASS_NAME(DataRecorder);
+
+Modified: trunk/pkg/lattice/PreProcessor/LatticeExample.cpp
+===================================================================
+--- trunk/pkg/lattice/PreProcessor/LatticeExample.cpp	2007-07-11 14:48:39 UTC (rev 1225)
++++ trunk/pkg/lattice/PreProcessor/LatticeExample.cpp	2007-07-11 17:30:52 UTC (rev 1226)
+@@ -1070,9 +1070,9 @@
+         rootBody-&gt;engines.push_back(strainRecorder);
+         rootBody-&gt;engines.push_back(measurePoisson);
+ 	// FIXME - Serialization of nodeRecorder, beamRecorder and movingSupport is not wirking....
+-        //rootBody-&gt;engines.push_back(nodeRecorder);
+-        //rootBody-&gt;engines.push_back(beamRecorder);
+-	//rootBody-&gt;engines.push_back(movingSupport);
++        rootBody-&gt;engines.push_back(nodeRecorder);
++        rootBody-&gt;engines.push_back(beamRecorder);
++	rootBody-&gt;engines.push_back(movingSupport);
+         
+         rootBody-&gt;initializers.clear();
+         rootBody-&gt;initializers.push_back(boundingVolumeDispatcher);
+@@ -1131,10 +1131,10 @@
+         rootBody-&gt;engines.push_back((rootBody-&gt;engines)[rootBody-&gt;engines.size()-1]);
+         (rootBody-&gt;engines)[rootBody-&gt;engines.size()-2]=(rootBody-&gt;engines)[rootBody-&gt;engines.size()-3];
+         (rootBody-&gt;engines)[rootBody-&gt;engines.size()-3]=(rootBody-&gt;engines)[rootBody-&gt;engines.size()-4];
+-        (rootBody-&gt;engines)[rootBody-&gt;engines.size()-4]=/*(rootBody-&gt;engines)[rootBody-&gt;engines.size()-5];
++        (rootBody-&gt;engines)[rootBody-&gt;engines.size()-4]=(rootBody-&gt;engines)[rootBody-&gt;engines.size()-5];
+         (rootBody-&gt;engines)[rootBody-&gt;engines.size()-5]=(rootBody-&gt;engines)[rootBody-&gt;engines.size()-6];
+         (rootBody-&gt;engines)[rootBody-&gt;engines.size()-6]=(rootBody-&gt;engines)[rootBody-&gt;engines.size()-7];
+-        (rootBody-&gt;engines)[rootBody-&gt;engines.size()-7]=*/translationCondition;
++        (rootBody-&gt;engines)[rootBody-&gt;engines.size()-7]=translationCondition;
+         translationCondition-&gt;subscribedBodies.clear();
+         
+         BodyContainer::iterator bi    = rootBody-&gt;bodies-&gt;begin();
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000190.html">[Yade-commits] r1225 - trunk/pkg/dem/Engine/DeusExMachina
+</A></li>
+	<LI>Next message: <A HREF="000192.html">[Yade-commits] r1227 - in trunk/pkg/realtime-rigidbody: .	Engine/EngineUnit
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#191">[ date ]</a>
+              <a href="thread.html#191">[ thread ]</a>
+              <a href="subject.html#191">[ subject ]</a>
+              <a href="author.html#191">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

@@ -1,0 +1,424 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1433 - in trunk: extra gui/py gui/qt3	pkg/common/Engine/StandAloneEngine
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1433%20-%20in%20trunk%3A%20extra%20gui/py%20gui/qt3%0A%09pkg/common/Engine/StandAloneEngine&In-Reply-To=%3C200807180636.m6I6aADW018194%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000392.html">
+   <LINK REL="Next"  HREF="000394.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1433 - in trunk: extra gui/py gui/qt3	pkg/common/Engine/StandAloneEngine</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1433%20-%20in%20trunk%3A%20extra%20gui/py%20gui/qt3%0A%09pkg/common/Engine/StandAloneEngine&In-Reply-To=%3C200807180636.m6I6aADW018194%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1433 - in trunk: extra gui/py gui/qt3	pkg/common/Engine/StandAloneEngine">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Fri Jul 18 08:36:10 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000392.html">[Yade-commits] r1432 - in trunk: core extra gui/py gui/qt3	lib/serialization lib/serialization-qt pkg/common/Engine	pkg/common/Engine/StandAloneEngine	pkg/common/RenderingEngine/OpenGLRenderingEngine	pkg/dem/PreProcessor pkg/fem/PreProcessor	pkg/lattice/PreProcessor scripts
+</A></li>
+        <LI>Next message: <A HREF="000394.html">[Yade-commits] r1434 - in trunk: extra/clump lib/QGLViewer	lib/QGLViewer/VRender
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#393">[ date ]</a>
+              <a href="thread.html#393">[ thread ]</a>
+              <a href="subject.html#393">[ subject ]</a>
+              <a href="author.html#393">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2008-07-18 08:36:09 +0200 (Fri, 18 Jul 2008)
+New Revision: 1433
+
+Modified:
+   trunk/extra/Brefcom.cpp
+   trunk/gui/py/plot.py
+   trunk/gui/py/utils.py
+   trunk/gui/qt3/GLViewer.cpp
+   trunk/gui/qt3/GLViewer.hpp
+   trunk/gui/qt3/QtGUI-python.cpp
+   trunk/gui/qt3/YadeQtMainWindow.cpp
+   trunk/pkg/common/Engine/StandAloneEngine/PeriodicEngines.hpp
+Log:
+1. Fixes in Brefcom
+2. Add docstrings to QtGUI-python functions;
+3. StretchPeriodicEngine adjusts both limit and period if one of them is nonzero
+4. Other fixes in python interface
+
+
+Modified: trunk/extra/Brefcom.cpp
+===================================================================
+--- trunk/extra/Brefcom.cpp	2008-07-17 09:09:42 UTC (rev 1432)
++++ trunk/extra/Brefcom.cpp	2008-07-18 06:36:09 UTC (rev 1433)
+@@ -47,9 +47,9 @@
+ 
+ 		shared_ptr&lt;BrefcomContact&gt; contPhys(new BrefcomContact(
+ 			/* E */ E12,
+-			/* G */ E12/G_over_E, /*/2*(1+nu12)*(1-alpha*nu12)/(1+nu12),*/ /* FIXME&#160;FIXME&#160;FIXME ???? */
++			/* G */ E12*G_over_E, /*/2*(1+nu12)*(1-alpha*nu12)/(1+nu12),*/
+ 			/* tanFrictionAngle */ tan(.5*(elast1-&gt;frictionAngle+elast2-&gt;frictionAngle)),
+-			/* undamagedCohesion */ S12*sigmaT, /* FIXME&#160;FIXME&#160;FIXME&#160;??? should be sigmaT??? */
++			/* undamagedCohesion */ sigmaT,
+ 			/* equilibriumDist */ d0,
+ 			/* crossSection */ S12,
+ 			/* epsCrackOnset */ epsCrackOnset,
+
+Modified: trunk/gui/py/plot.py
+===================================================================
+--- trunk/gui/py/plot.py	2008-07-17 09:09:42 UTC (rev 1432)
++++ trunk/gui/py/plot.py	2008-07-18 06:36:09 UTC (rev 1433)
+@@ -41,7 +41,7 @@
+ 			print &quot;Reducing data: %d &gt; %d&quot;%(l,maxDataLen)
+ 			for d in data: data[d]=data[d][::2]
+ 			for attr in ['virtPeriod','realPeriod','iterPeriod']:
+-				if(plotDataCollector[attr]&gt;0) plotDataCollector[attr]=2*plotDataCollector[attr]
++				if(plotDataCollector[attr]&gt;0): plotDataCollector[attr]=2*plotDataCollector[attr]
+ 
+ def reverseData():
+ 	for k in data: data[k].reverse()
+@@ -53,13 +53,14 @@
+ 	This way, equal length of all data is assured so that they can be plotted one against any other.
+ 
+ 	Nan's don't appear in graphs.&quot;&quot;&quot;
++	import numpy
+ 	if len(data)&gt;0: numSamples=len(data[data.keys()[0]])
+ 	else: numSamples=0
+ 	reduceData(numSamples)
+ 	nan=float('nan')
+ 	for name in d:
+ 		if not name in data.keys():
+-			data[name]=[nan for i in range(numSamples)]
++			data[name]=numpy.array([nan for i in range(numSamples)])
+ 	for name in data:
+ 		if name in d: data[name].append(d[name])
+ 		else: data[name].append(nan)
+@@ -69,23 +70,24 @@
+ 	else: return (o,'')
+ 
+ def show(): plot()
++
+ def plot():
+ 	pylab.ion() ## # no interactive mode (hmmm, I don't know why actually...)
+ 	for p in plots:
+ 		pylab.figure()
+ 		plots_p=[fillNonSequence(o) for o in plots[p]]
+ 		plotsFilled[p]=plots_p
+-		plotLines[p]=pylab.plot(*sum([[data[p],data[d[0]],d[1]] for d in plots_p],[])V)
++		plotLines[p]=pylab.plot(*sum([[data[p],data[d[0]],d[1]] for d in plots_p],[]))
+ 		pylab.legend([_p[0] for _p in plots_p])
+ 		pylab.xlabel(p)
+ 	pylab.show()
+ 
+ def update():
+-	for p in plots:
++	pylab.draw();
++#	for p in plots:
++#		pylab.plot(*sum([[data[p],data[d[0]],d[1]] for d in plots_p],[]))
+ 
+-		pylab.plot(*sum([[data[p],data[d[0]],d[1]] for d in plots_p],[])V)
+ 
+-
+ def saveGnuplot(baseName,term='wxt',extension=None,timestamp=False,comment=None,title=None):
+ 	&quot;&quot;&quot;baseName: used for creating baseName.gnuplot (command file for gnuplot),
+ 			associated baseName.data (data) and output files (if applicable) in the form baseName.[plot number].extension
+
+Modified: trunk/gui/py/utils.py
+===================================================================
+--- trunk/gui/py/utils.py	2008-07-17 09:09:42 UTC (rev 1432)
++++ trunk/gui/py/utils.py	2008-07-18 06:36:09 UTC (rev 1433)
+@@ -155,7 +155,7 @@
+ 		out.write('%g\t%g\t%g\t%g\n'%(b.phys['se3'][0],b.phys['se3'][1],b.phys['se3'][2],b.shape['radius']))
+ 	out.close()
+ 
+-def qtCreateVideo(playerDb,out,viewerState,stride,fps=24,postLoadHook=None):
++def qtCreateVideo(playerDb,out,viewerState=None,dispParamsNo=-1,stride=1,fps=24,postLoadHook=None):
+ 	&quot;&quot;&quot;Create video by replaying a simulation. Snapshots are taken to temporary files,
+ 	encoded to a .ogg stream (theora codec); temps are deleted at the end.
+ 
+@@ -163,7 +163,7 @@
+ 
+ 	playerDb is the database with saved simulation states,
+ 	out is the output file (like a.ogg), fps is frames-per-second for the video that is created,
+-	viewerState, stride and postLoadHook are passed to qt.runPlayer (docs in gui/qt3/QtGUI-Python.cpp).
++	dispParamsNo, stride and postLoadHook are passed to qt.runPlayer (docs in gui/qt3/QtGUI-Python.cpp).
+ 	
+ 	You need a display to run this (either virtual, like xvfb, or physical).
+ 
+@@ -174,10 +174,16 @@
+ 	import gst
+ 	from yade import qt
+ 	qt.Player(True)
+-	# postLoadHook has &quot;&quot; instead of None in the c++ interface
+-	wildcard,snaps=qt.runPlayer(playerDb,'',viewerState,stride=stride,postLoadHook=(postLoadHook if postLoadHook else ''))
++	# postLoadHook and viewerState have &quot;&quot; instead of None in the c++ interface
++	wildcard,snaps=qt.runPlayer(
++		savedSim=playerDb,
++		snapBase='',
++		viewerState=(viewerstate if viewerState else &quot;&quot;),
++		dispParamsNo=dispParamsNo,
++		stride=stride,
++		postLoadHook=(postLoadHook if postLoadHook else ''))
+ 	if(os.path.exists(out)):
+-		i=0
++		i=0;
+ 		while(os.path.exists(out+&quot;~%d&quot;%i)): i+=1
+ 		os.rename(out,out+&quot;~%d&quot;%i); print &quot;Output file `%s' already existed, old file renamed to `%s'&quot;%(out,out+&quot;~%d&quot;%i)
+ 	print &quot;Encoding video from %s (%d files total) to %s&quot;%(wildcard,len(snaps),out)
+
+Modified: trunk/gui/qt3/GLViewer.cpp
+===================================================================
+--- trunk/gui/qt3/GLViewer.cpp	2008-07-17 09:09:42 UTC (rev 1432)
++++ trunk/gui/qt3/GLViewer.cpp	2008-07-18 06:36:09 UTC (rev 1433)
+@@ -122,6 +122,28 @@
+ 	displayMessage(&quot;Manipulating clip plane #&quot;+lexical_cast&lt;string&gt;(planeNo+1)+(grp.empty()?grp:&quot;(bound planes:&quot;+grp+&quot;)&quot;));
+ }
+ 
++void GLViewer::useDisplayParameters(size_t n){
++	LOG_DEBUG(&quot;Loading display parameters from #&quot;&lt;&lt;n);
++	vector&lt;shared_ptr&lt;DisplayParameters&gt; &gt;&amp; dispParams=Omega::instance().getRootBody()-&gt;dispParams;
++	if(dispParams.size()&lt;=(size_t)n){LOG_ERROR(&quot;Display parameters #&quot;&lt;&lt;n&lt;&lt;&quot; don't exist (number of entries &quot;&lt;&lt;dispParams.size()&lt;&lt;&quot;)&quot;); return;}
++	const shared_ptr&lt;DisplayParameters&gt;&amp; dp=dispParams[n];
++	string val;
++	if(dp-&gt;getValue(&quot;OpenGLRenderingEngine&quot;,val)){ istringstream oglre(val); IOFormatManager::loadFromStream(&quot;XMLFormatManager&quot;,oglre,&quot;renderer&quot;,renderer);}
++	else { LOG_WARN(&quot;OpenGLRenderingEngine configuration not found in display parameters, skipped.&quot;);}
++	if(dp-&gt;getValue(&quot;GLViewer&quot;,val)){ GLViewer::setState(val);}
++	else { LOG_WARN(&quot;GLViewer configuration not found in display parameters, skipped.&quot;); }
++}
++
++void GLViewer::saveDisplayParameters(size_t n){
++	LOG_DEBUG(&quot;Saving display parameters to #&quot;&lt;&lt;n);
++	vector&lt;shared_ptr&lt;DisplayParameters&gt; &gt;&amp; dispParams=Omega::instance().getRootBody()-&gt;dispParams;
++	if(dispParams.size()&lt;=n){while(dispParams.size()&lt;=n) dispParams.push_back(shared_ptr&lt;DisplayParameters&gt;(new DisplayParameters));} assert(n&lt;dispParams.size());
++	shared_ptr&lt;DisplayParameters&gt;&amp; dp=dispParams[n];
++	ostringstream oglre; IOFormatManager::saveToStream(&quot;XMLFormatManager&quot;,oglre,&quot;renderer&quot;,renderer);
++	dp-&gt;setValue(&quot;OpenGLRenderingEngine&quot;,oglre.str());
++	dp-&gt;setValue(&quot;GLViewer&quot;,GLViewer::getState());
++}
++
+ string GLViewer::getState(){
+ 	QString origStateFileName=stateFileName();
+ 	char tmpnam_str [L_tmpnam]; tmpnam(tmpnam_str);
+@@ -175,25 +197,8 @@
+ 	}
+ 	else if(e-&gt;key()==Qt::Key_7 || e-&gt;key()==Qt::Key_8 || e-&gt;key()==Qt::Key_9){
+ 		int nn=-1; if(e-&gt;key()==Qt::Key_7)nn=0; else if(e-&gt;key()==Qt::Key_8)nn=1; else if(e-&gt;key()==Qt::Key_9)nn=2; assert(nn&gt;=0); size_t n=(size_t)nn;
+-		vector&lt;shared_ptr&lt;DisplayParameters&gt; &gt;&amp; dispParams=Omega::instance().getRootBody()-&gt;dispParams;
+-		if(e-&gt;state() &amp; AltButton){// save display parameters
+-			LOG_DEBUG(&quot;Saving display parameters to #&quot;&lt;&lt;n);
+-			if(dispParams.size()&lt;=n){while(dispParams.size()&lt;=n) dispParams.push_back(shared_ptr&lt;DisplayParameters&gt;(new DisplayParameters));} assert(n&lt;dispParams.size());
+-			shared_ptr&lt;DisplayParameters&gt;&amp; dp=dispParams[n];
+-			ostringstream oglre; IOFormatManager::saveToStream(&quot;XMLFormatManager&quot;,oglre,&quot;renderer&quot;,renderer);
+-			IOFormatManager::saveToFile(&quot;XMLFormatManager&quot;,&quot;/tmp/rendererConfig.xml&quot;,&quot;renderer&quot;,renderer);
+-			dp-&gt;setValue(&quot;OpenGLRenderingEngine&quot;,oglre.str());
+-			dp-&gt;setValue(&quot;GLViewer&quot;,GLViewer::getState());
+-		} else { // load display parameters
+-			LOG_DEBUG(&quot;Loading display parameters from #&quot;&lt;&lt;n);
+-			if(dispParams.size()&lt;=(size_t)n){LOG_ERROR(&quot;Display parameters #&quot;&lt;&lt;n&lt;&lt;&quot; don't exist (number of entries &quot;&lt;&lt;dispParams.size()&lt;&lt;&quot;)&quot;); return;}
+-			const shared_ptr&lt;DisplayParameters&gt;&amp; dp=dispParams[n];
+-			string val;
+-			if(dp-&gt;getValue(&quot;OpenGLRenderingEngine&quot;,val)){ istringstream oglre(val); IOFormatManager::loadFromStream(&quot;XMLFormatManager&quot;,oglre,&quot;renderer&quot;,renderer);}
+-			else { LOG_WARN(&quot;OpenGLRenderingEngine configuration not found in display parameters, skipped.&quot;);}
+-			if(dp-&gt;getValue(&quot;GLViewer&quot;,val)){ GLViewer::setState(val);}
+-			else { LOG_WARN(&quot;GLViewer configuration not found in display parameters, skipped.&quot;); }
+-		}
++		if(e-&gt;state() &amp; AltButton) saveDisplayParameters(n);
++		else useDisplayParameters(n);
+ 	}
+ 	/* letters alphabetically */
+ 	else if(e-&gt;key()==Qt::Key_C &amp;&amp; selectedName() &gt;= 0 &amp;&amp; (*(Omega::instance().getRootBody()-&gt;bodies)).exists(selectedName())) setSceneCenter(manipulatedFrame()-&gt;position());
+
+Modified: trunk/gui/qt3/GLViewer.hpp
+===================================================================
+--- trunk/gui/qt3/GLViewer.hpp	2008-07-17 09:09:42 UTC (rev 1432)
++++ trunk/gui/qt3/GLViewer.hpp	2008-07-18 06:36:09 UTC (rev 1433)
+@@ -68,6 +68,10 @@
+ 		string getState();
+ 		//! set QGLViewer state from string (XML); QGLVIewer normally only supports loading state from file.
+ 		void setState(string);
++		//! Load display parameters (QGLViewer and OpenGLRenderingEngine) from MetaBody::dispParams[n] and use them
++		void useDisplayParameters(size_t n);
++		//! Save display parameters (QGOViewer and OpenGLRenderingEngine) to MetaBody::dispParams[n]
++		void saveDisplayParameters(size_t n);
+ 
+ 		//! Adds our attributes to the QGLViewer state that can be saved
+ 		QDomElement domElement(const QString&amp; name, QDomDocument&amp; document) const;
+
+Modified: trunk/gui/qt3/QtGUI-python.cpp
+===================================================================
+--- trunk/gui/qt3/QtGUI-python.cpp	2008-07-17 09:09:42 UTC (rev 1432)
++++ trunk/gui/qt3/QtGUI-python.cpp	2008-07-18 06:36:09 UTC (rev 1433)
+@@ -25,12 +25,14 @@
+ 
+ void centerViews(void){ensuredMainWindow()-&gt;centerViews();}
+ void Quit(void){ if(YadeQtMainWindow::self) YadeQtMainWindow::self-&gt;Quit(); }
+-pyOpenGLRenderingEngine getRenderer(){return pyOpenGLRenderingEngine(ensuredMainWindow()-&gt;renderer);}
++pyOpenGLRenderingEngine ensuredRenderer(){ensuredMainWindow()-&gt;ensureRenderer(); return pyOpenGLRenderingEngine(ensuredMainWindow()-&gt;renderer);}
+ 
+-#define POST_SYNTH_EVENT(EVT,checker) void evt##EVT(bool wait=false){QApplication::postEvent(ensuredMainWindow(),new QCustomEvent(YadeQtMainWindow::EVENT_##EVT)); if(wait){while(!(bool)(ensuredMainWindow()-&gt;checker)) usleep(50000);} }
+-POST_SYNTH_EVENT(PLAYER,player); BOOST_PYTHON_FUNCTION_OVERLOADS(evtPLAYER_overloads,evtPLAYER,0,1);
+-POST_SYNTH_EVENT(CONTROLLER,controller); BOOST_PYTHON_FUNCTION_OVERLOADS(evtCONTROLLER_overloads,evtCONTROLLER,0,1);
+-POST_SYNTH_EVENT(GENERATOR,generator); BOOST_PYTHON_FUNCTION_OVERLOADS(evtGENERATOR_overloads,evtGENERATOR,0,1);
++#define POST_SYNTH_EVENT(EVT,checker) void evt##EVT(){QApplication::postEvent(ensuredMainWindow(),new QCustomEvent(YadeQtMainWindow::EVENT_##EVT)); bool wait=true; if(wait){while(!(bool)(ensuredMainWindow()-&gt;checker)) usleep(50000);} }
++POST_SYNTH_EVENT(PLAYER,player);
++POST_SYNTH_EVENT(CONTROLLER,controller);
++POST_SYNTH_EVENT(GENERATOR,generator);
++// BOOST_PYTHON_FUNCTION_OVERLOADS(evtPLAYER_overloads,evtPLAYER,0,1); BOOST_PYTHON_FUNCTION_OVERLOADS(evtCONTROLLER_overloads,evtCONTROLLER,0,1); BOOST_PYTHON_FUNCTION_OVERLOADS(evtGENERATOR_overloads,evtGENERATOR,0,1);
++#undef POST_SYNT_EVENT
+ void evtVIEW(){QApplication::postEvent(ensuredMainWindow(),new QCustomEvent(YadeQtMainWindow::EVENT_VIEW)); }
+ 
+ 
+@@ -42,8 +44,11 @@
+  *
+  * @param savedQGLState is file with QGLViewer state (camera position, orientation, display 
+  * dimensions etc) saved when running the GLViewer (either in player or during simulation) and
+- * pressing Alt-S; this saves state to /tmp/qglviewerState.xml.
++ * pressing 'S'; this saves state to /tmp/qglviewerState.xml.
+  *
++ * @param dispParamsNo reloads n-th display parameters (GLViewer and OpenGLRenderingEngine)
++ * from states saved in MetaBody::dispParams.
++ *
+  * @param stride is that every stride-th simulation state will be taken
+ 
+  * @param snapBase is basename for .png snapshots. If ommited, tmpnam generates unique basename.
+@@ -68,12 +73,12 @@
+  *
+  * @returns tuple of (wildcard,[snap0,snap1,snap2,...]), where the list contains filename of snapshots.
+  */
+-python::tuple runPlayer(string savedSim,string snapBase=&quot;&quot;,string savedQGLState=&quot;&quot;,int stride=1,string postLoadHook=&quot;&quot;){
+-	evtPLAYER(true); // wait for the window to become ready
++python::tuple runPlayerSession(string savedSim,string snapBase=&quot;&quot;,string savedQGLState=&quot;&quot;,int dispParamsNo=-1,int stride=1,string postLoadHook=&quot;&quot;){
++	evtPLAYER();
+ 	shared_ptr&lt;QtSimulationPlayer&gt; player=ensuredMainWindow()-&gt;player;
+ 	GLSimulationPlayerViewer* glv=player-&gt;glSimulationPlayerViewer;
+ 	string snapBase2(snapBase);
+-	if(snapBase2.empty()){ char tmpnam_str [L_tmpnam]; tmpnam(tmpnam_str); snapBase2=tmpnam_str; }
++	if(snapBase2.empty()){ char tmpnam_str [L_tmpnam]; tmpnam(tmpnam_str); snapBase2=tmpnam_str; LOG_INFO(&quot;Using &quot;&lt;&lt;snapBase2&lt;&lt;&quot; as temporary basename for snapshots.&quot;); }
+ 	glv-&gt;stride=stride;
+ 	glv-&gt;load(savedSim);
+ 	if(!postLoadHook.empty()){ PyGILState_STATE gstate; gstate = PyGILState_Ensure(); PyRun_SimpleString(postLoadHook.c_str()); PyGILState_Release(gstate); }
+@@ -84,25 +89,29 @@
+ 		glv-&gt;restoreStateFromFile();
+ 		glv-&gt;setStateFileName(QString::null);
+ 	}
++	if(dispParamsNo&gt;=0) glv-&gt;useDisplayParameters(dispParamsNo);
+ 	glv-&gt;startAnimation();
+ 	while(glv-&gt;animationIsStarted()) { usleep(2000000); LOG_DEBUG(&quot;Last msg: &quot;&lt;&lt;*player-&gt;messages.rbegin()); }
+ 	python::list snaps; FOREACH(string s, glv-&gt;snapshots){snaps.append(s);}
+ 	return python::make_tuple(snapBase2+&quot;-%.04d.png&quot;,snaps);
+ }
+ 
+-BOOST_PYTHON_FUNCTION_OVERLOADS(runPlayer_overloads,runPlayer,2,5);
++bool qtGuiIsActive(){return (bool)YadeQtMainWindow::self;}
+ 
++BOOST_PYTHON_FUNCTION_OVERLOADS(runPlayerSession_overloads,runPlayerSession,2,6);
++
+ BOOST_PYTHON_MODULE(qt){
+-	def(&quot;Generator&quot;,evtGENERATOR,evtGENERATOR_overloads(args(&quot;wait&quot;)));
+-	def(&quot;Controller&quot;,evtCONTROLLER,evtCONTROLLER_overloads(args(&quot;wait&quot;)));
+-	def(&quot;Player&quot;,evtPLAYER,evtPLAYER_overloads(args(&quot;wait&quot;)));
+-	def(&quot;View&quot;,evtVIEW);
+-	def(&quot;center&quot;,centerViews);
+-	def(&quot;Renderer&quot;,getRenderer);
++	def(&quot;Generator&quot;,evtGENERATOR,&quot;Start simulation generator&quot;);
++	def(&quot;Controller&quot;,evtCONTROLLER,&quot;Start simulation controller&quot;);
++	def(&quot;Player&quot;,evtPLAYER,&quot;Start simulation player&quot;);
++	def(&quot;View&quot;,evtVIEW,&quot;Create new 3d view&quot;);
++	def(&quot;center&quot;,centerViews,&quot;Center all existing views.&quot;);
++	def(&quot;Renderer&quot;,ensuredRenderer,&quot;Return wrapped OpenGLRenderingEngine; the renderer is constructed if necessary.&quot;);
+ 	def(&quot;close&quot;,Quit);
+-	def(&quot;runPlayer&quot;,runPlayer,runPlayer_overloads(args(&quot;viewStateFile&quot;,&quot;stride&quot;,&quot;postLoadHook&quot;)));
++	def(&quot;isActive&quot;,qtGuiIsActive,&quot;Whether the Qt GUI is being used.&quot;);
++	def(&quot;runPlayerSession&quot;,runPlayerSession,runPlayerSession_overloads(args(&quot;savedQGLState&quot;,&quot;dispParamsNo&quot;,&quot;stride&quot;,&quot;postLoadHook&quot;)));
+ 
+ 	BASIC_PY_PROXY_WRAPPER(pyOpenGLRenderingEngine,&quot;GLRenderer&quot;)
+-		.def(&quot;setRefSe3&quot;,&amp;pyOpenGLRenderingEngine::setRefSe3);
++		.def(&quot;setRefSe3&quot;,&amp;pyOpenGLRenderingEngine::setRefSe3,&quot;Make current positions and orientation reference for scaleDisplacements and scaleRotations.&quot;);
+ 
+ }
+
+Modified: trunk/gui/qt3/YadeQtMainWindow.cpp
+===================================================================
+--- trunk/gui/qt3/YadeQtMainWindow.cpp	2008-07-17 09:09:42 UTC (rev 1432)
++++ trunk/gui/qt3/YadeQtMainWindow.cpp	2008-07-18 06:36:09 UTC (rev 1433)
+@@ -90,7 +90,7 @@
+ }
+ 
+ void YadeQtMainWindow::redrawAll(bool force){
+-	if(force || (controller &amp;&amp; !controller-&gt;syncRunning)){
++	if(force || (controller &amp;&amp; !controller-&gt;syncRunning) || (!controller)){
+ 		FOREACH(const shared_ptr&lt;GLViewer&gt;&amp; glv,glViews){ if(glv) glv-&gt;updateGL(); }
+ 	}
+ }
+@@ -114,8 +114,10 @@
+ void YadeQtMainWindow::closeEvent(QCloseEvent *e){ closeAllChilds(); YadeQtGeneratedMainWindow::closeEvent(e); }
+ 
+ void YadeQtMainWindow::ensureRenderer(){
+-	shared_ptr&lt;Factorable&gt; tmpRenderer = ClassFactory::instance().createShared(&quot;OpenGLRenderingEngine&quot;);
+-	renderer = static_pointer_cast&lt;OpenGLRenderingEngine&gt;(tmpRenderer);
++	if(!renderer){
++		shared_ptr&lt;Factorable&gt; tmpRenderer=ClassFactory::instance().createShared(&quot;OpenGLRenderingEngine&quot;);
++		renderer=static_pointer_cast&lt;OpenGLRenderingEngine&gt;(tmpRenderer);
++	}
+ 
+ 	if(!renderer) throw runtime_error(&quot;Renderer could not be created, why?&quot;);
+ 
+
+Modified: trunk/pkg/common/Engine/StandAloneEngine/PeriodicEngines.hpp
+===================================================================
+--- trunk/pkg/common/Engine/StandAloneEngine/PeriodicEngines.hpp	2008-07-17 09:09:42 UTC (rev 1432)
++++ trunk/pkg/common/Engine/StandAloneEngine/PeriodicEngines.hpp	2008-07-18 06:36:09 UTC (rev 1433)
+@@ -43,7 +43,9 @@
+  * stretchFactor must be positive; if &gt;1, period is stretched, for &lt;1, it is shrunk.
+  *
+  * Limit consistency (whether actual period is not over/below the limit) is checked: period is set to the 
+- * limit value if we are off.
++ * limit value if we are off. If the limit is zero, however, and the period is non-zero, the limit is set
++ * to the period value (therefore, if you initialize only iterPeriod, you will get what you expect: engine
++ * running at iterPeriod).
+  */
+ class StretchPeriodicEngine: public PeriodicEngine{
+ 	public:
+@@ -53,6 +55,9 @@
+ 	bool mayStretch;
+ 	virtual bool isActivated(){
+ 		assert(stretchFactor&gt;0);
++		if(iterLim==0 &amp;&amp; iterPeriod!=0){iterLim=iterPeriod;} else if(iterLim!=0 &amp;&amp; iterPeriod==0){iterPeriod=iterLim;}
++		if(realLim==0 &amp;&amp; realPeriod!=0){realLim=realPeriod;} else if(realLim!=0 &amp;&amp; realPeriod==0){realPeriod=realLim;}
++		if(virtLim==0 &amp;&amp; virtPeriod!=0){virtLim=virtPeriod;} else if(virtLim!=0 &amp;&amp; virtPeriod==0){virtPeriod=virtLim;}
+ 		if(stretchFactor&gt;1){iterPeriod=min(iterPeriod,iterLim); realPeriod=min(realPeriod,realLim); virtPeriod=min(virtPeriod,virtLim);}
+ 		else {iterPeriod=max(iterPeriod,iterLim); realPeriod=max(realPeriod,realLim); virtPeriod=max(virtPeriod,virtLim);}
+ 		mayStretch=((virtPeriod&lt;0 || (stretchFactor&gt;1 ? stretchFactor*virtPeriod&lt;=virtLim : stretchFactor*virtPeriod&gt;=virtLim))
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000392.html">[Yade-commits] r1432 - in trunk: core extra gui/py gui/qt3	lib/serialization lib/serialization-qt pkg/common/Engine	pkg/common/Engine/StandAloneEngine	pkg/common/RenderingEngine/OpenGLRenderingEngine	pkg/dem/PreProcessor pkg/fem/PreProcessor	pkg/lattice/PreProcessor scripts
+</A></li>
+	<LI>Next message: <A HREF="000394.html">[Yade-commits] r1434 - in trunk: extra/clump lib/QGLViewer	lib/QGLViewer/VRender
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#393">[ date ]</a>
+              <a href="thread.html#393">[ thread ]</a>
+              <a href="subject.html#393">[ subject ]</a>
+              <a href="author.html#393">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

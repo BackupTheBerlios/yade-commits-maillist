@@ -1,0 +1,896 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1358 - in trunk: core extra extra/clump extra/usct	gui/py gui/qt3 pkg/common/Engine/DeusExMachina	pkg/common/Engine/StandAloneEngine
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1358%20-%20in%20trunk%3A%20core%20extra%20extra/clump%20extra/usct%0A%09gui/py%20gui/qt3%20pkg/common/Engine/DeusExMachina%0A%09pkg/common/Engine/StandAloneEngine&In-Reply-To=%3C200805202005.m4KK5Afj012390%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000319.html">
+   <LINK REL="Next"  HREF="000321.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1358 - in trunk: core extra extra/clump extra/usct	gui/py gui/qt3 pkg/common/Engine/DeusExMachina	pkg/common/Engine/StandAloneEngine</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1358%20-%20in%20trunk%3A%20core%20extra%20extra/clump%20extra/usct%0A%09gui/py%20gui/qt3%20pkg/common/Engine/DeusExMachina%0A%09pkg/common/Engine/StandAloneEngine&In-Reply-To=%3C200805202005.m4KK5Afj012390%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1358 - in trunk: core extra extra/clump extra/usct	gui/py gui/qt3 pkg/common/Engine/DeusExMachina	pkg/common/Engine/StandAloneEngine">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Tue May 20 22:05:10 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000319.html">[Yade-commits] r1357 - in trunk: core gui gui/py gui/qt3
+</A></li>
+        <LI>Next message: <A HREF="000321.html">[Yade-commits] r1359 - in trunk: core gui/py lib/import	pkg/common/DataClass/PhysicalParameters	pkg/common/Engine/DeusExMachina	pkg/common/Engine/StandAloneEngine pkg/dem/Engine/EngineUnit	pkg/dem/Engine/StandAloneEngine	pkg/dem/RenderingEngine/GLDrawElasticContactInteraction
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#320">[ date ]</a>
+              <a href="thread.html#320">[ thread ]</a>
+              <a href="subject.html#320">[ subject ]</a>
+              <a href="author.html#320">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2008-05-20 22:05:08 +0200 (Tue, 20 May 2008)
+New Revision: 1358
+
+Modified:
+   trunk/core/BodyContainer.hpp
+   trunk/core/InteractionContainer.hpp
+   trunk/core/MetaBody.cpp
+   trunk/core/MetaEngine.cpp
+   trunk/core/Omega.hpp
+   trunk/extra/Brefcom.cpp
+   trunk/extra/clump/Shop.cpp
+   trunk/extra/usct/UniaxialStrainControlledTest.cpp
+   trunk/extra/usct/UniaxialStrainControlledTest.hpp
+   trunk/gui/py/yadeControl.cpp
+   trunk/gui/qt3/MessageDialog.cpp
+   trunk/gui/qt3/QtGeneratedSimulationController.ui
+   trunk/pkg/common/Engine/DeusExMachina/FixedPositionEngine.cpp
+   trunk/pkg/common/Engine/DeusExMachina/ForceEngine.cpp
+   trunk/pkg/common/Engine/StandAloneEngine/PhysicalActionContainerInitializer.cpp
+Log:
+1. Replace foreach with FOREACH, based on discussion with Janek.
+2. Fix FileGenerateor message crash without workspace.
+3. Fix TimeStepper choosable at the same time as fixed timestep. There is some problem with switching back to timestepper, use Omega().usesTimeStepper=True/False from python for now, please.
+
+
+
+Modified: trunk/core/BodyContainer.hpp
+===================================================================
+--- trunk/core/BodyContainer.hpp	2008-05-19 18:49:24 UTC (rev 1357)
++++ trunk/core/BodyContainer.hpp	2008-05-20 20:05:08 UTC (rev 1358)
+@@ -60,8 +60,8 @@
+ REGISTER_SERIALIZABLE(BodyContainer,false);
+ 
+ /* for BOOST_FOREACH compatibility */
+-#ifndef foreach
+-#	define foreach BOOST_FOREACH
++#ifndef FOREACH
++#	define FOREACH BOOST_FOREACH
+ #endif
+ 
+ namespace boost{
+
+Modified: trunk/core/InteractionContainer.hpp
+===================================================================
+--- trunk/core/InteractionContainer.hpp	2008-05-19 18:49:24 UTC (rev 1357)
++++ trunk/core/InteractionContainer.hpp	2008-05-20 20:05:08 UTC (rev 1358)
+@@ -53,8 +53,8 @@
+ REGISTER_SERIALIZABLE(InteractionContainer,false);
+ 
+ // BOOST_FOREACH compatibility
+-#ifndef foreach
+-#  define foreach BOOST_FOREACH
++#ifndef FOREACH
++#  define FOREACH BOOST_FOREACH
+ #endif
+ 
+ namespace boost{
+
+Modified: trunk/core/MetaBody.cpp
+===================================================================
+--- trunk/core/MetaBody.cpp	2008-05-19 18:49:24 UTC (rev 1357)
++++ trunk/core/MetaBody.cpp	2008-05-20 20:05:08 UTC (rev 1358)
+@@ -37,7 +37,7 @@
+ 
+ 
+ void MetaBody::runInitializers(){
+-	BOOST_FOREACH(shared_ptr&lt;Engine&gt; e, initializers){
++	FOREACH(shared_ptr&lt;Engine&gt; e, initializers){
+ 		if(e-&gt;isActivated()) e-&gt;action(this);
+ 	}
+ }
+@@ -81,7 +81,7 @@
+ }
+ 
+ shared_ptr&lt;Engine&gt; MetaBody::engineByName(string s){
+-	BOOST_FOREACH(shared_ptr&lt;Engine&gt; e, engines){
++	FOREACH(shared_ptr&lt;Engine&gt; e, engines){
+ 		if(e-&gt;getClassName()==s) return e;
+ 	}
+ 	return shared_ptr&lt;Engine&gt;();
+@@ -90,7 +90,7 @@
+ 
+ void MetaBody::setTimeSteppersActive(bool a)
+ {
+-	BOOST_FOREACH(shared_ptr&lt;Engine&gt; e, engines){
++	FOREACH(shared_ptr&lt;Engine&gt; e, engines){
+ 		if (Omega::instance().isInheritingFrom(e-&gt;getClassName(),&quot;TimeStepper&quot;))
+ 			(dynamic_pointer_cast&lt;TimeStepper&gt;(e))-&gt;setActive(a);
+ 	}
+
+Modified: trunk/core/MetaEngine.cpp
+===================================================================
+--- trunk/core/MetaEngine.cpp	2008-05-19 18:49:24 UTC (rev 1357)
++++ trunk/core/MetaEngine.cpp	2008-05-20 20:05:08 UTC (rev 1358)
+@@ -13,7 +13,7 @@
+ 
+ list&lt;string&gt; MetaEngine::getNeededBex(){
+ 	list&lt;string&gt; ret;
+-	BOOST_FOREACH(shared_ptr&lt;EngineUnit&gt; e, functorArguments){
++	FOREACH(shared_ptr&lt;EngineUnit&gt; e, functorArguments){
+ 		list&lt;string&gt; eBex=e-&gt;getNeededBex();
+ 		ret.insert(ret.end(),eBex.begin(),eBex.end());
+ 	}
+
+Modified: trunk/core/Omega.hpp
+===================================================================
+--- trunk/core/Omega.hpp	2008-05-19 18:49:24 UTC (rev 1357)
++++ trunk/core/Omega.hpp	2008-05-20 20:05:08 UTC (rev 1358)
+@@ -45,6 +45,10 @@
+ #include &quot;SimulationFlow.hpp&quot;
+ #include &quot;Body.hpp&quot;
+ 
++#ifndef FOREACH
++#	define FOREACH&#160;BOOST_FOREACH
++#endif
++
+ class MetaBody;
+ class ThreadRunner;
+ class Preferences;
+
+Modified: trunk/extra/Brefcom.cpp
+===================================================================
+--- trunk/extra/Brefcom.cpp	2008-05-19 18:49:24 UTC (rev 1357)
++++ trunk/extra/Brefcom.cpp	2008-05-20 20:05:08 UTC (rev 1358)
+@@ -5,22 +5,7 @@
+ #include&lt;yade/pkg-common/Sphere.hpp&gt;
+ #include&lt;yade/lib-QGLViewer/qglviewer.h&gt;
+ 
+-/*
+-#include&lt;boost/foreach.hpp&gt;
+-#include&lt;boost/range.hpp&gt;
+-namespace boost {
+-	template&lt;&gt; struct range_iterator&lt;InteractionContainer&gt;{typedef shared_ptr&lt;Interaction&gt; type;};
+-	template&lt;&gt; struct range_const_iterator&lt;InteractionContainer&gt;{typedef shared_ptr&lt;Interaction&gt; type;};
+-	template&lt;&gt; struct range_size&lt;InteractionContainer&gt;{typedef unsigned int type;};
+-}
+-inline shared_ptr&lt;Interaction&gt; boost_range_begin(InteractionContainer&amp; c){return *(c.begin());}
+-//inline shared_ptr&lt;Interaction&gt; boost_range_begin(const InteractionContainer&amp; c){return *(c.begin());}
+-inline shared_ptr&lt;Interaction&gt; boost_range_end(InteractionContainer&amp; c){return *(c.end());}
+-//inline shared_ptr&lt;Interaction&gt; boost_range_end(const InteractionContainer&amp; c){return *(c.end());}
+-inline boost::range_size&lt;InteractionContainer&gt;::type boost_range_size(InteractionContainer&amp; c){return c.size();}
+-*/
+ 
+-
+ YADE_PLUGIN(&quot;BrefcomMakeContact&quot;,&quot;BrefcomContact&quot;,&quot;BrefcomLaw&quot;,&quot;GLDrawBrefcomContact&quot;,&quot;BrefcomDamageColorizer&quot; /* ,&quot;BrefcomStiffnessCounter&quot;*/ );
+ 
+ /********************** BrefcomMakeContact ****************************/
+@@ -173,7 +158,7 @@
+ void BrefcomLaw::action(MetaBody* _rootBody){
+ 	rootBody=_rootBody;
+ 	
+-	foreach(shared_ptr&lt;Interaction&gt; I, *rootBody-&gt;transientInteractions){
++	FOREACH(shared_ptr&lt;Interaction&gt; I, *rootBody-&gt;transientInteractions){
+ 		if(!I-&gt;isReal) continue;
+ 		//TRACE;
+ 		// initialize temporaries
+@@ -332,14 +317,14 @@
+ void BrefcomDamageColorizer::action(MetaBody* rootBody){
+ 	vector&lt;pair&lt;short,Real&gt; &gt; bodyDamage; /* number of cohesive interactions per body; cummulative damage of interactions */
+ 	bodyDamage.resize(rootBody-&gt;bodies-&gt;size(),pair&lt;short,Real&gt;(0,0));
+-	foreach(shared_ptr&lt;Interaction&gt; I, *rootBody-&gt;transientInteractions){
++	FOREACH(shared_ptr&lt;Interaction&gt; I, *rootBody-&gt;transientInteractions){
+ 		shared_ptr&lt;BrefcomContact&gt; BC=dynamic_pointer_cast&lt;BrefcomContact&gt;(I-&gt;interactionPhysics);
+ 		if(!BC || !BC-&gt;isCohesive) continue;
+ 		const body_id_t id1=I-&gt;getId1(), id2=I-&gt;getId2();
+ 		bodyDamage[id1].first++; bodyDamage[id2].first++;
+ 		bodyDamage[id1].second+=BC-&gt;omega; bodyDamage[id2].second+=BC-&gt;omega;
+ 	}
+-	foreach(shared_ptr&lt;Body&gt; B, *rootBody-&gt;bodies){
++	FOREACH(shared_ptr&lt;Body&gt; B, *rootBody-&gt;bodies){
+ 		if(bodyDamage[B-&gt;getId()].first==0) continue;
+ 		Real normDmg=bodyDamage[B-&gt;getId()].second/bodyDamage[B-&gt;getId()].first;
+ 		B-&gt;geometricalModel-&gt;diffuseColor=Vector3r(normDmg,1-normDmg,B-&gt;isDynamic?0:1);
+
+Modified: trunk/extra/clump/Shop.cpp
+===================================================================
+--- trunk/extra/clump/Shop.cpp	2008-05-19 18:49:24 UTC (rev 1357)
++++ trunk/extra/clump/Shop.cpp	2008-05-20 20:05:08 UTC (rev 1358)
+@@ -416,7 +416,7 @@
+ 	ofstream f(fname.c_str());
+ 	if(!f.good()) throw runtime_error(&quot;Unable to open file `&quot;+fname+&quot;'&quot;);
+ 
+-	foreach(shared_ptr&lt;Body&gt; b, *rootBody-&gt;bodies){
++	FOREACH(shared_ptr&lt;Body&gt; b, *rootBody-&gt;bodies){
+ 		if (!b-&gt;isDynamic) continue;
+ 		shared_ptr&lt;InteractingSphere&gt;	intSph=dynamic_pointer_cast&lt;InteractingSphere&gt;(b-&gt;interactingGeometry);
+ 		if(!intSph) continue;
+@@ -1082,7 +1082,7 @@
+ 
+ Real Shop::ElasticWaveTimestepEstimate(shared_ptr&lt;MetaBody&gt; rootBody){
+ 	Real minDt=std::numeric_limits&lt;Real&gt;::infinity();
+-	foreach(shared_ptr&lt;Body&gt; b, *rootBody-&gt;bodies){
++	FOREACH(shared_ptr&lt;Body&gt; b, *rootBody-&gt;bodies){
+ 		shared_ptr&lt;Sphere&gt; sphere=dynamic_pointer_cast&lt;Sphere&gt;(b-&gt;geometricalModel);
+ 		shared_ptr&lt;ElasticBodyParameters&gt; elast=dynamic_pointer_cast&lt;ElasticBodyParameters&gt;(b-&gt;physicalParameters);
+ 		if(!sphere || !elast) continue;
+
+Modified: trunk/extra/usct/UniaxialStrainControlledTest.cpp
+===================================================================
+--- trunk/extra/usct/UniaxialStrainControlledTest.cpp	2008-05-19 18:49:24 UTC (rev 1357)
++++ trunk/extra/usct/UniaxialStrainControlledTest.cpp	2008-05-20 20:05:08 UTC (rev 1358)
+@@ -23,8 +23,8 @@
+ 	assert(posIds.size()&gt;0);
+ 	assert(negIds.size()&gt;0);
+ 	posCoords.clear(); negCoords.clear();
+-	BOOST_FOREACH(body_id_t id,posIds){ const shared_ptr&lt;Body&gt;&amp; b=Body::byId(id); posCoords.push_back(b-&gt;physicalParameters-&gt;se3.position[axis]); b-&gt;isDynamic=false;}
+-	BOOST_FOREACH(body_id_t id,negIds){ const shared_ptr&lt;Body&gt;&amp; b=Body::byId(id); negCoords.push_back(b-&gt;physicalParameters-&gt;se3.position[axis]); b-&gt;isDynamic=false;}
++	FOREACH(body_id_t id,posIds){ const shared_ptr&lt;Body&gt;&amp; b=Body::byId(id); posCoords.push_back(b-&gt;physicalParameters-&gt;se3.position[axis]); b-&gt;isDynamic=false;}
++	FOREACH(body_id_t id,negIds){ const shared_ptr&lt;Body&gt;&amp; b=Body::byId(id); negCoords.push_back(b-&gt;physicalParameters-&gt;se3.position[axis]); b-&gt;isDynamic=false;}
+ 	assert(posIds.size()==posCoords.size() &amp;&amp; negIds.size()==negCoords.size());
+ 
+ 	originalLength=axisCoord(posIds[0])-axisCoord(negIds[0]);
+@@ -55,13 +55,13 @@
+ 	if(transStrainSensors.size()==0) return;
+ 	if(!sensorsPusher){
+ 		int count=0;
+-		foreach(const shared_ptr&lt;Engine&gt;&amp; e,rb-&gt;engines){
++		FOREACH(const shared_ptr&lt;Engine&gt;&amp; e,rb-&gt;engines){
+ 			if(e-&gt;getClassName()==&quot;UniaxialStrainSensorPusher&quot;){ count++; sensorsPusher=static_pointer_cast&lt;UniaxialStrainSensorPusher&gt;(e); }
+ 		}
+ 		if(count&gt;1) LOG_ERROR(&quot;Multiple UniaxialStrainSensorPusher's found, using the last one&#160;for transversal strain sensors!&quot;);
+ 		if(count&lt;1) { LOG_ERROR(&quot;No UniaxialStrainSensorPusher found, transversal strain sensors will not work!&quot;); return; }
+ 		sensorsPusher-&gt;subscribedBodies.clear();
+-		foreach(body_id_t id, transStrainSensors) sensorsPusher-&gt;subscribedBodies.push_back(id);
++		FOREACH(body_id_t id, transStrainSensors) sensorsPusher-&gt;subscribedBodies.push_back(id);
+ 		sensorsPusher-&gt;forces.resize(transStrainSensors.size());
+ 		//TRVAR3(transStrainSensors.size(),sensorsPusher-&gt;subscribedBodies.size(),sensorsPusher-&gt;forces.size());
+ 	}
+@@ -69,7 +69,7 @@
+ 	Real forceMagnitude=.001*avgStress*transStrainSensorArea;
+ 	Real maxVelocity=2*strainRate*originalLength; // move at max 5 &#215; faster than strained ends
+ 	/* reset orientation to identity and limit velocity */
+-	foreach(body_id_t id, transStrainSensors){
++	FOREACH(body_id_t id, transStrainSensors){
+ 		const shared_ptr&lt;Body&gt;&amp; b=Body::byId(id); const shared_ptr&lt;ParticleParameters&gt;&amp; pp=YADE_PTR_CAST&lt;ParticleParameters&gt;(b-&gt;physicalParameters);
+ 		pp-&gt;se3.orientation=Quaternionr::IDENTITY;
+ 		if(pp-&gt;velocity.SquaredLength()&gt;pow(maxVelocity,2)){ pp-&gt;velocity.Normalize(); pp-&gt;velocity*=maxVelocity; }
+@@ -112,7 +112,7 @@
+ 		originalWidths.push_back(2*rbAABB-&gt;halfSize[transAxis]);
+ 		body_id_t sensId[]={transStrainSensors[2*(i-1)],transStrainSensors[2*(i-1)+1]};
+ 		// do the same on either side, only positioning will be different
+-		BOOST_FOREACH(body_id_t id, sensId){
++		FOREACH(body_id_t id, sensId){
+ 			shared_ptr&lt;Body&gt; b=Body::byId(id);
+ 			shared_ptr&lt;RigidBodyParameters&gt; rbp=dynamic_pointer_cast&lt;RigidBodyParameters&gt;(b-&gt;physicalParameters);
+ 			shared_ptr&lt;Box&gt; box=dynamic_pointer_cast&lt;Box&gt;(b-&gt;geometricalModel);
+@@ -178,8 +178,8 @@
+ 
+ void UniaxialStrainer::computeAxialForce(MetaBody* rootBody){
+ 	sumPosForces=sumNegForces=0;
+-	foreach(body_id_t id, negIds) sumNegForces+=Shop::Bex::force(id)[axis];
+-	foreach(body_id_t id, posIds) sumPosForces-=Shop::Bex::force(id)[axis];
++	FOREACH(body_id_t id, negIds) sumNegForces+=Shop::Bex::force(id)[axis];
++	FOREACH(body_id_t id, posIds) sumPosForces-=Shop::Bex::force(id)[axis];
+ }
+ 
+ /***************************************** USCTGen **************************/
+
+Modified: trunk/extra/usct/UniaxialStrainControlledTest.hpp
+===================================================================
+--- trunk/extra/usct/UniaxialStrainControlledTest.hpp	2008-05-19 18:49:24 UTC (rev 1357)
++++ trunk/extra/usct/UniaxialStrainControlledTest.hpp	2008-05-20 20:05:08 UTC (rev 1358)
+@@ -7,8 +7,8 @@
+ #include&lt;yade/core/DeusExMachina.hpp&gt;
+ #include&lt;yade/core/PhysicalAction.hpp&gt;
+ 
+-#ifndef foreach
+-#define foreach BOOST_FOREACH
++#ifndef FOREACH
++#define FOREACH BOOST_FOREACH
+ #endif
+ 
+ class USCTGen: public FileGenerator {
+
+Modified: trunk/gui/py/yadeControl.cpp
+===================================================================
+--- trunk/gui/py/yadeControl.cpp	2008-05-19 18:49:24 UTC (rev 1357)
++++ trunk/gui/py/yadeControl.cpp	2008-05-20 20:05:08 UTC (rev 1358)
+@@ -350,7 +350,7 @@
+ 
+ 	python::list miscParams_get(){
+ 		python::list ret;
+-		BOOST_FOREACH(shared_ptr&lt;Serializable&gt;&amp; s, OMEGA.getRootBody()-&gt;miscParams){
++		FOREACH(shared_ptr&lt;Serializable&gt;&amp; s, OMEGA.getRootBody()-&gt;miscParams){
+ 			ret.append(pyGeneric(s));
+ 		}
+ 		return ret;
+@@ -368,7 +368,7 @@
+ 
+ 	python::list anyEngines_get(vector&lt;shared_ptr&lt;Engine&gt; &gt;&amp; engContainer){
+ 		python::list ret; 
+-		BOOST_FOREACH(shared_ptr&lt;Engine&gt;&amp; eng, engContainer){
++		FOREACH(shared_ptr&lt;Engine&gt;&amp; eng, engContainer){
+ 			#define APPEND_ENGINE_IF_POSSIBLE(engineType,pyEngineType) { shared_ptr&lt;engineType&gt; e=dynamic_pointer_cast&lt;engineType&gt;(eng); if(e) { ret.append(pyEngineType(e)); continue; } }
+ 			APPEND_ENGINE_IF_POSSIBLE(MetaEngine,pyMetaEngine); APPEND_ENGINE_IF_POSSIBLE(StandAloneEngine,pyStandAloneEngine); APPEND_ENGINE_IF_POSSIBLE(DeusExMachina,pyDeusExMachina);
+ 			throw std::runtime_error(&quot;Unknown engine type: `&quot;+eng-&gt;getClassName()+&quot;' (only MetaEngine, StandAloneEngine and DeusExMachina are supported)&quot;);
+
+Modified: trunk/gui/qt3/MessageDialog.cpp
+===================================================================
+--- trunk/gui/qt3/MessageDialog.cpp	2008-05-19 18:49:24 UTC (rev 1357)
++++ trunk/gui/qt3/MessageDialog.cpp	2008-05-20 20:05:08 UTC (rev 1358)
+@@ -31,10 +31,13 @@
+ //	resize(teMessage-&gt;size().width()+20,teMessage-&gt;size().height()+30+pbOk-&gt;size().height());
+ //	pbOk-&gt;move((size().width()-pbOk-&gt;size().width())/2,teMessage-&gt;size().height()+20);
+ 
+-	QSize s1 = parent-&gt;size();
+-	QSize s2 = size();
+-	QSize s = s1-s2;
+-	reparent(parent,QPoint(s.width()/2,s.height()/2));	
++
++	if(parent){
++		QSize s1 = parent-&gt;size();
++		QSize s2 = size();
++		QSize s = s1-s2;
++		reparent(parent,QPoint(s.width()/2,s.height()/2));	
++	}
+ 	
+ 	show();
+ 	startTimer(10);
+
+Modified: trunk/gui/qt3/QtGeneratedSimulationController.ui
+===================================================================
+--- trunk/gui/qt3/QtGeneratedSimulationController.ui	2008-05-19 18:49:24 UTC (rev 1357)
++++ trunk/gui/qt3/QtGeneratedSimulationController.ui	2008-05-20 20:05:08 UTC (rev 1358)
+@@ -8,7 +8,7 @@
+         &lt;rect&gt;
+             &lt;x&gt;0&lt;/x&gt;
+             &lt;y&gt;0&lt;/y&gt;
+-            &lt;width&gt;233&lt;/width&gt;
++            &lt;width&gt;320&lt;/width&gt;
+             &lt;height&gt;550&lt;/height&gt;
+         &lt;/rect&gt;
+     &lt;/property&gt;
+@@ -83,96 +83,8 @@
+                     &lt;set&gt;AlignCenter&lt;/set&gt;
+                 &lt;/property&gt;
+             &lt;/widget&gt;
+-            &lt;widget class=&quot;QSpinBox&quot;&gt;
+-                &lt;property name=&quot;name&quot;&gt;
+-                    &lt;cstring&gt;sb10PowerSecond&lt;/cstring&gt;
+-                &lt;/property&gt;
+-                &lt;property name=&quot;enabled&quot;&gt;
+-                    &lt;bool&gt;true&lt;/bool&gt;
+-                &lt;/property&gt;
+-                &lt;property name=&quot;geometry&quot;&gt;
+-                    &lt;rect&gt;
+-                        &lt;x&gt;120&lt;/x&gt;
+-                        &lt;y&gt;260&lt;/y&gt;
+-                        &lt;width&gt;40&lt;/width&gt;
+-                        &lt;height&gt;25&lt;/height&gt;
+-                    &lt;/rect&gt;
+-                &lt;/property&gt;
+-                &lt;property name=&quot;maxValue&quot;&gt;
+-                    &lt;number&gt;20&lt;/number&gt;
+-                &lt;/property&gt;
+-                &lt;property name=&quot;minValue&quot;&gt;
+-                    &lt;number&gt;-20&lt;/number&gt;
+-                &lt;/property&gt;
+-                &lt;property name=&quot;value&quot;&gt;
+-                    &lt;number&gt;-3&lt;/number&gt;
+-                &lt;/property&gt;
+-            &lt;/widget&gt;
+-            &lt;widget class=&quot;QLabel&quot;&gt;
+-                &lt;property name=&quot;name&quot;&gt;
+-                    &lt;cstring&gt;tl10Power&lt;/cstring&gt;
+-                &lt;/property&gt;
+-                &lt;property name=&quot;enabled&quot;&gt;
+-                    &lt;bool&gt;true&lt;/bool&gt;
+-                &lt;/property&gt;
+-                &lt;property name=&quot;geometry&quot;&gt;
+-                    &lt;rect&gt;
+-                        &lt;x&gt;90&lt;/x&gt;
+-                        &lt;y&gt;260&lt;/y&gt;
+-                        &lt;width&gt;30&lt;/width&gt;
+-                        &lt;height&gt;25&lt;/height&gt;
+-                    &lt;/rect&gt;
+-                &lt;/property&gt;
+-                &lt;property name=&quot;text&quot;&gt;
+-                    &lt;string&gt;x10&lt;/string&gt;
+-                &lt;/property&gt;
+-                &lt;property name=&quot;alignment&quot;&gt;
+-                    &lt;set&gt;AlignVCenter|AlignRight&lt;/set&gt;
+-                &lt;/property&gt;
+-            &lt;/widget&gt;
+-            &lt;widget class=&quot;QSpinBox&quot;&gt;
+-                &lt;property name=&quot;name&quot;&gt;
+-                    &lt;cstring&gt;sbSecond&lt;/cstring&gt;
+-                &lt;/property&gt;
+-                &lt;property name=&quot;enabled&quot;&gt;
+-                    &lt;bool&gt;true&lt;/bool&gt;
+-                &lt;/property&gt;
+-                &lt;property name=&quot;geometry&quot;&gt;
+-                    &lt;rect&gt;
+-                        &lt;x&gt;40&lt;/x&gt;
+-                        &lt;y&gt;260&lt;/y&gt;
+-                        &lt;width&gt;49&lt;/width&gt;
+-                        &lt;height&gt;25&lt;/height&gt;
+-                    &lt;/rect&gt;
+-                &lt;/property&gt;
+-                &lt;property name=&quot;value&quot;&gt;
+-                    &lt;number&gt;40&lt;/number&gt;
+-                &lt;/property&gt;
+-            &lt;/widget&gt;
+             &lt;widget class=&quot;QPushButton&quot;&gt;
+                 &lt;property name=&quot;name&quot;&gt;
+-                    &lt;cstring&gt;pbStopSimulation&lt;/cstring&gt;
+-                &lt;/property&gt;
+-                &lt;property name=&quot;enabled&quot;&gt;
+-                    &lt;bool&gt;false&lt;/bool&gt;
+-                &lt;/property&gt;
+-                &lt;property name=&quot;geometry&quot;&gt;
+-                    &lt;rect&gt;
+-                        &lt;x&gt;90&lt;/x&gt;
+-                        &lt;y&gt;80&lt;/y&gt;
+-                        &lt;width&gt;70&lt;/width&gt;
+-                        &lt;height&gt;60&lt;/height&gt;
+-                    &lt;/rect&gt;
+-                &lt;/property&gt;
+-                &lt;property name=&quot;text&quot;&gt;
+-                    &lt;string&gt;&lt;/string&gt;
+-                &lt;/property&gt;
+-                &lt;property name=&quot;pixmap&quot;&gt;
+-                    &lt;pixmap&gt;image0&lt;/pixmap&gt;
+-                &lt;/property&gt;
+-            &lt;/widget&gt;
+-            &lt;widget class=&quot;QPushButton&quot;&gt;
+-                &lt;property name=&quot;name&quot;&gt;
+                     &lt;cstring&gt;pbLoadSimulation&lt;/cstring&gt;
+                 &lt;/property&gt;
+                 &lt;property name=&quot;geometry&quot;&gt;
+@@ -205,12 +117,15 @@
+             &lt;/widget&gt;
+             &lt;widget class=&quot;QPushButton&quot;&gt;
+                 &lt;property name=&quot;name&quot;&gt;
+-                    &lt;cstring&gt;pbCenterScene_2&lt;/cstring&gt;
++                    &lt;cstring&gt;pbNewView_2&lt;/cstring&gt;
+                 &lt;/property&gt;
++                &lt;property name=&quot;enabled&quot;&gt;
++                    &lt;bool&gt;true&lt;/bool&gt;
++                &lt;/property&gt;
+                 &lt;property name=&quot;geometry&quot;&gt;
+                     &lt;rect&gt;
+                         &lt;x&gt;10&lt;/x&gt;
+-                        &lt;y&gt;300&lt;/y&gt;
++                        &lt;y&gt;340&lt;/y&gt;
+                         &lt;width&gt;150&lt;/width&gt;
+                         &lt;height&gt;33&lt;/height&gt;
+                     &lt;/rect&gt;
+@@ -224,20 +139,17 @@
+                     &lt;/sizepolicy&gt;
+                 &lt;/property&gt;
+                 &lt;property name=&quot;text&quot;&gt;
+-                    &lt;string&gt;Center Scene&lt;/string&gt;
++                    &lt;string&gt;New View ...&lt;/string&gt;
+                 &lt;/property&gt;
+             &lt;/widget&gt;
+             &lt;widget class=&quot;QPushButton&quot;&gt;
+                 &lt;property name=&quot;name&quot;&gt;
+-                    &lt;cstring&gt;pbNewView_2&lt;/cstring&gt;
++                    &lt;cstring&gt;pbCenterScene_2&lt;/cstring&gt;
+                 &lt;/property&gt;
+-                &lt;property name=&quot;enabled&quot;&gt;
+-                    &lt;bool&gt;true&lt;/bool&gt;
+-                &lt;/property&gt;
+                 &lt;property name=&quot;geometry&quot;&gt;
+                     &lt;rect&gt;
+                         &lt;x&gt;10&lt;/x&gt;
+-                        &lt;y&gt;340&lt;/y&gt;
++                        &lt;y&gt;300&lt;/y&gt;
+                         &lt;width&gt;150&lt;/width&gt;
+                         &lt;height&gt;33&lt;/height&gt;
+                     &lt;/rect&gt;
+@@ -251,65 +163,74 @@
+                     &lt;/sizepolicy&gt;
+                 &lt;/property&gt;
+                 &lt;property name=&quot;text&quot;&gt;
+-                    &lt;string&gt;New View ...&lt;/string&gt;
++                    &lt;string&gt;Center Scene&lt;/string&gt;
+                 &lt;/property&gt;
+             &lt;/widget&gt;
+-            &lt;widget class=&quot;QRadioButton&quot;&gt;
++            &lt;widget class=&quot;QPushButton&quot;&gt;
+                 &lt;property name=&quot;name&quot;&gt;
+-                    &lt;cstring&gt;rbFixed&lt;/cstring&gt;
++                    &lt;cstring&gt;pbStartSimulation&lt;/cstring&gt;
+                 &lt;/property&gt;
+                 &lt;property name=&quot;enabled&quot;&gt;
+-                    &lt;bool&gt;true&lt;/bool&gt;
++                    &lt;bool&gt;false&lt;/bool&gt;
+                 &lt;/property&gt;
+                 &lt;property name=&quot;geometry&quot;&gt;
+                     &lt;rect&gt;
+                         &lt;x&gt;10&lt;/x&gt;
+-                        &lt;y&gt;230&lt;/y&gt;
+-                        &lt;width&gt;116&lt;/width&gt;
+-                        &lt;height&gt;25&lt;/height&gt;
++                        &lt;y&gt;70&lt;/y&gt;
++                        &lt;width&gt;70&lt;/width&gt;
++                        &lt;height&gt;60&lt;/height&gt;
+                     &lt;/rect&gt;
+                 &lt;/property&gt;
+                 &lt;property name=&quot;text&quot;&gt;
+-                    &lt;string&gt;Fixed step&lt;/string&gt;
++                    &lt;string&gt;&lt;/string&gt;
+                 &lt;/property&gt;
++                &lt;property name=&quot;pixmap&quot;&gt;
++                    &lt;pixmap&gt;image0&lt;/pixmap&gt;
++                &lt;/property&gt;
+             &lt;/widget&gt;
+-            &lt;widget class=&quot;QRadioButton&quot;&gt;
++            &lt;widget class=&quot;QPushButton&quot;&gt;
+                 &lt;property name=&quot;name&quot;&gt;
+-                    &lt;cstring&gt;rbTimeStepper&lt;/cstring&gt;
++                    &lt;cstring&gt;pbStopSimulation&lt;/cstring&gt;
+                 &lt;/property&gt;
+                 &lt;property name=&quot;enabled&quot;&gt;
+-                    &lt;bool&gt;true&lt;/bool&gt;
++                    &lt;bool&gt;false&lt;/bool&gt;
+                 &lt;/property&gt;
+                 &lt;property name=&quot;geometry&quot;&gt;
+                     &lt;rect&gt;
+-                        &lt;x&gt;10&lt;/x&gt;
+-                        &lt;y&gt;200&lt;/y&gt;
+-                        &lt;width&gt;116&lt;/width&gt;
+-                        &lt;height&gt;25&lt;/height&gt;
++                        &lt;x&gt;90&lt;/x&gt;
++                        &lt;y&gt;70&lt;/y&gt;
++                        &lt;width&gt;70&lt;/width&gt;
++                        &lt;height&gt;60&lt;/height&gt;
+                     &lt;/rect&gt;
+                 &lt;/property&gt;
+                 &lt;property name=&quot;text&quot;&gt;
+-                    &lt;string&gt;Time stepper&lt;/string&gt;
++                    &lt;string&gt;&lt;/string&gt;
+                 &lt;/property&gt;
++                &lt;property name=&quot;pixmap&quot;&gt;
++                    &lt;pixmap&gt;image1&lt;/pixmap&gt;
++                &lt;/property&gt;
+             &lt;/widget&gt;
+-            &lt;widget class=&quot;QRadioButton&quot;&gt;
++            &lt;widget class=&quot;QPushButton&quot;&gt;
+                 &lt;property name=&quot;name&quot;&gt;
+-                    &lt;cstring&gt;rbRealTime&lt;/cstring&gt;
++                    &lt;cstring&gt;pbOneSimulationStep&lt;/cstring&gt;
+                 &lt;/property&gt;
+                 &lt;property name=&quot;enabled&quot;&gt;
+                     &lt;bool&gt;false&lt;/bool&gt;
+                 &lt;/property&gt;
+                 &lt;property name=&quot;geometry&quot;&gt;
+                     &lt;rect&gt;
+-                        &lt;x&gt;140&lt;/x&gt;
+-                        &lt;y&gt;200&lt;/y&gt;
+-                        &lt;width&gt;16&lt;/width&gt;
+-                        &lt;height&gt;25&lt;/height&gt;
++                        &lt;x&gt;10&lt;/x&gt;
++                        &lt;y&gt;140&lt;/y&gt;
++                        &lt;width&gt;40&lt;/width&gt;
++                        &lt;height&gt;40&lt;/height&gt;
+                     &lt;/rect&gt;
+                 &lt;/property&gt;
+                 &lt;property name=&quot;text&quot;&gt;
+-                    &lt;string&gt;Real Time&lt;/string&gt;
++                    &lt;string&gt;&lt;/string&gt;
+                 &lt;/property&gt;
++                &lt;property name=&quot;pixmap&quot;&gt;
++                    &lt;pixmap&gt;image2&lt;/pixmap&gt;
++                &lt;/property&gt;
+             &lt;/widget&gt;
+             &lt;widget class=&quot;QPushButton&quot;&gt;
+                 &lt;property name=&quot;name&quot;&gt;
+@@ -321,7 +242,7 @@
+                 &lt;property name=&quot;geometry&quot;&gt;
+                     &lt;rect&gt;
+                         &lt;x&gt;60&lt;/x&gt;
+-                        &lt;y&gt;150&lt;/y&gt;
++                        &lt;y&gt;140&lt;/y&gt;
+                         &lt;width&gt;100&lt;/width&gt;
+                         &lt;height&gt;40&lt;/height&gt;
+                     &lt;/rect&gt;
+@@ -330,56 +251,151 @@
+                     &lt;string&gt;&lt;/string&gt;
+                 &lt;/property&gt;
+                 &lt;property name=&quot;pixmap&quot;&gt;
+-                    &lt;pixmap&gt;image1&lt;/pixmap&gt;
++                    &lt;pixmap&gt;image3&lt;/pixmap&gt;
+                 &lt;/property&gt;
+                 &lt;property name=&quot;toolTip&quot; stdset=&quot;0&quot;&gt;
+                     &lt;string&gt;Note: currently using synchronized display can *sometimes* lead to crash when reloading file.&lt;/string&gt;
+                 &lt;/property&gt;
+             &lt;/widget&gt;
+-            &lt;widget class=&quot;QPushButton&quot;&gt;
++            &lt;widget class=&quot;QSpinBox&quot;&gt;
+                 &lt;property name=&quot;name&quot;&gt;
+-                    &lt;cstring&gt;pbOneSimulationStep&lt;/cstring&gt;
++                    &lt;cstring&gt;sb10PowerSecond&lt;/cstring&gt;
+                 &lt;/property&gt;
+                 &lt;property name=&quot;enabled&quot;&gt;
+-                    &lt;bool&gt;false&lt;/bool&gt;
++                    &lt;bool&gt;true&lt;/bool&gt;
+                 &lt;/property&gt;
+                 &lt;property name=&quot;geometry&quot;&gt;
+                     &lt;rect&gt;
+-                        &lt;x&gt;10&lt;/x&gt;
+-                        &lt;y&gt;150&lt;/y&gt;
++                        &lt;x&gt;120&lt;/x&gt;
++                        &lt;y&gt;270&lt;/y&gt;
+                         &lt;width&gt;40&lt;/width&gt;
+-                        &lt;height&gt;40&lt;/height&gt;
++                        &lt;height&gt;25&lt;/height&gt;
+                     &lt;/rect&gt;
+                 &lt;/property&gt;
+-                &lt;property name=&quot;text&quot;&gt;
+-                    &lt;string&gt;&lt;/string&gt;
++                &lt;property name=&quot;maxValue&quot;&gt;
++                    &lt;number&gt;20&lt;/number&gt;
+                 &lt;/property&gt;
+-                &lt;property name=&quot;pixmap&quot;&gt;
+-                    &lt;pixmap&gt;image2&lt;/pixmap&gt;
++                &lt;property name=&quot;minValue&quot;&gt;
++                    &lt;number&gt;-20&lt;/number&gt;
+                 &lt;/property&gt;
++                &lt;property name=&quot;value&quot;&gt;
++                    &lt;number&gt;-3&lt;/number&gt;
++                &lt;/property&gt;
+             &lt;/widget&gt;
+-            &lt;widget class=&quot;QPushButton&quot;&gt;
++            &lt;widget class=&quot;QLabel&quot;&gt;
+                 &lt;property name=&quot;name&quot;&gt;
+-                    &lt;cstring&gt;pbStartSimulation&lt;/cstring&gt;
++                    &lt;cstring&gt;tl10Power&lt;/cstring&gt;
+                 &lt;/property&gt;
+                 &lt;property name=&quot;enabled&quot;&gt;
+-                    &lt;bool&gt;false&lt;/bool&gt;
++                    &lt;bool&gt;true&lt;/bool&gt;
+                 &lt;/property&gt;
+                 &lt;property name=&quot;geometry&quot;&gt;
+                     &lt;rect&gt;
+-                        &lt;x&gt;10&lt;/x&gt;
+-                        &lt;y&gt;80&lt;/y&gt;
+-                        &lt;width&gt;70&lt;/width&gt;
+-                        &lt;height&gt;60&lt;/height&gt;
++                        &lt;x&gt;80&lt;/x&gt;
++                        &lt;y&gt;270&lt;/y&gt;
++                        &lt;width&gt;30&lt;/width&gt;
++                        &lt;height&gt;25&lt;/height&gt;
+                     &lt;/rect&gt;
+                 &lt;/property&gt;
+                 &lt;property name=&quot;text&quot;&gt;
+-                    &lt;string&gt;&lt;/string&gt;
++                    &lt;string&gt;x10&lt;/string&gt;
+                 &lt;/property&gt;
+-                &lt;property name=&quot;pixmap&quot;&gt;
+-                    &lt;pixmap&gt;image3&lt;/pixmap&gt;
++                &lt;property name=&quot;alignment&quot;&gt;
++                    &lt;set&gt;AlignVCenter|AlignRight&lt;/set&gt;
+                 &lt;/property&gt;
+             &lt;/widget&gt;
++            &lt;widget class=&quot;QSpinBox&quot;&gt;
++                &lt;property name=&quot;name&quot;&gt;
++                    &lt;cstring&gt;sbSecond&lt;/cstring&gt;
++                &lt;/property&gt;
++                &lt;property name=&quot;enabled&quot;&gt;
++                    &lt;bool&gt;true&lt;/bool&gt;
++                &lt;/property&gt;
++                &lt;property name=&quot;geometry&quot;&gt;
++                    &lt;rect&gt;
++                        &lt;x&gt;30&lt;/x&gt;
++                        &lt;y&gt;270&lt;/y&gt;
++                        &lt;width&gt;49&lt;/width&gt;
++                        &lt;height&gt;25&lt;/height&gt;
++                    &lt;/rect&gt;
++                &lt;/property&gt;
++                &lt;property name=&quot;value&quot;&gt;
++                    &lt;number&gt;40&lt;/number&gt;
++                &lt;/property&gt;
++            &lt;/widget&gt;
++            &lt;widget class=&quot;QButtonGroup&quot;&gt;
++                &lt;property name=&quot;name&quot;&gt;
++                    &lt;cstring&gt;timestep&lt;/cstring&gt;
++                &lt;/property&gt;
++                &lt;property name=&quot;geometry&quot;&gt;
++                    &lt;rect&gt;
++                        &lt;x&gt;10&lt;/x&gt;
++                        &lt;y&gt;180&lt;/y&gt;
++                        &lt;width&gt;150&lt;/width&gt;
++                        &lt;height&gt;80&lt;/height&gt;
++                    &lt;/rect&gt;
++                &lt;/property&gt;
++                &lt;property name=&quot;title&quot;&gt;
++                    &lt;string&gt;timestep&lt;/string&gt;
++                &lt;/property&gt;
++                &lt;widget class=&quot;QRadioButton&quot;&gt;
++                    &lt;property name=&quot;name&quot;&gt;
++                        &lt;cstring&gt;rbRealTime&lt;/cstring&gt;
++                    &lt;/property&gt;
++                    &lt;property name=&quot;enabled&quot;&gt;
++                        &lt;bool&gt;false&lt;/bool&gt;
++                    &lt;/property&gt;
++                    &lt;property name=&quot;geometry&quot;&gt;
++                        &lt;rect&gt;
++                            &lt;x&gt;120&lt;/x&gt;
++                            &lt;y&gt;50&lt;/y&gt;
++                            &lt;width&gt;16&lt;/width&gt;
++                            &lt;height&gt;25&lt;/height&gt;
++                        &lt;/rect&gt;
++                    &lt;/property&gt;
++                    &lt;property name=&quot;text&quot;&gt;
++                        &lt;string&gt;Real Time&lt;/string&gt;
++                    &lt;/property&gt;
++                &lt;/widget&gt;
++                &lt;widget class=&quot;QRadioButton&quot;&gt;
++                    &lt;property name=&quot;name&quot;&gt;
++                        &lt;cstring&gt;rbFixed&lt;/cstring&gt;
++                    &lt;/property&gt;
++                    &lt;property name=&quot;enabled&quot;&gt;
++                        &lt;bool&gt;true&lt;/bool&gt;
++                    &lt;/property&gt;
++                    &lt;property name=&quot;geometry&quot;&gt;
++                        &lt;rect&gt;
++                            &lt;x&gt;10&lt;/x&gt;
++                            &lt;y&gt;50&lt;/y&gt;
++                            &lt;width&gt;116&lt;/width&gt;
++                            &lt;height&gt;25&lt;/height&gt;
++                        &lt;/rect&gt;
++                    &lt;/property&gt;
++                    &lt;property name=&quot;text&quot;&gt;
++                        &lt;string&gt;Fixed step&lt;/string&gt;
++                    &lt;/property&gt;
++                &lt;/widget&gt;
++                &lt;widget class=&quot;QRadioButton&quot;&gt;
++                    &lt;property name=&quot;name&quot;&gt;
++                        &lt;cstring&gt;rbTimeStepper&lt;/cstring&gt;
++                    &lt;/property&gt;
++                    &lt;property name=&quot;enabled&quot;&gt;
++                        &lt;bool&gt;true&lt;/bool&gt;
++                    &lt;/property&gt;
++                    &lt;property name=&quot;geometry&quot;&gt;
++                        &lt;rect&gt;
++                            &lt;x&gt;10&lt;/x&gt;
++                            &lt;y&gt;20&lt;/y&gt;
++                            &lt;width&gt;116&lt;/width&gt;
++                            &lt;height&gt;25&lt;/height&gt;
++                        &lt;/rect&gt;
++                    &lt;/property&gt;
++                    &lt;property name=&quot;text&quot;&gt;
++                        &lt;string&gt;Time stepper&lt;/string&gt;
++                    &lt;/property&gt;
++                &lt;/widget&gt;
++            &lt;/widget&gt;
+         &lt;/widget&gt;
+         &lt;widget class=&quot;QWidget&quot;&gt;
+             &lt;property name=&quot;name&quot;&gt;
+@@ -675,16 +691,16 @@
+ &lt;/widget&gt;
+ &lt;images&gt;
+     &lt;image name=&quot;image0&quot;&gt;
+-        &lt;data format=&quot;PNG&quot; length=&quot;232&quot;&gt;89504e470d0a1a0a0000000d4948445200000015000000150806000000a917a596000000af49444154388ded95a10ec33010435fa2810bbb5f181e1becbe7f8565c1fd85b01eeb401b2d8dc29ab2869c6ccb8ae5931217a7080608981922721afb640904922544841ed8c529764b98f12359424529e76718565880002cc46976597fbd9f6be621f01d4757fbbd8a82818a6266a828db09ff59e8079e8daffded4e614fb2cf423ff0d0ecd41f12ee37d6494bbd95b4f6fbd616eba4a5de4a5afbef4eef4eef4e7b767ac97bdaecf42c7657fc513f8f2ab9c097ced54c0000000049454e44ae426082&lt;/data&gt;
++        &lt;data format=&quot;PNG&quot; length=&quot;252&quot;&gt;89504e470d0a1a0a0000000d4948445200000015000000150806000000a917a596000000c349444154388dadd4310e82401046e1b78462e8f61cda6187e7974ebabdc7764e870d2460609d59a5217f80f0e58510d2944001015545447ede4dd60c02593322c276df867e2e5d3fdb214de9f48dd7fe32033cc72978c44d5100c0cb2d0ea5a6ab743dace262d355ea15375122aa4a94080abb0d40b73bdf87613ebd7fd9a6a65e71537ae391d4227635b58add4d2de2aaa6dbf3631cc3e7f36d6d53e896eff68f4d8f84eb6e6b9a9e09ab9b9684554dbf09dd4d2d425753abd0dcd42334fd4f6bf71b0403e127c7dd51090000000049454e44ae426082&lt;/data&gt;
+     &lt;/image&gt;
+     &lt;image name=&quot;image1&quot;&gt;
+-        &lt;data format=&quot;PNG&quot; length=&quot;210&quot;&gt;89504e470d0a1a0a0000000d4948445200000015000000150806000000a917a5960000009949444154388ded94bd0a0231108427e18ab1db67d1cef737e575f139b6733aaff0222182dc4f0a854b330cec928fafd890c70c0800014920b9bb479703045c0e92e8d1431e7337c2d2634fc2d243ebf4723d3fb1f2e5740f5f9d028f79744536c4d1689004a3bd88719a879767bd6fb44fa75b485ba7b1fe41d226d27aff4d7a383d9cfeb8d3c1e5301a4ade520a755f9268fa1fdfd31ec413524e89890537f1ed0000000049454e44ae426082&lt;/data&gt;
++        &lt;data format=&quot;PNG&quot; length=&quot;232&quot;&gt;89504e470d0a1a0a0000000d4948445200000015000000150806000000a917a596000000af49444154388ded95a10ec33010435fa2810bbb5f181e1becbe7f8565c1fd85b01eeb401b2d8dc29ab2869c6ccb8ae5931217a7080608981922721afb640904922544841ed8c529764b98f12359424529e76718565880002cc46976597fbd9f6be621f01d4757fbbd8a82818a6266a828db09ff59e8079e8daffded4e614fb2cf423ff0d0ecd41f12ee37d6494bbd95b4f6fbd616eba4a5de4a5afbef4eef4eef4e7b767ac97bdaecf42c7657fc513f8f2ab9c097ced54c0000000049454e44ae426082&lt;/data&gt;
+     &lt;/image&gt;
+     &lt;image name=&quot;image2&quot;&gt;
+         &lt;data format=&quot;PNG&quot; length=&quot;273&quot;&gt;89504e470d0a1a0a0000000d4948445200000015000000150806000000a917a596000000d849444154388db595310e83300c451f88c16c5c81b56c744bcf5fc66ef41cd9ea2d1d2088221a42d266b1be1dc54f6f49313e46504040551191ec5c5ab520d0f5adbb9ade757deb3a7371562d228255cb362310ca65230daa0ad44c67aa8d34a073056ec6389f55f563becda5df00aff9d1a9ae097c3f96b8f41bf6481782553f867871ba47ba10f0393f228e76ba9d87884f398d253eed348638c9e91171b2d3107196d375bd0f43e1ef57b94ea1661c9e05bf74ba26f4f7ab1ca75bc26ca77b84594ebf11263b0d1126393d223ced3486d0e7e21f7fd41b9f5d95b4bfffbba60000000049454e44ae426082&lt;/data&gt;
+     &lt;/image&gt;
+     &lt;image name=&quot;image3&quot;&gt;
+-        &lt;data format=&quot;PNG&quot; length=&quot;252&quot;&gt;89504e470d0a1a0a0000000d4948445200000015000000150806000000a917a596000000c349444154388dadd4310e82401046e1b78462e8f61cda6187e7974ebabdc7764e870d2460609d59a5217f80f0e58510d2944001015545447ede4dd60c02593322c276df867e2e5d3fdb214de9f48dd7fe32033cc72978c44d5100c0cb2d0ea5a6ab743dace262d355ea15375122aa4a94080abb0d40b73bdf87613ebd7fd9a6a65e71537ae391d4227635b58add4d2de2aaa6dbf3631cc3e7f36d6d53e896eff68f4d8f84eb6e6b9a9e09ab9b9684554dbf09dd4d2d425753abd0dcd42334fd4f6bf71b0403e127c7dd51090000000049454e44ae426082&lt;/data&gt;
++        &lt;data format=&quot;PNG&quot; length=&quot;210&quot;&gt;89504e470d0a1a0a0000000d4948445200000015000000150806000000a917a5960000009949444154388ded94bd0a0231108427e18ab1db67d1cef737e575f139b6733aaff0222182dc4f0a854b330cec928fafd890c70c0800014920b9bb479703045c0e92e8d1431e7337c2d2634fc2d243ebf4723d3fb1f2e5740f5f9d028f79744536c4d1689004a3bd88719a879767bd6fb44fa75b485ba7b1fe41d226d27aff4d7a383d9cfeb8d3c1e5301a4ade520a755f9268fa1fdfd31ec413524e89890537f1ed0000000049454e44ae426082&lt;/data&gt;
+     &lt;/image&gt;
+ &lt;/images&gt;
+ &lt;connections&gt;
+
+Modified: trunk/pkg/common/Engine/DeusExMachina/FixedPositionEngine.cpp
+===================================================================
+--- trunk/pkg/common/Engine/DeusExMachina/FixedPositionEngine.cpp	2008-05-19 18:49:24 UTC (rev 1357)
++++ trunk/pkg/common/Engine/DeusExMachina/FixedPositionEngine.cpp	2008-05-20 20:05:08 UTC (rev 1358)
+@@ -26,7 +26,7 @@
+ 
+ void FixedPositionEngine::applyCondition(MetaBody * ncb){
+ 	shared_ptr&lt;BodyContainer&gt;&amp; bodies = ncb-&gt;bodies;
+-	BOOST_FOREACH(int id, subscribedBodies){
++	FOREACH(int id, subscribedBodies){
+ 		if(!bodies-&gt;exists(id)) continue;
+ 		if(mask[0]!=0) (*bodies)[id]-&gt;physicalParameters-&gt;se3.position[0]=fixedPosition[0];
+ 		if(mask[1]!=0) (*bodies)[id]-&gt;physicalParameters-&gt;se3.position[1]=fixedPosition[1];
+
+Modified: trunk/pkg/common/Engine/DeusExMachina/ForceEngine.cpp
+===================================================================
+--- trunk/pkg/common/Engine/DeusExMachina/ForceEngine.cpp	2008-05-19 18:49:24 UTC (rev 1357)
++++ trunk/pkg/common/Engine/DeusExMachina/ForceEngine.cpp	2008-05-20 20:05:08 UTC (rev 1358)
+@@ -31,7 +31,7 @@
+ 
+ 
+ void ForceEngine::applyCondition(MetaBody* ncb){
+-	BOOST_FOREACH(body_id_t id, subscribedBodies){
++	FOREACH(body_id_t id, subscribedBodies){
+ 		assert(ncb-&gt;bodies-&gt;exists(id));
+ 		static_pointer_cast&lt;Force&gt;(ncb-&gt;physicalActions-&gt;find(id,actionParameterForce-&gt;getClassIndex()))-&gt;force+=force;
+ 	}
+
+Modified: trunk/pkg/common/Engine/StandAloneEngine/PhysicalActionContainerInitializer.cpp
+===================================================================
+--- trunk/pkg/common/Engine/StandAloneEngine/PhysicalActionContainerInitializer.cpp	2008-05-19 18:49:24 UTC (rev 1357)
++++ trunk/pkg/common/Engine/StandAloneEngine/PhysicalActionContainerInitializer.cpp	2008-05-20 20:05:08 UTC (rev 1358)
+@@ -34,21 +34,21 @@
+ 	list&lt;string&gt; allNames;
+ 	// copy physical action names that were passed by the user directly
+ 	allNames.insert(allNames.end(),physicalActionNames.begin(),physicalActionNames.end());
+-	LOG_DEBUG(&quot;allNames as defined by the user: &quot;);	BOOST_FOREACH(string an,allNames) LOG_DEBUG(an);
++	LOG_DEBUG(&quot;allNames as defined by the user: &quot;);	FOREACH(string an,allNames) LOG_DEBUG(an);
+ 	// loop over all engines, get Bex from them
+-	BOOST_FOREACH(shared_ptr&lt;Engine&gt; e, ncb-&gt;engines){
++	FOREACH(shared_ptr&lt;Engine&gt; e, ncb-&gt;engines){
+ 		list&lt;string&gt; bex=e-&gt;getNeededBex();
+ 		allNames.insert(allNames.end(),bex.begin(),bex.end());
+-		LOG_DEBUG(&quot;The following engines were inserted by &quot;&lt;&lt;e-&gt;getClassName()&lt;&lt;&quot;:&quot;); BOOST_FOREACH(string b,bex) LOG_DEBUG(b);
++		LOG_DEBUG(&quot;The following engines were inserted by &quot;&lt;&lt;e-&gt;getClassName()&lt;&lt;&quot;:&quot;); FOREACH(string b,bex) LOG_DEBUG(b);
+ 	}
+-	LOG_DEBUG(&quot;allNames after loop over engines: &quot;);	BOOST_FOREACH(string an,allNames) LOG_DEBUG(an);
++	LOG_DEBUG(&quot;allNames after loop over engines: &quot;);	FOREACH(string an,allNames) LOG_DEBUG(an);
+ 	// eliminate all duplicates
+ 	allNames.sort();
+ 	allNames.unique();
+-	LOG_DEBUG(&quot;allNames after sort and unique: &quot;);	BOOST_FOREACH(string an,allNames) LOG_DEBUG(an);
++	LOG_DEBUG(&quot;allNames after sort and unique: &quot;);	FOREACH(string an,allNames) LOG_DEBUG(an);
+ 
+ 	vector&lt;shared_ptr&lt;PhysicalAction&gt; &gt; physicalActions;
+-	BOOST_FOREACH(string physicalActionName, allNames){
++	FOREACH(string physicalActionName, allNames){
+ 		physicalActions.push_back(YADE_PTR_CAST&lt;PhysicalAction&gt;(ClassFactory::instance().createShared(physicalActionName)));
+ 	}
+ 	ncb-&gt;physicalActions-&gt;prepare(physicalActions);
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000319.html">[Yade-commits] r1357 - in trunk: core gui gui/py gui/qt3
+</A></li>
+	<LI>Next message: <A HREF="000321.html">[Yade-commits] r1359 - in trunk: core gui/py lib/import	pkg/common/DataClass/PhysicalParameters	pkg/common/Engine/DeusExMachina	pkg/common/Engine/StandAloneEngine pkg/dem/Engine/EngineUnit	pkg/dem/Engine/StandAloneEngine	pkg/dem/RenderingEngine/GLDrawElasticContactInteraction
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#320">[ date ]</a>
+              <a href="thread.html#320">[ thread ]</a>
+              <a href="subject.html#320">[ subject ]</a>
+              <a href="author.html#320">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

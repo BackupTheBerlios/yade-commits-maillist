@@ -1,0 +1,288 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1272 - in trunk: core gui/cmd scripts
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1272%20-%20in%20trunk%3A%20core%20gui/cmd%20scripts&In-Reply-To=%3C200803021028.m22ASShR017953%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000236.html">
+   <LINK REL="Next"  HREF="000238.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1272 - in trunk: core gui/cmd scripts</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1272%20-%20in%20trunk%3A%20core%20gui/cmd%20scripts&In-Reply-To=%3C200803021028.m22ASShR017953%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1272 - in trunk: core gui/cmd scripts">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Sun Mar  2 11:28:28 CET 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000236.html">[Yade-commits] r1271 - in trunk: core extra/usct	pkg/dem/Engine/StandAloneEngine scripts
+</A></li>
+        <LI>Next message: <A HREF="000238.html">[Yade-commits] r1273 - in trunk: .	pkg/common/Engine/StandAloneEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#237">[ date ]</a>
+              <a href="thread.html#237">[ thread ]</a>
+              <a href="subject.html#237">[ subject ]</a>
+              <a href="author.html#237">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2008-03-02 11:28:26 +0100 (Sun, 02 Mar 2008)
+New Revision: 1272
+
+Modified:
+   trunk/core/Omega.cpp
+   trunk/core/Omega.hpp
+   trunk/core/yade.cpp
+   trunk/gui/cmd/cmdGui.cpp
+   trunk/gui/cmd/cmdGuiInit.py
+   trunk/gui/cmd/yadeControl.cpp
+   trunk/scripts/default-test.py
+Log:
+1. cmdGui now exports yade binary name (to allow spawning subprocesses)
+2. default-test.py handles crashing simulations gracefully (by executing them in a subprocess)
+3. Omega retains original argc and argv from the command line.
+
+
+
+Modified: trunk/core/Omega.cpp
+===================================================================
+--- trunk/core/Omega.cpp	2008-03-01 21:45:54 UTC (rev 1271)
++++ trunk/core/Omega.cpp	2008-03-02 10:28:26 UTC (rev 1272)
+@@ -321,6 +321,7 @@
+ 		&amp;&amp;  (filesystem::exists(simulationFileName)) 
+ 		&amp;&amp;  (filesystem::extension(simulationFileName)==&quot;.xml&quot; || filesystem::extension(simulationFileName)==&quot;.yade&quot; ))
+ 	{
++		// FIXME: should stop running simulation!!
+ 		freeRootBody();
+ 		LOG_INFO(&quot;Loading file &quot; + simulationFileName);
+ 		
+
+Modified: trunk/core/Omega.hpp
+===================================================================
+--- trunk/core/Omega.hpp	2008-03-01 21:45:54 UTC (rev 1271)
++++ trunk/core/Omega.hpp	2008-03-02 10:28:26 UTC (rev 1272)
+@@ -102,6 +102,7 @@
+ 		// dtto for gdb
+ 		string gdbCrashBatch;
+ 		string recoveryFilename;
++		char** origArgv; int origArgc;
+ 
+ 		// FIXME end
+ 		
+
+Modified: trunk/core/yade.cpp
+===================================================================
+--- trunk/core/yade.cpp	2008-03-01 21:45:54 UTC (rev 1271)
++++ trunk/core/yade.cpp	2008-03-02 10:28:26 UTC (rev 1272)
+@@ -35,6 +35,10 @@
+ 	log4cxx::LoggerPtr logger=log4cxx::Logger::getLogger(&quot;yade&quot;);
+ #endif
+ 
++void nullHandler(int sig){
++	cerr&lt;&lt;&quot;nullHandler called&quot;&lt;&lt;endl;
++}
++
+ void
+ sigHandler(int sig){
+ 	#ifdef EMBED_PYTHON
+@@ -52,7 +56,7 @@
+ 			cerr&lt;&lt;&quot;SIGSEGV/SIGABRT handler called; gdb batch file is `&quot;&lt;&lt;Omega::instance().gdbCrashBatch&lt;&lt;&quot;'&quot;&lt;&lt;endl;
+ 			system((string(&quot;gdb -x &quot;)+Omega::instance().gdbCrashBatch).c_str());
+ 			unlink(Omega::instance().gdbCrashBatch.c_str()); // delete the crash batch file
+-			kill(getpid(),sig); // reemit signal after exiting gdb
++			raise(sig); // reemit signal after exiting gdb
+ 		}
+ 	#endif
+ 	if(sig==SIGHUP){
+@@ -170,6 +174,8 @@
+ 			case '-': coreOptions=false; break;
+ 			default: printHelp(); return 1;
+ 		}
++	// save original options
++	Omega::instance().origArgv=argv; Omega::instance().origArgc=argc;
+ 	// kill processed options, keep one more which will is in fact non-option (normally the binary)
+ 	argv=&amp;(argv[optind-1]); argc-=optind-1;
+ 	// reset getopt globals for next processing
+
+Modified: trunk/gui/cmd/cmdGui.cpp
+===================================================================
+--- trunk/gui/cmd/cmdGui.cpp	2008-03-01 21:45:54 UTC (rev 1271)
++++ trunk/gui/cmd/cmdGui.cpp	2008-03-02 10:28:26 UTC (rev 1272)
+@@ -19,6 +19,7 @@
+ \n\
+ 	-h       print this help\n\
+ 	-s file  run this python script before entering interactive prompt\n\
++	/* -c cmd   run python command (may be specified multiple times, newline is appended every time) */ \n\ 
+ \n\
+ 	Sample session:\n\
+ \n\
+@@ -47,12 +48,14 @@
+ 
+ int cmdGui::run(int argc, char *argv[]) {
+ 	string runScript;
++	string runCommands;
+ 	
+ 	int ch;
+ 	while((ch=getopt(argc,argv,&quot;hs:&quot;))!=-1)
+ 	switch(ch){
+ 		case 'h': help(); return 1;
+ 		case 's': runScript=string(optarg); break;
++		//case 'c': runCommands+=string(optarg)+&quot;\n&quot;; break;
+ 		default: break;
+ 	}
+ 
+@@ -65,8 +68,10 @@
+ 		// wrap those in python::handle&lt;&gt; ??
+ 		PYTHON_DEFINE_STRING(&quot;yadePrefix&quot;,PREFIX);
+ 		PYTHON_DEFINE_STRING(&quot;yadeSuffix&quot;,SUFFIX);
++		PYTHON_DEFINE_STRING(&quot;yadeExecutable&quot;,Omega::instance().origArgv[0]);
+ 		PYTHON_DEFINE_STRING(&quot;yadeRunSimulation&quot;,Omega::instance().getSimulationFileName());
+ 		PYTHON_DEFINE_STRING(&quot;yadeRunScript&quot;,runScript);
++		PYTHON_DEFINE_STRING(&quot;yadeRunCommands&quot;,runCommands);
+ 		#undef PYTHON_DEFINE_STRING
+ 		execScript(PREFIX &quot;/lib/yade&quot; SUFFIX &quot;/gui/cmdGuiInit.py&quot;);
+ 		
+
+Modified: trunk/gui/cmd/cmdGuiInit.py
+===================================================================
+--- trunk/gui/cmd/cmdGuiInit.py	2008-03-01 21:45:54 UTC (rev 1271)
++++ trunk/gui/cmd/cmdGuiInit.py	2008-03-02 10:28:26 UTC (rev 1272)
+@@ -19,6 +19,11 @@
+ 	print &quot;Running script &quot;+yadeRunScript
+ 	execfile(yadeRunScript)
+ 
++# run commands if requested from the command line
++#if yadeRunCommands:
++#	print &quot;Running commands from commandline: &quot;+yadeRunCommands
++#	exec(yadeRunCommands)
++
+ try:
+ 	# prefer ipython, since it is colorful and cool
+ 	from IPython.Shell import IPShellEmbed
+
+Modified: trunk/gui/cmd/yadeControl.cpp
+===================================================================
+--- trunk/gui/cmd/yadeControl.cpp	2008-03-01 21:45:54 UTC (rev 1271)
++++ trunk/gui/cmd/yadeControl.cpp	2008-03-02 10:28:26 UTC (rev 1272)
+@@ -207,7 +207,7 @@
+ 		}
+ 	}
+ 
+-	//void join(){cerr&lt;&lt;&quot;JOIN!&quot;&lt;&lt;endl; OMEGA.joinSimulationLoop();}
++	//void join(){cerr&lt;&lt;&quot;JOIN!&quot;&lt;&lt;endl; OMEGA.joinSimulationLoop(); /* FIXME: this is OK, but must create simulation loop again! */ }
+ 	void wait(){ if(OMEGA.isRunning()){cerr&lt;&lt;&quot;WAIT!&quot;&lt;&lt;endl;} while(OMEGA.isRunning()) usleep(20000 /*20 ms*/); }
+ 	
+ 	pyBodyContainer bodies_get(void){assertRootBody(); return pyBodyContainer(OMEGA.getRootBody()-&gt;bodies); }
+
+Modified: trunk/scripts/default-test.py
+===================================================================
+--- trunk/scripts/default-test.py	2008-03-01 21:45:54 UTC (rev 1271)
++++ trunk/scripts/default-test.py	2008-03-02 10:28:26 UTC (rev 1272)
+@@ -3,30 +3,62 @@
+ 
+ import os,time,sys
+ simulFile='/tmp/yade-test-%d.xml'%(os.getpid()) # generated simulations here
+-broken=['SDECLinkedSpheres','SDECMovingWall','SDECSpheresPlane','ThreePointBending']
++pyCmdFile='/tmp/yade-test-%d.py'%(os.getpid()) # generated simulations here
++speedFile='/tmp/yade-test-%d.speed'%(os.getpid()) # write speed hiere
++runSimul=&quot;&quot;&quot;
++# generated file
++simulFile='%s'
++speedFile='%s'
++nIter=%d
++import time
++o=Omega()
++o.load(simulFile)
++o.run(10); o.wait() # run first 10 iterations
++start=time.time(); o.run(nIter); o.wait(); finish=time.time() # run nIter iterations, wait to finish, measure elapsed time
++speed=nIter/(finish-start) # rough estimate
++open(speedFile,'w').write('%%g'%%speed)
++quit()
++&quot;&quot;&quot;%(simulFile,speedFile,100)
++
++f=open(pyCmdFile,'w'); f.write(runSimul); f.close()
++
++#broken=['SDECLinkedSpheres','SDECMovingWall','SDECSpheresPlane','ThreePointBending']
+ genParams={
+ 	'USCTGen':{'spheresFile':'examples/small.sdec.xyz'}
+ 	}
+-nIter=100
++#nIter=100
+ summary=[]
+ o=Omega()
++broken=[]
+ 
++def crashProofRun():
++	retval=os.system(&quot;%s -N cmdGui -- -s '%s'&quot;%(yadeExecutable,pyCmdFile))
++	if retval==0: return 'passed&#160;(%s iter/sec)'%(open(speedFile,'r').readline()[:-1])
++	else: return 'CRASHED&#160;(backtrace above)'
++
+ for pp in o.childClasses('FileGenerator'):
+ 	if pp in broken:
+-		sys.stderr.write(&quot;============= (skipping broken &quot;+pp+&quot;)==============\n&quot;)
++		print &quot;============= (skipping broken &quot;+pp+&quot;)==============&quot;
++		summary.append(&quot;%30s SKIPPED (broken)&quot;%pp)
+ 		continue
+-	sys.stderr.write(&quot;============================================= &quot;+pp+&quot; =========================================\n&quot;)
++	print &quot;============================================= &quot;+pp+&quot; =========================================\n&quot;
+ 	p=Preprocessor(pp)
+ 	if pp in genParams.keys(): # set preprocessor parameters, if desired
+ 		for k in genParams[pp].keys():
+ 			p[k]=genParams[pp][k]
+ 	if not p.generate(simulFile): # preprocessor failed 
+-		summary.append('FAILED&#160;generator '+pp+'!!')
++		summary.append('%30s FAILED&#160;generator'%pp)
+ 		continue
+-	o.load(simulFile)
+-	o.run(10); o.wait() # run first 10 iterations
+-	start=time.time(); o.run(nIter); o.wait(); finish=time.time() # run nIter iterations, wait to finish, measure elapsed time
+-	speed=nIter/(finish-start) # rough estimate
+-	summary.append('Passed test '+pp+' at %g iter/sec'%speed)
++	if 1: # survives crash (separate process)
++		summary.append('%30s '%pp+crashProofRun())
++	else:
++		o.load(simulFile)
++		o.run(10); o.wait() # run first 10 iterations
++		start=time.time(); o.run(nIter); o.wait(); finish=time.time() # run nIter iterations, wait to finish, measure elapsed time
++		speed=nIter/(finish-start) # rough estimate
++		summary.append('%30s passed (%g iter/sec)'%(pp,speed))
+ 
++print &quot;\n\n========================================= SUMMARY&#160;======================================\n&quot;
+ for l in summary: print l
++print &quot;\n====================================== END&#160;OF SUMMARY&#160;==================================&quot;
++quit()
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000236.html">[Yade-commits] r1271 - in trunk: core extra/usct	pkg/dem/Engine/StandAloneEngine scripts
+</A></li>
+	<LI>Next message: <A HREF="000238.html">[Yade-commits] r1273 - in trunk: .	pkg/common/Engine/StandAloneEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#237">[ date ]</a>
+              <a href="thread.html#237">[ thread ]</a>
+              <a href="subject.html#237">[ subject ]</a>
+              <a href="author.html#237">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

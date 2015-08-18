@@ -1,0 +1,358 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1339 - in trunk: debian extra gui/py scripts
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1339%20-%20in%20trunk%3A%20debian%20extra%20gui/py%20scripts&In-Reply-To=%3C200805021517.m42FH1T7000311%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000300.html">
+   <LINK REL="Next"  HREF="000302.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1339 - in trunk: debian extra gui/py scripts</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1339%20-%20in%20trunk%3A%20debian%20extra%20gui/py%20scripts&In-Reply-To=%3C200805021517.m42FH1T7000311%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1339 - in trunk: debian extra gui/py scripts">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Fri May  2 17:17:01 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000300.html">[Yade-commits] r1338 - in trunk: . core lib/serialization scripts
+</A></li>
+        <LI>Next message: <A HREF="000302.html">[Yade-commits] r1340 - in branches/przewdnik: core/concurrent	pkg/common/Engine/StandAloneEngine	pkg/common/Engine/StandAloneEngine/Visualisation
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#301">[ date ]</a>
+              <a href="thread.html#301">[ thread ]</a>
+              <a href="subject.html#301">[ subject ]</a>
+              <a href="author.html#301">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2008-05-02 17:17:00 +0200 (Fri, 02 May 2008)
+New Revision: 1339
+
+Added:
+   trunk/extra/SimpleScene.cpp
+   trunk/extra/SimpleScene.hpp
+Modified:
+   trunk/debian/control-template
+   trunk/gui/py/utils.py
+   trunk/scripts/simple-scene.py
+Log:
+1. Added heavy comments to simple-scene.py, started functionally equal code in extra/SimpleScene.{c,h}pp
+2. Added dependency on boost::iostreams to debian template (for gzip/bzip2 streams).
+
+
+
+Modified: trunk/debian/control-template
+===================================================================
+--- trunk/debian/control-template	2008-05-02 12:18:38 UTC (rev 1338)
++++ trunk/debian/control-template	2008-05-02 15:17:00 UTC (rev 1339)
+@@ -2,7 +2,7 @@
+ Section: x11
+ Priority: optional
+ Maintainer: Vaclav Smilauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">eudoxos at arcig.cz</A>&gt;
+-Build-Depends: debhelper (&gt;= 5), scons, libqt3-mt-dev, qt3-dev-tools, freeglut3-dev, libboost-dev (&gt;=1.34), libboost-date-time-dev (&gt;=1.34), libboost-filesystem-dev (&gt;=1.34), libboost-thread-dev (&gt;=1.34), libboost-regex-dev (&gt;=1.34), libboost-python-dev (&gt;=1.34), liblog4cxx9-dev, docbook-to-man, python-scientific
++Build-Depends: debhelper (&gt;= 5), scons, libqt3-mt-dev, qt3-dev-tools, freeglut3-dev, libboost-dev (&gt;=1.34), libboost-date-time-dev (&gt;=1.34), libboost-filesystem-dev (&gt;=1.34), libboost-thread-dev (&gt;=1.34), libboost-regex-dev (&gt;=1.34), libboost-python-dev (&gt;=1.34), libboost-iostreams-dev (&gt;=1.34), liblog4cxx9-dev, docbook-to-man, python-scientific
+ Standards-Version: 3.7.2
+ 
+ Package: <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">yade at _REVISION</A>@
+
+Added: trunk/extra/SimpleScene.cpp
+===================================================================
+--- trunk/extra/SimpleScene.cpp	2008-05-02 12:18:38 UTC (rev 1338)
++++ trunk/extra/SimpleScene.cpp	2008-05-02 15:17:00 UTC (rev 1339)
+@@ -0,0 +1,70 @@
++bool SimpleScene::generate(){
++	message=&quot;&quot;;
++	rootBody=Shop::rootBody();
++
++	/* initializers */
++		rootBody-&gt;initializers.clear();
++
++		shared_ptr&lt;PhysicalActionContainerInitializer&gt; physicalActionInitializer(new PhysicalActionContainerInitializer);
++			physicalActionInitializer-&gt;physicalActionNames.push_back(&quot;Force&quot;);
++			physicalActionInitializer-&gt;physicalActionNames.push_back(&quot;Momentum&quot;);
++			rootBody-&gt;initializers.push_back(physicalActionInitializer);
++	
++		shared_ptr&lt;BoundingVolumeMetaEngine&gt; boundingVolumeDispatcher	= shared_ptr&lt;BoundingVolumeMetaEngine&gt;(new BoundingVolumeMetaEngine);
++			boundingVolumeDispatcher-&gt;add(new InteractingSphere2AABB);
++			boundingVolumeDispatcher-&gt;add(new InteractingBox2AABB);
++			boundingVolumeDispatcher-&gt;add(new MetaInteractingGeometry2AABB);
++			rootBody-&gt;initializers.push_back(boundingVolumeDispatcher);
++
++	/* engines */
++		rootBody-&gt;engines.clear();
++
++		rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new PhysicalActionContainerReseter));
++			rootBody-&gt;engines.push_back(boundingVolumeDispatcher);
++
++		shared_ptr&lt;PersistentSAPCollider&gt; collider(new PersistentSAPCollider);
++			rootBody-&gt;engines.push_back(collider);
++
++		shared_ptr&lt;InteractionGeometryMetaEngine&gt; igeomDispatcher(new InteractionGeometryMetaEngine);
++			igeomDispatcher-&gt;add(new InteractingSphere2InteractingSphere4SpheresContactGeometry);
++			igeomDispatcher-&gt;add(new InteractingBox2InteractingSphere4SpheresContactGeometry);
++			rootBody-&gt;engines.push_back(igeomDispatcher);
++
++		shared_ptr&lt;InteractionPhysicsMetaEngine&gt; iphysDispatcher(new InteractionPhysicsMetaEngine);
++			shared_ptr&lt;SimpleElasticRelationships&gt; ssr(new SimpleElasticRelationships);
++			iphysDispatcher-&gt;add(ssr);
++			rootBody-&gt;engines.push_back(iphysDispatcher);
++
++		shared_ptr&lt;ElasticContactLaw&gt; ecl(new ElasticContactLaw);
++			rootBody-&gt;engines.push_back(ecl);
++
++		shared_ptr&lt;GravityEngine&gt; ge(new GravityEngine);
++			ge-&gt;gravity=Vector3r(0,0,-9.81);
++			rootBody-&gt;engines.push_back(ge);
++
++
++		shared_ptr&lt;PhysicalActionDamper&gt; dampingDispatcher(new PhysicalActionDamper);
++			shared_ptr&lt;CundallNonViscousForceDamping&gt; forceDamper(new CundallNonViscousForceDamping);
++			forceDamper-&gt;damping=0.2;
++			dampingDispatcher-&gt;add(forceDamper);
++			shared_ptr&lt;CundallNonViscousMomentumDamping&gt; momentumDamper(new CundallNonViscousMomentumDamping);
++			momentumDamper-&gt;damping=0.2;
++			dampingDispatcher-&gt;add(momentumDamper);
++			rootBody-&gt;engines.push_back(dampingDispatcher);
++
++
++		shared_ptr&lt;PhysicalActionApplier&gt; applyActionDispatcher(new PhysicalActionApplier);
++			applyActionDispatcher-&gt;add(new NewtonsForceLaw);
++			applyActionDispatcher-&gt;add(new NewtonsMomentumLaw);
++			rootBody-&gt;engines.push_back(applyActionDispatcher);
++
++		shared_ptr&lt;PhysicalParametersMetaEngine&gt; positionIntegrator(new PhysicalParametersMetaEngine);
++			positionIntegrator-&gt;add(new LeapFrogPositionIntegrator);
++			rootBody-&gt;engines.push_back(positionIntegrator);
++
++		shared_ptr&lt;PhysicalParametersMetaEngine&gt; orientationIntegrator(new PhysicalParametersMetaEngine);
++			orientationIntegrator-&gt;add(new LeapFrogOrientationIntegrator);
++			rootBody-&gt;engines.push_back(orientationIntegrator);
++
++
++}
+
+Added: trunk/extra/SimpleScene.hpp
+===================================================================
+--- trunk/extra/SimpleScene.hpp	2008-05-02 12:18:38 UTC (rev 1338)
++++ trunk/extra/SimpleScene.hpp	2008-05-02 15:17:00 UTC (rev 1339)
+@@ -0,0 +1,21 @@
++
++#pragma once
++#include&lt;yade/core/FileGenerator.hpp&gt;
++#include&lt;yade/core/PhysicalAction.hpp&gt;
++#include&lt;yade/extra/Shop.hpp&gt;
++
++
++class SimpleScene: public FileGenerator {
++	public:
++		USCTGen(){};
++		~USCTGen (){};
++		virtual bool generate();
++	protected :
++		void registerAttributes(){ FileGenerator::registerAttributes(); }
++	NEEDS_BEX(&quot;Force&quot;,&quot;Momentum&quot;);
++	REGISTER_CLASS_NAME(SimpleScene);
++	REGISTER_BASE_CLASS_NAME(FileGenerator);
++	DECLARE_LOGGER;
++};
++REGISTER_SERIALIZABLE(SimpleScene,false);
++
+
+Modified: trunk/gui/py/utils.py
+===================================================================
+--- trunk/gui/py/utils.py	2008-05-02 12:18:38 UTC (rev 1338)
++++ trunk/gui/py/utils.py	2008-05-02 15:17:00 UTC (rev 1339)
+@@ -79,7 +79,9 @@
+ 	Omega().save(filename)
+ 	if background: bg=' &amp;'
+ 	else: bg=''
+-	os.system(yade.runtime.executable+' -N QtGUI -S &quot;'+filename+'&quot;'+bg)
++	cmd=yade.runtime.executable+' -N QtGUI -S &quot;'+filename+'&quot;'+bg
++	print &quot;Running command: `&quot;+cmd+&quot;'&quot;
++	os.system(cmd)
+ 	if not background: os.remove(filename)
+ 
+ def PWaveTimeStep():
+
+Modified: trunk/scripts/simple-scene.py
+===================================================================
+--- trunk/scripts/simple-scene.py	2008-05-02 12:18:38 UTC (rev 1338)
++++ trunk/scripts/simple-scene.py	2008-05-02 15:17:00 UTC (rev 1339)
+@@ -1,57 +1,124 @@
+ #!/usr/local/bin/yade-trunk -x
+ # -*- encoding=utf-8 -*-
+ 
+-o=Omega() # this creates default rootBody as well
++# Omega is the super-class that orchestrates the whole program.
++# It holds the entire simulation (MetaBody), takes care of loading/saving,
++# starting/stopping the simulation, loads plugins and more.
+ 
++o=Omega() # for advaned folks: this creates default MetaBody as well
++
++# initializers are run before the simulation
+ o.initializers=[
++	# create and reset to zero container of all PhysicalActions that will be used (Force and Momentum)
+ 	StandAloneEngine('PhysicalActionContainerInitializer'),
++	# create bounding boxes: before the simulation starts. Used to zoom the 3d view properly.
+ 	MetaEngine('BoundingVolumeMetaEngine',[EngineUnit('InteractingSphere2AABB'),EngineUnit('InteractingBox2AABB'),EngineUnit('MetaInteractingGeometry2AABB')])
+ 	]
+ 
++# Engines are called consecutively at each iteration. Their order matters.
++#
++# Some of them work by themselves (StandAloneEngine, DeusExMachina - the difference of these two is unimportant).
++#
++# MetaEngines act as dispatchers and based on the type of objects they operate on, different EngineUnits are called.
+ o.engines=[
++	# resets forces and momenta the act on bodies
+ 	StandAloneEngine('PhysicalActionContainerReseter'),
++	# associates bounding volume - in this case, AxisAlignedBoundingBox (AABB) - to each body.
++	# MetaEngine calls corresponding EngineUnit, depending on whether the body is Sphere, Box, or MetaBody (rootBody).
++	# AABBs are used to detect collisions
+ 	MetaEngine('BoundingVolumeMetaEngine',[
+ 		EngineUnit('InteractingSphere2AABB'),
+ 		EngineUnit('InteractingBox2AABB'),
+ 		EngineUnit('MetaInteractingGeometry2AABB')
+ 	]),
++	# Using bounding boxes created by the previous engine, find possible body collisions.
++	# These possible collisions are inserted in Omega.interactions container (MetaBody::transientInteractions in c++).
+ 	StandAloneEngine('PersistentSAPCollider'),
++	# Decide whether the potential collisions are real; if so, create geometry information about each potential collision.
++	# Here, the decision about which EngineUnit to use depends on types of _both_ bodies.
++	# Note that there is no EngineUnit for box-box collision. They are not implemented.
+ 	MetaEngine('InteractionGeometryMetaEngine',[
+ 		EngineUnit('InteractingSphere2InteractingSphere4SpheresContactGeometry'),
+ 		EngineUnit('InteractingBox2InteractingSphere4SpheresContactGeometry')
+ 	]),
++	# Create physical information about the interaction.
++	# This may consist in deriving contact rigidity from elastic moduli of each body, for example.
++	# The purpose is that the contact may be &quot;solved&quot; without reference to related bodies,
++	# only with the information contained in contact geometry and physics.
+ 	MetaEngine('InteractionPhysicsMetaEngine',[EngineUnit('SimpleElasticRelationships')]),
++	# &quot;Solver&quot; of the contact, also called (consitutive) law.
++	# based on the information in interaction physics and geometry, apply corresponding forces on bodies in interaction.
+ 	StandAloneEngine('ElasticContactLaw'),
++	# Apply gravity: all bodies will have gravity applied on them.
++	# Note the engine parameter 'gravity', a vector the gives the acceleration.
+ 	DeusExMachina('GravityEngine',{'gravity':[0,0,-9.81]}),
++	# Forces acting on bodies are damped to artificially increase energy dissipation in simulation.
++	# (In this model, the restitution coefficient of interaction is 1, which is not realistic.)
++	# This MetaEngine acts on all PhysicalActions and selects the right EngineUnit base on type of the PhysicalAction.
+ 	MetaEngine('PhysicalActionDamper',[
+ 		EngineUnit('CundallNonViscousForceDamping',{'damping':0.2}),
+ 		EngineUnit('CundallNonViscousMomentumDamping',{'damping':0.2})
+ 	]),
++	# Now we have forces and momenta acting on bodies. Newton's law calculated acceleration that corresponds to them.
+ 	MetaEngine('PhysicalActionApplier',[
+ 		EngineUnit('NewtonsForceLaw'),
+ 		EngineUnit('NewtonsMomentumLaw'),
+ 	]),
++	# Acceleration results in velocity change. Integrating the velocity over dt, position of the body will change.
+ 	MetaEngine('PhysicalParametersMetaEngine',[EngineUnit('LeapFrogPositionIntegrator')]),
++	# Angular acceleration changes angular velocity, resulting in position and/or orientation change of the body.
+ 	MetaEngine('PhysicalParametersMetaEngine',[EngineUnit('LeapFrogOrientationIntegrator')]),
+-	StandAloneEngine('GlobalStiffnessCounter',{'interval':50}),
+-	StandAloneEngine('GlobalStiffnessTimeStepper',{'defaultDt':1e-5,'active':True,'timeStepUpdateInterval':50}),
+ ]
+ 
+-
++# the yade.utils module contains some handy functions, like yade.utils.box and yade.utils.sphere
++# after this import, they will be accessible as utils.box and utils.sphere
+ from yade import utils
+-o.bodies.append(utils.box(extents=[.5,.5,.5],center=[0,0,0],dynamic=False,color=[1,0,0]))
+-o.bodies.append(utils.sphere(1,[0,0,2],color=[0,1,0]))
+-# o.dt=.2*utils.PWaveTimeStep()
+ 
+-o.save('/tmp/a.xml.bz2')
++# create bodies in the simulation: one box in the origin and one floating above it.
++#
++# The box:
++# * extents: half-size of the box. [.5,.5,.5] is unit cube
++# * center: position of the center of the box
++# * dynamic: it is not dynamic, i.e. will not move during simulation, even if forces are applied to it
++# * color: for the 3d display; specified  within unit cube in the RGB space; [1,0,0] is, therefore, red
++# * young: Young's modulus
++# * poisson: Poissons's ratio
++o.bodies.append(utils.box(extents=[.5,.5,.5],center=[0,0,0],dynamic=False,color=[1,0,0],young=30e9,poisson=.3,density=2400))
+ 
+-if True:
+-	# will run in background
+-	utils.runInQtGui()
+-else:
+-	## we could save it to a file just as well
+-	o.save('/tmp/a.xml')
+-	# load that with the QtGUI
+-	import os,yade.runtime
+-	os.system(yade.runtime.executable+' -N QtGUI -S /tmp/a.xml &amp;')
++## The above command could be actully written without the util.box function like this:
++## (will not be executed, since the condition is never True)
++if False:
++	# Create empty body object
++	b=Body()
++	# Assign geometrical model (shape) to the body: a box of given size
++	b.shape=GeometricalModel('Box',{'extents':[.5,.5,.5],'diffuseColor':[1,0,0]})
++	# Assign computational model (mold; may be simplified form of shape) to the body
++	b.mold=InteractingGeometry('InteractingBox',{'extents':extents,'diffuseColor':[1,0,0]})
++	# store mass to a temporary
++	mass=8*.5*.5*.5*2400
++	# physical parameters:
++	# * se3 (position &amp; orientation) as 3 position coordinates, then 3 direction axis coordinates and rotation angle
++	b.phys=PhysicalParameters('BodyMacroParameters',{'se3':[0,0,0,1,0,0,0],'mass':mass,'inertia':[mass*4*(.5**2+.5**2),mass*4*(.5**2+.5**2),mass*4*(.5**2+.5**2)],'young':30e9,'poisson':.3})
++	# other information about AABB will be updated during simulation by relevant BoundingVolumeMetaEngine
++	b.bound=BoundingVolume('AABB',{'diffuseColor':[0,1,0]})
++	# set the isDynamic body attribute
++	b['isDynamic']=False
++	# add the body to the simulation
++	o.bodies.append(b)
+ 
++
++# The sphere
++#
++# * First two arguments are radius and center, respectively. They are used as &quot;positional arguments&quot; here:
++#	python will deduce based on where they are what they mean.
++#
++# It could also be written without using utils.sphere - see gui/py/utils.py for the code of the utils.sphere function
++o.bodies.append(utils.sphere(1,[0,0,2],color=[0,1,0],young=30e9,poisson=.3,density=2400))
++
++# Estimate timestep from p-wave speed and multiply it by safety factor of .2
++o.dt=.2*utils.PWaveTimeStep()
++
++# Save the scene to file, so that it can be loaded later. Supported extension are: .xml, .xml.gz, .xml.bz2.
++o.save('/tmp/a.xml.bz2');
++
++## utils.runInQtGui(background=False) # will run in background
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000300.html">[Yade-commits] r1338 - in trunk: . core lib/serialization scripts
+</A></li>
+	<LI>Next message: <A HREF="000302.html">[Yade-commits] r1340 - in branches/przewdnik: core/concurrent	pkg/common/Engine/StandAloneEngine	pkg/common/Engine/StandAloneEngine/Visualisation
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#301">[ date ]</a>
+              <a href="thread.html#301">[ thread ]</a>
+              <a href="subject.html#301">[ subject ]</a>
+              <a href="author.html#301">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

@@ -1,0 +1,104 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1120 - in branches/scons-layout: .	pkg/realtime-rigidbody/Engine/StandAloneEngine
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2007/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1120%20-%20in%20branches/scons-layout%3A%20.%0A%09pkg/realtime-rigidbody/Engine/StandAloneEngine&In-Reply-To=%3C200703091916.l29JGnTK015419%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000084.html">
+   <LINK REL="Next"  HREF="000086.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1120 - in branches/scons-layout: .	pkg/realtime-rigidbody/Engine/StandAloneEngine</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1120%20-%20in%20branches/scons-layout%3A%20.%0A%09pkg/realtime-rigidbody/Engine/StandAloneEngine&In-Reply-To=%3C200703091916.l29JGnTK015419%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1120 - in branches/scons-layout: .	pkg/realtime-rigidbody/Engine/StandAloneEngine">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Fri Mar  9 20:16:49 CET 2007</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000084.html">[Yade-commits] r1119 - in branches/scons-layout: . debian
+</A></li>
+        <LI>Next message: <A HREF="000086.html">[Yade-commits] r1121 - branches/scons-layout
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#85">[ date ]</a>
+              <a href="thread.html#85">[ thread ]</a>
+              <a href="subject.html#85">[ subject ]</a>
+              <a href="author.html#85">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2007-03-09 20:16:49 +0100 (Fri, 09 Mar 2007)
+New Revision: 1120
+
+Modified:
+   branches/scons-layout/INSTALL
+   branches/scons-layout/pkg/realtime-rigidbody/Engine/StandAloneEngine/ErrorTolerantLaw.cpp
+Log:
+Caught and error with static_cast, updated INSTALL.
+
+
+Modified: branches/scons-layout/INSTALL
+===================================================================
+--- branches/scons-layout/INSTALL	2007-03-09 17:56:28 UTC (rev 1119)
++++ branches/scons-layout/INSTALL	2007-03-09 19:16:49 UTC (rev 1120)
+@@ -27,10 +27,10 @@
+ 
+ 	$ svn checkout <A HREF="svn://svn.berlios.de/yade/branches/scons-layout">svn://svn.berlios.de/yade/branches/scons-layout</A> yade-0.0.svn1112 # (change revision number as appropriate)
+ 	$ cd yade-0.0.svn1112
+-	$ dpkg-buildpackage -rfakeroot
++	$ dpkg-buildpackage -rfakeroot-tcp
+ 	$ sudo dpkg -i ../yade_0.0.svn11112-1_i386.dpkg
+     
+-There are some limitations at this moment: the build is binary by default, all libraries will be stripped, no headers of yade-dev packages created, version hardcoded in the control file. Experimental.
++There are some limitations at this moment: version hardcoded in the control file, plain fakeroot will not work with scons (most likely because not all environment variables are propagated by scons - to be investigated).
+ 
+ RUNNING
+ =======
+
+Modified: branches/scons-layout/pkg/realtime-rigidbody/Engine/StandAloneEngine/ErrorTolerantLaw.cpp
+===================================================================
+--- branches/scons-layout/pkg/realtime-rigidbody/Engine/StandAloneEngine/ErrorTolerantLaw.cpp	2007-03-09 17:56:28 UTC (rev 1119)
++++ branches/scons-layout/pkg/realtime-rigidbody/Engine/StandAloneEngine/ErrorTolerantLaw.cpp	2007-03-09 19:16:49 UTC (rev 1120)
+@@ -64,7 +64,7 @@
+ 			b = *bi;
+ 
+ 			int offset = 6*i;
+-			shared_ptr&lt;RigidBodyParameters&gt; rb = YADE_PTR_CAST&lt;RigidBodyParameters&gt;(b);
++			shared_ptr&lt;RigidBodyParameters&gt; rb = YADE_PTR_CAST&lt;RigidBodyParameters&gt;(b-&gt;physicalParameters);
+ 			invM(offset,offset++) = 1.0/rb-&gt;mass;
+ 			invM(offset,offset++) = 1.0/rb-&gt;mass;
+ 			invM(offset,offset++) = 1.0/rb-&gt;mass;
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000084.html">[Yade-commits] r1119 - in branches/scons-layout: . debian
+</A></li>
+	<LI>Next message: <A HREF="000086.html">[Yade-commits] r1121 - branches/scons-layout
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#85">[ date ]</a>
+              <a href="thread.html#85">[ thread ]</a>
+              <a href="subject.html#85">[ subject ]</a>
+              <a href="author.html#85">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

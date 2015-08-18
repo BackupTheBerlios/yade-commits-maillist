@@ -1,0 +1,287 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1188 - in trunk: . lib/base pkg/dem	pkg/dem/DataClass/InteractionGeometry	pkg/dem/DataClass/InteractionPhysics	pkg/dem/DataClass/PhysicalParameters	pkg/dem/Engine/StandAloneEngine scripts
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2007/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1188%20-%20in%20trunk%3A%20.%20lib/base%20pkg/dem%0A%09pkg/dem/DataClass/InteractionGeometry%0A%09pkg/dem/DataClass/InteractionPhysics%0A%09pkg/dem/DataClass/PhysicalParameters%0A%09pkg/dem/Engine/StandAloneEngine%20scripts&In-Reply-To=%3C200706051546.l55FkqrI017151%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000152.html">
+   <LINK REL="Next"  HREF="000154.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1188 - in trunk: . lib/base pkg/dem	pkg/dem/DataClass/InteractionGeometry	pkg/dem/DataClass/InteractionPhysics	pkg/dem/DataClass/PhysicalParameters	pkg/dem/Engine/StandAloneEngine scripts</H1>
+    <B>cosurgi at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1188%20-%20in%20trunk%3A%20.%20lib/base%20pkg/dem%0A%09pkg/dem/DataClass/InteractionGeometry%0A%09pkg/dem/DataClass/InteractionPhysics%0A%09pkg/dem/DataClass/PhysicalParameters%0A%09pkg/dem/Engine/StandAloneEngine%20scripts&In-Reply-To=%3C200706051546.l55FkqrI017151%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1188 - in trunk: . lib/base pkg/dem	pkg/dem/DataClass/InteractionGeometry	pkg/dem/DataClass/InteractionPhysics	pkg/dem/DataClass/PhysicalParameters	pkg/dem/Engine/StandAloneEngine scripts">cosurgi at mail.berlios.de
+       </A><BR>
+    <I>Tue Jun  5 17:46:52 CEST 2007</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000152.html">[Yade-commits] r1187 - in trunk: extra/tetra	pkg/common/Engine/MetaEngine pkg/common/Engine/StandAloneEngine	pkg/dem/Engine/DeusExMachina pkg/dem/Engine/EngineUnit	pkg/dem/Engine/StandAloneEngine pkg/dem/PreProcessor	pkg/fem/PreProcessor pkg/lattice/PreProcessor	pkg/mass-spring/PreProcessor pkg/realtime-rigidbody/PreProcessor
+</A></li>
+        <LI>Next message: <A HREF="000154.html">[Yade-commits] r1189 - in trunk/pkg/dem:	DataClass/InteractionPhysics Engine/DeusExMachina	Engine/EngineUnit Engine/StandAloneEngine PreProcessor
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#153">[ date ]</a>
+              <a href="thread.html#153">[ thread ]</a>
+              <a href="subject.html#153">[ subject ]</a>
+              <a href="author.html#153">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: cosurgi
+Date: 2007-06-05 17:46:51 +0200 (Tue, 05 Jun 2007)
+New Revision: 1188
+
+Modified:
+   trunk/Yade.kdevelop
+   trunk/lib/base/Logging.hpp
+   trunk/pkg/dem/DataClass/InteractionGeometry/SpheresContactGeometry.cpp
+   trunk/pkg/dem/DataClass/InteractionPhysics/ElasticContactInteraction.cpp
+   trunk/pkg/dem/DataClass/PhysicalParameters/BodyMacroParameters.cpp
+   trunk/pkg/dem/Engine/StandAloneEngine/ElasticContactLaw.cpp
+   trunk/pkg/dem/SConscript
+   trunk/scripts/debian-prep
+Log:
+OK, I think that migration back from BZR is complete :-)
+
+
+
+Modified: trunk/Yade.kdevelop
+===================================================================
+--- trunk/Yade.kdevelop	2007-06-05 15:32:42 UTC (rev 1187)
++++ trunk/Yade.kdevelop	2007-06-05 15:46:51 UTC (rev 1188)
+@@ -10,16 +10,16 @@
+     &lt;projectname&gt;Yade&lt;/projectname&gt;
+     &lt;projectdirectory&gt;.&lt;/projectdirectory&gt;
+     &lt;absoluteprojectpath&gt;false&lt;/absoluteprojectpath&gt;
+-    &lt;description/&gt;
+-    &lt;defaultencoding/&gt;
++    &lt;description&gt;&lt;/description&gt;
++    &lt;defaultencoding&gt;&lt;/defaultencoding&gt;
+     &lt;versioncontrol&gt;kdevsubversion&lt;/versioncontrol&gt;
+   &lt;/general&gt;
+   &lt;kdevcustomproject&gt;
+     &lt;run&gt;
+       &lt;mainprogram&gt;/usr/local/bin/yade-svn1148&lt;/mainprogram&gt;
+       &lt;directoryradio&gt;executable&lt;/directoryradio&gt;
+-      &lt;programargs/&gt;
+-      &lt;globaldebugarguments/&gt;
++      &lt;programargs&gt;&lt;/programargs&gt;
++      &lt;globaldebugarguments&gt;&lt;/globaldebugarguments&gt;
+       &lt;globalcwd&gt;/tmp&lt;/globalcwd&gt;
+       &lt;useglobalprogram&gt;false&lt;/useglobalprogram&gt;
+       &lt;terminal&gt;false&lt;/terminal&gt;
+@@ -30,7 +30,7 @@
+     &lt;/run&gt;
+     &lt;build&gt;
+       &lt;buildtool&gt;make&lt;/buildtool&gt;
+-      &lt;builddir/&gt;
++      &lt;builddir&gt;&lt;/builddir&gt;
+     &lt;/build&gt;
+     &lt;make&gt;
+       &lt;abortonerror&gt;false&lt;/abortonerror&gt;
+@@ -38,8 +38,8 @@
+       &lt;prio&gt;0&lt;/prio&gt;
+       &lt;dontact&gt;false&lt;/dontact&gt;
+       &lt;makebin&gt;scons&lt;/makebin&gt;
+-      &lt;defaulttarget/&gt;
+-      &lt;makeoptions/&gt;
++      &lt;defaulttarget&gt;&lt;/defaulttarget&gt;
++      &lt;makeoptions&gt;&lt;/makeoptions&gt;
+       &lt;selectedenvironment&gt;default&lt;/selectedenvironment&gt;
+       &lt;environments&gt;
+         &lt;default/&gt;
+@@ -48,11 +48,11 @@
+   &lt;/kdevcustomproject&gt;
+   &lt;kdevdebugger&gt;
+     &lt;general&gt;
+-      &lt;dbgshell/&gt;
+-      &lt;gdbpath/&gt;
+-      &lt;configGdbScript/&gt;
+-      &lt;runShellScript/&gt;
+-      &lt;runGdbScript/&gt;
++      &lt;dbgshell&gt;&lt;/dbgshell&gt;
++      &lt;gdbpath&gt;&lt;/gdbpath&gt;
++      &lt;configGdbScript&gt;&lt;/configGdbScript&gt;
++      &lt;runShellScript&gt;&lt;/runShellScript&gt;
++      &lt;runGdbScript&gt;&lt;/runGdbScript&gt;
+       &lt;breakonloadinglibs&gt;true&lt;/breakonloadinglibs&gt;
+       &lt;separatetty&gt;false&lt;/separatetty&gt;
+       &lt;floatingtoolbar&gt;false&lt;/floatingtoolbar&gt;
+@@ -124,7 +124,7 @@
+       &lt;root&gt;/usr/share/qt3&lt;/root&gt;
+       &lt;designerintegration&gt;EmbeddedKDevDesigner&lt;/designerintegration&gt;
+       &lt;qmake&gt;/usr/bin/qmake-qt3&lt;/qmake&gt;
+-      &lt;designer&gt;&lt;/designer&gt;
++      &lt;designer&gt;/usr/bin/designer-qt3&lt;/designer&gt;
+       &lt;designerpluginpaths/&gt;
+     &lt;/qt&gt;
+     &lt;codecompletion&gt;
+@@ -151,7 +151,7 @@
+       &lt;includePaths&gt;.;&lt;/includePaths&gt;
+     &lt;/codecompletion&gt;
+     &lt;creategettersetter&gt;
+-      &lt;prefixGet/&gt;
++      &lt;prefixGet&gt;&lt;/prefixGet&gt;
+       &lt;prefixSet&gt;set&lt;/prefixSet&gt;
+       &lt;prefixVariable&gt;m_,_&lt;/prefixVariable&gt;
+       &lt;parameterName&gt;theValue&lt;/parameterName&gt;
+@@ -190,7 +190,7 @@
+     &lt;/tree&gt;
+   &lt;/kdevfileview&gt;
+   &lt;ctagspart&gt;
+-    &lt;customArguments/&gt;
++    &lt;customArguments&gt;&lt;/customArguments&gt;
+     &lt;activeTagsFiles/&gt;
+   &lt;/ctagspart&gt;
+ &lt;/kdevelop&gt;
+
+Modified: trunk/lib/base/Logging.hpp
+===================================================================
+--- trunk/lib/base/Logging.hpp	2007-06-05 15:32:42 UTC (rev 1187)
++++ trunk/lib/base/Logging.hpp	2007-06-05 15:46:51 UTC (rev 1188)
+@@ -12,7 +12,7 @@
+  *
+  * All of user macros should come in 2 flavors, depending on whether we use log4cxx or not (backward compatibility).
+  * The default is not to use it, unless the preprocessor macro LOG4CXX is defined. In that case, you want to #include
+- * core/logging.h and link with log4cxx.
++ * yade-core/logging.h and link with log4cxx.
+  *
+  * TODO:
+  * 1. for optimized builds, at least debugging macros should become no-ops
+
+Modified: trunk/pkg/dem/DataClass/InteractionGeometry/SpheresContactGeometry.cpp
+===================================================================
+--- trunk/pkg/dem/DataClass/InteractionGeometry/SpheresContactGeometry.cpp	2007-06-05 15:32:42 UTC (rev 1187)
++++ trunk/pkg/dem/DataClass/InteractionGeometry/SpheresContactGeometry.cpp	2007-06-05 15:46:51 UTC (rev 1188)
+@@ -8,7 +8,7 @@
+ *  GNU General Public License v2 or later. See file LICENSE for details. *
+ *************************************************************************/
+ 
+-#include &lt;yade/pkg-dem/SpheresContactGeometry.hpp&gt;
++#include &quot;SpheresContactGeometry.hpp&quot;
+ 
+ SpheresContactGeometry::SpheresContactGeometry() : InteractionGeometry()
+ {
+
+Modified: trunk/pkg/dem/DataClass/InteractionPhysics/ElasticContactInteraction.cpp
+===================================================================
+--- trunk/pkg/dem/DataClass/InteractionPhysics/ElasticContactInteraction.cpp	2007-06-05 15:32:42 UTC (rev 1187)
++++ trunk/pkg/dem/DataClass/InteractionPhysics/ElasticContactInteraction.cpp	2007-06-05 15:46:51 UTC (rev 1188)
+@@ -6,10 +6,9 @@
+ *  GNU General Public License v2 or later. See file LICENSE for details. *
+ *************************************************************************/
+ 
+-#include &lt;yade/pkg-dem/ElasticContactInteraction.hpp&gt;
++#include &quot;ElasticContactInteraction.hpp&quot;
+ 
+ 
+-
+ ElasticContactInteraction::ElasticContactInteraction()
+ {
+ 	createIndex();
+
+Modified: trunk/pkg/dem/DataClass/PhysicalParameters/BodyMacroParameters.cpp
+===================================================================
+--- trunk/pkg/dem/DataClass/PhysicalParameters/BodyMacroParameters.cpp	2007-06-05 15:32:42 UTC (rev 1187)
++++ trunk/pkg/dem/DataClass/PhysicalParameters/BodyMacroParameters.cpp	2007-06-05 15:46:51 UTC (rev 1188)
+@@ -6,7 +6,7 @@
+ *  GNU General Public License v2 or later. See file LICENSE for details. *
+ *************************************************************************/
+ 
+-#include &lt;yade/pkg-dem/BodyMacroParameters.hpp&gt;
++#include &quot;BodyMacroParameters.hpp&quot;
+ 
+ BodyMacroParameters::BodyMacroParameters () : ElasticBodyParameters()
+ {
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/ElasticContactLaw.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/ElasticContactLaw.cpp	2007-06-05 15:32:42 UTC (rev 1187)
++++ trunk/pkg/dem/Engine/StandAloneEngine/ElasticContactLaw.cpp	2007-06-05 15:46:51 UTC (rev 1188)
+@@ -6,8 +6,7 @@
+ *  GNU General Public License v2 or later. See file LICENSE for details. *
+ *************************************************************************/
+ 
+-#include &lt;yade/pkg-dem/ElasticContactLaw.hpp&gt;
+-
++#include &quot;ElasticContactLaw.hpp&quot;
+ #include&lt;yade/pkg-dem/BodyMacroParameters.hpp&gt;
+ #include&lt;yade/pkg-dem/SpheresContactGeometry.hpp&gt;
+ #include&lt;yade/pkg-dem/SDECLinkGeometry.hpp&gt;
+
+Modified: trunk/pkg/dem/SConscript
+===================================================================
+--- trunk/pkg/dem/SConscript	2007-06-05 15:32:42 UTC (rev 1187)
++++ trunk/pkg/dem/SConscript	2007-06-05 15:46:51 UTC (rev 1188)
+@@ -536,6 +536,7 @@
+ 			'yade-multimethods',
+ 			'TranslationEngine']),
+ 
++
+ env.SharedLibrary('WallStressRecorder',
+ 		['Engine/DeusExMachina/WallStressRecorder.cpp'],
+ 		LIBS=env['LIBS']+['ParticleParameters',
+@@ -670,4 +671,7 @@
+ 
+ 
+ 
++
++
+ ])
++
+
+Modified: trunk/scripts/debian-prep
+===================================================================
+--- trunk/scripts/debian-prep	2007-06-05 15:32:42 UTC (rev 1187)
++++ trunk/scripts/debian-prep	2007-06-05 15:46:51 UTC (rev 1188)
+@@ -4,13 +4,16 @@
+ # svn used to be used:
+ # REVISION=&quot;svn$( svn info | egrep '^Revision:' | cut -f2 -d' ')&quot;
+ #
++# bzr used:
++# REVISION=&quot;bzr$( bzr version-info | egrep '^revno:' | cut -f2 -d' ')&quot;
++#
+ # if there is file RELEASE, it will be the version number ($REVISION) and SNAPSHOT will be empty.
+ #
+ if [ -f RELEASE ]; then
+ 	REVISION=`cat RELEASE`
+ 	SNAPSHOT=&quot;&quot;
+ else
+-	REVISION=&quot;bzr$( bzr version-info | egrep '^revno:' | cut -f2 -d' ')&quot;
++	REVISION=&quot;svn$( svn info | egrep '^Revision:' | cut -f2 -d' ')&quot;
+ 	SNAPSHOT=&quot;-snapshot&quot;
+ fi
+ _REVISION=&quot;-$REVISION&quot;
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000152.html">[Yade-commits] r1187 - in trunk: extra/tetra	pkg/common/Engine/MetaEngine pkg/common/Engine/StandAloneEngine	pkg/dem/Engine/DeusExMachina pkg/dem/Engine/EngineUnit	pkg/dem/Engine/StandAloneEngine pkg/dem/PreProcessor	pkg/fem/PreProcessor pkg/lattice/PreProcessor	pkg/mass-spring/PreProcessor pkg/realtime-rigidbody/PreProcessor
+</A></li>
+	<LI>Next message: <A HREF="000154.html">[Yade-commits] r1189 - in trunk/pkg/dem:	DataClass/InteractionPhysics Engine/DeusExMachina	Engine/EngineUnit Engine/StandAloneEngine PreProcessor
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#153">[ date ]</a>
+              <a href="thread.html#153">[ thread ]</a>
+              <a href="subject.html#153">[ subject ]</a>
+              <a href="author.html#153">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

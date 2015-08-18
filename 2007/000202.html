@@ -1,0 +1,746 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1237 - in trunk: core gui/cmd gui/qt3	pkg/common/RenderingEngine/OpenGLRenderingEngine	pkg/dem/Engine/DeusExMachina pkg/dem/Engine/StandAloneEngine	pkg/dem/PreProcessor
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2007/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1237%20-%20in%20trunk%3A%20core%20gui/cmd%20gui/qt3%0A%09pkg/common/RenderingEngine/OpenGLRenderingEngine%0A%09pkg/dem/Engine/DeusExMachina%20pkg/dem/Engine/StandAloneEngine%0A%09pkg/dem/PreProcessor&In-Reply-To=%3C200712141129.lBEBTHIM017976%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000201.html">
+   <LINK REL="Next"  HREF="000203.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1237 - in trunk: core gui/cmd gui/qt3	pkg/common/RenderingEngine/OpenGLRenderingEngine	pkg/dem/Engine/DeusExMachina pkg/dem/Engine/StandAloneEngine	pkg/dem/PreProcessor</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1237%20-%20in%20trunk%3A%20core%20gui/cmd%20gui/qt3%0A%09pkg/common/RenderingEngine/OpenGLRenderingEngine%0A%09pkg/dem/Engine/DeusExMachina%20pkg/dem/Engine/StandAloneEngine%0A%09pkg/dem/PreProcessor&In-Reply-To=%3C200712141129.lBEBTHIM017976%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1237 - in trunk: core gui/cmd gui/qt3	pkg/common/RenderingEngine/OpenGLRenderingEngine	pkg/dem/Engine/DeusExMachina pkg/dem/Engine/StandAloneEngine	pkg/dem/PreProcessor">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Fri Dec 14 12:29:17 CET 2007</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000201.html">[Yade-commits] r1236 - in trunk/pkg: common/Engine/StandAloneEngine	dem/Engine/DeusExMachina dem/PreProcessor
+</A></li>
+        <LI>Next message: <A HREF="000203.html">[Yade-commits] r1238 - in trunk: . core doc	pkg/dem/Engine/DeusExMachina pkg/dem/PreProcessor
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#202">[ date ]</a>
+              <a href="thread.html#202">[ thread ]</a>
+              <a href="subject.html#202">[ subject ]</a>
+              <a href="author.html#202">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2007-12-14 12:29:16 +0100 (Fri, 14 Dec 2007)
+New Revision: 1237
+
+Modified:
+   trunk/core/Omega.cpp
+   trunk/core/yade.cpp
+   trunk/gui/cmd/attrUtils.cpp
+   trunk/gui/qt3/SimulationController.cpp
+   trunk/gui/qt3/SimulationController.hpp
+   trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.cpp
+   trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.cpp
+   trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.hpp
+   trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.cpp
+   trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.hpp
+   trunk/pkg/dem/Engine/StandAloneEngine/GlobalStiffnessTimeStepper.cpp
+   trunk/pkg/dem/Engine/StandAloneEngine/GlobalStiffnessTimeStepper.hpp
+   trunk/pkg/dem/PreProcessor/TriaxialTest.cpp
+   trunk/pkg/dem/PreProcessor/TriaxialTest.hpp
+Log:
+1. Change default timestep to 1e-8, should prevent weidness onthe first run.
+2. Fix cmdGui to handle gracefully reading/assigning nonexistent attributes (not crash, but caught exception)
+3. Fix char* / const char * warnings from g++-4.2 in main() and OpenGLRenderingEngine.
+4. Cleanup of triaxial test, added parameter noLateralConfinement (not yet used).
+
+
+
+Modified: trunk/core/Omega.cpp
+===================================================================
+--- trunk/core/Omega.cpp	2007-12-10 16:56:13 UTC (rev 1236)
++++ trunk/core/Omega.cpp	2007-12-14 11:29:16 UTC (rev 1237)
+@@ -45,7 +45,7 @@
+ {
+ 	simulationFileName=&quot;&quot;;
+ 	currentIteration = 0;
+-	dt = 0.01;
++	dt = 1e-8;
+ 	logFile = shared_ptr&lt;ofstream&gt;(new ofstream(&quot;../data/log.xml&quot;, ofstream::out | ofstream::app));
+ }
+ 
+
+Modified: trunk/core/yade.cpp
+===================================================================
+--- trunk/core/yade.cpp	2007-12-10 16:56:13 UTC (rev 1236)
++++ trunk/core/yade.cpp	2007-12-14 11:29:16 UTC (rev 1237)
+@@ -58,12 +58,13 @@
+ 
+ void firstRunSetup(shared_ptr&lt;Preferences&gt;&amp; pref)
+ {
+-	char *libDirs[]={&quot;extra&quot;,&quot;gui&quot;,&quot;lib&quot;,&quot;pkg-common&quot;,&quot;pkg-dem&quot;,&quot;pkg-fem&quot;,&quot;pkg-lattice&quot;,&quot;pkg-mass-spring&quot;,&quot;pkg-realtime-rigidbody&quot;,NULL /* sentinel */};
++	const char* libDirs[]={&quot;extra&quot;,&quot;gui&quot;,&quot;lib&quot;,&quot;pkg-common&quot;,&quot;pkg-dem&quot;,&quot;pkg-fem&quot;,&quot;pkg-lattice&quot;,&quot;pkg-mass-spring&quot;,&quot;pkg-realtime-rigidbody&quot;,NULL /* sentinel */};
+ 	string cfgFile=Omega::instance().yadeConfigPath+&quot;/preferences.xml&quot;;
+ 	LOG_INFO(&quot;Creating default configuration file: &quot;&lt;&lt;cfgFile&lt;&lt;&quot;. Please tune by hand if needed.&quot;);
+ 	string expLibDir;
+ 	for(int i=0; libDirs[i]!=NULL; i++) {
+ 		expLibDir=string(PREFIX &quot;/lib/yade&quot; SUFFIX &quot;/&quot;) + libDirs[i];
++		// FIXME: only add if really exists (module may not be built)
+ 		LOG_INFO(&quot;Adding plugin directory &quot;&lt;&lt;expLibDir&lt;&lt;&quot;.&quot;);
+ 		pref-&gt;dynlibDirectories.push_back(expLibDir);
+ 	}
+
+Modified: trunk/gui/cmd/attrUtils.cpp
+===================================================================
+--- trunk/gui/cmd/attrUtils.cpp	2007-12-10 16:56:13 UTC (rev 1236)
++++ trunk/gui/cmd/attrUtils.cpp	2007-12-14 11:29:16 UTC (rev 1237)
+@@ -103,6 +103,8 @@
+ 		//! return attribute value as python object
+ 		boost::python::object pyGet(std::string key){
+ 			vector&lt;string&gt; raw=getAttrStr(key);
++			DescriptorMap::iterator I=descriptors.find(key);
++			if(I==descriptors.end()) throw std::invalid_argument(string(&quot;Invalid key: `&quot;)+key+&quot;'.&quot;);
+ 			if(raw.size()==1){
+ 				if(descriptors[key].types[0]==BOOL) return boost::python::object(lexical_cast&lt;bool&gt;(raw[0]));
+ 				if(descriptors[key].types[0]==STRING) return boost::python::object(raw[0]);
+@@ -119,6 +121,8 @@
+ 		}
+ 		//! set attribute value from python object
+ 		void pySet(std::string key, python::object val){
++			DescriptorMap::iterator I=descriptors.find(key);
++			if(I==descriptors.end()) throw std::invalid_argument(string(&quot;Invalid key: `&quot;)+key+&quot;'.&quot;);
+ 			if(descriptors[key].types.size()==1){
+ 				if(descriptors[key].types[0]==BOOL) { setAttr(key,python::extract&lt;bool&gt;(val)); return;}
+ 				if(descriptors[key].types[0]==STRING){setAttr(key,python::extract&lt;string&gt;(val)); return;}
+
+Modified: trunk/gui/qt3/SimulationController.cpp
+===================================================================
+--- trunk/gui/qt3/SimulationController.cpp	2007-12-10 16:56:13 UTC (rev 1236)
++++ trunk/gui/qt3/SimulationController.cpp	2007-12-14 11:29:16 UTC (rev 1237)
+@@ -96,9 +96,6 @@
+ 	if (Omega::instance().getSimulationFileName()!=&quot;&quot;){
+ 		loadSimulationFromFileName(Omega::instance().getSimulationFileName());
+ 	}
+-
+-	// this should prevent weird things happening during the very first run; it is not a proper fix, though.
+-	pbStopClicked();
+ }
+ 
+ 
+@@ -161,7 +158,7 @@
+ }
+ 
+ 
+-void SimulationController::loadSimulationFromFileName(const std::string&amp; fileName,bool center)
++void SimulationController::loadSimulationFromFileName(const std::string&amp; fileName,bool center, bool useTimeStepperIfPresent)
+ {
+ 	assert(filesystem::exists(fileName));
+ 
+@@ -186,8 +183,8 @@
+ 			if (Omega::instance().containTimeStepper())
+ 			{
+ 				rbTimeStepper-&gt;setEnabled(true);
+-				rbTimeStepper-&gt;setChecked(true);
+-				wasUsingTimeStepper = true;
++				rbTimeStepper-&gt;setChecked(useTimeStepperIfPresent);
++				wasUsingTimeStepper = useTimeStepperIfPresent;
+ 			}
+ 			else
+ 			{
+@@ -195,6 +192,7 @@
+ 				rbFixed-&gt;setChecked(true);
+ 				wasUsingTimeStepper = false;
+ 			}
++			skipTimeStepper=!wasUsingTimeStepper;
+ 		} 
+ 		catch(SerializableError&amp; e) // catching it...
+ 		{
+@@ -219,10 +217,7 @@
+ 			pbOneSimulationStep-&gt;setDisabled(true);
+ 		}
+ 
+-		if(center)
+-			pbCenterSceneClicked();
+-		
+-		rbTimeStepper-&gt;setEnabled(Omega::instance().containTimeStepper());
++		if(center) pbCenterSceneClicked();
+ }
+ 
+ void SimulationController::pbSaveClicked()
+@@ -318,26 +313,16 @@
+ 
+ void SimulationController::pbResetClicked()
+ {
+-//	updater-&gt;stop();
+ 
+ 	pbStopClicked();
+ 
+-/*
+-	Omega::instance().finishSimulationLoop();
+-	Omega::instance().joinSimulationLoop(); 
+-	Omega::instance().loadSimulation();
+-	Omega::instance().createSimulationLoop();
+-*/
+ 	std::string name=Omega::instance().getSimulationFileName(); 
+-	loadSimulationFromFileName(name,false);
++	loadSimulationFromFileName(name,false /* don't re-center scene */,wasUsingTimeStepper /* respect timeStepper setting from the prvious run*/);
+ 
+ 	if(Omega::instance().getRootBody())
+ 	{
+-		changeSkipTimeStepper = true;
+-		skipTimeStepper = !wasUsingTimeStepper;
++		// timeStepper setup done in loadSimulationFromFileName
+ 		updater-&gt;oneLoop(); // to refresh gui
+-
+-		rbTimeStepper-&gt;setEnabled(Omega::instance().containTimeStepper());
+ 		redrawAll();
+ 	} 
+ 	else
+
+Modified: trunk/gui/qt3/SimulationController.hpp
+===================================================================
+--- trunk/gui/qt3/SimulationController.hpp	2007-12-10 16:56:13 UTC (rev 1236)
++++ trunk/gui/qt3/SimulationController.hpp	2007-12-14 11:29:16 UTC (rev 1237)
+@@ -38,7 +38,7 @@
+ 		QFrame * scrollViewFrame;
+ 		QVBoxLayout* scrollViewLayout;
+ 		void addNewView();
+-		void loadSimulationFromFileName(const std::string&amp; fileName,bool center=true);
++		void loadSimulationFromFileName(const std::string&amp; fileName,bool center=true, bool useTimeStepperIfPresent=true);
+ 	
+ 	public : 
+ 		bool	 changeSkipTimeStepper
+
+Modified: trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.cpp
+===================================================================
+--- trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.cpp	2007-12-10 16:56:13 UTC (rev 1236)
++++ trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.cpp	2007-12-14 11:29:16 UTC (rev 1237)
+@@ -114,7 +114,7 @@
+ 	if(!initDone) // FIXME - this is a quick hack for newest version of libglut
+ 	{
+ 		int a=1;
+-		char* b=&quot;./yade&quot;;
++		char* b=(char*)&quot;./yade&quot;;
+ 		glutInit(&amp;a,&amp;b);
+ 		initDone=true;
+ 	}
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.cpp	2007-12-10 16:56:13 UTC (rev 1236)
++++ trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.cpp	2007-12-14 11:29:16 UTC (rev 1237)
+@@ -16,6 +16,8 @@
+ 
+ class CohesiveFrictionalRelationships;
+ 
++CREATE_LOGGER(TriaxialCompressionEngine);
++
+ TriaxialCompressionEngine::TriaxialCompressionEngine() : actionForce(new Force)
+ {
+ 	translationAxis=TriaxialStressController::normal[wall_bottom_id];
+@@ -30,6 +32,7 @@
+ 	testEquilibriumInterval = 20;
+ 	compressionActivated=false;
+ 	autoCompressionActivation=true;
++	noLateralConfinement=false;
+ 	UnbalancedForce = 1;
+ 	previousSigmaIso = 0;
+ 	//for (int i=0; i&lt;3; ++i) strain[i]=0;
+@@ -64,90 +67,64 @@
+ 	REGISTER_ATTRIBUTE(autoCompressionActivation);
+ 	REGISTER_ATTRIBUTE(testEquilibriumInterval);
+ 	REGISTER_ATTRIBUTE(previousSigmaIso);
+-		
++	REGISTER_ATTRIBUTE(noLateralConfinement);
+ }
+ 
+-
+-
+ void TriaxialCompressionEngine::updateParameters(Body * body)
+-{
++{ TR;
+ 
+     UnbalancedForce=ComputeUnbalancedForce(body);
+     MetaBody * ncb = static_cast&lt;MetaBody*&gt;(body);
+-    if (Omega::instance().getCurrentIteration() % 100 == 0) cerr &lt;&lt; &quot;UnbalancedForce=&quot; &lt;&lt; UnbalancedForce &lt;&lt; endl;
++    if (Omega::instance().getCurrentIteration() % 100 == 0) LOG_DEBUG(&quot;UnbalancedForce=&quot;&lt;&lt;UnbalancedForce);
+     //Real S = computeStressStrain(ncb);
+     if (sigma_iso != previousSigmaIso) {
+     	previousSigmaIso = sigma_iso;
+     	Phase1 = false;
+     }
+ 
+-    if ((!Phase1) || (autoCompressionActivation))
+-    {
++	/* Zero-th phase, isotropic compression */
++    if ((!Phase1) || (autoCompressionActivation)) {
+     	if (!(Omega::instance().getCurrentIteration() % computeStressStrainInterval == 0)) computeStressStrain(ncb);
+-    	//cerr &lt;&lt; &quot;UnbalancedForce&quot; &lt;&lt; UnbalancedForce &lt;&lt; &quot;StabilityCriterion&quot; &lt;&lt; StabilityCriterion &lt;&lt; &quot;meanStress&quot;&lt;&lt; meanStress&lt;&lt; &quot;sigma_iso&quot;&lt;&lt;sigma_iso&lt;&lt; endl;
+-        if (UnbalancedForce&lt;=StabilityCriterion &amp;&amp; abs((meanStress-sigma_iso)/sigma_iso) &lt; 0.02)
++		  TRVAR5(UnbalancedForce,StabilityCriterion,meanStress,sigma_iso,abs((meanStress-sigma_iso)/sigma_iso));
++        if (UnbalancedForce&lt;=StabilityCriterion &amp;&amp; abs((meanStress-sigma_iso)/sigma_iso) &lt; 1.0 )//FIXME: revert to 0.02)
+         {
+-       // cerr &lt;&lt; &quot;go to phase1&quot; &lt;&lt; endl;
+-            Phase1 = true;
++				LOG_DEBUG(&quot;Isotropic compression DONE, entering Phase1 (uniaxial test with confinement).&quot;);
++            Phase1 = true; 
++				if(noLateralConfinement) deactivateLateralWalls();
+             internalCompaction = false;
+             height0 = height;
+             depth0 = depth;
+             width0 = width;
+ 
+-// 			FinalIterationPhase1 =
+-// 			Omega::instance().getCurrentIteration();
+-
+-
+-            //if ((S-sigma_iso)/sigma_iso &lt; 0.005)
+-            //{
+             Iteration = Omega::instance().getCurrentIteration();
+ 
+-            //if ((Omega::instance().getCurrentIteration()) &gt;= (Iteration + 1000));
+-
+-            // saving snapshot.xml
+-            saveSimulation = true;
+-//             string fileName = &quot;../data/&quot; + Phase1End + &quot;_&quot; +
+-//                               lexical_cast&lt;string&gt;(Omega::instance().getCurrentIteration()) + &quot;.xml&quot;;
+-//             cerr &lt;&lt; &quot;saving snapshot: &quot; &lt;&lt; fileName &lt;&lt; &quot; ...&quot;;
+-//             Omega::instance().saveSimulation(fileName);
+-            if (autoCompressionActivation)
+-            {
++            saveSimulation = true; // saving snapshot .xml will actually be done in ::applyCondition
++            if (autoCompressionActivation) {
+                 compressionActivated = true;
+                 wall_bottom_activated=false;
+                 wall_top_activated=false;
+                 autoCompressionActivation = false;
+-            }
+-           // else Omega::instance().stopSimulationLoop();//FIXME : will not stop the nullgui runs
+-
+-
++            } else { LOG_WARN(&quot;Compression would be activated now, but is not --- limbo...&quot;); } // else Omega::instance().stopSimulationLoop();//FIXME : will not stop the nullgui runs
+         }
+-
+-// 	if (compressionActivated)
+-// 	{
+-// 		wall_bottom_activated=false;
+-// 		wall_top_activated=false;
+-// 		internalCompaction = false;
+-// 		autoCompressionActivation = false;
+-// 	}
+-
+-
++#if 0
+         //This is a hack in order to allow subsequent run without activating compression - like for the YADE-COMSOL coupling
+-//         if (!compressionActivated)
+-//         {
+-// // 		vector&lt;shared_ptr&lt;Engine&gt; &gt;::iterator itFirst = ncb-&gt;engines.begin();
+-// // 		vector&lt;shared_ptr&lt;Engine&gt; &gt;::iterator itLast = ncb-&gt;engines.end();
+-// // 		for (;itFirst!=itLast; ++itFirst) {
+-// // 			if ((*itFirst)-&gt;getClassName() == &quot;CohesiveFrictionalRelationships&quot;)
+-// // 				(static_cast&lt;CohesiveFrictionalRelationships*&gt; ( (*itFirst).get()))-&gt;setCohesionNow = true;
+-// // 		}
+-//             internalCompaction = false;
+-//             Phase1 = true;
+-//             string fileName = &quot;../data/&quot; + Phase1End + &quot;_&quot; +
+-//                               lexical_cast&lt;string&gt;(Omega::instance().getCurrentIteration()) + &quot;.xml&quot;;
+-//             cerr &lt;&lt; &quot;saving snapshot: &quot; &lt;&lt; fileName &lt;&lt; &quot; ...&quot;;
+-//             Omega::instance().saveSimulation(fileName);
+-//             Omega::instance().stopSimulationLoop();
+-//         }
++        if (!compressionActivated)
++        {
++				// 		vector&lt;shared_ptr&lt;Engine&gt; &gt;::iterator itFirst = ncb-&gt;engines.begin();
++				// 		vector&lt;shared_ptr&lt;Engine&gt; &gt;::iterator itLast = ncb-&gt;engines.end();
++				// 		for (;itFirst!=itLast; ++itFirst) {
++				// 			if ((*itFirst)-&gt;getClassName() == &quot;CohesiveFrictionalRelationships&quot;)
++				// 				(static_cast&lt;CohesiveFrictionalRelationships*&gt; ( (*itFirst).get()))-&gt;setCohesionNow = true;
++				// 		}
++            internalCompaction = false;
++            Phase1 = true;
++            string fileName = &quot;../data/&quot; + Phase1End + &quot;_&quot; +
++                              lexical_cast&lt;string&gt;(Omega::instance().getCurrentIteration()) + &quot;.xml&quot;;
++            cerr &lt;&lt; &quot;saving snapshot: &quot; &lt;&lt; fileName &lt;&lt; &quot; ...&quot;;
++            Omega::instance().saveSimulation(fileName);
++            Omega::instance().stopSimulationLoop();
++        }
++#endif
+     }
+     if (compressionActivated &amp;&amp; !Phase1)
+     {
+@@ -155,6 +132,7 @@
+         wall_top_activated=false;
+         internalCompaction = false;
+         Phase1 = true;
++		  if(noLateralConfinement) deactivateLateralWalls();
+         autoCompressionActivation = false;
+         height0 = height;
+         depth0 = depth;
+@@ -164,7 +142,7 @@
+ 
+ 
+ void TriaxialCompressionEngine::applyCondition(Body * body)
+-{
++{ TR;
+     //cerr &lt;&lt; &quot;TriaxialCompressionEngine::applyCondition(Body * body)&quot; &lt;&lt; endl;
+     TriaxialStressController::applyCondition(body);
+     if (Omega::instance().getCurrentIteration() % testEquilibriumInterval == 0)
+@@ -174,7 +152,7 @@
+         {
+             string fileName = &quot;../data/&quot; + Phase1End + &quot;_&quot; +
+                               lexical_cast&lt;string&gt;(Omega::instance().getCurrentIteration()) + &quot;.xml&quot;;
+-            cerr &lt;&lt; &quot;saving snapshot: &quot; &lt;&lt; fileName &lt;&lt; &quot; ...&quot;;
++            LOG_INFO(&quot;saving snapshot: &quot;&lt;&lt;fileName);
+             Omega::instance().saveSimulation(fileName);
+             saveSimulation = false;
+         }
+@@ -184,34 +162,24 @@
+ //        MetaBody * ncb2 = static_cast&lt;MetaBody*&gt;(body);
+     //cerr &lt;&lt; computeStress(ncb2)  &lt;&lt; endl;
+ 
+-    if (compressionActivated)
++    /* phase 1: uniaxial compression with confinement */
++	 if (compressionActivated)
+     {
+-        if (Omega::instance().getCurrentIteration() % 100 == 0)
+-            cerr &lt;&lt; &quot;Compression started!!&quot; &lt;&lt; endl;
++        if (Omega::instance().getCurrentIteration() % 100 == 0) LOG_DEBUG(&quot;Compression active.&quot;);
+         Real dt = Omega::instance().getTimeStep();
+         MetaBody * ncb = static_cast&lt;MetaBody*&gt;(body);
+         shared_ptr&lt;BodyContainer&gt;&amp; bodies = ncb-&gt;bodies;
+ 
+-        if (currentStrainRate &lt; strainRate) currentStrainRate
+-            += strainRate*0.0003;	// !!! si decharge
++        if (currentStrainRate &lt; strainRate) currentStrainRate += strainRate*0.0003;	// !!! si decharge
+         else currentStrainRate = strainRate;
+ 
+-        PhysicalParameters* p =
+-            static_cast&lt;PhysicalParameters*&gt;((*bodies)[wall_bottom_id]-&gt;
+-                                             physicalParameters. get());
++		  /* Move top and bottom wall according to strain rate */
++
++        PhysicalParameters* p = static_cast&lt;PhysicalParameters*&gt;((*bodies)[wall_bottom_id]-&gt;physicalParameters. get());
+         p-&gt;se3.position += 0.5*strainRate*height*translationAxis*dt;
+-//                 cerr &lt;&lt; &quot;deplacmt = &quot; &lt;&lt;
+-// 		0.5*strainRate*height*translationAxis*dt &lt;&lt; endl;
+-//                 cerr &lt;&lt; &quot;wall_bottom : p-&gt;se3.position = &quot; &lt;&lt; p-&gt;se3.position
+-// 		&lt;&lt; endl;
+ 
+-        p =
+-            static_cast&lt;PhysicalParameters*&gt;((*bodies)[wall_top_id]-&gt;
+-                                             physicalParameters.get( ));
++        p = static_cast&lt;PhysicalParameters*&gt;((*bodies)[wall_top_id]-&gt;physicalParameters.get( ));
+         p-&gt;se3.position -= 0.5*strainRate*height*translationAxis*dt;
+-//                 cerr &lt;&lt; &quot;wall_top : p-&gt;se3.position = &quot; &lt;&lt; p-&gt;se3.position
+-// 		&lt;&lt; endl;
+-
+     }
+ }
+ 
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.hpp	2007-12-10 16:56:13 UTC (rev 1236)
++++ trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.hpp	2007-12-14 11:29:16 UTC (rev 1237)
+@@ -23,6 +23,11 @@
+ 
+ class PhysicalAction;
+ 
++/** \brief Class for controlling optional initial isotropic compaction and subsequent triaxial stress test with hydrostatic confinement.
++ *
++ *
++ * 
++ */
+ class TriaxialCompressionEngine : public TriaxialStressController
+ {
+ 	private :
+@@ -51,9 +56,13 @@
+ 		bool compressionActivated;
+ 		//! Auto-switch between isotropic and uniaxial compression?
+ 		bool autoCompressionActivation;
++		//! Do not apply lateral confinement during uniaxial compression? (default off, i.e. lateral confinement activated)
++		bool noLateralConfinement;
+ 				
+ 		virtual void applyCondition(Body * body);
+ 		void updateParameters(Body * body);
++
++		DECLARE_LOGGER;
+ 		
+ 
+ 	protected :
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.cpp	2007-12-10 16:56:13 UTC (rev 1236)
++++ trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.cpp	2007-12-14 11:29:16 UTC (rev 1237)
+@@ -17,8 +17,8 @@
+ #include&lt;yade/core/MetaBody.hpp&gt;
+ #include&lt;yade/pkg-common/Sphere.hpp&gt;
+ 
++CREATE_LOGGER(TriaxialStressController);
+ 
+-
+ TriaxialStressController::TriaxialStressController() : actionParameterForce(new Force), wall_bottom_id(wall_id[0]), wall_top_id(wall_id[1]), wall_left_id(wall_id[2]), wall_right_id(wall_id[3]), wall_front_id(wall_id[4]), wall_back_id(wall_id[5])
+ {
+ 	//cerr &lt;&lt; &quot;constructor of TriaxialStressController&quot; &lt;&lt; std::endl;
+@@ -194,9 +194,9 @@
+ 	
+ }
+ 
+-void TriaxialStressController::controlExternalStress(int wall, MetaBody* ncb, int id, Vector3r resultantForce, PhysicalParameters* p, Real wall_max_vel) //FIXME remove parameter &quot;id&quot;
++void TriaxialStressController::controlExternalStress(int wall, MetaBody* ncb, Vector3r resultantForce, PhysicalParameters* p, Real wall_max_vel)
+ {
+-	Real translation= normal[wall].Dot(static_cast&lt;Force*&gt;( ncb-&gt;physicalActions-&gt;find(wall_id[wall],ForceClassIndex).get() )-&gt;force - resultantForce);
++	Real translation=normal[wall].Dot(static_cast&lt;Force*&gt;( ncb-&gt;physicalActions-&gt;find(wall_id[wall],ForceClassIndex).get() )-&gt;force - resultantForce);
+ 	//cerr &lt;&lt; &quot;current force= &quot; &lt;&lt; static_cast&lt;Force*&gt;(ncb-&gt;physicalActions-&gt;find(wall_id[wall],ForceClassIndex).get() )-&gt;force &lt;&lt; &quot; imposed force = &quot; &lt;&lt; resultantForce &lt;&lt; endl;
+         if (translation!=0)
+         {
+@@ -210,9 +210,7 @@
+             }
+             else
+                 translation = wall_max_vel * Mathr::Sign(translation);
+-                
+         }
+-
+         previousTranslation[wall] = (1-wallDamping)*translation*normal[wall];// + 0.7*previousTranslation[wall];// formula for &quot;steady-flow&quot; evolution with fluctuations
+         p-&gt;se3.position	+= previousTranslation[wall];
+ }
+@@ -221,7 +219,7 @@
+ 
+ 
+ void TriaxialStressController::applyCondition(Body* body)
+-{
++{ TR;
+ 	//cerr &lt;&lt; &quot;TriaxialStressController::applyCondition&quot; &lt;&lt; endl;
+         MetaBody * ncb = YADE_CAST&lt;MetaBody*&gt;(body);
+ 
+@@ -246,41 +244,17 @@
+         if (Omega::instance().getCurrentIteration() % computeStressStrainInterval == 0 ||
+         	(internalCompaction &amp;&amp; isARadiusControlIteration) )
+         		computeStressStrain(ncb);
+-//                cerr &lt;&lt; &quot;Sm = &quot; &lt;&lt; computeStressStrain(ncb);
+ 
+-
+-        
+-
+-
+-       
+-        
+-        //cerr &lt;&lt; &quot;height &quot; &lt;&lt; height &lt;&lt; &quot; width &quot; &lt;&lt; width &lt;&lt; &quot; depth &quot; &lt;&lt; depth &lt;&lt; endl;
+-
+         if (!internalCompaction) {
+                 Vector3r wallForce (0, sigma_iso*width*depth, 0);
+-                if (wall_bottom_activated)
+-                        controlExternalStress(wall_bottom, ncb, wall_bottom_id, -wallForce, p_bottom, max_vel);
+-                if (wall_top_activated)
+-                        controlExternalStress(wall_top, ncb, wall_top_id, wallForce, p_top, max_vel);
+-
++                if (wall_bottom_activated) controlExternalStress(wall_bottom, ncb, -wallForce, p_bottom, max_vel);
++                if (wall_top_activated) controlExternalStress(wall_top, ncb, wallForce, p_top, max_vel);
+                 wallForce = Vector3r(sigma_iso*height*depth, 0, 0);
+-                if (wall_left_activated)
+-                        controlExternalStress(wall_left, ncb, wall_left_id,
+-                                              -wallForce, p_left, max_vel*width/height);
+-
+-                if (wall_right_activated)
+-                        controlExternalStress(wall_right, ncb, wall_right_id,
+-                                              wallForce, p_right, max_vel*width/height);
+-
++                if (wall_left_activated) controlExternalStress(wall_left, ncb, -wallForce, p_left, max_vel*width/height);
++                if (wall_right_activated) controlExternalStress(wall_right, ncb, wallForce, p_right, max_vel*width/height);
+                 wallForce = Vector3r(0, 0, sigma_iso*height*width);
+-                if (wall_back_activated)
+-                        controlExternalStress(wall_back, ncb, wall_back_id,
+-                                              -wallForce, p_back, max_vel*depth/height);
+-
+-                if (wall_front_activated)
+-                        controlExternalStress(wall_front, ncb, wall_front_id,
+-                                              wallForce, p_front, max_vel*depth/height);
+-
++					 if (wall_back_activated) controlExternalStress(wall_back, ncb, -wallForce, p_back, max_vel*depth/height);
++					 if (wall_front_activated) controlExternalStress(wall_front, ncb, wallForce, p_front, max_vel*depth/height);
+         }
+         else //if internal compaction
+         {
+@@ -302,7 +276,13 @@
+         }
+ }
+ 
++void TriaxialStressController::deactivateLateralWalls()
++{
++	LOG_WARN(&quot;NOT&#160;IMPLEMENTED: would deactivate lateral walls now.&quot;);
++	cerr&lt;&lt;&quot;!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!&quot;&lt;&lt;endl;
++}
+ 
++
+ Real TriaxialStressController::computeStressStrain(MetaBody* ncb)
+ {
+ 	
+@@ -312,11 +292,11 @@
+ 	
+ 	meanStress = 0;
+ 	if (height0 == 0) height0 = height;
+-        if (width0 == 0) width0 = width;
+-        if (depth0 == 0) depth0 = depth;
++	if (width0 == 0) width0 = width;
++	if (depth0 == 0) depth0 = depth;
+ 	strain[0] = Mathr::Log(width0/width);
+-        strain[1] = Mathr::Log(height0/height);
+-        strain[2] = Mathr::Log(depth0/depth);
++	strain[1] = Mathr::Log(height0/height);
++	strain[2] = Mathr::Log(depth0/depth);
+ 	
+ 	Real invXSurface = 1.f/(height*depth);
+ 	Real invYSurface = 1.f/(width*depth);
+@@ -334,7 +314,7 @@
+  //&lt;&lt; stress[wall_front] &lt;&lt; &quot; &quot; &lt;&lt; stress[wall_back] &lt;&lt; endl;
+ 
+ 	for (int i=0; i&lt;6; i++) meanStress-= stress[i].Dot(normal[i]);
+-	return meanStress*=0.16666666666;
++	return meanStress/6.;
+ 	
+ }
+ 
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.hpp	2007-12-10 16:56:13 UTC (rev 1236)
++++ trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.hpp	2007-12-14 11:29:16 UTC (rev 1237)
+@@ -13,7 +13,7 @@
+ #include &lt;Wm3Vector3.h&gt;
+ #include&lt;yade/lib-base/yadeWm3.hpp&gt;
+ 
+-
++#define TR {if (Omega::instance().getCurrentIteration()%100==0) TRACE; }
+ class PhysicalAction;
+ class MetaBody;
+ class PhysicalParameters;
+@@ -75,12 +75,15 @@
+ 	
+ 		virtual void applyCondition(Body*);
+ 		//! Regulate the stress applied on walls with flag wall_XXX_activated = true
+-		void controlExternalStress(int wall, MetaBody* ncb, int id, Vector3r resultantForce, PhysicalParameters* p, Real wall_max_vel);
++		void controlExternalStress(int wall, MetaBody* ncb, Vector3r resultantForce, PhysicalParameters* p, Real wall_max_vel);
+ 		void controlInternalStress(MetaBody* ncb, Real multiplier);
+ 		void updateStiffness(MetaBody* ncb);
+ 		Real computeStressStrain(MetaBody* ncb); //Compute stresses on walls and store the values in &quot;Vector3r stress[6]&quot;, return mean stress
+ 		//! Compute the mean/max unbalanced force in the assembly (normalized by mean contact force)
+     		Real ComputeUnbalancedForce(Body * body, bool maxUnbalanced=false);
++		void deactivateLateralWalls();
++
++		DECLARE_LOGGER;
+ 		
+ 	
+ 	protected :
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/GlobalStiffnessTimeStepper.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/GlobalStiffnessTimeStepper.cpp	2007-12-10 16:56:13 UTC (rev 1236)
++++ trunk/pkg/dem/Engine/StandAloneEngine/GlobalStiffnessTimeStepper.cpp	2007-12-14 11:29:16 UTC (rev 1237)
+@@ -16,6 +16,7 @@
+ #include&lt;yade/pkg-common/Sphere.hpp&gt;
+ #include&lt;yade/pkg-dem/GlobalStiffness.hpp&gt;
+ 
++CREATE_LOGGER(GlobalStiffnessTimeStepper);
+ 
+ GlobalStiffnessTimeStepper::GlobalStiffnessTimeStepper() : TimeStepper() , sdecContactModel(new MacroMicroElasticRelationships), actionParameterGlobalStiffness(new GlobalStiffness)
+ {
+@@ -177,7 +178,8 @@
+ 		//cerr &lt;&lt; &quot;GlobalStiffnessTimeStepper, timestep chosen is:&quot; &lt;&lt; Omega::instance().getTimeStep() &lt;&lt; endl;
+ 	}
+ 	else if (!computedOnce) Omega::instance().setTimeStep(defaultDt);
+-	if (Omega::instance().getCurrentIteration() % 100 == 0)
+-	cerr &lt;&lt; &quot;computed timestep = &quot; &lt;&lt; newDt &lt;&lt; &quot;; new timestep is:&quot; &lt;&lt; Omega::instance().getTimeStep() &lt;&lt; endl;
++	if (Omega::instance().getCurrentIteration() % 100 == 0) LOG_INFO(&quot;computed timestep &quot; &lt;&lt; newDt &lt;&lt;
++		(Omega::instance().getTimeStep()==newDt ? string(&quot;, appplied&quot;) :
++		string(&quot;, BUT timestep is &quot;)+lexical_cast&lt;string&gt;(Omega::instance().getTimeStep()))&lt;&lt;&quot;.&quot;);
+ }
+ 
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/GlobalStiffnessTimeStepper.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/GlobalStiffnessTimeStepper.hpp	2007-12-10 16:56:13 UTC (rev 1236)
++++ trunk/pkg/dem/Engine/StandAloneEngine/GlobalStiffnessTimeStepper.hpp	2007-12-14 11:29:16 UTC (rev 1237)
+@@ -40,6 +40,7 @@
+ 	
+ 		virtual void computeTimeStep(Body* body);
+ 		virtual bool isActivated();
++		DECLARE_LOGGER;
+ 
+ 
+ 	protected :
+
+Modified: trunk/pkg/dem/PreProcessor/TriaxialTest.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/TriaxialTest.cpp	2007-12-10 16:56:13 UTC (rev 1236)
++++ trunk/pkg/dem/PreProcessor/TriaxialTest.cpp	2007-12-14 11:29:16 UTC (rev 1237)
+@@ -148,6 +148,7 @@
+ 	strainRate = 0.1;
+ 	StabilityCriterion = 0.01;
+ 	autoCompressionActivation = false;
++	noLateralConfinement=false;
+ 	maxMultiplier = 1.01;
+ 	finalMaxMultiplier = 1.001;
+ 	
+@@ -212,6 +213,7 @@
+ 	REGISTER_ATTRIBUTE(strainRate);
+ 	REGISTER_ATTRIBUTE(StabilityCriterion);
+ 	REGISTER_ATTRIBUTE(autoCompressionActivation);
++	REGISTER_ATTRIBUTE(noLateralConfinement);
+ //	REGISTER_ATTRIBUTE(wall_top);
+ //	REGISTER_ATTRIBUTE(wall_bottom);
+ //	REGISTER_ATTRIBUTE(wall_1);
+@@ -649,6 +651,7 @@
+ 	triaxialcompressionEngine-&gt;strainRate = strainRate;
+ 	triaxialcompressionEngine-&gt;StabilityCriterion = StabilityCriterion;
+ 	triaxialcompressionEngine-&gt;autoCompressionActivation = autoCompressionActivation;
++	triaxialcompressionEngine-&gt;noLateralConfinement = noLateralConfinement;
+ 	triaxialcompressionEngine-&gt;internalCompaction = internalCompaction;
+ 	triaxialcompressionEngine-&gt;maxMultiplier = maxMultiplier;
+ 		
+
+Modified: trunk/pkg/dem/PreProcessor/TriaxialTest.hpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/TriaxialTest.hpp	2007-12-10 16:56:13 UTC (rev 1236)
++++ trunk/pkg/dem/PreProcessor/TriaxialTest.hpp	2007-12-14 11:29:16 UTC (rev 1237)
+@@ -100,7 +100,8 @@
+ 				,boxWalls
+ 				//! flag for choosing between moving boundaries or increasing particles sizes during the compaction stage.
+ 				,internalCompaction
+-				,saveAnimationSnapshots;
++				,saveAnimationSnapshots
++				,noLateralConfinement;
+ 
+ 		int		 recordIntervalIter
+ 				,timeStepUpdateInterval
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000201.html">[Yade-commits] r1236 - in trunk/pkg: common/Engine/StandAloneEngine	dem/Engine/DeusExMachina dem/PreProcessor
+</A></li>
+	<LI>Next message: <A HREF="000203.html">[Yade-commits] r1238 - in trunk: . core doc	pkg/dem/Engine/DeusExMachina pkg/dem/PreProcessor
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#202">[ date ]</a>
+              <a href="thread.html#202">[ thread ]</a>
+              <a href="subject.html#202">[ subject ]</a>
+              <a href="author.html#202">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

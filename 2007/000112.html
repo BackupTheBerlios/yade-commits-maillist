@@ -1,0 +1,272 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1147 - in branches/scons-layout: core	pkg/dem/Engine/EngineUnit
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2007/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1147%20-%20in%20branches/scons-layout%3A%20core%0A%09pkg/dem/Engine/EngineUnit&In-Reply-To=%3C200703150827.l2F8RsmZ030384%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000111.html">
+   <LINK REL="Next"  HREF="000113.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1147 - in branches/scons-layout: core	pkg/dem/Engine/EngineUnit</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1147%20-%20in%20branches/scons-layout%3A%20core%0A%09pkg/dem/Engine/EngineUnit&In-Reply-To=%3C200703150827.l2F8RsmZ030384%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1147 - in branches/scons-layout: core	pkg/dem/Engine/EngineUnit">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Thu Mar 15 09:27:54 CET 2007</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000111.html">[Yade-commits] r1146 - in branches/scons-layout: . debian	pkg/dem/Engine/EngineUnit
+</A></li>
+        <LI>Next message: <A HREF="000113.html">[Yade-commits] r1148 - branches/scons-layout/gui
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#112">[ date ]</a>
+              <a href="thread.html#112">[ thread ]</a>
+              <a href="subject.html#112">[ subject ]</a>
+              <a href="author.html#112">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2007-03-15 09:27:53 +0100 (Thu, 15 Mar 2007)
+New Revision: 1147
+
+Modified:
+   branches/scons-layout/core/yade.cpp
+   branches/scons-layout/pkg/dem/Engine/EngineUnit/InteractingBox2InteractingSphere4SpheresContactGeometry.cpp
+Log:
+1. Debugger works for the first run of the version.
+2. Cleaned up sphere-box contact code, needs review for correctness (will post to yade-dev).
+
+
+Modified: branches/scons-layout/core/yade.cpp
+===================================================================
+--- branches/scons-layout/core/yade.cpp	2007-03-14 18:25:06 UTC (rev 1146)
++++ branches/scons-layout/core/yade.cpp	2007-03-15 08:27:53 UTC (rev 1147)
+@@ -148,13 +148,6 @@
+ 	filesystem::path yadeConfigPath  = filesystem::path(Omega::instance().yadeConfigPath, filesystem::native);
+ 	filesystem::path yadeConfigFile  = filesystem::path(Omega::instance().yadeConfigPath + &quot;/preferences.xml&quot;, filesystem::native);
+ 
+-	#ifdef YADE_DEBUG
+-		ofstream gdbBatch;
+-		gdbCrashBatch=(yadeConfigPath/&quot;gdb_crash_batch-pid&quot;).string()+lexical_cast&lt;string&gt;(getpid());
+-		gdbBatch.open(gdbCrashBatch.c_str()); gdbBatch&lt;&lt;&quot;attach &quot;&lt;&lt;lexical_cast&lt;string&gt;(getpid())&lt;&lt;&quot;\nthread info\nthread apply all backtrace\n&quot;; gdbBatch.close();
+-		signal(SIGABRT,sigHandler);
+-		signal(SIGSEGV,sigHandler);
+-	#endif
+ 
+ 	#ifdef EMBED_PYTHON
+ 		LOG_DEBUG(&quot;Initializing Python...&quot;);
+@@ -162,12 +155,21 @@
+ 		signal(SIGINT,sigHandler);
+ 	#endif
+ 
+-	if ( !filesystem::exists( yadeConfigPath ) || setup || !filesystem::exists(yadeConfigFile) )
+-	{
++	if (!filesystem::exists(yadeConfigPath) || setup || !filesystem::exists(yadeConfigFile)){
+ 		filesystem::create_directories(yadeConfigPath);
+ 		firstRunSetup(Omega::instance().preferences);
+ 	}
+-	//cout &lt;&lt; &quot;loading configuration file: &quot; &lt;&lt; yadeConfigFile.string() &lt;&lt; &quot;\n&quot;;
++
++	#ifdef YADE_DEBUG
++		// postponed until the config dir have been created
++		ofstream gdbBatch;
++		gdbCrashBatch=(yadeConfigPath/&quot;gdb_crash_batch-pid&quot;).string()+lexical_cast&lt;string&gt;(getpid());
++		gdbBatch.open(gdbCrashBatch.c_str()); gdbBatch&lt;&lt;&quot;attach &quot;&lt;&lt;lexical_cast&lt;string&gt;(getpid())&lt;&lt;&quot;\nthread info\nthread apply all backtrace\n&quot;; gdbBatch.close();
++		signal(SIGABRT,sigHandler);
++		signal(SIGSEGV,sigHandler);
++	#endif
++
++
+ 	LOG_INFO(&quot;Loading configuration file: &quot;&lt;&lt;yadeConfigFile.string());
+ 
+ 	IOFormatManager::loadFromFile(&quot;XMLFormatManager&quot;,yadeConfigFile.string(),&quot;preferences&quot;,Omega::instance().preferences);
+
+Modified: branches/scons-layout/pkg/dem/Engine/EngineUnit/InteractingBox2InteractingSphere4SpheresContactGeometry.cpp
+===================================================================
+--- branches/scons-layout/pkg/dem/Engine/EngineUnit/InteractingBox2InteractingSphere4SpheresContactGeometry.cpp	2007-03-14 18:25:06 UTC (rev 1146)
++++ branches/scons-layout/pkg/dem/Engine/EngineUnit/InteractingBox2InteractingSphere4SpheresContactGeometry.cpp	2007-03-15 08:27:53 UTC (rev 1147)
+@@ -23,8 +23,7 @@
+ 		const Se3r&amp; se32,
+ 		const shared_ptr&lt;Interaction&gt;&amp; c)
+ {
+-	Vector3r q,r;
+-	bool onborder = false;
++	bool inside=true;
+ 	Vector3r pt1,pt2,normal;
+ 	Real depth;
+ 
+@@ -33,40 +32,33 @@
+ 	
+ 	Vector3r extents = obb-&gt;extents;
+ 
++	// FIXME: do we need rotation matrix? Can't quaternion do just fine?
+ 	Matrix3r boxAxisT; se31.orientation.ToRotationMatrix(boxAxisT); 
+ 	Matrix3r boxAxis = boxAxisT.Transpose();
+ 	
+ 	Vector3r relPos21 = se32.position-se31.position; // relative position of centroids
+ 	
+-	// t is the sphere centroid (in box-local coordinates), but projected onto box if it is outside.
+-	Vector3r t_should_be_the_same=boxAxis*relPos21;
+-	Vector3r t;
+-	t[0]=boxAxis.GetRow(0).Dot(relPos21); 
+-	t[1]=boxAxis.GetRow(1).Dot(relPos21);
+-	t[2]=boxAxis.GetRow(2).Dot(relPos21);
+-	assert((t-t_should_be_the_same).Length()&lt;1e-4);
++	// cOnBox_boxLocal is the sphere centroid (in box-local coordinates), but projected onto box if it is outside.
++	// _boxLocal means that ROTATION is local and origin is in box's origin
++	Vector3r cOnBox_boxLocal=boxAxis*relPos21; 
+ 
+-	if (t[0]&lt;-extents[0]){t[0]=-extents[0]; onborder=true; }
+-	if (t[0]&gt; extents[0]){t[0]= extents[0]; onborder=true; }
+-	if (t[1]&lt;-extents[1]){t[1]=-extents[1]; onborder=true; }
+-	if (t[1]&gt; extents[1]){t[1]= extents[1]; onborder=true; }
+-	if (t[2]&lt;-extents[2]){t[2]=-extents[2]; onborder=true; }
+-	if (t[2]&gt; extents[2]){t[2]= extents[2]; onborder=true; }
++	if (cOnBox_boxLocal[0]&lt;-extents[0]){cOnBox_boxLocal[0]=-extents[0]; inside=false; }
++	if (cOnBox_boxLocal[0]&gt; extents[0]){cOnBox_boxLocal[0]= extents[0]; inside=false; }
++	if (cOnBox_boxLocal[1]&lt;-extents[1]){cOnBox_boxLocal[1]=-extents[1]; inside=false; }
++	if (cOnBox_boxLocal[1]&gt; extents[1]){cOnBox_boxLocal[1]= extents[1]; inside=false; }
++	if (cOnBox_boxLocal[2]&lt;-extents[2]){cOnBox_boxLocal[2]=-extents[2]; inside=false; }
++	if (cOnBox_boxLocal[2]&gt; extents[2]){cOnBox_boxLocal[2]= extents[2]; inside=false; }
+ 	
+-	if (!onborder){
+-		// sphere center inside box. find largest `t' value:
+-		// min_i is the coordinate index that minimizes extents[min_i]-abs(t[min_i] (sphere center closes to box boundary)
+-		// where t is minimal (i.e. where sphere center is closest perpendicularly to the box)
+-		Real min=extents[0]-fabs(t[0]);
+-		int min_i=0;
+-		for (int i=1; i&lt;3; i++){
+-			Real tt = extents[i]-fabs(t[i]);
+-			if (tt &lt; min) { min = tt; min_i = i; }
+-		}
++	if (inside){
++		// sphere center inside box. find largest `cOnBox_boxLocal' value:
++		// min_i is the coordinate index that minimizes extents[min_i]-abs(cOnBox_boxLocal[min_i] (sphere center closest to box boundary)
++		// where cOnBox_boxLocal is minimal (i.e. where sphere center is closest perpendicularly to the box)
++		Real min=extents[0]-fabs(cOnBox_boxLocal[0]); int min_i=0;
++		for (int i=1; i&lt;3; i++){Real tt=extents[i]-fabs(cOnBox_boxLocal[i]); if (tt&lt;min){min=tt; min_i=i;}}
+ 		
+-		// contact normal aligned with box edge along largest `t' value
++		// contact normal aligned with box edge along largest `cOnBox_boxLocal' value
+ 		Vector3r localNormal = Vector3r(0,0,0);
+-		localNormal[min_i] = (t[min_i] &gt; 0) ? 1.0 : -1.0;
++		localNormal[min_i] = (cOnBox_boxLocal[min_i] &gt; 0) ? 1.0 : -1.0;
+ 		
+ 		normal = boxAxisT*localNormal;
+ 		normal.Normalize();
+@@ -79,9 +71,9 @@
+ 		 *  |    /       ^      \               |
+ 		 *  |   /        | (normal)*|min|       |
+ 		 *  |   |        x        |             |
+-		 *  |   \        | (se32-&gt;position)     |
++		 *  |   \        | c &#8801; se32-&gt;position   |
+ 		 *  |    \       |       /              |
+-		 *  |      ~     |     /                |
++		 *  |      ~     |     /  SPHERE        |
+ 		 *  |        ^~~ x ~~^                  |
+ 		 *  |              (pt2)                |
+ 		 *  +-----------------------------------+
+@@ -95,33 +87,53 @@
+ 		if (c-&gt;isNew) scm = shared_ptr&lt;SpheresContactGeometry&gt;(new SpheresContactGeometry());
+ 		else scm = YADE_PTR_CAST&lt;SpheresContactGeometry&gt;(c-&gt;interactionGeometry);
+ 			
++		// contact point is in the middle of overlapping volumes
++		//(in the direction of penetration, which is normal to the box surface closest to sphere center) of overlapping volumes
+ 		scm-&gt;contactPoint = 0.5*(pt1+pt2);
+-		scm-&gt;normal = pt1-pt2;
+-		scm-&gt;penetrationDepth = scm-&gt;normal.Normalize();
++		scm-&gt;normal = pt1-pt2; scm-&gt;normal.Normalize();
++		scm-&gt;penetrationDepth = (pt1-pt2).Length();
+ 		scm-&gt;radius1 = s-&gt;radius*2;
+ 		scm-&gt;radius2 = s-&gt;radius;
+ 		c-&gt;interactionGeometry = scm;
+-	} else { // onborder
+-	
+-		q = boxAxisT*t;
+-		r = relPos21-q;
+-		
+-		depth = s-&gt;radius-sqrt(r.Dot(r));
+-		if (depth &lt; 0) return false;
++	} else { // outside
++		Vector3r cOnBox_box = boxAxisT*cOnBox_boxLocal; // projection of sphere's center on closest box surface - relative to box's origin, but GLOBAL orientation!
++		Vector3r cOnBox_sphere = relPos21-cOnBox_box; // same, but origin in sphere's center
++		depth=s-&gt;radius-cOnBox_sphere.Length();
++		if (depth&lt;0) return false;
+ 
+-		pt1 = q + se31.position;
++		/*
++		 *  +-----------------------------------+
++		 *  |                                   |
++		 *  |          se32-&gt;position           |
++		 *  |               &#215;                   |
++		 *  |              / cOnBox_box         |
++		 *  |         pt1 /                     |
++		 *  +------~-----&#215;-----~----------------+
++		 *       /       ^      \
++		 *      /        | cOnBox_sphere
++		 *      |        &#215;        |
++		 *      \        |  c &#8801; se32-&gt;position
++		 *       \       |       /              
++		 *         ~     |     /
++		 *           ^~~ &#215; ~~^
++		 *                 pt2
++		 */
+ 
+-		normal = r;
+-		normal.Normalize();
++		pt1=cOnBox_box+se31.position;
+ 
+-		pt2 = se32.position - normal * s-&gt;radius;
++		cOnBox_sphere.Normalize(); // we want only direction in the following
++
++		// FIXME: is this CORRECT? Shouldn't it be rather se32-&gt;position+...???
++		// otherwise, we have pt1 on the box boundary, but pt2 is on the other side,
++		// therefore the contact point in OUTSIDE the box?!!
++		pt2=se32.position-cOnBox_sphere*s-&gt;radius;
+ 		
+ 		shared_ptr&lt;SpheresContactGeometry&gt; scm;
+ 		if (c-&gt;isNew) scm = shared_ptr&lt;SpheresContactGeometry&gt;(new SpheresContactGeometry());
+ 		else scm = YADE_PTR_CAST&lt;SpheresContactGeometry&gt;(c-&gt;interactionGeometry);	
+ 		scm-&gt;contactPoint = 0.5*(pt1+pt2);
+-		scm-&gt;normal = pt1-pt2;
+-		scm-&gt;penetrationDepth = scm-&gt;normal.Normalize();
++		scm-&gt;normal = pt1-pt2; scm-&gt;normal.Normalize();
++		scm-&gt;penetrationDepth = (pt1-pt2).Length();
+ 		scm-&gt;radius1 = s-&gt;radius*2;
+ 		scm-&gt;radius2 = s-&gt;radius;
+ 		c-&gt;interactionGeometry = scm;
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000111.html">[Yade-commits] r1146 - in branches/scons-layout: . debian	pkg/dem/Engine/EngineUnit
+</A></li>
+	<LI>Next message: <A HREF="000113.html">[Yade-commits] r1148 - branches/scons-layout/gui
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#112">[ date ]</a>
+              <a href="thread.html#112">[ thread ]</a>
+              <a href="subject.html#112">[ subject ]</a>
+              <a href="author.html#112">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

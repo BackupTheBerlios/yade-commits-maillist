@@ -1,0 +1,1094 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1168 - in trunk: . pkg/lattice/Engine/EngineUnit	pkg/lattice/PreProcessor pkg/realtime-rigidbody	pkg/realtime-rigidbody/DataClass	pkg/realtime-rigidbody/Engine/EngineUnit	pkg/realtime-rigidbody/Engine/StandAloneEngine
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2007/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1168%20-%20in%20trunk%3A%20.%20pkg/lattice/Engine/EngineUnit%0A%09pkg/lattice/PreProcessor%20pkg/realtime-rigidbody%0A%09pkg/realtime-rigidbody/DataClass%0A%09pkg/realtime-rigidbody/Engine/EngineUnit%0A%09pkg/realtime-rigidbody/Engine/StandAloneEngine&In-Reply-To=%3C200705241943.l4OJhhCC002852%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000132.html">
+   <LINK REL="Next"  HREF="000134.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1168 - in trunk: . pkg/lattice/Engine/EngineUnit	pkg/lattice/PreProcessor pkg/realtime-rigidbody	pkg/realtime-rigidbody/DataClass	pkg/realtime-rigidbody/Engine/EngineUnit	pkg/realtime-rigidbody/Engine/StandAloneEngine</H1>
+    <B>cosurgi at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1168%20-%20in%20trunk%3A%20.%20pkg/lattice/Engine/EngineUnit%0A%09pkg/lattice/PreProcessor%20pkg/realtime-rigidbody%0A%09pkg/realtime-rigidbody/DataClass%0A%09pkg/realtime-rigidbody/Engine/EngineUnit%0A%09pkg/realtime-rigidbody/Engine/StandAloneEngine&In-Reply-To=%3C200705241943.l4OJhhCC002852%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1168 - in trunk: . pkg/lattice/Engine/EngineUnit	pkg/lattice/PreProcessor pkg/realtime-rigidbody	pkg/realtime-rigidbody/DataClass	pkg/realtime-rigidbody/Engine/EngineUnit	pkg/realtime-rigidbody/Engine/StandAloneEngine">cosurgi at mail.berlios.de
+       </A><BR>
+    <I>Thu May 24 21:43:43 CEST 2007</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000132.html">[Yade-commits] r1167 - in trunk: core lib/miniWm3	pkg/common/Engine/DeusExMachina	pkg/common/RenderingEngine/GLDrawGeometricalModel	pkg/dem/Engine/DeusExMachina pkg/dem/Engine/StandAloneEngine	pkg/dem/PreProcessor pkg/lattice/DataClass/PhysicalParameters	pkg/lattice/Engine/EngineUnit	pkg/lattice/Engine/StandAloneEngine pkg/lattice/PreProcessor	pkg/lattice/RenderingEngine/GLDrawLatticeSetGeometry	pkg/mass-spring/Engine/StandAloneEngine
+</A></li>
+        <LI>Next message: <A HREF="000134.html">[Yade-commits] r1169 - in trunk: . gui
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#133">[ date ]</a>
+              <a href="thread.html#133">[ thread ]</a>
+              <a href="subject.html#133">[ subject ]</a>
+              <a href="author.html#133">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: cosurgi
+Date: 2007-05-24 21:43:42 +0200 (Thu, 24 May 2007)
+New Revision: 1168
+
+Removed:
+   trunk/pkg/realtime-rigidbody/DataClass/InteractionGeometry/
+   trunk/pkg/realtime-rigidbody/Engine/EngineUnit/InteractingBox2InteractingSphere4ErrorTolerantContact.cpp
+   trunk/pkg/realtime-rigidbody/Engine/EngineUnit/InteractingBox2InteractingSphere4ErrorTolerantContact.hpp
+   trunk/pkg/realtime-rigidbody/Engine/EngineUnit/InteractingSphere2InteractingSphere4ErrorTolerantContact.cpp
+   trunk/pkg/realtime-rigidbody/Engine/EngineUnit/InteractingSphere2InteractingSphere4ErrorTolerantContact.hpp
+   trunk/pkg/realtime-rigidbody/Engine/StandAloneEngine/ErrorTolerantLaw.cpp
+   trunk/pkg/realtime-rigidbody/Engine/StandAloneEngine/ErrorTolerantLaw.hpp
+Modified:
+   trunk/SConstruct
+   trunk/pkg/lattice/Engine/EngineUnit/LatticeSet2LatticeBeams.cpp
+   trunk/pkg/lattice/PreProcessor/LatticeExample.cpp
+   trunk/pkg/realtime-rigidbody/SConscript
+Log:
+ - removed ErrorTolerant,
+ - SConscript uses md5sum instead of timestamp.
+
+
+
+Modified: trunk/SConstruct
+===================================================================
+--- trunk/SConstruct	2007-05-24 09:14:33 UTC (rev 1167)
++++ trunk/SConstruct	2007-05-24 19:43:42 UTC (rev 1168)
+@@ -210,7 +210,7 @@
+ ##########################################################################################
+ 
+ ### SCONS OPTIMIZATIONS
+-env.SourceSignatures('timestamp') #can be  'MD5' or 'timestamp'; 'timestamp' but is less reliable and not so much faster
++env.SourceSignatures('MD5') #can be  'MD5' or 'timestamp'; 'timestamp' but is less reliable and not so much faster
+ env.SetOption('max_drift',5) # cache md5sums of files older than 30 seconds
+ SetOption('implicit_cache',1) # cache #include files etc.
+ env.SourceCode(&quot;.&quot;,None) # skip dotted directories
+
+Modified: trunk/pkg/lattice/Engine/EngineUnit/LatticeSet2LatticeBeams.cpp
+===================================================================
+--- trunk/pkg/lattice/Engine/EngineUnit/LatticeSet2LatticeBeams.cpp	2007-05-24 09:14:33 UTC (rev 1167)
++++ trunk/pkg/lattice/Engine/EngineUnit/LatticeSet2LatticeBeams.cpp	2007-05-24 19:43:42 UTC (rev 1168)
+@@ -40,6 +40,7 @@
+ 			      if(beam-&gt;longitudalStiffness   &lt; 0.12  ) line-&gt;diffuseColor = Vector3r(0.4,0.4,0.4); else // CEMENT   
+ 			                                               line-&gt;diffuseColor = Vector3r(0.0,0.0,0.0);      // AGGREGATE
+ 
++			      if(beam-&gt;longitudalStiffness &gt; 0.99 ) line-&gt;diffuseColor = Vector3r(0.6,0.6,0.6); // DEFAULT generation
+ 			      if(beam-&gt;longitudalStiffness &gt; 1.2  ) line-&gt;diffuseColor = Vector3r(0.4,0.4,1.0); // NON-DESTROY
+ 		}
+ 	}
+
+Modified: trunk/pkg/lattice/PreProcessor/LatticeExample.cpp
+===================================================================
+--- trunk/pkg/lattice/PreProcessor/LatticeExample.cpp	2007-05-24 09:14:33 UTC (rev 1167)
++++ trunk/pkg/lattice/PreProcessor/LatticeExample.cpp	2007-05-24 19:43:42 UTC (rev 1168)
+@@ -533,7 +533,7 @@
+ #else
+ 	if(use_Delaunay) // create beams, Delaunay not avauilable
+ 	{
+-		return &quot;Yade was compiled without full installation of wildmagic-dev (Wm3 foundation library), can't use Delaunay. Please disable option use_Delaunay or compile yade with full wm3 library installed. Don't forget CPPPATH=/usr/include/wm3 scons parameter.&quot;;
++		return &quot;ERROR:\n\nYade was compiled without full installation of wildmagic-dev (Wm3 foundation library), can't use Delaunay. Please disable option use_Delaunay or compile yade with full wm3 library installed. Don't forget CPPPATH=/usr/include/wm3 scons parameter.&quot;;
+ 	}
+ #endif
+ 	else
+
+Deleted: trunk/pkg/realtime-rigidbody/Engine/EngineUnit/InteractingBox2InteractingSphere4ErrorTolerantContact.cpp
+===================================================================
+--- trunk/pkg/realtime-rigidbody/Engine/EngineUnit/InteractingBox2InteractingSphere4ErrorTolerantContact.cpp	2007-05-24 09:14:33 UTC (rev 1167)
++++ trunk/pkg/realtime-rigidbody/Engine/EngineUnit/InteractingBox2InteractingSphere4ErrorTolerantContact.cpp	2007-05-24 19:43:42 UTC (rev 1168)
+@@ -1,142 +0,0 @@
+-/*************************************************************************
+-*  Copyright (C) 2004 by Olivier Galizzi                                 *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">olivier.galizzi at imag.fr</A>                                               *
+-*                                                                        *
+-*  This program is free software; it is licensed under the terms of the  *
+-*  GNU General Public License v2 or later. See file LICENSE for details. *
+-*************************************************************************/
+-
+-#include &quot;InteractingBox2InteractingSphere4ErrorTolerantContact.hpp&quot;
+-#include &quot;ErrorTolerantContact.hpp&quot;
+-#include&lt;yade/pkg-common/InteractingSphere.hpp&gt;
+-#include&lt;yade/pkg-common/InteractingBox.hpp&gt;
+-
+-bool InteractingBox2InteractingSphere4ErrorTolerantContact::go(		const shared_ptr&lt;InteractingGeometry&gt;&amp; cm1,
+-						const shared_ptr&lt;InteractingGeometry&gt;&amp; cm2,
+-						const Se3r&amp; se31,
+-						const Se3r&amp; se32,
+-						const shared_ptr&lt;Interaction&gt;&amp; c)
+-{
+-
+-	//if (se31.orientation == Quaternionr())
+-	//	return collideAABoxSphere(cm1,cm2,se31,se32,c);
+-	
+-	Vector3r l,t,p,q,r;
+-	bool onborder = false;
+-	Vector3r pt1,pt2,normal;
+-	Matrix3r axisT,axis;
+-	float depth;
+-
+-	shared_ptr&lt;InteractingSphere&gt; s = YADE_PTR_CAST&lt;InteractingSphere&gt;(cm2);
+-	shared_ptr&lt;InteractingBox&gt; obb = YADE_PTR_CAST&lt;InteractingBox&gt;(cm1);
+-	
+-	Vector3r extents = obb-&gt;extents;
+-
+-	se31.orientation.ToRotationMatrix(axisT);
+-	axis = axisT.Transpose();
+-	
+-	p = se32.position-se31.position;
+-	
+-	l[0] = extents[0];
+-	t[0] = axis.GetRow(0).Dot(p); 
+-	if (t[0] &lt; -l[0]) { t[0] = -l[0]; onborder = true; }
+-	if (t[0] &gt;  l[0]) { t[0] =  l[0]; onborder = true; }
+-
+-	l[1] = extents[1];
+-	t[1] = axis.GetRow(1).Dot(p);
+-	if (t[1] &lt; -l[1]) { t[1] = -l[1]; onborder = true; }
+-	if (t[1] &gt;  l[1]) { t[1] =  l[1]; onborder = true; }
+-
+-	l[2] = extents[2];
+-	t[2] = axis.GetRow(2).Dot(p);
+-	if (t[2] &lt; -l[2]) { t[2] = -l[2]; onborder = true; }
+-	if (t[2] &gt;  l[2]) { t[2] =  l[2]; onborder = true; }
+-	
+-	if (!onborder) 
+-	{
+-		// sphere center inside box. find largest `t' value
+-		float min = l[0]-fabs(t[0]);
+-		int mini = 0;
+-		for (int i=1; i&lt;3; i++) 
+-		{
+-			float tt = l[i]-fabs(t[i]);
+-			if (tt &lt; min) 
+-			{
+-				min = tt;
+-				mini = i;
+-			}
+-		}
+-		
+-		// contact normal aligned with box edge along largest `t' value
+-		Vector3r tmp = Vector3r(0,0,0);
+-
+-		tmp[mini] = (t[mini] &gt; 0) ? 1.0 : -1.0;
+-		
+-		normal = axisT*tmp;
+-		
+-		normal.Normalize();
+-		
+-		pt1 = se32.position + normal*min;
+-		pt2 = se32.position - normal*s-&gt;radius;	
+-	
+-		shared_ptr&lt;ErrorTolerantContact&gt; cm = shared_ptr&lt;ErrorTolerantContact&gt;(new ErrorTolerantContact());
+-		cm-&gt;closestPoints.push_back(std::pair&lt;Vector3r,Vector3r&gt;(pt1,pt2));
+-		cm-&gt;normal = pt1-pt2;
+-		cm-&gt;o1p1 = pt1-se31.position;
+-		cm-&gt;o2p2 = pt2-se32.position;
+-		c-&gt;interactionGeometry = cm;
+-		
+-		return true;	
+-	}
+-	//FIXME : use else instead and signle return
+-	
+-	q = axisT*t;
+-	r = p - q;
+-	
+-	depth = s-&gt;radius-sqrt(r.Dot(r));
+-	
+-	if (depth &lt; 0) 
+-		return false;
+-
+-	pt1 = q + se31.position;
+-
+-	normal = r;
+-	normal.Normalize();
+-
+-	pt2 = se32.position - normal * s-&gt;radius;
+-		
+-	shared_ptr&lt;ErrorTolerantContact&gt; cm = shared_ptr&lt;ErrorTolerantContact&gt;(new ErrorTolerantContact());
+-	cm-&gt;closestPoints.push_back(std::pair&lt;Vector3r,Vector3r&gt;(pt1,pt2));
+-	cm-&gt;normal = pt1-pt2;
+-	cm-&gt;o1p1 = pt1-se31.position;
+-	cm-&gt;o2p2 = pt2-se32.position;
+-	c-&gt;interactionGeometry = cm;
+-
+-
+-	
+-	return true;
+-}
+-
+-
+-bool InteractingBox2InteractingSphere4ErrorTolerantContact::goReverse(	const shared_ptr&lt;InteractingGeometry&gt;&amp; cm1,
+-						const shared_ptr&lt;InteractingGeometry&gt;&amp; cm2,
+-						const Se3r&amp; se31,
+-						const Se3r&amp; se32,
+-						const shared_ptr&lt;Interaction&gt;&amp; c)
+-{
+-	bool isInteracting = go(cm2,cm1,se32,se31,c);
+-	if (isInteracting)
+-	{
+-		shared_ptr&lt;ErrorTolerantContact&gt; cm = YADE_PTR_CAST&lt;ErrorTolerantContact&gt;(c-&gt;interactionGeometry);
+-
+-		Vector3r tmp = cm-&gt;closestPoints[0].first;
+-		cm-&gt;closestPoints[0].first = cm-&gt;closestPoints[0].second;
+-		cm-&gt;closestPoints[0].second = tmp;
+-		tmp = cm-&gt;o1p1;
+-		cm-&gt;o1p1 = cm-&gt;o2p2;
+-		cm-&gt;o2p2 = tmp;
+-		cm-&gt;normal = -cm-&gt;normal;
+-	}
+-	return isInteracting;
+-}
+-
+
+Deleted: trunk/pkg/realtime-rigidbody/Engine/EngineUnit/InteractingBox2InteractingSphere4ErrorTolerantContact.hpp
+===================================================================
+--- trunk/pkg/realtime-rigidbody/Engine/EngineUnit/InteractingBox2InteractingSphere4ErrorTolerantContact.hpp	2007-05-24 09:14:33 UTC (rev 1167)
++++ trunk/pkg/realtime-rigidbody/Engine/EngineUnit/InteractingBox2InteractingSphere4ErrorTolerantContact.hpp	2007-05-24 19:43:42 UTC (rev 1168)
+@@ -1,37 +0,0 @@
+-/*************************************************************************
+-*  Copyright (C) 2004 by Olivier Galizzi                                 *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">olivier.galizzi at imag.fr</A>                                               *
+-*                                                                        *
+-*  This program is free software; it is licensed under the terms of the  *
+-*  GNU General Public License v2 or later. See file LICENSE for details. *
+-*************************************************************************/
+-
+-#ifndef BOX2SPHERE4ERRORTOLERANT_HPP
+-#define BOX2SPHERE4ERRORTOLERANT_HPP
+-
+-#include&lt;yade/pkg-common/InteractionGeometryEngineUnit.hpp&gt;
+-
+-class InteractingBox2InteractingSphere4ErrorTolerantContact : public InteractionGeometryEngineUnit
+-{
+-	public :
+-		virtual bool go(	const shared_ptr&lt;InteractingGeometry&gt;&amp; cm1,
+-					const shared_ptr&lt;InteractingGeometry&gt;&amp; cm2,
+-					const Se3r&amp; se31,
+-					const Se3r&amp; se32,
+-					const shared_ptr&lt;Interaction&gt;&amp; c);
+-
+-		virtual bool goReverse(	const shared_ptr&lt;InteractingGeometry&gt;&amp; cm1,
+-					const shared_ptr&lt;InteractingGeometry&gt;&amp; cm2,
+-					const Se3r&amp; se31,
+-					const Se3r&amp; se32,
+-					const shared_ptr&lt;Interaction&gt;&amp; c);
+-
+-	REGISTER_CLASS_NAME(InteractingBox2InteractingSphere4ErrorTolerantContact);
+-	REGISTER_BASE_CLASS_NAME(InteractionGeometryEngineUnit);
+-	DEFINE_FUNCTOR_ORDER_2D(Box,Sphere);
+-};
+-
+-REGISTER_SERIALIZABLE(InteractingBox2InteractingSphere4ErrorTolerantContact,false);
+-
+-#endif // __BOX2SPHERE4ERRORTOLERANT_H__
+-
+
+Deleted: trunk/pkg/realtime-rigidbody/Engine/EngineUnit/InteractingSphere2InteractingSphere4ErrorTolerantContact.cpp
+===================================================================
+--- trunk/pkg/realtime-rigidbody/Engine/EngineUnit/InteractingSphere2InteractingSphere4ErrorTolerantContact.cpp	2007-05-24 09:14:33 UTC (rev 1167)
++++ trunk/pkg/realtime-rigidbody/Engine/EngineUnit/InteractingSphere2InteractingSphere4ErrorTolerantContact.cpp	2007-05-24 19:43:42 UTC (rev 1168)
+@@ -1,54 +0,0 @@
+-/*************************************************************************
+-*  Copyright (C) 2004 by Olivier Galizzi                                 *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">olivier.galizzi at imag.fr</A>                                               *
+-*                                                                        *
+-*  This program is free software; it is licensed under the terms of the  *
+-*  GNU General Public License v2 or later. See file LICENSE for details. *
+-*************************************************************************/
+-
+-#include &quot;InteractingSphere2InteractingSphere4ErrorTolerantContact.hpp&quot;
+-#include &quot;ErrorTolerantContact.hpp&quot;
+-#include&lt;yade/pkg-common/InteractingSphere.hpp&gt;
+-
+-
+-bool InteractingSphere2InteractingSphere4ErrorTolerantContact::go(		const shared_ptr&lt;InteractingGeometry&gt;&amp; cm1,
+-						const shared_ptr&lt;InteractingGeometry&gt;&amp; cm2,
+-						const Se3r&amp; se31,
+-						const Se3r&amp; se32,
+-						const shared_ptr&lt;Interaction&gt;&amp; c)
+-{
+-	shared_ptr&lt;InteractingSphere&gt; s1 = YADE_PTR_CAST&lt;InteractingSphere&gt;(cm1);
+-	shared_ptr&lt;InteractingSphere&gt; s2 = YADE_PTR_CAST&lt;InteractingSphere&gt;(cm2);
+-
+-	Vector3r normal = se32.position-se31.position;
+-	float penetrationDepth = s1-&gt;radius+s2-&gt;radius-normal.Normalize();
+-
+-	if (penetrationDepth&gt;0)
+-	{
+-		shared_ptr&lt;ErrorTolerantContact&gt; cm = shared_ptr&lt;ErrorTolerantContact&gt;(new ErrorTolerantContact());
+-
+-		Vector3r pt1 = se31.position+normal*s1-&gt;radius;
+-		Vector3r pt2 = se32.position-normal*s2-&gt;radius;
+-		cm-&gt;closestPoints.push_back(std::pair&lt;Vector3r,Vector3r&gt;(pt1,pt2));
+-		cm-&gt;o1p1 = pt1-se31.position;
+-		cm-&gt;o2p2 = pt2-se32.position;
+-		cm-&gt;normal = normal;
+-		c-&gt;interactionGeometry = cm;
+-		return true;
+-	}
+-	else	
+-		return false;
+-
+-}
+-
+-
+-bool InteractingSphere2InteractingSphere4ErrorTolerantContact::goReverse(	const shared_ptr&lt;InteractingGeometry&gt;&amp; cm1,
+-						const shared_ptr&lt;InteractingGeometry&gt;&amp; cm2,
+-						const Se3r&amp; se31,
+-						const Se3r&amp; se32,
+-						const shared_ptr&lt;Interaction&gt;&amp; c)
+-{
+-	return go(cm1,cm2,se31,se32,c);
+-}
+-
+-
+
+Deleted: trunk/pkg/realtime-rigidbody/Engine/EngineUnit/InteractingSphere2InteractingSphere4ErrorTolerantContact.hpp
+===================================================================
+--- trunk/pkg/realtime-rigidbody/Engine/EngineUnit/InteractingSphere2InteractingSphere4ErrorTolerantContact.hpp	2007-05-24 09:14:33 UTC (rev 1167)
++++ trunk/pkg/realtime-rigidbody/Engine/EngineUnit/InteractingSphere2InteractingSphere4ErrorTolerantContact.hpp	2007-05-24 19:43:42 UTC (rev 1168)
+@@ -1,36 +0,0 @@
+-/*************************************************************************
+-*  Copyright (C) 2004 by Olivier Galizzi                                 *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">olivier.galizzi at imag.fr</A>                                               *
+-*                                                                        *
+-*  This program is free software; it is licensed under the terms of the  *
+-*  GNU General Public License v2 or later. See file LICENSE for details. *
+-*************************************************************************/
+-
+-#ifndef SPHERE2SPHERE4ERRORTOLERANT_HPP
+-#define SPHERE2SPHERE4ERRORTOLERANT_HPP
+-
+-#include&lt;yade/pkg-common/InteractionGeometryEngineUnit.hpp&gt;
+-
+-class InteractingSphere2InteractingSphere4ErrorTolerantContact : public InteractionGeometryEngineUnit
+-{
+-	public :
+-		virtual bool go(	const shared_ptr&lt;InteractingGeometry&gt;&amp; cm1,
+-					const shared_ptr&lt;InteractingGeometry&gt;&amp; cm2,
+-					const Se3r&amp; se31,
+-					const Se3r&amp; se32,
+-					const shared_ptr&lt;Interaction&gt;&amp; c);
+-		virtual bool goReverse(	const shared_ptr&lt;InteractingGeometry&gt;&amp; cm1,
+-					const shared_ptr&lt;InteractingGeometry&gt;&amp; cm2,
+-					const Se3r&amp; se31,
+-					const Se3r&amp; se32,
+-					const shared_ptr&lt;Interaction&gt;&amp; c);
+-
+-	REGISTER_CLASS_NAME(InteractingSphere2InteractingSphere4ErrorTolerantContact);
+-	REGISTER_BASE_CLASS_NAME(InteractionGeometryEngineUnit);
+-	DEFINE_FUNCTOR_ORDER_2D(Sphere,Sphere);
+-};
+-
+-REGISTER_SERIALIZABLE(InteractingSphere2InteractingSphere4ErrorTolerantContact,false);
+-
+-#endif // SPHERE2SPHERE4ERRORTOLERANT_HPP
+-
+
+Deleted: trunk/pkg/realtime-rigidbody/Engine/StandAloneEngine/ErrorTolerantLaw.cpp
+===================================================================
+--- trunk/pkg/realtime-rigidbody/Engine/StandAloneEngine/ErrorTolerantLaw.cpp	2007-05-24 09:14:33 UTC (rev 1167)
++++ trunk/pkg/realtime-rigidbody/Engine/StandAloneEngine/ErrorTolerantLaw.cpp	2007-05-24 19:43:42 UTC (rev 1168)
+@@ -1,511 +0,0 @@
+-/*************************************************************************
+-*  Copyright (C) 2004 by Olivier Galizzi                                 *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">olivier.galizzi at imag.fr</A>                                               *
+-*                                                                        *
+-*  This program is free software; it is licensed under the terms of the  *
+-*  GNU General Public License v2 or later. See file LICENSE for details. *
+-*************************************************************************/
+-
+-#include &quot;ErrorTolerantLaw.hpp&quot;
+-#include &quot;ErrorTolerantContact.hpp&quot;
+-#include&lt;yade/pkg-common/RigidBodyParameters.hpp&gt;
+-#include&lt;yade/core/MetaBody.hpp&gt;
+-
+-ErrorTolerantLaw::ErrorTolerantLaw() : InteractionSolver()
+-{
+-	maxReactivations = 100;
+-	maxIterations    = 5;
+-	threshold	 = 0.01;
+-}
+-
+-
+-ErrorTolerantLaw::~ErrorTolerantLaw()
+-{
+-}
+-
+-
+-
+-void ErrorTolerantLaw::postProcessAttributes(bool deserializing)
+-{
+-	InteractionSolver::postProcessAttributes(deserializing);
+-	// PROCESS DESIRED ATTRIBUTES HERE
+-}
+-
+-
+-void ErrorTolerantLaw::registerAttributes()
+-{
+-	InteractionSolver::registerAttributes();
+-	// REGISTER DESIRED ATTRIBUTES HERE
+-}
+-
+-
+-
+-void ErrorTolerantLaw::action(Body* body)
+-{
+-
+-	MetaBody * ncb = YADE_CAST&lt;MetaBody*&gt;(body);
+-	shared_ptr&lt;BodyContainer&gt; bodies = ncb-&gt;bodies;
+-
+-	if (ncb-&gt;transientInteractions-&gt;size() &gt; 0)
+-	{
+-		// Build inverse of masses matrix and store it into a vector
+-		ublas::banded_matrix&lt;float&gt; invM(6*bodies-&gt;size(),6*bodies-&gt;size(),1,1);
+-
+-
+-		shared_ptr&lt;Body&gt; b;
+-		unsigned int i=0;
+-// FIXME - this loop assumes that id's of all bodies start from zero and increment by one?
+-//		for(unsigned int i=0;i&lt;bodies-&gt;size();i++)
+-
+-		BodyContainer::iterator bi    = bodies-&gt;begin();
+-		BodyContainer::iterator biEnd = bodies-&gt;end();
+-		for(  ; bi!=biEnd ; ++bi,++i )
+-		{
+-			b = *bi;
+-
+-			int offset = 6*i;
+-			shared_ptr&lt;RigidBodyParameters&gt; rb = YADE_PTR_CAST&lt;RigidBodyParameters&gt;(b-&gt;physicalParameters);
+-			invM(offset,offset++) = 1.0/rb-&gt;mass;
+-			invM(offset,offset++) = 1.0/rb-&gt;mass;
+-			invM(offset,offset++) = 1.0/rb-&gt;mass;
+-			invM(offset,offset++) = 1.0/rb-&gt;inertia[0];
+-			invM(offset,offset++) = 1.0/rb-&gt;inertia[1];
+-			invM(offset,offset)   = 1.0/rb-&gt;inertia[2];
+-		}
+-
+-		// Build the jacobian and transpose of jacobian
+-		//
+-		// I'm compiling YADE with boost 1.33, and this line is not compiling. I don't understand it, so I can't fix it.
+-		// This totally kills ErrorTolerantLaw, I know - so if you start working on that - first you have to correct this line,
+-		// I'm sorry, but boost 1.33 is 30% faster !
+-		//                                              Janek
+-		//
+-		ublas::matrix&lt;float&gt; J;
+-		ublas::matrix&lt;float&gt; Jt;
+-		//ublas::sparse_matrix&lt;float&gt; J (6*bodies-&gt;size(), ncb-&gt;transientInteractions-&gt;size(), ncb-&gt;transientInteractions-&gt;size()*2/*6*bodies.size()*body-&gt;transientInteractions.size()*/);
+-		//ublas::sparse_matrix&lt;float&gt; Jt (ncb-&gt;transientInteractions-&gt;size(), 6*bodies-&gt;size(), ncb-&gt;transientInteractions-&gt;size()*2/*6*bodies.size()*body-&gt;transientInteractions.size()*/);
+-
+-		static ublas::vector&lt;float&gt; penetrationDepthes;
+-		static ublas::vector&lt;float&gt; penetrationVelocities;
+-
+-		penetrationDepthes.resize(bodies-&gt;size());
+-		penetrationVelocities.resize(bodies-&gt;size());
+-
+-		Vector3r n,o1p1,o2p2;
+-		Vector3r o1p1CrossN,o2p2CrossN;
+-		int id1,id2,offset1,offset2;
+-
+-
+-		shared_ptr&lt;Interaction&gt; contact;
+-		i=0;
+-
+-		InteractionContainer::iterator ii = ncb-&gt;transientInteractions-&gt;begin();
+-		InteractionContainer::iterator iiEnd = ncb-&gt;transientInteractions-&gt;end();
+-		for( ; ii!=iiEnd; ++ii )
+-		{
+-			contact = *ii;
+-			if (contact-&gt;isReal)
+-			{
+-
+-				shared_ptr&lt;ErrorTolerantContact&gt; cm = YADE_PTR_CAST&lt;ErrorTolerantContact&gt;(contact-&gt;interactionGeometry);
+-	
+-				id1 		= contact-&gt;getId1();
+-				id2 		= contact-&gt;getId2();
+-				o1p1 		= cm-&gt;o1p1;
+-				o2p2 		= cm-&gt;o2p2;
+-				n 		= cm-&gt;normal;
+-				o1p1CrossN 	= o1p1.Cross(n);
+-				o2p2CrossN 	= o2p2.Cross(n);
+-	
+-				offset1		= 6*id1;
+-				offset2		= 6*id2;
+-	
+-				J(offset1++,i)	= n[0];
+-				J(offset1++,i)	= n[1];
+-				J(offset1++,i)	= n[2];
+-				J(offset1++,i)	= o1p1CrossN[0];
+-				J(offset1++,i)	= o1p1CrossN[1];
+-				J(offset1,i)	= o1p1CrossN[2];
+-				J(offset2++,i)	= -n[0];
+-				J(offset2++,i)	= -n[1];
+-				J(offset2++,i)	= -n[2];
+-				J(offset2++,i)	= -o2p2CrossN[0];
+-				J(offset2++,i)	= -o2p2CrossN[1];
+-				J(offset2,i)	= -o2p2CrossN[2];
+-	
+-				offset1		= 6*id1;
+-				offset2		= 6*id2;
+-	
+-				Jt(i,offset1++)	= n[0];
+-				Jt(i,offset1++)	= n[1];
+-				Jt(i,offset1++)	= n[2];
+-				Jt(i,offset1++)	= o1p1CrossN[0];
+-				Jt(i,offset1++)	= o1p1CrossN[1];
+-				Jt(i,offset1)	= o1p1CrossN[2];
+-				Jt(i,offset2++)	= -n[0];
+-				Jt(i,offset2++)	= -n[1];
+-				Jt(i,offset2++)	= -n[2];
+-				Jt(i,offset2++)	= -o2p2CrossN[0];
+-				Jt(i,offset2++)	= -o2p2CrossN[1];
+-				Jt(i,offset2)	= -o2p2CrossN[2];
+-	
+-				penetrationDepthes[i] = (cm-&gt;closestPoints[0].first-cm-&gt;closestPoints[0].second).Length();
+-	
+-				//penetrationVelocities[i] = ( ((*bodies)[id1]-&gt;velocity+o1p1.cross((*bodies)[id1]-&gt;angularVelocity)) - ((*bodies)[id2]-&gt;velocity+o2p2.cross((*bodies)[id2]-&gt;angularVelocity)) ).dot(n);
+-			}
+-		}
+-
+-		ublas::vector&lt;float&gt; impulses;
+-		ublas::vector&lt;float&gt; displacement;
+-
+-		impulses.resize(bodies-&gt;size());
+-		displacement.resize(bodies-&gt;size());
+-
+-		BCGSolve(J,invM,Jt,penetrationDepthes,displacement);
+-		BCGSolve(J,invM,Jt,penetrationVelocities,impulses);
+-	}
+-
+-
+-	shared_ptr&lt;Body&gt; b;
+-	unsigned int i=0;
+-// FIXME - this loop assumes that id's of all bodies start from zero and increment by one?
+-//	for(unsigned int i=0; i &lt; bodies-&gt;size(); i++)
+-	BodyContainer::iterator bi    = bodies-&gt;begin();
+-	BodyContainer::iterator biEnd = bodies-&gt;end();
+-	for(  ; bi!=biEnd ; ++bi,++i )
+-	{
+-		b = *bi;
+-
+-
+-		shared_ptr&lt;RigidBodyParameters&gt; rb = dynamic_pointer_cast&lt;RigidBodyParameters&gt;(b);
+-		if (rb)
+-		{
+-			//Vector3r force = Omega::instance().getGravity()*rb-&gt;mass;
+-			Vector3r force = Vector3r(0,-9.81,0)*rb-&gt;mass; // FIXME - use GravityEngine
+-			int sign;
+-			float f = force.Length();
+-
+-			for(int j=0;j&lt;3;j++)  // FIXME - use CundallNonViscousForceDamping
+-			{
+-				if (rb-&gt;velocity[j]==0)
+-					sign=0;
+-				else if (rb-&gt;velocity[j]&gt;0)
+-					sign=1;
+-				else
+-					sign=-1;
+-				force[j] -= 0.1*f*sign;
+-			}
+-
+-			/*float m = moments[i].length();
+-
+-			for(int j=0;j&lt;3;j++)
+-			{
+-				if (rb-&gt;angularVelocity[j]==0)
+-					sign=0;
+-				else if (rb-&gt;angularVelocity[j]&gt;0)
+-					sign=1;
+-				else
+-					sign=-1;
+-				moments[i][j] -= 0.1*m*sign;
+-			}*/
+-
+-			rb-&gt;acceleration += force/rb-&gt;mass;
+-			//rb-&gt;angularAcceleration += moments[i].multTerm(rb-&gt;invInertia);
+-		}
+-        }
+-
+-}
+-
+-
+-void ErrorTolerantLaw::multA(	ublas::vector&lt;float&gt;&amp; res		,
+-					ublas::matrix&lt;float&gt;&amp; J		,
+-					ublas::banded_matrix&lt;float&gt;&amp; invM	,
+-					ublas::matrix&lt;float&gt;&amp; Jt		,
+-					ublas::vector&lt;float&gt;&amp; v		)
+-
+-// I changed sparse_matrix to matrix, because of boost 1.33. why? Maybe there is another name for this matrix?
+-// Or maybe sparse matrix is no longer necessery, because matrix is efficient when sparse?
+-//
+-//							Janek
+-//
+-//void ErrorTolerantLaw::multA(	ublas::vector&lt;float&gt;&amp; res		,
+-//					ublas::sparse_matrix&lt;float&gt;&amp; J		,
+-//					ublas::banded_matrix&lt;float&gt;&amp; invM	,
+-//					ublas::sparse_matrix&lt;float&gt;&amp; Jt		,
+-//					ublas::vector&lt;float&gt;&amp; v		)
+-{
+-
+-	ublas::vector&lt;float&gt; Jtv = ublas::prod(Jt,v);
+-	ublas::vector&lt;float&gt; invMJtv = ublas::prod(invM,Jtv);
+-	res = ublas::prod(J,invMJtv);
+-	//res = ublas::prod(J , ublas::prod(invM , ublas::prod(Jt,v) ) );
+-}
+-
+-
+-void ErrorTolerantLaw::initInitialGuess(ublas::vector&lt;float&gt;&amp; v)
+-{
+-
+-	ublas::vector&lt;float&gt;::iterator vi	= v.begin();
+-	ublas::vector&lt;float&gt;::iterator viEnd	= v.end();
+-
+-	for( ; vi != viEnd ; ++vi)
+-	{
+-		//(*vi) = t_Vec3((float)random()/(float)RAND_MAX,(float)random()/(float)RAND_MAX,(float)random()/(float)RAND_MAX);
+-		(*vi) = 0;
+-	}
+-
+-}
+-
+-
+-void ErrorTolerantLaw::filter(const ublas::vector&lt;float&gt;&amp; v, ublas::vector&lt;float&gt;&amp; res)
+-{
+-
+-	ublas::vector&lt;float&gt;::const_iterator vi		= v.begin();
+-	ublas::vector&lt;float&gt;::const_iterator viEnd	= v.end();
+-	ublas::vector&lt;float&gt;::iterator resi		= res.begin();
+-	vector&lt;ContactState&gt;::iterator si		= contactStates.begin();
+-
+-	for( ; vi != viEnd ; ++vi , ++si , ++resi)
+-	{
+-		if ((*si) == VANISHING)
+-			(*resi) = 0;
+-		else
+-			(*resi) = (*vi);
+-	}
+-}
+-
+-
+-bool ErrorTolerantLaw::solved(const ublas::vector&lt;float&gt;&amp; v, float threshold)
+-{
+-	static ublas::vector&lt;float&gt; tmpVec;
+-	tmpVec.resize(v.size());
+-	filter(v,tmpVec);
+-	return (norm(tmpVec)&lt;threshold);
+-}
+-
+-
+-float ErrorTolerantLaw::norm(const ublas::vector&lt;float&gt;&amp; v)
+-{
+-	return ublas::norm_1(v);
+-}
+-
+-
+-bool ErrorTolerantLaw::wrong(ublas::vector&lt;float&gt;&amp; f, const ublas::vector&lt;float&gt;&amp; a)
+-{
+-	bool err;
+-	vector&lt;int&gt;::iterator 		ri	= nbReactivations.begin();
+-	ublas::vector&lt;float&gt;::iterator	fi	= f.begin();
+-	ublas::vector&lt;float&gt;::iterator	fiEnd	= f.end();
+-	ublas::vector&lt;float&gt;::const_iterator ai	= a.begin();
+-	vector&lt;ContactState&gt;::iterator	si	= contactStates.begin();
+-
+-	err = false;
+-	for( ; fi != fiEnd ; ++fi , ++ai , ++si,++ri)
+-	{
+-		if ( (*si) == VANISHING &amp;&amp; (*ai) &lt; 0 &amp;&amp; (*ri)&lt;maxReactivations)
+-		{
+-			(*si) = CLAMPED;
+-			err   = true;
+-			(*ri)++;
+-		}
+-		else if ( (*si) == CLAMPED &amp;&amp; (*fi) &lt; 0 )
+-		{
+-			(*si) 	= VANISHING;
+-			(*fi) 	= 0;
+-			err   	= true;
+-		}
+-	}
+-
+-	return err;
+-
+-}
+-
+-
+-void ErrorTolerantLaw::BCGSolve(	ublas::matrix&lt;float&gt;&amp; J		,
+-						ublas::banded_matrix&lt;float&gt;&amp; invM	,
+-						ublas::matrix&lt;float&gt;&amp; Jt		,
+-						ublas::vector&lt;float&gt;&amp; constantTerm	,
+-						ublas::vector&lt;float&gt;&amp; res)
+-// I changed sparse_matrix to matrix, because of boost 1.33. why? Maybe there is another name for this matrix?
+-// Or maybe sparse matrix is no longer necessery, because matrix is efficient when sparse?
+-//
+-//								Janek
+-//
+-//void ErrorTolerantLaw::BCGSolve(	ublas::sparse_matrix&lt;float&gt;&amp; J		,
+-//						ublas::banded_matrix&lt;float&gt;&amp; invM	,
+-//						ublas::sparse_matrix&lt;float&gt;&amp; Jt		,
+-//						ublas::vector&lt;float&gt;&amp; constantTerm	,
+-//						ublas::vector&lt;float&gt;&amp; res)
+-{
+-	bool modif=true;
+-	float residu,oldResidu;
+-	int size = J.size2(); //J.size1(); ??
+-	int nbRestart;
+-	float ak,akden,bk,bknum,bkden=1;
+-	bool restart,solve;
+-	int iter;
+-
+-	static ublas::vector&lt;float&gt; a, r, rr, p, pp, z, zz, tmpVec;
+-
+-	solve		= false;
+-	iter		= 0;
+-	nbRestart	= 0;
+-	restart		= true;
+-
+-	a.resize(3*size);
+-	r.resize(3*size);
+-	rr.resize(3*size);
+-	p.resize(3*size);
+-	pp.resize(3*size);
+-	z.resize(3*size);
+-	zz.resize(3*size);
+-	tmpVec.resize(3*size);
+-	res.resize(3*size);
+-
+-	initInitialGuess(res);
+-
+-	contactStates.resize(size);
+-	fill( contactStates.begin(), contactStates.end(), CLAMPED);
+-
+-	nbReactivations.resize(size);
+-	fill( nbReactivations.begin(), nbReactivations.end(), 0);
+-/// 	invDiag.resize(size);
+-
+-/// 	if (precond)
+-/// 		buildInvDiag(jacobian,invMass) ;
+-
+-
+-	multA(a,J,invM,Jt,res);	// a = Af 	// multA(res, a,jacobian,invMass)
+-
+-	a -= constantTerm;	// a = Af - b	// animal::v_meq (a, constantTerm);
+-
+-	a = -a;			// a = b - Af	// animal::v_eq_minus (a, a);
+-
+-	if (modif)
+-		filter(a,r);
+-	else
+-		r = a;
+-
+-	if (solved(r,threshold))
+-		solve = true;
+-	else
+-	{
+-///		if (precond)
+-///			z = invDiag*r;	// leftMultByInvDiag(z,r);
+-///		else
+-			z = r;
+-
+-		multA(rr,J,invM,Jt,r);	// multA(r,rr,jacobian,invMass);
+-
+-		if (modif)
+-		{
+-			filter(rr,tmpVec);
+-			rr = tmpVec;
+-	 	}
+-	}
+-
+-	nbRestart = 0;
+-	oldResidu = 0;
+-	residu = norm(r);
+-
+-	while (iter &lt; maxIterations &amp;&amp; !solve)
+-	{
+-		iter ++;
+-
+-///		if (precond)
+-///			zz = invDiag*rr;	// leftMultByInvDiag(zz,rr);
+-///		else
+-///			zz = rr;
+-
+-		bknum = ublas::inner_prod(z,rr);
+-
+-		if (restart)
+-		{
+-			p       = z;
+-			pp      = zz;
+-			restart = false;
+-		}
+-		else
+-		{
+-			bk = bknum/bkden;
+-			p = z+bk*p;		// animal::vv_eq ( p, z, bk, p );		//p  = bk * p  + z;
+-			pp = zz + bk*pp;	//animal::vv_eq ( pp, zz, bk, pp );	//pp = bk * pp + zz
+-		}
+-
+-		bkden = bknum;
+-
+-		multA(z,J,invM,Jt,p);	// multA(p,z,jacobian,invMass);
+-
+-		if (modif)
+-			filter(z,tmpVec);
+-		else
+-			tmpVec=z;
+-
+-		akden =  ublas::inner_prod(tmpVec,pp);
+-
+-		if (akden!=0)
+-			ak = bknum/akden;
+-		else
+-			ak = 0;
+-
+-		res += ak*p;		// x = x + ak * p;
+-
+-
+-// 		ublas::vector&lt;float&gt;::iterator ri    = res.begin();
+-// 		ublas::vector&lt;float&gt;::iterator riEnd = res.end();
+-// 		for( ; ri != riEnd ; ++ri)
+-// 		{
+-// 			if (fabs((*ri)[0])&lt;1e-3) (*ri)[0]=0;
+-// 			if (fabs((*ri)[1])&lt;1e-3) (*ri)[1]=0;
+-// 			if (fabs((*ri)[2])&lt;1e-3) (*ri)[2]=0;
+-// 		}
+-
+-		filter(z,tmpVec);	// r = r - ak * filter(z);
+-
+-		r -= ak*tmpVec;		// animal::vv_peq ( r, -ak, tmpVec );
+-		a -= ak*z;		// a = a - ak * z;	// animal::vv_peq ( a, -ak, z );
+-
+-		if (modif)
+-			restart = wrong(res,a);
+-		else
+-			restart = false;
+-
+-		if (restart)
+-		{
+-			nbRestart++;
+-			multA(a,J,invM,Jt,res);	// a = Af	// multA(res,a,jacobian,invMass);
+-			a -= constantTerm;	//a = Af - b;	// animal::v_meq (a, constantTerm);
+-			a = -a;			// animal::v_eq_minus (a, a);
+-			filter(a, r);
+-		}
+-
+-		if (solved(r,threshold))
+-			solve = true;
+-		else
+-		{
+-///			if (precond)
+-///				z = invDiag*r;	// leftMultByInvDiag(z,r);
+-///			else
+-				z = r;
+-
+-			if (restart)
+-			{
+-				multA(rr,J,invM,Jt,r);	//multA(r,rr,jacobian,invMass);
+-				filter(rr,tmpVec);
+-				rr = tmpVec;
+-			}
+-			else
+-			{
+-				multA(zz,J,invM,Jt,pp);	// multA(pp,zz,jacobian,invMass);
+-				if (modif)
+-					filter(zz,tmpVec);
+-				else
+-					tmpVec = zz;
+-				rr -= ak*tmpVec;	// rr = rr - ak*filter(zz); //animal::vv_peq (rr, -ak, tmpVec );
+-			}
+-		}
+-		oldResidu = residu;
+-		residu = norm(r);
+-	}
+-}
+-
+
+Deleted: trunk/pkg/realtime-rigidbody/Engine/StandAloneEngine/ErrorTolerantLaw.hpp
+===================================================================
+--- trunk/pkg/realtime-rigidbody/Engine/StandAloneEngine/ErrorTolerantLaw.hpp	2007-05-24 09:14:33 UTC (rev 1167)
++++ trunk/pkg/realtime-rigidbody/Engine/StandAloneEngine/ErrorTolerantLaw.hpp	2007-05-24 19:43:42 UTC (rev 1168)
+@@ -1,88 +0,0 @@
+-/*************************************************************************
+-*  Copyright (C) 2004 by Olivier Galizzi                                 *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">olivier.galizzi at imag.fr</A>                                               *
+-*                                                                        *
+-*  This program is free software; it is licensed under the terms of the  *
+-*  GNU General Public License v2 or later. See file LICENSE for details. *
+-*************************************************************************/
+-
+-#ifndef ERRORTOLERANTDYNAMICENGINE_HPP
+-#define ERRORTOLERANTDYNAMICENGINE_HPP
+-
+-#include&lt;yade/core/InteractionSolver.hpp&gt;
+-
+-#include &lt;boost/numeric/ublas/vector.hpp&gt;
+-#include &lt;boost/numeric/ublas/matrix_sparse.hpp&gt;
+-#include &lt;boost/numeric/ublas/banded.hpp&gt;
+-
+-using namespace boost::numeric;
+-
+-class ErrorTolerantLaw : public InteractionSolver
+-{
+-	typedef enum{VANISHING,CLAMPED} ContactState;
+-	vector&lt;ContactState&gt; contactStates;
+-	vector&lt;int&gt; nbReactivations;
+-	int maxReactivations;
+-	int maxIterations;
+-	float threshold;
+-	
+-	public : ErrorTolerantLaw();
+-	public : ~ErrorTolerantLaw();
+-
+-	protected : virtual void postProcessAttributes(bool deserializing);
+-	public : void registerAttributes();
+-
+-	public : void action(Body* body);
+-
+-	private : void multA(	ublas::vector&lt;float&gt;&amp; res		, 
+-				ublas::matrix&lt;float&gt;&amp; J		,
+-				ublas::banded_matrix&lt;float&gt;&amp; invM	,
+-				ublas::matrix&lt;float&gt;&amp; Jt		,
+-				ublas::vector&lt;float&gt;&amp; v	);
+-
+-// I changed sparse_matrix to matrix, because of boost 1.33. why? Maybe there is another name for this matrix?
+-// Or maybe sparse matrix is no longer necessery, because matrix is efficient when sparse?
+-//
+-//								Janek
+-//
+-//	private : void multA(	ublas::vector&lt;float&gt;&amp; res		, 
+-//				ublas::sparse_matrix&lt;float&gt;&amp; J		,
+-//				ublas::banded_matrix&lt;float&gt;&amp; invM	,
+-//				ublas::sparse_matrix&lt;float&gt;&amp; Jt		,
+-//				ublas::vector&lt;float&gt;&amp; v	);
+-	
+-	private : void initInitialGuess(ublas::vector&lt;float&gt;&amp; v);
+-	
+-	private : void filter(const ublas::vector&lt;float&gt;&amp; v, ublas::vector&lt;float&gt;&amp; res) ;
+-	
+-	private : bool solved(const ublas::vector&lt;float&gt;&amp; v, float threshold) ;
+-
+-	private : float norm(const ublas::vector&lt;float&gt;&amp; v);
+-	
+-	private : bool wrong(ublas::vector&lt;float&gt;&amp; f, const ublas::vector&lt;float&gt;&amp; a) ;
+-
+-	private : void BCGSolve(	ublas::matrix&lt;float&gt;&amp; J		,
+-					ublas::banded_matrix&lt;float&gt;&amp; invM	,
+-					ublas::matrix&lt;float&gt;&amp; Jt		,
+-					ublas::vector&lt;float&gt;&amp; constantTerm	,
+-					ublas::vector&lt;float&gt;&amp; res);
+-// I changed sparse_matrix to matrix, because of boost 1.33. why? Maybe there is another name for this matrix?
+-// Or maybe sparse matrix is no longer necessery, because matrix is efficient when sparse?
+-//
+-//								Janek
+-//
+-//	private : void BCGSolve(	ublas::sparse_matrix&lt;float&gt;&amp; J		,
+-//					ublas::banded_matrix&lt;float&gt;&amp; invM	,
+-//					ublas::sparse_matrix&lt;float&gt;&amp; Jt		,
+-//					ublas::vector&lt;float&gt;&amp; constantTerm	,
+-//					ublas::vector&lt;float&gt;&amp; res);
+-
+-	
+-	REGISTER_CLASS_NAME(ErrorTolerantLaw);
+-	REGISTER_BASE_CLASS_NAME(InteractionSolver);
+-};
+-
+-REGISTER_SERIALIZABLE(ErrorTolerantLaw,false);
+-
+-#endif // ERRORTOLERANTDYNAMICENGINE_HPP
+-
+
+Modified: trunk/pkg/realtime-rigidbody/SConscript
+===================================================================
+--- trunk/pkg/realtime-rigidbody/SConscript	2007-05-24 09:14:33 UTC (rev 1167)
++++ trunk/pkg/realtime-rigidbody/SConscript	2007-05-24 19:43:42 UTC (rev 1168)
+@@ -1,13 +1,6 @@
+ Import('*')
+ env.Install('$PREFIX/lib/yade$SUFFIX/pkg-realtime-rigidbody',[
+ 
+-	env.SharedLibrary('ErrorTolerantContact',
+-		['DataClass/InteractionGeometry/ErrorTolerantContact.cpp'],
+-		LIBS=env['LIBS']+['yade-base',
+-			'yade-base',
+-			'yade-serialization',
+-			'yade-factory']),
+-
+ 	env.SharedLibrary('AAInteractingBox2InteractingSphere4ClosestFeatures',
+ 		['Engine/EngineUnit/AAInteractingBox2InteractingSphere4ClosestFeatures.cpp'],
+ 		LIBS=env['LIBS']+['yade-base',
+@@ -40,17 +33,6 @@
+ 			'Sphere',
+ 			'ClosestFeatures']),
+ 
+-	env.SharedLibrary('InteractingBox2InteractingSphere4ErrorTolerantContact',
+-		['Engine/EngineUnit/InteractingBox2InteractingSphere4ErrorTolerantContact.cpp'],
+-		LIBS=env['LIBS']+['yade-base',
+-			'ErrorTolerantContact',
+-			'InteractionGeometryMetaEngine',
+-			'yade-factory',
+-			'yade-multimethods',
+-			'InteractingBox',
+-			'InteractingSphere'],
+-		CPPPATH=env['CPPPATH']+['DataClass/InteractionGeometry']),
+-
+ 	env.SharedLibrary('InteractingSphere2InteractingSphere4ClosestFeatures',
+ 		['Engine/EngineUnit/InteractingSphere2InteractingSphere4ClosestFeatures.cpp'],
+ 		LIBS=env['LIBS']+['yade-base',
+@@ -60,27 +42,6 @@
+ 			'Sphere',
+ 			'ClosestFeatures']),
+ 
+-	env.SharedLibrary('InteractingSphere2InteractingSphere4ErrorTolerantContact',
+-		['Engine/EngineUnit/InteractingSphere2InteractingSphere4ErrorTolerantContact.cpp'],
+-		LIBS=env['LIBS']+['yade-base',
+-			'ErrorTolerantContact',
+-			'InteractionGeometryMetaEngine',
+-			'InteractingSphere',
+-			'yade-multimethods',
+-			'yade-factory',
+-			'Sphere'],
+-		CPPPATH=env['CPPPATH']+['DataClass/InteractionGeometry']),
+-
+-	env.SharedLibrary('ErrorTolerantLaw',
+-		['Engine/StandAloneEngine/ErrorTolerantLaw.cpp'],
+-		LIBS=env['LIBS']+['yade-base',
+-			'ErrorTolerantContact',
+-			'RigidBodyParameters',
+-			'yade-serialization',
+-			'yade-factory',
+-			'yade-multimethods'],
+-		CPPPATH=env['CPPPATH']+['DataClass/InteractionGeometry']),
+-
+ 	env.SharedLibrary('FrictionLessElasticContactLaw',
+ 		['Engine/StandAloneEngine/FrictionLessElasticContactLaw.cpp'],
+ 		LIBS=env['LIBS']+['yade-base',
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000132.html">[Yade-commits] r1167 - in trunk: core lib/miniWm3	pkg/common/Engine/DeusExMachina	pkg/common/RenderingEngine/GLDrawGeometricalModel	pkg/dem/Engine/DeusExMachina pkg/dem/Engine/StandAloneEngine	pkg/dem/PreProcessor pkg/lattice/DataClass/PhysicalParameters	pkg/lattice/Engine/EngineUnit	pkg/lattice/Engine/StandAloneEngine pkg/lattice/PreProcessor	pkg/lattice/RenderingEngine/GLDrawLatticeSetGeometry	pkg/mass-spring/Engine/StandAloneEngine
+</A></li>
+	<LI>Next message: <A HREF="000134.html">[Yade-commits] r1169 - in trunk: . gui
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#133">[ date ]</a>
+              <a href="thread.html#133">[ thread ]</a>
+              <a href="subject.html#133">[ subject ]</a>
+              <a href="author.html#133">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

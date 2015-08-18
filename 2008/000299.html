@@ -1,0 +1,536 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1337 - trunk/core
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1337%20-%20trunk/core&In-Reply-To=%3C200805021011.m42ABJsH018105%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000298.html">
+   <LINK REL="Next"  HREF="000300.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1337 - trunk/core</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1337%20-%20trunk/core&In-Reply-To=%3C200805021011.m42ABJsH018105%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1337 - trunk/core">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Fri May  2 12:11:19 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000298.html">[Yade-commits] r1336 - trunk/core
+</A></li>
+        <LI>Next message: <A HREF="000300.html">[Yade-commits] r1338 - in trunk: . core lib/serialization scripts
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#299">[ date ]</a>
+              <a href="thread.html#299">[ thread ]</a>
+              <a href="subject.html#299">[ subject ]</a>
+              <a href="author.html#299">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2008-05-02 12:11:19 +0200 (Fri, 02 May 2008)
+New Revision: 1337
+
+Added:
+   trunk/core/MetaEngine.cpp
+   trunk/core/MetaEngine.hpp
+   trunk/core/MetaEngine1D.hpp
+   trunk/core/MetaEngine2D.hpp
+Removed:
+   trunk/core/MetaDispatchingEngine.cpp
+   trunk/core/MetaDispatchingEngine.hpp
+   trunk/core/MetaDispatchingEngine1D.hpp
+   trunk/core/MetaDispatchingEngine2D.hpp
+Log:
+Refactored MetaDispatchingEngine to MetaEngine (everywhere)
+
+
+Deleted: trunk/core/MetaDispatchingEngine.cpp
+===================================================================
+--- trunk/core/MetaDispatchingEngine.cpp	2008-05-02 10:08:17 UTC (rev 1336)
++++ trunk/core/MetaDispatchingEngine.cpp	2008-05-02 10:11:19 UTC (rev 1337)
+@@ -1,137 +0,0 @@
+-/*************************************************************************
+-*  Copyright (C) 2004 by Olivier Galizzi                                 *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">olivier.galizzi at imag.fr</A>                                               *
+-*                                                                        *
+-*  This program is free software; it is licensed under the terms of the  *
+-*  GNU General Public License v2 or later. See file LICENSE for details. *
+-*************************************************************************/
+-
+-#include &quot;MetaEngine.hpp&quot;
+-
+-#include&lt;algorithm&gt;
+-#include&lt;vector&gt;
+-
+-list&lt;string&gt; MetaEngine::getNeededBex(){
+-	list&lt;string&gt; ret;
+-	BOOST_FOREACH(shared_ptr&lt;EngineUnit&gt; e, functorArguments){
+-		list&lt;string&gt; eBex=e-&gt;getNeededBex();
+-		ret.insert(ret.end(),eBex.begin(),eBex.end());
+-	}
+-	ret.sort();
+-	ret.unique();
+-	return ret;
+-}
+-
+-
+-MetaEngine::MetaEngine()
+-{
+-	functorNames.clear();
+-	functorArguments.clear();
+-}
+-
+-
+-MetaEngine::~MetaEngine()
+-{
+-}
+-
+-
+-void MetaEngine::postProcessAttributes(bool deserializing)
+-{
+-	Engine::postProcessAttributes(deserializing);
+-}
+-
+-
+-void MetaEngine::registerAttributes()
+-{
+-	Engine::registerAttributes();
+-	REGISTER_ATTRIBUTE(functorNames);
+-	REGISTER_ATTRIBUTE(functorArguments);
+-}
+-
+-
+-vector&lt;vector&lt;string&gt; &gt;&amp; MetaEngine::getFunctorNames()
+-{
+-	return functorNames;
+-}
+-
+-void MetaEngine::clear()
+-{
+-	functorNames.clear();
+-	functorArguments.clear();
+-}
+-
+-
+-
+-void MetaEngine::storeFunctorName(const string&amp; baseClassName1, const string&amp; libName, shared_ptr&lt;EngineUnit&gt; eu)
+-{
+-	vector&lt;string&gt; v;
+-
+-	v.push_back(baseClassName1);
+-	v.push_back(libName);
+-
+-	functorNames.push_back(v);
+-
+-	storeFunctorArguments(eu);
+-}
+-
+-
+-void MetaEngine::storeFunctorName( const string&amp; baseClassName1, const string&amp; baseClassName2, const string&amp; libName, shared_ptr&lt;EngineUnit&gt; eu)
+-{
+-	vector&lt;string&gt; v;
+-
+-	v.push_back(baseClassName1);
+-	v.push_back(baseClassName2);
+-	v.push_back(libName);
+-
+-	functorNames.push_back(v);
+-
+-	storeFunctorArguments(eu);
+-}
+-
+-
+-void MetaEngine::storeFunctorName( const string&amp; baseClassName1, const string&amp; baseClassName2, const string&amp; baseClassName3, const string&amp; libName, shared_ptr&lt;EngineUnit&gt; eu)
+-{
+-	vector&lt;string&gt; v;
+-
+-	v.push_back(baseClassName1);
+-	v.push_back(baseClassName2);
+-	v.push_back(baseClassName3);
+-
+-	v.push_back(libName);
+-
+-	functorNames.push_back(v);
+-
+-	storeFunctorArguments(eu);
+-}
+-
+-
+-void MetaEngine::storeFunctorArguments(shared_ptr&lt;EngineUnit&gt; eu)
+-{
+-	if (!eu) 
+-		return;
+-
+-	bool dupe = false;
+-
+-	EngineUnitListIterator it    = functorArguments.begin();
+-	EngineUnitListIterator itEnd = functorArguments.end();
+-	for( ; it != itEnd ; ++it )
+-		if( (*it)-&gt;getClassName() == eu-&gt;getClassName() )
+-			dupe = true;
+-	
+-	if (!dupe) 
+-		functorArguments.push_back(eu);
+-}
+-
+-
+-shared_ptr&lt;EngineUnit&gt; MetaEngine::findFunctorArguments(const string&amp; libName)
+-{
+-
+-	EngineUnitListIterator it    = functorArguments.begin();
+-	EngineUnitListIterator itEnd = functorArguments.end();
+-	for( ; it != itEnd ; ++it )
+-		if( (*it)-&gt;getClassName() == libName )
+-			return *it;
+-	
+-	return shared_ptr&lt;EngineUnit&gt;();
+-}
+-
+
+Deleted: trunk/core/MetaDispatchingEngine.hpp
+===================================================================
+--- trunk/core/MetaDispatchingEngine.hpp	2008-05-02 10:08:17 UTC (rev 1336)
++++ trunk/core/MetaDispatchingEngine.hpp	2008-05-02 10:11:19 UTC (rev 1337)
+@@ -1,59 +0,0 @@
+-/*************************************************************************
+-*  Copyright (C) 2004 by Olivier Galizzi                                 *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">olivier.galizzi at imag.fr</A>                                               *
+-*                                                                        *
+-*  This program is free software; it is licensed under the terms of the  *
+-*  GNU General Public License v2 or later. See file LICENSE for details. *
+-*************************************************************************/
+-
+-#ifndef METADISPATCHINGENGINE_HPP
+-#define METADISPATCHINGENGINE_HPP
+-
+-#include &quot;Engine.hpp&quot;
+-#include &quot;EngineUnit.hpp&quot;
+-
+-class MetaEngine : public Engine
+-{
+-	public:
+-		vector&lt;vector&lt;string&gt; &gt;		functorNames; // public for python interface; since there is getFunctorArguments returning RW(!) reference to this, why have it private anyway?!
+-		list&lt;shared_ptr&lt;EngineUnit&gt; &gt;	functorArguments;
+-	protected:
+-		void storeFunctorArguments(shared_ptr&lt;EngineUnit&gt; eu);
+-
+-	public :
+-		vector&lt;vector&lt;string&gt; &gt;&amp; getFunctorNames();
+-
+-		typedef list&lt;shared_ptr&lt;EngineUnit&gt; &gt;::iterator EngineUnitListIterator;
+-		
+-		//virtual void add( string , string , shared_ptr&lt;EngineUnit&gt; eu = shared_ptr&lt;EngineUnit&gt;()) {throw;}
+-		//virtual void add( string , string , string , shared_ptr&lt;EngineUnit&gt; eu = shared_ptr&lt;EngineUnit&gt;()) {throw;}
+-		virtual void add(shared_ptr&lt;EngineUnit&gt; eu=shared_ptr&lt;EngineUnit&gt;()) {throw;}
+-		virtual void add(EngineUnit*) {throw;}
+-		virtual void add(string) {throw;}
+-
+-		virtual list&lt;string&gt; getNeededBex();
+-		
+-		void storeFunctorName(const string&amp; baseClassName1, const string&amp; libName, shared_ptr&lt;EngineUnit&gt; eu);
+-		void storeFunctorName(const string&amp; baseClassName1, const string&amp; baseClassName2, const string&amp; libName, shared_ptr&lt;EngineUnit&gt; eu);
+-		void storeFunctorName(const string&amp; baseClassName1, const string&amp; baseClassName2, const string&amp; baseClassName3, const string&amp; libName, shared_ptr&lt;EngineUnit&gt; eu);
+-		shared_ptr&lt;EngineUnit&gt; findFunctorArguments(const string&amp; libName);
+-		void clear();
+-		
+-		MetaEngine();
+-		virtual ~MetaEngine();
+-		
+-		virtual string getEngineUnitType() { throw; };
+-		virtual int getDimension() { throw; };
+-		virtual string getBaseClassType(unsigned int ) { throw; };
+-
+-	protected :
+-		virtual void registerAttributes();
+-		virtual void postProcessAttributes(bool deserializing);
+-	REGISTER_CLASS_NAME(MetaEngine);
+-	REGISTER_BASE_CLASS_NAME(Engine);
+-};
+-
+-REGISTER_SERIALIZABLE(MetaEngine,false);
+-
+-#endif // METADISPATCHINGENGINE_HPP
+-
+
+Deleted: trunk/core/MetaDispatchingEngine1D.hpp
+===================================================================
+--- trunk/core/MetaDispatchingEngine1D.hpp	2008-05-02 10:08:17 UTC (rev 1336)
++++ trunk/core/MetaDispatchingEngine1D.hpp	2008-05-02 10:11:19 UTC (rev 1337)
+@@ -1,101 +0,0 @@
+-/*************************************************************************
+-*  Copyright (C) 2004 by Olivier Galizzi                                 *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">olivier.galizzi at imag.fr</A>                                               *
+-*                                                                        *
+-*  This program is free software; it is licensed under the terms of the  *
+-*  GNU General Public License v2 or later. See file LICENSE for details. *
+-*************************************************************************/
+-
+-#ifndef METADISPATCHINGENGINE1D_HPP
+-#define METADISPATCHINGENGINE1D_HPP
+-
+-#include &quot;MetaEngine.hpp&quot;
+-#include&lt;yade/lib-multimethods/DynLibDispatcher.hpp&gt;
+-
+-/*! Type-safe variant of the MetaEngine2D::add function. Arguments are not strings, but regular typenames and will give compile-time error if not defined. They are passed to MetaEngine1D::add in the same order as given. */
+-#define DISPATCHER_ADD2(e1,e2) add(#e1,#e2); {/* compile-time check for class existence */ typedef e1 p1; typedef e2 p2;}
+-/*! Same as DISPATCHER_ADD2 macro, but passes the additional 3rd argument to MetaEngine1D::add as its 3rd, optional argument */
+-#define DISPATCHER_ADD2_1(e1,e2,e3) add(#e1,#e2,e3); {/* compile-time check for class existence */ typedef e1 p1; typedef e2 p2;}
+-
+-
+-template
+-&lt;
+-	class baseClass,
+-	class EngineUnitType,
+-	class EngineUnitReturnType,
+-	class EngineUnitArguments,
+-	bool autoSymmetry=true
+-&gt;
+-class MetaEngine1D : public MetaEngine,
+-				public DynLibDispatcher
+-				&lt;	  TYPELIST_1(baseClass)		// base classes for dispatch
+-					, EngineUnitType		// class that provides multivirtual call
+-					, EngineUnitReturnType		// return type
+-					, EngineUnitArguments
+-					, autoSymmetry
+-				&gt;
+-{
+-
+-	public :
+-		#if 0
+-		virtual void __attribute__((deprecated)) add(string baseClassName1, string libName, shared_ptr&lt;EngineUnit&gt; eu = shared_ptr&lt;EngineUnitType&gt;()) {
+-			storeFunctorName(baseClassName1,libName,static_pointer_cast&lt;EngineUnitType&gt;(eu));
+-			add1DEntry(baseClassName1,libName,static_pointer_cast&lt;EngineUnitType&gt;(eu));
+-		}
+-		#endif
+-
+-		virtual void add(EngineUnitType* eu){ add(shared_ptr&lt;EngineUnitType&gt;(eu)); }
+-		virtual void add(shared_ptr&lt;EngineUnitType&gt; eu){
+-			storeFunctorName(eu-&gt;get1DFunctorType1(),eu-&gt;getClassName(),eu);
+-			add1DEntry(eu-&gt;get1DFunctorType1(),eu-&gt;getClassName(),static_pointer_cast&lt;EngineUnitType&gt;(eu));
+-		}
+-
+-		virtual void add(string euType){
+-			shared_ptr&lt;EngineUnitType&gt; eu=dynamic_pointer_cast&lt;EngineUnitType&gt;(ClassFactory::instance().createShared(euType));
+-			// if(!eu) throw runtime_error(&quot;Class `&quot;+euType+&quot;' could not be cast to required 1D EngineUnit&quot;);
+-			if(!eu){
+-				cerr&lt;&lt;__FILE__&lt;&lt;&quot;:&quot;&lt;&lt;__LINE__&lt;&lt;&quot; WARNING! dynamic cast of engine unit &quot;&lt;&lt;euType&lt;&lt;&quot; failed, will use static_cast. Go figure why.&quot;&lt;&lt;endl;
+-				eu=static_pointer_cast&lt;EngineUnitType&gt;(ClassFactory::instance().createShared(euType));
+-			}
+-			add(eu);
+-		}
+-
+-		int getDimension() { return 1; }
+-	
+-		virtual string getEngineUnitType() 
+-		{
+-			shared_ptr&lt;EngineUnitType&gt; eu(new EngineUnitType);
+-			return eu-&gt;getClassName();
+-		}
+-
+-		virtual string getBaseClassType(unsigned int i)
+-		{
+-			if (i==0)
+-			{
+-				shared_ptr&lt;baseClass&gt; bc(new baseClass);
+-				return bc-&gt;getClassName();
+-			}
+-			else
+-				return &quot;&quot;;
+-		}
+-
+-	protected :
+-		void registerAttributes()
+-		{
+-			MetaEngine::registerAttributes();
+-		}
+-		void postProcessAttributes(bool deserializing)
+-		{
+-			MetaEngine::postProcessAttributes(deserializing);
+-			if(deserializing)
+-			{
+-				for(unsigned int i=0;i&lt;functorNames.size();i++)
+-					add1DEntry(functorNames[i][0],functorNames[i][1],static_pointer_cast&lt;EngineUnitType&gt;(findFunctorArguments(functorNames[i][1])));	
+-			}
+-		}
+-	REGISTER_CLASS_NAME(MetaEngine1D);
+-	REGISTER_BASE_CLASS_NAME(MetaEngine DynLibDispatcher);
+-};
+-
+-#endif // METADISPATCHINGENGINE1D_HPP
+-
+
+Deleted: trunk/core/MetaDispatchingEngine2D.hpp
+===================================================================
+--- trunk/core/MetaDispatchingEngine2D.hpp	2008-05-02 10:08:17 UTC (rev 1336)
++++ trunk/core/MetaDispatchingEngine2D.hpp	2008-05-02 10:11:19 UTC (rev 1337)
+@@ -1,128 +0,0 @@
+-/*************************************************************************
+-*  Copyright (C) 2004 by Olivier Galizzi                                 *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">olivier.galizzi at imag.fr</A>                                               *
+-*                                                                        *
+-*  This program is free software; it is licensed under the terms of the  *
+-*  GNU General Public License v2 or later. See file LICENSE for details. *
+-*************************************************************************/
+-
+-#ifndef METADISPATCHINGENGINE2D_HPP
+-#define METADISPATCHINGENGINE2D_HPP
+-
+-#include &quot;MetaEngine.hpp&quot;
+-#include&lt;yade/lib-multimethods/DynLibDispatcher.hpp&gt;
+-
+-/*! Type-safe variant of the MetaEngine2D::add function. Arguments are not strings, but regular typenames and will give compile-time error if not defined. They are passed to MetaEngine2D::add in the same order as given. */
+-#define DISPATCHER_ADD3(e1,e2,e3) add(#e1,#e2,#e3); {/* compile-time check for class existence */ typedef e1 p1; typedef e2 p2; typedef e3 p3;}
+-/*! Same as DISPATCHER_ADD3 macro, but passes the additional 4th argument to MetaEngine2D::add as its 4th, optional argument */
+-#define DISPATCHER_ADD3_1(e1,e2,e3,e4) add(#e1,#e2,#e3,e4); {/* compile-time check for class existence */ typedef e1 p1; typedef e2 p2; typedef e3 p3;}
+-
+-
+-
+-template
+-&lt;
+-	class baseClass1, 
+-	class baseClass2,
+-	class EngineUnitType,
+-	class EngineUnitReturnType,
+-	class EngineUnitArguments,
+-	bool autoSymmetry=true
+-&gt;
+-class MetaEngine2D : public MetaEngine,
+-				public DynLibDispatcher
+-				&lt;	  TYPELIST_2(baseClass1,baseClass2)	// base classes for dispatch
+-					, EngineUnitType			// class that provides multivirtual call
+-					, EngineUnitReturnType			// return type
+-					, EngineUnitArguments			// argument of engine unit
+-					, autoSymmetry
+-				&gt;
+-{
+-	public :
+-		#if 0
+-		__attribute__((deprecated))
+-		virtual void add ( string baseClassName1, string baseClassName2, string libName, shared_ptr&lt;EngineUnit&gt; eu = shared_ptr&lt;EngineUnitType&gt;())  
+-		{
+-			storeFunctorName(baseClassName1,baseClassName2,libName,static_pointer_cast&lt;EngineUnitType&gt;(eu));
+-			add2DEntry(baseClassName1,baseClassName2,libName,static_pointer_cast&lt;EngineUnitType&gt;(eu));
+-		}
+-		#endif
+-
+-		/* add functor by pointer: this is convenience for calls like foo-&gt;add(new SomeFunctor); */
+-		virtual void add(EngineUnitType* eu){ add(shared_ptr&lt;EngineUnitType&gt;(eu)); }
+-		/* add functor by shared pointer */
+-		virtual void add(shared_ptr&lt;EngineUnitType&gt; eu){
+-			storeFunctorName(eu-&gt;get2DFunctorType1(),eu-&gt;get2DFunctorType2(),eu-&gt;getClassName(),eu);
+-			add2DEntry(eu-&gt;get2DFunctorType1(),eu-&gt;get2DFunctorType2(),eu-&gt;getClassName(),static_pointer_cast&lt;EngineUnitType&gt;(eu));
+-		}
+-		/* add functor by its literal name */
+-		virtual void add(string euType){
+-			shared_ptr&lt;EngineUnitType&gt; eu=dynamic_pointer_cast&lt;EngineUnitType&gt;(ClassFactory::instance().createShared(euType));
+-			if(!eu){
+-				cerr&lt;&lt;__FILE__&lt;&lt;&quot;:&quot;&lt;&lt;__LINE__&lt;&lt;&quot; WARNING! dynamic cast of engine unit &quot;&lt;&lt;euType&lt;&lt;&quot; failed, will use static_cast. Go figure why.&quot;&lt;&lt;endl;
+-				eu=static_pointer_cast&lt;EngineUnitType&gt;(ClassFactory::instance().createShared(euType));
+-			}
+-			add(eu);
+-		}
+-
+-
+-		virtual int getDimension() { return 2; }
+-
+-		virtual string getEngineUnitType() 
+-		{
+-			shared_ptr&lt;EngineUnitType&gt; eu(new EngineUnitType);
+-			return eu-&gt;getClassName();
+-		}
+-	
+-		virtual string getBaseClassType(unsigned int i)
+-		{
+-			if (i==0)
+-			{
+-				shared_ptr&lt;baseClass1&gt; bc(new baseClass1);
+-				return bc-&gt;getClassName();
+-			}
+-			else if (i==1)
+-			{
+-				shared_ptr&lt;baseClass2&gt; bc(new baseClass2);
+-				return bc-&gt;getClassName();
+-			}
+-			else
+-				return &quot;&quot;;
+-		}
+-
+-	protected :
+-		void postProcessAttributes(bool deserializing)
+-		{
+-			MetaEngine::postProcessAttributes(deserializing);
+-			if(deserializing)
+-			{
+-				for(unsigned int i=0;i&lt;functorNames.size();i++)
+-					add2DEntry(functorNames[i][0],functorNames[i][1],functorNames[i][2],static_pointer_cast&lt;EngineUnitType&gt;(findFunctorArguments(functorNames[i][2])));
+-			}
+-		}
+-
+-		void registerAttributes()
+-		{
+-			MetaEngine::registerAttributes();
+-		}
+-	REGISTER_CLASS_NAME(MetaEngine2D);
+-	REGISTER_BASE_CLASS_NAME(MetaEngine DynLibDispatcher);
+-
+-};
+-
+-//REGISTER_SERIALIZABLE(MetaEngine2D,false);
+-
+-/*
+-#define REGISTER_BASE_CLASS_TYPE_2D(name1,name2)			\
+- 	public : virtual string getBaseClassType(unsigned int i)	\
+- 	{								\
+- 		switch (i)						\
+- 		{							\
+- 			case 0  : return #name1;			\
+- 			case 1  : return #name2;			\
+- 			default : return &quot;&quot;;				\
+- 		}							\
+- 	}	
+-*/
+-
+-#endif // METADISPATCHINGENGINE2D_HPP
+-
+
+Copied: trunk/core/MetaEngine.cpp (from rev 1336, trunk/core/MetaDispatchingEngine.cpp)
+
+Copied: trunk/core/MetaEngine.hpp (from rev 1336, trunk/core/MetaDispatchingEngine.hpp)
+
+Copied: trunk/core/MetaEngine1D.hpp (from rev 1336, trunk/core/MetaDispatchingEngine1D.hpp)
+
+Copied: trunk/core/MetaEngine2D.hpp (from rev 1336, trunk/core/MetaDispatchingEngine2D.hpp)
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000298.html">[Yade-commits] r1336 - trunk/core
+</A></li>
+	<LI>Next message: <A HREF="000300.html">[Yade-commits] r1338 - in trunk: . core lib/serialization scripts
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#299">[ date ]</a>
+              <a href="thread.html#299">[ thread ]</a>
+              <a href="subject.html#299">[ subject ]</a>
+              <a href="author.html#299">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

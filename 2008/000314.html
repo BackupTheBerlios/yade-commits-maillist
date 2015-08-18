@@ -1,0 +1,294 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1352 - trunk/lib/import
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1352%20-%20trunk/lib/import&In-Reply-To=%3C200805130858.m4D8wIP6007595%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000313.html">
+   <LINK REL="Next"  HREF="000315.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1352 - trunk/lib/import</H1>
+    <B>sega at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1352%20-%20trunk/lib/import&In-Reply-To=%3C200805130858.m4D8wIP6007595%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1352 - trunk/lib/import">sega at mail.berlios.de
+       </A><BR>
+    <I>Tue May 13 10:58:18 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000313.html">[Yade-commits] r1351 - trunk
+</A></li>
+        <LI>Next message: <A HREF="000315.html">[Yade-commits] r1353 - in trunk: examples lib/import pkg/dem	pkg/dem/Engine/EngineUnit pkg/dem/PreProcessor
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#314">[ date ]</a>
+              <a href="thread.html#314">[ thread ]</a>
+              <a href="subject.html#314">[ subject ]</a>
+              <a href="author.html#314">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: sega
+Date: 2008-05-13 10:58:18 +0200 (Tue, 13 May 2008)
+New Revision: 1352
+
+Modified:
+   trunk/lib/import/STLImporter.cpp
+   trunk/lib/import/STLReader.cpp
+Log:
+Translate comments to english.
+
+
+Modified: trunk/lib/import/STLImporter.cpp
+===================================================================
+--- trunk/lib/import/STLImporter.cpp	2008-05-12 20:32:43 UTC (rev 1351)
++++ trunk/lib/import/STLImporter.cpp	2008-05-13 08:58:18 UTC (rev 1352)
+@@ -145,7 +145,7 @@
+ 
+     for(int i=0,ei=egs.size(); i&lt;ei; ++i)
+     {
+-//	if (egs[i].flat) continue; //FIXME: &#1087;&#1083;&#1086;&#1089;&#1082;&#1080;&#1077; &#1087;&#1088;&#1086;&#1089;&#1090;&#1086; &#1087;&#1088;&#1086;&#1087;&#1091;&#1089;&#1082;&#1072;&#1077;&#1084;
++//	if (egs[i].flat) continue; //FIXME: skip flat edges 
+ 
+ 	Vector3r v0(vts[egs[i].first].point)
+ 		,v1(vts[egs[i].second].point)
+@@ -154,43 +154,43 @@
+ 	else if (p0 == v1) normal = v1-v0; 
+ 	else continue;
+ 	normal.Normalize();
+-	if ( vrtx.normals.size() &lt; 2 ) // &#1087;&#1077;&#1088;&#1074;&#1099;&#1077; &#1076;&#1074;&#1077; &#1085;&#1086;&#1088;&#1084;&#1072;&#1083;&#1080;
++	if ( vrtx.normals.size() &lt; 2 ) // the first two normal
+ 	{
+ 	    vrtx.normals.push_back(normal);
+ 	    if ( vrtx.normals.size()==2 &amp;&amp; (vrtx.normals[0].UnitCross(vrtx.normals[1])).Length() == 0)
+-	    { // &#1074;&#1077;&#1088;&#1096;&#1080;&#1085;&#1072; &#1083;&#1077;&#1078;&#1080;&#1090; &#1085;&#1072; &#1088;&#1077;&#1073;&#1088;&#1077;
++	    { // vertex lies on the edge
+ 		vrtx.flat = true;
+ 		break;
+ 	    }
+ 	    continue;
+ 	}
+-	// &#1090;&#1088;&#1077;&#1090;&#1100;&#1103; &#1085;&#1086;&#1088;&#1084;&#1072;&#1083;&#1100; &#1080; &#1076;&#1072;&#1083;&#1077;&#1077;
++	// third normal, etc.
+ 	bool add_normal_flag=true;
+ 	for (int ii=0,eii=vrtx.normals.size()-1; ii&lt;eii; ++ii)
+ 	{
+ 	    for (int jj=ii+1, ejj=vrtx.normals.size(); jj&lt;ejj; ++jj)
+ 	    {
+-		Vector3r n1n2 = vrtx.normals[ii].UnitCross(vrtx.normals[jj]); // &#1087;&#1086;&#1074;&#1086;&#1088;&#1086;&#1090; &#1086;&#1090; ni &#1082; nj
++		Vector3r n1n2 = vrtx.normals[ii].UnitCross(vrtx.normals[jj]); // turn from ni to nj
+ 		if ( Math&lt;Real&gt;::FAbs(n1n2.Dot(normal)) &lt; Math&lt;Real&gt;::ZERO_TOLERANCE )
+ 		{ // &#1085;&#1086;&#1088;&#1084;&#1072;&#1083;&#1100; n &#1083;&#1077;&#1078;&#1080;&#1090; &#1074; &#1087;&#1083;&#1086;&#1089;&#1082;&#1086;&#1089;&#1090;&#1080; ni, nj
+ 		    add_normal_flag = false;
+ 
+-		    Vector3r n1normal = vrtx.normals[ii].UnitCross(normal); // &#1087;&#1086;&#1074;&#1086;&#1088;&#1086;&#1090; &#1086;&#1090; ni &#1082; n
++		    Vector3r n1normal = vrtx.normals[ii].UnitCross(normal); // turn from ni to n
+ 
+ 		    if ( n1n2.Dot(n1normal) &lt; Math&lt;Real&gt;::ZERO_TOLERANCE) 
+-		    { // &#1087;&#1086;&#1074;&#1086;&#1088;&#1086;&#1090;&#1099; ni-&gt;nj &#1080; ni-&gt;n &#1088;&#1072;&#1079;&#1085;&#1086;&#1085;&#1072;&#1087;&#1088;&#1072;&#1074;&#1083;&#1077;&#1085;&#1085;&#1099;&#1077; 
+-			Vector3r normaln1 = normal.UnitCross(vrtx.normals[ii]); // &#1087;&#1086;&#1074;&#1086;&#1088;&#1086;&#1090; &#1086;&#1090; n &#1082; ni
+-			Vector3r normaln2 = normal.UnitCross(vrtx.normals[jj]); // &#1087;&#1086;&#1074;&#1086;&#1088;&#1086;&#1090; &#1086;&#1090; n &#1082; nj
++		    { // turns ni-&gt;nj and ni-&gt;n directed to different sides
++			Vector3r normaln1 = normal.UnitCross(vrtx.normals[ii]); // turn from n to ni
++			Vector3r normaln2 = normal.UnitCross(vrtx.normals[jj]); // turn form n to nj
+ 			if ( normaln1.Dot(normaln2) &lt; Math&lt;Real&gt;::ZERO_TOLERANCE) 
+-			    // &#1087;&#1086;&#1074;&#1086;&#1088;&#1086;&#1090;&#1099; n-&gt;ni &#1080; n-&gt;nj &#1088;&#1072;&#1079;&#1085;&#1086;&#1085;&#1072;&#1087;&#1088;&#1072;&#1074;&#1083;&#1077;&#1085;&#1085;&#1099;&#1077; =&gt;
+-			    vrtx.flat = true; // &#1074;&#1077;&#1088;&#1096;&#1080;&#1085;&#1072; &#1083;&#1077;&#1078;&#1080;&#1090; &#1074;&#1086; &#1074;&#1085;&#1091;&#1090;&#1088;&#1077;&#1085;&#1085;&#1077;&#1084; &#1091;&#1075;&#1083;&#1091;
++			    // turns n-&gt;ni and n-&gt;nj directed to different sides =&gt;
++			    vrtx.flat = true; // vertex lies in the inner corner
+ 			else
+-			    // &#1087;&#1086;&#1074;&#1086;&#1088;&#1086;&#1090;&#1099; n-&gt;ni &#1080; n-&gt;nj &#1089;&#1086;&#1085;&#1072;&#1087;&#1088;&#1072;&#1074;&#1083;&#1077;&#1085;&#1099; =&gt;
++			    // turns n-&gt;ni and n-&gt;nj directed to one side =&gt;
+ 			    vrtx.normals[ii] = normal; // ni &lt;- n
+ 		    }
+-		    else // &#1087;&#1086;&#1074;&#1086;&#1088;&#1086;&#1090;&#1099; ni-&gt;nj &#1080; ni-&gt;n &#1089;&#1086;&#1085;&#1072;&#1087;&#1088;&#1072;&#1074;&#1083;&#1077;&#1085;&#1099;
++		    else // turns ni-&gt;nj and ni-&gt;n directed to one side
+ 		       	if (vrtx.normals[ii].Dot(normal) &lt; vrtx.normals[ii].Dot(vrtx.normals[jj]))
+-			    // &#1091;&#1075;&#1086;&#1083; &#1084;&#1077;&#1078;&#1076;&#1091; ni &#1080; n &#1073;&#1086;&#1083;&#1100;&#1096;&#1077; &#1095;&#1077;&#1084; &#1084;&#1077;&#1078;&#1076;&#1091; ni &#1080; nj =&gt;
++			    // the angle between ni and n are greater than between ni and nj =&gt;
+ 			    vrtx.normals[jj]=normal; // nj &lt;- n
+ 		}
+ 	    }
+@@ -214,11 +214,11 @@
+     pair&lt;Vector3r,Vector3r&gt; edge( minmax(p0, p1) );
+     for(int i=0,ei=fcs.size(); i&lt;ei; ++i)
+     {
+-	Vector3r v0(vts[fcs[i][0]].point)  // &#1075;&#1088;&#1072;&#1085;&#1100; &#1090;&#1088;&#1077;&#1091;&#1075;&#1086;&#1083;&#1100;&#1085;&#1072;&#1103; 
++	Vector3r v0(vts[fcs[i][0]].point)  // triangular facet
+ 		,v1(vts[fcs[i][1]].point)
+ 	        ,v2(vts[fcs[i][2]].point);
+ 	Vector3r N(0,0,0);
+-	if ( edge == minmax(v0,v1) ) // &#1086;&#1087;&#1088;&#1077;&#1076;&#1077;&#1083;&#1103;&#1077;&#1084; &#1085;&#1086;&#1088;&#1084;&#1072;&#1083;&#1100; &#1082; &#1088;&#1077;&#1073;&#1088;&#1091;	     
++	if ( edge == minmax(v0,v1) ) // find normal to edge
+ 	{
+ 	    v1 -= v0;
+ 	    v2 -= v0;
+@@ -242,23 +242,23 @@
+ 
+ 	if (N.Normalize() &gt; 0)
+ 	{
+-	    if (edg.normal1 == Vector3r::ZERO) // &#1091;&#1089;&#1090;&#1072;&#1085;&#1072;&#1074;&#1083;&#1080;&#1074;&#1072;&#1077;&#1084; &#1087;&#1077;&#1088;&#1074;&#1091;&#1102; &#1085;&#1086;&#1088;&#1084;&#1072;&#1083;&#1100;
++	    if (edg.normal1 == Vector3r::ZERO) // setup first normal
+ 	    {
+ 		edg.normal1 = N;
+ 		continue;
+ 	    }
+-	    if (edg.normal2 == Vector3r::ZERO) // &#1091;&#1089;&#1090;&#1072;&#1085;&#1072;&#1074;&#1083;&#1080;&#1074;&#1072;&#1077;&#1084; &#1074;&#1090;&#1086;&#1088;&#1091;&#1102; &#1085;&#1086;&#1088;&#1084;&#1072;&#1083;&#1100;
++	    if (edg.normal2 == Vector3r::ZERO) // setup second normal
+ 	    {
+ 		edg.normal2 = N;
+ 		edg.both=true;
+ 		continue;
+ 	    }
+-	    // &#1089; &#1088;&#1077;&#1073;&#1088;&#1086;&#1084; &#1089;&#1074;&#1103;&#1079;&#1072;&#1085;&#1086; &#1073;&#1086;&#1083;&#1077;&#1077; 2 &#1075;&#1088;&#1072;&#1085;&#1077;&#1081;?!
++	    // the edge involves more than two faces
+ 	    cerr &lt;&lt; &quot;WARNING: Edge have over two facets&quot; &lt;&lt; endl;
+ 	}
+     }
+     if ( Math&lt;Real&gt;::FAbs(edg.normal1.Dot(edg.normal2) + 1) &lt;= Math&lt;Real&gt;::ZERO_TOLERANCE)
+-    { // &#1089;&#1082;&#1072;&#1083;&#1103;&#1088;&#1085;&#1086;&#1077; &#1087;&#1088;&#1086;&#1080;&#1079;&#1074;&#1077;&#1076;&#1077;&#1085;&#1080;&#1077; &#1085;&#1086;&#1088;&#1084;&#1072;&#1083;&#1077;&#1081; &#1088;&#1072;&#1074;&#1085;&#1086; -1 =&gt; &#1075;&#1088;&#1072;&#1085;&#1080; &#1083;&#1077;&#1078;&#1072;&#1090; &#1074; &#1086;&#1076;&#1085;&#1086;&#1081; &#1087;&#1083;&#1086;&#1089;&#1082;&#1086;&#1089;&#1090;&#1080;, &#1088;&#1077;&#1073;&#1088;&#1086; &#1087;&#1083;&#1086;&#1089;&#1082;&#1086;&#1077;
++    { // scalar product normals is -1 =&gt; facets lies in the same plane, edge is flat 
+ 	edg.flat=true;
+ 	nbFlatEdges++;
+     }
+@@ -269,27 +269,27 @@
+     int nbFlatEdgesOld = nbFlatEdges;
+ 
+     vector&lt;Edg&gt;::iterator edge_it = egs.begin(), edge_end = egs.end();
+-    while( edge_it != edge_end ) // &#1086;&#1073;&#1093;&#1086;&#1076;&#1080;&#1084; &#1074;&#1089;&#1077; &#1088;&#1077;&#1073;&#1088;&#1072;
++    while( edge_it != edge_end ) // loop on all edges
+     {
+-	if (!edge_it-&gt;flat) // &#1080;&#1097;&#1077;&#1084; &#1087;&#1083;&#1086;&#1089;&#1082;&#1086;&#1077; &#1088;&#1077;&#1073;&#1088;&#1086;
++	if (!edge_it-&gt;flat) // find the flat edge
+ 	{
+ 	    ++edge_it;
+ 	    continue;
+ 	}
+-	// &#1087;&#1083;&#1086;&#1089;&#1082;&#1086;&#1077; &#1088;&#1077;&#1073;&#1088;&#1086;
++	// flat edge
+ 	pair&lt;int,int&gt; edge = minmax(edge_it-&gt;first, edge_it-&gt;second); 
+ 
+-	// &#1080;&#1097;&#1077;&#1084; &#1075;&#1088;&#1072;&#1085;&#1080;, &#1082;&#1086;&#1090;&#1086;&#1088;&#1099;&#1077; &#1088;&#1072;&#1079;&#1076;&#1077;&#1083;&#1103;&#1077;&#1090; edge
++	// looking for a faces, which shares this edge
+ 	int facet1=-1, facet2=-1;
+ 	int edge_in_facet1, edge_in_facet2;
+-	for (int facet_it=0, facet_end=fcs.size(); facet_it&lt;facet_end &amp;&amp; facet2&lt;0; ++facet_it) // &#1094;&#1080;&#1082;&#1083; &#1087;&#1086; &#1075;&#1088;&#1072;&#1085;&#1103;&#1084;
++	for (int facet_it=0, facet_end=fcs.size(); facet_it&lt;facet_end &amp;&amp; facet2&lt;0; ++facet_it) // loop on the facets
+ 	{
+-	    for (int edge_in_facet_it=0, edge_in_facet_end=fcs[facet_it].size(); // &#1094;&#1080;&#1082;&#1083; &#1087;&#1086; &#1088;&#1077;&#1073;&#1088;&#1072;&#1084; &#1075;&#1088;&#1072;&#1085;&#1080;
++	    for (int edge_in_facet_it=0, edge_in_facet_end=fcs[facet_it].size(); // loop on the facet edges
+ 		    edge_in_facet_it &lt; edge_in_facet_end; ++edge_in_facet_it)
+ 	    {
+ 		pair&lt;int,int&gt; edge_in_facet = fcs[facet_it].edge(edge_in_facet_it);
+ 		if ( edge == minmax(edge_in_facet.first, edge_in_facet.second) )
+-		{ // edge &#1089;&#1086;&#1074;&#1087;&#1072;&#1076;&#1072;&#1077;&#1090; &#1089; &#1086;&#1076;&#1085;&#1080;&#1084; &#1080;&#1079; &#1088;&#1077;&#1073;&#1077;&#1088; &#1075;&#1088;&#1072;&#1085;&#1080;
++		{ // edge coincides with one of the facet
+ 		    if (facet1&lt;0)
+ 		    { 
+ 		      facet1 = facet_it;
+@@ -305,7 +305,7 @@
+ 	    } 
+ 	} //for
+ 
+-	// &#1086;&#1073;&#1098;&#1077;&#1076;&#1080;&#1085;&#1103;&#1077;&#1084; &#1085;&#1072;&#1081;&#1076;&#1077;&#1085;&#1085;&#1099;&#1077; &#1075;&#1088;&#1072;&#1085;&#1080;
++	// join the facets 
+ 	Fct f1 = fcs[facet1], f2 = fcs[facet2];
+ 	if (f1.vertex.size()&lt;max_vertices_in_facet &amp;&amp; f2.vertex.size()&lt;max_vertices_in_facet)
+ 	{
+@@ -313,7 +313,7 @@
+ 	    f1.vertex.insert(f1.vertex.begin()+edge_in_facet1+1, f2.vertex.begin(), f2.vertex.end() );
+ 	    reduce_facet_vertices(f1);
+ 	    
+-	    // &#1077;&#1089;&#1083;&#1080; &#1087;&#1086;&#1083;&#1091;&#1095;&#1080;&#1074;&#1096;&#1080;&#1081;&#1089;&#1103; &#1084;&#1085;&#1086;&#1075;&#1086;&#1091;&#1075;&#1086;&#1083;&#1100;&#1085;&#1080;&#1082; &#1074;&#1099;&#1087;&#1091;&#1082;&#1083;&#1099;&#1081;, &#1087;&#1088;&#1080;&#1085;&#1080;&#1084;&#1072;&#1077;&#1084; &#1086;&#1073;&#1098;&#1077;&#1076;&#1080;&#1085;&#1077;&#1085;&#1080;&#1077; 
++	    // if we get a convex shape, accept join
+ 	    if (convex_test(f1))
+ 	    {
+ 		fcs[facet1]=f1;
+@@ -326,11 +326,10 @@
+ 	++edge_it;
+     } // while
+ 
+-    // &#1077;&#1089;&#1083;&#1080; &#1073;&#1099;&#1083;&#1080; &#1086;&#1073;&#1098;&#1077;&#1076;&#1080;&#1085;&#1077;&#1085;&#1080;&#1103; &#1075;&#1088;&#1072;&#1085;&#1077;&#1081;, &#1087;&#1086;&#1074;&#1090;&#1086;&#1088;&#1103;&#1077;&#1084; &#1087;&#1088;&#1086;&#1094;&#1077;&#1076;&#1091;&#1088;&#1091;
++    // repeat if the joins occurred
+     if (nbFlatEdgesOld != nbFlatEdges) 
+ 	facetsConsolidation();
+ 
+-    // &#1086;&#1073;&#1098;&#1077;&#1076;&#1080;&#1085;&#1080;&#1083;&#1080; &#1074;&#1089;&#1077;, &#1095;&#1090;&#1086; &#1084;&#1086;&#1078;&#1085;&#1086; =&gt; &#1074;&#1099;&#1093;&#1086;&#1076;
+     return;
+ }
+ 
+@@ -346,7 +345,7 @@
+ 	else
+ 	    R = (vts[v[i]].point-vts[v[i-1]].point).UnitCross(vts[v[i+1]].point-vts[v[i]].point);
+ 
+-	if ( T.Dot(R) &lt; Math&lt;Real&gt;::ZERO_TOLERANCE ) // T &#1085;&#1072;&#1087;&#1088;&#1072;&#1074;&#1083;&#1077;&#1085;&#1086; &#1087;&#1088;&#1086;&#1090;&#1080;&#1074;&#1086;&#1087;&#1086;&#1083;&#1086;&#1078;&#1085;&#1086; R
++	if ( T.Dot(R) &lt; Math&lt;Real&gt;::ZERO_TOLERANCE ) // T oppositely directed R
+ 	    return false;
+     }
+     return true;
+@@ -374,7 +373,7 @@
+ 
+ 	Real L = ((vts[v[k]].point-vts[v[l]].point).UnitCross(vts[v[m]].point-vts[v[k]].point)).Length();
+ 	if (L == 0)
+-	{ // &#1090;&#1088;&#1080; &#1074;&#1077;&#1088;&#1096;&#1080;&#1085;&#1099; &#1083;&#1077;&#1078;&#1072;&#1090; &#1085;&#1072; &#1086;&#1076;&#1085;&#1086;&#1081; &#1087;&#1088;&#1103;&#1084;&#1086;&#1081; =&gt; &#1091;&#1076;&#1072;&#1083;&#1103;&#1077;&#1084; &#1089;&#1088;&#1077;&#1076;&#1085;&#1102;&#1102;
++	{ // three vertices lies on a line =&gt; remove middle vertex
+ 	    v.erase(v.begin()+i);
+ 	    N--;
+ 	}
+
+Modified: trunk/lib/import/STLReader.cpp
+===================================================================
+--- trunk/lib/import/STLReader.cpp	2008-05-12 20:32:43 UTC (rev 1351)
++++ trunk/lib/import/STLReader.cpp	2008-05-13 08:58:18 UTC (rev 1352)
+@@ -9,19 +9,3 @@
+ 
+ float STLReader::tolerance =0;
+ 
+-//void STLReader::open(const char* filename)
+-//{
+-//    is.open(filename);
+-//}
+-//
+-//void STLReader::close()
+-//{
+-//    is.close();
+-//}
+-//
+-//bool STLReader::operator!() const
+-//{
+-//    return !is;
+-//}
+-
+-
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000313.html">[Yade-commits] r1351 - trunk
+</A></li>
+	<LI>Next message: <A HREF="000315.html">[Yade-commits] r1353 - in trunk: examples lib/import pkg/dem	pkg/dem/Engine/EngineUnit pkg/dem/PreProcessor
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#314">[ date ]</a>
+              <a href="thread.html#314">[ thread ]</a>
+              <a href="subject.html#314">[ subject ]</a>
+              <a href="author.html#314">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

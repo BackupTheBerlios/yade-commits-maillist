@@ -1,0 +1,117 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1408 - in trunk: core gui/py gui/qt3
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1408%20-%20in%20trunk%3A%20core%20gui/py%20gui/qt3&In-Reply-To=%3C200806301726.m5UHQKUe000998%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000368.html">
+   <LINK REL="Next"  HREF="000370.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1408 - in trunk: core gui/py gui/qt3</H1>
+    <B>sega at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1408%20-%20in%20trunk%3A%20core%20gui/py%20gui/qt3&In-Reply-To=%3C200806301726.m5UHQKUe000998%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1408 - in trunk: core gui/py gui/qt3">sega at mail.berlios.de
+       </A><BR>
+    <I>Mon Jun 30 19:26:20 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000368.html">[Yade-commits] r1407 - trunk/gui/qt3
+</A></li>
+        <LI>Next message: <A HREF="000370.html">[Yade-commits] r1410 - trunk/gui/qt3
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#369">[ date ]</a>
+              <a href="thread.html#369">[ thread ]</a>
+              <a href="subject.html#369">[ subject ]</a>
+              <a href="author.html#369">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: sega
+Date: 2008-06-30 19:26:19 +0200 (Mon, 30 Jun 2008)
+New Revision: 1408
+
+Modified:
+   trunk/core/PhysicalParameters.hpp
+   trunk/gui/py/utils.py
+   trunk/gui/qt3/GLSimulationPlayerViewer.cpp
+Log:
+Small fixes
+
+Modified: trunk/core/PhysicalParameters.hpp
+===================================================================
+--- trunk/core/PhysicalParameters.hpp	2008-06-29 21:42:26 UTC (rev 1407)
++++ trunk/core/PhysicalParameters.hpp	2008-06-30 17:26:19 UTC (rev 1408)
+@@ -18,6 +18,7 @@
+ class PhysicalParameters : public Serializable, public Indexable
+ {
+ 	public : /// FIXME - remove Se3, move Position and move Orientation to Particle and RigidBody. think about ParametersSingleton
++			PhysicalParameters() : se3(Vector3r(0,0,0), Quaternionr(1,0,0,0)) {}
+ 		Se3r se3;
+ 
+ 	protected :
+
+Modified: trunk/gui/py/utils.py
+===================================================================
+--- trunk/gui/py/utils.py	2008-06-29 21:42:26 UTC (rev 1407)
++++ trunk/gui/py/utils.py	2008-06-30 17:26:19 UTC (rev 1408)
+@@ -150,9 +150,10 @@
+ def spheresToFile(filename,consider=lambda id: True):
+ 	&quot;&quot;&quot;Save sphere coordinates into ASCII file; the format of the line is: x y z r.
+ 	Non-spherical bodies are silently skipped.&quot;&quot;&quot;
++	o=Omega()
+ 	out=open(filename,'w')
+ 	for b in o.bodies:
+-		if not b.shape.name=='Sphere' or not consider(b.id): continue
++		if not b.shape or not b.shape.name=='Sphere' or not consider(b.id): continue
+ 		out.write('%g\t%g\t%g\t%g\n'%(b.phys['se3'][0],b.phys['se3'][1],b.phys['se3'][2],b.shape['radius']))
+ 	out.close()
+ 
+
+Modified: trunk/gui/qt3/GLSimulationPlayerViewer.cpp
+===================================================================
+--- trunk/gui/qt3/GLSimulationPlayerViewer.cpp	2008-06-29 21:42:26 UTC (rev 1407)
++++ trunk/gui/qt3/GLSimulationPlayerViewer.cpp	2008-06-30 17:26:19 UTC (rev 1408)
+@@ -96,7 +96,8 @@
+ 			path=por-&gt;outputFile.substr(0,dirSep);
+ 			prefix=por-&gt;outputFile.substr(dirSep+1 /* without slash, till the end */);
+ 		} else { prefix=por-&gt;outputFile; }
+-		if(inputBaseDirectory.empty()){ inputBaseDirectory=path; } if(inputBaseName.empty()){ inputBaseName=prefix; }
++		//if(inputBaseDirectory.empty()){ inputBaseDirectory=path; } if(inputBaseName.empty()){ inputBaseName=prefix; }
++		inputBaseDirectory=path; inputBaseName=prefix; 
+ 	} else { simPlayer-&gt;pushMessage(&quot;No PositionOrientationEngine in simulation file. ABORTED.&quot;);  return; }
+ 
+ 	simPlayer-&gt;pushMessage(&quot;Using directory &quot;+inputBaseDirectory+&quot; and basename &quot;+inputBaseName+&quot;.&quot;);
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000368.html">[Yade-commits] r1407 - trunk/gui/qt3
+</A></li>
+	<LI>Next message: <A HREF="000370.html">[Yade-commits] r1410 - trunk/gui/qt3
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#369">[ date ]</a>
+              <a href="thread.html#369">[ thread ]</a>
+              <a href="subject.html#369">[ subject ]</a>
+              <a href="author.html#369">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

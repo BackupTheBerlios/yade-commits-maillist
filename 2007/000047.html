@@ -1,0 +1,102 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1082 -	trunk/yade-libs/yade-lib-serialization/src/yade-lib-serialization
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2007/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1082%20-%0A%09trunk/yade-libs/yade-lib-serialization/src/yade-lib-serialization&In-Reply-To=%3C200703041012.l24ACaIs014436%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000046.html">
+   <LINK REL="Next"  HREF="000048.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1082 -	trunk/yade-libs/yade-lib-serialization/src/yade-lib-serialization</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1082%20-%0A%09trunk/yade-libs/yade-lib-serialization/src/yade-lib-serialization&In-Reply-To=%3C200703041012.l24ACaIs014436%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1082 -	trunk/yade-libs/yade-lib-serialization/src/yade-lib-serialization">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Sun Mar  4 11:12:36 CET 2007</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000046.html">[Yade-commits] r1081 - in trunk: . yade-extra/clump	yade-libs/yade-lib-serialization/src/yade-lib-serialization
+</A></li>
+        <LI>Next message: <A HREF="000048.html">[Yade-commits] r1083 - trunk
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#47">[ date ]</a>
+              <a href="thread.html#47">[ thread ]</a>
+              <a href="subject.html#47">[ subject ]</a>
+              <a href="author.html#47">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2007-03-04 11:12:35 +0100 (Sun, 04 Mar 2007)
+New Revision: 1082
+
+Modified:
+   trunk/yade-libs/yade-lib-serialization/src/yade-lib-serialization/Archive.tpp
+Log:
+Fixed error in yesterday's commit, should compile really fine with g++4.1 now.
+
+
+Modified: trunk/yade-libs/yade-lib-serialization/src/yade-lib-serialization/Archive.tpp
+===================================================================
+--- trunk/yade-libs/yade-lib-serialization/src/yade-lib-serialization/Archive.tpp	2007-03-03 22:31:08 UTC (rev 1081)
++++ trunk/yade-libs/yade-lib-serialization/src/yade-lib-serialization/Archive.tpp	2007-03-04 10:12:35 UTC (rev 1082)
+@@ -21,6 +21,9 @@
+ 
+ #include&lt;boost/type_traits.hpp&gt;
+ 
++template&lt;typename Type&gt; SerializableTypes::Type findType(Type&amp; instance,bool&amp; fundamental, string&amp; str);
++#include &quot;ContainerHandler.tpp&quot;
++
+ using namespace ArchiveTypes;
+ 
+ 
+@@ -84,6 +87,7 @@
+ 		return type;
+ 	}
+ 	else
++		cerr&lt;&lt;&quot;Type of instance is: &quot;&lt;&lt;typeid(instance).name()&lt;&lt;endl;
+ 		throw SerializableError(SerializationExceptions::SerializableUnknown2);
+ };
+ 
+@@ -153,7 +157,6 @@
+ 
+ #include &quot;ArchiveTypes.hpp&quot;
+ #include &quot;FundamentalHandler.tpp&quot;
+-#include &quot;ContainerHandler.tpp&quot;
+ #include &quot;PointerHandler.tpp&quot;
+ #include &quot;KnownFundamentalsHandler.tpp&quot;
+ //#include &quot;MultiTypeHandler.tpp&quot; // this is in Serializable.hpp, should be here, but then it doesn't compile
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000046.html">[Yade-commits] r1081 - in trunk: . yade-extra/clump	yade-libs/yade-lib-serialization/src/yade-lib-serialization
+</A></li>
+	<LI>Next message: <A HREF="000048.html">[Yade-commits] r1083 - trunk
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#47">[ date ]</a>
+              <a href="thread.html#47">[ thread ]</a>
+              <a href="subject.html#47">[ subject ]</a>
+              <a href="author.html#47">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

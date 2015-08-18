@@ -1,0 +1,139 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1313 - trunk/pkg/dem/Engine/DeusExMachina
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1313%20-%20trunk/pkg/dem/Engine/DeusExMachina&In-Reply-To=%3C200804140318.m3E3IUdi022787%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000275.html">
+   <LINK REL="Next"  HREF="000277.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1313 - trunk/pkg/dem/Engine/DeusExMachina</H1>
+    <B>chareyre at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1313%20-%20trunk/pkg/dem/Engine/DeusExMachina&In-Reply-To=%3C200804140318.m3E3IUdi022787%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1313 - trunk/pkg/dem/Engine/DeusExMachina">chareyre at mail.berlios.de
+       </A><BR>
+    <I>Mon Apr 14 05:18:30 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000275.html">[Yade-commits] r1312 - in trunk/pkg/common/Engine: MetaEngine	StandAloneEngine
+</A></li>
+        <LI>Next message: <A HREF="000277.html">[Yade-commits] r1314 - trunk/pkg/dem/Engine/StandAloneEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#276">[ date ]</a>
+              <a href="thread.html#276">[ thread ]</a>
+              <a href="subject.html#276">[ subject ]</a>
+              <a href="author.html#276">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: chareyre
+Date: 2008-04-14 05:18:29 +0200 (Mon, 14 Apr 2008)
+New Revision: 1313
+
+Modified:
+   trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.cpp
+Log:
+Again few changes in the behaviour of this engine, it should now handle correctly any manual change in the xml file 
+(still needs a fix : there is still a part of the code that is done only at first iteration, which means that a 
+modification of sigma_iso by editing the xml will give a different result than the same modification from PythonUI).
+
+
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.cpp	2008-04-14 03:09:50 UTC (rev 1312)
++++ trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.cpp	2008-04-14 03:18:29 UTC (rev 1313)
+@@ -40,6 +40,7 @@
+ 	UnbalancedForce = 1;
+ 	saveSimulation = false;
+ 	firstRun=true;
++	previousSigmaIso=sigma_iso;
+ }
+ 
+ TriaxialCompressionEngine::~TriaxialCompressionEngine()
+@@ -75,9 +76,11 @@
+ void TriaxialCompressionEngine::doStateTransition(stateNum nextState){
+ 	if ( /* currentState==STATE_UNINITIALIZED &amp;&amp; */ nextState==STATE_ISO_COMPACTION){
+ 		sigma_iso=sigmaIsoCompaction;
++		previousSigmaIso=sigma_iso;
+ 	}
+ 	else if((currentState==STATE_ISO_COMPACTION || currentState==STATE_ISO_UNLOADING || currentState==STATE_LIMBO) &amp;&amp; nextState==STATE_TRIAX_LOADING){
+-		sigma_iso=sigmaLateralConfinement;		
++		sigma_iso=sigmaLateralConfinement;
++		previousSigmaIso=sigma_iso;		
+ 		internalCompaction = false;
+ 		height0 = height; depth0 = depth; width0 = width;
+ 		//compressionActivated = true;
+@@ -89,6 +92,7 @@
+ 	else if(currentState==STATE_ISO_COMPACTION &amp;&amp; nextState==STATE_ISO_UNLOADING){
+ 		sigma_iso=sigmaLateralConfinement;
+ 		sigmaIsoCompaction = sigmaLateralConfinement;
++		previousSigmaIso=sigma_iso;
+ 		internalCompaction=false; // unloading will not change grain sizes
+ 	}
+ 	else if(currentState==STATE_ISO_COMPACTION &amp;&amp; nextState==STATE_LIMBO){
+@@ -170,7 +174,7 @@
+ 	{
+ 		LOG_INFO ( &quot;First run, will initialize!&quot; );
+ 		//sigma_iso was changed, we need to rerun compaction
+-		if ( sigmaIsoCompaction!=previousSigmaIso || currentState==STATE_UNINITIALIZED || currentState== STATE_LIMBO ) doStateTransition ( STATE_ISO_COMPACTION );
++		if ( (sigmaIsoCompaction!=previousSigmaIso || currentState==STATE_UNINITIALIZED || currentState== STATE_LIMBO) &amp;&amp; currentState!=STATE_TRIAX_LOADING ) doStateTransition ( STATE_ISO_COMPACTION );
+ 		if ( previousState==STATE_LIMBO &amp;&amp; currentState==STATE_TRIAX_LOADING ) doStateTransition ( STATE_TRIAX_LOADING );
+ 		previousState=currentState;
+ 		previousSigmaIso=sigma_iso;
+@@ -190,8 +194,7 @@
+ 		saveSimulation = false;
+ 	}
+ 	if ( currentState==STATE_LIMBO )
+-	{
+-		Omega::instance().stopSimulationLoop();
++	{		
+ 		return;
+ 	}
+ 
+@@ -217,9 +220,9 @@
+ 
+ 		/* Move top and bottom wall according to strain rate */
+ 		PhysicalParameters* p=static_cast&lt;PhysicalParameters*&gt; ( Body::byId ( wall_bottom_id )-&gt;physicalParameters.get() );
+-		p-&gt;se3.position += 0.5*strainRate*height*translationAxis*dt;
++		p-&gt;se3.position += 0.5*currentStrainRate*height*translationAxis*dt;
+ 		p = static_cast&lt;PhysicalParameters*&gt; ( Body::byId ( wall_top_id )-&gt;physicalParameters.get() );
+-		p-&gt;se3.position -= 0.5*strainRate*height*translationAxis*dt;
++		p-&gt;se3.position -= 0.5*currentStrainRate*height*translationAxis*dt;
+ 	}
+ }
+ 
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000275.html">[Yade-commits] r1312 - in trunk/pkg/common/Engine: MetaEngine	StandAloneEngine
+</A></li>
+	<LI>Next message: <A HREF="000277.html">[Yade-commits] r1314 - trunk/pkg/dem/Engine/StandAloneEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#276">[ date ]</a>
+              <a href="thread.html#276">[ thread ]</a>
+              <a href="subject.html#276">[ subject ]</a>
+              <a href="author.html#276">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

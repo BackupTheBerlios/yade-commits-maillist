@@ -1,0 +1,104 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1267 - trunk/gui/cmd
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1267%20-%20trunk/gui/cmd&In-Reply-To=%3C200802261813.m1QIDloa022012%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000231.html">
+   <LINK REL="Next"  HREF="000233.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1267 - trunk/gui/cmd</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1267%20-%20trunk/gui/cmd&In-Reply-To=%3C200802261813.m1QIDloa022012%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1267 - trunk/gui/cmd">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Tue Feb 26 19:13:47 CET 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000231.html">[Yade-commits] r1266 - in trunk: . extra/clump gui gui/cmd lib
+</A></li>
+        <LI>Next message: <A HREF="000233.html">[Yade-commits] r1268 - in trunk/pkg/dem: . Engine/DeusExMachina
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#232">[ date ]</a>
+              <a href="thread.html#232">[ thread ]</a>
+              <a href="subject.html#232">[ subject ]</a>
+              <a href="author.html#232">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2008-02-26 19:13:47 +0100 (Tue, 26 Feb 2008)
+New Revision: 1267
+
+Modified:
+   trunk/gui/cmd/yadeControl.cpp
+Log:
+Avoid using boost1.34 python/stl_iterator.hpp, should compile with 1.33 now (debian etch, ubuntu feisty)
+
+
+
+Modified: trunk/gui/cmd/yadeControl.cpp
+===================================================================
+--- trunk/gui/cmd/yadeControl.cpp	2008-02-26 17:46:55 UTC (rev 1266)
++++ trunk/gui/cmd/yadeControl.cpp	2008-02-26 18:13:47 UTC (rev 1267)
+@@ -13,7 +13,7 @@
+ #include&lt;boost/any.hpp&gt;
+ #include&lt;boost/shared_ptr.hpp&gt;
+ #include&lt;boost/python.hpp&gt;
+-#include&lt;boost/python/stl_iterator.hpp&gt;
++// [boost1.34] #include&lt;boost/python/stl_iterator.hpp&gt;
+ 
+ #include&lt;yade/lib-base/Logging.hpp&gt;
+ #include&lt;yade/lib-serialization-xml/XMLFormatManager.hpp&gt;
+@@ -98,7 +98,7 @@
+ 		}
+ 		void functors_set(python::object ftrs){
+ 			ensureAcc(); shared_ptr&lt;MetaDispatchingEngine&gt; me=dynamic_pointer_cast&lt;MetaDispatchingEngine&gt;(proxee); if(!me) throw runtime_error(&quot;Proxied class not a MetaDispatchingEngine. (WTF?)&quot;);
+-			me-&gt;clear(); int len=python::len(ftrs);
++			me-&gt;clear(); int len=PySequence_Size(ftrs.ptr()) /*[boost1.34] python::len(ftrs)*/;
+ 			for(int i=0; i&lt;len; i++){ const pyEngineUnit&amp; eu=python::extract&lt;pyEngineUnit&gt;(PySequence_GetItem(ftrs.ptr(),i)); me-&gt;add(eu.proxee); }
+ 		}
+ BASIC_PY_PROXY_TAIL;
+@@ -199,7 +199,7 @@
+ 	}
+ 
+ 	void engines_set(python::object egs){
+-		assertRootBody(); int len=python::len(egs); const shared_ptr&lt;MetaBody&gt;&amp; rootBody=OMEGA.getRootBody(); rootBody-&gt;engines.clear();
++		assertRootBody(); int len=PySequence_Size(egs.ptr()) /*[boost1.34] python::len(egs)*/; const shared_ptr&lt;MetaBody&gt;&amp; rootBody=OMEGA.getRootBody(); rootBody-&gt;engines.clear();
+ 		for(int i=0; i&lt;len; i++){
+ 			#define PUSH_BACK_ENGINE_IF_POSSIBLE(pyEngineType) if(python::extract&lt;pyEngineType&gt;(PySequence_GetItem(egs.ptr(),i)).check()){ pyEngineType e=python::extract&lt;pyEngineType&gt;(PySequence_GetItem(egs.ptr(),i)); rootBody-&gt;engines.push_back(e.proxee); /* cerr&lt;&lt;&quot;added &quot;&lt;&lt;e.pyStr()&lt;&lt;&quot;, a &quot;&lt;&lt;#pyEngineType&lt;&lt;endl; */ continue; }
+ 			PUSH_BACK_ENGINE_IF_POSSIBLE(pyStandAloneEngine); PUSH_BACK_ENGINE_IF_POSSIBLE(pyMetaEngine); PUSH_BACK_ENGINE_IF_POSSIBLE(pyDeusExMachina);
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000231.html">[Yade-commits] r1266 - in trunk: . extra/clump gui gui/cmd lib
+</A></li>
+	<LI>Next message: <A HREF="000233.html">[Yade-commits] r1268 - in trunk/pkg/dem: . Engine/DeusExMachina
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#232">[ date ]</a>
+              <a href="thread.html#232">[ thread ]</a>
+              <a href="subject.html#232">[ subject ]</a>
+              <a href="author.html#232">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

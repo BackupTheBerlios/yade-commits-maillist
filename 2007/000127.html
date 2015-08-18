@@ -1,0 +1,158 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1162 - in trunk: . extra extra/tetra
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2007/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1162%20-%20in%20trunk%3A%20.%20extra%20extra/tetra&In-Reply-To=%3C200705151825.l4FIPlL3016543%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000126.html">
+   <LINK REL="Next"  HREF="000128.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1162 - in trunk: . extra extra/tetra</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1162%20-%20in%20trunk%3A%20.%20extra%20extra/tetra&In-Reply-To=%3C200705151825.l4FIPlL3016543%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1162 - in trunk: . extra extra/tetra">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Tue May 15 20:25:47 CEST 2007</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000126.html">[Yade-commits] r1161 - in trunk: . extra/clump extra/tetra	pkg/common/DataClass/GeometricalModel
+</A></li>
+        <LI>Next message: <A HREF="000128.html">[Yade-commits] r1163 - tags
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#127">[ date ]</a>
+              <a href="thread.html#127">[ thread ]</a>
+              <a href="subject.html#127">[ subject ]</a>
+              <a href="author.html#127">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2007-05-15 20:25:46 +0200 (Tue, 15 May 2007)
+New Revision: 1162
+
+Modified:
+   trunk/SConstruct
+   trunk/extra/SConscript
+   trunk/extra/tetra/Tetra.cpp
+Log:
+Make compilation proper when python is not found (no errors, just disable what should be disabled).
+
+
+
+Modified: trunk/SConstruct
+===================================================================
+--- trunk/SConstruct	2007-05-11 13:36:28 UTC (rev 1161)
++++ trunk/SConstruct	2007-05-15 18:25:46 UTC (rev 1162)
+@@ -194,7 +194,8 @@
+ 	# check optional libs
+ 	if conf.CheckLibWithHeader('log4cxx','log4cxx/logger.h','c++','log4cxx::Logger::getLogger(&quot;foo&quot;);'):
+ 		env.Append(LIBS='log4cxx',CPPDEFINES=['LOG4CXX'])
+-	if conf.CheckPython() and conf.CheckScientificPython(): env.Append(CPPDEFINES=['EMBED_PYTHON'])
++	if conf.CheckPython() and conf.CheckScientificPython():
++		env.Append(CPPDEFINES=['EMBED_PYTHON'])
+ 
+ 	# append essential libs		
+ 	env.Append(LIBS=['glut','boost_date_time','boost_filesystem','boost_thread','pthread'])
+
+Modified: trunk/extra/SConscript
+===================================================================
+--- trunk/extra/SConscript	2007-05-11 13:36:28 UTC (rev 1161)
++++ trunk/extra/SConscript	2007-05-15 18:25:46 UTC (rev 1162)
+@@ -1,6 +1,13 @@
+ Import('*')
++
++if 'EMBED_PYTHON' in env['CPPDEFINES']:
++	env.Install('$PREFIX/lib/yade$SUFFIX/extra',[
++		env.SharedLibrary('PythonRecorder',['clump/PythonRecorder.cpp']),
++		env.SharedLibrary('_pyade',['clump/pyade.cpp'],SHLIBPREFIX='',LIBS=env['LIBS']+['yade-base','ParticleParameters','RigidBodyParameters']),
++		env.File('clump/pyade.py')])
++
++
+ env.Install('$PREFIX/lib/yade$SUFFIX/extra',[
+-
+ 	env.SharedLibrary('SphericalDEMSimulator',
+ 		['spherical-dem-simulator/PersistentAloneSAPCollider.cpp',
+ 			'spherical-dem-simulator/SphericalDEMSimulator.cpp'],
+@@ -28,19 +35,14 @@
+          'RigidBodyParameters',
+          'SimpleElasticInteraction',
+ 			'ElasticBodyParameters',
++			'BodyMacroParameters',
+ 			'Momentum',
+ 			'Force',
+          'AABB']),
+ 	
+ 	env.SharedLibrary('TetraTestGen',['tetra/TetraTestGen.cpp'],LIBS=env['LIBS']+['Shop','Tetra']),
+ 
+-	env.SharedLibrary('PythonRecorder',['clump/PythonRecorder.cpp']),
+ 
+-	env.SharedLibrary('_pyade',['clump/pyade.cpp'],SHLIBPREFIX='',
+-		LIBS=env['LIBS']+['yade-base','ParticleParameters','RigidBodyParameters']),
+-
+-	env.File('clump/pyade.py'),
+-
+ 	env.SharedLibrary('Shop',
+ 		['clump/Shop.cpp'],
+ 		LIBS=env['LIBS']+[
+@@ -75,7 +77,7 @@
+ 			'SAPCollider',
+ 			'MetaInteractingGeometry',
+ 			'MetaInteractingGeometry2AABB',
+-			'PythonRecorder',
++			'EMBED_PYTHON' in env['CPPDEFINES'] and 'PythonRecorder' or 'yade-base', # FIXME: handle python properly; duplicated base is harmless
+ 			'InteractingSphere2AABB',\
+ 			'InteractingBox2AABB',
+ 			'NewtonsMomentumLaw',
+@@ -90,3 +92,5 @@
+ 			'yade-multimethods']),
+ 
+ ])
++
++
+
+Modified: trunk/extra/tetra/Tetra.cpp
+===================================================================
+--- trunk/extra/tetra/Tetra.cpp	2007-05-11 13:36:28 UTC (rev 1161)
++++ trunk/extra/tetra/Tetra.cpp	2007-05-15 18:25:46 UTC (rev 1162)
+@@ -35,7 +35,6 @@
+ //#include&quot;Intersection/Wm3IntrTetrahedron3Tetrahedron3.cpp&quot;
+ //#include&quot;Intersection/Wm3Intersector.cpp&quot;
+ 
+-
+ /*! Calculate configuration of TetraMold - TetraMold intersection.
+  *
+  * Wildmagick's functions are used here: intersection is returned as a set of tetrahedra (may be empty, inwhich case there is no real intersection).
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000126.html">[Yade-commits] r1161 - in trunk: . extra/clump extra/tetra	pkg/common/DataClass/GeometricalModel
+</A></li>
+	<LI>Next message: <A HREF="000128.html">[Yade-commits] r1163 - tags
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#127">[ date ]</a>
+              <a href="thread.html#127">[ thread ]</a>
+              <a href="subject.html#127">[ subject ]</a>
+              <a href="author.html#127">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

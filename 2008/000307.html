@@ -1,0 +1,239 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1345 - in trunk: extra extra/tetra gui/py	lib/serialization
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1345%20-%20in%20trunk%3A%20extra%20extra/tetra%20gui/py%0A%09lib/serialization&In-Reply-To=%3C200805071705.m47H59qe024339%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000306.html">
+   <LINK REL="Next"  HREF="000308.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1345 - in trunk: extra extra/tetra gui/py	lib/serialization</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1345%20-%20in%20trunk%3A%20extra%20extra/tetra%20gui/py%0A%09lib/serialization&In-Reply-To=%3C200805071705.m47H59qe024339%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1345 - in trunk: extra extra/tetra gui/py	lib/serialization">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Wed May  7 19:05:09 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000306.html">[Yade-commits] r1344 - trunk
+</A></li>
+        <LI>Next message: <A HREF="000308.html">[Yade-commits] r1346 - in trunk: core extra extra/tetra extra/usct
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#307">[ date ]</a>
+              <a href="thread.html#307">[ thread ]</a>
+              <a href="subject.html#307">[ subject ]</a>
+              <a href="author.html#307">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2008-05-07 19:05:06 +0200 (Wed, 07 May 2008)
+New Revision: 1345
+
+Modified:
+   trunk/extra/Brefcom.cpp
+   trunk/extra/SConscript
+   trunk/extra/tetra/Tetra.cpp
+   trunk/gui/py/PythonUI.hpp
+   trunk/gui/py/yadeControl.cpp
+   trunk/lib/serialization/IOFormatManager.tpp
+Log:
+Fix compilation problems and some warnings in the previous commit.
+
+
+
+Modified: trunk/extra/Brefcom.cpp
+===================================================================
+--- trunk/extra/Brefcom.cpp	2008-05-07 16:07:10 UTC (rev 1344)
++++ trunk/extra/Brefcom.cpp	2008-05-07 17:05:06 UTC (rev 1345)
+@@ -164,10 +164,10 @@
+ 	Shop::Bex::momentum(id1)+=(contGeom-&gt;contactPoint-rbp1-&gt;se3.position).Cross(force);
+ 	Shop::Bex::momentum(id1)-=(contGeom-&gt;contactPoint-rbp2-&gt;se3.position).Cross(force);
+ */
+-	static_cast&lt;Force*&gt;(rootBody-&gt;physicalActions-&gt;find(id1,ForceClassIndex))-&gt;force+=force;
+-	static_cast&lt;Force*&gt;(rootBody-&gt;physicalActions-&gt;find(id2,ForceClassIndex))-&gt;force-=force;
+-	static_cast&lt;Momentum*&gt;(rootBody-&gt;physicalActions-&gt;find(id1,MomentumClassIndex))-&gt;momentum+=(contGeom-&gt;contactPoint-rbp1-&gt;se3.position).Cross(force);
+-	static_cast&lt;Momentum*&gt;(rootBody-&gt;physicalActions-&gt;find(id2,MomentumClassIndex))-&gt;momentum-=(contGeom-&gt;contactPoint-rbp2-&gt;se3.position).Cross(force);
++	static_pointer_cast&lt;Force&gt;(rootBody-&gt;physicalActions-&gt;find(id1,ForceClassIndex))-&gt;force+=force;
++	static_pointer_cast&lt;Force&gt;(rootBody-&gt;physicalActions-&gt;find(id2,ForceClassIndex))-&gt;force-=force;
++	static_pointer_cast&lt;Momentum&gt;(rootBody-&gt;physicalActions-&gt;find(id1,MomentumClassIndex))-&gt;momentum+=(contGeom-&gt;contactPoint-rbp1-&gt;se3.position).Cross(force);
++	static_pointer_cast&lt;Momentum&gt;(rootBody-&gt;physicalActions-&gt;find(id2,MomentumClassIndex))-&gt;momentum-=(contGeom-&gt;contactPoint-rbp2-&gt;se3.position).Cross(force);
+ }
+ 
+ void BrefcomLaw::action(MetaBody* _rootBody){
+
+Modified: trunk/extra/SConscript
+===================================================================
+--- trunk/extra/SConscript	2008-05-07 16:07:10 UTC (rev 1344)
++++ trunk/extra/SConscript	2008-05-07 17:05:06 UTC (rev 1345)
+@@ -87,6 +87,7 @@
+ 			'SAPCollider',
+ 			'MetaInteractingGeometry',
+ 			'MetaInteractingGeometry2AABB',
++			'GlobalStiffness',
+ 			# 'EMBED_PYTHON' in env['CPPDEFINES'] and 'PythonRecorder' or 'yade-base', # FIXME: handle python properly; duplicated base is harmless
+ 			'InteractingSphere2AABB',\
+ 			'InteractingBox2AABB',
+
+Modified: trunk/extra/tetra/Tetra.cpp
+===================================================================
+--- trunk/extra/tetra/Tetra.cpp	2008-05-07 16:07:10 UTC (rev 1344)
++++ trunk/extra/tetra/Tetra.cpp	2008-05-07 17:05:06 UTC (rev 1345)
+@@ -133,7 +133,7 @@
+ 	 *  2. tangent?! hopefully not needed at all. */
+ 
+ 	Matrix3r Ip, R; // principal moments of inertia, rotation matrix
+-	I.EigenDecomposition(R,Ip);
++	(void) /* should check convergence*/ I.EigenDecomposition(R,Ip);
+ 	// according to the documentation in Wm3 header, diagonal entries are in ascending order: d0&lt;=d1&lt;=d2;
+ 	// but keep it algorithmic for now and just assert that.
+ 	int ix=(Ip(0,0)&lt;Ip(1,1) &amp;&amp; Ip(0,0)&lt;Ip(2,2))?0:( (Ip(1,1)&lt;Ip(0,0) &amp;&amp; Ip(1,1)&lt;Ip(2,2))?1:2); // index of the minimum moment of inertia
+
+Modified: trunk/gui/py/PythonUI.hpp
+===================================================================
+--- trunk/gui/py/PythonUI.hpp	2008-05-07 16:07:10 UTC (rev 1344)
++++ trunk/gui/py/PythonUI.hpp	2008-05-07 17:05:06 UTC (rev 1345)
+@@ -1,7 +1,7 @@
+ // &#169; 2007 V&#225;clav &#352;milauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">eudoxos at arcig.cz</A>&gt;
+ #pragma once
+ #include&lt;yade/core/FrontEnd.hpp&gt;
+-#include&lt;boost/shared_ptr.hpp&gt;a
++#include&lt;boost/shared_ptr.hpp&gt;
+ #include&lt;termios.h&gt;
+ 
+ class PythonUI: public FrontEnd
+
+Modified: trunk/gui/py/yadeControl.cpp
+===================================================================
+--- trunk/gui/py/yadeControl.cpp	2008-05-07 16:07:10 UTC (rev 1344)
++++ trunk/gui/py/yadeControl.cpp	2008-05-07 17:05:06 UTC (rev 1345)
+@@ -601,6 +601,5 @@
+ 
+ 	BASIC_PY_PROXY_WRAPPER(pyFileGenerator,&quot;Preprocessor&quot;)
+ 		.def(&quot;generate&quot;,&amp;pyFileGenerator::generate);
+-
+ }
+ 
+
+Modified: trunk/lib/serialization/IOFormatManager.tpp
+===================================================================
+--- trunk/lib/serialization/IOFormatManager.tpp	2008-05-07 16:07:10 UTC (rev 1344)
++++ trunk/lib/serialization/IOFormatManager.tpp	2008-05-07 17:05:06 UTC (rev 1345)
+@@ -25,67 +25,39 @@
+ template&lt;typename Type&gt;
+ void IOFormatManager::loadFromFile(const string&amp; libName, const string&amp; fileName,const string&amp; name, Type&amp; t)
+ {
+-	std::istream* anyIn;
+-
+-	if(boost::algorithm::ends_with(fileName,&quot;.xml&quot;)){
+-		anyIn=new ifstream(fileName.c_str());
+-	}
+-	else if(boost::algorithm::ends_with(fileName,&quot;.xml.gz&quot;)){
+-		iostreams::filtering_istream* in=new iostreams::filtering_istream();
+-		in-&gt;push(iostreams::gzip_decompressor());
+-		in-&gt;push(iostreams::file_source(fileName));
+-	}
+-	else if(boost::algorithm::ends_with(fileName,&quot;.xml.bz2&quot;)){
+-		iostreams::filtering_istream* in=new iostreams::filtering_istream();
+-		in-&gt;push(iostreams::bzip2_decompressor());
+-		in-&gt;push(iostreams::file_source(fileName));
+-	}
++	iostreams::filtering_istream in;
++	if(boost::algorithm::ends_with(fileName,&quot;.xml.gz&quot;)) in.push(iostreams::gzip_decompressor());
++	else if(boost::algorithm::ends_with(fileName,&quot;.xml.bz2&quot;)) in.push(iostreams::bzip2_decompressor());
++	in.push(iostreams::file_source(fileName));
+ 	
+-	if(!anyIn-&gt;good()) throw SerializableError(IOManagerExceptions::FileNotGood);
++	if(!in.good()) throw SerializableError(IOManagerExceptions::FileNotGood);
+ 
+ 	shared_ptr&lt;IOFormatManager&gt; ioManager;
+ 	ioManager = YADE_PTR_CAST&lt;IOFormatManager&gt;(ClassFactory::instance().createShared(libName));
+ 
+ 	shared_ptr&lt;Archive&gt; ac = Archive::create(name,t);
+-	string str = ioManager-&gt;beginDeserialization(*anyIn,*ac);
+-	ac-&gt;deserialize(*anyIn, *ac, str);
+-	ioManager-&gt;finalizeDeserialization(*anyIn,*ac);
+-
+-	delete anyIn;
++	string str = ioManager-&gt;beginDeserialization(in,*ac);
++	ac-&gt;deserialize(in, *ac, str);
++	ioManager-&gt;finalizeDeserialization(in,*ac);
+ }
+ 
+ 
+ template&lt;typename Type&gt;
+ void IOFormatManager::saveToFile(const string&amp; libName, const string&amp; fileName,const string&amp; name, Type&amp; t)
+ {
+-	std::ostream* anyOut;
+-
+-	if(boost::algorithm::ends_with(fileName,&quot;.xml&quot;)){
+-		anyOut=new ofstream(fileName.c_str());
+-	}
+-	else if(boost::algorithm::ends_with(fileName,&quot;.xml.gz&quot;)){
+-		iostreams::filtering_ostream* out=new iostreams::filtering_ostream();
+-		out-&gt;push(iostreams::gzip_compressor());
+-		out-&gt;push(iostreams::file_sink(fileName));
+-		anyOut=out;
+-	}
+-	else if(boost::algorithm::ends_with(fileName,&quot;.xml.bz2&quot;)){
+-		iostreams::filtering_ostream* out=new iostreams::filtering_ostream();
+-		out-&gt;push(iostreams::bzip2_compressor());
+-		out-&gt;push(iostreams::file_sink(fileName));
+-		anyOut=out;
+-	}
+-	if(!anyOut-&gt;good()) throw SerializableError(IOManagerExceptions::FileNotGood);
++	iostreams::filtering_ostream out;
++	if(boost::algorithm::ends_with(fileName,&quot;.xml.gz&quot;)) out.push(iostreams::gzip_compressor());
++	else if(boost::algorithm::ends_with(fileName,&quot;.xml.bz2&quot;)) out.push(iostreams::bzip2_compressor());
++	out.push(iostreams::file_sink(fileName));
++	if(!out.good()) throw SerializableError(IOManagerExceptions::FileNotGood);
+ 	
+ 	shared_ptr&lt;IOFormatManager&gt; ioManager;
+ 	ioManager = static_pointer_cast&lt;IOFormatManager&gt;(ClassFactory::instance().createShared(libName));
+ 
+ 	shared_ptr&lt;Archive&gt; ac = Archive::create(name,t);
+-	ioManager-&gt;beginSerialization(*anyOut, *ac);
+-	ac-&gt;serialize(*anyOut, *ac, 1);
+-	ioManager-&gt;finalizeSerialization(*anyOut, *ac);
+-
+-	delete anyOut;
++	ioManager-&gt;beginSerialization(out, *ac);
++	ac-&gt;serialize(out, *ac, 1);
++	ioManager-&gt;finalizeSerialization(out, *ac);
+ }
+ 
+ 
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000306.html">[Yade-commits] r1344 - trunk
+</A></li>
+	<LI>Next message: <A HREF="000308.html">[Yade-commits] r1346 - in trunk: core extra extra/tetra extra/usct
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#307">[ date ]</a>
+              <a href="thread.html#307">[ thread ]</a>
+              <a href="subject.html#307">[ subject ]</a>
+              <a href="author.html#307">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

@@ -1,0 +1,116 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1380 - branches/przewdnik/core/concurrent
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1380%20-%20branches/przewdnik/core/concurrent&In-Reply-To=%3C200806061445.m56EjH1T017781%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000340.html">
+   <LINK REL="Next"  HREF="000342.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1380 - branches/przewdnik/core/concurrent</H1>
+    <B>przewdnik at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1380%20-%20branches/przewdnik/core/concurrent&In-Reply-To=%3C200806061445.m56EjH1T017781%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1380 - branches/przewdnik/core/concurrent">przewdnik at mail.berlios.de
+       </A><BR>
+    <I>Fri Jun  6 16:45:17 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000340.html">[Yade-commits] r1379 - branches/dorofeenko/pkg/common
+</A></li>
+        <LI>Next message: <A HREF="000342.html">[Yade-commits] r1381 - trunk/gui/py
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#341">[ date ]</a>
+              <a href="thread.html#341">[ thread ]</a>
+              <a href="subject.html#341">[ subject ]</a>
+              <a href="author.html#341">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: przewdnik
+Date: 2008-06-06 16:45:16 +0200 (Fri, 06 Jun 2008)
+New Revision: 1380
+
+Modified:
+   branches/przewdnik/core/concurrent/InterprocessQueue.cpp
+   branches/przewdnik/core/concurrent/InterprocessQueue.hpp
+Log:
+conversion to std:string
+
+Modified: branches/przewdnik/core/concurrent/InterprocessQueue.cpp
+===================================================================
+--- branches/przewdnik/core/concurrent/InterprocessQueue.cpp	2008-06-06 13:57:00 UTC (rev 1379)
++++ branches/przewdnik/core/concurrent/InterprocessQueue.cpp	2008-06-06 14:45:16 UTC (rev 1380)
+@@ -2,10 +2,10 @@
+ 
+ 
+ template &lt;class T&gt;
+-void InterprocessQueue&lt;T&gt;::init(const char* name) {
++void InterprocessQueue&lt;T&gt;::init(const std::string&amp; name) {
+ 	qname = name;
+ 	queue = message_queue(open_or_create,
+-						name, 
++						name.c_str(), 
+ 						100, // TODO
+ 						100
+ 			);
+@@ -13,7 +13,7 @@
+ 
+ template &lt;class T&gt;
+ void InterprocessQueue&lt;T&gt;::cleanup() {
+-	message_queue::remove(qname);
++	message_queue::remove(qname.c_str());
+ };
+ 
+ template &lt;class T&gt;
+
+Modified: branches/przewdnik/core/concurrent/InterprocessQueue.hpp
+===================================================================
+--- branches/przewdnik/core/concurrent/InterprocessQueue.hpp	2008-06-06 13:57:00 UTC (rev 1379)
++++ branches/przewdnik/core/concurrent/InterprocessQueue.hpp	2008-06-06 14:45:16 UTC (rev 1380)
+@@ -10,10 +10,10 @@
+ class InterprocessQueue : public AbstractQueue&lt;T&gt; 
+ {
+ private:
+-	char* qname;
++	std::string qname;
+ 	message_queue queue;
+ public:
+-	void init(const char*);
++	void init(const std::string&amp;);
+ 	void cleanup();
+ 		
+ 	void push(const T&amp;);
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000340.html">[Yade-commits] r1379 - branches/dorofeenko/pkg/common
+</A></li>
+	<LI>Next message: <A HREF="000342.html">[Yade-commits] r1381 - trunk/gui/py
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#341">[ date ]</a>
+              <a href="thread.html#341">[ thread ]</a>
+              <a href="subject.html#341">[ subject ]</a>
+              <a href="author.html#341">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

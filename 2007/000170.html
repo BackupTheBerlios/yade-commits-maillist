@@ -1,0 +1,869 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1205 - in trunk: core extra/clump extra/tetra	gui/cmd gui/qt3 pkg/dem/PreProcessor
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2007/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1205%20-%20in%20trunk%3A%20core%20extra/clump%20extra/tetra%0A%09gui/cmd%20gui/qt3%20pkg/dem/PreProcessor&In-Reply-To=%3C200706191009.l5JA9nT5021493%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000169.html">
+   <LINK REL="Next"  HREF="000171.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1205 - in trunk: core extra/clump extra/tetra	gui/cmd gui/qt3 pkg/dem/PreProcessor</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1205%20-%20in%20trunk%3A%20core%20extra/clump%20extra/tetra%0A%09gui/cmd%20gui/qt3%20pkg/dem/PreProcessor&In-Reply-To=%3C200706191009.l5JA9nT5021493%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1205 - in trunk: core extra/clump extra/tetra	gui/cmd gui/qt3 pkg/dem/PreProcessor">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Tue Jun 19 12:09:49 CEST 2007</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000169.html">[Yade-commits] r1204 - trunk/gui/cmd
+</A></li>
+        <LI>Next message: <A HREF="000171.html">[Yade-commits] r1206 - in trunk: gui/cmd pkg/fem/PreProcessor	pkg/lattice/PreProcessor pkg/mass-spring/PreProcessor	pkg/realtime-rigidbody/PreProcessor
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#170">[ date ]</a>
+              <a href="thread.html#170">[ thread ]</a>
+              <a href="subject.html#170">[ subject ]</a>
+              <a href="author.html#170">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2007-06-19 12:09:46 +0200 (Tue, 19 Jun 2007)
+New Revision: 1205
+
+Modified:
+   trunk/core/FileGenerator.cpp
+   trunk/core/FileGenerator.hpp
+   trunk/core/ThreadWorker.cpp
+   trunk/core/ThreadWorker.hpp
+   trunk/extra/clump/Clump.cpp
+   trunk/extra/clump/Clump.hpp
+   trunk/extra/clump/PythonRecorder.cpp
+   trunk/extra/tetra/TetraTestGen.cpp
+   trunk/extra/tetra/TetraTestGen.hpp
+   trunk/gui/cmd/attrUtils.cpp
+   trunk/gui/cmd/yadeControl.cpp
+   trunk/gui/qt3/QtFileGenerator.cpp
+   trunk/pkg/dem/PreProcessor/Funnel.cpp
+   trunk/pkg/dem/PreProcessor/Funnel.hpp
+   trunk/pkg/dem/PreProcessor/SDECImpactTest.cpp
+   trunk/pkg/dem/PreProcessor/SDECImpactTest.hpp
+   trunk/pkg/dem/PreProcessor/SDECLinkedSpheres.cpp
+   trunk/pkg/dem/PreProcessor/SDECLinkedSpheres.hpp
+   trunk/pkg/dem/PreProcessor/SDECMovingWall.cpp
+   trunk/pkg/dem/PreProcessor/SDECMovingWall.hpp
+   trunk/pkg/dem/PreProcessor/SDECSpheresPlane.cpp
+   trunk/pkg/dem/PreProcessor/SDECSpheresPlane.hpp
+   trunk/pkg/dem/PreProcessor/TetrahedronsTest.cpp
+   trunk/pkg/dem/PreProcessor/TetrahedronsTest.hpp
+   trunk/pkg/dem/PreProcessor/ThreePointBending.cpp
+   trunk/pkg/dem/PreProcessor/ThreePointBending.hpp
+   trunk/pkg/dem/PreProcessor/TriaxialTest.cpp
+   trunk/pkg/dem/PreProcessor/TriaxialTest.hpp
+   trunk/pkg/dem/PreProcessor/TriaxialTestWater.cpp
+   trunk/pkg/dem/PreProcessor/TriaxialTestWater.hpp
+Log:
+1. rename ThreadWorker::message() to ThreadWorker::getStatus, ThreadWorker::setMessage() to ThreadWorker::setStatus (and private ThreadWorker::m_message to m_status)
+2. add public: std::string FileGenerator::message that holds exit value description
+3. FileGenerator::generate returns now bool (if the generation was successful); description in ::message
+4. Adapted all generators and UIs for the above changes (except NullGUI - is that needed?)
+
+
+
+Modified: trunk/core/FileGenerator.cpp
+===================================================================
+--- trunk/core/FileGenerator.cpp	2007-06-17 20:14:16 UTC (rev 1204)
++++ trunk/core/FileGenerator.cpp	2007-06-19 10:09:46 UTC (rev 1205)
+@@ -49,36 +49,39 @@
+ }
+ 
+ 
+-string FileGenerator::generate() 
++bool FileGenerator::generate() 
+ {
+-	return &quot;FileGenerator (base class) generates nothing.&quot;;
++	message=&quot;FileGenerator (base class) generates nothing.&quot;;
++	return false;
+ }
+ 
+ 
+-string FileGenerator::generateAndSave()
++bool FileGenerator::generateAndSave()
+ {
+-	string message;
++	bool status;
++	message=&quot;&quot;;
+ 	boost::posix_time::ptime now = boost::posix_time::second_clock::local_time();
+ 	try {
+-		message = generate();
++		status=generate();
+ 	}
+-	catch(SerializableError&amp; e){return string(&quot;SeriazableError: &quot;)+e.what();}
+-	catch(FactoryError&amp; e){return string(&quot;FactoryError: &quot;)+e.what();}
+-	catch(MultiMethodsError&amp; e){return string(&quot;MultiMethodsError: &quot;)+e.what();}
++	catch(SerializableError&amp; e){message+=string(&quot;SeriazableError: &quot;)+e.what(); return false;}
++	catch(FactoryError&amp; e){message+=string(&quot;FactoryError: &quot;)+e.what(); return false;}
++	catch(MultiMethodsError&amp; e){message+=string(&quot;MultiMethodsError: &quot;)+e.what(); return false;}
+ 	catch(std::exception&amp; e){
+ 		LOG_FATAL(&quot;Unhandled exception: &quot;&lt;&lt;typeid(e).name()&lt;&lt;&quot; : &quot;&lt;&lt;e.what());
+ 		abort(); // use abort, since we may want to inspect core
++		//return false;
+ 	}
+ 
+ 	if(shouldTerminate())
+ 	{
+-		return &quot;Generation aborted.&quot;;
++		message+=&quot;Generation aborted.&quot;; return false;
+ 	}
+ 	else
+ 	{
+ 		boost::posix_time::ptime now2 = boost::posix_time::second_clock::local_time();
+ 		boost::posix_time::time_duration generationTime = now2 - now; // generation time, without save time
+-		setMessage(&quot;saving...&quot;);
++		setStatus(&quot;saving...&quot;);
+ 		setProgress(1.0);
+ 		try
+ 		{
+@@ -86,21 +89,23 @@
+ 		}
+ 		catch(SerializableError&amp; e)
+ 		{
+-			return std::string(&quot;File &quot;+outputFileName+&quot; cannot be saved: &quot;+e.what());
++			message+=std::string(&quot;File &quot;+outputFileName+&quot; cannot be saved: &quot;+e.what());
++			return false;
+ 		}
+ 		boost::posix_time::ptime now3 = boost::posix_time::second_clock::local_time();
+ 		boost::posix_time::time_duration saveTime = now3 - now2; // save time
+-		return std::string(&quot;File &quot;+outputFileName+&quot; generated successfully.&quot;
++		message=std::string(&quot;File &quot;+outputFileName+&quot; generated successfully.&quot;
+ 				+ &quot;\ngeneration time: &quot; + boost::posix_time::to_simple_string(generationTime) 
+ 				+ &quot;\nsave time: &quot;       + boost::posix_time::to_simple_string(saveTime)
+ 				+&quot;\n\n&quot;)+message;
++		return true;
+ 	}
+ }
+ 
+ void FileGenerator::singleAction()
+ {
+-	setMessage(&quot;generating model...&quot;);
+-	std::string st=generateAndSave();
++	setStatus(&quot;generating model...&quot;);
++	bool st=generateAndSave();
+ 	setReturnValue(st);
+ };
+ 
+
+Modified: trunk/core/FileGenerator.hpp
+===================================================================
+--- trunk/core/FileGenerator.hpp	2007-06-17 20:14:16 UTC (rev 1204)
++++ trunk/core/FileGenerator.hpp	2007-06-19 10:09:46 UTC (rev 1205)
+@@ -26,11 +26,13 @@
+ 					,serializationDynlib;
+ 	
+ 	public :
+-		std::string generateAndSave();
++		bool generateAndSave();
+ 		void setFileName(const string&amp; fileName);
+ 		void setSerializationLibrary(const string&amp; lib);
+ 		std::string getFileName() {return outputFileName;}; // stupid? better make that variable public.. ech.
+ 		std::string getSerializationLibrary() {return serializationDynlib;};
++		//! Describes the result in a user-readable form.
++		std::string message;
+ 		
+ 		FileGenerator ();
+ 		virtual ~FileGenerator ();
+@@ -38,7 +40,8 @@
+ 		virtual void singleAction();
+ 
+ 	protected :
+-		virtual string generate();
++		//! Returns whether the generation was successful; message for user is in FileGenerator::message
++		virtual bool generate();
+ 
+ 		virtual void postProcessAttributes(bool);
+ 		virtual void registerAttributes();
+
+Modified: trunk/core/ThreadWorker.cpp
+===================================================================
+--- trunk/core/ThreadWorker.cpp	2007-06-17 20:14:16 UTC (rev 1204)
++++ trunk/core/ThreadWorker.cpp	2007-06-19 10:09:46 UTC (rev 1205)
+@@ -26,10 +26,10 @@
+ 	m_progress=i;
+ };
+ 
+-void ThreadWorker::setMessage(std::string s)
++void ThreadWorker::setStatus(std::string s)
+ {
+ 	boost::mutex::scoped_lock lock(m_mutex);
+-	m_message=s;
++	m_status=s;
+ };
+ 
+ float ThreadWorker::progress()
+@@ -38,10 +38,10 @@
+ 	return m_progress;
+ };
+ 
+-std::string ThreadWorker::message()
++std::string ThreadWorker::getStatus()
+ {
+ 	boost::mutex::scoped_lock lock(m_mutex);
+-	return m_message;
++	return m_status;
+ };
+ 
+ void ThreadWorker::setReturnValue(boost::any a)
+
+Modified: trunk/core/ThreadWorker.hpp
+===================================================================
+--- trunk/core/ThreadWorker.hpp	2007-06-17 20:14:16 UTC (rev 1204)
++++ trunk/core/ThreadWorker.hpp	2007-06-19 10:09:46 UTC (rev 1205)
+@@ -31,7 +31,7 @@
+ 		boost::mutex	m_mutex;
+ 		boost::any	m_val;
+ 		float		m_progress;
+-		std::string	m_message;
++		std::string	m_status;
+ 		void		setTerminate(bool);
+ 		void		callSingleAction();
+ 
+@@ -43,7 +43,7 @@
+ 		/// if you feel monitored for progress, you can set it here: a value between 0.0 and 1.0
+ 		void		setProgress(float);
+ 		/// if you feel being monitored for what currently is done, set the message here
+-		void		setMessage(std::string);
++		void		setStatus(std::string);
+ 		/// derived classes must define this method, that's what is executed in separate thread
+ 		virtual void	singleAction() = 0;
+ 
+@@ -54,7 +54,7 @@
+ 		/// Returns a value between 0.0 and 1.0. Useful for updating a progress bar.
+ 		float		progress(); // get_progress ? (pick a naming convention, efngh)
+ 		/// You can display a message in GUI about what is the current work status
+-		std::string	message();
++		std::string	getStatus();
+ 		/// Check whether execution is finished,
+ 		bool		done();
+ 		/// then get the result.
+
+Modified: trunk/extra/clump/Clump.cpp
+===================================================================
+--- trunk/extra/clump/Clump.cpp	2007-06-17 20:14:16 UTC (rev 1204)
++++ trunk/extra/clump/Clump.cpp	2007-06-19 10:09:46 UTC (rev 1205)
+@@ -339,7 +339,7 @@
+ #include&lt;yade/core/MetaBody.hpp&gt;
+ #include&lt;yade/extra/Shop.hpp&gt;
+ 
+-string ClumpTestGen::generate()
++bool ClumpTestGen::generate()
+ {
+ 	Shop::setDefault(&quot;param_pythonRunExpr&quot;,string(&quot;if S.i%50==0 and S.i&lt;1000 and S.i&gt;500:\n\tprint S.i,len(S.sel),B[1].x, B[1].E&quot;));
+ 
+@@ -394,7 +394,8 @@
+ 	// restore Omega
+ 	Omega::instance().setRootBody(oldRootBody);
+ 	
+-	return &quot;OK&quot;;
++	message=&quot;OK&quot;;
++	return true;
+ }
+ 
+ /*! \brief Generate clump of spheres, the result will be inserted into rootBody.
+
+Modified: trunk/extra/clump/Clump.hpp
+===================================================================
+--- trunk/extra/clump/Clump.hpp	2007-06-17 20:14:16 UTC (rev 1204)
++++ trunk/extra/clump/Clump.hpp	2007-06-19 10:09:46 UTC (rev 1205)
+@@ -138,7 +138,7 @@
+ 	public :
+ 		ClumpTestGen (){};
+ 		~ClumpTestGen (){};
+-		string generate();
++		bool generate();
+ 	protected :
+ 		virtual void postProcessAttributes(bool deserializing){};
+ 		void registerAttributes(){};
+
+Modified: trunk/extra/clump/PythonRecorder.cpp
+===================================================================
+--- trunk/extra/clump/PythonRecorder.cpp	2007-06-17 20:14:16 UTC (rev 1204)
++++ trunk/extra/clump/PythonRecorder.cpp	2007-06-19 10:09:46 UTC (rev 1205)
+@@ -18,7 +18,7 @@
+  */
+ 
+ PythonRecorder::PythonRecorder():DataRecorder(){
+-	LOG_FATAL(&quot;what use of releasing unknown lock??!! Otherwise deadlock here.&quot;);
++	LOG_FATAL(&quot;what use of releasing unknown lock?! Otherwise deadlock here.&quot;);
+ 	PyEval_ReleaseLock();
+ 	PyGILState_STATE pyState = PyGILState_Ensure();
+ 		PyRun_SimpleString(&quot;import sys; sys.path.insert(0,'&quot; PREFIX &quot;/lib/yade&quot; SUFFIX &quot;/extra');&quot;);
+
+Modified: trunk/extra/tetra/TetraTestGen.cpp
+===================================================================
+--- trunk/extra/tetra/TetraTestGen.cpp	2007-06-17 20:14:16 UTC (rev 1204)
++++ trunk/extra/tetra/TetraTestGen.cpp	2007-06-19 10:09:46 UTC (rev 1205)
+@@ -11,7 +11,7 @@
+         NULL /*sentinel*/
+ };
+ 
+-string TetraTestGen::generate()
++bool TetraTestGen::generate()
+ {
+ 	//Shop::setDefault(&quot;param_pythonRunExpr&quot;,string(&quot;if S.i%50==0 and S.i&lt;1000 and S.i&gt;500:\n\tprint S.i,len(S.sel),B[1].x, B[1].E&quot;));
+ 
+@@ -66,5 +66,6 @@
+ 	Omega::instance().setRootBody(oldRootBody);
+ 	#endif
+ 	
+-	return &quot;ATTN: this example is not working yet!&quot;;
++	message=&quot;ATTN: this example is not working yet!&quot;;
++	return true;
+ }
+
+Modified: trunk/extra/tetra/TetraTestGen.hpp
+===================================================================
+--- trunk/extra/tetra/TetraTestGen.hpp	2007-06-17 20:14:16 UTC (rev 1204)
++++ trunk/extra/tetra/TetraTestGen.hpp	2007-06-19 10:09:46 UTC (rev 1205)
+@@ -12,7 +12,7 @@
+ 		vector&lt;size_t&gt; gridSize;
+ 		TetraTestGen(){ gridSize.push_back(3); gridSize.push_back(3); gridSize.push_back(3);};
+ 		~TetraTestGen (){};
+-		string generate();
++		bool generate();
+ 	protected :
+ 		virtual void postProcessAttributes(bool deserializing){};
+ 		void registerAttributes(){FileGenerator::registerAttributes(); REGISTER_ATTRIBUTE(gridSize);}
+
+Modified: trunk/gui/cmd/attrUtils.cpp
+===================================================================
+--- trunk/gui/cmd/attrUtils.cpp	2007-06-17 20:14:16 UTC (rev 1204)
++++ trunk/gui/cmd/attrUtils.cpp	2007-06-19 10:09:46 UTC (rev 1205)
+@@ -74,35 +74,3 @@
+ 		}
+ };
+ 
+-void showAttrs(shared_ptr&lt;Serializable&gt; ser){
+-	if (ser-&gt;getArchives().empty()) ser-&gt;registerSerializableAttributes(false);
+-	Serializable::Archives archives=ser-&gt;getArchives();
+-
+-	for(Serializable::Archives::iterator ai=archives.begin();ai!=archives.end();++ai){
+-		if ((*ai)-&gt;isFundamental() &amp;&amp; (*ai)-&gt;getName() != &quot;outputFileName&quot; &amp;&amp; (*ai)-&gt;getName() != &quot;serializationDynlib&quot; ){
+-			//shared_ptr&lt;AttributeDescriptor&gt; descriptor(new AttributeDescriptor);
+-			//descriptor-&gt;name=(*ai)-&gt;getName();
+-			cerr&lt;&lt;&quot;NAME: &quot;&lt;&lt;(*ai)-&gt;getName()&lt;&lt;endl;
+-
+-			vector&lt;string&gt; strings; stringstream stream;
+-			(*ai)-&gt;serialize(stream,*(*ai),0);
+-			IOFormatManager::parseFundamental(stream.str(),strings);
+-
+-			for(unsigned int i=0;i&lt;strings.size();i++){
+-				any instance=(*ai)-&gt;getAddress();
+-				if(bool** b=any_cast&lt;bool*&gt;(&amp;instance)){
+-					cerr&lt;&lt;&quot;\tBOOL: &quot;&lt;&lt;(**b?&quot;true&quot;:&quot;false&quot;)&lt;&lt;endl;
+-					//descriptor-&gt;types.push_back(AttributeDescriptor::BOOLEAN);
+-				} else {
+-					cerr&lt;&lt;&quot;\tNUM : &quot;&lt;&lt;strings[i]&lt;&lt;endl;
+-					//descriptor-&gt;types.push_back(AttributeDescriptor::FLOATING);
+-				}
+-			}
+-			// not possible to store descriptor into a map or set ?????!!! I don't know why but it is crashing, so I use a vector and lookup table
+-			//descriptors.push_back(descriptor);
+-			//lookUp[descriptor-&gt;name] = descriptors.size()-1;
+-		}
+-	}
+-	ser-&gt;unregisterSerializableAttributes(false);
+-}
+-
+
+Modified: trunk/gui/cmd/yadeControl.cpp
+===================================================================
+--- trunk/gui/cmd/yadeControl.cpp	2007-06-17 20:14:16 UTC (rev 1204)
++++ trunk/gui/cmd/yadeControl.cpp	2007-06-19 10:09:46 UTC (rev 1205)
+@@ -83,7 +83,7 @@
+ 		QGLFormat format;	QGLFormat::setDefaultFormat(format); format.setStencil(TRUE); format.setAlpha(TRUE);
+ 		viewer=new GLViewer(viewId,renderer,format,0,viewId==0?0:instances[0]-&gt;viewer);
+ 		viewer-&gt;notMoving();
+-		showAttrs(renderer);
++		// showAttrs(renderer); // deprecated
+ 
+ 		AttrAccess acc(renderer);
+ 		cerr&lt;&lt;acc.dumpAttrs();
+
+Modified: trunk/gui/qt3/QtFileGenerator.cpp
+===================================================================
+--- trunk/gui/qt3/QtFileGenerator.cpp	2007-06-17 20:14:16 UTC (rev 1204)
++++ trunk/gui/qt3/QtFileGenerator.cpp	2007-06-19 10:09:46 UTC (rev 1205)
+@@ -199,7 +199,7 @@
+ 	// generating ....
+ 	if(m_worker &amp;&amp; m_runner)
+ 	{
+-		textLabel1-&gt;setText(m_worker-&gt;message());
++		textLabel1-&gt;setText(m_worker-&gt;getStatus());
+ 		progressBar1-&gt;setProgress((int)(m_worker-&gt;progress()*1000.0));
+ 	}
+ 
+@@ -210,8 +210,10 @@
+ 		pbClose-&gt;setEnabled(false);
+ 		pbGenerate-&gt;setEnabled(true);
+ 
+-		string message = boost::any_cast&lt;std::string&gt;(m_worker-&gt;getReturnValue());
+-		shared_ptr&lt;MessageDialog&gt; md = shared_ptr&lt;MessageDialog&gt;(new MessageDialog(message,this-&gt;parentWidget()-&gt;parentWidget()));
++		bool successfullyGenerated=boost::any_cast&lt;bool&gt;(m_worker-&gt;getReturnValue());
++		string message=m_worker-&gt;message;
++
++		shared_ptr&lt;MessageDialog&gt; md = shared_ptr&lt;MessageDialog&gt;(new MessageDialog(string(successfullyGenerated?&quot;SUCCESS:\n\n&quot;:&quot;FAILURE!\n\n&quot;)+message,this-&gt;parentWidget()-&gt;parentWidget()));
+ 		md-&gt;exec();
+ 
+ 		m_worker=shared_ptr&lt;FileGenerator&gt;();
+@@ -222,10 +224,10 @@
+ 
+ 		/* now, launch the generated simulation if
+ 		 * 1. it is desired,
+-		 * 2. generation was successful (unreliable check: generator returns string; we just have a look if the filename specified exists or not),
++		 * 2. generation was successful
+ 		 * 3. no simulation is open already (by checking Omega's simulationFileName) */
+-		if(	   cbOpenAutomatically-&gt;isChecked() 
+-			&amp;&amp; filesystem::exists(filesystem::path((const char*)(leOutputFileName-&gt;text()))) 
++		if(cbOpenAutomatically-&gt;isChecked() 
++			&amp;&amp; successfullyGenerated //filesystem::exists(filesystem::path((const char*)(leOutputFileName-&gt;text()))) 
+ 			&amp;&amp; Omega::instance().getSimulationFileName()==&quot;&quot;)
+ 		{
+ 			QWidget* qw=this; while (qw-&gt;parentWidget()) qw=qw-&gt;parentWidget(); // find toplevel widget - which should be yade's main window
+
+Modified: trunk/pkg/dem/PreProcessor/Funnel.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/Funnel.cpp	2007-06-17 20:14:16 UTC (rev 1204)
++++ trunk/pkg/dem/PreProcessor/Funnel.cpp	2007-06-19 10:09:46 UTC (rev 1205)
+@@ -100,7 +100,7 @@
+ }
+ 
+ 
+-string Funnel::generate()
++bool Funnel::generate()
+ {
+ 	rootBody = shared_ptr&lt;MetaBody&gt;(new MetaBody);
+ 	createActors(rootBody);
+@@ -170,7 +170,7 @@
+ 				rootBody-&gt;bodies-&gt;insert(sphere);
+ 			}
+ 	
+-	return &quot;&quot;;
++	message=&quot;&quot;; return true;
+ }
+ 
+ 
+
+Modified: trunk/pkg/dem/PreProcessor/Funnel.hpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/Funnel.hpp	2007-06-17 20:14:16 UTC (rev 1204)
++++ trunk/pkg/dem/PreProcessor/Funnel.hpp	2007-06-19 10:09:46 UTC (rev 1205)
+@@ -39,7 +39,7 @@
+ 	public :
+ 		Funnel ();
+ 		~Funnel ();
+-		string generate();
++		bool generate();
+ 
+ 	protected :
+ 		void registerAttributes();
+
+Modified: trunk/pkg/dem/PreProcessor/SDECImpactTest.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/SDECImpactTest.cpp	2007-06-17 20:14:16 UTC (rev 1204)
++++ trunk/pkg/dem/PreProcessor/SDECImpactTest.cpp	2007-06-19 10:09:46 UTC (rev 1205)
+@@ -187,7 +187,7 @@
+ }
+ 
+ 
+-string SDECImpactTest::generate()
++bool SDECImpactTest::generate()
+ {
+ 	int startId=boost::numeric::bounds&lt;int&gt;::highest(), endId=0; // record forces from group 2
+ 	
+@@ -338,13 +338,14 @@
+ 			 
+ 	}
+ 
+- 	return &quot;Generated a sample inside box of dimensions: (&quot; 
++ 	message=&quot;Generated a sample inside box of dimensions: (&quot; 
+  		+ lexical_cast&lt;string&gt;(lowerCorner[0]) + &quot;,&quot; 
+  		+ lexical_cast&lt;string&gt;(lowerCorner[1]) + &quot;,&quot; 
+  		+ lexical_cast&lt;string&gt;(lowerCorner[2]) + &quot;) and (&quot; 
+  		+ lexical_cast&lt;string&gt;(upperCorner[0]) + &quot;,&quot; 
+  		+ lexical_cast&lt;string&gt;(upperCorner[1]) + &quot;,&quot; 
+  		+ lexical_cast&lt;string&gt;(upperCorner[2]) + &quot;).&quot;;
++	return true;
+ 
+ }
+ 
+
+Modified: trunk/pkg/dem/PreProcessor/SDECImpactTest.hpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/SDECImpactTest.hpp	2007-06-17 20:14:16 UTC (rev 1204)
++++ trunk/pkg/dem/PreProcessor/SDECImpactTest.hpp	2007-06-19 10:09:46 UTC (rev 1205)
+@@ -84,7 +84,7 @@
+ 	public : 
+ 		SDECImpactTest ();
+ 		~SDECImpactTest ();
+-		string generate();
++		bool generate();
+ 	
+ 	protected :
+ 		void registerAttributes();
+
+Modified: trunk/pkg/dem/PreProcessor/SDECLinkedSpheres.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/SDECLinkedSpheres.cpp	2007-06-17 20:14:16 UTC (rev 1204)
++++ trunk/pkg/dem/PreProcessor/SDECLinkedSpheres.cpp	2007-06-19 10:09:46 UTC (rev 1205)
+@@ -114,7 +114,7 @@
+ }
+ 
+ 
+-string SDECLinkedSpheres::generate()
++bool SDECLinkedSpheres::generate()
+ {
+ 	rootBody = shared_ptr&lt;MetaBody&gt;(new MetaBody);
+ 	createActors(rootBody);
+@@ -211,9 +211,10 @@
+ 		}
+ 	}
+ 	
+-	return &quot;total number of permament links created: &quot; 
++	message=&quot;total number of permament links created: &quot; 
+ 		+ lexical_cast&lt;string&gt;(rootBody-&gt;persistentInteractions-&gt;size()) 
+ 		+ &quot;\nWARNING: link bonds are nearly working, but the formulas are waiting for total rewrite!&quot;;
++	return true;
+ }
+ 
+ 
+
+Modified: trunk/pkg/dem/PreProcessor/SDECLinkedSpheres.hpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/SDECLinkedSpheres.hpp	2007-06-17 20:14:16 UTC (rev 1204)
++++ trunk/pkg/dem/PreProcessor/SDECLinkedSpheres.hpp	2007-06-19 10:09:46 UTC (rev 1205)
+@@ -48,7 +48,7 @@
+ 	public :
+ 		SDECLinkedSpheres ();
+ 		~SDECLinkedSpheres ();
+-		string generate();
++		bool generate();
+ 	
+ 	protected :
+ 		virtual void postProcessAttributes(bool deserializing);
+
+Modified: trunk/pkg/dem/PreProcessor/SDECMovingWall.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/SDECMovingWall.cpp	2007-06-17 20:14:16 UTC (rev 1204)
++++ trunk/pkg/dem/PreProcessor/SDECMovingWall.cpp	2007-06-19 10:09:46 UTC (rev 1205)
+@@ -138,7 +138,7 @@
+ }
+ 
+ 
+-string SDECMovingWall::generate()
++bool SDECMovingWall::generate()
+ {
+ 	rootBody = shared_ptr&lt;MetaBody&gt;(new MetaBody);
+ 	createActors(rootBody);
+@@ -208,7 +208,7 @@
+ 				rootBody-&gt;bodies-&gt;insert(sphere);
+ 			}
+ 	
+-	return &quot;&quot;;
++	message=&quot;&quot;; return true;
+ }
+ 
+ 
+
+Modified: trunk/pkg/dem/PreProcessor/SDECMovingWall.hpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/SDECMovingWall.hpp	2007-06-17 20:14:16 UTC (rev 1204)
++++ trunk/pkg/dem/PreProcessor/SDECMovingWall.hpp	2007-06-19 10:09:46 UTC (rev 1205)
+@@ -59,7 +59,7 @@
+ 	public :
+ 		SDECMovingWall ();
+ 		~SDECMovingWall ();
+-		string generate();
++		bool generate();
+ 
+ 	protected :
+ 		virtual void postProcessAttributes(bool deserializing);
+
+Modified: trunk/pkg/dem/PreProcessor/SDECSpheresPlane.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/SDECSpheresPlane.cpp	2007-06-17 20:14:16 UTC (rev 1204)
++++ trunk/pkg/dem/PreProcessor/SDECSpheresPlane.cpp	2007-06-19 10:09:46 UTC (rev 1205)
+@@ -109,7 +109,7 @@
+ }
+ 
+ 
+-string SDECSpheresPlane::generate()
++bool SDECSpheresPlane::generate()
+ {
+ 	rootBody = shared_ptr&lt;MetaBody&gt;(new MetaBody);
+ 	createActors(rootBody);
+@@ -179,7 +179,7 @@
+ 			}
+ 	}
+ 	
+-	return &quot;&quot;;
++	message=&quot;&quot;; return true;
+ }
+ 
+ 
+
+Modified: trunk/pkg/dem/PreProcessor/SDECSpheresPlane.hpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/SDECSpheresPlane.hpp	2007-06-17 20:14:16 UTC (rev 1204)
++++ trunk/pkg/dem/PreProcessor/SDECSpheresPlane.hpp	2007-06-19 10:09:46 UTC (rev 1205)
+@@ -44,7 +44,7 @@
+ 	public :
+ 		SDECSpheresPlane ();
+ 		~SDECSpheresPlane ();
+-		string generate();
++		bool generate();
+ 
+ 	protected :
+ 		virtual void postProcessAttributes(bool deserializing);
+
+Modified: trunk/pkg/dem/PreProcessor/TetrahedronsTest.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/TetrahedronsTest.cpp	2007-06-17 20:14:16 UTC (rev 1204)
++++ trunk/pkg/dem/PreProcessor/TetrahedronsTest.cpp	2007-06-19 10:09:46 UTC (rev 1205)
+@@ -122,7 +122,7 @@
+ }
+ 
+ 
+-string TetrahedronsTest::generate()
++bool TetrahedronsTest::generate()
+ {
+ 	Omega::instance().setTimeStep(0.04);
+ 	rootBody = shared_ptr&lt;MetaBody&gt;(new MetaBody);
+@@ -148,7 +148,7 @@
+ 	float all = nbTetrahedrons[0]*nbTetrahedrons[1]*nbTetrahedrons[2];
+ 	float current = 0.0;
+ 
+-	setMessage(&quot;generating tetrahedrons...&quot;);
++	setStatus(&quot;generating tetrahedrons...&quot;);
+ 	for(int i=0;i&lt;nbTetrahedrons[0];i++)
+ 	{
+ 		if(shouldTerminate()) return &quot;&quot;;
+@@ -164,7 +164,8 @@
+ 			}
+ 	}
+ 	
+-	return &quot;foo bar &quot;+boost::lexical_cast&lt;std::string&gt;(42);
++	message=&quot;foo bar &quot;+boost::lexical_cast&lt;std::string&gt;(42);
++	return true;
+ }
+ 
+ 
+
+Modified: trunk/pkg/dem/PreProcessor/TetrahedronsTest.hpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/TetrahedronsTest.hpp	2007-06-17 20:14:16 UTC (rev 1204)
++++ trunk/pkg/dem/PreProcessor/TetrahedronsTest.hpp	2007-06-19 10:09:46 UTC (rev 1205)
+@@ -97,7 +97,7 @@
+ 	public :
+ 		TetrahedronsTest ();
+ 		~TetrahedronsTest ();
+-		string generate();
++		bool generate();
+ 
+ 	protected :
+ 		virtual void postProcessAttributes(bool deserializing);
+
+Modified: trunk/pkg/dem/PreProcessor/ThreePointBending.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/ThreePointBending.cpp	2007-06-17 20:14:16 UTC (rev 1204)
++++ trunk/pkg/dem/PreProcessor/ThreePointBending.cpp	2007-06-19 10:09:46 UTC (rev 1205)
+@@ -125,7 +125,7 @@
+ }
+ 
+ 
+-string ThreePointBending::generate()
++bool ThreePointBending::generate()
+ {
+ 	rootBody = shared_ptr&lt;MetaBody&gt;(new MetaBody);
+ 	createActors(rootBody);
+@@ -156,16 +156,15 @@
+ 			else if(filesystem::extension(yadeFileWithSpheres)==&quot;.yade&quot; )
+ 				IOFormatManager::loadFromFile(&quot;BINFormatManager&quot;,yadeFileWithSpheres,&quot;rootBody&quot;,metaBodyWithSpheres);
+ 
+-			if( metaBodyWithSpheres-&gt;getClassName() != &quot;MetaBody&quot;)
+-				return &quot;Error: cannot load the file that should contain spheres&quot;;
++			if( metaBodyWithSpheres-&gt;getClassName() != &quot;MetaBody&quot;){ message=&quot;Error: cannot load the file that should contain spheres&quot;; return false; }
+ 		} 
+ 		catch(SerializableError&amp; e)
+ 		{
+-			return &quot;Error: cannot load the file that should contain spheres&quot;;
++			message=&quot;Error: cannot load the file that should contain spheres&quot;; return false;
+ 		}
+ 		catch(yadeError&amp; e)
+ 		{
+-			return &quot;Error: cannot load the file that should contain spheres&quot;;
++			message=&quot;Error: cannot load the file that should contain spheres&quot;; return false;
+ 		}
+ 	}
+ 	else
+@@ -184,8 +183,7 @@
+ 				max = componentMaxVector(max,b-&gt;physicalParameters-&gt;se3.position + static_cast&lt;Sphere*&gt;(b-&gt;geometricalModel.get())-&gt;radius * Vector3r(1,1,1));
+ 
+ 				BodyMacroParameters* bm = dynamic_cast&lt;BodyMacroParameters*&gt;(b-&gt;physicalParameters.get());
+-				if(!bm)
+-					return &quot;Error: spheres don't use BodyMacroParameters for physical parameters&quot;;
++				if(!bm) {message=&quot;Error: spheres don't use BodyMacroParameters for physical parameters&quot;; return false;}
+ 
+ 				bm-&gt;young		= sphereYoungModulus;
+ 				bm-&gt;poisson		= spherePoissonRatio;
+@@ -278,9 +276,10 @@
+ 		}
+ 	}
+ 	
+-	return &quot;total number of permament links created: &quot; 
++	message=&quot;total number of permament links created: &quot; 
+ 		+ lexical_cast&lt;string&gt;(rootBody-&gt;persistentInteractions-&gt;size()) 
+ 		+ &quot;\nWARNING: link bonds are nearly working, but the formulas are waiting for total rewrite!&quot;;
++	return true;
+ }
+ 
+ 
+
+Modified: trunk/pkg/dem/PreProcessor/ThreePointBending.hpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/ThreePointBending.hpp	2007-06-17 20:14:16 UTC (rev 1204)
++++ trunk/pkg/dem/PreProcessor/ThreePointBending.hpp	2007-06-19 10:09:46 UTC (rev 1205)
+@@ -45,7 +45,7 @@
+ 	public :
+ 		ThreePointBending ();
+ 		~ThreePointBending ();
+-		string generate();
++		bool generate();
+ 	
+ 	protected :
+ 		virtual void postProcessAttributes(bool deserializing);
+
+Modified: trunk/pkg/dem/PreProcessor/TriaxialTest.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/TriaxialTest.cpp	2007-06-17 20:14:16 UTC (rev 1204)
++++ trunk/pkg/dem/PreProcessor/TriaxialTest.cpp	2007-06-19 10:09:46 UTC (rev 1205)
+@@ -245,7 +245,7 @@
+ }
+ 
+ 
+-string TriaxialTest::generate()
++bool TriaxialTest::generate()
+ {
+ //	unsigned int startId=boost::numeric::bounds&lt;unsigned int&gt;::highest(), endId=0; // record forces from group 2
+ 	
+@@ -263,7 +263,7 @@
+ 	shared_ptr&lt;Body&gt; body;
+ 	
+ 	vector&lt;BasicSphere&gt; sphere_list;
+-	string output = GenerateCloud(sphere_list, lowerCorner, upperCorner, numberOfGrains, 0.3, 0.75);
++	message=GenerateCloud(sphere_list, lowerCorner, upperCorner, numberOfGrains, 0.3, 0.75);
+ 	
+ 	vector&lt;BasicSphere&gt;::iterator it = sphere_list.begin();
+ 	vector&lt;BasicSphere&gt;::iterator it_end = sphere_list.end();
+@@ -435,7 +435,7 @@
+ 			 
+ 	}
+ 	
+-	return output;
++	return true;
+ //  	return &quot;Generated a sample inside box of dimensions: (&quot; 
+ //  		+ lexical_cast&lt;string&gt;(lowerCorner[0]) + &quot;,&quot; 
+ //  		+ lexical_cast&lt;string&gt;(lowerCorner[1]) + &quot;,&quot; 
+
+Modified: trunk/pkg/dem/PreProcessor/TriaxialTest.hpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/TriaxialTest.hpp	2007-06-17 20:14:16 UTC (rev 1204)
++++ trunk/pkg/dem/PreProcessor/TriaxialTest.hpp	2007-06-19 10:09:46 UTC (rev 1205)
+@@ -118,7 +118,7 @@
+ 	public : 
+ 		TriaxialTest ();
+ 		~TriaxialTest ();
+-		string generate();
++		bool generate();
+ 	
+ 	protected :
+ 		void registerAttributes();
+
+Modified: trunk/pkg/dem/PreProcessor/TriaxialTestWater.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/TriaxialTestWater.cpp	2007-06-17 20:14:16 UTC (rev 1204)
++++ trunk/pkg/dem/PreProcessor/TriaxialTestWater.cpp	2007-06-19 10:09:46 UTC (rev 1205)
+@@ -221,7 +221,7 @@
+ }
+ 
+ 
+-string TriaxialTestWater::generate()
++bool TriaxialTestWater::generate()
+ {
+ 	//unsigned int startId=boost::numeric::bounds&lt;unsigned int&gt;::highest(), endId=0; // record forces from group 2
+ 	
+@@ -239,7 +239,7 @@
+ 	shared_ptr&lt;Body&gt; body;
+ 	
+ 	vector&lt;BasicSphere&gt; sphere_list;
+-	string output = GenerateCloud(sphere_list, lowerCorner, upperCorner,
++	message = GenerateCloud(sphere_list, lowerCorner, upperCorner,
+ 	numberOfGrains, Rdispersion, 0.75);
+ 	
+ 	vector&lt;BasicSphere&gt;::iterator it = sphere_list.begin();
+@@ -371,7 +371,8 @@
+ 			 
+ 	}
+ 	
+-	return std::string(&quot;ATTN: this test will not work without data file for capillary law\n\n&quot;)+output;
++	message=std::string(&quot;ATTN: this test will not work without data file for capillary law\n\n&quot;)+message;
++	return true;
+ //  	return &quot;Generated a sample inside box of dimensions: (&quot; 
+ //  		+ lexical_cast&lt;string&gt;(lowerCorner[0]) + &quot;,&quot; 
+ //  		+ lexical_cast&lt;string&gt;(lowerCorner[1]) + &quot;,&quot; 
+
+Modified: trunk/pkg/dem/PreProcessor/TriaxialTestWater.hpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/TriaxialTestWater.hpp	2007-06-17 20:14:16 UTC (rev 1204)
++++ trunk/pkg/dem/PreProcessor/TriaxialTestWater.hpp	2007-06-19 10:09:46 UTC (rev 1205)
+@@ -124,7 +124,7 @@
+ 	public : 
+ 		TriaxialTestWater ();
+ 		~TriaxialTestWater ();
+-		string generate();
++		bool generate();
+ 	
+ 	protected :
+ 		void registerAttributes();
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000169.html">[Yade-commits] r1204 - trunk/gui/cmd
+</A></li>
+	<LI>Next message: <A HREF="000171.html">[Yade-commits] r1206 - in trunk: gui/cmd pkg/fem/PreProcessor	pkg/lattice/PreProcessor pkg/mass-spring/PreProcessor	pkg/realtime-rigidbody/PreProcessor
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#170">[ date ]</a>
+              <a href="thread.html#170">[ thread ]</a>
+              <a href="subject.html#170">[ subject ]</a>
+              <a href="author.html#170">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

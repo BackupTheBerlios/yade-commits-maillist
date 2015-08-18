@@ -1,0 +1,335 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1353 - in trunk: examples lib/import pkg/dem	pkg/dem/Engine/EngineUnit pkg/dem/PreProcessor
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1353%20-%20in%20trunk%3A%20examples%20lib/import%20pkg/dem%0A%09pkg/dem/Engine/EngineUnit%20pkg/dem/PreProcessor&In-Reply-To=%3C200805131748.m4DHm6rj019203%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000314.html">
+   <LINK REL="Next"  HREF="000316.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1353 - in trunk: examples lib/import pkg/dem	pkg/dem/Engine/EngineUnit pkg/dem/PreProcessor</H1>
+    <B>sega at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1353%20-%20in%20trunk%3A%20examples%20lib/import%20pkg/dem%0A%09pkg/dem/Engine/EngineUnit%20pkg/dem/PreProcessor&In-Reply-To=%3C200805131748.m4DHm6rj019203%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1353 - in trunk: examples lib/import pkg/dem	pkg/dem/Engine/EngineUnit pkg/dem/PreProcessor">sega at mail.berlios.de
+       </A><BR>
+    <I>Tue May 13 19:48:06 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000314.html">[Yade-commits] r1352 - trunk/lib/import
+</A></li>
+        <LI>Next message: <A HREF="000316.html">[Yade-commits] r1354 - in trunk: examples gui gui/py lib/import	pkg/dem/PreProcessor
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#315">[ date ]</a>
+              <a href="thread.html#315">[ thread ]</a>
+              <a href="subject.html#315">[ subject ]</a>
+              <a href="author.html#315">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: sega
+Date: 2008-05-13 19:48:05 +0200 (Tue, 13 May 2008)
+New Revision: 1353
+
+Added:
+   trunk/examples/baraban.stl
+Modified:
+   trunk/lib/import/STLImporter.hpp
+   trunk/pkg/dem/Engine/EngineUnit/InteractingEdge2InteractingSphere4SpheresContactGeometry.cpp
+   trunk/pkg/dem/Engine/EngineUnit/InteractingFacet2InteractingSphere4SpheresContactGeometry.cpp
+   trunk/pkg/dem/Engine/EngineUnit/InteractingVertex2InteractingSphere4SpheresContactGeometry.cpp
+   trunk/pkg/dem/PreProcessor/STLImporterTest.cpp
+   trunk/pkg/dem/PreProcessor/STLImporterTest.hpp
+   trunk/pkg/dem/SConscript
+Log:
+1. Fix orientation. Now one can rotate the STL geometry.
+2. Added rotation kinematics to STLImporterTest preprocessor
+3. Bugs fix.
+4. Added another example of STL file in examples directory.  
+
+
+Added: trunk/examples/baraban.stl
+===================================================================
+(Binary files differ)
+
+
+Property changes on: trunk/examples/baraban.stl
+___________________________________________________________________
+Name: svn:mime-type
+   + application/octet-stream
+
+Modified: trunk/lib/import/STLImporter.hpp
+===================================================================
+--- trunk/lib/import/STLImporter.hpp	2008-05-13 08:58:18 UTC (rev 1352)
++++ trunk/lib/import/STLImporter.hpp	2008-05-13 17:48:05 UTC (rev 1353)
+@@ -30,7 +30,7 @@
+ 	/// number of imported edges (all|corner)
+ 	int number_of_imported_edges() const {if (import_edges) return (import_flat_edges_flag) ? number_of_edges() : number_of_corner_edges(); else return 0;}
+ 	/// number of imported facets (all|corner)
+-	int number_of_imported_facets() const {return number_of_facets();}
++	int number_of_imported_facets() const {return (import_facets) ? number_of_facets() : 0;}
+ 	
+ 	/// number of all vertices
+ 	int number_of_vertices() const { return vts.size(); }
+
+Modified: trunk/pkg/dem/Engine/EngineUnit/InteractingEdge2InteractingSphere4SpheresContactGeometry.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/EngineUnit/InteractingEdge2InteractingSphere4SpheresContactGeometry.cpp	2008-05-13 08:58:18 UTC (rev 1352)
++++ trunk/pkg/dem/Engine/EngineUnit/InteractingEdge2InteractingSphere4SpheresContactGeometry.cpp	2008-05-13 17:48:05 UTC (rev 1353)
+@@ -36,24 +36,25 @@
+ 	Real squaredLength = e-&gt;squaredLength;
+ 	Real sphereRadius = static_cast&lt;InteractingSphere*&gt;(cm2.get())-&gt;radius;
+ 
+-	Vector3r ep = se31.position;
+-	Vector3r sp = se32.position;
+-	Vector3r rp = sp - ep;
++	Matrix3r edgeAxisT; se31.orientation.ToRotationMatrix(edgeAxisT); 
++	Matrix3r edgeAxis = edgeAxisT.Transpose();
+ 	
+-	// TODO: orientation normal1 &amp; normal2!!!
+-
++	// local orientation
++	Vector3r rp = edgeAxis*(se32.position - se31.position);
++	
+ 	if (e-&gt;both) {
+ 	    if ( e-&gt;normal1.Dot(rp) &lt; 0 || e-&gt;normal2.Dot(rp) &lt; 0 ) return false;
+ 	} else if ( e-&gt;normal1.Dot(rp) &lt; 0 ) return false;
+ 
+-	Vector3r edge = e-&gt;edge; // TODO: orientation edge!!! se31.orientation.Rotate(e-&gt;edge); 
++	Vector3r edge = e-&gt;edge; 
+ 
+ 	Real c1 = rp.Dot(edge);
+ 	if ( c1&lt;=0 || squaredLength&lt;=c1 ) return false;
+ 
+-	Vector3r Pb = ep + c1/squaredLength*edge;
++	// global orientation
++	Vector3r Pb = se31.position + edgeAxisT * c1/squaredLength*edge;
+ 
+-	Vector3r normal = sp - Pb;
++	Vector3r normal = se32.position - Pb;
+ 	Real penetrationDepth = sphereRadius - normal.Normalize();
+ 
+ 	if (penetrationDepth &gt; 0)
+
+Modified: trunk/pkg/dem/Engine/EngineUnit/InteractingFacet2InteractingSphere4SpheresContactGeometry.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/EngineUnit/InteractingFacet2InteractingSphere4SpheresContactGeometry.cpp	2008-05-13 08:58:18 UTC (rev 1352)
++++ trunk/pkg/dem/Engine/EngineUnit/InteractingFacet2InteractingSphere4SpheresContactGeometry.cpp	2008-05-13 17:48:05 UTC (rev 1353)
+@@ -29,8 +29,13 @@
+ 							const shared_ptr&lt;Interaction&gt;&amp; c)
+ {
+ 	InteractingFacet*   facet = static_cast&lt;InteractingFacet*&gt;(cm1.get());
+-	Vector3r fp = se31.position;
+-	Vector3r sp = se32.position - fp;// TODO: orientation!!! //se31.orientation.Inverse()*(se32.position - fp);
++	
++	Matrix3r facetAxisT; se31.orientation.ToRotationMatrix(facetAxisT); 
++	Matrix3r facetAxis = facetAxisT.Transpose();
++	
++	// local orientation
++	Vector3r sp = facetAxis*(se32.position - se31.position); 
++	
+ 	Vector3r normal = facet-&gt;normal;
+ 	Real L = normal.Dot(sp);
+ 	if (L&lt;0) { normal=-normal; L=-L; }
+@@ -55,8 +60,11 @@
+   
+ 	    Real penetrationDepth = sphereRadius - L;
+ 
+-  	    scm-&gt;contactPoint = sp + fp - 0.5*penetrationDepth*normal; // TODO: orientation!!!
+-  	    scm-&gt;normal = normal; // TODO: orientation!!!
++	    // global orientation
++	    normal = facetAxisT*normal; normal.Normalize();
++
++  	    scm-&gt;contactPoint = se32.position - 0.5*penetrationDepth*normal; 
++  	    scm-&gt;normal = normal; 
+   	    scm-&gt;penetrationDepth = penetrationDepth;
+   	    scm-&gt;radius1 = 2*sphereRadius;
+   	    scm-&gt;radius2 = sphereRadius;
+
+Modified: trunk/pkg/dem/Engine/EngineUnit/InteractingVertex2InteractingSphere4SpheresContactGeometry.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/EngineUnit/InteractingVertex2InteractingSphere4SpheresContactGeometry.cpp	2008-05-13 08:58:18 UTC (rev 1352)
++++ trunk/pkg/dem/Engine/EngineUnit/InteractingVertex2InteractingSphere4SpheresContactGeometry.cpp	2008-05-13 17:48:05 UTC (rev 1353)
+@@ -31,15 +31,19 @@
+ 
+     InteractingSphere* s2 = static_cast&lt;InteractingSphere*&gt;(cm2.get());
+ 
+-    Vector3r normal = se32.position-se31.position; // TODO: Orientation!!!
++    Matrix3r vertexAxisT; se31.orientation.ToRotationMatrix(vertexAxisT); 
++    Matrix3r vertexAxis = vertexAxisT.Transpose();
+ 
++    Vector3r normal = se32.position-se31.position; // global orientation
++
+     InteractingVertex* v = static_cast&lt;InteractingVertex*&gt;(cm1.get());
+ 
+     // ignore vertices of a flat
+     if (v-&gt;flat) return false; 
+ 
++    Vector3r normal_l = vertexAxis*normal; //local orientation
+     for(int i=0,ei=v-&gt;normals.size(); i&lt;ei; ++i)
+-	if ( normal.Dot(v-&gt;normals[i]) &lt; 0 ) return false;
++	if ( normal_l.Dot(v-&gt;normals[i]) &lt; 0 ) return false;
+ 
+     Real penetrationDepth = s2-&gt;radius - normal.Normalize();
+ 	    
+
+Modified: trunk/pkg/dem/PreProcessor/STLImporterTest.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/STLImporterTest.cpp	2008-05-13 08:58:18 UTC (rev 1352)
++++ trunk/pkg/dem/PreProcessor/STLImporterTest.cpp	2008-05-13 17:48:05 UTC (rev 1353)
+@@ -36,6 +36,7 @@
+ #include&lt;yade/pkg-dem/ElasticContactLaw.hpp&gt;
+ #include&lt;yade/pkg-dem/ElasticCriterionTimeStepper.hpp&gt;
+ #include&lt;yade/pkg-dem/MacroMicroElasticRelationships.hpp&gt;
++#include&lt;yade/pkg-common/RotationEngine.hpp&gt;
+ 
+ STLImporterTest::STLImporterTest() : FileGenerator()
+ {
+@@ -49,7 +50,6 @@
+ 	spherePoissonRatio  = 0.2;
+ 	sphereFrictionDeg   = 18.0;
+ 	density = 2600;
+-	rotationBlocked = false;
+ 	gravity = Vector3r(0,-9.81,0);
+ 	disorder = Vector3r(0.002,0.002,0.002);
+ 	verticesImport=true;
+@@ -57,6 +57,8 @@
+        	facetsWire=true;
+        	edgesImport=true;
+ 	stlFileName = &quot;hourglass.stl&quot;;
++	angularVelocity = 0.5;
++	rotationAxis = Vector3r(0,0,1);
+ 	spheresHeight = 0;
+ }
+ 
+@@ -91,9 +93,10 @@
+ 	REGISTER_ATTRIBUTE(edgesImport);
+ 	REGISTER_ATTRIBUTE(facetsImport);
+ 	REGISTER_ATTRIBUTE(facetsWire);
++	REGISTER_ATTRIBUTE(angularVelocity);
++	REGISTER_ATTRIBUTE(rotationAxis);
+ 	REGISTER_ATTRIBUTE(dampingForce);
+ 	REGISTER_ATTRIBUTE(dampingMomentum);
+-	REGISTER_ATTRIBUTE(rotationBlocked);
+ 	REGISTER_ATTRIBUTE(timeStepUpdateInterval);
+ }
+ 
+@@ -101,7 +104,6 @@
+ bool STLImporterTest::generate()
+ {
+ 	rootBody = shared_ptr&lt;MetaBody&gt;(new MetaBody);
+-	createActors(rootBody);
+ 	positionRootBody(rootBody);
+ 
+ 	rootBody-&gt;dt = 0.001; //default time step
+@@ -186,6 +188,10 @@
+ 			}
+ 	}
+ 	
++
++///////// engines
++	createActors(rootBody);
++
+ 	return true;
+ }
+ 
+@@ -279,6 +285,22 @@
+ 	shared_ptr&lt;PhysicalParametersMetaEngine&gt; orientationIntegrator(new PhysicalParametersMetaEngine);
+ 	orientationIntegrator-&gt;add(&quot;LeapFrogOrientationIntegrator&quot;);
+ 
++	shared_ptr&lt;RotationEngine&gt; kinematic = shared_ptr&lt;RotationEngine&gt;(new RotationEngine);
++ 	kinematic-&gt;angularVelocity  = angularVelocity;
++	rotationAxis.Normalize();
++ 	kinematic-&gt;rotationAxis  = rotationAxis;
++ 	kinematic-&gt;rotateAroundZero = true;
++	
++	
++	shared_ptr&lt;InteractingGeometry&gt; vertex(new InteractingVertex);
++	shared_ptr&lt;InteractingGeometry&gt; edge(new InteractingEdge);
++	shared_ptr&lt;InteractingGeometry&gt; facet(new InteractingFacet);
++	for(BodyContainer::iterator bi = rootBody-&gt;bodies-&gt;begin(), biEnd=rootBody-&gt;bodies-&gt;end(); bi!=biEnd; ++bi)
++	    if ( (*bi)-&gt;interactingGeometry-&gt;getClassIndex() == vertex-&gt;getClassIndex() ||
++		    (*bi)-&gt;interactingGeometry-&gt;getClassIndex() == edge-&gt;getClassIndex() ||
++		    (*bi)-&gt;interactingGeometry-&gt;getClassIndex() == facet-&gt;getClassIndex() )
++		kinematic-&gt;subscribedBodies.push_back((*bi)-&gt;getId());
++
+ 	shared_ptr&lt;ElasticCriterionTimeStepper&gt; sdecTimeStepper(new ElasticCriterionTimeStepper);
+ 	sdecTimeStepper-&gt;sdecGroupMask = 1;
+ 	sdecTimeStepper-&gt;timeStepUpdateInterval = timeStepUpdateInterval;
+@@ -295,10 +317,9 @@
+ 	rootBody-&gt;engines.push_back(actionDampingDispatcher);
+ 	rootBody-&gt;engines.push_back(applyActionDispatcher);
+ 	rootBody-&gt;engines.push_back(positionIntegrator);
+-
+-	if(!rotationBlocked)
+-		rootBody-&gt;engines.push_back(orientationIntegrator);
+-
++	rootBody-&gt;engines.push_back(orientationIntegrator);
++	rootBody-&gt;engines.push_back(kinematic);
++ 	
+ 	rootBody-&gt;initializers.clear();
+ 	rootBody-&gt;initializers.push_back(physicalActionInitializer);
+ 	rootBody-&gt;initializers.push_back(boundingVolumeDispatcher);
+
+Modified: trunk/pkg/dem/PreProcessor/STLImporterTest.hpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/STLImporterTest.hpp	2008-05-13 08:58:18 UTC (rev 1352)
++++ trunk/pkg/dem/PreProcessor/STLImporterTest.hpp	2008-05-13 17:48:05 UTC (rev 1353)
+@@ -23,9 +23,9 @@
+ 				,edgesImport
+ 			        ,facetsImport
+ 			        ,facetsWire;
++		Real		angularVelocity;
++		Vector3r	rotationAxis;
+ 
+-		bool		rotationBlocked;
+-
+ 		Real		 minRadius
+ 				,maxRadius
+ 				,density
+
+Modified: trunk/pkg/dem/SConscript
+===================================================================
+--- trunk/pkg/dem/SConscript	2008-05-13 08:58:18 UTC (rev 1352)
++++ trunk/pkg/dem/SConscript	2008-05-13 17:48:05 UTC (rev 1353)
+@@ -1090,6 +1090,7 @@
+ 				,'PhysicalParametersMetaEngine'
+ 				,'SpatialQuickSortCollider'
+ 				,'Sphere'
++				,'RotationEngine'
+ 				,'Vertex'
+ 				])
+ ])
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000314.html">[Yade-commits] r1352 - trunk/lib/import
+</A></li>
+	<LI>Next message: <A HREF="000316.html">[Yade-commits] r1354 - in trunk: examples gui gui/py lib/import	pkg/dem/PreProcessor
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#315">[ date ]</a>
+              <a href="thread.html#315">[ thread ]</a>
+              <a href="subject.html#315">[ subject ]</a>
+              <a href="author.html#315">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

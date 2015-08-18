@@ -1,0 +1,125 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1061 - in	trunk/yade-packages/yade-package-common/src/Engine/EngineUnit:	CundallNonViscousForceDamping CundallNonViscousMomentumDamping
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2007/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1061%20-%20in%0A%09trunk/yade-packages/yade-package-common/src/Engine/EngineUnit%3A%0A%09CundallNonViscousForceDamping%20CundallNonViscousMomentumDamping&In-Reply-To=%3C200702151541.l1FFfedc031335%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000025.html">
+   <LINK REL="Next"  HREF="000027.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1061 - in	trunk/yade-packages/yade-package-common/src/Engine/EngineUnit:	CundallNonViscousForceDamping CundallNonViscousMomentumDamping</H1>
+    <B>chareyre at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1061%20-%20in%0A%09trunk/yade-packages/yade-package-common/src/Engine/EngineUnit%3A%0A%09CundallNonViscousForceDamping%20CundallNonViscousMomentumDamping&In-Reply-To=%3C200702151541.l1FFfedc031335%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1061 - in	trunk/yade-packages/yade-package-common/src/Engine/EngineUnit:	CundallNonViscousForceDamping CundallNonViscousMomentumDamping">chareyre at mail.berlios.de
+       </A><BR>
+    <I>Thu Feb 15 16:41:40 CET 2007</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000025.html">[Yade-commits] r1060 - in trunk: . yade-extra/clump	yade-libs/yade-lib-base/src/yade-lib-base
+</A></li>
+        <LI>Next message: <A HREF="000027.html">[Yade-commits] r1062 -	trunk/yade-packages/yade-package-dem/src/Engine/EngineUnit/InteractingSphere2InteractingSphere4SpheresContactGeometry
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#26">[ date ]</a>
+              <a href="thread.html#26">[ thread ]</a>
+              <a href="subject.html#26">[ subject ]</a>
+              <a href="author.html#26">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: chareyre
+Date: 2007-02-15 16:41:39 +0100 (Thu, 15 Feb 2007)
+New Revision: 1061
+
+Modified:
+   trunk/yade-packages/yade-package-common/src/Engine/EngineUnit/CundallNonViscousForceDamping/CundallNonViscousForceDamping.cpp
+   trunk/yade-packages/yade-package-common/src/Engine/EngineUnit/CundallNonViscousMomentumDamping/CundallNonViscousMomentumDamping.cpp
+Log:
+
+The damping equations are reverted to their original expressions, with independant
+damping of each DOF. It looks like the convergence to equilibrium is faster with 
+these equations.
+
+
+
+
+Modified: trunk/yade-packages/yade-package-common/src/Engine/EngineUnit/CundallNonViscousForceDamping/CundallNonViscousForceDamping.cpp
+===================================================================
+--- trunk/yade-packages/yade-package-common/src/Engine/EngineUnit/CundallNonViscousForceDamping/CundallNonViscousForceDamping.cpp	2007-02-10 16:43:27 UTC (rev 1060)
++++ trunk/yade-packages/yade-package-common/src/Engine/EngineUnit/CundallNonViscousForceDamping/CundallNonViscousForceDamping.cpp	2007-02-15 15:41:39 UTC (rev 1061)
+@@ -32,9 +32,12 @@
+ 	Force * af = static_cast&lt;Force*&gt;(a.get());
+ 	ParticleParameters * p = static_cast&lt;ParticleParameters*&gt;(b.get());
+ 		
+-	Real sign = Mathr::Sign( (af-&gt;force).Dot(p-&gt;velocity) );
+-	af-&gt;force *= 1 - damping*sign;
+-
++	
++	for (int i=0; i&lt;3; ++i)
++	{
++		af-&gt;force[i] *= 1 - damping*Mathr::Sign(af-&gt;force[i]*p-&gt;velocity[i]);	
++	}
++	
+ }
+ 
+ 
+
+Modified: trunk/yade-packages/yade-package-common/src/Engine/EngineUnit/CundallNonViscousMomentumDamping/CundallNonViscousMomentumDamping.cpp
+===================================================================
+--- trunk/yade-packages/yade-package-common/src/Engine/EngineUnit/CundallNonViscousMomentumDamping/CundallNonViscousMomentumDamping.cpp	2007-02-10 16:43:27 UTC (rev 1060)
++++ trunk/yade-packages/yade-package-common/src/Engine/EngineUnit/CundallNonViscousMomentumDamping/CundallNonViscousMomentumDamping.cpp	2007-02-15 15:41:39 UTC (rev 1061)
+@@ -29,12 +29,19 @@
+ 						, const shared_ptr&lt;PhysicalParameters&gt;&amp; b
+ 						, const Body*)
+ {
++
+ 	Momentum * am = static_cast&lt;Momentum*&gt;(a.get());
+ 	RigidBodyParameters * rb = static_cast&lt;RigidBodyParameters*&gt;(b.get());
+ 	
+ 	Vector3r&amp; m  = am-&gt;momentum;
+-	Real sign = Mathr::Sign( m.Dot(rb-&gt;angularVelocity) );
+-	m *= 1 - damping*sign;
++	
++	
++	for (int i=0; i&lt;3; ++i)
++	{
++		m[i] *= 1 - damping*Mathr::Sign(m[i]*rb-&gt;angularVelocity[i]);	
++	}
++	
++		
+ 
+ }
+ 
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000025.html">[Yade-commits] r1060 - in trunk: . yade-extra/clump	yade-libs/yade-lib-base/src/yade-lib-base
+</A></li>
+	<LI>Next message: <A HREF="000027.html">[Yade-commits] r1062 -	trunk/yade-packages/yade-package-dem/src/Engine/EngineUnit/InteractingSphere2InteractingSphere4SpheresContactGeometry
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#26">[ date ]</a>
+              <a href="thread.html#26">[ thread ]</a>
+              <a href="subject.html#26">[ subject ]</a>
+              <a href="author.html#26">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

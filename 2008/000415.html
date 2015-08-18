@@ -1,0 +1,486 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1455 - in trunk: core extra gui/py gui/qt3	lib/miniWm3 pkg/common/Engine/DeusExMachina	pkg/common/Engine/StandAloneEngine
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1455%20-%20in%20trunk%3A%20core%20extra%20gui/py%20gui/qt3%0A%09lib/miniWm3%20pkg/common/Engine/DeusExMachina%0A%09pkg/common/Engine/StandAloneEngine&In-Reply-To=%3C200807300644.m6U6iWeo000533%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000414.html">
+   <LINK REL="Next"  HREF="000416.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1455 - in trunk: core extra gui/py gui/qt3	lib/miniWm3 pkg/common/Engine/DeusExMachina	pkg/common/Engine/StandAloneEngine</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1455%20-%20in%20trunk%3A%20core%20extra%20gui/py%20gui/qt3%0A%09lib/miniWm3%20pkg/common/Engine/DeusExMachina%0A%09pkg/common/Engine/StandAloneEngine&In-Reply-To=%3C200807300644.m6U6iWeo000533%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1455 - in trunk: core extra gui/py gui/qt3	lib/miniWm3 pkg/common/Engine/DeusExMachina	pkg/common/Engine/StandAloneEngine">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Wed Jul 30 08:44:32 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000414.html">[Yade-commits] r1454 - in trunk: extra gui gui/py gui/qt3 scripts
+</A></li>
+        <LI>Next message: <A HREF="000416.html">[Yade-commits] r1456 - in trunk: core extra extra/clump gui gui/py	pkg/common/Engine/DeusExMachina pkg/common/Engine/MetaEngine	pkg/common/Engine/StandAloneEngine pkg/dem/Engine/EngineUnit	pkg/dem/PreProcessor
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#415">[ date ]</a>
+              <a href="thread.html#415">[ thread ]</a>
+              <a href="subject.html#415">[ subject ]</a>
+              <a href="author.html#415">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2008-07-30 08:44:29 +0200 (Wed, 30 Jul 2008)
+New Revision: 1455
+
+Modified:
+   trunk/core/yade.cpp
+   trunk/extra/Brefcom.cpp
+   trunk/extra/Brefcom.hpp
+   trunk/gui/py/eudoxos.py
+   trunk/gui/py/plot.py
+   trunk/gui/py/yadeControl.cpp
+   trunk/gui/qt3/GLViewer.cpp
+   trunk/gui/qt3/QtGUI-python.cpp
+   trunk/gui/qt3/QtGUI.cpp
+   trunk/gui/qt3/YadeQtMainWindow.cpp
+   trunk/gui/qt3/YadeQtMainWindow.hpp
+   trunk/lib/miniWm3/Wm3Math.cpp
+   trunk/pkg/common/Engine/DeusExMachina/JumpChangeSe3.cpp
+   trunk/pkg/common/Engine/DeusExMachina/JumpChangeSe3.hpp
+   trunk/pkg/common/Engine/StandAloneEngine/PeriodicEngines.hpp
+Log:
+1. DECREASED Mathr::ZERO_TOLERANCE to 1e-20 so that we don't get identity quaternions for small rotation in ToAxisAngle (!!)
+2. Add glue for GLViewer, currently may crash, probably concurrency issues there
+3. added yade.plot.reset()
+4. add data smoothing (moving averages &amp;c) function to yade.eudoxos
+5. Omega().run(num#,wait=False): if the bool is True, it is equivalent to o.run(20); o.wait() for convenience
+
+
+Modified: trunk/core/yade.cpp
+===================================================================
+--- trunk/core/yade.cpp	2008-07-28 19:25:02 UTC (rev 1454)
++++ trunk/core/yade.cpp	2008-07-30 06:44:29 UTC (rev 1455)
+@@ -218,7 +218,7 @@
+ 		signal(SIGSEGV,sigHandler);
+ 		LOG_DEBUG(&quot;ABRT/SEGV signal handlers set, crash batch created as &quot;&lt;&lt;Omega::instance().gdbCrashBatch);
+ 	#endif
+-
++	
+ 	LOG_INFO(&quot;Loading &quot;&lt;&lt;yadeConfigFile.string()); IOFormatManager::loadFromFile(&quot;XMLFormatManager&quot;,yadeConfigFile.string(),&quot;preferences&quot;,Omega::instance().preferences);
+ 
+ 	LOG_INFO(&quot;Loading plugins&quot;); Omega::instance().scanPlugins();
+
+Modified: trunk/extra/Brefcom.cpp
+===================================================================
+--- trunk/extra/Brefcom.cpp	2008-07-28 19:25:02 UTC (rev 1454)
++++ trunk/extra/Brefcom.cpp	2008-07-30 06:44:29 UTC (rev 1455)
+@@ -149,6 +149,9 @@
+ 		// /* TODO: recover non-cohesive contact deletion: */
+ 		if(!BC-&gt;isCohesive &amp;&amp; epsN&gt;0.){ /* delete this interaction later */ I-&gt;isReal=false; continue; }
+ 		#define BREFCOM_DETAIL
++		#ifdef BREFCOM_DETAIL
++			LOG_TRACE(&quot;======= iteration #&quot;&lt;&lt;Omega::instance().getCurrentIteration()&lt;&lt;&quot;, interaction &quot;&lt;&lt;id1&lt;&lt;&quot; + &quot;&lt;&lt;id2&lt;&lt;&quot;=======&quot;);
++		#endif
+ 		/* shear strain: always use it, even for epsN&gt;0 */
+ 		/*if(false &amp;&amp; epsN&gt;0) { epsT=Vector3r::ZERO; } else {*/
+ 				NNANV(epsT);
+@@ -282,6 +285,7 @@
+ 		const body_id_t id1=I-&gt;getId1(), id2=I-&gt;getId2();
+ 		bodyDamage[id1].first++; bodyDamage[id2].first++;
+ 		bodyDamage[id1].second+=BC-&gt;omega; bodyDamage[id2].second+=BC-&gt;omega;
++		maxOmega=max(maxOmega,BC-&gt;omega);
+ 	}
+ 	FOREACH(shared_ptr&lt;Body&gt; B, *rootBody-&gt;bodies){
+ 		if(bodyDamage[B-&gt;getId()].first==0) {B-&gt;geometricalModel-&gt;diffuseColor=Vector3r(0.5,0.5,B-&gt;isDynamic?0:1); continue; }
+
+Modified: trunk/extra/Brefcom.hpp
+===================================================================
+--- trunk/extra/Brefcom.hpp	2008-07-28 19:25:02 UTC (rev 1454)
++++ trunk/extra/Brefcom.hpp	2008-07-30 06:44:29 UTC (rev 1455)
+@@ -135,7 +135,7 @@
+ 		};
+ 		void action(MetaBody*);
+ 	protected: 
+-		void registerAttributes(){InteractionSolver::registerAttributes();};
++		virtual void registerAttributes(){InteractionSolver::registerAttributes();};
+ 		void postProcessAttributes(bool deserializing){ if(deserializing)
+ 		#ifdef BREFCOM_REC
+ 			recStream.open(&quot;/tmp/breflaw.data&quot;)
+@@ -224,11 +224,12 @@
+ };
+ REGISTER_SERIALIZABLE(GLDrawBrefcomContact,false);
+ 
+-class BrefcomDamageColorizer : public PeriodicEngine {
+-	public :
+-		BrefcomDamageColorizer(){}
++class BrefcomDamageColorizer: public PeriodicEngine {
++	public:
++		Real maxOmega;
++		BrefcomDamageColorizer(){maxOmega=0;}
+ 		virtual void action(MetaBody*);
+-	virtual void registerAtributes(){PeriodicEngine::registerAttributes();}
++	virtual void registerAttributes(){ PeriodicEngine::registerAttributes(); REGISTER_ATTRIBUTE(maxOmega);}
+ 	REGISTER_CLASS_NAME(BrefcomDamageColorizer);
+ 	REGISTER_BASE_CLASS_NAME(PeriodicEngine);
+ };
+
+Modified: trunk/gui/py/eudoxos.py
+===================================================================
+--- trunk/gui/py/eudoxos.py	2008-07-28 19:25:02 UTC (rev 1454)
++++ trunk/gui/py/eudoxos.py	2008-07-30 06:44:29 UTC (rev 1455)
+@@ -43,3 +43,42 @@
+ 		interactions.append(&quot;%d %d %g %g %g %g&quot;%(i.id1,i.id2,cp[0],cp[1],cp[2],i.phys['crossSection']))
+ 
+ 	return material+[&quot;%d %d&quot;%(len(bodies),len(interactions))]+bodies+interactions
++
++
++import numpy
++from pylab import *
++from matplotlib.mlab import *
++
++def eliminateJumps(eps,sigma,numSteep=10,gapWidth=5,movWd=40):
++	# get histogram of 'derivatives'
++	ds=abs(diff(sigma))
++	n,bins=numpy.histogram(ds)
++	i=1; sum=0
++	# numSteep steepest pieces will be discarded
++	while sum&lt;numSteep:
++		#print n[-i],bins[-i]
++		sum+=n[-i]; i+=1
++	#print n[-i],bins[-i]
++	threshold=bins[-i]
++	# old algo: replace with nan's
++	##rEps,rSigma=eps[:],sigma[:]; nan=float('nan')
++	##indices=where(ds&gt;threshold)[0]
++	##for i in indices:
++	##	for ii in range(max(0,i-gapWidth),min(len(rEps),i+gapWidth+1)): rEps[ii]=rSigma[ii]=nan
++
++	## doesn't work with older numpy (?)
++	# indices1=where(ds&gt;threshold)[0]
++	indices1=[]
++	for i in range(len(ds)):
++		if ds[i]&gt;threshold: indices1.append(i)
++	indices=[]
++	for i in indices1:
++		for ii in range(i-gapWidth,i+gapWidth+1): indices.append(ii)
++	#print indices1, indices
++	rEps=[eps[i] for i in range(0,len(eps)) if i not in indices]
++	rSigma=[sigma[i] for i in range(0,len(sigma)) if i not in indices]
++	# apply moving average to the result
++	rSigma=movavg(rSigma,movWd)
++	rEps=rEps[movWd/2:-movWd/2+1]
++	return rEps,rSigma.flatten().tolist()
++
+
+Modified: trunk/gui/py/plot.py
+===================================================================
+--- trunk/gui/py/plot.py	2008-07-28 19:25:02 UTC (rev 1454)
++++ trunk/gui/py/plot.py	2008-07-30 06:44:29 UTC (rev 1455)
+@@ -14,13 +14,17 @@
+ import pylab
+ 
+ 
+-
+ data={} # global, common for all plots: {'name':[value,...],...}
+ plots={} # dictionary x-name -&gt; (yspec,...), where yspec is either y-name or (y-name,'line-specification')
+ plotsFilled={} # same as plots but with standalone plot specs filled to tuples (used internally only)
+ plotLines={} # dictionary x-name -&gt; Line2d objects (that hopefully still correspond to yspec in plots)
+ needsFullReplot=True
+ 
++def reset():
++	global data, plots, plotsFilled, plotLines, needsFullReplot
++	data={}; plots={}; plotsFilled={}; plotLines={}; needsFullReplot=True; 
++	pylab.close('all')
++
+ # we could have a yplot class, that would hold: (yspec,...), (Line2d,Line2d,...) ?
+ 
+ 
+
+Modified: trunk/gui/py/yadeControl.cpp
+===================================================================
+--- trunk/gui/py/yadeControl.cpp	2008-07-28 19:25:02 UTC (rev 1454)
++++ trunk/gui/py/yadeControl.cpp	2008-07-30 06:44:29 UTC (rev 1455)
+@@ -385,11 +385,12 @@
+ 	bool usesTimeStepper_get(){return OMEGA.timeStepperActive();}
+ 	void usesTimeStepper_set(bool use){OMEGA.skipTimeStepper(!use);}
+ 
+-	void run(long int numIter=-1){
++	void run(long int numIter=-1,bool doWait=false){
+ 		if(numIter&gt;0) OMEGA.getRootBody()-&gt;stopAtIteration=OMEGA.getCurrentIteration()+numIter;
+ 		OMEGA.startSimulationLoop();
+ 		long toGo=OMEGA.getRootBody()-&gt;stopAtIteration-OMEGA.getCurrentIteration();
+ 		LOG_DEBUG(&quot;RUN&quot;&lt;&lt;(toGo&gt;0?string(&quot; (&quot;+lexical_cast&lt;string&gt;(toGo)+&quot; to go)&quot;):string(&quot;&quot;))&lt;&lt;&quot;!&quot;);
++		if(doWait) wait();
+ 	}
+ 	void pause(){Py_BEGIN_ALLOW_THREADS; OMEGA.stopSimulationLoop(); Py_END_ALLOW_THREADS; LOG_DEBUG(&quot;PAUSE!&quot;);}
+ 	void step() { LOG_DEBUG(&quot;STEP!&quot;); run(1); wait();  }
+@@ -467,7 +468,7 @@
+ 	pyTags tags_get(void){assertRootBody(); return pyTags(OMEGA.getRootBody());}
+ };
+ 	
+-BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(omega_run_overloads,run,0,1);
++BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(omega_run_overloads,run,0,2);
+ 
+ class pySTLImporter : public STLImporter {
+     public:
+
+Modified: trunk/gui/qt3/GLViewer.cpp
+===================================================================
+--- trunk/gui/qt3/GLViewer.cpp	2008-07-28 19:25:02 UTC (rev 1454)
++++ trunk/gui/qt3/GLViewer.cpp	2008-07-30 06:44:29 UTC (rev 1455)
+@@ -41,8 +41,6 @@
+ 
+ 	if(manipulatedFrame()==0) setManipulatedFrame(new qglviewer::ManipulatedFrame());
+ 
+-	camera()-&gt;setUpVector(qglviewer::Vec(0,0,1));
+-
+ 	xyPlaneConstraint=shared_ptr&lt;qglviewer::LocalConstraint&gt;(new qglviewer::LocalConstraint());
+ 	//xyPlaneConstraint-&gt;setTranslationConstraint(qglviewer::AxisPlaneConstraint::AXIS,qglviewer::Vec(0,0,1));
+ 	//xyPlaneConstraint-&gt;setRotationConstraint(qglviewer::AxisPlaneConstraint::FORBIDDEN,qglviewer::Vec(0,0,1));
+
+Modified: trunk/gui/qt3/QtGUI-python.cpp
+===================================================================
+--- trunk/gui/qt3/QtGUI-python.cpp	2008-07-28 19:25:02 UTC (rev 1454)
++++ trunk/gui/qt3/QtGUI-python.cpp	2008-07-30 06:44:29 UTC (rev 1455)
+@@ -14,7 +14,6 @@
+ log4cxx::LoggerPtr logger=log4cxx::Logger::getLogger(&quot;yade.QtGUI-python&quot;);
+ #endif
+ 
+-
+ using namespace boost::python;
+ 
+ BASIC_PY_PROXY_HEAD(pyOpenGLRenderingEngine,OpenGLRenderingEngine)
+@@ -33,7 +32,7 @@
+ POST_SYNTH_EVENT(GENERATOR,generator);
+ // BOOST_PYTHON_FUNCTION_OVERLOADS(evtPLAYER_overloads,evtPLAYER,0,1); BOOST_PYTHON_FUNCTION_OVERLOADS(evtCONTROLLER_overloads,evtCONTROLLER,0,1); BOOST_PYTHON_FUNCTION_OVERLOADS(evtGENERATOR_overloads,evtGENERATOR,0,1);
+ #undef POST_SYNT_EVENT
+-void evtVIEW(){QApplication::postEvent(ensuredMainWindow(),new QCustomEvent(YadeQtMainWindow::EVENT_VIEW)); }
++void evtVIEW(){QApplication::postEvent(ensuredMainWindow(),new QCustomEvent(YadeQtMainWindow::EVENT_VIEW)); size_t origViewNo=ensuredMainWindow()-&gt;glViews.size(); while(ensuredMainWindow()-&gt;glViews.size()!=origViewNo+1) usleep(50000); }
+ 
+ // event associated data will be deleted in the event handler
+ void restoreGLViewerState_str(string str){string* s=new string(str); QApplication::postEvent(ensuredMainWindow(),new QCustomEvent((QEvent::Type)YadeQtMainWindow::EVENT_RESTORE_GLVIEWER_STR,(void*)s));}
+@@ -118,7 +117,7 @@
+ 		pyGLViewer(size_t viewNo){init(viewNo);}
+ 		pyGLViewer(const shared_ptr&lt;GLViewer&gt;&amp; _glv){glv=_glv;}
+ 		python::tuple get_grid(){return python::make_tuple(glv-&gt;drawGridXYZ[0],glv-&gt;drawGridXYZ[1],glv-&gt;drawGridXYZ[2]);}
+-		void set_grid(bool x,bool y,bool z){glv-&gt;drawGridXYZ[0]=x; glv-&gt;drawGridXYZ[1]=y; glv-&gt;drawGridXYZ[2]=z;}
++		void set_grid(python::tuple t){for(int i=0;i&lt;3;i++)glv-&gt;drawGridXYZ[i]=python::extract&lt;bool&gt;(t[i])();}
+ 		#define VEC_GET_SET(property,getter,setter) python::object get_##property(){return vec2tuple(getter());} void set_##property(python::tuple t){setter(tuple2vec(t));}
+ 		VEC_GET_SET(upVector,glv-&gt;camera()-&gt;upVector,glv-&gt;camera()-&gt;setUpVector);
+ 		VEC_GET_SET(lookAt,glv-&gt;camera()-&gt;position()+glv-&gt;camera()-&gt;viewDirection,glv-&gt;camera()-&gt;lookAt);
+@@ -136,6 +135,8 @@
+ 		void fitSphere(python::tuple center,Real radius){glv-&gt;camera()-&gt;fitSphere(tuple2vec(center),radius);}
+ 		void showEntireScene(){glv-&gt;camera()-&gt;showEntireScene();}
+ 		void center(bool median=false){if(median)glv-&gt;centerMedianQuartile(); else glv-&gt;centerScene();}
++		python::tuple get_screenSize(){return python::make_tuple(glv-&gt;width(),glv-&gt;height());} void set_screenSize(python::tuple t){ vector&lt;int&gt;* ii=new(vector&lt;int&gt;); ii-&gt;push_back(ensuredMainWindow()-&gt;viewNo(glv)); ii-&gt;push_back(python::extract&lt;int&gt;(t[0])()); ii-&gt;push_back(python::extract&lt;int&gt;(t[1])()); QApplication::postEvent(ensuredMainWindow(),new QCustomEvent((QEvent::Type)YadeQtMainWindow::EVENT_RESIZE_VIEW,(void*)ii));}
++		string pyStr(){return string(&quot;&lt;GLViewer for view #&quot;)+lexical_cast&lt;string&gt;(ensuredMainWindow()-&gt;viewNo(glv))+&quot;&gt;&quot;;}
+ };
+ 
+ BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(pyGLViewer_center_overloads,center,0,1);
+@@ -174,9 +175,11 @@
+ 		.add_property(&quot;scale&quot;,&amp;pyGLViewer::get_scale,&amp;pyGLViewer::set_scale)
+ 		.add_property(&quot;sceneRadius&quot;,&amp;pyGLViewer::get_sceneRadius,&amp;pyGLViewer::set_sceneRadius)
+ 		.add_property(&quot;ortho&quot;,&amp;pyGLViewer::get_orthographic,&amp;pyGLViewer::set_orthographic)
++		.add_property(&quot;screenSize&quot;,&amp;pyGLViewer::get_screenSize,&amp;pyGLViewer::set_screenSize)
+ 		.def(&quot;fitAABB&quot;,&amp;pyGLViewer::fitAABB)
+ 		.def(&quot;fitSphere&quot;,&amp;pyGLViewer::fitSphere)
+ 		.def(&quot;showEntireScene&quot;,&amp;pyGLViewer::showEntireScene)
+ 		.def(&quot;center&quot;,&amp;pyGLViewer::center,pyGLViewer_center_overloads())
++		.def(&quot;__repr__&quot;,&amp;pyGLViewer::pyStr).def(&quot;__str__&quot;,&amp;pyGLViewer::pyStr)
+ 		;
+ }
+
+Modified: trunk/gui/qt3/QtGUI.cpp
+===================================================================
+--- trunk/gui/qt3/QtGUI.cpp	2008-07-28 19:25:02 UTC (rev 1454)
++++ trunk/gui/qt3/QtGUI.cpp	2008-07-30 06:44:29 UTC (rev 1455)
+@@ -33,7 +33,7 @@
+ CREATE_LOGGER(QtGUI);
+ 
+ void QtGUI::help(){
+-	cerr&lt;&lt;&quot;Qt3 GUI\n=======\n\t-w to hide the main window (with python console only; unused now)\n\t-h to get this help\n&quot;&lt;&lt;endl;
++	cerr&lt;&lt;&quot;Qt3 GUI\n=======\n\t-h to get this help\n&quot;&lt;&lt;endl;
+ }
+ 
+ int QtGUI::run(int argc, char *argv[])
+
+Modified: trunk/gui/qt3/YadeQtMainWindow.cpp
+===================================================================
+--- trunk/gui/qt3/YadeQtMainWindow.cpp	2008-07-28 19:25:02 UTC (rev 1454)
++++ trunk/gui/qt3/YadeQtMainWindow.cpp	2008-07-30 06:44:29 UTC (rev 1455)
+@@ -148,6 +148,8 @@
+ 	shared_ptr&lt;GLViewer&gt; glv=shared_ptr&lt;GLViewer&gt;(new GLViewer(glViews.size(),renderer,NULL,isFirst?NULL:glViews[0].get()));
+ 	glv-&gt;setCamera(new YadeCamera);
+ 	glv-&gt;camera()-&gt;frame()-&gt;setWheelSensitivity(-1.0f);
++	glv-&gt;camera()-&gt;setUpVector(qglviewer::Vec(0,0,1));
++	glv-&gt;camera()-&gt;setViewDirection(qglviewer::Vec(-1,0,0));
+ 	glv-&gt;centerScene();
+ 	glViews.push_back(glv);
+ 	//connect( glv, SIGNAL(closeSignal(int)), this, SLOT( closeGLViewEvent(int) ) );
+@@ -186,6 +188,11 @@
+ 	} else {	if(glViews[ii]) closeView(glViews[ii].get()); }
+ }
+ 
++size_t YadeQtMainWindow::viewNo(shared_ptr&lt;GLViewer&gt; g){
++	for(size_t i=0; i&lt;glViews.size(); i++) if(glViews[i]==g) return i;
++	throw std::invalid_argument(&quot;No such view&quot;);
++}
++
+ void YadeQtMainWindow::closeAllChilds(){
+ 	while(glViews.size()&gt;0 &amp;&amp; glViews[0]!=NULL) { LOG_DEBUG(&quot;glViews.size()=&quot;&lt;&lt;glViews.size()&lt;&lt;&quot;, glViews[0]=&quot;&lt;&lt;glViews[0]); closeView(-1);}
+ 	if(player) player=shared_ptr&lt;QtSimulationPlayer&gt;();
+@@ -199,6 +206,12 @@
+ 		case EVENT_VIEW: createView(); break;
+ 		case EVENT_PLAYER: createPlayer(); break;
+ 		case EVENT_GENERATOR: createGenerator(); break;
++		case EVENT_RESIZE_VIEW: {
++			vector&lt;int&gt;* d=(vector&lt;int&gt;*)e-&gt;data();
++			if(glViews.size()&lt;d-&gt;at(0)+1 || !glViews[d-&gt;at(0)]) LOG_ERROR(&quot;No view #&quot;+lexical_cast&lt;string&gt;(d-&gt;at(0))+&quot;, resize request ignored&quot;);
++			glViews[d-&gt;at(0)]-&gt;resize(d-&gt;at(1),d-&gt;at(2));
++			delete d;
++		}
+ 		#if 0
+ 		case EVENT_RESTORE_GLVIEWER_NUM:
+ 			{if(glViews.size()&lt;1 || !glViews[0]){ LOG_ERROR(&quot;No primary view to set attributes on, ignored.&quot;);} else{glViews[0]-&gt;useDisplayParameters(*(int*)(e-&gt;data())); delete (int*)e-&gt;data(); }} break;
+
+Modified: trunk/gui/qt3/YadeQtMainWindow.hpp
+===================================================================
+--- trunk/gui/qt3/YadeQtMainWindow.hpp	2008-07-28 19:25:02 UTC (rev 1454)
++++ trunk/gui/qt3/YadeQtMainWindow.hpp	2008-07-30 06:44:29 UTC (rev 1455)
+@@ -25,6 +25,7 @@
+ 		shared_ptr&lt;QtFileGenerator&gt; generator;
+ 		vector&lt;shared_ptr&lt;GLViewer&gt; &gt; glViews;
+ 		shared_ptr&lt;OpenGLRenderingEngine&gt; renderer;
++		size_t viewNo(shared_ptr&lt;GLViewer&gt;);
+ 
+ 		void ensureRenderer();
+ 		void saveRendererConfig();
+@@ -53,7 +54,7 @@
+ 
+ 		DECLARE_LOGGER;
+ 	public slots :
+-		enum{EVENT_CONTROLLER=QEvent::User+1,EVENT_PLAYER,EVENT_VIEW,EVENT_GENERATOR,EVENT_RESTORE_GLVIEWER_NUM,EVENT_RESTORE_GLVIEWER_STR,EVENT_RESTORE_VIEWER_FILE};
++		enum{EVENT_CONTROLLER=QEvent::User+1,EVENT_PLAYER,EVENT_VIEW,EVENT_GENERATOR,EVENT_RESTORE_GLVIEWER_NUM,EVENT_RESTORE_GLVIEWER_STR,EVENT_RESTORE_VIEWER_FILE,EVENT_RESIZE_VIEW};
+ 		virtual void customEvent(QCustomEvent* e);
+ 		/* each of player, controller, generator have slots for them being opened and closed: create{Player,Controller,Generator} and the instances are kept in player, controller, generator. */
+ 		#define __MK_RM_CHILD(Child,child,YadeClass)  virtual void close##Child(){if(child)child=shared_ptr&lt;YadeClass&gt;();} virtual void create##Child(){if(!child){child=shared_ptr&lt;YadeClass&gt;(new YadeClass()); connect(child.get(),SIGNAL(closeSignal()),this,SLOT(close##Child())); child-&gt;show();} else {child-&gt;show(); child-&gt;raise();}}
+
+Modified: trunk/lib/miniWm3/Wm3Math.cpp
+===================================================================
+--- trunk/lib/miniWm3/Wm3Math.cpp	2008-07-28 19:25:02 UTC (rev 1454)
++++ trunk/lib/miniWm3/Wm3Math.cpp	2008-07-30 06:44:29 UTC (rev 1455)
+@@ -15,7 +15,7 @@
+ {
+ 
+ template&lt;&gt; const float Math&lt;float&gt;::EPSILON = FLT_EPSILON;
+-template&lt;&gt; const float Math&lt;float&gt;::ZERO_TOLERANCE = 1e-06f;
++template&lt;&gt; const float Math&lt;float&gt;::ZERO_TOLERANCE = 1e-12f;
+ template&lt;&gt; const float Math&lt;float&gt;::MAX_REAL = FLT_MAX;
+ template&lt;&gt; const float Math&lt;float&gt;::PI = (float)(4.0*atan(1.0));
+ template&lt;&gt; const float Math&lt;float&gt;::TWO_PI = 2.0f*Math&lt;float&gt;::PI;
+@@ -26,7 +26,7 @@
+ template&lt;&gt; const float Math&lt;float&gt;::RAD_TO_DEG = 180.0f/Math&lt;float&gt;::PI;
+ 
+ template&lt;&gt; const double Math&lt;double&gt;::EPSILON = DBL_EPSILON;
+-template&lt;&gt; const double Math&lt;double&gt;::ZERO_TOLERANCE = 1e-08;
++template&lt;&gt; const double Math&lt;double&gt;::ZERO_TOLERANCE = 1e-20;
+ template&lt;&gt; const double Math&lt;double&gt;::MAX_REAL = DBL_MAX;
+ template&lt;&gt; const double Math&lt;double&gt;::PI = 4.0*atan(1.0);
+ template&lt;&gt; const double Math&lt;double&gt;::TWO_PI = 2.0*Math&lt;double&gt;::PI;
+
+Modified: trunk/pkg/common/Engine/DeusExMachina/JumpChangeSe3.cpp
+===================================================================
+--- trunk/pkg/common/Engine/DeusExMachina/JumpChangeSe3.cpp	2008-07-28 19:25:02 UTC (rev 1454)
++++ trunk/pkg/common/Engine/DeusExMachina/JumpChangeSe3.cpp	2008-07-30 06:44:29 UTC (rev 1455)
+@@ -1,4 +1,5 @@
+ // 2008 &#169; V&#225;clav &#352;milauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">eudoxos at arcig.cz</A>&gt; 
+ #include&quot;JumpChangeSe3.hpp&quot;
++CREATE_LOGGER(JumpChangeSe3);
+ YADE_PLUGIN(&quot;JumpChangeSe3&quot;);
+ 
+
+Modified: trunk/pkg/common/Engine/DeusExMachina/JumpChangeSe3.hpp
+===================================================================
+--- trunk/pkg/common/Engine/DeusExMachina/JumpChangeSe3.hpp	2008-07-28 19:25:02 UTC (rev 1454)
++++ trunk/pkg/common/Engine/DeusExMachina/JumpChangeSe3.hpp	2008-07-30 06:44:29 UTC (rev 1455)
+@@ -28,6 +28,7 @@
+ 					rbp-&gt;velocity=deltaSe3.position/dt;
+ 					Vector3r axis; Real angle; deltaSe3.orientation.ToAxisAngle(axis,angle); axis.Normalize();
+ 					rbp-&gt;angularVelocity=axis*angle/dt;
++					LOG_DEBUG(&quot;Angular velocity set to &quot;&lt;&lt;axis*angle/dt&lt;&lt;&quot;. Axis=&quot;&lt;&lt;axis&lt;&lt;&quot;, angle=&quot;&lt;&lt;angle);
+ 				}
+ 				if(!setVelocities || (setVelocities &amp;&amp; !b-&gt;isDynamic)){
+ 					Se3r&amp; se3=b-&gt;physicalParameters-&gt;se3;
+@@ -42,6 +43,7 @@
+ 		virtual void registerAttributes(){DeusExMachina::registerAttributes();REGISTER_ATTRIBUTE(deltaSe3);REGISTER_ATTRIBUTE(setVelocities);}
+ 		REGISTER_CLASS_NAME(JumpChangeSe3);
+ 		REGISTER_BASE_CLASS_NAME(DeusExMachina);
++		DECLARE_LOGGER;
+ };
+ REGISTER_SERIALIZABLE(JumpChangeSe3,false);
+ 	
+
+Modified: trunk/pkg/common/Engine/StandAloneEngine/PeriodicEngines.hpp
+===================================================================
+--- trunk/pkg/common/Engine/StandAloneEngine/PeriodicEngines.hpp	2008-07-28 19:25:02 UTC (rev 1454)
++++ trunk/pkg/common/Engine/StandAloneEngine/PeriodicEngines.hpp	2008-07-30 06:44:29 UTC (rev 1455)
+@@ -8,7 +8,7 @@
+  * those criteria to a number &gt; 0. */
+ class PeriodicEngine:  public StandAloneEngine {
+ 	protected:
+-		Real getClock(){ timeval tp; gettimeofday(&amp;tp,NULL); return tp.tv_sec+tp.tv_usec/1e6; }
++		static Real getClock(){ timeval tp; gettimeofday(&amp;tp,NULL); return tp.tv_sec+tp.tv_usec/1e6; }
+ 	public:
+ 		Real virtPeriod, virtLast, realPeriod, realLast; long iterPeriod,iterLast;
+ 		PeriodicEngine(): virtPeriod(0),virtLast(0),realPeriod(0),realLast(0),iterPeriod(0),iterLast(0) { realLast=getClock(); }
+@@ -25,7 +25,8 @@
+ 			return false;
+ 		}
+ 	protected:
+-		void registerAttributes(){ StandAloneEngine::registerAttributes();
++		virtual void registerAttributes(){ 
++			StandAloneEngine::registerAttributes();
+ 			REGISTER_ATTRIBUTE(virtPeriod);
+ 			REGISTER_ATTRIBUTE(realPeriod);
+ 			REGISTER_ATTRIBUTE(iterPeriod);
+@@ -33,6 +34,8 @@
+ 			REGISTER_ATTRIBUTE(realLast);
+ 			REGISTER_ATTRIBUTE(iterLast);
+ 		}
++	REGISTER_CLASS_NAME(PeriodicEngine);
++	REGISTER_BASE_CLASS_NAME(StandAloneEngine);
+ };
+ REGISTER_SERIALIZABLE(PeriodicEngine,false);
+ 
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000414.html">[Yade-commits] r1454 - in trunk: extra gui gui/py gui/qt3 scripts
+</A></li>
+	<LI>Next message: <A HREF="000416.html">[Yade-commits] r1456 - in trunk: core extra extra/clump gui gui/py	pkg/common/Engine/DeusExMachina pkg/common/Engine/MetaEngine	pkg/common/Engine/StandAloneEngine pkg/dem/Engine/EngineUnit	pkg/dem/PreProcessor
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#415">[ date ]</a>
+              <a href="thread.html#415">[ thread ]</a>
+              <a href="subject.html#415">[ subject ]</a>
+              <a href="author.html#415">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

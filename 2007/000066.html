@@ -1,0 +1,124 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1104 - in branches/scons-layout: . core
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2007/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1104%20-%20in%20branches/scons-layout%3A%20.%20core&In-Reply-To=%3C200703071115.l27BF5j4027776%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000065.html">
+   <LINK REL="Next"  HREF="000072.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1104 - in branches/scons-layout: . core</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1104%20-%20in%20branches/scons-layout%3A%20.%20core&In-Reply-To=%3C200703071115.l27BF5j4027776%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1104 - in branches/scons-layout: . core">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Wed Mar  7 12:15:05 CET 2007</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000065.html">[Yade-commits] r1103 - in branches/scons-layout: . core extra gui	lib pkg/common pkg/dem pkg/dem/DataClass pkg/fem pkg/lattice	pkg/mass-spring pkg/realtime-rigidbody
+</A></li>
+        <LI>Next message: <A HREF="000072.html">[Yade-commits] r1105 - in branches/scons-layout: . core extra extra/clump extra/spherical-dem-simulator gui gui/qt lib lib/computational-geometry lib/factory lib/multimethods lib/opengl lib/serialization lib/serialization-bin lib/serialization-qt lib/serialization-xml pkg/common pkg/common/Container/BodyContainer/BodyAssocVector pkg/common/Container/BodyContainer/BodyRedirectionVector pkg/common/Container/InteractionContainer/InteractionHashMap pkg/common/Container/InteractionContainer/InteractionVecSet pkg/common/Container/PhysicalActionContainer/PhysicalActionVectorVector pkg/common/DataClass/BoundingVolume/AABB pkg/common/DataClass/BoundingVolume/BoundingSphere pkg/common/DataClass/GeometricalModel/Box pkg/common/DataClass/GeometricalModel/Mesh2D pkg/common/DataClass/GeometricalModel/Quadrilateral pkg/common/DataClass/GeometricalModel/Sphere pkg/common/DataClass/GeometricalModel/Tetrahedron pkg/common/DataClass/InteractingGeometry/InteractingBox pkg/common/DataClass/Interacting! Geometry/InteractingSphere pkg/common/DataClass/InteractingGeometry/MetaInteractingGeometry pkg/common/DataClass/InteractionGeometry/ClosestFeatures pkg/common/DataClass/InteractionPhysics/SimpleElasticInteraction pkg/common/DataClass/PhysicalAction/Force pkg/common/DataClass/PhysicalAction/Momentum pkg/common/DataClass/PhysicalParameters/ParticleParameters pkg/common/DataClass/PhysicalParameters/RigidBodyParameters pkg/common/Engine/DeusExMachina/DisplacementEngine pkg/common/Engine/DeusExMachina/ForceEngine pkg/common/Engine/DeusExMachina/GravityEngine pkg/common/Engine/DeusExMachina/RotationEngine pkg/common/Engine/DeusExMachina/TranslationEngine pkg/common/Engine/EngineUnit/ElasticBodySimpleRelationship pkg/common/Engine/EngineUnit/LeapFrogOrientationIntegrator pkg/common/Engine/EngineUnit/LeapFrogPositionIntegrator pkg/common/Engine/EngineUnit/MetaInteractingGeometry2AABB pkg/common/Engine/EngineUnit/NewtonsMomentumLaw pkg/common/Engine/MetaEngine/BoundingVolumeMetaEng! ine pkg/common/Engine/MetaEngine/GeometricalModelMetaEngine pk! g/common
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#66">[ date ]</a>
+              <a href="thread.html#66">[ thread ]</a>
+              <a href="subject.html#66">[ subject ]</a>
+              <a href="author.html#66">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2007-03-07 12:15:05 +0100 (Wed, 07 Mar 2007)
+New Revision: 1104
+
+Modified:
+   branches/scons-layout/SConscript
+   branches/scons-layout/SConstruct
+   branches/scons-layout/core/SConscript
+Log:
+scons builds, now fix #includes...
+
+Modified: branches/scons-layout/SConscript
+===================================================================
+--- branches/scons-layout/SConscript	2007-03-07 11:03:50 UTC (rev 1103)
++++ branches/scons-layout/SConscript	2007-03-07 11:15:05 UTC (rev 1104)
+@@ -1,2 +1,3 @@
+ Import('*')
++print env['yadeModules']
+ SConscript(dirs=env['yadeModules'])
+
+Modified: branches/scons-layout/SConstruct
+===================================================================
+--- branches/scons-layout/SConstruct	2007-03-07 11:03:50 UTC (rev 1103)
++++ branches/scons-layout/SConstruct	2007-03-07 11:15:05 UTC (rev 1104)
+@@ -258,7 +258,7 @@
+ 
+ ### this workaround is only needed for scons&lt;=0.96.92, will disappear soon
+ ###  (env.Install method chokes on no-existing directories)
+-if sconsVersion&lt;=9692:
++if sconsVersion&lt;=9692 or 1:
+ 	## should reside in prepareIncludes or sth similar
+ 	def createDirs(dirList):
+ 		for d in dirList:
+@@ -315,7 +315,8 @@
+ 	prepareLocalIncludesProxy=prepareIncludes()
+ 	#prepareIncludesProxy=prepareIncludes(prefix=env['PREFIX'])
+ 	prebuildAlias=env.Alias('prebuild',[prepareLocalIncludesProxy])
+-	installAlias=env.Alias('install',[instDirs]) #,os.path.join('$PREFIX','include','yade')]) #prepareIncludesProxy,
++	# must tell scons that instDirs are really Dirs (otherwise, if nonexistent, they would become File nodes and it would fail)
++	installAlias=env.Alias('install',instDirs) #,os.path.join('$PREFIX','include','yade')]) #prepareIncludesProxy,
+ 	Depends(installAlias,prebuildAlias)
+ 	Default(installAlias)
+ 
+
+Modified: branches/scons-layout/core/SConscript
+===================================================================
+--- branches/scons-layout/core/SConscript	2007-03-07 11:03:50 UTC (rev 1103)
++++ branches/scons-layout/core/SConscript	2007-03-07 11:15:05 UTC (rev 1104)
+@@ -1,6 +1,5 @@
+ Import('*')
+ env.InstallAs(['$PREFIX/bin/yade$POSTFIX'],[
+-
+ 	env.Program('yade',
+ 		['Body.cpp',
+ 			'BodyContainer.cpp',
+@@ -38,5 +37,5 @@
+ 			'boost_date_time',
+ 			'boost_filesystem',
+ 			'boost_thread'],
+-		CPPPATH=env['CPPPATH']+['$PREFIX/include', '.'])
++		CPPPATH=env['CPPPATH']+['.'])
+ ])
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000065.html">[Yade-commits] r1103 - in branches/scons-layout: . core extra gui	lib pkg/common pkg/dem pkg/dem/DataClass pkg/fem pkg/lattice	pkg/mass-spring pkg/realtime-rigidbody
+</A></li>
+	<LI>Next message: <A HREF="000072.html">[Yade-commits] r1105 - in branches/scons-layout: . core extra extra/clump extra/spherical-dem-simulator gui gui/qt lib lib/computational-geometry lib/factory lib/multimethods lib/opengl lib/serialization lib/serialization-bin lib/serialization-qt lib/serialization-xml pkg/common pkg/common/Container/BodyContainer/BodyAssocVector pkg/common/Container/BodyContainer/BodyRedirectionVector pkg/common/Container/InteractionContainer/InteractionHashMap pkg/common/Container/InteractionContainer/InteractionVecSet pkg/common/Container/PhysicalActionContainer/PhysicalActionVectorVector pkg/common/DataClass/BoundingVolume/AABB pkg/common/DataClass/BoundingVolume/BoundingSphere pkg/common/DataClass/GeometricalModel/Box pkg/common/DataClass/GeometricalModel/Mesh2D pkg/common/DataClass/GeometricalModel/Quadrilateral pkg/common/DataClass/GeometricalModel/Sphere pkg/common/DataClass/GeometricalModel/Tetrahedron pkg/common/DataClass/InteractingGeometry/InteractingBox pkg/common/DataClass/Interacting! Geometry/InteractingSphere pkg/common/DataClass/InteractingGeometry/MetaInteractingGeometry pkg/common/DataClass/InteractionGeometry/ClosestFeatures pkg/common/DataClass/InteractionPhysics/SimpleElasticInteraction pkg/common/DataClass/PhysicalAction/Force pkg/common/DataClass/PhysicalAction/Momentum pkg/common/DataClass/PhysicalParameters/ParticleParameters pkg/common/DataClass/PhysicalParameters/RigidBodyParameters pkg/common/Engine/DeusExMachina/DisplacementEngine pkg/common/Engine/DeusExMachina/ForceEngine pkg/common/Engine/DeusExMachina/GravityEngine pkg/common/Engine/DeusExMachina/RotationEngine pkg/common/Engine/DeusExMachina/TranslationEngine pkg/common/Engine/EngineUnit/ElasticBodySimpleRelationship pkg/common/Engine/EngineUnit/LeapFrogOrientationIntegrator pkg/common/Engine/EngineUnit/LeapFrogPositionIntegrator pkg/common/Engine/EngineUnit/MetaInteractingGeometry2AABB pkg/common/Engine/EngineUnit/NewtonsMomentumLaw pkg/common/Engine/MetaEngine/BoundingVolumeMetaEng! ine pkg/common/Engine/MetaEngine/GeometricalModelMetaEngine pk! g/common
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#66">[ date ]</a>
+              <a href="thread.html#66">[ thread ]</a>
+              <a href="subject.html#66">[ subject ]</a>
+              <a href="author.html#66">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

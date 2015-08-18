@@ -1,0 +1,485 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1067 - in trunk: yade-core/src/yade	yade-extra/clump yade-guis/yade-gui-qt/src/QtGUI
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2007/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1067%20-%20in%20trunk%3A%20yade-core/src/yade%0A%09yade-extra/clump%20yade-guis/yade-gui-qt/src/QtGUI&In-Reply-To=%3C200702221916.l1MJGiFH004523%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000031.html">
+   <LINK REL="Next"  HREF="000033.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1067 - in trunk: yade-core/src/yade	yade-extra/clump yade-guis/yade-gui-qt/src/QtGUI</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1067%20-%20in%20trunk%3A%20yade-core/src/yade%0A%09yade-extra/clump%20yade-guis/yade-gui-qt/src/QtGUI&In-Reply-To=%3C200702221916.l1MJGiFH004523%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1067 - in trunk: yade-core/src/yade	yade-extra/clump yade-guis/yade-gui-qt/src/QtGUI">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Thu Feb 22 20:16:44 CET 2007</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000031.html">[Yade-commits] r1066 - in trunk: . yade-core/src/yade	yade-extra/clump
+</A></li>
+        <LI>Next message: <A HREF="000033.html">[Yade-commits] r1068 - trunk
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#32">[ date ]</a>
+              <a href="thread.html#32">[ thread ]</a>
+              <a href="subject.html#32">[ subject ]</a>
+              <a href="author.html#32">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2007-02-22 20:16:43 +0100 (Thu, 22 Feb 2007)
+New Revision: 1067
+
+Added:
+   trunk/yade-extra/clump/pyadeDummy.py
+Modified:
+   trunk/yade-core/src/yade/Omega.hpp
+   trunk/yade-extra/clump/PythonRecorder.cpp
+   trunk/yade-extra/clump/PythonRecorder.hpp
+   trunk/yade-extra/clump/pyade.cpp
+   trunk/yade-extra/clump/pyade.py
+   trunk/yade-guis/yade-gui-qt/src/QtGUI/GLViewer.cpp
+Log:
+1. selection in the renderer are now saved in Omega::selectedBodies (GUI to that list is in the future yet)
+2. PythonRecorder now supports retrieving selected bodies; it redirects stdout to file if specified.
+3. pyade now required scientific python to be installed - this permits to do vector and quaternion arithmetics in python. General cleanup.
+4. pyadeDummy.py module added - for testing pyade without yade
+
+
+
+Modified: trunk/yade-core/src/yade/Omega.hpp
+===================================================================
+--- trunk/yade-core/src/yade/Omega.hpp	2007-02-21 19:15:43 UTC (rev 1066)
++++ trunk/yade-core/src/yade/Omega.hpp	2007-02-22 19:16:43 UTC (rev 1067)
+@@ -14,6 +14,7 @@
+ #include &lt;boost/date_time/posix_time/posix_time.hpp&gt;
+ #include &lt;fstream&gt;
+ #include &lt;set&gt;
++#include &lt;list&gt;
+ #include &lt;time.h&gt;
+ #include &lt;boost/thread/thread.hpp&gt;
+ #include &lt;iostream&gt;
+@@ -25,6 +26,7 @@
+ #include &lt;yade/yade-lib-factory/ClassFactory.hpp&gt;
+ 
+ #include &quot;SimulationFlow.hpp&quot;
++#include &quot;Body.hpp&quot;
+ 
+ class MetaBody;
+ class ThreadRunner;
+@@ -73,6 +75,8 @@
+ 		shared_ptr&lt;Preferences&gt; preferences;
+ 		string 				 yadeConfigPath;	// FIXME - must be private and more clean
+ 		string 				 yadeVersionName;	// FIXME - public ?
++
++		list&lt;Body::id_t&gt; selectedBodies;
+ 	
+ 		void logMessage(const string&amp; str);
+ 		void logError(const string&amp; str);
+
+Modified: trunk/yade-extra/clump/PythonRecorder.cpp
+===================================================================
+--- trunk/yade-extra/clump/PythonRecorder.cpp	2007-02-21 19:15:43 UTC (rev 1066)
++++ trunk/yade-extra/clump/PythonRecorder.cpp	2007-02-22 19:16:43 UTC (rev 1067)
+@@ -15,7 +15,6 @@
+  *
+  * @todo Import path prepended to sys.path hardcoded now. Should depend on install dir (PREFIX and POSTFIX);
+  * @todo Maybe change PythonRecorder::expression to vector&lt;string&gt; so that multiple expressions may be run at a time. This is equivalent to multiline expressions, but more easily manageable from c++.
+- * @todo Design an intelligent way of doing output, now just prints to stdout...
+  *
+  */
+ 
+@@ -36,6 +35,12 @@
+ 	else LOG_DEBUG(&quot;pyade imported.&quot;);
+ }
+ 
++void PythonRecorder::postProcessAttributes(bool deserializing){
++	if(outputFile.length()==0) return;
++	PyRun_SimpleString(string(&quot;import os; import sys; ofile=file('&quot;+outputFile+&quot;','w+'); sys.stdout=ofile&quot;).c_str());
++	LOG_DEBUG(&quot;Python stdout redirected to &quot;&lt;&lt;outputFile);
++}
++
+ void PythonRecorder::action(Body *_rootBody)
+ {
+ 	//MetaBody* rootBody=dynamic_cast&lt;MetaBody*&gt;(_rootBody);
+
+Modified: trunk/yade-extra/clump/PythonRecorder.hpp
+===================================================================
+--- trunk/yade-extra/clump/PythonRecorder.hpp	2007-02-21 19:15:43 UTC (rev 1066)
++++ trunk/yade-extra/clump/PythonRecorder.hpp	2007-02-22 19:16:43 UTC (rev 1067)
+@@ -7,25 +7,33 @@
+ 	#error EMBED_PYTHON must be defined for this module to work!
+ #endif
+ 
++#include&lt;string&gt;
+ #include&lt;yade/yade-core/DataRecorder.hpp&gt;
+ #include&lt;yade/yade-lib-base/Logging.hpp&gt;
+ 
+ /*! Recorder that executes arbitrary python expression when called.
+  *
+  * The expressions to access yade's internals are described in documentation for pyade.py and pyade.cpp.
++ *
+  * */
+ class PythonRecorder : public DataRecorder
+ {
++	private:
+ 	public :
+ 		//! Constructor that imports pyade module (warns if there is an error).
+ 		PythonRecorder();
+ 		virtual void action(Body* b);
+ 		virtual bool isActivated(){return true;}
+-		virtual void registerAttributes(){DataRecorder::registerAttributes(); REGISTER_ATTRIBUTE(expression);}
++		virtual void registerAttributes(){DataRecorder::registerAttributes(); REGISTER_ATTRIBUTE(expression); REGISTER_ATTRIBUTE(outputFile);}
+ 		//! This expression will be interpreted when the engine is called.
+ 		std::string expression;
++		//! Piece of python code run on intialization
++		std::string initExpression;
++		//! If not empty, python sys.stdout will be redirected to this file (overwritten every time!)
++		std::string outputFile;
++		//std::string initExpression;
+ 	protected :
+-		virtual void postProcessAttributes(bool deserializing){}
++		virtual void postProcessAttributes(bool deserializing);
+ 	DECLARE_LOGGER;
+ 
+ 	REGISTER_CLASS_NAME(PythonRecorder);
+
+Modified: trunk/yade-extra/clump/pyade.cpp
+===================================================================
+--- trunk/yade-extra/clump/pyade.cpp	2007-02-21 19:15:43 UTC (rev 1066)
++++ trunk/yade-extra/clump/pyade.cpp	2007-02-22 19:16:43 UTC (rev 1067)
+@@ -1,6 +1,7 @@
+ // (c) 2007 Vaclav Smilauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">eudoxos at arcig.cz</A>&gt; 
+ 
+ #include&lt;Python.h&gt;
++#include&lt;list&gt;
+ 
+ #include&lt;boost/shared_ptr.hpp&gt;
+ #include&lt;yade/yade-core/Body.hpp&gt;
+@@ -11,6 +12,19 @@
+ #include&lt;yade/yade-lib-base/yadeWm3Extra.hpp&gt;
+ #include&lt;yade/yade-core/Omega.hpp&gt;
+ 
++
++/******************* basic type conversions *********/
++static PyObject* __main__; // assigned in initializer
++PyObject* toPython(int arg){return Py_BuildValue(&quot;i&quot;,arg);}
++PyObject* toPython(Body::id_t arg){return toPython((int)arg);}
++PyObject* toPython(long arg){return Py_BuildValue(&quot;l&quot;,arg);}
++PyObject* toPython(bool arg){return toPython((int)arg);}
++PyObject* toPython(double arg){return Py_BuildValue(&quot;d&quot;,arg);}
++PyObject* toPython(std::string arg){return Py_BuildValue(&quot;s&quot;,arg.c_str());}
++PyObject* toPython(Wm3::Vector3r arg){	return PyObject_Call(PyObject_GetAttrString(__main__,&quot;Vector&quot;),Py_BuildValue(&quot;(ddd)&quot;,arg[0],arg[1],arg[2]),NULL);}
++PyObject* toPython(Wm3::Quaternionr arg){ return PyObject_Call(PyObject_GetAttrString(__main__,&quot;Quaternion&quot;),Py_BuildValue(&quot;(dddd)&quot;,arg[0],arg[1],arg[2],arg[3]),NULL);}
++PyObject* toPython(list&lt;Body::id_t&gt; arg){	PyObject* ret=PyList_New(0); for(list&lt;Body::id_t&gt;::iterator I=arg.begin(); I!=arg.end(); I++) PyList_Append(ret,toPython(*I)); return ret;}
++ 
+ /******************* body properties ****************/
+ 
+ /*! Body parameters that can be accessed through this code.
+@@ -46,17 +60,17 @@
+ 	shared_ptr&lt;RigidBodyParameters&gt; rbp=dynamic_pointer_cast&lt;RigidBodyParameters&gt;(pp);
+ 	switch(prop){
+ 		/* warning: no implicit conversions in additional arguments (not even int-&gt;double), attention!! */
+-		case bp_id: return Py_BuildValue(&quot;i&quot;,(int)(B-&gt;getId()));
+-		case bp_clumpId: return Py_BuildValue(&quot;i&quot;,(int)(B-&gt;clumpId));
+-		case bp_x: return Py_BuildValue(&quot;(ddd)&quot;,pp-&gt;se3.position[0],pp-&gt;se3.position[1],pp-&gt;se3.position[2]);
+-		case bp_r: return Py_BuildValue(&quot;(dddd)&quot;,pp-&gt;se3.orientation[0],pp-&gt;se3.orientation[1],pp-&gt;se3.orientation[2],pp-&gt;se3.orientation[3]);
+-		case bp_v: return Py_BuildValue(&quot;(ddd)&quot;,pap-&gt;velocity[0],pap-&gt;velocity[1],pap-&gt;velocity[2]);
+-		case bp_w: return Py_BuildValue(&quot;(ddd)&quot;,rbp-&gt;angularVelocity[0],rbp-&gt;angularVelocity[1],rbp-&gt;angularVelocity[2]);
+-		case bp_m: return Py_BuildValue(&quot;d&quot;,pap-&gt;mass);
+-		case bp_I: return Py_BuildValue(&quot;(ddd)&quot;,rbp-&gt;inertia[0],rbp-&gt;inertia[1],rbp-&gt;inertia[2]);
+-		case bp_isClump: return Py_BuildValue(&quot;i&quot;,(int)B-&gt;isClump());
+-		case bp_isClumpMember: return Py_BuildValue(&quot;i&quot;,(int)B-&gt;isClumpMember());
+-		case bp_isStandalone: return Py_BuildValue(&quot;i&quot;,(int)B-&gt;isStandalone());
++		case bp_id: return toPython(B-&gt;getId());
++		case bp_clumpId: return toPython(B-&gt;clumpId);
++		case bp_x: return toPython(pp-&gt;se3.position);
++		case bp_r: return toPython(pp-&gt;se3.orientation);
++		case bp_v: return toPython(pap-&gt;velocity[0]);
++		case bp_w: return toPython(rbp-&gt;angularVelocity[0]);
++		case bp_m: return toPython(pap-&gt;mass);
++		case bp_I: return toPython(rbp-&gt;inertia);
++		case bp_isClump: return toPython(B-&gt;isClump());
++		case bp_isClumpMember: return toPython(B-&gt;isClumpMember());
++		case bp_isStandalone: return toPython(B-&gt;isStandalone());
+ 	}
+ 	return Py_BuildValue(&quot;&quot;);
+ }
+@@ -77,7 +91,9 @@
+ enum simulPropCodes {/*! simulation time [double] */ sm_t,
+ 	/*! iteration number [float] */ sm_i,
+ 	/*! timestep [float] */ sm_dt,
+-	/*! simulation filename [float] */ sm_file};
++	/*! simulation filename [float] */ sm_file,
++	/*! number of bodies in rootBody */ sm_nBodies,
++	/*! list of selected bodies (newest first) */ sm_sel };
+ 
+ /* Retrieves simulation's property.
+  *
+@@ -92,10 +108,12 @@
+ 	if(!PyArg_ParseTuple(args, &quot;l&quot;, &amp;prop)) return NULL;
+ 	//shared_ptr&lt;MetaBody&gt; rootBody=Omega::instance()-&gt;getRootBody();
+ 	switch(prop){
+-		case sm_t: return Py_BuildValue(&quot;d&quot;,Omega::instance().getSimulationTime());
+-		case sm_dt: return Py_BuildValue(&quot;d&quot;,Omega::instance().getTimeStep());
+-		case sm_i: return Py_BuildValue(&quot;l&quot;,Omega::instance().getCurrentIteration());
+-		case sm_file: return Py_BuildValue(&quot;s&quot;,Omega::instance().getSimulationFileName().c_str());
++		case sm_t: return toPython(Omega::instance().getSimulationTime());
++		case sm_dt: return toPython(Omega::instance().getTimeStep());
++		case sm_i: return toPython(Omega::instance().getCurrentIteration());
++		case sm_file: return toPython(Omega::instance().getSimulationFileName());
++		case sm_nBodies: return toPython(Omega::instance().getRootBody()-&gt;bodies-&gt;size());
++		case sm_sel: return toPython(Omega::instance().selectedBodies);
+ 	}
+ 	return Py_BuildValue(&quot;&quot;);
+ }
+@@ -103,7 +121,7 @@
+ static PyObject*
+ simulPropDict(PyObject *self, PyObject *args){
+ 	#define SM(name) #name,sm_##name
+-		return Py_BuildValue(&quot;{sisisisi}&quot;,SM(t),SM(dt),SM(i),SM(file));
++		return Py_BuildValue(&quot;{sisisisisisi}&quot;,SM(t),SM(dt),SM(i),SM(file),SM(nBodies),SM(sel));
+ 	#undef SM
+ }
+ 
+@@ -117,4 +135,9 @@
+     {NULL, NULL, 0, NULL} /* sentinel */
+ };
+ 
+-PyMODINIT_FUNC init_pyade(void){ (void) Py_InitModule(&quot;_pyade&quot;, _pyadeMethods);}
++
++PyMODINIT_FUNC init_pyade(void){
++	(void) Py_InitModule(&quot;_pyade&quot;, _pyadeMethods);
++	__main__=PyImport_Import(PyString_FromString(&quot;__main__&quot;));
++	assert(__main__);
++}
+
+Modified: trunk/yade-extra/clump/pyade.py
+===================================================================
+--- trunk/yade-extra/clump/pyade.py	2007-02-21 19:15:43 UTC (rev 1066)
++++ trunk/yade-extra/clump/pyade.py	2007-02-22 19:16:43 UTC (rev 1067)
+@@ -1,47 +1,133 @@
+ #!/usr/bin/env python
+ # (c) 2007 Vaclav Smilauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">eudoxos at arcig.cz</A>&gt; 
+ 
+-import _pyade
++from Scientific.Geometry import Vector
++from Scientific.Geometry.Quaternion import Quaternion
++Vector.__dict__['__str__']=lambda self: &quot;%g %g %g&quot;%(self[0],self[1],self[2])
++Quaternion.__dict__['__str__']=lambda self: &quot;%g %g %g %g&quot;%(self[0],self[1],self[2],self[3])
++
++try: 
++	import psyco; psyco.full()
++except ImportError: pass
++
++if __name__=='__main__': import pyadeDummy as _pyade # testing, without yade running
++else:	import _pyade
+ # convenience for users
+ from math import *
+ 
+-class Body:
+-	&quot;&quot;&quot;Dummy class that returns a few body parameters as if they were its attributes.
++&quot;&quot;&quot;
++In order to make vector arithmetics possible, this module imports
++Scientific.Geometry.{Quaternion,Vector}. Debian package with these modules is
++called `python-scientific'. We overrider Vector's and Quaternion's __str__
++method so that they are printed as numbers with spaces (suitable for gnuplot,
++for example).
+ 
+-	C++ code in pyade.cpp is called to get the actual values.
++Future things to do (maybe):
++ * use serialization attributes to access values really; something like Body.attr(name), with  Body.__getitem__(name) as shorthand.
++ * implement history:
++ 	attribute will have kw t (time) and i (iteration); for non-negative values, they are absolute; for negative, relative.
++ 	class History:
++ * Find out how to make B[5].I equivalent to B[5].I(), so that we can also say B[5].I(t=-1)
++		If not possible, use __call__ and mandate B[5].I(). Or use B[5].attr('I',dt=...) since it will be used quite rarely
++&quot;&quot;&quot;
+ 
+-	Properties calculable from those already existing may be defined here - see Etrans, Erot, Epot for examples.
+-	&quot;&quot;&quot;
+-	def __init__(self,id):
+-		self._id=id
+-	def __getattr__(self,name):
+-		#TODO: perhaps try directly, exception will occur anyway
+-		if name in _pyade.bodyPropDict():
+-			#print &quot;calling bodyProp with parameters:&quot;,self._id,_pyade.bodyPropDict()[name]
+-			return _pyade.bodyProp(self._id,_pyade.bodyPropDict()[name])
+-		elif name=='Etrans': return .5*self.m*sum([v**2 for v in self.v])
+-		elif name=='Erot': return sum([.5*self.I[i]*self.w[i]**2 for i in range(3)])
+-		#FIXME: gravity hardcoded...
+-		elif name=='Epot': return -sum([self.x[i]*(0,0,-10)[i] for i in range(3)])*self.m
+-		else: raise KeyError(&quot;Invalid Body property `%s'.&quot;%name);
+ 
+ class Bodies:
+ 	&quot;&quot;&quot;This class accesses individual bodies. User code uses its instance conveninently named &quot;B&quot;.
+-
+-	@todo implement Bodies.__iter__ so that iteration over all bodies is possible&quot;&quot;&quot;
+-	def __getitem__(self,id): return Body(id)
+-	def __len__(self): return 1024
+-	#def __iter__(self): pass
++	Iteration is supported, so you can say &quot;for b in B: ...&quot;. &quot;&quot;&quot;
++	def __getitem__(self,id): return Bodies.Body(id)
++	def __len__(self): return S.nBodies
+ 	def __contains__(self,n): return n&lt;self.__len__()
++	def __iter__(self):
++		return Bodies._iterator()
++	class _iterator:
++		def __init__(self): self.index=0
++		def next(self):
++			if self.index&gt;=S.nBodies: raise StopIteration
++			self.index+=1
++			return B[self.index]
+ 
++	class Body:
++		&quot;&quot;&quot;Dummy class that returns a few body parameters as if they were its attributes.
++		C++ code in pyade.cpp is called to get the actual values.
++		Properties calculable from those already existing may be defined here - see Etrans, Erot, Epot for examples.&quot;&quot;&quot;
++		def __init__(self,id):
++			self._id=id
++		def __getattr__(self,name):
++			if   name=='Etrans': return .5*self.m*sum([v**2 for v in self.v])
++			elif name=='Erot': return sum([.5*self.I[i]*self.w[i]**2 for i in range(3)])
++			#FIXME: gravity hardcoded...
++			elif name=='Epot': return -sum([self.x[i]*(0,0,-10)[i] for i in range(3)])*self.m
++			else: return _pyade.bodyProp(self._id,_pyade.bodyPropDict()[name])
++
+ class Simul:
+ 	&quot;&quot;&quot;Class representing (current) simulation. User code uses its instance convenintly named &quot;S&quot;. &quot;&quot;&quot;
+ 	def __getattr__(self,name):
+-		if name in _pyade.simulPropDict():
+-			return _pyade.simulProp(_pyade.simulPropDict()[name])
+-		#elif name=='...': return ...
+-		else: raise KeyError(&quot;Invalid Simul property `%s'.&quot;%name);
++		return _pyade.simulProp(_pyade.simulPropDict()[name])
+ 
++#class History:
++#	&quot;&quot;&quot;
++#		example:
++#			hash=&quot;B5I&quot; for B[5].I
++#			lambda to get value at current time: lambda: B[5].I
++#		relWanted={hash:(delta_t&gt;0,delta_i&gt;0,lambda to get value),...}; highest delta_t/delta_i gets precedence
++#		absWanted={hash:([t0,t1,t2,...],[i0,i1,...]),...}
++#		data={hash:[(iter,time,value),...],hash2:[(,,),...]}
++#	&quot;&quot;&quot;
++#	def __init__:
++#		relWanted={}; absWanted={};
++#		# time and iteration when called for the last time - used to determine if we know how to calculate an abs value
++#		prev=(0,0)
++#		self.ITER,self.TIME=0,1
++#	def addWanted(hash,coord,what,getFunc=None):
++#		if coord&lt;0: #relative
++#			if relWanted.has_key(hash):
++#				rec=list(relWanted[hash]) # to be mutable
++#				if rec[what]&gt;-coord: rec[what]=-coord
++#					relWanted[hash]=tuple(rec)
++#			else:
++#				assert(getFunc)
++#				rec=[0,0,getFunc]
++#				rec[what]=-coord
++#				relWanted[hash]=tuple(rec)
++#		else: # absolute
++#			if absWanted.has_key[hash]:
++#				if not coord in absWanted[hash][what]: absWanted[hash][what].append(coord)
++#			else:
++#				rec=[][]
++#				rec[what].append(coord)
++#				absWanted[hash]=rec
++#			
++#	def get(hash,t=None,i=None):
++#		assert((t or i) and not (t and i)); #args mutually exclusive
++#		# self.what says whether we need time or iterations
++#		if t:
++#			d=t; what=ITER;
++#		else
++#			d=i; what=TIME
++#		dd=d; wanted=absWanted #absolute, from origin
++#		if d&lt;0: # relative, towards past
++#			dd=[S.i+d,S.t+d][what];
++#		if data.has_key[hash]:
++#			res=[ddh for ddh in data[hash] if ddh[what]==dd];
++#			assert(len(res) in [0,1]);
++#			addWanted(hash,dd,what)
++#			if not d in absWanted[hash][what]: absWanted[hash][what].append(d)
++#			if len(res)==1: return ret[0][2]
++#		else: 
++#			addWanted[hash][what].append(d)
++#			return None
++
++
++
++
+ # instances
+ B=Bodies()
+ S=Simul()
++
++# testing stuff
++if __name__=='__main__':
++		print B[0].m,B[0].I
++		print B[2].x, B[2].r
++		print S.nBodies
++		for a in [(bb.m,bb.id) for bb in B if bb.id&gt;50 and bb.id%2==0]: print a[0],a[1]
+
+Added: trunk/yade-extra/clump/pyadeDummy.py
+===================================================================
+--- trunk/yade-extra/clump/pyadeDummy.py	2007-02-21 19:15:43 UTC (rev 1066)
++++ trunk/yade-extra/clump/pyadeDummy.py	2007-02-22 19:16:43 UTC (rev 1067)
+@@ -0,0 +1,9 @@
++from __main__ import Vector,Quaternion
++
++def bodyPropDict(): return {'id':0,'clumpId':1,'x':2,'r':3,'v':4,'w':5,'m':6,'I':7,'isClump':8,'isClumpMember':9,'isStandalone':10}
++def simulPropDict(): return {'t':0,'dt':1,'i':2,'file':3,'nBodies':4,'sel':5}
++def bodyProp(id,p):
++	#return {0:id,1:3,2:(2.,2.,2.),3:(3.,0.,0.,0.),4:(4.,4.,4.),5:5.,6:(6.,6.,6.),7:0,8:1,9:0,10:0}[p]
++	return {0:id,1:3,2:Vector(2.,2.,2.),3:Quaternion(3.,0.,0.,0.),4:Vector(4.,4.,4.),5:5.,6:Vector(6.,6.,6.),7:0,8:1,9:0,10:0}[p]
++def simulProp(p):
++	return {0:55.5,1:2.44e-4,2:13452,3:'simulation.xml',4:64}[p]
+
+Modified: trunk/yade-guis/yade-gui-qt/src/QtGUI/GLViewer.cpp
+===================================================================
+--- trunk/yade-guis/yade-gui-qt/src/QtGUI/GLViewer.cpp	2007-02-21 19:15:43 UTC (rev 1066)
++++ trunk/yade-guis/yade-gui-qt/src/QtGUI/GLViewer.cpp	2007-02-22 19:16:43 UTC (rev 1067)
+@@ -183,6 +183,9 @@
+ 	}
+ 	if( (*(Omega::instance().getRootBody()-&gt;bodies)).exists(selection) )
+ 	{
++		#ifdef HIGHLEVEL_CLUMPS
++			Omega::instance().selectedBodies.push_front(Body::byId(selection)-&gt;isClumpMember()?Body::byId(selection)-&gt;clumpId:selection);
++		#endif
+ 		std::cerr &lt;&lt; &quot;new selection &quot; &lt;&lt; selection &lt;&lt; &quot;\n&quot;;
+ 		wasDynamic = (*(Omega::instance().getRootBody()-&gt;bodies))[selection]-&gt;isDynamic;
+ 		(*(Omega::instance().getRootBody()-&gt;bodies))[selection]-&gt;isDynamic = false;
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000031.html">[Yade-commits] r1066 - in trunk: . yade-core/src/yade	yade-extra/clump
+</A></li>
+	<LI>Next message: <A HREF="000033.html">[Yade-commits] r1068 - trunk
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#32">[ date ]</a>
+              <a href="thread.html#32">[ thread ]</a>
+              <a href="subject.html#32">[ subject ]</a>
+              <a href="author.html#32">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

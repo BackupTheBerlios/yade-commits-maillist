@@ -1,0 +1,253 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1077 - in trunk: yade-core/src/yade yade-extra/clump	yade-packages/yade-package-common/src/Engine/EngineUnit/CundallNonViscousForceDamping	yade-packages/yade-package-common/src/Engine/EngineUnit/CundallNonViscousMomentumDamping
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2007/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1077%20-%20in%20trunk%3A%20yade-core/src/yade%20yade-extra/clump%0A%09yade-packages/yade-package-common/src/Engine/EngineUnit/CundallNonViscousForceDamping%0A%09yade-packages/yade-package-common/src/Engine/EngineUnit/CundallNonViscousMomentumDamping&In-Reply-To=%3C200702281336.l1SDaDox025648%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000041.html">
+   <LINK REL="Next"  HREF="000043.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1077 - in trunk: yade-core/src/yade yade-extra/clump	yade-packages/yade-package-common/src/Engine/EngineUnit/CundallNonViscousForceDamping	yade-packages/yade-package-common/src/Engine/EngineUnit/CundallNonViscousMomentumDamping</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1077%20-%20in%20trunk%3A%20yade-core/src/yade%20yade-extra/clump%0A%09yade-packages/yade-package-common/src/Engine/EngineUnit/CundallNonViscousForceDamping%0A%09yade-packages/yade-package-common/src/Engine/EngineUnit/CundallNonViscousMomentumDamping&In-Reply-To=%3C200702281336.l1SDaDox025648%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1077 - in trunk: yade-core/src/yade yade-extra/clump	yade-packages/yade-package-common/src/Engine/EngineUnit/CundallNonViscousForceDamping	yade-packages/yade-package-common/src/Engine/EngineUnit/CundallNonViscousMomentumDamping">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Wed Feb 28 14:36:13 CET 2007</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000041.html">[Yade-commits] r1076 - in trunk: . yade-scripts
+</A></li>
+        <LI>Next message: <A HREF="000043.html">[Yade-commits] r1078 - in trunk: . yade-core/src/yade	yade-libs/yade-lib-factory/src/yade-lib-factory	yade-libs/yade-lib-multimethods/src/yade-lib-multimethods	yade-libs/yade-lib-serialization/src/yade-lib-serialization
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#42">[ date ]</a>
+              <a href="thread.html#42">[ thread ]</a>
+              <a href="subject.html#42">[ subject ]</a>
+              <a href="author.html#42">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2007-02-28 14:36:12 +0100 (Wed, 28 Feb 2007)
+New Revision: 1077
+
+Modified:
+   trunk/yade-core/src/yade/Omega.cpp
+   trunk/yade-extra/clump/Clump.cpp
+   trunk/yade-extra/clump/SConscript
+   trunk/yade-extra/clump/Shop.cpp
+   trunk/yade-packages/yade-package-common/src/Engine/EngineUnit/CundallNonViscousForceDamping/CundallNonViscousForceDamping.cpp
+   trunk/yade-packages/yade-package-common/src/Engine/EngineUnit/CundallNonViscousMomentumDamping/CundallNonViscousMomentumDamping.cpp
+Log:
+1. Clump member velocities are calculated in ClumpMemberMover. This may create problems since velocity will always be lagged by one iteration. 
+2. removed cyclic dependency of Clump and Shop.
+
+
+
+
+Modified: trunk/yade-core/src/yade/Omega.cpp
+===================================================================
+--- trunk/yade-core/src/yade/Omega.cpp	2007-02-28 10:37:27 UTC (rev 1076)
++++ trunk/yade-core/src/yade/Omega.cpp	2007-02-28 13:36:12 UTC (rev 1077)
+@@ -291,7 +291,7 @@
+ 				else LOG_ERROR(&quot;Error loading Library `&quot;&lt;&lt;(*dlli)&lt;&lt;&quot;': &quot;&lt;&lt;err&lt;&lt;&quot; .&quot;); // leave space to not to confuse c++filt
+ 			}
+ 			#ifdef STUPID_DLL
+-			else if (!thisLoaded) { LOG_DEBUG(&quot;Plugin &quot;&lt;&lt;*dlli&lt;&lt;&quot; not loaded successfully this time...&quot;); }
++			else if (!thisLoaded) { LOG_DEBUG(&quot;Plugin &quot;&lt;&lt;*dlli&lt;&lt;&quot; not loaded successfully this time: &quot;&lt;&lt;ClassFactory::instance().lastError()&lt;&lt;&quot; (will retry).&quot;); }
+ 			#endif
+ 			else { // no error
+ 				if (ClassFactory::instance().lastPluginClasses().size()==0){ // regular plugin, one class per file
+
+Modified: trunk/yade-extra/clump/Clump.cpp
+===================================================================
+--- trunk/yade-extra/clump/Clump.cpp	2007-02-28 10:37:27 UTC (rev 1076)
++++ trunk/yade-extra/clump/Clump.cpp	2007-02-28 13:36:12 UTC (rev 1077)
+@@ -108,6 +108,7 @@
+  */
+ void Clump::moveMembers(){
+ 	const Se3r&amp; mySe3(physicalParameters-&gt;se3);
++	const shared_ptr&lt;RigidBodyParameters&gt;&amp; myRBP(dynamic_pointer_cast&lt;RigidBodyParameters&gt;(physicalParameters));
+ 	for(Clump::memberMap::iterator I=members.begin(); I!=members.end(); I++){
+ 		// now, I-&gt;first is Body::id_t, I-&gt;second is Se3r of that body in the clump
+ 		shared_ptr&lt;Body&gt; subBody=Body::byId(I-&gt;first);
+@@ -118,7 +119,9 @@
+ 		//LOG_TRACE(&quot;New #&quot;&lt;&lt;I-&gt;first&lt;&lt;&quot;position: &quot;&lt;&lt;subRBP-&gt;se3.position);
+ 		//LOG_TRACE(&quot;Clump #&quot;&lt;&lt;getId()&lt;&lt;&quot; moved #&quot;&lt;&lt;I-&gt;first&lt;&lt;&quot;.&quot;);
+ 
+-		//! FIXME: need to set velocity as well, because of damping?!
++		//! FIXME: we set velocity because of damping here; but since positions are integrated after all forces applied, these velocities will be used in the NEXT step for CundallNonViscousDamping. Does that matter?!
++		subRBP-&gt;velocity=myRBP-&gt;velocity+myRBP-&gt;angularVelocity.Cross(I-&gt;second.position);
++		subRBP-&gt;angularVelocity=myRBP-&gt;angularVelocity;
+ 	}
+ 	/* @bug Temporarily we reset acceleration and angularAcceleration of the clump here;
+ 	 * should be a new negine that will take care of that?
+@@ -340,6 +343,9 @@
+ 
+ 	rootBody=Shop::rootBody();
+ 	Shop::rootBodyActors(rootBody);
++	// clumps do not need to subscribe currently (that will most likely change, though)
++	rootBody-&gt;engines.push_back(shared_ptr&lt;ClumpMemberMover&gt;(new ClumpMemberMover));
++	
+ 
+ 	shared_ptr&lt;MetaBody&gt; oldRootBody=Omega::instance().getRootBody();
+ 	Omega::instance().setRootBody(rootBody);
+
+Modified: trunk/yade-extra/clump/SConscript
+===================================================================
+--- trunk/yade-extra/clump/SConscript	2007-02-28 10:37:27 UTC (rev 1076)
++++ trunk/yade-extra/clump/SConscript	2007-02-28 13:36:12 UTC (rev 1077)
+@@ -2,55 +2,13 @@
+ env.Install('$PREFIX/lib/yade$POSTFIX/yade-extra',[
+ 	env.SharedLibrary('Clump',
+ 		['Clump.cpp'],
+-		LIBS=env['LIBS']+[
+-			#'ElasticContactLaw',
+-			#'ElasticCohesiveLaw',
+-			#'MacroMicroElasticRelationships',
+-			#'ElasticCriterionTimeStepper',
+-			#'PhysicalActionVectorVector',
+-			#'InteractionVecSet',
+-			#'BodyRedirectionVector',
+-			#'InteractingSphere',
+-			#'InteractingBox',
+-			#'CundallNonViscousMomentumDamping',
+-			#'CundallNonViscousForceDamping',
+-			#'MetaInteractingGeometry',
+-			#'GravityEngine',
+-			#'yade-lib-serialization',
+-			#'yade-lib-base',
+-			#'Wm3Foundation',
+-			#'PhysicalActionContainerInitializer',
+-			#'PhysicalActionContainerReseter',
+-			#'InteractionGeometryMetaEngine',
+-			#'InteractionPhysicsMetaEngine',
+-			#'PhysicalActionApplier',
+-			#'PhysicalParametersMetaEngine',
+-			#'BoundingVolumeMetaEngine',
+-			#'Box',
+-			#'Sphere',
+-			#'AABB',
+-			#'PersistentSAPCollider',
+-			#'ParticleParameters',
+-			#'SAPCollider',
+-			#'MetaInteractingGeometry2AABB',
+-			#'PythonRecorder',
+-			#'yade-lib-multimethods',
+-			'Shop'],
++		LIBS=env['LIBS']+['Shop'],
+ 		LIBPATH=env['LIBPATH']),
+-	#env.Program('tryI',['tryI.cpp'],LIBS=env['LIBS']+['yade-lib-base','Wm3Foundation'])
+-	#	LIBS=env['LIBS']+[
+-	#		'yade-lib-serialization',
+-	#		'yade-lib-base',
+-	#		'Wm3Foundation',])
+-	#env.Program('pyrec',['pyrec.cpp'])
+-	#env.SharedLibrary('emb',['emb.cc'],SHLIBPREFIX='')
+-	## PythonRecorder
+ 	env.SharedLibrary('PythonRecorder',['PythonRecorder.cpp']),
+ 	env.SharedLibrary('_pyade',['pyade.cpp'],SHLIBPREFIX='',
+ 		LIBS=env['LIBS']+['yade-lib-base','Wm3Foundation','ParticleParameters','RigidBodyParameters'],
+ 	),
+ 	env.File('pyade.py'),
+-
+ 	env.SharedLibrary('Shop',
+ 		['Shop.cpp'],
+ 		LIBS=env['LIBS']+[
+@@ -85,5 +43,6 @@
+ 			'SAPCollider',
+ 			'MetaInteractingGeometry2AABB',
+ 			'PythonRecorder',
++			#'Clump',
+ 			'yade-lib-multimethods']),
+ ])
+
+Modified: trunk/yade-extra/clump/Shop.cpp
+===================================================================
+--- trunk/yade-extra/clump/Shop.cpp	2007-02-28 10:37:27 UTC (rev 1076)
++++ trunk/yade-extra/clump/Shop.cpp	2007-02-28 13:36:12 UTC (rev 1077)
+@@ -38,7 +38,7 @@
+ #include&lt;yade/yade-package-dem/ElasticCohesiveLaw.hpp&gt;
+ 
+ #include&lt;yade/yade-extra/PythonRecorder.hpp&gt;
+-#include&lt;yade/yade-extra/Clump.hpp&gt;
++//#include&lt;yade/yade-extra/Clump.hpp&gt;
+ //#include &quot;BodyMacroParameters.hpp&quot;
+ 
+ 
+@@ -216,9 +216,6 @@
+ 	orientationIntegrator-&gt;add(&quot;RigidBodyParameters&quot;,&quot;LeapFrogOrientationIntegrator&quot;);
+ 	rootBody-&gt;engines.push_back(orientationIntegrator);
+ 
+-	// clumps do not need to subscribe currently (that will most likely change, though)
+-	rootBody-&gt;engines.push_back(shared_ptr&lt;ClumpMemberMover&gt;(new ClumpMemberMover));
+-
+ 	#ifdef EMBED_PYTHON
+ 		if(getDefault&lt;string&gt;(&quot;param_pythonExpr&quot;).length()&gt;0 || getDefault&lt;string&gt;(&quot;param_pythonInitExpr&quot;).length()&gt;0){
+ 			shared_ptr&lt;PythonRecorder&gt; pythonRecorder=shared_ptr&lt;PythonRecorder&gt;(new PythonRecorder);
+
+Modified: trunk/yade-packages/yade-package-common/src/Engine/EngineUnit/CundallNonViscousForceDamping/CundallNonViscousForceDamping.cpp
+===================================================================
+--- trunk/yade-packages/yade-package-common/src/Engine/EngineUnit/CundallNonViscousForceDamping/CundallNonViscousForceDamping.cpp	2007-02-28 10:37:27 UTC (rev 1076)
++++ trunk/yade-packages/yade-package-common/src/Engine/EngineUnit/CundallNonViscousForceDamping/CundallNonViscousForceDamping.cpp	2007-02-28 13:36:12 UTC (rev 1077)
+@@ -27,8 +27,9 @@
+ 
+ void CundallNonViscousForceDamping::go(    const shared_ptr&lt;PhysicalAction&gt;&amp; a
+ 						, const shared_ptr&lt;PhysicalParameters&gt;&amp; b
+-						, const Body*)
++						, const Body* body)
+ {
++	if(body-&gt;isClump()) return;
+ 	Force * af = static_cast&lt;Force*&gt;(a.get());
+ 	ParticleParameters * p = static_cast&lt;ParticleParameters*&gt;(b.get());
+ 		
+
+Modified: trunk/yade-packages/yade-package-common/src/Engine/EngineUnit/CundallNonViscousMomentumDamping/CundallNonViscousMomentumDamping.cpp
+===================================================================
+--- trunk/yade-packages/yade-package-common/src/Engine/EngineUnit/CundallNonViscousMomentumDamping/CundallNonViscousMomentumDamping.cpp	2007-02-28 10:37:27 UTC (rev 1076)
++++ trunk/yade-packages/yade-package-common/src/Engine/EngineUnit/CundallNonViscousMomentumDamping/CundallNonViscousMomentumDamping.cpp	2007-02-28 13:36:12 UTC (rev 1077)
+@@ -27,9 +27,9 @@
+ 
+ void CundallNonViscousMomentumDamping::go( 	  const shared_ptr&lt;PhysicalAction&gt;&amp; a
+ 						, const shared_ptr&lt;PhysicalParameters&gt;&amp; b
+-						, const Body*)
++						, const Body* body)
+ {
+-
++	if(body-&gt;isClump()) return;
+ 	Momentum * am = static_cast&lt;Momentum*&gt;(a.get());
+ 	RigidBodyParameters * rb = static_cast&lt;RigidBodyParameters*&gt;(b.get());
+ 	
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000041.html">[Yade-commits] r1076 - in trunk: . yade-scripts
+</A></li>
+	<LI>Next message: <A HREF="000043.html">[Yade-commits] r1078 - in trunk: . yade-core/src/yade	yade-libs/yade-lib-factory/src/yade-lib-factory	yade-libs/yade-lib-multimethods/src/yade-lib-multimethods	yade-libs/yade-lib-serialization/src/yade-lib-serialization
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#42">[ date ]</a>
+              <a href="thread.html#42">[ thread ]</a>
+              <a href="subject.html#42">[ subject ]</a>
+              <a href="author.html#42">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

@@ -1,0 +1,458 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1206 - in trunk: gui/cmd pkg/fem/PreProcessor	pkg/lattice/PreProcessor pkg/mass-spring/PreProcessor	pkg/realtime-rigidbody/PreProcessor
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2007/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1206%20-%20in%20trunk%3A%20gui/cmd%20pkg/fem/PreProcessor%0A%09pkg/lattice/PreProcessor%20pkg/mass-spring/PreProcessor%0A%09pkg/realtime-rigidbody/PreProcessor&In-Reply-To=%3C200706191156.l5JBu2ht010620%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000170.html">
+   <LINK REL="Next"  HREF="000172.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1206 - in trunk: gui/cmd pkg/fem/PreProcessor	pkg/lattice/PreProcessor pkg/mass-spring/PreProcessor	pkg/realtime-rigidbody/PreProcessor</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1206%20-%20in%20trunk%3A%20gui/cmd%20pkg/fem/PreProcessor%0A%09pkg/lattice/PreProcessor%20pkg/mass-spring/PreProcessor%0A%09pkg/realtime-rigidbody/PreProcessor&In-Reply-To=%3C200706191156.l5JBu2ht010620%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1206 - in trunk: gui/cmd pkg/fem/PreProcessor	pkg/lattice/PreProcessor pkg/mass-spring/PreProcessor	pkg/realtime-rigidbody/PreProcessor">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Tue Jun 19 13:56:02 CEST 2007</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000170.html">[Yade-commits] r1205 - in trunk: core extra/clump extra/tetra	gui/cmd gui/qt3 pkg/dem/PreProcessor
+</A></li>
+        <LI>Next message: <A HREF="000172.html">[Yade-commits] r1207 - tags/yade-release-candidate-0.11.0/core	trunk/core
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#171">[ date ]</a>
+              <a href="thread.html#171">[ thread ]</a>
+              <a href="subject.html#171">[ subject ]</a>
+              <a href="author.html#171">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2007-06-19 13:56:01 +0200 (Tue, 19 Jun 2007)
+New Revision: 1206
+
+Modified:
+   trunk/gui/cmd/yadeControl.cpp
+   trunk/pkg/fem/PreProcessor/FEMBeam.cpp
+   trunk/pkg/fem/PreProcessor/FEMBeam.hpp
+   trunk/pkg/lattice/PreProcessor/LatticeExample.cpp
+   trunk/pkg/lattice/PreProcessor/LatticeExample.hpp
+   trunk/pkg/mass-spring/PreProcessor/HangingCloth.cpp
+   trunk/pkg/mass-spring/PreProcessor/HangingCloth.hpp
+   trunk/pkg/realtime-rigidbody/PreProcessor/BoxStack.cpp
+   trunk/pkg/realtime-rigidbody/PreProcessor/BoxStack.hpp
+   trunk/pkg/realtime-rigidbody/PreProcessor/RotatingBox.cpp
+   trunk/pkg/realtime-rigidbody/PreProcessor/RotatingBox.hpp
+Log:
+Adjust other components for FileGenerator changes. Add wrapper for preprocessor in python.
+
+
+Modified: trunk/gui/cmd/yadeControl.cpp
+===================================================================
+--- trunk/gui/cmd/yadeControl.cpp	2007-06-19 10:09:46 UTC (rev 1205)
++++ trunk/gui/cmd/yadeControl.cpp	2007-06-19 11:56:01 UTC (rev 1206)
+@@ -1,6 +1,8 @@
+ #include&lt;yade/core/Omega.hpp&gt;
++#include&lt;yade/core/FileGenerator.hpp&gt;
+ 
+ #include&lt;boost/python.hpp&gt;
++#include &lt;boost/python/suite/indexing/vector_indexing_suite.hpp&gt;
+ #include&lt;boost/bind.hpp&gt;
+ #include&lt;boost/thread/thread.hpp&gt;
+ #include&lt;boost/filesystem/operations.hpp&gt;
+@@ -11,6 +13,7 @@
+ #include&lt;qapplication.h&gt;
+ 
+ #include&lt;unistd.h&gt;
++#include&lt;list&gt;
+ 
+ #include&quot;attrUtils.cpp&quot;
+ 
+@@ -43,8 +46,42 @@
+ 	}
+ };
+ 
++class pyPreprocessor{
++	public:
++		pyPreprocessor(){serializer=&quot;XMLFormatManager&quot;; output=&quot;../data/scene.xml&quot;;}
++		std::string generator;
++		std::string serializer;
++		std::string output;
++		//! return list of available generators
++		boost::python::list listGenerators(){
++			boost::python::list ret;
++			for(map&lt;string,DynlibDescriptor&gt;::const_iterator di=Omega::instance().getDynlibsDescriptor().begin();di!=Omega::instance().getDynlibsDescriptor().end();++di) if (Omega::instance().isInheritingFrom((*di).first,&quot;FileGenerator&quot;)) ret.append(di-&gt;first);
++			return ret;
++		}
++		//! return list of available serializers
++		boost::python::list listSerializers(){
++			//vector&lt;string&gt; ret;
++			boost::python::list ret;
++			for(map&lt;string,DynlibDescriptor&gt;::const_iterator di=Omega::instance().getDynlibsDescriptor().begin();di!=Omega::instance().getDynlibsDescriptor().end();++di) if (Omega::instance().isInheritingFrom((*di).first,&quot;IOFormatManager&quot;)) ret.append(di-&gt;first);
++			return ret;
++		}
++		//! run generator
++		bool generate(){
++			#define _CHECK_NONEMPTY(s) if(s.empty()) throw std::runtime_error(&quot;`&quot; #s &quot;' is empty.&quot;)
++				_CHECK_NONEMPTY(generator); _CHECK_NONEMPTY(serializer);	_CHECK_NONEMPTY(output);
++			#undef _CHECK_NONEMPTY
++			shared_ptr&lt;FileGenerator&gt; gen=static_pointer_cast&lt;FileGenerator&gt;(ClassFactory::instance().createShared(generator));
++			gen-&gt;setFileName(output);
++			gen-&gt;setSerializationLibrary(serializer);
++			bool ret=gen-&gt;generateAndSave();
++			cerr&lt;&lt;(ret?&quot;SUCCESS:\n&quot;:&quot;FAILURE:\n&quot;)&lt;&lt;gen-&gt;message&lt;&lt;endl;
++			return ret;
++		}
++};
++		
+ 
+ 
++
+ class pyGLViewer{
+ 	//DECLARE_LOGGER;
+ 	shared_ptr&lt;RenderingEngine&gt; renderer;
+@@ -112,7 +149,12 @@
+ 
+ BOOST_PYTHON_MODULE(yadeControl)
+ {
+-	boost::python::class_&lt;pyOmega&gt;(&quot;Omega&quot;)
++	/* <A HREF="http://mail.python.org/pipermail/c++-sig/2004-March/007025.html">http://mail.python.org/pipermail/c++-sig/2004-March/007025.html</A>
++	<A HREF="http://mail.python.org/pipermail/c++-sig/2004-March/007029.html">http://mail.python.org/pipermail/c++-sig/2004-March/007029.html</A> */
++	python::class_&lt;std::vector&lt;std::string&gt; &gt;(&quot;_vectSs&quot;)
++		.def(python::vector_indexing_suite&lt;std::vector&lt;std::string&gt;,true&gt;());  
++
++	boost::python::class_&lt;pyOmega&gt;(&quot;Omega_base&quot;)
+ 		.add_property(&quot;iter&quot;,&amp;pyOmega::iter)
+ 		.add_property(&quot;time&quot;,&amp;pyOmega::simulationTime)
+ 		// TODO: return computation time
+@@ -123,6 +165,14 @@
+ 		.def(&quot;pause&quot;,&amp;pyOmega::pause)
+ 		.def(&quot;step&quot;,&amp;pyOmega::step);
+ 
++	boost::python::class_&lt;pyPreprocessor&gt;(&quot;Preprocessor&quot;)
++		.add_property(&quot;generator&quot;,&amp;pyPreprocessor::generator,&amp;pyPreprocessor::generator)
++		.add_property(&quot;serializer&quot;,&amp;pyPreprocessor::serializer,&amp;pyPreprocessor::serializer)
++		.add_property(&quot;output&quot;,&amp;pyPreprocessor::output,&amp;pyPreprocessor::output)
++		.def(&quot;generate&quot;,&amp;pyPreprocessor::generate)
++		.def(&quot;listSerializers&quot;,&amp;pyPreprocessor::listSerializers)
++		.def(&quot;listGenerators&quot;,&amp;pyPreprocessor::listGenerators);
++
+ 	boost::python::class_&lt;pyGLViewer&gt;(&quot;View&quot;);
+ 
+ 	//		.def(&quot;greet&quot;, &amp;World::greet)
+
+Modified: trunk/pkg/fem/PreProcessor/FEMBeam.cpp
+===================================================================
+--- trunk/pkg/fem/PreProcessor/FEMBeam.cpp	2007-06-19 10:09:46 UTC (rev 1205)
++++ trunk/pkg/fem/PreProcessor/FEMBeam.cpp	2007-06-19 11:56:01 UTC (rev 1206)
+@@ -112,7 +112,7 @@
+ }
+ 
+ 
+-string FEMBeam::generate()
++bool FEMBeam::generate()
+ {
+ 	Omega::instance().setTimeStep(0.004);
+ 	rootBody = shared_ptr&lt;MetaBody&gt;(new MetaBody);
+@@ -130,7 +130,7 @@
+ 	imposeTranslation(rootBody,regionMin1,regionMax1,translationAxis1,velocity1);
+ 	imposeTranslation(rootBody,regionMin2,regionMax2,translationAxis2,velocity2);
+ 
+-	return &quot;\nNOTE: if it explodes, set smaller time step.&quot;;
++	message=&quot;\nNOTE: if it explodes, set smaller time step.&quot;; return true;
+ }
+ 
+ 
+
+Modified: trunk/pkg/fem/PreProcessor/FEMBeam.hpp
+===================================================================
+--- trunk/pkg/fem/PreProcessor/FEMBeam.hpp	2007-06-19 10:09:46 UTC (rev 1205)
++++ trunk/pkg/fem/PreProcessor/FEMBeam.hpp	2007-06-19 11:56:01 UTC (rev 1206)
+@@ -40,7 +40,7 @@
+ 	public :
+ 		FEMBeam ();
+ 		~FEMBeam ();
+-		string generate();
++		bool generate();
+ 
+ 	private :
+ 		void createActors(shared_ptr&lt;MetaBody&gt;&amp; rootBody);
+
+Modified: trunk/pkg/lattice/PreProcessor/LatticeExample.cpp
+===================================================================
+--- trunk/pkg/lattice/PreProcessor/LatticeExample.cpp	2007-06-19 10:09:46 UTC (rev 1205)
++++ trunk/pkg/lattice/PreProcessor/LatticeExample.cpp	2007-06-19 11:56:01 UTC (rev 1206)
+@@ -409,7 +409,7 @@
+         REGISTER_ATTRIBUTE(bond_critTensileStrain);
+ }
+ 
+-string LatticeExample::generate()
++bool LatticeExample::generate()
+ {
+ 	rootBody = shared_ptr&lt;MetaBody&gt;(new MetaBody);
+ 	createActors(rootBody);
+@@ -436,13 +436,13 @@
+ 
+         unsigned int totalNodesCount = 0;
+ 	{
+-		setMessage(&quot;creating nodes...&quot;);
++		setStatus(&quot;creating nodes...&quot;);
+ 		float all = nbNodes[0]*nbNodes[1]*nbNodes[2];
+ 		float current = 0.0;
+ 
+ 		for( int j=0 ; j&lt;=nbNodes[1] ; j++ )
+ 		{
+-			if(shouldTerminate()) return &quot;&quot;;
++			if(shouldTerminate()) return false;
+ 
+ 			for( int i=0 ; i&lt;=nbNodes[0] ; i++ )
+ 				for( int k=0 ; k&lt;=nbNodes[2] ; k++)
+@@ -476,14 +476,14 @@
+ 		int I,J;
+ 		if(FLAT)
+ 		{
+-			setProgress(0); setMessage(&quot;Delaunay 2d...&quot;);
++			setProgress(0); setStatus(&quot;Delaunay 2d...&quot;);
+ 			Delaunay2&lt;Real&gt; del2(vert2.size(),&amp;(vert2[0]),cellsizeUnit_in_meters/50,false, Query::QT_INTEGER); // Delaunay
+ 
+ 			int del2_i = 0;
+ 			int del2_ind[3];
+ 			while(del2.GetIndexSet(del2_i++,del2_ind))
+ 			{
+-				if(shouldTerminate()) return &quot;&quot;;
++				if(shouldTerminate()) return false;
+ 				setProgress((float)del2_i/(float)del2.GetSimplexQuantity());
+ 				shared_ptr&lt;Body&gt; beam;
+ 
+@@ -503,7 +503,7 @@
+ 		}
+ 		else
+ 		{
+-			setProgress(0); setMessage(&quot;Delaunay 3d...&quot;);
++			setProgress(0); setStatus(&quot;Delaunay 3d...&quot;);
+ 			Delaunay3&lt;Real&gt; del3(vert3.size(),&amp;(vert3[0]),cellsizeUnit_in_meters/50,false, Query::QT_INTEGER); // Delaunay
+ 			
+ 			int del3_i = 0;
+@@ -541,7 +541,7 @@
+ 	int beam_counter = 0;
+ 	float nodes_a=0;
+ 	float nodes_all = rootBody-&gt;bodies-&gt;size();
+-	setMessage(&quot;creating beams...&quot;);
++	setStatus(&quot;creating beams...&quot;);
+ 	double r  = maxLength_in_cellsizeUnit*cellsizeUnit_in_meters;
+ 	double r2 = std::pow(r,2);
+ 	for(  ; bi!=biEnd ; ++bi )  // loop over all nodes, to create beams
+@@ -686,7 +686,7 @@
+ 		}
+ 	}
+ 
+-	setMessage(&quot;angular springs...&quot;);
++	setStatus(&quot;angular springs...&quot;);
+ 	{ // create angular springs between beams
+ 		bi    = rootBody-&gt;bodies-&gt;begin();
+ 		biEnd = rootBody-&gt;bodies-&gt;end();
+@@ -714,10 +714,10 @@
+ 	{
+ 		float all = (nbNodes[0]-1)*(nbNodes[1]-1)*(nbNodes[2]-1);
+ 		float current = 0.0;
+-		setMessage(&quot;quadrilaterals...&quot;);
++		setStatus(&quot;quadrilaterals...&quot;);
+ 		for( int j=1 ; j&lt;=nbNodes[1] ; j++ )
+ 		{
+-			if(shouldTerminate()) return &quot;&quot;;
++			if(shouldTerminate()) return false;
+ 
+ 			for( int i=1 ; i&lt;=nbNodes[0] ; i++ )
+ 			{
+@@ -737,7 +737,7 @@
+         imposeTranslation(rootBody,region_F_min,region_F_max,direction_F,displacement_F_meters);
+ 
+         if(useAggregates) addAggregates(rootBody);
+-	if(shouldTerminate()) return &quot;&quot;;
++	if(shouldTerminate()) return false;
+         
+         nonDestroy(rootBody,nonDestroy_A_min,nonDestroy_A_max);
+         nonDestroy(rootBody,nonDestroy_B_min,nonDestroy_B_max);
+@@ -747,11 +747,12 @@
+         
+         cerr &lt;&lt; &quot;finished.. saving\n&quot;;
+ 
+-        return &quot;Number of nodes created:\n&quot; + lexical_cast&lt;string&gt;(nbNodes[0]) + &quot;,&quot;
++        message=&quot;Number of nodes created:\n&quot; + lexical_cast&lt;string&gt;(nbNodes[0]) + &quot;,&quot;
+                                             + lexical_cast&lt;string&gt;(nbNodes[1]) + &quot;,&quot;
+                                             + lexical_cast&lt;string&gt;(nbNodes[2]) + &quot;,&quot;
+ 	     + &quot;Number of beams: &quot; + lexical_cast&lt;string&gt;(bc.size()) + &quot;\n&quot;
+ 	     + &quot;\nNOTE: sometimes it can look better when 'drawWireFrame' is enabled in Display tab.&quot;;
++		  return true;
+ 
+ }
+ 
+@@ -1383,7 +1384,7 @@
+                 randomN(generator, boost::normal_distribution&lt;&gt;(MEAN_DIAMETER,SIGMA_DIAMETER));
+ 
+         std::cerr &lt;&lt; &quot;generating aggregates ... &quot;;
+-	setMessage(  &quot;generating aggregates...&quot;);
++	setStatus(  &quot;generating aggregates...&quot;);
+         do
+         {
+ 		if(shouldTerminate()) return;
+
+Modified: trunk/pkg/lattice/PreProcessor/LatticeExample.hpp
+===================================================================
+--- trunk/pkg/lattice/PreProcessor/LatticeExample.hpp	2007-06-19 10:09:46 UTC (rev 1205)
++++ trunk/pkg/lattice/PreProcessor/LatticeExample.hpp	2007-06-19 11:56:01 UTC (rev 1206)
+@@ -221,7 +221,7 @@
+ 		LatticeExample();
+ 		virtual ~LatticeExample();
+ 
+-		string generate();
++		bool generate();
+ 	
+ 		void createActors(shared_ptr&lt;MetaBody&gt;&amp; rootBody);
+ 		void positionRootBody(shared_ptr&lt;MetaBody&gt;&amp; rootBody);
+
+Modified: trunk/pkg/mass-spring/PreProcessor/HangingCloth.cpp
+===================================================================
+--- trunk/pkg/mass-spring/PreProcessor/HangingCloth.cpp	2007-06-19 10:09:46 UTC (rev 1205)
++++ trunk/pkg/mass-spring/PreProcessor/HangingCloth.cpp	2007-06-19 11:56:01 UTC (rev 1206)
+@@ -141,7 +141,7 @@
+ }
+ 
+ 
+-string HangingCloth::generate()
++bool HangingCloth::generate()
+ {
+ 	Omega::instance().setTimeStep(0.004);
+ 	rootBody = shared_ptr&lt;MetaBody&gt;(new MetaBody);
+@@ -439,7 +439,8 @@
+ 		}
+ 	}
+ 			
+-	return &quot;total number of permament links created: &quot; + lexical_cast&lt;string&gt;(linksNum);
++	message=&quot;total number of permament links created: &quot; + lexical_cast&lt;string&gt;(linksNum);
++	return true;
+ }
+ 
+ 
+
+Modified: trunk/pkg/mass-spring/PreProcessor/HangingCloth.hpp
+===================================================================
+--- trunk/pkg/mass-spring/PreProcessor/HangingCloth.hpp	2007-06-19 10:09:46 UTC (rev 1205)
++++ trunk/pkg/mass-spring/PreProcessor/HangingCloth.hpp	2007-06-19 11:56:01 UTC (rev 1206)
+@@ -50,7 +50,7 @@
+ 	public :
+ 		HangingCloth ();
+ 		~HangingCloth ();
+-		string generate();
++		bool generate();
+ 
+ 	
+ 	private :
+
+Modified: trunk/pkg/realtime-rigidbody/PreProcessor/BoxStack.cpp
+===================================================================
+--- trunk/pkg/realtime-rigidbody/PreProcessor/BoxStack.cpp	2007-06-19 10:09:46 UTC (rev 1205)
++++ trunk/pkg/realtime-rigidbody/PreProcessor/BoxStack.cpp	2007-06-19 11:56:01 UTC (rev 1206)
+@@ -83,7 +83,7 @@
+ }
+ 
+ 
+-string BoxStack::generate()
++bool BoxStack::generate()
+ {
+ 	Omega::instance().setTimeStep(0.04);
+ 	rootBody = shared_ptr&lt;MetaBody&gt;(new MetaBody);
+@@ -115,7 +115,7 @@
+ 	createSphere(body);
+ 	rootBody-&gt;bodies-&gt;insert(body);
+  			
+-	return &quot;&quot;;
++	message=&quot;&quot;; return true;
+ }
+ 
+ 
+
+Modified: trunk/pkg/realtime-rigidbody/PreProcessor/BoxStack.hpp
+===================================================================
+--- trunk/pkg/realtime-rigidbody/PreProcessor/BoxStack.hpp	2007-06-19 10:09:46 UTC (rev 1205)
++++ trunk/pkg/realtime-rigidbody/PreProcessor/BoxStack.hpp	2007-06-19 11:56:01 UTC (rev 1206)
+@@ -34,7 +34,7 @@
+ 
+ 		virtual void registerAttributes();
+ 		
+-		virtual string generate();
++		virtual bool generate();
+ 
+ 	private :
+ 		void createKinematicBox(shared_ptr&lt;Body&gt;&amp; body, Vector3r position, Vector3r extents,bool);
+
+Modified: trunk/pkg/realtime-rigidbody/PreProcessor/RotatingBox.cpp
+===================================================================
+--- trunk/pkg/realtime-rigidbody/PreProcessor/RotatingBox.cpp	2007-06-19 10:09:46 UTC (rev 1205)
++++ trunk/pkg/realtime-rigidbody/PreProcessor/RotatingBox.cpp	2007-06-19 11:56:01 UTC (rev 1206)
+@@ -85,7 +85,7 @@
+ }
+ 
+ 
+-string RotatingBox::generate()
++bool RotatingBox::generate()
+ {
+ 	Omega::instance().setTimeStep(0.01);
+ 	rootBody = shared_ptr&lt;MetaBody&gt;(new MetaBody);
+@@ -127,7 +127,8 @@
+ 				rootBody-&gt;bodies-&gt;insert(box);
+  			}
+ 
+-	return &quot;ATTN: please set smaller timestep or it will bounce like crazy.&quot;;
++	message=&quot;ATTN: please set smaller timestep or it will bounce like crazy.&quot;;
++	return true;
+ }
+ 
+ 
+
+Modified: trunk/pkg/realtime-rigidbody/PreProcessor/RotatingBox.hpp
+===================================================================
+--- trunk/pkg/realtime-rigidbody/PreProcessor/RotatingBox.hpp	2007-06-19 10:09:46 UTC (rev 1205)
++++ trunk/pkg/realtime-rigidbody/PreProcessor/RotatingBox.hpp	2007-06-19 11:56:01 UTC (rev 1206)
+@@ -40,7 +40,7 @@
+ 	public :
+ 		RotatingBox ();
+ 		~RotatingBox ();
+-		virtual string generate();
++		virtual bool generate();
+ 	
+ 	protected :
+ 		virtual void registerAttributes();
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000170.html">[Yade-commits] r1205 - in trunk: core extra/clump extra/tetra	gui/cmd gui/qt3 pkg/dem/PreProcessor
+</A></li>
+	<LI>Next message: <A HREF="000172.html">[Yade-commits] r1207 - tags/yade-release-candidate-0.11.0/core	trunk/core
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#171">[ date ]</a>
+              <a href="thread.html#171">[ thread ]</a>
+              <a href="subject.html#171">[ subject ]</a>
+              <a href="author.html#171">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

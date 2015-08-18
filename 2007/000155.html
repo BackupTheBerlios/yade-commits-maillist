@@ -1,0 +1,402 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1190 - in trunk/pkg: dem dem/Engine/DeusExMachina	dem/Engine/EngineUnit dem/Engine/StandAloneEngine	dem/PreProcessor mass-spring/PreProcessor
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2007/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1190%20-%20in%20trunk/pkg%3A%20dem%20dem/Engine/DeusExMachina%0A%09dem/Engine/EngineUnit%20dem/Engine/StandAloneEngine%0A%09dem/PreProcessor%20mass-spring/PreProcessor&In-Reply-To=%3C200706051713.l55HDOQk015863%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000154.html">
+   <LINK REL="Next"  HREF="000156.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1190 - in trunk/pkg: dem dem/Engine/DeusExMachina	dem/Engine/EngineUnit dem/Engine/StandAloneEngine	dem/PreProcessor mass-spring/PreProcessor</H1>
+    <B>cosurgi at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1190%20-%20in%20trunk/pkg%3A%20dem%20dem/Engine/DeusExMachina%0A%09dem/Engine/EngineUnit%20dem/Engine/StandAloneEngine%0A%09dem/PreProcessor%20mass-spring/PreProcessor&In-Reply-To=%3C200706051713.l55HDOQk015863%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1190 - in trunk/pkg: dem dem/Engine/DeusExMachina	dem/Engine/EngineUnit dem/Engine/StandAloneEngine	dem/PreProcessor mass-spring/PreProcessor">cosurgi at mail.berlios.de
+       </A><BR>
+    <I>Tue Jun  5 19:13:24 CEST 2007</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000154.html">[Yade-commits] r1189 - in trunk/pkg/dem:	DataClass/InteractionPhysics Engine/DeusExMachina	Engine/EngineUnit Engine/StandAloneEngine PreProcessor
+</A></li>
+        <LI>Next message: <A HREF="000156.html">[Yade-commits] r1191 - trunk/scripts
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#155">[ date ]</a>
+              <a href="thread.html#155">[ thread ]</a>
+              <a href="subject.html#155">[ subject ]</a>
+              <a href="author.html#155">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: cosurgi
+Date: 2007-06-05 19:13:23 +0200 (Tue, 05 Jun 2007)
+New Revision: 1190
+
+Modified:
+   trunk/pkg/dem/Engine/DeusExMachina/CapillaryStressRecorder.cpp
+   trunk/pkg/dem/Engine/DeusExMachina/ContactStressRecorder.cpp
+   trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.cpp
+   trunk/pkg/dem/Engine/EngineUnit/MacroMicroElasticRelationships.cpp
+   trunk/pkg/dem/Engine/EngineUnit/MacroMicroElasticRelationships.hpp
+   trunk/pkg/dem/Engine/EngineUnit/MacroMicroElasticRelationshipsWater.cpp
+   trunk/pkg/dem/Engine/StandAloneEngine/CapillaryCohesiveLaw.cpp
+   trunk/pkg/dem/PreProcessor/TriaxialTestWater.cpp
+   trunk/pkg/dem/SConscript
+   trunk/pkg/mass-spring/PreProcessor/HangingCloth.cpp
+Log:
+Ooops, previous commit did break SCDECLinkedSpheres example and HangingCloth...
+I hope that it's fixed now. Also removed warnings from Capillary law... again.
+
+
+
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/CapillaryStressRecorder.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/CapillaryStressRecorder.cpp	2007-06-05 16:22:34 UTC (rev 1189)
++++ trunk/pkg/dem/Engine/DeusExMachina/CapillaryStressRecorder.cpp	2007-06-05 17:13:23 UTC (rev 1190)
+@@ -205,7 +205,7 @@
+ 	
+ 	Real Vv = Vech - Vs;
+ 	
+-	Real n = Vv/Vech;
++	//Real n = Vv/Vech;
+ 	Real Sr = 100*Vwater/Vv;
+ 	if (Sr&gt;100) Sr=100;
+ 	Real w = 100*Vwater/Vech;
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/ContactStressRecorder.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/ContactStressRecorder.cpp	2007-06-05 16:22:34 UTC (rev 1189)
++++ trunk/pkg/dem/Engine/DeusExMachina/ContactStressRecorder.cpp	2007-06-05 17:13:23 UTC (rev 1190)
+@@ -91,7 +91,9 @@
+ 	Real f1_el_x=0, f1_el_y=0, f1_el_z=0, x1=0, y1=0, z1=0, x2=0, y2=0, z2=0;
+ 	
+ 	Real sig11_el=0, sig22_el=0, sig33_el=0, sig12_el=0, sig13_el=0,
+-	sig23_el=0, Vwater = 0, kinematicE = 0;
++	sig23_el=0;
++	//, Vwater = 0,
++	Real kinematicE = 0;
+ 	
+ 	InteractionContainer::iterator ii    = ncb-&gt;transientInteractions-&gt;begin();
+         InteractionContainer::iterator iiEnd = ncb-&gt;transientInteractions-&gt;end();
+@@ -202,7 +204,7 @@
+ 
+ 	/// FabricTensor
+ 	
+-	Real traceFT = (FT[0][0]+FT[1][1]+FT[2][2])/j;
++	//Real traceFT = (FT[0][0]+FT[1][1]+FT[2][2])/j;
+ 	
+ 	/// calcul de l'energie cinetique:
+ 
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.cpp	2007-06-05 16:22:34 UTC (rev 1189)
++++ trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.cpp	2007-06-05 17:13:23 UTC (rev 1190)
+@@ -78,7 +78,7 @@
+ 	if (autoCompressionActivation &amp;&amp; Phase1 &amp;&amp; UnbalancedForce&lt;=StabilityCriterion)
+ 	
+ 	{
+-		Metabody * ncb = static_cast&lt;Metabody*&gt;(body);
++		MetaBody * ncb = static_cast&lt;MetaBody*&gt;(body);
+ 
+ 		Real S = computeStress(ncb);
+ 
+
+Modified: trunk/pkg/dem/Engine/EngineUnit/MacroMicroElasticRelationships.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/EngineUnit/MacroMicroElasticRelationships.cpp	2007-06-05 16:22:34 UTC (rev 1189)
++++ trunk/pkg/dem/Engine/EngineUnit/MacroMicroElasticRelationships.cpp	2007-06-05 17:13:23 UTC (rev 1190)
+@@ -8,14 +8,14 @@
+ *  GNU General Public License v2 or later. See file LICENSE for details. *
+ *************************************************************************/
+ 
+-#include &quot;MacroMicroElasticRelationships.hpp&quot;
+-#include &quot;SpheresContactGeometry.hpp&quot;
+-#include &quot;ElasticContactInteraction.hpp&quot;
+-#include &quot;SDECLinkGeometry.hpp&quot; // FIXME - I can't dispatch by SDECLinkGeometry &lt;-&gt; SpheresContactGeometry !!?
+-#include &quot;SDECLinkPhysics.hpp&quot; // FIXME
+-#include &quot;BodyMacroParameters.hpp&quot;
+-#include &lt;yade/yade-core/Omega.hpp&gt;
+-#include &lt;yade/yade-core/MetaBody.hpp&gt;
++#include&quot;MacroMicroElasticRelationships.hpp&quot;
++#include&lt;yade/pkg-dem/SpheresContactGeometry.hpp&gt;
++#include&lt;yade/pkg-dem/ElasticContactInteraction.hpp&gt;
++#include&lt;yade/pkg-dem/SDECLinkGeometry.hpp&gt; // FIXME - I can't dispatch by SDECLinkGeometry &lt;-&gt; SpheresContactGeometry !!?
++#include&lt;yade/pkg-dem/SDECLinkPhysics.hpp&gt; // FIXME
++#include&lt;yade/pkg-dem/BodyMacroParameters.hpp&gt;
++#include&lt;yade/core/Omega.hpp&gt;
++#include&lt;yade/core/MetaBody.hpp&gt;
+ 
+ 
+ MacroMicroElasticRelationships::MacroMicroElasticRelationships()
+@@ -40,7 +40,7 @@
+ {
+ 	BodyMacroParameters* sdec1 = static_cast&lt;BodyMacroParameters*&gt;(b1.get());
+ 	BodyMacroParameters* sdec2 = static_cast&lt;BodyMacroParameters*&gt;(b2.get());
+-	SpheresContactGeometry* interactionGeometry = static_cast&lt;SpheresContactGeometry*&gt;(interaction-&gt;interactionGeometry.get());
++	SpheresContactGeometry* interactionGeometry = dynamic_cast&lt;SpheresContactGeometry*&gt;(interaction-&gt;interactionGeometry.get());
+ 	
+ 	if(interactionGeometry) // so it is SpheresContactGeometry  - NON PERMANENT LINK
+ 	{
+@@ -53,7 +53,7 @@
+ 		if ( interaction-&gt;isNew)
+ 		{
+ 			interaction-&gt;interactionPhysics = shared_ptr&lt;ElasticContactInteraction&gt;(new ElasticContactInteraction());
+-			contactPhysics = dynamic_pointer_cast&lt;ElasticContactInteraction&gt;(interaction-&gt;interactionPhysics);
++			contactPhysics = YADE_PTR_CAST&lt;ElasticContactInteraction&gt;(interaction-&gt;interactionPhysics);
+ 			
+ 			contactPhysics-&gt;initialKn			= 2*(sdec1-&gt;kn*sdec2-&gt;kn)/(sdec1-&gt;kn+sdec2-&gt;kn);
+ 			contactPhysics-&gt;initialKs			= 2*(sdec1-&gt;ks*sdec2-&gt;ks)/(sdec1-&gt;ks+sdec2-&gt;ks);
+@@ -61,7 +61,7 @@
+ 			contactPhysics-&gt;initialEquilibriumDistance	= interactionGeometry-&gt;radius1+interactionGeometry-&gt;radius2;
+ 		}
+ 		else
+-			contactPhysics = dynamic_pointer_cast&lt;ElasticContactInteraction&gt;(interaction-&gt;interactionPhysics);
++			contactPhysics = YADE_PTR_CAST&lt;ElasticContactInteraction&gt;(interaction-&gt;interactionPhysics);
+ 		
+ 		contactPhysics-&gt;kn = contactPhysics-&gt;initialKn;
+ 		contactPhysics-&gt;ks = contactPhysics-&gt;initialKs;
+@@ -70,7 +70,7 @@
+ 		if( interaction-&gt;isNew)
+ 		{
+ 			interaction-&gt;interactionPhysics = shared_ptr&lt;ElasticContactInteraction&gt;(new ElasticContactInteraction());
+-			ElasticContactInteraction* contactPhysics = static_cast&lt;ElasticContactInteraction*&gt;(interaction-&gt;interactionPhysics.get());
++			ElasticContactInteraction* contactPhysics = YADE_CAST&lt;ElasticContactInteraction*&gt;(interaction-&gt;interactionPhysics.get());
+ 
+ 			Real Ea 	= sdec1-&gt;young;
+ 			Real Eb 	= sdec2-&gt;young;
+@@ -105,17 +105,19 @@
+ 		}
+ 		else
+ 		{	// FIXME - are those lines necessary ???? what they are doing in fact ???
+-			ElasticContactInteraction* contactPhysics = static_cast&lt;ElasticContactInteraction*&gt;(interaction-&gt;interactionPhysics.get());
+-
+-			contactPhysics-&gt;kn = contactPhysics-&gt;initialKn;
+-			contactPhysics-&gt;ks = contactPhysics-&gt;initialKs;
+-			contactPhysics-&gt;equilibriumDistance = contactPhysics-&gt;initialEquilibriumDistance;
++			ElasticContactInteraction* contactPhysics = dynamic_cast&lt;ElasticContactInteraction*&gt;(interaction-&gt;interactionPhysics.get());
++			if(contactPhysics)
++			{
++				contactPhysics-&gt;kn = contactPhysics-&gt;initialKn;
++				contactPhysics-&gt;ks = contactPhysics-&gt;initialKs;
++				contactPhysics-&gt;equilibriumDistance = contactPhysics-&gt;initialEquilibriumDistance;
++			}
+ 		}	
+ 		
+ 	}
+-	else   // this is PERMANENT LINK because previous static_cast failed, dispatcher should do this job
++	else   // this is PERMANENT LINK because previous dynamic_cast failed, dispatcher should do this job
+ 	{
+-		SDECLinkGeometry* sdecLinkGeometry =  static_cast&lt;SDECLinkGeometry*&gt;(interaction-&gt;interactionGeometry.get());
++		SDECLinkGeometry* sdecLinkGeometry =  dynamic_cast&lt;SDECLinkGeometry*&gt;(interaction-&gt;interactionGeometry.get());
+ 		if (sdecLinkGeometry)
+ 		{		
+ 			SDECLinkPhysics* linkPhysics = static_cast&lt;SDECLinkPhysics*&gt;(interaction-&gt;interactionPhysics.get());
+
+Modified: trunk/pkg/dem/Engine/EngineUnit/MacroMicroElasticRelationships.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/EngineUnit/MacroMicroElasticRelationships.hpp	2007-06-05 16:22:34 UTC (rev 1189)
++++ trunk/pkg/dem/Engine/EngineUnit/MacroMicroElasticRelationships.hpp	2007-06-05 17:13:23 UTC (rev 1190)
+@@ -9,7 +9,7 @@
+ #ifndef SDECLINEARCONTACTMODEL_HPP
+ #define SDECLINEARCONTACTMODEL_HPP
+ 
+-#include &lt;yade/yade-package-common/InteractionPhysicsEngineUnit.hpp&gt;
++#include&lt;yade/pkg-common/InteractionPhysicsEngineUnit.hpp&gt;
+ 
+ class MacroMicroElasticRelationships : public InteractionPhysicsEngineUnit
+ {
+
+Modified: trunk/pkg/dem/Engine/EngineUnit/MacroMicroElasticRelationshipsWater.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/EngineUnit/MacroMicroElasticRelationshipsWater.cpp	2007-06-05 16:22:34 UTC (rev 1189)
++++ trunk/pkg/dem/Engine/EngineUnit/MacroMicroElasticRelationshipsWater.cpp	2007-06-05 17:13:23 UTC (rev 1190)
+@@ -75,18 +75,18 @@
+ 
+ 			Real Ea 	= sdec1-&gt;young;
+ 			Real Eb 	= sdec2-&gt;young;
+-			Real Va 	= sdec1-&gt;poisson;
+-			Real Vb 	= sdec2-&gt;poisson;
++			//Real Va 	= sdec1-&gt;poisson;
++			//Real Vb 	= sdec2-&gt;poisson;
+ 			Real Da 	= interactionGeometry-&gt;radius1; // FIXME - multiply by factor of sphere interaction distance (so sphere intaracts at bigger range that its geometrical size)
+ 			Real Db 	= interactionGeometry-&gt;radius2; // FIXME - as above
+ 			Real fa 	= sdec1-&gt;frictionAngle;
+ 			Real fb 	= sdec2-&gt;frictionAngle;
+ 
+-			Real Eab	= 2*Ea*Eb/(Ea+Eb);
+-			Real Vab	= 2*Va*Vb/(Va+Vb);
++			//Real Eab	= 2*Ea*Eb/(Ea+Eb);
++			//Real Vab	= 2*Va*Vb/(Va+Vb);
+ 
+ 			Real Dinit 	= Da+Db; 			// FIXME - is it just a sum?
+-			Real Sinit 	= Mathr::PI * std::pow( std::min(Da,Db) , 2);
++			//Real Sinit 	= Mathr::PI * std::pow( std::min(Da,Db) , 2);
+ 
+ 			//Real Kn						= (Eab*Sinit/Dinit)*( (1+alpha)/(beta*(1+Vab) + gamma*(1-alpha*Vab) ) );
+ 			Real ksOnkn = 0.5;
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/CapillaryCohesiveLaw.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/CapillaryCohesiveLaw.cpp	2007-06-05 16:22:34 UTC (rev 1189)
++++ trunk/pkg/dem/Engine/StandAloneEngine/CapillaryCohesiveLaw.cpp	2007-06-05 17:13:23 UTC (rev 1190)
+@@ -166,8 +166,7 @@
+ 
+                         /// intergranular distance
+ 
+-                        Real intergranularDistance =
+-                                currentContactGeometry-&gt;penetrationDepth;
++                        //Real intergranularDistance = currentContactGeometry-&gt;penetrationDepth;
+ 
+                         Real D =
+                                 alpha*(de2-&gt;se3.position-de1-&gt;se3.position).Length()-alpha*(
+@@ -192,7 +191,7 @@
+                         Real Pinterpol =CapillaryPressure*(R2/liquidTension);
+                         currentContactPhysics-&gt;CapillaryPressure = CapillaryPressure;
+ 
+-                        Real r = R2/R1;
++                        //Real r = R2/R1;
+ 
+                         /// Capillary solution finder:
+ 
+@@ -271,7 +270,7 @@
+         Parameters result;
+         int i = 0;
+ 
+-        for ( i; i &lt; (NB_R_VALUES); i++)
++        for ( ; i &lt; (NB_R_VALUES); i++)
+         {
+                 Real data_R = data_complete[i].R;
+                 //cerr &lt;&lt; &quot;i = &quot; &lt;&lt; i &lt;&lt; endl;
+@@ -320,7 +319,15 @@
+         file &gt;&gt; n_D;
+ 
+         if (!file.is_open())
+-                cout &lt;&lt; &quot;problem opening file for capillary law&quot; &lt;&lt; endl;
++	{
++		static bool first=true;
++		if(first)
++		{
++	                cout &lt;&lt; &quot;WARNING: cannot open file used for capillary law, in TriaxalTestWater&quot; &lt;&lt; endl;
++			first=false;
++		}
++		return;
++	}
+         for (int i=0; i&lt;n_D; i++)
+                 full_data.push_back(TableauD(file));
+         file.close();
+@@ -337,7 +344,7 @@
+         Parameters result_inf;
+         Parameters result_sup;
+ 
+-        for ( int i=0; i &lt; full_data.size(); ++i)
++        for ( unsigned int i=0; i &lt; full_data.size(); ++i)
+         {
+                 if (full_data[i].D &gt; D )	// ok si D rang&#65533;s ds l'ordre croissant
+ 
+@@ -380,7 +387,7 @@
+         file.ignore(200, '\n'); // saute les caract&#65533;res (200 au maximum) jusque au caract&#65533;re \n (fin de ligne)*_
+ 
+         if (n_lines!=0)
+-                for (i; i&lt;n_lines; ++i) {
++                for (; i&lt;n_lines; ++i) {
+                         data.push_back(vector&lt;Real&gt; ());
+                         for (int j=0; j &lt; 6; ++j)	// [D,P,V,F,delta1,delta2]
+                         {
+@@ -471,10 +478,10 @@
+ std::ostream&amp; operator&lt;&lt;(std::ostream&amp; os, Tableau&amp; T)
+ {
+         os &lt;&lt; &quot;Tableau : R=&quot; &lt;&lt; T.R &lt;&lt; endl;
+-        for (int i=0; i&lt;T.full_data.size(); i++) {
++        for (unsigned int i=0; i&lt;T.full_data.size(); i++) {
+                 os &lt;&lt; &quot;TableauD : D=&quot; &lt;&lt; T.full_data[i].D &lt;&lt; endl;
+-                for (int j=0; j&lt;T.full_data[i].data.size();j++) {
+-                        for (int k=0; k&lt;T.full_data[i].data[j].size(); k++)
++                for (unsigned int j=0; j&lt;T.full_data[i].data.size();j++) {
++                        for (unsigned int k=0; k&lt;T.full_data[i].data[j].size(); k++)
+                                 os &lt;&lt; T.full_data[i].data[j][k] &lt;&lt; &quot; &quot;;
+                         os &lt;&lt; endl;
+                 }
+
+Modified: trunk/pkg/dem/PreProcessor/TriaxialTestWater.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/TriaxialTestWater.cpp	2007-06-05 16:22:34 UTC (rev 1189)
++++ trunk/pkg/dem/PreProcessor/TriaxialTestWater.cpp	2007-06-05 17:13:23 UTC (rev 1190)
+@@ -223,7 +223,7 @@
+ 
+ string TriaxialTestWater::generate()
+ {
+-	unsigned int startId=boost::numeric::bounds&lt;unsigned int&gt;::highest(), endId=0; // record forces from group 2
++	//unsigned int startId=boost::numeric::bounds&lt;unsigned int&gt;::highest(), endId=0; // record forces from group 2
+ 	
+ 	rootBody = shared_ptr&lt;MetaBody&gt;(new MetaBody);
+ 	createActors(rootBody);
+@@ -371,7 +371,7 @@
+ 			 
+ 	}
+ 	
+-	return output;
++	return std::string(&quot;ATTN: this test will not work without data file for capillary law\n\n&quot;)+output;
+ //  	return &quot;Generated a sample inside box of dimensions: (&quot; 
+ //  		+ lexical_cast&lt;string&gt;(lowerCorner[0]) + &quot;,&quot; 
+ //  		+ lexical_cast&lt;string&gt;(lowerCorner[1]) + &quot;,&quot; 
+
+Modified: trunk/pkg/dem/SConscript
+===================================================================
+--- trunk/pkg/dem/SConscript	2007-06-05 16:22:34 UTC (rev 1189)
++++ trunk/pkg/dem/SConscript	2007-06-05 17:13:23 UTC (rev 1190)
+@@ -604,6 +604,7 @@
+ 	GlobalStiffnessCounter
+ 	ResultantForceEngine
+ 	TriaxialStressController
++	MacroMicroElasticRelationshipsWater
+ 	TriaxialCompressionEngine
+ 	GlobalStiffnessTimeStepper''')),
+ 
+
+Modified: trunk/pkg/mass-spring/PreProcessor/HangingCloth.cpp
+===================================================================
+--- trunk/pkg/mass-spring/PreProcessor/HangingCloth.cpp	2007-06-05 16:22:34 UTC (rev 1189)
++++ trunk/pkg/mass-spring/PreProcessor/HangingCloth.cpp	2007-06-05 17:13:23 UTC (rev 1190)
+@@ -438,7 +438,7 @@
+ 		}
+ 	}
+ 			
+-	return &quot;total number of permament links created: &quot; + lexical_cast&lt;string&gt;(linksNum);
++	return &quot;ATTN: This test can sometimes crash in optimized builds, fix is pending for next release\n\ntotal number of permament links created: &quot; + lexical_cast&lt;string&gt;(linksNum);
+ }
+ 
+ 
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000154.html">[Yade-commits] r1189 - in trunk/pkg/dem:	DataClass/InteractionPhysics Engine/DeusExMachina	Engine/EngineUnit Engine/StandAloneEngine PreProcessor
+</A></li>
+	<LI>Next message: <A HREF="000156.html">[Yade-commits] r1191 - trunk/scripts
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#155">[ date ]</a>
+              <a href="thread.html#155">[ thread ]</a>
+              <a href="subject.html#155">[ subject ]</a>
+              <a href="author.html#155">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

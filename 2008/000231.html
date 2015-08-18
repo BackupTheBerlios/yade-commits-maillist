@@ -1,0 +1,357 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1266 - in trunk: . extra/clump gui gui/cmd lib
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1266%20-%20in%20trunk%3A%20.%20extra/clump%20gui%20gui/cmd%20lib&In-Reply-To=%3C200802261746.m1QHkvh0027171%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000230.html">
+   <LINK REL="Next"  HREF="000232.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1266 - in trunk: . extra/clump gui gui/cmd lib</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1266%20-%20in%20trunk%3A%20.%20extra/clump%20gui%20gui/cmd%20lib&In-Reply-To=%3C200802261746.m1QHkvh0027171%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1266 - in trunk: . extra/clump gui gui/cmd lib">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Tue Feb 26 18:46:57 CET 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000230.html">[Yade-commits] r1265 - trunk/core
+</A></li>
+        <LI>Next message: <A HREF="000232.html">[Yade-commits] r1267 - trunk/gui/cmd
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#231">[ date ]</a>
+              <a href="thread.html#231">[ thread ]</a>
+              <a href="subject.html#231">[ subject ]</a>
+              <a href="author.html#231">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2008-02-26 18:46:55 +0100 (Tue, 26 Feb 2008)
+New Revision: 1266
+
+Modified:
+   trunk/SConstruct
+   trunk/extra/clump/Shop.cpp
+   trunk/gui/SConscript
+   trunk/gui/cmd/yadeControl.cpp
+   trunk/lib/SConscript
+Log:
+Passing exclude='qt3' to scons will disable qt3 checks and everything related to qt3. Note that the default GUI is still QtGUI unless you change that in your config file or at command line with -N.
+
+
+
+
+Modified: trunk/SConstruct
+===================================================================
+--- trunk/SConstruct	2008-02-26 14:12:32 UTC (rev 1265)
++++ trunk/SConstruct	2008-02-26 17:46:55 UTC (rev 1266)
+@@ -82,7 +82,7 @@
+ 	BoolOption('debug', 'Enable debugging information and disable optimizations',1),
+ 	BoolOption('profile','Enable profiling information',0),
+ 	BoolOption('optimize','Turn on heavy optimizations (generates SSE2 instructions)',0),
+-	ListOption('exclude','Yade components that will not be built','none',names=['gui','extra','common','dem','fem','lattice','mass-spring','realtime-rigidbody']),
++	ListOption('exclude','Yade components that will not be built','none',names=['qt3','gui','extra','common','dem','fem','lattice','mass-spring','realtime-rigidbody']),
+ 	# OK, dummy prevents bug in scons: if one selects all, it says all in scons.config, but without quotes, which generates error.
+ 	ListOption('features','Optional features that are turned on','python,log4cxx',names=['python','log4cxx','dummy']),
+ 	('jobs','Number of jobs to run at the same time (same as -j, but saved)',4,None,int),
+@@ -235,15 +235,15 @@
+ 
+ 	if not env['useMiniWm3']: ok&amp;=conf.CheckLibWithHeader('Wm3Foundation','Wm3Math.h','c++','Wm3::Math&lt;double&gt;::PI;',autoadd=1)
+ 
+-	ok&amp;=conf.CheckQt(env['QTDIR'])
+-	env.Tool('qt'); env.Replace(QT_LIB='qt-mt')
+-
+-	# one or another (QGLViewer is upstream name, 3dviewer is (teomporary) workaround for clashing name with obsolete package once in debian)
+-	# (this one has to be explicitly mentioned for each plugin that uses it, no autoadd)
+-	if conf.CheckLibWithHeader('QGLViewer','QGLViewer/qglviewer.h','c++','QGLViewer(1);'): env['QGLVIEWER_LIB']='QGLViewer'
+-	if conf.CheckLibWithHeader('qglviewer','QGLViewer/qglviewer.h','c++','QGLViewer(1);'): env['QGLVIEWER_LIB']='qglviewer'
+-	elif conf.CheckLibWithHeader('3dviewer','QGLViewer/qglviewer.h','c++','QGLViewer(1);'): env['QGLVIEWER_LIB']='3dviewer'
+-	else: ok=False
++	if 'qt3' not in env['exclude']:
++		ok&amp;=conf.CheckQt(env['QTDIR'])
++		env.Tool('qt'); env.Replace(QT_LIB='qt-mt')
++		# one or another (QGLViewer is upstream name, 3dviewer is (teomporary) workaround for clashing name with obsolete package once in debian)
++		# (this one has to be explicitly mentioned for each plugin that uses it, no autoadd)
++		if conf.CheckLibWithHeader('QGLViewer','QGLViewer/qglviewer.h','c++','QGLViewer(1);'): env['QGLVIEWER_LIB']='QGLViewer'
++		if conf.CheckLibWithHeader('qglviewer','QGLViewer/qglviewer.h','c++','QGLViewer(1);'): env['QGLVIEWER_LIB']='qglviewer'
++		elif conf.CheckLibWithHeader('3dviewer','QGLViewer/qglviewer.h','c++','QGLViewer(1);'): env['QGLVIEWER_LIB']='3dviewer'
++		else: ok=False
+ 	
+ 
+ 	if not ok:
+@@ -317,7 +317,9 @@
+ else: env.Append(CXXFLAGS='-O2')
+ if env['optimize']:
+ 	env.Append(CXXFLAGS=Split('-O3 -ffast-math'),
+-		CPPDEFINES=[('YADE_CAST','static_cast'),('YADE_PTR_CAST','static_pointer_cast')])
++		CPPDEFINES=[('YADE_CAST','static_cast'),('YADE_PTR_CAST','static_pointer_cast'),'NDEBUG'])
++	# NDEBUG is used in /usr/include/assert.h: when defined, asserts() are no-ops
++
+ 	# -floop-optimize2 is a gcc-4.x flag, doesn't exist on previous version
+ 	# CRASH -ffloat-store
+ 	# maybe not CRASH?: -fno-math-errno
+
+Modified: trunk/extra/clump/Shop.cpp
+===================================================================
+--- trunk/extra/clump/Shop.cpp	2008-02-26 14:12:32 UTC (rev 1265)
++++ trunk/extra/clump/Shop.cpp	2008-02-26 17:46:55 UTC (rev 1266)
+@@ -411,7 +411,7 @@
+ 
+ vector&lt;pair&lt;Vector3r,Real&gt; &gt; Shop::loadSpheresFromFile(string fname, Vector3r&amp; minXYZ, Vector3r&amp; maxXYZ){
+ 	if(!boost::filesystem::exists(fname)) {
+-		throw std::runtime_error(string(&quot;File with spheres `&quot;)+fname+&quot;' doesn't exist.&quot;);
++		throw std::invalid_argument(string(&quot;File with spheres `&quot;)+fname+&quot;' doesn't exist.&quot;);
+ 	}
+ 	vector&lt;pair&lt;Vector3r,Real&gt; &gt; spheres;
+ 	ifstream sphereFile(fname.c_str());
+
+Modified: trunk/gui/SConscript
+===================================================================
+--- trunk/gui/SConscript	2008-02-26 14:12:32 UTC (rev 1265)
++++ trunk/gui/SConscript	2008-02-26 17:46:55 UTC (rev 1266)
+@@ -1,50 +1,51 @@
+ Import('*')
+-env.Install('$PREFIX/lib/yade$SUFFIX/gui',[
+ 
+-	env.SharedLibrary('QtGUI',
+-		['qt3/FileDialog.cpp',
+-			'qt3/GLEngineEditor.cpp',
+-			'qt3/GLSimulationPlayerViewer.cpp',
+-			'qt3/GLViewer.cpp',
+-			'qt3/MessageDialog.cpp',
+-			'qt3/QtCodeGenerator.cpp',
+-			'qt3/QtEngineEditor.cpp',
+-			'qt3/QtFileGenerator.cpp',
+-			'qt3/QtFileGeneratorController.ui',
+-			'qt3/QtGUI.cpp',
+-			'qt3/QtGUIPreferences.cpp',
+-			'qt3/QtGeneratedCodeGenerator.ui',
+-			'qt3/QtGeneratedEngineEditor.ui',
+-			'qt3/QtGeneratedMessageDialog.ui',
+-			'qt3/QtGeneratedMetaDispatchingEngineProperties.ui',
+-			'qt3/QtGeneratedPreferencesEditor.ui',
+-			'qt3/QtGeneratedSimulationController.ui',
+-			'qt3/QtGeneratedSimulationPlayer.ui',
+-			'qt3/QtGeneratedSphericalDEMSimulator.ui',
+-			'qt3/QtMetaDispatchingEngineProperties.cpp',
+-			'qt3/QtPreferencesEditor.cpp',
+-			'qt3/QtSimulationPlayer.cpp',
+-			'qt3/QtSphericalDEM.cpp',
+-			'qt3/SimulationController.cpp',
+-			'qt3/SimulationControllerUpdater.cpp',
+-			'qt3/YadeQtGeneratedMainWindow.ui',
+-			'qt3/YadeQtMainWindow.cpp'],
+-		LIBS=env['LIBS']+['yade-base',
+-			'yade-multimethods',
+-			'yade-factory',
+-			'yade-opengl',
+-			'yade-serialization',
+-			'yade-computational-geometry',
+-			'XMLFormatManager',
+-			'yade-serialization-qt',
+-			'$QGLVIEWER_LIB'],
+-		CPPPATH=env['CPPPATH']+['qt3']),
+-])
++if 'qt3' not in env['exclude']:
++	env.Install('$PREFIX/lib/yade$SUFFIX/gui',[
++		env.SharedLibrary('QtGUI',
++			['qt3/FileDialog.cpp',
++				'qt3/GLEngineEditor.cpp',
++				'qt3/GLSimulationPlayerViewer.cpp',
++				'qt3/GLViewer.cpp',
++				'qt3/MessageDialog.cpp',
++				'qt3/QtCodeGenerator.cpp',
++				'qt3/QtEngineEditor.cpp',
++				'qt3/QtFileGenerator.cpp',
++				'qt3/QtFileGeneratorController.ui',
++				'qt3/QtGUI.cpp',
++				'qt3/QtGUIPreferences.cpp',
++				'qt3/QtGeneratedCodeGenerator.ui',
++				'qt3/QtGeneratedEngineEditor.ui',
++				'qt3/QtGeneratedMessageDialog.ui',
++				'qt3/QtGeneratedMetaDispatchingEngineProperties.ui',
++				'qt3/QtGeneratedPreferencesEditor.ui',
++				'qt3/QtGeneratedSimulationController.ui',
++				'qt3/QtGeneratedSimulationPlayer.ui',
++				'qt3/QtGeneratedSphericalDEMSimulator.ui',
++				'qt3/QtMetaDispatchingEngineProperties.cpp',
++				'qt3/QtPreferencesEditor.cpp',
++				'qt3/QtSimulationPlayer.cpp',
++				'qt3/QtSphericalDEM.cpp',
++				'qt3/SimulationController.cpp',
++				'qt3/SimulationControllerUpdater.cpp',
++				'qt3/YadeQtGeneratedMainWindow.ui',
++				'qt3/YadeQtMainWindow.cpp'],
++			LIBS=env['LIBS']+['yade-base',
++				'yade-multimethods',
++				'yade-factory',
++				'yade-opengl',
++				'yade-serialization',
++				'yade-computational-geometry',
++				'XMLFormatManager',
++				'yade-serialization-qt',
++				'$QGLVIEWER_LIB'],
++			CPPPATH=env['CPPPATH']+['qt3']),
++	])
+ 
+ if 'EMBED_PYTHON' in env['CPPDEFINES']:
+ 	env.Install('$PREFIX/lib/yade$SUFFIX/gui',[
+ 		env.SharedLibrary('cmdGui',['cmd/cmdGui.cpp']),
+-		env.SharedLibrary('yadeControl',['cmd/yadeControl.cpp'],SHLIBPREFIX='',LIBS=env['LIBS']+['yade-base','libboost_python','QtGUI']),
++		env.SharedLibrary('yadeControl',['cmd/yadeControl.cpp'],SHLIBPREFIX='',CPPDEFINES=env['CPPDEFINES']+['NO_PYGLVIEWER'],LIBS=env['LIBS']+['yade-base','libboost_python','XMLFormatManager','yade-factory','yade-serialization']), # link with 'QtGUI' in you enable pyGLViewer
+ 		env.File('cmdGuiInit.py','cmd')
+ ])
+ 
+
+Modified: trunk/gui/cmd/yadeControl.cpp
+===================================================================
+--- trunk/gui/cmd/yadeControl.cpp	2008-02-26 14:12:32 UTC (rev 1265)
++++ trunk/gui/cmd/yadeControl.cpp	2008-02-26 17:46:55 UTC (rev 1266)
+@@ -19,8 +19,8 @@
+ #include&lt;yade/lib-serialization-xml/XMLFormatManager.hpp&gt;
+ #include&lt;yade/core/Omega.hpp&gt;
+ #include&lt;yade/core/FileGenerator.hpp&gt;
+-#include&lt;yade/gui-qt3/GLViewer.hpp&gt;
+ 
++
+ #include&lt;yade/core/MetaDispatchingEngine.hpp&gt;
+ #include&lt;yade/core/StandAloneEngine.hpp&gt;
+ #include&lt;yade/core/DeusExMachina.hpp&gt;
+@@ -28,9 +28,12 @@
+ #include&lt;yade/core/EngineUnit1D.hpp&gt;
+ #include&lt;yade/core/EngineUnit2D.hpp&gt;
+ 
+-#include&lt;qapplication.h&gt;
+-// qt3 sucks
+-#undef DEBUG
++#ifndef NO_PYGLVIEWER
++	#include&lt;yade/gui-qt3/GLViewer.hpp&gt;
++	#include&lt;qapplication.h&gt;
++	// qt3 sucks
++	#undef DEBUG
++#endif
+ 
+ using namespace boost;
+ using namespace std;
+@@ -158,7 +161,13 @@
+ 	bool usesTimeStepper_get(){return OMEGA.timeStepperActive();}
+ 	void usesTimeStepper_set(bool use){OMEGA.skipTimeStepper(!use);}
+ 
+-	void run(){OMEGA.startSimulationLoop(); cerr&lt;&lt;&quot;RUN!&quot;&lt;&lt;endl;}
++	void run(long int numIter=-1){
++		if(numIter&gt;0) OMEGA.stopAtIteration=OMEGA.getCurrentIteration()+numIter;
++		//else OMEGA.stopAtIteration=-1;
++		OMEGA.startSimulationLoop();
++		long toGo=OMEGA.stopAtIteration-OMEGA.getCurrentIteration();
++		cerr&lt;&lt;&quot;RUN&quot;&lt;&lt;(toGo&gt;0?string(&quot; (&quot;+lexical_cast&lt;string&gt;(toGo)+&quot; to go)&quot;):string(&quot;&quot;))&lt;&lt;&quot;!&quot;&lt;&lt;endl;
++	}
+ 	// must stop, then reload
+ 	//void _stop(){OMEGA(resetSimulationLoop());}
+ 	void pause(){OMEGA.stopSimulationLoop(); cerr&lt;&lt;&quot;PAUSE!&quot;&lt;&lt;endl;}
+@@ -211,6 +220,9 @@
+ 	#undef OMEGA
+ };
+ 
++BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(omega_overloads,run,0,1);
++
++#ifndef NO_PYGLVIEWER
+ /*! GL viewer wrapper, with full attribute access.
+  *
+  * Creates the 3D view on instantiation. Currently displays nothing (why???), although it redraws just fine.
+@@ -275,11 +287,10 @@
+ 		//app-&gt;quit();
+ 	}
+ };
+-
+ CREATE_LOGGER(pyGLViewer);
++#endif
+ 
+ 
+-
+ BOOST_PYTHON_MODULE(yadeControl)
+ {
+ 	/* <A HREF="http://mail.python.org/pipermail/c++-sig/2004-March/007025.html">http://mail.python.org/pipermail/c++-sig/2004-March/007025.html</A>
+@@ -299,7 +310,7 @@
+ 		.add_property(&quot;usesTimeStepper&quot;,&amp;pyOmega::usesTimeStepper_get,&amp;pyOmega::usesTimeStepper_set)
+ 		.def(&quot;load&quot;,&amp;pyOmega::load)
+ 		.def(&quot;save&quot;,&amp;pyOmega::save)
+-		.def(&quot;run&quot;,&amp;pyOmega::run)
++		.def(&quot;run&quot;,&amp;pyOmega::run,omega_overloads())
+ 		.def(&quot;pause&quot;,&amp;pyOmega::pause)
+ 		.def(&quot;step&quot;,&amp;pyOmega::step)
+ 		.def(&quot;wait&quot;,&amp;pyOmega::wait)
+@@ -316,9 +327,10 @@
+ 			.def(&quot;newView&quot;, &amp;newView)
+ 			.def(&quot;centerScene&quot;, &amp;centerScene)
+ 		#endif
+-
++#ifndef NO_PYGLVIEWER
+ 	boost::python::class_&lt;pyGLViewer&gt;(&quot;View&quot;)
+ 		.ATTR_ACCESS_PY(pyGLViewer);
++#endif
+ 
+ #define BASIC_PY_PROXY_WRAPPER(pyClass,pyName)  \
+ 	boost::python::class_&lt;pyClass&gt;(pyName,python::init&lt;python::optional&lt;string&gt; &gt;()) \
+
+Modified: trunk/lib/SConscript
+===================================================================
+--- trunk/lib/SConscript	2008-02-26 14:12:32 UTC (rev 1265)
++++ trunk/lib/SConscript	2008-02-26 17:46:55 UTC (rev 1266)
+@@ -1,4 +1,12 @@
+ Import('*')
++
++if 'qt3' not in env['exclude']:
++	env.Install('$PREFIX/lib/yade$SUFFIX/lib',[
++		env.SharedLibrary('yade-serialization-qt',
++			['serialization-qt/QtGUIGenerator.cpp'],
++			LIBS=env['LIBS']+['yade-base','XMLFormatManager']),
++		])
++
+ env.Install('$PREFIX/lib/yade$SUFFIX/lib',[
+ 
+ 	env.SharedLibrary('yade-base',
+@@ -52,9 +60,6 @@
+ 	env.SharedLibrary('BINFormatManager',
+ 		['serialization-bin/BINFormatManager.cpp']),
+ 
+-	env.SharedLibrary('yade-serialization-qt',
+-		['serialization-qt/QtGUIGenerator.cpp'],
+-		LIBS=env['LIBS']+['yade-base','XMLFormatManager']),
+ 
+ 	env.SharedLibrary('XMLFormatManager',
+ 		['serialization-xml/XMLFormatManager.cpp',
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000230.html">[Yade-commits] r1265 - trunk/core
+</A></li>
+	<LI>Next message: <A HREF="000232.html">[Yade-commits] r1267 - trunk/gui/cmd
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#231">[ date ]</a>
+              <a href="thread.html#231">[ thread ]</a>
+              <a href="subject.html#231">[ subject ]</a>
+              <a href="author.html#231">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

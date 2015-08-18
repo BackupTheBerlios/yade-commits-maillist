@@ -1,0 +1,256 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1403 - in trunk: gui/py pkg/common/Engine	pkg/common/Engine/MetaEngine	pkg/common/Engine/StandAloneEngine scripts
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1403%20-%20in%20trunk%3A%20gui/py%20pkg/common/Engine%0A%09pkg/common/Engine/MetaEngine%0A%09pkg/common/Engine/StandAloneEngine%20scripts&In-Reply-To=%3C200806261242.m5QCg5CZ011074%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000363.html">
+   <LINK REL="Next"  HREF="000365.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1403 - in trunk: gui/py pkg/common/Engine	pkg/common/Engine/MetaEngine	pkg/common/Engine/StandAloneEngine scripts</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1403%20-%20in%20trunk%3A%20gui/py%20pkg/common/Engine%0A%09pkg/common/Engine/MetaEngine%0A%09pkg/common/Engine/StandAloneEngine%20scripts&In-Reply-To=%3C200806261242.m5QCg5CZ011074%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1403 - in trunk: gui/py pkg/common/Engine	pkg/common/Engine/MetaEngine	pkg/common/Engine/StandAloneEngine scripts">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Thu Jun 26 14:42:05 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000363.html">[Yade-commits] r1402 - in trunk: . core extra gui gui/py gui/qt3	pkg/common pkg/common/Engine scripts
+</A></li>
+        <LI>Next message: <A HREF="000365.html">[Yade-commits] r1404 - in trunk: extra gui/py gui/qt3	pkg/common/Engine/MetaEngine pkg/common/Engine/StandAloneEngine	pkg/common/RenderingEngine/GLDrawGeometricalModel	pkg/dem/Engine/StandAloneEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#364">[ date ]</a>
+              <a href="thread.html#364">[ thread ]</a>
+              <a href="subject.html#364">[ subject ]</a>
+              <a href="author.html#364">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2008-06-26 14:42:04 +0200 (Thu, 26 Jun 2008)
+New Revision: 1403
+
+Modified:
+   trunk/gui/py/yadeControl.cpp
+   trunk/pkg/common/Engine/MetaEngine/BoundingVolumeMetaEngine.cpp
+   trunk/pkg/common/Engine/MetaEngine/InteractingGeometryMetaEngine.cpp
+   trunk/pkg/common/Engine/ParallelEngine.cpp
+   trunk/pkg/common/Engine/StandAloneEngine/PersistentSAPCollider.cpp
+   trunk/scripts/simple-scene-parallel.py
+Log:
+1. Fix the simple-scene-parallel.py (interactionGeometry and interactionPhysics may _not_ be run in parallel)
+2. Fix the #pragma clause in ParallelEngine (it did not run in parallel before, but still there were performance gains ?!)
+3. When saving simulation, set the filename so that it can be reloaded from the GUI
+
+#pragma omp parallel for did not give speedups with other engines... it is commented out there.
+
+
+
+Modified: trunk/gui/py/yadeControl.cpp
+===================================================================
+--- trunk/gui/py/yadeControl.cpp	2008-06-26 11:43:03 UTC (rev 1402)
++++ trunk/gui/py/yadeControl.cpp	2008-06-26 12:42:04 UTC (rev 1403)
+@@ -412,6 +412,7 @@
+ 	void save(std::string fileName, bool recover=false){
+ 		assertRootBody();
+ 		OMEGA.saveSimulation(fileName,recover);
++		OMEGA.setSimulationFileName(fileName);
+ 		LOG_DEBUG(&quot;SAVE!&quot;);
+ 	}
+ 
+
+Modified: trunk/pkg/common/Engine/MetaEngine/BoundingVolumeMetaEngine.cpp
+===================================================================
+--- trunk/pkg/common/Engine/MetaEngine/BoundingVolumeMetaEngine.cpp	2008-06-26 11:43:03 UTC (rev 1402)
++++ trunk/pkg/common/Engine/MetaEngine/BoundingVolumeMetaEngine.cpp	2008-06-26 12:42:04 UTC (rev 1403)
+@@ -17,16 +17,12 @@
+ void BoundingVolumeMetaEngine::action(MetaBody* ncb)
+ {
+ 	shared_ptr&lt;BodyContainer&gt;&amp; bodies = ncb-&gt;bodies;
+-	
+-	BodyContainer::iterator bi    = bodies-&gt;begin();
+-	BodyContainer::iterator biEnd = bodies-&gt;end();
+-	for( ; bi!=biEnd ; ++bi )
+-	{
+-		shared_ptr&lt;Body&gt; b = *bi;
+-		if(b-&gt;interactingGeometry &amp;&amp; b-&gt;boundingVolume)
+-			operator()(b-&gt;interactingGeometry,b-&gt;boundingVolume,b-&gt;physicalParameters-&gt;se3,b.get());
++	const long numBodies=(long)bodies-&gt;size();
++	// #pragma omp parallel for
++	for(int id=0; id&lt;numBodies; id++){
++		const shared_ptr&lt;Body&gt;&amp; b=(*bodies)[id];
++		if(b-&gt;interactingGeometry &amp;&amp; b-&gt;boundingVolume) operator()(b-&gt;interactingGeometry,b-&gt;boundingVolume,b-&gt;physicalParameters-&gt;se3,b.get());
+ 	}
+-		
+ 	operator()(ncb-&gt;interactingGeometry,ncb-&gt;boundingVolume,ncb-&gt;physicalParameters-&gt;se3,ncb);
+ }
+ 
+
+Modified: trunk/pkg/common/Engine/MetaEngine/InteractingGeometryMetaEngine.cpp
+===================================================================
+--- trunk/pkg/common/Engine/MetaEngine/InteractingGeometryMetaEngine.cpp	2008-06-26 11:43:03 UTC (rev 1402)
++++ trunk/pkg/common/Engine/MetaEngine/InteractingGeometryMetaEngine.cpp	2008-06-26 12:42:04 UTC (rev 1403)
+@@ -13,17 +13,14 @@
+ 
+ void InteractingGeometryMetaEngine::action(MetaBody* ncb)
+ {
+-	shared_ptr&lt;BodyContainer&gt;&amp; bodies = ncb-&gt;bodies;
++	const shared_ptr&lt;BodyContainer&gt;&amp; bodies = ncb-&gt;bodies;
+ 	
+-	BodyContainer::iterator bi    = bodies-&gt;begin();
+-	BodyContainer::iterator biEnd = bodies-&gt;end();
+-	for( ; bi!=biEnd ; ++bi )
+-	{
+-		shared_ptr&lt;Body&gt; b = *bi;
+-		if(b-&gt;geometricalModel &amp;&amp; b-&gt;interactingGeometry)
+-			operator()(b-&gt;geometricalModel,b-&gt;interactingGeometry,b-&gt;physicalParameters-&gt;se3,b.get());
++	const long numBodies=(long)bodies-&gt;size();
++	// #pragma omp parallel for
++	for(int id=0; id&lt;numBodies; id++){
++		const shared_ptr&lt;Body&gt;&amp; b=(*bodies)[id];
++		if(b-&gt;geometricalModel &amp;&amp; b-&gt;interactingGeometry) operator()(b-&gt;geometricalModel,b-&gt;interactingGeometry,b-&gt;physicalParameters-&gt;se3,b.get());
+ 	}
+-		
+ 	if(ncb-&gt;geometricalModel &amp;&amp; ncb-&gt;interactingGeometry)
+ 		operator()(ncb-&gt;geometricalModel,ncb-&gt;interactingGeometry,ncb-&gt;physicalParameters-&gt;se3,ncb);
+ }
+
+Modified: trunk/pkg/common/Engine/ParallelEngine.cpp
+===================================================================
+--- trunk/pkg/common/Engine/ParallelEngine.cpp	2008-06-26 11:43:03 UTC (rev 1402)
++++ trunk/pkg/common/Engine/ParallelEngine.cpp	2008-06-26 12:42:04 UTC (rev 1403)
+@@ -1,4 +1,5 @@
+ #include&quot;ParallelEngine.hpp&quot;
++#include&lt;omp.h&gt;
+ YADE_PLUGIN(&quot;ParallelEngine&quot;);
+ list&lt;string&gt; ParallelEngine::getNeededBex(){
+ 	list&lt;string&gt; ret;
+@@ -14,10 +15,12 @@
+ void ParallelEngine::action(MetaBody* rootBody){
+ 	// openMP warns if the iteration variable is unsigned...
+ 	const int size=(int)slaves.size();
+-	#pragma omp for schedule(dynamic,1)
++	#pragma omp parallel for
+ 	for(int i=0; i&lt;size; i++){
+ 		// run every slave group sequentially
+-		FOREACH(const shared_ptr&lt;Engine&gt;&amp; e, slaves[i])
++		FOREACH(const shared_ptr&lt;Engine&gt;&amp; e, slaves[i]) {
++			//cerr&lt;&lt;&quot;[&quot;&lt;&lt;omp_get_thread_num()&lt;&lt;&quot;:&quot;&lt;&lt;e-&gt;getClassName()&lt;&lt;&quot;]&quot;;
+ 			if(e-&gt;isActivated()) e-&gt;action(rootBody);
++		}
+ 	}
+ }
+
+Modified: trunk/pkg/common/Engine/StandAloneEngine/PersistentSAPCollider.cpp
+===================================================================
+--- trunk/pkg/common/Engine/StandAloneEngine/PersistentSAPCollider.cpp	2008-06-26 11:43:03 UTC (rev 1402)
++++ trunk/pkg/common/Engine/StandAloneEngine/PersistentSAPCollider.cpp	2008-06-26 12:42:04 UTC (rev 1403)
+@@ -49,12 +49,11 @@
+ 	int offset;
+ 	Vector3r min,max;
+ 
+-	BodyContainer::iterator bi=bodies-&gt;begin();
+-	BodyContainer::iterator bi_end = bodies-&gt;end();
+-	for(unsigned int i=0 ; bi!=bi_end; ++bi,i++) {
+-		const shared_ptr&lt;Body&gt;&amp; b=*bi;
+-		offset = 3*i;
+-		//FIXME: this is broken: bodies without boundingVolume are just skipped, which means that some garbage values are used later!
++	const long numBodies=(long)bodies-&gt;size();
++	// #pragma omp parallel for
++	for(int id=0; id&lt;numBodies; id++){
++		const shared_ptr&lt;Body&gt;&amp; b=(*bodies)[id];
++		offset=3*id;
+ 		if(b-&gt;boundingVolume){ // can't assume that everybody has BoundingVolume
+ 			min=b-&gt;boundingVolume-&gt;min; max=b-&gt;boundingVolume-&gt;max;
+ 			minima[offset+0]=min[0]; minima[offset+1]=min[1]; minima[offset+2]=min[2];
+@@ -82,9 +81,15 @@
+ 	nbObjects=bodies-&gt;size();
+ 
+ 	// permutation sort of the AABBBounds along the 3 axis performed in a independant manner
+-	sortBounds(xBounds, nbObjects);
+-	sortBounds(yBounds, nbObjects);
+-	sortBounds(zBounds, nbObjects);
++	// #pragma omp parallel sections
++	{
++	//	#pragma omp section
++		sortBounds(xBounds, nbObjects);
++	//	#pragma omp section
++		sortBounds(yBounds, nbObjects);
++	//	#pragma omp section
++		sortBounds(zBounds, nbObjects);
++	}
+ }
+ 
+ 
+
+Modified: trunk/scripts/simple-scene-parallel.py
+===================================================================
+--- trunk/scripts/simple-scene-parallel.py	2008-06-26 11:43:03 UTC (rev 1402)
++++ trunk/scripts/simple-scene-parallel.py	2008-06-26 12:42:04 UTC (rev 1403)
+@@ -15,6 +15,9 @@
+ 	# 	if an element of the list is itself a list, it is run sequentially.
+ 	#	openMP has number of environment variables (notably, how many threads to use):
+ 	#  	<A HREF="http://docs.sun.com/source/819-0501/5_compiling.html#19273">http://docs.sun.com/source/819-0501/5_compiling.html#19273</A>
++	#
++	# 	try OMP_NUM_THREAD=number yade-version simple-scene-parallel.py to see the difference
++	#  by default, openMP creates as many threads as you have processor cores in your machine
+ 	#  
+ 	#  overview: <A HREF="http://en.wikipedia.org/wiki/Openmp">http://en.wikipedia.org/wiki/Openmp</A>
+ 	#	homepage: <A HREF="http://openmp.org">http://openmp.org</A> for details,
+@@ -27,12 +30,10 @@
+ 			StandAloneEngine('PersistentSAPCollider'),
+ 		]
+ 	]),
+-	# interaction geometry and interaction physics are indepent and may run in parallel
+-	ParallelEngine([
+-		MetaEngine('InteractionGeometryMetaEngine',[EngineUnit('InteractingSphere2InteractingSphere4SpheresContactGeometry'),EngineUnit('InteractingBox2InteractingSphere4SpheresContactGeometry')]),
+-		MetaEngine('InteractionPhysicsMetaEngine',[EngineUnit('SimpleElasticRelationships')]),
+-	]),
+-	# the rest must be run sequentially
++	# interaction physics depends on interaction geometry
++	MetaEngine('InteractionGeometryMetaEngine',[EngineUnit('InteractingSphere2InteractingSphere4SpheresContactGeometry'),EngineUnit('InteractingBox2InteractingSphere4SpheresContactGeometry')]),
++	MetaEngine('InteractionPhysicsMetaEngine',[EngineUnit('SimpleElasticRelationships')]),
++	# the rest must also be run sequentially
+ 	# (contact law as well as gravity modify physical actions, which are, once computed, used in the integrator)
+ 	StandAloneEngine('ElasticContactLaw'),
+ 	DeusExMachina('GravityEngine',{'gravity':[0,0,-9.81]}),
+@@ -44,4 +45,4 @@
+ o.bodies.append(utils.sphere([0,0,2],1,color=[0,1,0],young=30e9,poisson=.3,density=2400))
+ o.dt=.5*utils.PWaveTimeStep()
+ 
+-o.run(100000); o.wait(); print o.iter/o.realtime,&quot;iterations/sec&quot;
++#o.run(100000); o.wait(); print o.iter/o.realtime,&quot;iterations/sec&quot;
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000363.html">[Yade-commits] r1402 - in trunk: . core extra gui gui/py gui/qt3	pkg/common pkg/common/Engine scripts
+</A></li>
+	<LI>Next message: <A HREF="000365.html">[Yade-commits] r1404 - in trunk: extra gui/py gui/qt3	pkg/common/Engine/MetaEngine pkg/common/Engine/StandAloneEngine	pkg/common/RenderingEngine/GLDrawGeometricalModel	pkg/dem/Engine/StandAloneEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#364">[ date ]</a>
+              <a href="thread.html#364">[ thread ]</a>
+              <a href="subject.html#364">[ subject ]</a>
+              <a href="author.html#364">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

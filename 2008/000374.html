@@ -1,0 +1,138 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1414 - in trunk: gui/qt3	pkg/common/Engine/DeusExMachina pkg/dem/Engine/StandAloneEngine
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1414%20-%20in%20trunk%3A%20gui/qt3%0A%09pkg/common/Engine/DeusExMachina%20pkg/dem/Engine/StandAloneEngine&In-Reply-To=%3C200807041417.m64EHxKm015995%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000373.html">
+   <LINK REL="Next"  HREF="000375.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1414 - in trunk: gui/qt3	pkg/common/Engine/DeusExMachina pkg/dem/Engine/StandAloneEngine</H1>
+    <B>sega at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1414%20-%20in%20trunk%3A%20gui/qt3%0A%09pkg/common/Engine/DeusExMachina%20pkg/dem/Engine/StandAloneEngine&In-Reply-To=%3C200807041417.m64EHxKm015995%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1414 - in trunk: gui/qt3	pkg/common/Engine/DeusExMachina pkg/dem/Engine/StandAloneEngine">sega at mail.berlios.de
+       </A><BR>
+    <I>Fri Jul  4 16:17:59 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000373.html">[Yade-commits] r1413 - in trunk: core gui/qt3	pkg/common/Engine/DeusExMachina	pkg/common/RenderingEngine/OpenGLRenderingEngine
+</A></li>
+        <LI>Next message: <A HREF="000375.html">[Yade-commits] r1415 - in branches/przewdnik: core/visualisation	gui/qt3 pkg/common/Engine/StandAloneEngine/Visualisation	pkg/common/RenderingEngine/OpenGLRenderingEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#374">[ date ]</a>
+              <a href="thread.html#374">[ thread ]</a>
+              <a href="subject.html#374">[ subject ]</a>
+              <a href="author.html#374">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: sega
+Date: 2008-07-04 16:17:57 +0200 (Fri, 04 Jul 2008)
+New Revision: 1414
+
+Modified:
+   trunk/gui/qt3/GLSimulationPlayerViewer.cpp
+   trunk/pkg/common/Engine/DeusExMachina/ResetPositionEngine.cpp
+   trunk/pkg/dem/Engine/StandAloneEngine/PositionOrientationRecorder.cpp
+Log:
+In PositionOrientationRecorder and GLSimulationPlayerViewer pass the bodies without geometrical model 
+Small fixes in PositionOrientationRecorder
+
+
+Modified: trunk/gui/qt3/GLSimulationPlayerViewer.cpp
+===================================================================
+--- trunk/gui/qt3/GLSimulationPlayerViewer.cpp	2008-07-04 02:57:10 UTC (rev 1413)
++++ trunk/gui/qt3/GLSimulationPlayerViewer.cpp	2008-07-04 14:17:57 UTC (rev 1414)
+@@ -185,9 +185,11 @@
+ 		if(!b-&gt;physicalParameters) {LOG_ERROR(&quot;Body #&quot;&lt;&lt;id&lt;&lt;&quot; has no physical parameters?! (skipping)&quot;); continue; }
+ 		Se3r&amp; mySe3=b-&gt;physicalParameters-&gt;se3;
+ 		f&gt;&gt;mySe3.position[0]&gt;&gt;mySe3.position[1]&gt;&gt;mySe3.position[2]&gt;&gt;mySe3.orientation[0]&gt;&gt;mySe3.orientation[1]&gt;&gt;mySe3.orientation[2]&gt;&gt;mySe3.orientation[3];
+-		if(!b-&gt;geometricalModel) {LOG_ERROR(&quot;Body #&quot;&lt;&lt;id&lt;&lt;&quot; has no geometrical model?! (skipping)&quot;); continue; }
+-		Vector3r&amp; myColor=b-&gt;geometricalModel-&gt;diffuseColor;
+-		if(doRgb &amp;&amp; !rgb.eof() &amp;&amp; !rgb.fail()) rgb&gt;&gt;myColor[0]&gt;&gt;myColor[1]&gt;&gt;myColor[2];
++		if(doRgb &amp;&amp; !rgb.eof() &amp;&amp; !rgb.fail()) {
++			if(!b-&gt;geometricalModel) {LOG_ERROR(&quot;Body #&quot;&lt;&lt;id&lt;&lt;&quot; has no geometrical model?! (skipping)&quot;); continue; }
++			Vector3r&amp; myColor=b-&gt;geometricalModel-&gt;diffuseColor;
++			rgb&gt;&gt;myColor[0]&gt;&gt;myColor[1]&gt;&gt;myColor[2];
++		}
+ 	}
+ 	return true;
+ }
+
+Modified: trunk/pkg/common/Engine/DeusExMachina/ResetPositionEngine.cpp
+===================================================================
+--- trunk/pkg/common/Engine/DeusExMachina/ResetPositionEngine.cpp	2008-07-04 02:57:10 UTC (rev 1413)
++++ trunk/pkg/common/Engine/DeusExMachina/ResetPositionEngine.cpp	2008-07-04 14:17:57 UTC (rev 1414)
+@@ -56,11 +56,14 @@
+ void ResetPositionEngine::initialize(MetaBody * ncb)
+ {
+ 	if (fileName==&quot;&quot;)
+-	{ // initialize positions from bodies se3
+-		initial_positions.resize(subscribedBodies.size());
+-		shared_ptr&lt;BodyContainer&gt;&amp; bodies = ncb-&gt;bodies;
+-		for(int i=0,e=subscribedBodies.size(); i&lt;e; ++i)
+-			initial_positions[i]=(*bodies)[subscribedBodies[i]]-&gt;physicalParameters-&gt;se3.position;
++	{ 
++		if (initial_positions.size()==0) 	
++		{ // initialize positions from bodies se3
++			initial_positions.resize(subscribedBodies.size());
++			shared_ptr&lt;BodyContainer&gt;&amp; bodies = ncb-&gt;bodies;
++			for(int i=0,e=subscribedBodies.size(); i&lt;e; ++i)
++				initial_positions[i]=(*bodies)[subscribedBodies[i]]-&gt;physicalParameters-&gt;se3.position;
++		}
+ 		ini_pos.assign(initial_positions.begin(),initial_positions.end());
+ 		return;
+ 	}
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/PositionOrientationRecorder.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/PositionOrientationRecorder.cpp	2008-07-04 02:57:10 UTC (rev 1413)
++++ trunk/pkg/dem/Engine/StandAloneEngine/PositionOrientationRecorder.cpp	2008-07-04 14:17:57 UTC (rev 1414)
+@@ -50,9 +50,11 @@
+ 		BodyContainer::iterator biEnd = ncb-&gt;bodies-&gt;end();
+ 		for(BodyContainer::iterator bi    = ncb-&gt;bodies-&gt;begin(); bi!=biEnd; ++bi){
+ 			const Se3r&amp; se3=(*bi)-&gt;physicalParameters-&gt;se3;
+-			const Vector3r&amp; color=(*bi)-&gt;geometricalModel-&gt;diffuseColor;
+ 			ofile&lt;&lt;se3.position[0]&lt;&lt;&quot; &quot;&lt;&lt;se3.position[1]&lt;&lt;&quot; &quot;&lt;&lt;se3.position[2]&lt;&lt;&quot; &quot;&lt;&lt;se3.orientation[0]&lt;&lt;&quot; &quot;&lt;&lt;se3.orientation[1]&lt;&lt;&quot; &quot;&lt;&lt;se3.orientation[2]&lt;&lt;&quot; &quot;&lt;&lt;se3.orientation[3]&lt;&lt;endl;
+-			if(saveRgb) rgbFile&lt;&lt;color[0]&lt;&lt;&quot; &quot;&lt;&lt;color[1]&lt;&lt;&quot; &quot;&lt;&lt;color[2]&lt;&lt;endl;
++			if(saveRgb &amp;&amp; (*bi)-&gt;geometricalModel) {
++				const Vector3r&amp; color=(*bi)-&gt;geometricalModel-&gt;diffuseColor;
++				rgbFile&lt;&lt;color[0]&lt;&lt;&quot; &quot;&lt;&lt;color[1]&lt;&lt;&quot; &quot;&lt;&lt;color[2]&lt;&lt;endl;
++			}
+ 		}
+ 	}
+ }
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000373.html">[Yade-commits] r1413 - in trunk: core gui/qt3	pkg/common/Engine/DeusExMachina	pkg/common/RenderingEngine/OpenGLRenderingEngine
+</A></li>
+	<LI>Next message: <A HREF="000375.html">[Yade-commits] r1415 - in branches/przewdnik: core/visualisation	gui/qt3 pkg/common/Engine/StandAloneEngine/Visualisation	pkg/common/RenderingEngine/OpenGLRenderingEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#374">[ date ]</a>
+              <a href="thread.html#374">[ thread ]</a>
+              <a href="subject.html#374">[ subject ]</a>
+              <a href="author.html#374">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

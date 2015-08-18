@@ -1,0 +1,271 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1037 - trunk
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2007/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1037%20-%20trunk&In-Reply-To=%3C200701152121.l0FLLuJH003524%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000001.html">
+   <LINK REL="Next"  HREF="000003.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1037 - trunk</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1037%20-%20trunk&In-Reply-To=%3C200701152121.l0FLLuJH003524%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1037 - trunk">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Mon Jan 15 22:21:56 CET 2007</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000001.html">[Yade-commits] r1036 - in trunk: . yade-core/src/yade	yade-packages/yade-package-lattice/src/PreProcessor/LatticeExample
+</A></li>
+        <LI>Next message: <A HREF="000003.html">[Yade-commits] r1038 - trunk
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#2">[ date ]</a>
+              <a href="thread.html#2">[ thread ]</a>
+              <a href="subject.html#2">[ subject ]</a>
+              <a href="author.html#2">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2007-01-15 22:21:55 +0100 (Mon, 15 Jan 2007)
+New Revision: 1037
+
+Modified:
+   trunk/Makefile
+   trunk/SConstruct
+Log:
+Hunted down the bugwith node enumeration, now should be reliable. Added some checks so that configuration is not done when cleaning, likewise for installable nodes (so we do NOT uninstall upon cleaning). If you use g++-3.3, you need to set e.g. CXX=&quot;distcc g++-3.3 -pthread&quot;. This will be fixed perhaps in the future but for now the default is to keep it simple.
+
+
+
+Modified: trunk/Makefile
+===================================================================
+--- trunk/Makefile	2007-01-13 15:20:23 UTC (rev 1036)
++++ trunk/Makefile	2007-01-15 21:21:55 UTC (rev 1037)
+@@ -10,7 +10,7 @@
+ 	$(MAKE) -C yade-guis clean
+ 	$(MAKE) -C yade-packages clean
+ 	$(MAKE) -C yade-extra clean
+-	rm -rf config.log scons.config .sconf_temp include
++	rm -rf config.log scons.config .sconf_temp include .sconsign.dblite
+ 	find -name &quot;.sconsign&quot; -exec rm -rf {} \;
+ 	find -name &quot;SConscript&quot; -exec rm -rf {} \;
+ 
+
+Modified: trunk/SConstruct
+===================================================================
+--- trunk/SConstruct	2007-01-13 15:20:23 UTC (rev 1036)
++++ trunk/SConstruct	2007-01-15 21:21:55 UTC (rev 1037)
+@@ -65,11 +65,7 @@
+ 	if os.environ.has_key(v): env.Append(ENV={v:os.environ[v]})
+ 
+ opts.Save(optsFile,env)
+-
+-def my_format(env, opt, help, default, actual):
+-	return &quot;%10s: %5s [%s] (%s)\n&quot;%(opt,actual,default,help)
+-opts.FormatOptionHelpText = my_format
+-
++opts.FormatOptionHelpText=lambda env,opt,help,default,actual: &quot;%10s: %5s [%s] (%s)\n&quot;%(opt,actual,default,help)
+ Help(opts.GenerateHelpText(env))
+ 
+ 
+@@ -100,35 +96,30 @@
+ 	return ret
+ 
+ 
+-conf=Configure(env,custom_tests={'CheckQt':CheckQt,'CheckCXX':CheckCXX})
++if not env.GetOption('clean'):
++	ok=True
++	conf=Configure(env,custom_tests={'CheckQt':CheckQt,'CheckCXX':CheckCXX})
++	ok&amp;=conf.CheckCXX()
++	ok&amp;=conf.CheckLibWithHeader('pthread','pthread.h','c','pthread_exit(NULL);')
++	ok&amp;=conf.CheckLibWithHeader('glut','GL/glut.h','c','glutGetModifiers();')
++	ok&amp;=conf.CheckLibWithHeader('boost_date_time','boost/date_time/posix_time/posix_time.hpp','c++','boost::posix_time::time_duration::time_duration();')
++	ok&amp;=conf.CheckLibWithHeader('boost_thread','boost/thread/thread.hpp','c++','boost::thread::thread();')
++	ok&amp;=conf.CheckLibWithHeader('boost_filesystem','boost/filesystem/path.hpp','c++','boost::filesystem::path();')
++	ok&amp;=conf.CheckLibWithHeader('Wm3Foundation','Wm3Math.h','c++','Wm3::Math&lt;double&gt;::PI;')
++	ok&amp;=conf.CheckQt(env['QTDIR'])
++	env.Tool('qt'); env.Replace(QT_LIB='qt-mt')
++	ok&amp;=conf.CheckLibWithHeader('QGLViewer','QGLViewer/qglviewer.h','c++','QGLViewer(1);')
++	if not ok:
++		print &quot;\nOne of the essential libraries above was not found, unable to continue.\n\nCheck config.log for possible causes, note that there are options that you may need to customize:\n\n&quot;+opts.GenerateHelpText(env)
++		Exit(1)
+ 
+-#I have moved it up. It is necessary, because the tests also need -pthread flag
+-# -pthread is for older g++ 3.3 and 3.4
+-env.Append(CXXFLAGS=['-pipe','-Wall','-pthread'])
++	env.Append(LIBS=['glut','boost_date_time','boost_filesystem','boost_thread','pthread','Wm3Foundation'])
+ 
+-ok=True
+-ok&amp;=conf.CheckCXX()
+-ok&amp;=conf.CheckLibWithHeader('pthread','pthread.h','c','pthread_exit(NULL);')
+-ok&amp;=conf.CheckLibWithHeader('glut','GL/glut.h','c','glutGetModifiers();')
+-ok&amp;=conf.CheckLibWithHeader('boost_date_time','boost/date_time/posix_time/posix_time.hpp','c++','boost::posix_time::time_duration::time_duration();')
+-ok&amp;=conf.CheckLibWithHeader('boost_thread','boost/thread/thread.hpp','c++','boost::thread::thread();')
+-ok&amp;=conf.CheckLibWithHeader('boost_filesystem','boost/filesystem/path.hpp','c++','boost::filesystem::path();')
+-ok&amp;=conf.CheckLibWithHeader('Wm3Foundation','Wm3Math.h','c++','Wm3::Math&lt;double&gt;::PI;')
+-ok&amp;=conf.CheckQt(env['QTDIR'])
+-if not ok:
+-	print &quot;\nOne of the essential libraries above was not found, unable to continue.\n\nCheck config.log for possible causes, note that there are options that you may need to customize:\n\n&quot;+opts.GenerateHelpText(env)
+-	Exit(1)
++	if conf.CheckLibWithHeader('log4cxx','log4cxx/logger.h','c++','log4cxx::Logger::getLogger(&quot;foo&quot;);'): env.Append(LIBS='log4cxx',CPPDEFINES=['LOG4CXX'])
+ 
+-env.Tool('qt')
+-env.Replace(QT_LIB='qt-mt')
+-env.Append(LIBS=['glut','boost_date_time','boost_filesystem','boost_thread','pthread','Wm3Foundation'])
++	env=conf.Finish()
+ 
+-if conf.CheckLibWithHeader('log4cxx','log4cxx/logger.h','c++','log4cxx::Logger::getLogger(&quot;foo&quot;);'):
+-	env.Append(LIBS='log4cxx',CPPDEFINES=['LOG4CXX'])
+ 
+-env=conf.Finish()
+-
+-
+ ##########################################################################################
+ ############# BUILDING ###################################################################
+ ##########################################################################################
+@@ -163,13 +154,13 @@
+ 	archFlags=Split('-march=pentium4 -mfpmath=sse,387') #-malign-double')
+ 	env.Append(CXXFLAGS=archFlags,LINKFLAGS=archFlags,SHLINKFLAGS=archFlags)
+ if env['profile']: env.Append(CXXFLAGS=['-pg'],LINKFLAGS=['-pg'],SHLINKFLAGS=['-pg'])
+-# -pthread is for older g++ 3.3 and 3.4
+-#env.Append(CXXFLAGS=['-pipe','-Wall','-pthread'])
++env.Append(CXXFLAGS=['-pipe','-Wall'])
+ 
+ ### LINKER
+-env.Append(SHLINKFLAGS='-Wl,-soname=${TARGET.file} -rdynamic')
++env.Append(LIBS=[]) # ensure existence of the flag
++env.Append(SHLINKFLAGS=['-Wl,-soname=${TARGET.file} -rdynamic'])
+ # if this is not present, vtables &amp; typeinfos for classes in yade binary itself are not exported; breaks plugin loading
+-env.Append(LINKFLAGS='-rdynamic') 
++env.Append(LINKFLAGS=['-rdynamic']) 
+ # makes dynamic library loading easied (no LD_LIBRARY_PATH) and perhaps faster
+ env.Append(RPATH=[os.path.join('$PREFIX','lib','yade$POSTFIX',string.split(x,os.path.sep)[-1]) for x in libDirs])
+ # find already compiled but not yet installed libraries for linking
+@@ -224,23 +215,23 @@
+ # 4. set the &quot;install&quot; target as default (if scons is called without any arguments)
+ # Should be cleaned up.
+ 
+-## re-run erskine if needed
+-from os.path import exists
+-if len([1 for x in [os.path.join(x,'SConscript') for x in libDirs+['yade-core']] if not exists(x)]):
+-	print &quot;Generating SConscript files (warnings can be ignored safely)...&quot;
+-	ret=os.system('cd yade-scripts &amp;&amp; sh erskine3-apply.sh')
+-	if ret!=0:
+-		print &quot;Error running yade-scripts/erskine3-apply.sh, try doing it by hand.&quot;
+-		Exit(1)
++if not env.GetOption('clean'):
++	## re-run erskine if needed
++	from os.path import exists
++	if len([1 for x in [os.path.join(x,'SConscript') for x in libDirs+['yade-core']] if not exists(x)]):
++		print &quot;Generating SConscript files (warnings can be ignored safely)...&quot;
++		ret=os.system('cd yade-scripts &amp;&amp; sh erskine3-apply.sh')
++		if ret!=0:
++			print &quot;Error running yade-scripts/erskine3-apply.sh, try doing it by hand.&quot;
++			Exit(1)
+ 
++	prepareLocalIncludesProxy=prepareIncludes()
++	prepareIncludesProxy=prepareIncludes(prefix=env['PREFIX'])
++	prebuildAlias=env.Alias('prebuild',[prepareLocalIncludesProxy])
++	installAlias=env.Alias('install',[instDirs,prepareIncludesProxy,os.path.join('$PREFIX','include','yade')])
++	Depends(installAlias,prebuildAlias)
++	Default(installAlias)
+ 
+-prepareLocalIncludesProxy=prepareIncludes()
+-prepareIncludesProxy=prepareIncludes(prefix=env['PREFIX'])
+-prebuildAlias=env.Alias('prebuild',[prepareLocalIncludesProxy])
+-installAlias=env.Alias('install',[instDirs,prepareIncludesProxy,os.path.join('$PREFIX','include','yade')])
+-Depends(installAlias,prebuildAlias)
+-Default(installAlias)
+-
+ # read all SConscript files
+ env.Export('env');
+ SConscript([os.path.join(x,'SConscript') for x in libDirs+['yade-core']])
+@@ -252,31 +243,33 @@
+ 
+ ##### (this is UNIX specific!) ######################
+ 
++##### (*.so pattern is UNIX specific!!) ######################
+ def enumerateDotSoNodes(dirnode, level=0):
+-	&quot; cut&amp;paste from <A HREF="http://www.scons.org/wiki/BuildDirGlob,">http://www.scons.org/wiki/BuildDirGlob,</A> then modified &quot;
+-	if type(dirnode)==type(''): dirnode=Dir(dirnode) # convert string to node
++	&quot;cut&amp;paste from <A HREF="http://www.scons.org/wiki/BuildDirGlob,">http://www.scons.org/wiki/BuildDirGlob,</A> then modified&quot;
+ 	ret=[]
+ 	for f in dirnode.all_children():
+-		if type(f)==type(Dir('.')): # print str(f)
+-			ret+=enumerateDotSoNodes(f,level)
+-		if str(f)[-3:]=='.so':
+-			ret.append(f) #print &quot;%s%s (%s: %s)&quot;%(level * ' ', str(f),type(f.get_builder()),f.get_builder())
++		if f.isdir():
++			ret+=enumerateDotSoNodes(f,level+1)
++		if f.isfile() and str(f)[-3:]=='.so':
++			ret.append(f)
+ 	return ret
+-installableNodes=enumerateDotSoNodes(Dir('.'))
+ 
+-# iterate over .so nodes we got previously and call Install for each of them
+-for n in installableNodes:
+-	f=str(n)
+-	m=re.match(r'(^|.*/)(yade-(extra|guis|libs|package-[^/]+))/lib[^/]+\.so$',f)
+-	if not m: # older scons version have e.g. qt libs in nodes, we just skip them here
+-		# TODO: exclude system libs in node enumerator, that is much safer
+-		if major=='0' and int(minor)&lt;=96 and int(micro)&lt;90: continue
+-		else: assert(m)
+-	assert(m)
+-	instDir=m.group(2)
+-	env.Install('$PREFIX/lib/yade$POSTFIX/'+instDir,n)
+-# for the one and only binary, we do it by hand
+-env.InstallAs('$PREFIX/bin/yade$POSTFIX','yade-core/yade')
++# since we skip this when cleaning, it means that installed files will not be cleaned
++if not env.GetOption('clean'):
++	installableNodes=enumerateDotSoNodes(Dir('.'))
++	# iterate over .so nodes we got previously and call Install for each of them
++	for n in installableNodes:
++		f=str(n)
++		m=re.match(r'(^|.*/)(yade-(extra|guis|libs|package-[^/]+))/[^/]+$',f)
++		if not m: # older scons version have e.g. qt libs in nodes, we just skip them here
++			# TODO: exclude system libs in node enumerator, that is much safer
++			if major=='0' and int(minor)&lt;=96 and int(micro)&lt;90: continue
++			else: assert(m)
++		assert(m)
++		instDir=m.group(2)
++		env.Install('$PREFIX/lib/yade$POSTFIX/'+instDir,n)
++	# for the one and only binary, we do it by hand
++	env.InstallAs('$PREFIX/bin/yade$POSTFIX','yade-core/yade')
+ 
+ ##########################################################################################
+ ############# MISCILLANEA ################################################################
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000001.html">[Yade-commits] r1036 - in trunk: . yade-core/src/yade	yade-packages/yade-package-lattice/src/PreProcessor/LatticeExample
+</A></li>
+	<LI>Next message: <A HREF="000003.html">[Yade-commits] r1038 - trunk
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#2">[ date ]</a>
+              <a href="thread.html#2">[ thread ]</a>
+              <a href="subject.html#2">[ subject ]</a>
+              <a href="author.html#2">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

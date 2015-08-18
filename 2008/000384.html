@@ -1,0 +1,532 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1424 - in trunk: gui gui/qt3 pkg/common	pkg/common/Engine pkg/common/Engine/FilterEngine
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1424%20-%20in%20trunk%3A%20gui%20gui/qt3%20pkg/common%0A%09pkg/common/Engine%20pkg/common/Engine/FilterEngine&In-Reply-To=%3C200807110801.m6B81qNR011422%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000383.html">
+   <LINK REL="Next"  HREF="000385.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1424 - in trunk: gui gui/qt3 pkg/common	pkg/common/Engine pkg/common/Engine/FilterEngine</H1>
+    <B>sega at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1424%20-%20in%20trunk%3A%20gui%20gui/qt3%20pkg/common%0A%09pkg/common/Engine%20pkg/common/Engine/FilterEngine&In-Reply-To=%3C200807110801.m6B81qNR011422%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1424 - in trunk: gui gui/qt3 pkg/common	pkg/common/Engine pkg/common/Engine/FilterEngine">sega at mail.berlios.de
+       </A><BR>
+    <I>Fri Jul 11 10:01:52 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000383.html">[Yade-commits] r1423 - trunk/gui/qt3
+</A></li>
+        <LI>Next message: <A HREF="000385.html">[Yade-commits] r1425 - trunk/gui/qt3
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#384">[ date ]</a>
+              <a href="thread.html#384">[ thread ]</a>
+              <a href="subject.html#384">[ subject ]</a>
+              <a href="author.html#384">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: sega
+Date: 2008-07-11 10:01:51 +0200 (Fri, 11 Jul 2008)
+New Revision: 1424
+
+Added:
+   trunk/pkg/common/Engine/FilterEngine/
+   trunk/pkg/common/Engine/FilterEngine/FilterEngine.cpp
+   trunk/pkg/common/Engine/FilterEngine/FilterEngine.hpp
+Removed:
+   trunk/pkg/common/Engine/FilterEngine/FiltrEngine.cpp
+   trunk/pkg/common/Engine/FilterEngine/FiltrEngine.hpp
+   trunk/pkg/common/Engine/FiltrEngine/
+Modified:
+   trunk/gui/SConscript
+   trunk/gui/qt3/GLSimulationPlayerViewer.cpp
+   trunk/gui/qt3/GLSimulationPlayerViewer.hpp
+   trunk/gui/qt3/QtGeneratedSimulationPlayer.ui
+   trunk/gui/qt3/QtSimulationPlayer.cpp
+   trunk/gui/qt3/QtSimulationPlayer.hpp
+   trunk/pkg/common/Engine/FilterEngine/ColorizedLayerFilter.cpp
+   trunk/pkg/common/Engine/FilterEngine/ColorizedLayerFilter.hpp
+   trunk/pkg/common/Engine/FilterEngine/ColorizedVelocityFilter.cpp
+   trunk/pkg/common/Engine/FilterEngine/ColorizedVelocityFilter.hpp
+   trunk/pkg/common/SConscript
+Log:
+fix errors in previous commits
+
+Modified: trunk/gui/SConscript
+===================================================================
+--- trunk/gui/SConscript	2008-07-10 19:27:28 UTC (rev 1423)
++++ trunk/gui/SConscript	2008-07-11 08:01:51 UTC (rev 1424)
+@@ -32,7 +32,7 @@
+ 				'OpenGLRenderingEngine',
+ 				'PositionOrientationRecorder',
+ 				'sqlite3x',
+-				'FiltrEngine',
++				'FilterEngine',
+ 				'$QGLVIEWER_LIB']+linkPythonUI,
+ 			CPPPATH=env['CPPPATH']+['qt3']),
+ 	])
+
+Modified: trunk/gui/qt3/GLSimulationPlayerViewer.cpp
+===================================================================
+--- trunk/gui/qt3/GLSimulationPlayerViewer.cpp	2008-07-10 19:27:28 UTC (rev 1423)
++++ trunk/gui/qt3/GLSimulationPlayerViewer.cpp	2008-07-11 08:01:51 UTC (rev 1424)
+@@ -20,7 +20,7 @@
+ #include&lt;boost/algorithm/string.hpp&gt;
+ 
+ #include&lt;yade/lib-opengl/OpenGLWrapper.hpp&gt;
+-#include&lt;yade/pkg-common/FiltrEngine.hpp&gt;
++#include&lt;yade/pkg-common/FilterEngine.hpp&gt;
+ #include&lt;qspinbox.h&gt;
+ #include&quot;QtSimulationPlayer.hpp&quot;
+ 
+@@ -91,7 +91,7 @@
+ 	FOREACH(shared_ptr&lt;Engine&gt;&amp; e, Omega::instance().getRootBody()-&gt;engines){
+ 		// FIXME
+ 		#warning FIXME: this gives me syntax error (invalid conversion) ?!
+-		//if(dynamic_cast&lt;FiltrEngine*&gt;(e.get())) filters.push_back(e);
++		if(dynamic_cast&lt;FilterEngine*&gt;(e.get())) filters.push_back(e);
+ 	}
+ 
+ 	if(!useSQLite){
+@@ -254,6 +254,6 @@
+ 		}
+ 		Omega::instance().setCurrentIteration(con-&gt;executeint(&quot;SELECT&#160;iter from 'records' where bodyTable='&quot;+tableName+&quot;';&quot;));
+ 	}
+-	FOREACH(const shared_ptr&lt;FiltrationalEngine&gt;&amp; e, filters) { if(e-&gt;isActivated()) e-&gt;action(Omega::instance().getRootBody().get()); }
++	FOREACH(const shared_ptr&lt;FilterEngine&gt;&amp; e, filters) { if(e-&gt;isActivated()) e-&gt;action(Omega::instance().getRootBody().get()); }
+ 	return true;
+ }
+
+Modified: trunk/gui/qt3/GLSimulationPlayerViewer.hpp
+===================================================================
+--- trunk/gui/qt3/GLSimulationPlayerViewer.hpp	2008-07-10 19:27:28 UTC (rev 1423)
++++ trunk/gui/qt3/GLSimulationPlayerViewer.hpp	2008-07-11 08:01:51 UTC (rev 1424)
+@@ -20,7 +20,7 @@
+ #include&lt;yade/lib-sqlite3x/sqlite3x.hpp&gt;
+ 
+ class QtSimulationPlayer;
+-class FiltrEngine;
++class FilterEngine;
+ 
+ class GLSimulationPlayerViewer: public GLViewer {
+ 	private :
+@@ -39,7 +39,7 @@
+  		//! filenames or table names (if useSQLite)
+  		list&lt;string&gt; xyzNames;
+  		list&lt;string&gt;::iterator xyzNamesIter;
+-		vector&lt; shared_ptr&lt; FiltrEngine &gt; &gt;   filters;
++		vector&lt; shared_ptr&lt; FilterEngine &gt; &gt;   filters;
+ 	public :
+ 		GLSimulationPlayerViewer(QWidget* parent,char* name);
+ 		virtual ~GLSimulationPlayerViewer(){};
+
+Modified: trunk/gui/qt3/QtGeneratedSimulationPlayer.ui
+===================================================================
+--- trunk/gui/qt3/QtGeneratedSimulationPlayer.ui	2008-07-10 19:27:28 UTC (rev 1423)
++++ trunk/gui/qt3/QtGeneratedSimulationPlayer.ui	2008-07-11 08:01:51 UTC (rev 1424)
+@@ -495,7 +495,7 @@
+                         &lt;/property&gt;
+                         &lt;widget class=&quot;QCheckBox&quot;&gt;
+                             &lt;property name=&quot;name&quot;&gt;
+-                                &lt;cstring&gt;cbAllowFiltration&lt;/cstring&gt;
++                                &lt;cstring&gt;cbAllowFilteration&lt;/cstring&gt;
+                             &lt;/property&gt;
+                             &lt;property name=&quot;text&quot;&gt;
+                                 &lt;string&gt;Allow filtration&lt;/string&gt;
+@@ -672,10 +672,10 @@
+         &lt;slot&gt;pbInputDirectoryClicked()&lt;/slot&gt;
+     &lt;/connection&gt;
+     &lt;connection&gt;
+-        &lt;sender&gt;cbAllowFiltration&lt;/sender&gt;
++        &lt;sender&gt;cbAllowFilteration&lt;/sender&gt;
+         &lt;signal&gt;toggled(bool)&lt;/signal&gt;
+         &lt;receiver&gt;QtGeneratedSimulationPlayer&lt;/receiver&gt;
+-        &lt;slot&gt;cbAllowFiltrationToggled(bool)&lt;/slot&gt;
++        &lt;slot&gt;cbAllowFilterationToggled(bool)&lt;/slot&gt;
+     &lt;/connection&gt;
+ &lt;/connections&gt;
+ &lt;slots&gt;
+@@ -688,7 +688,7 @@
+     &lt;slot&gt;pbResetClicked()&lt;/slot&gt;
+     &lt;slot&gt;pbInputConfigFileClicked()&lt;/slot&gt;
+     &lt;slot&gt;cbSaveSnapShotsToggled(bool)&lt;/slot&gt;
+-    &lt;slot&gt;cbAllowFiltrationToggled(bool)&lt;/slot&gt;
++    &lt;slot&gt;cbAllowFilterationToggled(bool)&lt;/slot&gt;
+ &lt;/slots&gt;
+ &lt;layoutdefaults spacing=&quot;6&quot; margin=&quot;11&quot;/&gt;
+ &lt;includehints&gt;
+
+Modified: trunk/gui/qt3/QtSimulationPlayer.cpp
+===================================================================
+--- trunk/gui/qt3/QtSimulationPlayer.cpp	2008-07-10 19:27:28 UTC (rev 1423)
++++ trunk/gui/qt3/QtSimulationPlayer.cpp	2008-07-11 08:01:51 UTC (rev 1424)
+@@ -10,7 +10,7 @@
+ #include &quot;FileDialog.hpp&quot;
+ #include &quot;GLSimulationPlayerViewer.hpp&quot;
+ #include&lt;yade/core/FileGenerator.hpp&gt;
+-#include&lt;yade/pkg-common/FiltrEngine.hpp&gt;
++#include&lt;yade/pkg-common/FilterEngine.hpp&gt;
+ #include &lt;qlineedit.h&gt;
+ #include &lt;qpushbutton.h&gt;
+ #include &lt;qspinbox.h&gt;
+@@ -28,7 +28,7 @@
+ void QtSimulationPlayer::pbStepClicked(){ glSimulationPlayerViewer-&gt;stopAnimation(); glSimulationPlayerViewer-&gt;doOneStep(); }
+ void QtSimulationPlayer::pbResetClicked(){ setParameters();	glSimulationPlayerViewer-&gt;reset();}
+ void QtSimulationPlayer::cbSaveSnapShotsToggled(bool b){	glSimulationPlayerViewer-&gt;saveSnapShots=b;}
+-void QtSimulationPlayer::cbAllowFiltrationToggled(bool b){	FiltrationalEngine::isFiltrationActivated=b; }
++void QtSimulationPlayer::cbAllowFilterationToggled(bool b){	FilterEngine::isFilterationActivated=b; }
+ void QtSimulationPlayer::closeEvent(QCloseEvent *e){ QtGeneratedSimulationPlayer::closeEvent(e);}
+ 
+ 
+
+Modified: trunk/gui/qt3/QtSimulationPlayer.hpp
+===================================================================
+--- trunk/gui/qt3/QtSimulationPlayer.hpp	2008-07-10 19:27:28 UTC (rev 1423)
++++ trunk/gui/qt3/QtSimulationPlayer.hpp	2008-07-11 08:01:51 UTC (rev 1424)
+@@ -35,7 +35,7 @@
+ 	public slots : virtual void pbStepClicked();
+ 	public slots : virtual void pbResetClicked();
+ 	
+-	public slots : virtual void cbAllowFiltrationToggled(bool b);
++	public slots : virtual void cbAllowFilterationToggled(bool b);
+  	
+ 	protected    : void closeEvent(QCloseEvent *);
+ //						void keyPressEvent(QKeyEvent *){};
+
+Copied: trunk/pkg/common/Engine/FilterEngine (from rev 1423, trunk/pkg/common/Engine/FiltrEngine)
+
+
+Property changes on: trunk/pkg/common/Engine/FilterEngine
+___________________________________________________________________
+Name: svn:mergeinfo
+   + 
+
+Modified: trunk/pkg/common/Engine/FilterEngine/ColorizedLayerFilter.cpp
+===================================================================
+--- trunk/pkg/common/Engine/FiltrEngine/ColorizedLayerFilter.cpp	2008-07-10 19:27:28 UTC (rev 1423)
++++ trunk/pkg/common/Engine/FilterEngine/ColorizedLayerFilter.cpp	2008-07-11 08:01:51 UTC (rev 1424)
+@@ -8,7 +8,7 @@
+ 
+ #include&quot;ColorizedLayerFilter.hpp&quot;
+ 
+-ColorizedLayerFilter::ColorizedLayerFilter() : FiltrEngine() 
++ColorizedLayerFilter::ColorizedLayerFilter() : FilterEngine() 
+ {
+ 	near = Vector3r(0,0,0);
+ 	normal = Vector3r(0,1,0);
+@@ -25,13 +25,13 @@
+ 
+ bool ColorizedLayerFilter::isActivated()
+ {
+-	return FiltrEngine::isActivated() 
++	return FilterEngine::isActivated() 
+ 		&amp;&amp; ((Omega::instance().getCurrentIteration() % interval == 0));
+ }
+ 
+ void ColorizedLayerFilter::registerAttributes()
+ {
+-	FiltrEngine::registerAttributes();
++	FilterEngine::registerAttributes();
+ 	REGISTER_ATTRIBUTE(near);
+ 	REGISTER_ATTRIBUTE(normal);
+ 	REGISTER_ATTRIBUTE(thickness);
+
+Modified: trunk/pkg/common/Engine/FilterEngine/ColorizedLayerFilter.hpp
+===================================================================
+--- trunk/pkg/common/Engine/FiltrEngine/ColorizedLayerFilter.hpp	2008-07-10 19:27:28 UTC (rev 1423)
++++ trunk/pkg/common/Engine/FilterEngine/ColorizedLayerFilter.hpp	2008-07-11 08:01:51 UTC (rev 1424)
+@@ -9,10 +9,10 @@
+ #ifndef COLORIZED_LAYER_FILTER_HPP
+ #define COLORIZED_LAYER_FILTER_HPP 
+ 
+-#include&lt;yade/pkg-common/FiltrEngine.hpp&gt;
++#include&lt;yade/pkg-common/FilterEngine.hpp&gt;
+ #include&lt;yade/core/MetaBody.hpp&gt;
+ 
+-class ColorizedLayerFilter : public FiltrEngine {
++class ColorizedLayerFilter : public FilterEngine {
+ 	private:
+ 		Vector3r far;
+ 	public :
+@@ -30,7 +30,7 @@
+ 		virtual void registerAttributes();
+ 		virtual void postProcessAttributes(bool deserializing);
+ 	REGISTER_CLASS_NAME(ColorizedLayerFilter);
+-	REGISTER_BASE_CLASS_NAME(FiltrEngine);
++	REGISTER_BASE_CLASS_NAME(FilterEngine);
+ };
+ 
+ REGISTER_SERIALIZABLE(ColorizedLayerFilter,false);
+
+Modified: trunk/pkg/common/Engine/FilterEngine/ColorizedVelocityFilter.cpp
+===================================================================
+--- trunk/pkg/common/Engine/FiltrEngine/ColorizedVelocityFilter.cpp	2008-07-10 19:27:28 UTC (rev 1423)
++++ trunk/pkg/common/Engine/FilterEngine/ColorizedVelocityFilter.cpp	2008-07-11 08:01:51 UTC (rev 1424)
+@@ -10,7 +10,7 @@
+ 
+ CREATE_LOGGER(ColorizedVelocityFilter);
+ 
+-ColorizedVelocityFilter::ColorizedVelocityFilter() : FiltrEngine() 
++ColorizedVelocityFilter::ColorizedVelocityFilter() : FilterEngine() 
+ {
+ 	first=true;
+ 	autoScale=true;
+@@ -31,12 +31,12 @@
+ 
+ bool ColorizedVelocityFilter::isActivated()
+ {
+-	return FiltrEngine::isActivated();
++	return FilterEngine::isActivated();
+ }
+ 
+ void ColorizedVelocityFilter::registerAttributes()
+ {
+-	FiltrEngine::registerAttributes();
++	FilterEngine::registerAttributes();
+ 	REGISTER_ATTRIBUTE(autoScale);
+ 	REGISTER_ATTRIBUTE(onlyDynamic);
+ 	REGISTER_ATTRIBUTE(minValue);
+
+Modified: trunk/pkg/common/Engine/FilterEngine/ColorizedVelocityFilter.hpp
+===================================================================
+--- trunk/pkg/common/Engine/FiltrEngine/ColorizedVelocityFilter.hpp	2008-07-10 19:27:28 UTC (rev 1423)
++++ trunk/pkg/common/Engine/FilterEngine/ColorizedVelocityFilter.hpp	2008-07-11 08:01:51 UTC (rev 1424)
+@@ -9,10 +9,10 @@
+ #ifndef COLORIZED_VELOCITY_FILTER_HPP
+ #define COLORIZED_VELOCITY_FILTER_HPP 
+ 
+-#include&lt;yade/pkg-common/FiltrEngine.hpp&gt;
++#include&lt;yade/pkg-common/FilterEngine.hpp&gt;
+ #include&lt;yade/core/MetaBody.hpp&gt;
+ 
+-class ColorizedVelocityFilter : public FiltrEngine {
++class ColorizedVelocityFilter : public FilterEngine {
+ 	protected:
+ 		Real midValue;
+ 		vector&lt;Vector3r&gt; prevPositions;
+@@ -40,7 +40,7 @@
+ 		//virtual void postProcessAttributes(bool deserializing);
+ 		DECLARE_LOGGER;
+ 	REGISTER_CLASS_NAME(ColorizedVelocityFilter);
+-	REGISTER_BASE_CLASS_NAME(FiltrEngine);
++	REGISTER_BASE_CLASS_NAME(FilterEngine);
+ };
+ 
+ REGISTER_SERIALIZABLE(ColorizedVelocityFilter,false);
+
+Copied: trunk/pkg/common/Engine/FilterEngine/FilterEngine.cpp (from rev 1423, trunk/pkg/common/Engine/FiltrEngine/FiltrEngine.cpp)
+===================================================================
+--- trunk/pkg/common/Engine/FiltrEngine/FiltrEngine.cpp	2008-07-10 19:27:28 UTC (rev 1423)
++++ trunk/pkg/common/Engine/FilterEngine/FilterEngine.cpp	2008-07-11 08:01:51 UTC (rev 1424)
+@@ -0,0 +1,20 @@
++/*************************************************************************
++*  Copyright (C) 2008 by Sergei Dorofeenko                               *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">sega at users.berlios.de</A>                                                 *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#include &quot;FilterEngine.hpp&quot;
++
++bool FilterEngine::isFilterationActivated = false;
++
++FilterEngine::FilterEngine() : DeusExMachina(), isFilterActivated(false)
++{
++}
++
++bool FilterEngine::isActivated() 
++{
++	return FilterEngine::isFilterationActivated &amp;&amp; isFilterActivated; 
++}
+
+
+Property changes on: trunk/pkg/common/Engine/FilterEngine/FilterEngine.cpp
+___________________________________________________________________
+Name: svn:mergeinfo
+   + 
+
+Copied: trunk/pkg/common/Engine/FilterEngine/FilterEngine.hpp (from rev 1423, trunk/pkg/common/Engine/FiltrEngine/FiltrEngine.hpp)
+===================================================================
+--- trunk/pkg/common/Engine/FiltrEngine/FiltrEngine.hpp	2008-07-10 19:27:28 UTC (rev 1423)
++++ trunk/pkg/common/Engine/FilterEngine/FilterEngine.hpp	2008-07-11 08:01:51 UTC (rev 1424)
+@@ -0,0 +1,38 @@
++/*************************************************************************
++*  Copyright (C) 2008 by Sergei Dorofeenko                               *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">sega at users.berlios.de</A>                                                 *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#ifndef FILTER_ENGINE_HPP
++#define FILTER_ENGINE_HPP
++
++#include&lt;yade/core/DeusExMachina.hpp&gt;
++class FilterEngine : public DeusExMachina {
++	public:
++		/// Activation of filtration from GUI
++		static bool isFilterationActivated;
++
++		/// Activation of the filter
++		bool isFilterActivated;
++
++		bool isActivated();
++
++		FilterEngine();
++	
++		void registerAttributes()
++		{
++//			REGISTER_ATTRIBUTE(isFilterationActivated);
++			REGISTER_ATTRIBUTE(isFilterActivated);
++		}
++
++	protected :
++	REGISTER_CLASS_NAME(FilterEngine);
++	REGISTER_BASE_CLASS_NAME(DeusExMachina);
++};
++REGISTER_SERIALIZABLE(FilterEngine,false);
++
++#endif // FILTER_ENGINE_HPP
++
+
+
+Property changes on: trunk/pkg/common/Engine/FilterEngine/FilterEngine.hpp
+___________________________________________________________________
+Name: svn:mergeinfo
+   + 
+
+Deleted: trunk/pkg/common/Engine/FilterEngine/FiltrEngine.cpp
+===================================================================
+--- trunk/pkg/common/Engine/FiltrEngine/FiltrEngine.cpp	2008-07-10 19:27:28 UTC (rev 1423)
++++ trunk/pkg/common/Engine/FilterEngine/FiltrEngine.cpp	2008-07-11 08:01:51 UTC (rev 1424)
+@@ -1,20 +0,0 @@
+-/*************************************************************************
+-*  Copyright (C) 2008 by Sergei Dorofeenko                               *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">sega at users.berlios.de</A>                                                 *
+-*                                                                        *
+-*  This program is free software; it is licensed under the terms of the  *
+-*  GNU General Public License v2 or later. See file LICENSE for details. *
+-*************************************************************************/
+-
+-#include &quot;FiltrEngine.hpp&quot;
+-
+-bool FiltrEngine::isFiltrationActivated = false;
+-
+-FiltrEngine::FiltrEngine() : DeusExMachina(), isFilterActivated(false)
+-{
+-}
+-
+-bool FiltrEngine::isActivated() 
+-{
+-	return FiltrEngine::isFiltrationActivated &amp;&amp; isFilterActivated; 
+-}
+
+Deleted: trunk/pkg/common/Engine/FilterEngine/FiltrEngine.hpp
+===================================================================
+--- trunk/pkg/common/Engine/FiltrEngine/FiltrEngine.hpp	2008-07-10 19:27:28 UTC (rev 1423)
++++ trunk/pkg/common/Engine/FilterEngine/FiltrEngine.hpp	2008-07-11 08:01:51 UTC (rev 1424)
+@@ -1,40 +0,0 @@
+-/*************************************************************************
+-*  Copyright (C) 2008 by Sergei Dorofeenko                               *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">sega at users.berlios.de</A>                                                 *
+-*                                                                        *
+-*  This program is free software; it is licensed under the terms of the  *
+-*  GNU General Public License v2 or later. See file LICENSE for details. *
+-*************************************************************************/
+-
+-#ifndef FILTRATIONAL_ENGINE_HPP
+-#define FILTRATIONAL_ENGINE_HPP
+-
+-#include&lt;yade/core/DeusExMachina.hpp&gt;
+-class FiltrEngine : public DeusExMachina {
+-	public:
+-		/// Activation of filtration from GUI
+-		static bool isFiltrationActivated;
+-
+-		/// Activation of the filter
+-		bool isFilterActivated;
+-
+-		bool isActivated();
+-
+-		FiltrEngine();
+-	
+-		void registerAttributes()
+-		{
+-//			REGISTER_ATTRIBUTE(isFiltrationActivated);
+-			REGISTER_ATTRIBUTE(isFilterActivated);
+-		}
+-
+-	protected :
+-	REGISTER_CLASS_NAME(FiltrEngine);
+-	REGISTER_BASE_CLASS_NAME(DeusExMachina);
+-};
+-REGISTER_SERIALIZABLE(FiltrEngine,false);
+-
+-typedef FiltrEngine FiltrationalEngine;
+-
+-#endif // FILTRATIONAL_ENGINE_HPP
+-
+
+Modified: trunk/pkg/common/SConscript
+===================================================================
+--- trunk/pkg/common/SConscript	2008-07-10 19:27:28 UTC (rev 1423)
++++ trunk/pkg/common/SConscript	2008-07-11 08:01:51 UTC (rev 1424)
+@@ -260,16 +260,16 @@
+ 			'ParticleParameters'],
+ 		CPPPATH=env['CPPPATH']+['$PREFIX/include','Engine/DeusExMachina']),
+ 	
+-	env.SharedLibrary('FiltrEngine',['Engine/FiltrEngine/FiltrEngine.cpp']),
++	env.SharedLibrary('FilterEngine',['Engine/FilterEngine/FilterEngine.cpp']),
+ 
+ 	env.SharedLibrary('ColorizedLayerFilter',
+-		['Engine/FiltrEngine/ColorizedLayerFilter.cpp'],
+-		LIBS=env['LIBS']+['yade-base','FiltrEngine']),
++		['Engine/FilterEngine/ColorizedLayerFilter.cpp'],
++		LIBS=env['LIBS']+['yade-base','FilterEngine']),
+ 	
+ 	env.SharedLibrary('ColorizedVelocityFilter',
+-		['Engine/FiltrEngine/ColorizedVelocityFilter.cpp'],
+-		LIBS=env['LIBS']+['yade-base','FiltrEngine'],
+-		CPPPATH=env['CPPPATH']+['$PREFIX/include', 'Engine/FiltrEngine']),
++		['Engine/FilterEngine/ColorizedVelocityFilter.cpp'],
++		LIBS=env['LIBS']+['yade-base','FilterEngine'],
++		CPPPATH=env['CPPPATH']+['$PREFIX/include', 'Engine/FilterEngine']),
+ 	
+ 	env.SharedLibrary('BoundingVolumeMetaEngine',
+ 		['Engine/MetaEngine/BoundingVolumeMetaEngine.cpp'],
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000383.html">[Yade-commits] r1423 - trunk/gui/qt3
+</A></li>
+	<LI>Next message: <A HREF="000385.html">[Yade-commits] r1425 - trunk/gui/qt3
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#384">[ date ]</a>
+              <a href="thread.html#384">[ thread ]</a>
+              <a href="subject.html#384">[ subject ]</a>
+              <a href="author.html#384">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

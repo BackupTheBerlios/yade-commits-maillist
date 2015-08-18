@@ -1,0 +1,135 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1152 - in branches/scons-layout: . debian scripts
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2007/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1152%20-%20in%20branches/scons-layout%3A%20.%20debian%20scripts&In-Reply-To=%3C200703221023.l2MANoRv013481%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000116.html">
+   <LINK REL="Next"  HREF="000118.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1152 - in branches/scons-layout: . debian scripts</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1152%20-%20in%20branches/scons-layout%3A%20.%20debian%20scripts&In-Reply-To=%3C200703221023.l2MANoRv013481%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1152 - in branches/scons-layout: . debian scripts">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Thu Mar 22 11:23:50 CET 2007</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000116.html">[Yade-commits] r1151 - in branches/scons-layout: . core debian	extra gui lib pkg/common pkg/dem pkg/dem/Engine/DeusExMachina	pkg/dem/Engine/EngineUnit pkg/dem/Engine/StandAloneEngine	pkg/dem/PreProcessor	pkg/dem/RenderingEngine/GLDrawInteractingMyTetrahedron	pkg/dem/RenderingEngine/GLDrawSDECLinkGeometry	pkg/dem/RenderingEngine/GLDrawSpheresContactGeometry	pkg/lattice pkg/mass-spring pkg/realtime-rigidbody
+</A></li>
+        <LI>Next message: <A HREF="000118.html">[Yade-commits] r1153 - branches/scons-layout/debian
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#117">[ date ]</a>
+              <a href="thread.html#117">[ thread ]</a>
+              <a href="subject.html#117">[ subject ]</a>
+              <a href="author.html#117">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2007-03-22 11:23:49 +0100 (Thu, 22 Mar 2007)
+New Revision: 1152
+
+Modified:
+   branches/scons-layout/INSTALL
+   branches/scons-layout/debian/control-svn-template
+   branches/scons-layout/debian/rules
+   branches/scons-layout/scripts/svn-debian-prep
+Log:
+Debian depends on wildmagic-dev since the deb compiles on amd64 finally.
+
+Modified: branches/scons-layout/INSTALL
+===================================================================
+--- branches/scons-layout/INSTALL	2007-03-19 19:47:03 UTC (rev 1151)
++++ branches/scons-layout/INSTALL	2007-03-22 10:23:49 UTC (rev 1152)
+@@ -21,7 +21,7 @@
+ 
+ 	$ sudo apt-get install debhelper scons lib3dviewer-dev libqt3-mt-dev qt3-dev-tools python-dev freeglut3-dev libboost-date-time-dev libboost-filesystem-dev libboost-thread-dev wildmagic-dev liblog4cxx9-dev docbook-to-man
+ 
+-Note that lib3dviewer-dev and wildmagic-dev are not in official archives - see <A HREF="http://yade.berlios.de">http://yade.berlios.de</A> on how to get them.
++Note that lib3dviewer-dev and wildmagic-dev are not in official archives - see <A HREF="http://yade.berlios.de">http://yade.berlios.de</A> or <A HREF="http://beta.arcig.cz/~eudoxos/phd/index.cgi/YaDe/DebianSnapshotInstallHowto">http://beta.arcig.cz/~eudoxos/phd/index.cgi/YaDe/DebianSnapshotInstallHowto</A> on how to get them.
+ 
+ Then go ahead:
+ 
+
+Modified: branches/scons-layout/debian/control-svn-template
+===================================================================
+--- branches/scons-layout/debian/control-svn-template	2007-03-19 19:47:03 UTC (rev 1151)
++++ branches/scons-layout/debian/control-svn-template	2007-03-22 10:23:49 UTC (rev 1152)
+@@ -2,7 +2,7 @@
+ Section: x11
+ Priority: optional
+ Maintainer: Vaclav Smilauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">eudoxos at arcig.cz</A>&gt;
+-Build-Depends: debhelper (&gt;= 5), scons, lib3dviewer-dev, libqt3-mt-dev, qt3-dev-tools, python-dev, freeglut3-dev, libboost-date-time-dev, libboost-filesystem-dev, libboost-thread-dev, liblog4cxx9-dev, docbook-to-man, python-scientific
++Build-Depends: debhelper (&gt;= 5), scons, lib3dviewer-dev, wildmagic-dev, libqt3-mt-dev, qt3-dev-tools, python-dev, freeglut3-dev, libboost-date-time-dev, libboost-filesystem-dev, libboost-thread-dev, liblog4cxx9-dev, docbook-to-man, python-scientific
+ Standards-Version: 3.7.2
+ 
+ Package: <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">yade at _SVNVERSION</A>@
+
+Modified: branches/scons-layout/debian/rules
+===================================================================
+--- branches/scons-layout/debian/rules	2007-03-19 19:47:03 UTC (rev 1151)
++++ branches/scons-layout/debian/rules	2007-03-22 10:23:49 UTC (rev 1152)
+@@ -70,11 +70,11 @@
+ 
+ 	### WARNING: !!!!!!!!!!!!! if this hangs later on, use fakeroot-tcp instead of fakeroot !!!!!!!!
+ 	#install headers
+-	scons buildPrefix=debian runtimePREFIX=/usr PREFIX=debian/yade${_SVNVERSION}-dev/usr variant='' version=${SVNVERSION} useMiniWm3=1 exclude=lattice,realtime-rigidbody debian/yade${_SVNVERSION}-dev/usr/include
++	scons buildPrefix=debian runtimePREFIX=/usr PREFIX=debian/yade${_SVNVERSION}-dev/usr variant='' version=${SVNVERSION} useMiniWm3=0 exclude=realtime-rigidbody debian/yade${_SVNVERSION}-dev/usr/include
+ 	#debug build
+-	scons buildPrefix=debian runtimePREFIX=/usr PREFIX=debian/yade${_SVNVERSION}-dbg/usr variant=-dbg pretty=0 optimize=0 debug=1 version=${SVNVERSION} useMiniWm3=1 exclude=lattice,realtime-rigidbody
++	scons buildPrefix=debian runtimePREFIX=/usr PREFIX=debian/yade${_SVNVERSION}-dbg/usr variant=-dbg pretty=0 optimize=0 debug=1 version=${SVNVERSION} useMiniWm3=0 exclude=realtime-rigidbody
+ 	#optimized build
+-	scons buildPrefix=debian runtimePREFIX=/usr PREFIX=debian/yade${_SVNVERSION}/usr variant='' pretty=0 optimize=1 debug=0 version=${SVNVERSION} useMiniWm3=1 exclude=lattice,realtime-rigidbody
++	scons buildPrefix=debian runtimePREFIX=/usr PREFIX=debian/yade${_SVNVERSION}/usr variant='' pretty=0 optimize=1 debug=0 version=${SVNVERSION} useMiniWm3=0 exclude=realtime-rigidbody
+ 
+ 
+ # Build architecture-independent files here.
+
+Modified: branches/scons-layout/scripts/svn-debian-prep
+===================================================================
+--- branches/scons-layout/scripts/svn-debian-prep	2007-03-19 19:47:03 UTC (rev 1151)
++++ branches/scons-layout/scripts/svn-debian-prep	2007-03-22 10:23:49 UTC (rev 1152)
+@@ -7,7 +7,7 @@
+ perl -pi -e&quot;s/\@_SVNVERSION\@/$_SVNVERSION/g&quot; debian/control
+ 
+ cat &lt;&lt;EOF &gt; debian/changelog
+-yade$_SVNVERSION (0.1.1) unstable; urgency=low
++yade$_SVNVERSION (1) unstable; urgency=low
+ 
+   * Building of svn snapshots as separate debian packages.
+ 
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000116.html">[Yade-commits] r1151 - in branches/scons-layout: . core debian	extra gui lib pkg/common pkg/dem pkg/dem/Engine/DeusExMachina	pkg/dem/Engine/EngineUnit pkg/dem/Engine/StandAloneEngine	pkg/dem/PreProcessor	pkg/dem/RenderingEngine/GLDrawInteractingMyTetrahedron	pkg/dem/RenderingEngine/GLDrawSDECLinkGeometry	pkg/dem/RenderingEngine/GLDrawSpheresContactGeometry	pkg/lattice pkg/mass-spring pkg/realtime-rigidbody
+</A></li>
+	<LI>Next message: <A HREF="000118.html">[Yade-commits] r1153 - branches/scons-layout/debian
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#117">[ date ]</a>
+              <a href="thread.html#117">[ thread ]</a>
+              <a href="subject.html#117">[ subject ]</a>
+              <a href="author.html#117">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

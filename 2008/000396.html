@@ -1,0 +1,2209 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1436 - in trunk: core extra extra/clump	extra/spherical-dem-simulator gui/py gui/qt3 pkg/common	pkg/common/Engine/DeusExMachina pkg/dem	pkg/dem/DataClass/InteractionGeometry pkg/dem/PreProcessor	pkg/fem pkg/fem/PreProcessor pkg/mass-spring	pkg/mass-spring/PreProcessor pkg/realtime-rigidbody	pkg/realtime-rigidbody/PreProcessor scripts
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1436%20-%20in%20trunk%3A%20core%20extra%20extra/clump%0A%09extra/spherical-dem-simulator%20gui/py%20gui/qt3%20pkg/common%0A%09pkg/common/Engine/DeusExMachina%20pkg/dem%0A%09pkg/dem/DataClass/InteractionGeometry%20pkg/dem/PreProcessor%0A%09pkg/fem%20pkg/fem/PreProcessor%20pkg/mass-spring%0A%09pkg/mass-spring/PreProcessor%20pkg/realtime-rigidbody%0A%09pkg/realtime-rigidbody/PreProcessor%20scripts&In-Reply-To=%3C200807211312.m6LDCS4J012636%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000395.html">
+   <LINK REL="Next"  HREF="000397.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1436 - in trunk: core extra extra/clump	extra/spherical-dem-simulator gui/py gui/qt3 pkg/common	pkg/common/Engine/DeusExMachina pkg/dem	pkg/dem/DataClass/InteractionGeometry pkg/dem/PreProcessor	pkg/fem pkg/fem/PreProcessor pkg/mass-spring	pkg/mass-spring/PreProcessor pkg/realtime-rigidbody	pkg/realtime-rigidbody/PreProcessor scripts</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1436%20-%20in%20trunk%3A%20core%20extra%20extra/clump%0A%09extra/spherical-dem-simulator%20gui/py%20gui/qt3%20pkg/common%0A%09pkg/common/Engine/DeusExMachina%20pkg/dem%0A%09pkg/dem/DataClass/InteractionGeometry%20pkg/dem/PreProcessor%0A%09pkg/fem%20pkg/fem/PreProcessor%20pkg/mass-spring%0A%09pkg/mass-spring/PreProcessor%20pkg/realtime-rigidbody%0A%09pkg/realtime-rigidbody/PreProcessor%20scripts&In-Reply-To=%3C200807211312.m6LDCS4J012636%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1436 - in trunk: core extra extra/clump	extra/spherical-dem-simulator gui/py gui/qt3 pkg/common	pkg/common/Engine/DeusExMachina pkg/dem	pkg/dem/DataClass/InteractionGeometry pkg/dem/PreProcessor	pkg/fem pkg/fem/PreProcessor pkg/mass-spring	pkg/mass-spring/PreProcessor pkg/realtime-rigidbody	pkg/realtime-rigidbody/PreProcessor scripts">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Mon Jul 21 15:12:28 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000395.html">[Yade-commits] r1435 - in trunk: core gui/py gui/qt3	pkg/common/Engine/StandAloneEngine
+</A></li>
+        <LI>Next message: <A HREF="000397.html">[Yade-commits] r1437 - in trunk: gui gui/py	pkg/common/Engine/EngineUnit
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#396">[ date ]</a>
+              <a href="thread.html#396">[ thread ]</a>
+              <a href="subject.html#396">[ subject ]</a>
+              <a href="author.html#396">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2008-07-21 15:12:23 +0200 (Mon, 21 Jul 2008)
+New Revision: 1436
+
+Added:
+   trunk/pkg/common/Engine/DeusExMachina/GravityEngines.cpp
+   trunk/pkg/common/Engine/DeusExMachina/GravityEngines.hpp
+Removed:
+   trunk/pkg/common/Engine/DeusExMachina/CentralGravityEngine.cpp
+   trunk/pkg/common/Engine/DeusExMachina/CentralGravityEngine.hpp
+   trunk/pkg/common/Engine/DeusExMachina/GravityEngine.cpp
+   trunk/pkg/common/Engine/DeusExMachina/GravityEngine.hpp
+Modified:
+   trunk/core/MetaBody.cpp
+   trunk/core/Omega.cpp
+   trunk/core/SConscript
+   trunk/core/SimulationFlow.cpp
+   trunk/core/ThreadRunner.cpp
+   trunk/extra/Brefcom.cpp
+   trunk/extra/Brefcom.hpp
+   trunk/extra/BrefcomTestGen.cpp
+   trunk/extra/SConscript
+   trunk/extra/SimpleScene.cpp
+   trunk/extra/clump/Shop.cpp
+   trunk/extra/spherical-dem-simulator/SphericalDEMSimulator.cpp
+   trunk/gui/py/PeriodicPythonRunner.hpp
+   trunk/gui/py/yadeControl.cpp
+   trunk/gui/qt3/GLViewer.cpp
+   trunk/pkg/common/SConscript
+   trunk/pkg/dem/DataClass/InteractionGeometry/SpheresContactGeometry.cpp
+   trunk/pkg/dem/PreProcessor/CohesiveTriaxialTest.cpp
+   trunk/pkg/dem/PreProcessor/DirectShearCis.cpp
+   trunk/pkg/dem/PreProcessor/Funnel.cpp
+   trunk/pkg/dem/PreProcessor/HydraulicTest.cpp
+   trunk/pkg/dem/PreProcessor/ModifiedTriaxialTest.cpp
+   trunk/pkg/dem/PreProcessor/SDECImpactTest.cpp
+   trunk/pkg/dem/PreProcessor/SDECLinkedSpheres.cpp
+   trunk/pkg/dem/PreProcessor/SDECMovingWall.cpp
+   trunk/pkg/dem/PreProcessor/SDECSpheresPlane.cpp
+   trunk/pkg/dem/PreProcessor/STLImporterTest.cpp
+   trunk/pkg/dem/PreProcessor/SnowCreepTest.cpp
+   trunk/pkg/dem/PreProcessor/TestSimpleViscoelastic.cpp
+   trunk/pkg/dem/PreProcessor/TetrahedronsTest.cpp
+   trunk/pkg/dem/PreProcessor/ThreePointBending.cpp
+   trunk/pkg/dem/PreProcessor/TriaxialTest.cpp
+   trunk/pkg/dem/PreProcessor/TriaxialTestWater.cpp
+   trunk/pkg/dem/SConscript
+   trunk/pkg/fem/PreProcessor/FEMBeam.cpp
+   trunk/pkg/fem/SConscript
+   trunk/pkg/mass-spring/PreProcessor/HangingCloth.cpp
+   trunk/pkg/mass-spring/SConscript
+   trunk/pkg/realtime-rigidbody/PreProcessor/BoxStack.cpp
+   trunk/pkg/realtime-rigidbody/PreProcessor/RotatingBox.cpp
+   trunk/pkg/realtime-rigidbody/SConscript
+   trunk/scripts/simple-scene.py
+Log:
+1. Merge all gravity engines (central, axial, directional (the old one)) into 1 header
+2. Cleanups of pkg/common/SConstript
+3. Add more brefcom accessors (Fs, Fn, ...)
+4. Fix (hopefully) threading issues with python; Omega().pause and other now use Py_BEGIN_ALLOW_THREADS to avoid deadlock of the interpreter if called from c++ interpreting python code
+
+
+
+Modified: trunk/core/MetaBody.cpp
+===================================================================
+--- trunk/core/MetaBody.cpp	2008-07-18 18:10:30 UTC (rev 1435)
++++ trunk/core/MetaBody.cpp	2008-07-21 13:12:23 UTC (rev 1436)
+@@ -92,7 +92,7 @@
+ 		FOREACH(shared_ptr&lt;Engine&gt; e, initializers){ if(e-&gt;isActivated()) e-&gt;action(this); }
+ 		needsInitializers=false;
+ 	}
+-	FOREACH(const shared_ptr&lt;Engine&gt;&amp; e, engines){ if(e-&gt;isActivated()) e-&gt;action(this); }
++	FOREACH(const shared_ptr&lt;Engine&gt;&amp; e, engines){ if(e-&gt;isActivated()){ e-&gt;action(this); }}
+ }
+ 
+ shared_ptr&lt;Engine&gt; MetaBody::engineByName(string s){
+
+Modified: trunk/core/Omega.cpp
+===================================================================
+--- trunk/core/Omega.cpp	2008-07-18 18:10:30 UTC (rev 1435)
++++ trunk/core/Omega.cpp	2008-07-21 13:12:23 UTC (rev 1436)
+@@ -79,6 +79,8 @@
+ void Omega::finishSimulationLoop(){ LOG_DEBUG(&quot;&quot;); if (simulationLoop&amp;&amp;simulationLoop-&gt;looping())simulationLoop-&gt;stop();}
+ void Omega::joinSimulationLoop(){ LOG_DEBUG(&quot;&quot;); finishSimulationLoop(); if (simulationLoop) simulationLoop=shared_ptr&lt;ThreadRunner&gt;(); }
+ 
++/* WARNING: single simulation is still run asynchronously; the call will return before the iteration is finished.
++ */
+ void Omega::spawnSingleSimulationLoop(){
+ 	if (simulationLoop){
+ 		msStartingPauseTime = microsec_clock::local_time();
+
+Modified: trunk/core/SConscript
+===================================================================
+--- trunk/core/SConscript	2008-07-18 18:10:30 UTC (rev 1435)
++++ trunk/core/SConscript	2008-07-21 13:12:23 UTC (rev 1436)
+@@ -32,7 +32,6 @@
+ 		LIBS=env['LIBS']+['yade-base',
+ 			'yade-serialization',
+ 			'yade-factory',
+-			'yade-base',
+ 			'yade-loki',
+ 			'yade-multimethods',
+ 			'glut'],
+
+Modified: trunk/core/SimulationFlow.cpp
+===================================================================
+--- trunk/core/SimulationFlow.cpp	2008-07-18 18:10:30 UTC (rev 1435)
++++ trunk/core/SimulationFlow.cpp	2008-07-21 13:12:23 UTC (rev 1436)
+@@ -20,7 +20,6 @@
+ 		OO.incrementSimulationTime();
+ 		if(OO.getRootBody()-&gt;stopAtIteration&gt;0 &amp;&amp; OO.getCurrentIteration()==OO.getRootBody()-&gt;stopAtIteration){
+ 			setTerminate(true);
+-			return;
+ 		}
+ 	}
+ };
+
+Modified: trunk/core/ThreadRunner.cpp
+===================================================================
+--- trunk/core/ThreadRunner.cpp	2008-07-18 18:10:30 UTC (rev 1435)
++++ trunk/core/ThreadRunner.cpp	2008-07-21 13:12:23 UTC (rev 1436)
+@@ -70,11 +70,11 @@
+ 
+ void ThreadRunner::stop()
+ {
+-	std::cerr&lt;&lt;__FILE__&lt;&lt;&quot;:&quot;&lt;&lt;__LINE__&lt;&lt;&quot;:&quot;&lt;&lt;__FUNCTION__&lt;&lt;std::endl;
++	//std::cerr&lt;&lt;__FILE__&lt;&lt;&quot;:&quot;&lt;&lt;__LINE__&lt;&lt;&quot;:&quot;&lt;&lt;__FUNCTION__&lt;&lt;std::endl;
+ 	if(!m_looping) return;
+-	std::cerr&lt;&lt;__FILE__&lt;&lt;&quot;:&quot;&lt;&lt;__LINE__&lt;&lt;&quot;:&quot;&lt;&lt;__FUNCTION__&lt;&lt;std::endl;
++	//std::cerr&lt;&lt;__FILE__&lt;&lt;&quot;:&quot;&lt;&lt;__LINE__&lt;&lt;&quot;:&quot;&lt;&lt;__FUNCTION__&lt;&lt;std::endl;
+ 	boost::mutex::scoped_lock lock(m_boolmutex);
+-	std::cerr&lt;&lt;__FILE__&lt;&lt;&quot;:&quot;&lt;&lt;__LINE__&lt;&lt;&quot;:&quot;&lt;&lt;__FUNCTION__&lt;&lt;std::endl;
++	//std::cerr&lt;&lt;__FILE__&lt;&lt;&quot;:&quot;&lt;&lt;__LINE__&lt;&lt;&quot;:&quot;&lt;&lt;__FUNCTION__&lt;&lt;std::endl;
+ 	m_looping=false;
+ }
+ 
+
+Modified: trunk/extra/Brefcom.cpp
+===================================================================
+--- trunk/extra/Brefcom.cpp	2008-07-18 18:10:30 UTC (rev 1435)
++++ trunk/extra/Brefcom.cpp	2008-07-21 13:12:23 UTC (rev 1436)
+@@ -123,7 +123,9 @@
+ 		#endif
+ 
+ 		// shorthands
+-		Real&amp; epsN(BC-&gt;epsN); Vector3r&amp; epsT(BC-&gt;epsT); Real&amp; kappaD(BC-&gt;kappaD); const Real&amp; equilibriumDist(BC-&gt;equilibriumDist); const Real&amp; xiShear(BC-&gt;xiShear); const Real&amp; E(BC-&gt;E); const Real&amp; undamagedCohesion(BC-&gt;undamagedCohesion); const Real&amp; tanFrictionAngle(BC-&gt;tanFrictionAngle); const Real&amp; G(BC-&gt;G); const Real&amp; crossSection(BC-&gt;crossSection); const Real&amp; tau(BC-&gt;tau); const Real&amp; expDmgRate(BC-&gt;expDmgRate); Real&amp; omega(BC-&gt;omega); Real&amp; sigmaN(BC-&gt;sigmaN); 
++		Real&amp; epsN(BC-&gt;epsN); Vector3r&amp; epsT(BC-&gt;epsT); Real&amp; kappaD(BC-&gt;kappaD); const Real&amp; equilibriumDist(BC-&gt;equilibriumDist); const Real&amp; xiShear(BC-&gt;xiShear); const Real&amp; E(BC-&gt;E); const Real&amp; undamagedCohesion(BC-&gt;undamagedCohesion); const Real&amp; tanFrictionAngle(BC-&gt;tanFrictionAngle); const Real&amp; G(BC-&gt;G); const Real&amp; crossSection(BC-&gt;crossSection); const Real&amp; tau(BC-&gt;tau); const Real&amp; expDmgRate(BC-&gt;expDmgRate);
++		// for python access
++		Real&amp; omega(BC-&gt;omega); Real&amp; sigmaN(BC-&gt;sigmaN);  Vector3r&amp; sigmaT(BC-&gt;sigmaT); Real&amp; Fn(BC-&gt;Fn); Vector3r&amp; Fs(BC-&gt;Fs);
+ 
+ 		Real dist=(rbp1-&gt;se3.position-rbp2-&gt;se3.position).Length();
+ 		#define NNAN(a) assert(!isnan(a));
+@@ -183,9 +185,6 @@
+ 			//epsT-=contGeom-&gt;normal*epsT.Dot(contGeom-&gt;normal);
+ 			//TRVAR1(epsT.Dot(contGeom-&gt;normal));
+ 			
+-
+-		Vector3r sigmaT;
+-
+ 		#ifdef BREFCOM_MATERIAL_MODEL
+ 			BREFCOM_MATERIAL_MODEL
+ 		#else
+@@ -197,12 +196,9 @@
+ 		//if(BC-&gt;omega==1){TRVAR5(equilibriumDist,dist,epsN,kappaD,BC-&gt;epsFracture);}
+ 
+ 		// store Fn (and Fs?), for use with BrefcomStiffnessCounter
+-		NNAN(sigmaN);
+-		NNAN(sigmaT[0]);
+-		NNAN(sigmaT[1]);
+-		NNAN(sigmaT[2]);
++		NNAN(sigmaN); NNAN(sigmaT[0]);NNAN(sigmaT[1]);NNAN(sigmaT[2]);
+ 		NNAN(crossSection);
+-		Fn=sigmaN*crossSection;
++		Fn=sigmaN*crossSection;	Fs=sigmaT*crossSection;
+ 		//TRVAR5(epsN,epsT,sigmaN,sigmaT,crossSection*(contGeom-&gt;normal*sigmaN + sigmaT));
+ 		applyForce(crossSection*(contGeom-&gt;normal*sigmaN + sigmaT)); /* this is the force applied on the _first_ body */
+ 
+
+Modified: trunk/extra/Brefcom.hpp
+===================================================================
+--- trunk/extra/Brefcom.hpp	2008-07-18 18:10:30 UTC (rev 1435)
++++ trunk/extra/Brefcom.hpp	2008-07-21 13:12:23 UTC (rev 1436)
+@@ -38,10 +38,10 @@
+ 		bool neverDamage;
+ 
+ 		/*! auxiliary variable for visualization and BrefcomStiffnessCounter, recalculated by BrefcomLaw at every iteration */
+-		Real omega, Fn, sigmaN, epsN;
++		Real omega, Fn, sigmaN, epsN; Vector3r sigmaT, Fs;
+ 
+ 		BrefcomContact(): InteractionPhysics(),E(0), G(0), tanFrictionAngle(0), undamagedCohesion(0), equilibriumDist(0), crossSection(0), expBending(0), xiShear(0), tau(0), expDmgRate(0) { createIndex(); epsT=Vector3r::ZERO; kappaD=0; isCohesive=false; }
+-		BrefcomContact(Real _E, Real _G, Real _tanFrictionAngle, Real _undamagedCohesion, Real _equilibriumDist, Real _crossSection, Real _epsCrackOnset, Real _epsFracture, Real _expBending, Real _xiShear, Real _tau=0, Real _expDmgRate=1): InteractionPhysics(), E(_E), G(_G), tanFrictionAngle(_tanFrictionAngle), undamagedCohesion(_undamagedCohesion), equilibriumDist(_equilibriumDist), crossSection(_crossSection), epsCrackOnset(_epsCrackOnset), epsFracture(_epsFracture), expBending(_expBending), xiShear(_xiShear), tau(_tau), expDmgRate(_expDmgRate) { epsT=Vector3r::ZERO; kappaD=0; isCohesive=false; neverDamage=false; omega=0; Fn=0; /*TRVAR5(epsCrackOnset,epsFracture,Kn,crossSection,equilibriumDist); */ }
++		BrefcomContact(Real _E, Real _G, Real _tanFrictionAngle, Real _undamagedCohesion, Real _equilibriumDist, Real _crossSection, Real _epsCrackOnset, Real _epsFracture, Real _expBending, Real _xiShear, Real _tau=0, Real _expDmgRate=1): InteractionPhysics(), E(_E), G(_G), tanFrictionAngle(_tanFrictionAngle), undamagedCohesion(_undamagedCohesion), equilibriumDist(_equilibriumDist), crossSection(_crossSection), epsCrackOnset(_epsCrackOnset), epsFracture(_epsFracture), expBending(_expBending), xiShear(_xiShear), tau(_tau), expDmgRate(_expDmgRate) { epsT=Vector3r::ZERO; kappaD=0; isCohesive=false; neverDamage=false; omega=0; Fn=0; Fs=Vector3r::ZERO; /*TRVAR5(epsCrackOnset,epsFracture,Kn,crossSection,equilibriumDist); */ }
+ 
+ 
+ 		void registerAttributes(){
+@@ -67,7 +67,12 @@
+ 			REGISTER_ATTRIBUTE(isCohesive);
+ 
+ 			// auxiliary params, to make them accessible from python
+-			REGISTER_ATTRIBUTE(omega);REGISTER_ATTRIBUTE(Fn);
++			REGISTER_ATTRIBUTE(omega);
++			REGISTER_ATTRIBUTE(Fn);
++			REGISTER_ATTRIBUTE(Fs);
++			REGISTER_ATTRIBUTE(epsN);
++			REGISTER_ATTRIBUTE(sigmaN);
++			REGISTER_ATTRIBUTE(sigmaT);
+ 		};
+ 
+ 	REGISTER_CLASS_NAME(BrefcomContact);
+@@ -88,7 +93,7 @@
+ 		 *
+ 		 * The orientation is conventionally as forces should be applied on the FIRST element in the interaction.
+ 		 */
+-		Vector3r Fs; Real Fn;
++		//Vector3r Fs; Real Fn;
+ 		/* temporaries initialized in the loop over interactions; above methods use these. */
+ 		body_id_t id1, id2;
+ 		shared_ptr&lt;Body&gt; body1, body2;
+
+Modified: trunk/extra/BrefcomTestGen.cpp
+===================================================================
+--- trunk/extra/BrefcomTestGen.cpp	2008-07-18 18:10:30 UTC (rev 1435)
++++ trunk/extra/BrefcomTestGen.cpp	2008-07-21 13:12:23 UTC (rev 1436)
+@@ -53,7 +53,7 @@
+ #include&lt;yade/pkg-common/PhysicalActionDamper.hpp&gt;
+ #include&lt;yade/pkg-common/CundallNonViscousForceDamping.hpp&gt;
+ #include&lt;yade/pkg-common/CundallNonViscousMomentumDamping.hpp&gt;
+-#include&lt;yade/pkg-common/GravityEngine.hpp&gt;
++#include&lt;yade/pkg-common/GravityEngines.hpp&gt;
+ 
+ #include&lt;yade/pkg-dem/BodyMacroParameters.hpp&gt;
+ #include&lt;yade/pkg-dem/ElasticCriterionTimeStepper.hpp&gt;
+
+Modified: trunk/extra/SConscript
+===================================================================
+--- trunk/extra/SConscript	2008-07-18 18:10:30 UTC (rev 1435)
++++ trunk/extra/SConscript	2008-07-21 13:12:23 UTC (rev 1436)
+@@ -19,7 +19,7 @@
+ 			'CundallNonViscousForceDamping',
+ 			'PhysicalActionDamper',
+ 			'InteractionPhysicsMetaEngine',
+-			'GravityEngine',
++			'GravityEngines',
+ 			'Sphere',
+ 			'yade-multimethods',
+ 			'yade-factory',
+@@ -66,7 +66,7 @@
+ 			'CundallNonViscousMomentumDamping',
+ 			'CundallNonViscousForceDamping',
+ 			'MetaInteractingGeometry',
+-			'GravityEngine',
++			'GravityEngines',
+ 			'yade-serialization',
+ 			'yade-base',	
+ 			'PhysicalActionContainerInitializer',
+
+Modified: trunk/extra/SimpleScene.cpp
+===================================================================
+--- trunk/extra/SimpleScene.cpp	2008-07-18 18:10:30 UTC (rev 1435)
++++ trunk/extra/SimpleScene.cpp	2008-07-21 13:12:23 UTC (rev 1436)
+@@ -29,7 +29,7 @@
+ #include&lt;yade/pkg-common/PhysicalActionApplier.hpp&gt;
+ #include&lt;yade/pkg-common/CundallNonViscousForceDamping.hpp&gt;
+ #include&lt;yade/pkg-common/CundallNonViscousMomentumDamping.hpp&gt;
+-#include&lt;yade/pkg-common/GravityEngine.hpp&gt;
++#include&lt;yade/pkg-common/GravityEngines.hpp&gt;
+ #include&lt;yade/pkg-dem/ElasticContactLaw.hpp&gt;
+ #include&lt;yade/pkg-dem/SpheresContactGeometry.hpp&gt;
+ #include&lt;yade/pkg-dem/SimpleElasticRelationships.hpp&gt;
+
+Modified: trunk/extra/clump/Shop.cpp
+===================================================================
+--- trunk/extra/clump/Shop.cpp	2008-07-18 18:10:30 UTC (rev 1435)
++++ trunk/extra/clump/Shop.cpp	2008-07-21 13:12:23 UTC (rev 1436)
+@@ -56,7 +56,7 @@
+ #include&lt;yade/pkg-common/PhysicalActionApplier.hpp&gt;
+ #include&lt;yade/pkg-common/CundallNonViscousForceDamping.hpp&gt;
+ #include&lt;yade/pkg-common/CundallNonViscousMomentumDamping.hpp&gt;
+-#include&lt;yade/pkg-common/GravityEngine.hpp&gt;
++#include&lt;yade/pkg-common/GravityEngines.hpp&gt;
+ 
+ #include&lt;yade/pkg-dem/BodyMacroParameters.hpp&gt;
+ #include&lt;yade/pkg-dem/ElasticCriterionTimeStepper.hpp&gt;
+
+Modified: trunk/extra/spherical-dem-simulator/SphericalDEMSimulator.cpp
+===================================================================
+--- trunk/extra/spherical-dem-simulator/SphericalDEMSimulator.cpp	2008-07-18 18:10:30 UTC (rev 1435)
++++ trunk/extra/spherical-dem-simulator/SphericalDEMSimulator.cpp	2008-07-21 13:12:23 UTC (rev 1436)
+@@ -14,7 +14,7 @@
+ #include&lt;yade/core/Engine.hpp&gt;
+ 
+ #include&lt;yade/pkg-common/Sphere.hpp&gt;
+-#include&lt;yade/pkg-common/GravityEngine.hpp&gt;
++#include&lt;yade/pkg-common/GravityEngines.hpp&gt;
+ #include&lt;yade/pkg-common/InteractionPhysicsMetaEngine.hpp&gt;
+ #include&lt;yade/pkg-common/PhysicalActionDamper.hpp&gt;
+ #include&lt;yade/pkg-common/CundallNonViscousForceDamping.hpp&gt;
+
+Modified: trunk/gui/py/PeriodicPythonRunner.hpp
+===================================================================
+--- trunk/gui/py/PeriodicPythonRunner.hpp	2008-07-18 18:10:30 UTC (rev 1435)
++++ trunk/gui/py/PeriodicPythonRunner.hpp	2008-07-21 13:12:23 UTC (rev 1436)
+@@ -16,7 +16,6 @@
+ 		PeriodicPythonRunner(): command(&quot;pass&quot;){};
+ 		/* virtual bool isActivated: not overridden, PeriodicEngine handles that */
+ 		virtual void action(MetaBody* b){
+-			//cerr&lt;&lt;&quot;[PeriodicPythonRunner]&quot;;
+ 			PyGILState_STATE gstate;
+ 				gstate = PyGILState_Ensure();
+ 				PyRun_SimpleString(command.c_str()); // this is suboptimal, since it has to be parsed at every execution; critical?
+
+Modified: trunk/gui/py/yadeControl.cpp
+===================================================================
+--- trunk/gui/py/yadeControl.cpp	2008-07-18 18:10:30 UTC (rev 1435)
++++ trunk/gui/py/yadeControl.cpp	2008-07-21 13:12:23 UTC (rev 1436)
+@@ -263,6 +263,7 @@
+ 		else return pyBody(proxee-&gt;operator[](id));
+ 	}
+ 	body_id_t insert(pyBody b){return proxee-&gt;insert(b.proxee);}
++	long length(){return proxee-&gt;size();}
+ 	void clear(){proxee-&gt;clear();}
+ };
+ 
+@@ -320,7 +321,7 @@
+ 		/* return nth iteration from the container (0-based index); this is to facilitate picking random interaction */
+ 		pyInteraction pyNth(long n){
+ 			long i=0; FOREACH(const shared_ptr&lt;Interaction&gt;&amp; I, *proxee){ if(i++==n) return pyInteraction(I); }
+-			throw invalid_argument(string(&quot;Interaction number out of range (&quot;)+lexical_cast&lt;string&gt;(n)+&quot;&gt;&quot;+lexical_cast&lt;string&gt;(i)+&quot;).&quot;);
++			throw invalid_argument(string(&quot;Interaction number out of range (&quot;)+lexical_cast&lt;string&gt;(n)+&quot;&gt;=&quot;+lexical_cast&lt;string&gt;(i)+&quot;).&quot;);
+ 		}
+ };
+ 
+@@ -373,11 +374,7 @@
+ 
+ 	long iter(){ return OMEGA.getCurrentIteration();}
+ 	double simulationTime(){return OMEGA.getSimulationTime();}
+-	double realTime(){
+-		posix_time::time_duration duration=microsec_clock::local_time()-OMEGA.getMsStartingSimulationTime();
+-		duration-=OMEGA.getSimulationPauseDuration();
+-		return double(duration.total_seconds())+double(duration.total_milliseconds()%1000)/1000; // FIXME: fractional_seconds are usec or msec or compile-time dependent?! documentation not clear on that.
+-	}
++	double realTime(){ return OMEGA.getComputationTime(); }
+ 	// long realTime(){return OMEGA(get...);}
+ 	double dt_get(){return OMEGA.getTimeStep();}
+ 	void dt_set(double dt){OMEGA.skipTimeStepper(true); OMEGA.setTimeStep(dt);}
+@@ -390,26 +387,23 @@
+ 
+ 	void run(long int numIter=-1){
+ 		if(numIter&gt;0) OMEGA.getRootBody()-&gt;stopAtIteration=OMEGA.getCurrentIteration()+numIter;
+-		//else OMEGA.stopAtIteration=-1;
+ 		OMEGA.startSimulationLoop();
+ 		long toGo=OMEGA.getRootBody()-&gt;stopAtIteration-OMEGA.getCurrentIteration();
+ 		LOG_DEBUG(&quot;RUN&quot;&lt;&lt;(toGo&gt;0?string(&quot; (&quot;+lexical_cast&lt;string&gt;(toGo)+&quot; to go)&quot;):string(&quot;&quot;))&lt;&lt;&quot;!&quot;);
+ 	}
+-	void pause(){OMEGA.stopSimulationLoop(); LOG_DEBUG(&quot;PAUSE!&quot;);}
+-	void step() {OMEGA.spawnSingleSimulationLoop(); LOG_DEBUG(&quot;STEP!&quot;);}
++	void pause(){Py_BEGIN_ALLOW_THREADS; OMEGA.stopSimulationLoop(); Py_END_ALLOW_THREADS; LOG_DEBUG(&quot;PAUSE!&quot;);}
++	void step() { LOG_DEBUG(&quot;STEP!&quot;); run(1); wait();  }
++	void wait(){ if(OMEGA.isRunning()){LOG_DEBUG(&quot;WAIT!&quot;);} else return; timespec t1,t2; t1.tv_sec=0; t1.tv_nsec=40000000; /* 40 ms */ Py_BEGIN_ALLOW_THREADS; while(OMEGA.isRunning()) nanosleep(&amp;t1,&amp;t2); Py_END_ALLOW_THREADS; }
+ 
+ 	void load(std::string fileName) {
+-		//OMEGA.finishSimulationLoop();
+-		OMEGA.joinSimulationLoop();
++		Py_BEGIN_ALLOW_THREADS; OMEGA.joinSimulationLoop(); Py_END_ALLOW_THREADS; 
+ 		OMEGA.setSimulationFileName(fileName);
+ 		OMEGA.loadSimulation();
+ 		OMEGA.createSimulationLoop();
+ 		LOG_DEBUG(&quot;LOAD!&quot;);
+ 	}
+ 
+-	void reset(){
+-		OMEGA.reset();
+-	}
++	void reset(){Py_BEGIN_ALLOW_THREADS; OMEGA.reset(); Py_END_ALLOW_THREADS; }
+ 
+ 	void save(std::string fileName){
+ 		assertRootBody();
+@@ -458,7 +452,6 @@
+ 	}
+ 
+ 
+-	void wait(){ if(OMEGA.isRunning()){LOG_DEBUG(&quot;WAIT!&quot;);} else return; timespec t1,t2; t1.tv_sec=0; t1.tv_nsec=40000000; /*40 ms*/ while(OMEGA.isRunning()) nanosleep(&amp;t1,&amp;t2); }
+ 	
+ 	pyBodyContainer bodies_get(void){assertRootBody(); return pyBodyContainer(OMEGA.getRootBody()-&gt;bodies); }
+ 	pyInteractionContainer interactions_get(void){assertRootBody(); return pyInteractionContainer(OMEGA.getRootBody()-&gt;transientInteractions); }
+@@ -525,6 +518,7 @@
+ 	
+ 	boost::python::class_&lt;pyBodyContainer&gt;(&quot;BodyContainer&quot;,python::init&lt;pyBodyContainer&amp;&gt;())
+ 		.def(&quot;__getitem__&quot;,&amp;pyBodyContainer::pyGetitem)
++		.def(&quot;__len__&quot;,&amp;pyBodyContainer::length)
+ 		.def(&quot;append&quot;,&amp;pyBodyContainer::insert)
+ 		.def(&quot;clear&quot;, &amp;pyBodyContainer::clear);
+ 	boost::python::class_&lt;pyInteractionContainer&gt;(&quot;InteractionContainer&quot;,python::init&lt;pyInteractionContainer&amp;&gt;())
+
+Modified: trunk/gui/qt3/GLViewer.cpp
+===================================================================
+--- trunk/gui/qt3/GLViewer.cpp	2008-07-18 18:10:30 UTC (rev 1435)
++++ trunk/gui/qt3/GLViewer.cpp	2008-07-21 13:12:23 UTC (rev 1436)
+@@ -26,7 +26,7 @@
+ 	isMoving=false;
+ 	renderer=_renderer;
+ 	drawGridXYZ[0]=drawGridXYZ[1]=drawGridXYZ[2]=false;
+-	drawScale=fals;
++	drawScale=true;
+ 	viewId = id;
+ 	cut_plane = 0;
+ 	cut_plane_delta = -2;
+@@ -415,7 +415,7 @@
+ }
+ 
+ float GLViewer::displayedSceneRadius(){
+-	return (camera()-&gt;unprojectedCoordinatesOf(qglviewer::Vec(width(),height(),.5))-camera()-&gt;unprojectedCoordinatesOf(qglviewer::Vec(0,0,.5))).norm();
++	return (camera()-&gt;unprojectedCoordinatesOf(qglviewer::Vec(width()/2,height()/2,.5))-camera()-&gt;unprojectedCoordinatesOf(qglviewer::Vec(0,0,.5))).norm();
+ }
+ 
+ void GLViewer::postDraw(){
+@@ -423,7 +423,7 @@
+ 	Real dispDiameter=min(wholeDiameter,max((Real)displayedSceneRadius()*2,wholeDiameter/1e3)); // limit to avoid drawing 1e5 lines with big zoom level
+ 	//qglviewer::Vec center=QGLViewer::camera()-&gt;sceneCenter();
+ 	Real gridStep=pow(10,(floor(log10(dispDiameter)-.7)));
+-	Real scaleStep=pow(10,(floor(log10(displayedSceneRadius()*2)-.7))); // unsconstrained
++	Real scaleStep=pow(10,(floor(log10(displayedSceneRadius()*2)-.7))); // unconstrained
+ 	int nSegments=((int)(wholeDiameter/gridStep))+1;
+ 	Real realSize=nSegments*gridStep;
+ 	//LOG_DEBUG(&quot;nSegments=&quot;&lt;&lt;nSegments&lt;&lt;&quot;,gridStep=&quot;&lt;&lt;gridStep&lt;&lt;&quot;,realSize=&quot;&lt;&lt;realSize);
+@@ -447,9 +447,10 @@
+ 			for(int xy=0;xy&lt;2;xy++)extremalDxDy[xy]=(axis&gt;0 ? min(extremalDxDy[xy],(int)screenDxDy[axis][xy]) : screenDxDy[axis][xy]);
+ 		}
+ 		//LOG_DEBUG(&quot;Screen offsets for axes: &quot;&lt;&lt;&quot; x(&quot;&lt;&lt;screenDxDy[0][0]&lt;&lt;&quot;,&quot;&lt;&lt;screenDxDy[0][1]&lt;&lt;&quot;) y(&quot;&lt;&lt;screenDxDy[1][0]&lt;&lt;&quot;,&quot;&lt;&lt;screenDxDy[1][1]&lt;&lt;&quot;) z(&quot;&lt;&lt;screenDxDy[2][0]&lt;&lt;&quot;,&quot;&lt;&lt;screenDxDy[2][1]&lt;&lt;&quot;)&quot;);
+-		int margin=20; // screen pixels
++		int margin=10; // screen pixels
+ 		int scaleCenter[2]; scaleCenter[0]=abs(extremalDxDy[0])+margin; scaleCenter[1]=abs(extremalDxDy[1])+margin;
+ 		//LOG_DEBUG(&quot;Center of scale &quot;&lt;&lt;scaleCenter[0]&lt;&lt;&quot;,&quot;&lt;&lt;scaleCenter[1]);
++		//displayMessage(QString().sprintf(&quot;displayed scene radius %g&quot;,displayedSceneRadius()));
+ 		startScreenCoordinatesSystem();
+ 			glDisable(GL_LIGHTING);
+ 			glDisable(GL_DEPTH_TEST);
+@@ -464,8 +465,8 @@
+ 			}
+ 			glLineWidth(1.);
+ 			glEnable(GL_DEPTH_TEST);
++			QGLViewer::drawText(scaleCenter[0],scaleCenter[1],QString().sprintf(&quot;%.3g&quot;,scaleStep));
+ 		stopScreenCoordinatesSystem();
+-		QGLViewer::drawText(scaleCenter[0],scaleCenter[1],QString().sprintf(&quot;%.3g&quot;,scaleStep));
+ 	}
+ 
+ 	// cutting planes (should be moved to OpenGLRenderingEngine perhaps?)
+
+Deleted: trunk/pkg/common/Engine/DeusExMachina/CentralGravityEngine.cpp
+===================================================================
+--- trunk/pkg/common/Engine/DeusExMachina/CentralGravityEngine.cpp	2008-07-18 18:10:30 UTC (rev 1435)
++++ trunk/pkg/common/Engine/DeusExMachina/CentralGravityEngine.cpp	2008-07-21 13:12:23 UTC (rev 1436)
+@@ -1,47 +0,0 @@
+-// 2008 &#169; V&#225;clav &#352;milauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">eudoxos at arcig.cz</A>&gt; 
+-#include&quot;CentralGravityEngine.hpp&quot;
+-#include&lt;yade/core/MetaBody.hpp&gt;
+-#include&lt;yade/pkg-common/ParticleParameters.hpp&gt;
+-
+-YADE_PLUGIN(&quot;CentralGravityEngine&quot;,&quot;AxialGravityEngine&quot;);
+-
+-void CentralGravityEngine::applyCondition(MetaBody* rootBody){
+-	/* get the central body, by its id; cast its Body::physicalParameters to ParticleParameters, since we need the mass */
+-	Real centralMass=YADE_PTR_CAST&lt;ParticleParameters&gt;(Body::byId(centralBody)-&gt;physicalParameters)-&gt;mass;
+-	/* position of the central body */
+-	const Vector3r&amp; centralPos=Body::byId(centralBody)-&gt;physicalParameters-&gt;se3.position;
+-	/* loop over all bodies */
+-	BodyContainer::iterator Iend=rootBody-&gt;bodies-&gt;end();
+-	for(BodyContainer::iterator I=rootBody-&gt;bodies-&gt;begin(); I!=Iend; ++I){
+-		const shared_ptr&lt;Body&gt;&amp; b(*I);
+-		if(b-&gt;isClumpMember()) continue; // skip clump members
+-		if(b-&gt;getId()==centralBody) continue; // don't gravitate central body to itself (would be div by zero)
+-		Real myMass=YADE_PTR_CAST&lt;ParticleParameters&gt;(b-&gt;physicalParameters)-&gt;mass; // mass of the current body; if the body has no mass (responsibility of the user), it will crash gracefully in debug builds
+-		const Vector3r&amp; myPos=b-&gt;physicalParameters-&gt;se3.position; // position of the current body;
+-		Real F=kappa*centralMass*myMass/(centralPos-myPos).SquaredLength(); // force according to the gravity law
+-		Vector3r toCenter=centralPos-myPos; toCenter.Normalize(); // unit vector between the elements
+-		// apply force(s): first to the current body
+-		static_cast&lt;Force*&gt;(rootBody-&gt;physicalActions-&gt;find(b-&gt;getId(),cachedForceClassIndex).get())-&gt;force+=F*toCenter;
+-		// if uncommented, reverse force will be applied to the central body
+-		// static_cast&lt;Force*&gt;(rootBody-&gt;physicalActions-&gt;find(centralBody,cachedForceClassIndex).get())-&gt;force-=F*toCenter;
+-	}
+-}
+-CREATE_LOGGER(AxialGravityEngine);
+-void AxialGravityEngine::applyCondition(MetaBody* rootBody){
+-	BodyContainer::iterator Iend=rootBody-&gt;bodies-&gt;end();
+-	for(BodyContainer::iterator I=rootBody-&gt;bodies-&gt;begin(); I!=Iend; ++I){
+-		const shared_ptr&lt;Body&gt;&amp; b(*I);
+-		if(b-&gt;isClumpMember()) continue;
+-		Real myMass=YADE_PTR_CAST&lt;ParticleParameters&gt;(b-&gt;physicalParameters)-&gt;mass;
+-		/* <A HREF="http://mathworld.wolfram.com/Point-LineDistance3-Dimensional.html">http://mathworld.wolfram.com/Point-LineDistance3-Dimensional.html</A> */
+-		const Vector3r&amp; x0=b-&gt;physicalParameters-&gt;se3.position;
+-		const Vector3r&amp; x1=axisPoint;
+-		const Vector3r x2=axisPoint+axisDirection;
+-		Vector3r closestAxisPoint=(x2-x1) * /* t */ (-(x1-x0).Dot(x2-x1))/((x2-x1).SquaredLength());
+-		Vector3r toAxis=closestAxisPoint-x0; toAxis.Normalize();
+-		static_pointer_cast&lt;Force&gt;(rootBody-&gt;physicalActions-&gt;find(b-&gt;getId(),cachedForceClassIndex))-&gt;force+=acceleration*myMass*toAxis;
+-		//if(b-&gt;getId()==20){ TRVAR3(toAxis,acceleration*myMass*toAxis,static_pointer_cast&lt;Force&gt;(rootBody-&gt;physicalActions-&gt;find(b-&gt;getId(),cachedForceClassIndex))-&gt;force); }
+-	}
+-}
+-
+-
+
+Deleted: trunk/pkg/common/Engine/DeusExMachina/CentralGravityEngine.hpp
+===================================================================
+--- trunk/pkg/common/Engine/DeusExMachina/CentralGravityEngine.hpp	2008-07-18 18:10:30 UTC (rev 1435)
++++ trunk/pkg/common/Engine/DeusExMachina/CentralGravityEngine.hpp	2008-07-21 13:12:23 UTC (rev 1436)
+@@ -1,59 +0,0 @@
+-#pragma once
+-
+-#include&lt;yade/core/DeusExMachina.hpp&gt;
+-#include&lt;yade/pkg-common/Force.hpp&gt;
+-
+-/* Engine attracting all bodies towards a central body, using Newton's gravity law.
+- *
+- * <A HREF="http://en.wikipedia.org/wiki/Newton%27s_law_of_universal_gravitation.">http://en.wikipedia.org/wiki/Newton%27s_law_of_universal_gravitation.</A>
+- * Unlike in real gravity, there are no forces exerted on the central body.
+- * Should there be? This way, we don't have energy conservation.
+- *
+- * @todo This code has not been yet tested at all.
+- *
+- */
+-
+-class CentralGravityEngine: public DeusExMachina {
+-	private:
+-		int cachedForceClassIndex;
+-	public:
+-		//! The body towards which all other bodies are attracted.
+-		body_id_t centralBody;
+-		//! The gravity constant. Must be big enough to have realistic influence when masses are small.
+-		Real kappa;
+-		CentralGravityEngine(){ shared_ptr&lt;Force&gt; f(new Force); cachedForceClassIndex=f-&gt;getClassIndex(); }
+-		virtual ~CentralGravityEngine(){};
+-		virtual void applyCondition(MetaBody*);
+-	protected:
+-		virtual void registerAttributes(){REGISTER_ATTRIBUTE(centralBody); REGISTER_ATTRIBUTE(kappa);}
+-		NEEDS_BEX(&quot;Force&quot;);
+-		REGISTER_CLASS_NAME(CentralGravityEngine);
+-		REGISTER_BASE_CLASS_NAME(DeusExMachina);
+-};
+-REGISTER_SERIALIZABLE(CentralGravityEngine,false);
+-
+-/*! Apply acceleration (independent of distance) directed towards an axis.
+- *
+- */
+-class AxialGravityEngine: public DeusExMachina {
+-	private:
+-		int cachedForceClassIndex;
+-	public:
+-		//! point through which the axis is passing
+-		Vector3r axisPoint;
+-		//! direction of the gravity axis (may not be normalized)
+-		Vector3r axisDirection;
+-		//! magnitude of acceleration that will be applied
+-		Real acceleration;
+-		AxialGravityEngine(){ shared_ptr&lt;Force&gt; f(new Force); cachedForceClassIndex=f-&gt;getClassIndex(); }
+-		virtual ~AxialGravityEngine(){};
+-		virtual void applyCondition(MetaBody*);
+-	protected:
+-		virtual void registerAttributes(){REGISTER_ATTRIBUTE(axisPoint); REGISTER_ATTRIBUTE(axisDirection); REGISTER_ATTRIBUTE(acceleration); }
+-		NEEDS_BEX(&quot;Force&quot;);
+-		REGISTER_CLASS_NAME(AxialGravityEngine);
+-		REGISTER_BASE_CLASS_NAME(DeusExMachina);
+-		DECLARE_LOGGER;
+-};
+-REGISTER_SERIALIZABLE(AxialGravityEngine,false);
+-
+
+Deleted: trunk/pkg/common/Engine/DeusExMachina/GravityEngine.cpp
+===================================================================
+--- trunk/pkg/common/Engine/DeusExMachina/GravityEngine.cpp	2008-07-18 18:10:30 UTC (rev 1435)
++++ trunk/pkg/common/Engine/DeusExMachina/GravityEngine.cpp	2008-07-21 13:12:23 UTC (rev 1436)
+@@ -1,53 +0,0 @@
+-/*************************************************************************
+-*  Copyright (C) 2004 by Janek Kozicki                                   *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">cosurgi at berlios.de</A>                                                    *
+-*                                                                        *
+-*  This program is free software; it is licensed under the terms of the  *
+-*  GNU General Public License v2 or later. See file LICENSE for details. *
+-*************************************************************************/
+-
+-#include&quot;GravityEngine.hpp&quot;
+-#include&lt;yade/pkg-common/ParticleParameters.hpp&gt;
+-#include&lt;yade/pkg-common/Force.hpp&gt;
+-#include&lt;yade/core/MetaBody.hpp&gt;
+-
+-GravityEngine::GravityEngine() : actionParameterForce(new Force), gravity(Vector3r::ZERO)
+-{
+-}
+-
+-
+-GravityEngine::~GravityEngine()
+-{
+-}
+-
+-
+-void GravityEngine::registerAttributes()
+-{
+-	REGISTER_ATTRIBUTE(gravity);
+-}
+-
+-
+-void GravityEngine::applyCondition(MetaBody* ncb)
+-{
+-	shared_ptr&lt;BodyContainer&gt;&amp; bodies = ncb-&gt;bodies;
+-	
+-	BodyContainer::iterator bi    = bodies-&gt;begin();
+-	BodyContainer::iterator biEnd = bodies-&gt;end();
+-	for( ; bi!=biEnd ; ++bi )
+-	{
+-		shared_ptr&lt;Body&gt; b = *bi;
+-		/* skip bodies that are within a clump;
+-		 * even if they are marked isDynamic==false, forces applied to them are passed to the clump, which is dynamic;
+-		 * and since clump is a body with mass equal to the sum of masses of its components, it would have gravity applied twice.
+-		 *
+-		 * The choice is to skip (b-&gt;isClumpMember()) or (b-&gt;isClump()). We rather skip members,
+-		 * since that will apply smaller number of forces and (theoretically) improve numerical stability ;-) */
+-		if(b-&gt;isClumpMember()) continue;
+-
+-		ParticleParameters* p = dynamic_cast&lt;ParticleParameters*&gt;(b-&gt;physicalParameters.get());
+-		if (p)
+-			static_cast&lt;Force*&gt;( ncb-&gt;physicalActions-&gt;find( b-&gt;getId() , actionParameterForce-&gt;getClassIndex() ).get() )-&gt;force += gravity * p-&gt;mass;
+-        }
+-}
+-
+-YADE_PLUGIN();
+
+Deleted: trunk/pkg/common/Engine/DeusExMachina/GravityEngine.hpp
+===================================================================
+--- trunk/pkg/common/Engine/DeusExMachina/GravityEngine.hpp	2008-07-18 18:10:30 UTC (rev 1435)
++++ trunk/pkg/common/Engine/DeusExMachina/GravityEngine.hpp	2008-07-21 13:12:23 UTC (rev 1436)
+@@ -1,38 +0,0 @@
+-/*************************************************************************
+-*  Copyright (C) 2004 by Janek Kozicki                                   *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">cosurgi at berlios.de</A>                                                    *
+-*                                                                        *
+-*  This program is free software; it is licensed under the terms of the  *
+-*  GNU General Public License v2 or later. See file LICENSE for details. *
+-*************************************************************************/
+-
+-#ifndef GRAVITY_FORCE_FUNCTOR_HPP
+-#define GRAVITY_FORCE_FUNCTOR_HPP 
+-
+-#include&lt;yade/core/DeusExMachina.hpp&gt;
+-
+-class Force;
+-
+-class GravityEngine : public DeusExMachina 
+-{
+-	private	:
+-		shared_ptr&lt;Force&gt; actionParameterForce;
+-
+-	public :
+-		Vector3r gravity;
+-		GravityEngine();
+-		virtual ~GravityEngine();
+-	
+-		virtual void applyCondition(MetaBody*);
+-	
+-	protected :
+-		virtual void registerAttributes();
+-	NEEDS_BEX(&quot;Force&quot;);
+-	REGISTER_CLASS_NAME(GravityEngine);
+-	REGISTER_BASE_CLASS_NAME(DeusExMachina);
+-};
+-
+-REGISTER_SERIALIZABLE(GravityEngine,false);
+-
+-#endif // GRAVITY_FORCE_FUNCTOR_HPP 
+-
+
+Copied: trunk/pkg/common/Engine/DeusExMachina/GravityEngines.cpp (from rev 1425, trunk/pkg/common/Engine/DeusExMachina/GravityEngine.cpp)
+===================================================================
+--- trunk/pkg/common/Engine/DeusExMachina/GravityEngine.cpp	2008-07-11 08:32:11 UTC (rev 1425)
++++ trunk/pkg/common/Engine/DeusExMachina/GravityEngines.cpp	2008-07-21 13:12:23 UTC (rev 1436)
+@@ -0,0 +1,57 @@
++/*************************************************************************
++*  Copyright (C) 2004 by Janek Kozicki                                   *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">cosurgi at berlios.de</A>                                                    *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#include&quot;GravityEngines.hpp&quot;
++#include&lt;yade/pkg-common/ParticleParameters.hpp&gt;
++#include&lt;yade/core/MetaBody.hpp&gt;
++
++YADE_PLUGIN(&quot;GravityEngine&quot;,&quot;CentralGravityEngine&quot;,&quot;AxialGravityEngine&quot;);
++
++
++void GravityEngine::applyCondition(MetaBody* ncb){
++	/* skip bodies that are within a clump;
++	 * even if they are marked isDynamic==false, forces applied to them are passed to the clump, which is dynamic;
++	 * and since clump is a body with mass equal to the sum of masses of its components, it would have gravity applied twice.
++	 *
++	 * The choice is to skip (b-&gt;isClumpMember()) or (b-&gt;isClump()). We rather skip members,
++	 * since that will apply smaller number of forces. */
++	FOREACH(const shared_ptr&lt;Body&gt;&amp; b, *ncb-&gt;bodies){
++		if(b-&gt;isClumpMember()) continue;
++		shared_ptr&lt;ParticleParameters&gt; p=YADE_PTR_CAST&lt;ParticleParameters&gt;(b-&gt;physicalParameters);
++		assert(p);
++		static_cast&lt;Force*&gt;(ncb-&gt;physicalActions-&gt;find(b-&gt;getId(),cachedForceClassIndex).get())-&gt;force+=gravity*p-&gt;mass;
++	}
++}
++
++void CentralGravityEngine::applyCondition(MetaBody* rootBody){
++	const Vector3r&amp; centralPos=Body::byId(centralBody)-&gt;physicalParameters-&gt;se3.position;
++	FOREACH(const shared_ptr&lt;Body&gt;&amp; b, *rootBody-&gt;bodies){
++		if(b-&gt;isClumpMember() || b-&gt;getId()==centralBody) continue; // skip clump members and central body
++		Real F=accel*YADE_PTR_CAST&lt;ParticleParameters&gt;(b-&gt;physicalParameters)-&gt;mass;
++		Vector3r toCenter=centralPos-b-&gt;physicalParameters-&gt;se3.position; toCenter.Normalize();
++		static_cast&lt;Force*&gt;(rootBody-&gt;physicalActions-&gt;find(b-&gt;getId(),cachedForceClassIndex).get())-&gt;force+=F*toCenter;
++		if(reciprocal) static_cast&lt;Force*&gt;(rootBody-&gt;physicalActions-&gt;find(centralBody,cachedForceClassIndex).get())-&gt;force-=F*toCenter;
++	}
++}
++
++void AxialGravityEngine::applyCondition(MetaBody* rootBody){
++	BodyContainer::iterator Iend=rootBody-&gt;bodies-&gt;end();
++	for(BodyContainer::iterator I=rootBody-&gt;bodies-&gt;begin(); I!=Iend; ++I){
++		const shared_ptr&lt;Body&gt;&amp; b(*I);
++		if(b-&gt;isClumpMember()) continue;
++		Real myMass=YADE_PTR_CAST&lt;ParticleParameters&gt;(b-&gt;physicalParameters)-&gt;mass;
++		/* <A HREF="http://mathworld.wolfram.com/Point-LineDistance3-Dimensional.html">http://mathworld.wolfram.com/Point-LineDistance3-Dimensional.html</A> */
++		const Vector3r&amp; x0=b-&gt;physicalParameters-&gt;se3.position;
++		const Vector3r&amp; x1=axisPoint;
++		const Vector3r x2=axisPoint+axisDirection;
++		Vector3r closestAxisPoint=(x2-x1) * /* t */ (-(x1-x0).Dot(x2-x1))/((x2-x1).SquaredLength());
++		Vector3r toAxis=closestAxisPoint-x0; toAxis.Normalize();
++		static_pointer_cast&lt;Force&gt;(rootBody-&gt;physicalActions-&gt;find(b-&gt;getId(),cachedForceClassIndex))-&gt;force+=acceleration*myMass*toAxis;
++		//if(b-&gt;getId()==20){ TRVAR3(toAxis,acceleration*myMass*toAxis,static_pointer_cast&lt;Force&gt;(rootBody-&gt;physicalActions-&gt;find(b-&gt;getId(),cachedForceClassIndex))-&gt;force); }
++	}
++}
+
+Copied: trunk/pkg/common/Engine/DeusExMachina/GravityEngines.hpp (from rev 1425, trunk/pkg/common/Engine/DeusExMachina/GravityEngine.hpp)
+===================================================================
+--- trunk/pkg/common/Engine/DeusExMachina/GravityEngine.hpp	2008-07-11 08:32:11 UTC (rev 1425)
++++ trunk/pkg/common/Engine/DeusExMachina/GravityEngines.hpp	2008-07-21 13:12:23 UTC (rev 1436)
+@@ -0,0 +1,77 @@
++// Copyright (C) 2004 by Janek Kozicki &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">cosurgi at berlios.de</A>&gt;
++// 2007,2008 &#169; V&#225;clav &#352;milauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">eudoxos at arcig.cz</A>&gt; 
++#pragma once
++#include&lt;yade/core/DeusExMachina.hpp&gt;
++#include&lt;yade/pkg-common/Force.hpp&gt;
++
++/* Homogeneous gravity field; applies gravity*mass force on all bodies.
++ *
++ * @bug is a DeusExMachina, but doesn't care about subscribedBodies.
++ */
++class GravityEngine : public DeusExMachina{
++		int cachedForceClassIndex;
++	public :
++		Vector3r gravity;
++		GravityEngine(): gravity(Vector3r::ZERO){shared_ptr&lt;Force&gt; f(new Force); cachedForceClassIndex=f-&gt;getClassIndex();};
++		virtual ~GravityEngine(){};
++		virtual void applyCondition(MetaBody*);
++	protected :
++		virtual void registerAttributes(){REGISTER_ATTRIBUTE(gravity);}
++	NEEDS_BEX(&quot;Force&quot;);
++	REGISTER_CLASS_NAME(GravityEngine);
++	REGISTER_BASE_CLASS_NAME(DeusExMachina);
++};
++REGISTER_SERIALIZABLE(GravityEngine,false);
++
++
++/* Engine attracting all bodies towards a central body (doesn't depend on distance);
++ *
++ * @todo This code has not been yet tested at all.
++ * @bug is a DeusExMachina, but doesn't care about subscribedBodies.
++ */
++class CentralGravityEngine: public DeusExMachina {
++	private:
++		int cachedForceClassIndex;
++	public:
++		//! The body towards which all other bodies are attracted.
++		body_id_t centralBody;
++		//! acceleration towards the central body
++		Real accel;
++		//! Whether to apply reciprocal force to the central body as well
++		bool reciprocal;
++		CentralGravityEngine(){ shared_ptr&lt;Force&gt; f(new Force); cachedForceClassIndex=f-&gt;getClassIndex(); reciprocal=false; }
++		virtual ~CentralGravityEngine(){};
++		virtual void applyCondition(MetaBody*);
++	protected:
++		virtual void registerAttributes(){REGISTER_ATTRIBUTE(centralBody); REGISTER_ATTRIBUTE(accel); REGISTER_ATTRIBUTE(reciprocal); }
++		NEEDS_BEX(&quot;Force&quot;);
++		REGISTER_CLASS_NAME(CentralGravityEngine);
++		REGISTER_BASE_CLASS_NAME(DeusExMachina);
++};
++REGISTER_SERIALIZABLE(CentralGravityEngine,false);
++
++/*! Apply acceleration (independent of distance) directed towards an axis.
++ *
++ * @bug is a DeusExMachina, but doesn't care about subscribedBodies.
++ */
++class AxialGravityEngine: public DeusExMachina {
++	private:
++		int cachedForceClassIndex;
++	public:
++		//! point through which the axis is passing
++		Vector3r axisPoint;
++		//! direction of the gravity axis (may not be normalized)
++		Vector3r axisDirection;
++		//! magnitude of acceleration that will be applied
++		Real acceleration;
++		AxialGravityEngine(){ shared_ptr&lt;Force&gt; f(new Force); cachedForceClassIndex=f-&gt;getClassIndex(); }
++		virtual ~AxialGravityEngine(){};
++		virtual void applyCondition(MetaBody*);
++	protected:
++		virtual void registerAttributes(){REGISTER_ATTRIBUTE(axisPoint); REGISTER_ATTRIBUTE(axisDirection); REGISTER_ATTRIBUTE(acceleration); }
++		NEEDS_BEX(&quot;Force&quot;);
++		REGISTER_CLASS_NAME(AxialGravityEngine);
++		REGISTER_BASE_CLASS_NAME(DeusExMachina);
++};
++REGISTER_SERIALIZABLE(AxialGravityEngine,false);
++
+
+Modified: trunk/pkg/common/SConscript
+===================================================================
+--- trunk/pkg/common/SConscript	2008-07-18 18:10:30 UTC (rev 1435)
++++ trunk/pkg/common/SConscript	2008-07-21 13:12:23 UTC (rev 1436)
+@@ -14,668 +14,156 @@
+ 		LIBS=env['LIBS']+['yade-base']),
+ 	
+ ## moved to core/DefaultContainerImplementations
+-#	env.SharedLibrary('BodyRedirectionVector',
+-#		['Container/BodyRedirectionVector.cpp'],
+-#		LIBS=env['LIBS']+['yade-base']),
+-#	env.SharedLibrary('InteractionVecSet',
+-#		['Container/InteractionVecSet.cpp'],
+-#		LIBS=env['LIBS']+['yade-base']),
+-#	env.SharedLibrary('PhysicalActionVectorVector',
+-#		['Container/PhysicalActionVectorVector.cpp'],
+-#		LIBS=env['LIBS']+['yade-base']),
++#	env.SharedLibrary('BodyRedirectionVector',['Container/BodyRedirectionVector.cpp']),
++#	env.SharedLibrary('InteractionVecSet',['Container/InteractionVecSet.cpp']),
++#	env.SharedLibrary('PhysicalActionVectorVector',['Container/PhysicalActionVectorVector.cpp']),
+ ## still permit linking with that
+ 	env.SharedLibrary('BodyRedirectionVector',[]),
+ 	env.SharedLibrary('InteractionVecSet',[]),
+ 	env.SharedLibrary('PhysicalActionVectorVector',[]),
+ 
+-	env.SharedLibrary('AABB',
+-		['DataClass/BoundingVolume/AABB.cpp'],
+-		LIBS=env['LIBS']+['yade-base',
+-			'yade-serialization',
+-			'yade-base']),
+-
+-	env.SharedLibrary('BoundingSphere',
+-		['DataClass/BoundingVolume/BoundingSphere.cpp'],
+-		LIBS=env['LIBS']+['yade-base',
+-			'yade-serialization']),
+-
+-	env.SharedLibrary('InteractingBox',
+-		['DataClass/InteractingGeometry/InteractingBox.cpp'],
+-		LIBS=env['LIBS']+['yade-base']),
+-
+-	env.SharedLibrary('InteractingSphere',
+-		['DataClass/InteractingGeometry/InteractingSphere.cpp'],
+-		LIBS=env['LIBS']+['yade-base']),
+-
+-	env.SharedLibrary('MetaInteractingGeometry',
+-		['DataClass/InteractingGeometry/MetaInteractingGeometry.cpp'],
+-		LIBS=env['LIBS']+['yade-base']),
+-    
+-	env.SharedLibrary('InteractingVertex'
+-	    ,['DataClass/InteractingGeometry/InteractingVertex.cpp'],
+-		 LIBS=env['LIBS']+['yade-base']),
+-	
+-	env.SharedLibrary('InteractingEdge'
+-	    ,['DataClass/InteractingGeometry/InteractingEdge.cpp']),
+-
+-	env.SharedLibrary('InteractingFacet'
+-	    ,['DataClass/InteractingGeometry/InteractingFacet.cpp']),
+-
+-	env.SharedLibrary('ParticleParameters',
+-		['DataClass/PhysicalParameters/ParticleParameters.cpp'],
+-		LIBS=env['LIBS']+['yade-base']),
+-
+-	env.SharedLibrary('RigidBodyParameters',
+-		['DataClass/PhysicalParameters/RigidBodyParameters.cpp'],
+-		LIBS=env['LIBS']+['yade-base',
+-			'ParticleParameters',
+-			'yade-serialization',
+-			'yade-multimethods']),
+-
+-	env.SharedLibrary('ElasticBodyParameters',
+-		['DataClass/PhysicalParameters/ElasticBodyParameters.cpp'],
+-		LIBS=env['LIBS']+['yade-base',
+-			'RigidBodyParameters',
+-			'ParticleParameters',
+-			'yade-serialization',
+-			'yade-multimethods']),
+-
+-	env.SharedLibrary('ClosestFeatures',
+-		['DataClass/InteractionGeometry/ClosestFeatures.cpp'],
+-		LIBS=env['LIBS']+['yade-base',		
+-			'yade-serialization']),
+-
+-	env.SharedLibrary('SimpleElasticInteraction',
+-		['DataClass/InteractionPhysics/SimpleElasticInteraction.cpp'],
+-		LIBS=env['LIBS']+['yade-base']),
+-
+-	env.SharedLibrary('Force',
+-		['DataClass/PhysicalAction/Force.cpp'],
+-		LIBS=env['LIBS']+['yade-base']),
+-
+-	env.SharedLibrary('Momentum',
+-		['DataClass/PhysicalAction/Momentum.cpp'],
+-		LIBS=env['LIBS']+['yade-base']),
+-
+-	env.SharedLibrary('Box',
+-		['DataClass/GeometricalModel/Box.cpp'],
+-		LIBS=env['LIBS']+['yade-base',
+-			'yade-multimethods']),
+-
+-	env.SharedLibrary('Mesh2D',
+-		['DataClass/GeometricalModel/Mesh2D.cpp'],
+-		LIBS=env['LIBS']+['yade-base',
+-			'yade-multimethods',
+-			'yade-serialization']),
+-
+-	env.SharedLibrary('Sphere',
+-		['DataClass/GeometricalModel/Sphere.cpp'],
+-		LIBS=env['LIBS']+['yade-base',
+-			'yade-multimethods',
+-			'yade-serialization']),
+-
+-	env.SharedLibrary('Tetrahedron',
+-		['DataClass/GeometricalModel/Tetrahedron.cpp'],
+-		LIBS=env['LIBS']+['yade-base','yade-multimethods']),
+-
+-	env.SharedLibrary('Quadrilateral',
+-		['DataClass/GeometricalModel/Quadrilateral.cpp'],
+-		LIBS=env['LIBS']+['yade-base','yade-multimethods'],
+-		CPPPATH=env['CPPPATH']+['$PREFIX/include','DataClass/GeometricalModel']),
+-
+-	env.SharedLibrary('Vertex'
+-	    ,['DataClass/GeometricalModel/Vertex.cpp'],
+-		 LIBS=env['LIBS']+['yade-base']),
+-	
+-	env.SharedLibrary('GeometricalEdge'
+-	    ,['DataClass/GeometricalModel/GeometricalEdge.cpp']),
+-    
+-	env.SharedLibrary('Facet'
+-	    ,['DataClass/GeometricalModel/Facet.cpp']),
+-	
+-	env.SharedLibrary('MomentEngine',
+-		['Engine/DeusExMachina/MomentEngine.cpp'],
+-		LIBS=env['LIBS']+['yade-base','Momentum','ParticleParameters'],
+-		CPPPATH=env['CPPPATH']+['DataClass/PhysicalParameters',
+-			'Engine/DeusExMachina',
+-			'$PREFIX/include',
+-			'DataClass/PhysicalAction']),
+-
+-	env.SharedLibrary('ForceEngine',
+-		['Engine/DeusExMachina/ForceEngine.cpp'],
+-		LIBS=env['LIBS']+['yade-base',  'Force', 'ParticleParameters'],
+-		CPPPATH=env['CPPPATH']+['DataClass/PhysicalParameters',
+-			'Engine/DeusExMachina',
+-			'$PREFIX/include',
+-			'DataClass/PhysicalAction']),
+-
+-	env.SharedLibrary('DisplacementToForceEngine',
+-		['Engine/DeusExMachina/DisplacementToForceEngine.cpp'],
+-		LIBS=env['LIBS']+['yade-base',
+-			'yade-factory',
+-			'yade-base',
+-			'Force',
+-			'ParticleParameters',
+-			'yade-serialization',
+-			'yade-multimethods'],
+-		CPPPATH=env['CPPPATH']+['DataClass/PhysicalParameters',
+-			'Engine/DeusExMachina',
+-			'$PREFIX/include', 
+-			'DataClass/PhysicalAction']),
+-
+-	env.SharedLibrary('GravityEngine',
+-		['Engine/DeusExMachina/GravityEngine.cpp'],
+-		LIBS=env['LIBS']+['yade-base','Force','ParticleParameters'],
+-		CPPPATH=env['CPPPATH']+['Engine/DeusExMachina',
+-			'DataClass/PhysicalAction',
+-			'$PREFIX/include',
+-			'DataClass/PhysicalParameters']),
+-	
+-	env.SharedLibrary('CentralGravityEngine',
+-		['Engine/DeusExMachina/CentralGravityEngine.cpp'],
+-		LIBS=env['LIBS']+['yade-base','Force','ParticleParameters'],
+-		),
+-
+-	env.SharedLibrary('RotationEngine',
+-		['Engine/DeusExMachina/RotationEngine.cpp'],
+-		LIBS=env['LIBS']+['yade-base',
+-			
+-			'ParticleParameters',
+-			'RigidBodyParameters',
+-			'yade-serialization',
+-			'yade-base',
+-			
+-			'yade-multimethods'],
+-		CPPPATH=env['CPPPATH']+['Engine/DeusExMachina',
+-			'$PREFIX/include',
+-			'DataClass/PhysicalParameters',
+-			'DataClass/PhysicalParameters']),
+-
+-	env.SharedLibrary('TranslationEngine',
+-		['Engine/DeusExMachina/TranslationEngine.cpp'],
+-		LIBS=env['LIBS']+['yade-base',
+-			'ParticleParameters',
+-			'yade-serialization',
+-			'yade-multimethods'],
+-		CPPPATH=env['CPPPATH']+['DataClass/PhysicalParameters',
+-			'$PREFIX/include',
+-			'Engine/DeusExMachina']),
+-
+-	env.SharedLibrary('CinemCisEngine',
+-		['Engine/DeusExMachina/CinemCisEngine.cpp'],
+-		LIBS=env['LIBS']+['yade-base',
+-			'ParticleParameters',
+-			'RigidBodyParameters',
+-			'yade-factory',
+-			'yade-base',
+-			'yade-serialization',
+-			'yade-multimethods'],
+-		CPPPATH=env['CPPPATH']+['DataClass/PhysicalParameters',
+-			'$PREFIX/include',
+-			'Engine/DeusExMachina']),
+-
+-	env.SharedLibrary('StaticAttractionEngine',
+-		['Engine/DeusExMachina/StaticAttractionEngine.cpp'],
+-		LIBS=env['LIBS']+['yade-base',
+-			'yade-serialization',
+-			'yade-multimethods'],
+-		CPPPATH=env['CPPPATH']+['$PREFIX/include', 'Engine/DeusExMachina']),
+-
+-	env.SharedLibrary('DisplacementEngine',
+-		['Engine/DeusExMachina/DisplacementEngine.cpp'],
+-		LIBS=env['LIBS']+['yade-base',
+-			'yade-serialization',
+-			'yade-multimethods'],
+-		CPPPATH=env['CPPPATH']+['$PREFIX/include', 'Engine/DeusExMachina']),
+-
+-	env.SharedLibrary('FixedPositionEngine',
+-		['Engine/DeusExMachina/FixedPositionEngine.cpp'],
+-		LIBS=env['LIBS']+['yade-base',
+-			
+-			'yade-factory',
+-			'yade-base',
+-			
+-			'yade-serialization',
+-			'yade-multimethods'],
+-		CPPPATH=env['CPPPATH']+['$PREFIX/include', 'Engine/DeusExMachina']),
+-
+-	env.SharedLibrary('FixedOrientationEngine',
+-		['Engine/DeusExMachina/FixedOrientationEngine.cpp'],
+-		LIBS=env['LIBS']+['yade-base',
+-			'yade-factory',
+-			'yade-base',
+-			'yade-serialization',
+-			'yade-loki',
+-			'yade-multimethods'],
+-		CPPPATH=env['CPPPATH']+['$PREFIX/include', 'Engine/DeusExMachina']),
+-
+-	env.SharedLibrary('ResetPositionEngine',
+-		['Engine/DeusExMachina/ResetPositionEngine.cpp'],
+-		LIBS=env['LIBS']+['yade-base',
+-			'yade-factory',
+-			'yade-base',
+-			'yade-serialization',
+-			'yade-loki',
+-			'yade-multimethods',
+-			'ParticleParameters'],
++	env.SharedLibrary('AABB',['DataClass/BoundingVolume/AABB.cpp']),
++	env.SharedLibrary('BoundingSphere',['DataClass/BoundingVolume/BoundingSphere.cpp']),
++	env.SharedLibrary('InteractingBox',['DataClass/InteractingGeometry/InteractingBox.cpp'],),
++	env.SharedLibrary('InteractingSphere',['DataClass/InteractingGeometry/InteractingSphere.cpp']),
++	env.SharedLibrary('MetaInteractingGeometry',['DataClass/InteractingGeometry/MetaInteractingGeometry.cpp']),
++	env.SharedLibrary('InteractingVertex',['DataClass/InteractingGeometry/InteractingVertex.cpp']),
++	env.SharedLibrary('InteractingEdge',['DataClass/InteractingGeometry/InteractingEdge.cpp']),
++	env.SharedLibrary('InteractingFacet',['DataClass/InteractingGeometry/InteractingFacet.cpp']),
++	env.SharedLibrary('ParticleParameters',['DataClass/PhysicalParameters/ParticleParameters.cpp']),
++	env.SharedLibrary('RigidBodyParameters',['DataClass/PhysicalParameters/RigidBodyParameters.cpp'],
++		LIBS=env['LIBS']+['ParticleParameters',]),
++	env.SharedLibrary('ElasticBodyParameters',['DataClass/PhysicalParameters/ElasticBodyParameters.cpp'],
++		LIBS=env['LIBS']+['RigidBodyParameters','ParticleParameters',]),
++	env.SharedLibrary('ClosestFeatures',['DataClass/InteractionGeometry/ClosestFeatures.cpp']),
++	env.SharedLibrary('SimpleElasticInteraction',['DataClass/InteractionPhysics/SimpleElasticInteraction.cpp']),
++	env.SharedLibrary('Force',['DataClass/PhysicalAction/Force.cpp']),
++	env.SharedLibrary('Momentum',['DataClass/PhysicalAction/Momentum.cpp']),
++	env.SharedLibrary('Box',['DataClass/GeometricalModel/Box.cpp']),
++	env.SharedLibrary('Mesh2D',['DataClass/GeometricalModel/Mesh2D.cpp']),
++	env.SharedLibrary('Sphere',['DataClass/GeometricalModel/Sphere.cpp']),
++	env.SharedLibrary('Tetrahedron',['DataClass/GeometricalModel/Tetrahedron.cpp']),
++	env.SharedLibrary('Quadrilateral',['DataClass/GeometricalModel/Quadrilateral.cpp']),
++	env.SharedLibrary('Vertex',['DataClass/GeometricalModel/Vertex.cpp']),
++	env.SharedLibrary('GeometricalEdge',['DataClass/GeometricalModel/GeometricalEdge.cpp']),
++	env.SharedLibrary('Facet',['DataClass/GeometricalModel/Facet.cpp']),
++	env.SharedLibrary('MomentEngine',['Engine/DeusExMachina/MomentEngine.cpp'],
++		LIBS=env['LIBS']+['Momentum','ParticleParameters']),
++	env.SharedLibrary('ForceEngine',['Engine/DeusExMachina/ForceEngine.cpp'],
++		LIBS=env['LIBS']+['Force','ParticleParameters']),
++	env.SharedLibrary('DisplacementToForceEngine',['Engine/DeusExMachina/DisplacementToForceEngine.cpp'],
++		LIBS=env['LIBS']+['Force','ParticleParameters']),
++	env.SharedLibrary('GravityEngines',['Engine/DeusExMachina/GravityEngines.cpp'],
++		LIBS=env['LIBS']+['Force','ParticleParameters']),
++	env.SharedLibrary('JumpChangeSe3',['Engine/DeusExMachina/JumpChangeSe3.cpp']),
++	env.SharedLibrary('RotationEngine',['Engine/DeusExMachina/RotationEngine.cpp'],
++		LIBS=env['LIBS']+['ParticleParameters','RigidBodyParameters']),
++	env.SharedLibrary('TranslationEngine',['Engine/DeusExMachina/TranslationEngine.cpp'],
++		LIBS=env['LIBS']+['ParticleParameters']),
++	env.SharedLibrary('CinemCisEngine',['Engine/DeusExMachina/CinemCisEngine.cpp'],
++		LIBS=env['LIBS']+['ParticleParameters','RigidBodyParameters']),
++	env.SharedLibrary('StaticAttractionEngine',['Engine/DeusExMachina/StaticAttractionEngine.cpp'],
+ 		CPPPATH=env['CPPPATH']+['$PREFIX/include','Engine/DeusExMachina']),
+-	
++	env.SharedLibrary('DisplacementEngine',['Engine/DeusExMachina/DisplacementEngine.cpp']),
++	env.SharedLibrary('FixedPositionEngine',['Engine/DeusExMachina/FixedPositionEngine.cpp']),
++	env.SharedLibrary('FixedOrientationEngine',['Engine/DeusExMachina/FixedOrientationEngine.cpp']),
++	env.SharedLibrary('ResetPositionEngine',['Engine/DeusExMachina/ResetPositionEngine.cpp'],
++		LIBS=env['LIBS']+['ParticleParameters']),
+ 	env.SharedLibrary('FilterEngine',['Engine/FilterEngine/FilterEngine.cpp']),
+-
+-	env.SharedLibrary('ColorizedLayerFilter',
+-		['Engine/FilterEngine/ColorizedLayerFilter.cpp'],
+-		LIBS=env['LIBS']+['yade-base','FilterEngine']),
+-	
+-	env.SharedLibrary('ColorizedVelocityFilter',
+-		['Engine/FilterEngine/ColorizedVelocityFilter.cpp'],
+-		LIBS=env['LIBS']+['yade-base','FilterEngine'],
+-		CPPPATH=env['CPPPATH']+['$PREFIX/include', 'Engine/FilterEngine']),
+-	
+-	env.SharedLibrary('BoundingVolumeMetaEngine',
+-		['Engine/MetaEngine/BoundingVolumeMetaEngine.cpp'],
+-		LIBS=env['LIBS']+['yade-base'],
+-		CPPPATH=env['CPPPATH']+['$PREFIX/include', 'Engine/MetaEngine']),
+-
+-	env.SharedLibrary('GeometricalModelMetaEngine',
+-		['Engine/MetaEngine/GeometricalModelMetaEngine.cpp'],
+-		LIBS=env['LIBS']+['yade-base'],
+-		CPPPATH=env['CPPPATH']+['$PREFIX/include', 'Engine/MetaEngine']),
+-
+-	env.SharedLibrary('InteractingGeometryMetaEngine',
+-		['Engine/MetaEngine/InteractingGeometryMetaEngine.cpp'],
+-		LIBS=env['LIBS']+['yade-base'],
+-		CPPPATH=env['CPPPATH']+['$PREFIX/include', 'Engine/MetaEngine']),
+-
+-	env.SharedLibrary('PhysicalParametersMetaEngine',
+-		['Engine/MetaEngine/PhysicalParametersMetaEngine.cpp'],
+-		LIBS=env['LIBS']+['yade-base'],
+-		CPPPATH=env['CPPPATH']+['$PREFIX/include', 'Engine/MetaEngine']),
+-
+-	env.SharedLibrary('InteractionGeometryMetaEngine',
+-		['Engine/MetaEngine/InteractionGeometryMetaEngine.cpp'],
+-		LIBS=env['LIBS']+['yade-base'],
+-		CPPPATH=env['CPPPATH']+['Engine/MetaEngine', '$PREFIX/include']),
+-
+-	env.SharedLibrary('InteractionPhysicsMetaEngine',
+-		['Engine/MetaEngine/InteractionPhysicsMetaEngine.cpp'],
+-		LIBS=env['LIBS']+['yade-base'],
+-		CPPPATH=env['CPPPATH']+['$PREFIX/include', 'Engine/MetaEngine']),
+-
+-	env.SharedLibrary('PhysicalActionApplier',
+-		['Engine/MetaEngine/PhysicalActionApplier.cpp'],
+-		LIBS=env['LIBS']+['yade-base'],
+-		CPPPATH=env['CPPPATH']+['$PREFIX/include', 'Engine/MetaEngine']),
+-
+-	env.SharedLibrary('PhysicalActionDamper',
+-		['Engine/MetaEngine/PhysicalActionDamper.cpp'],
+-		LIBS=env['LIBS']+['yade-base'],
+-		CPPPATH=env['CPPPATH']+['$PREFIX/include', 'Engine/MetaEngine']),
+-
+-	env.SharedLibrary('InteractingBox2AABB',
+-		['Engine/EngineUnit/InteractingBox2AABB.cpp'],
+-		LIBS=env['LIBS']+['yade-base',
+-			'BoundingVolumeMetaEngine',
+-			'InteractingBox',
+-			'AABB',
+-			'Box',
+-			'yade-base'],
+-		CPPPATH=env['CPPPATH']+['DataClass/BoundingVolume',
+-			'DataClass/InteractingGeometry',
+-			'$PREFIX/include',
+-			'Engine/MetaEngine',
+-			'Engine/EngineUnit']),
+-
+-	env.SharedLibrary('MetaInteractingGeometry2AABB',
+-		['Engine/EngineUnit/MetaInteractingGeometry2AABB.cpp'],
+-		LIBS=env['LIBS']+['yade-base',
+-			
+-			'BoundingVolumeMetaEngine',
+-			'MetaInteractingGeometry',
+-			'AABB'],
+-		CPPPATH=env['CPPPATH']+['DataClass/BoundingVolume',
+-			'$PREFIX/include',
+-			'DataClass/InteractingGeometry',
+-			'Engine/MetaEngine',
+-			'Engine/EngineUnit']),
+-
+-	env.SharedLibrary('InteractingEdge2AABB'
+-	    ,['Engine/EngineUnit/InteractingEdge2AABB.cpp']
+-	    ,LIBS=env['LIBS']+['AABB','InteractingEdge']),
+-    
+-	env.SharedLibrary('InteractingFacet2AABB'
+-	    ,['Engine/EngineUnit/InteractingFacet2AABB.cpp']
+-	    ,LIBS=env['LIBS']+['AABB','InteractingFacet']),
+-
+-	env.SharedLibrary('LeapFrogOrientationIntegrator',
+-		['Engine/EngineUnit/LeapFrogOrientationIntegrator.cpp'],
+-		LIBS=env['LIBS']+['yade-base',
+-			
+-			'PhysicalParametersMetaEngine',
+-			'ParticleParameters',
+-			'RigidBodyParameters'],
+-		CPPPATH=env['CPPPATH']+['Engine/EngineUnit',
+-			'$PREFIX/include',
+-			'DataClass/PhysicalParameters',
+-			'Engine/MetaEngine',
+-			'DataClass/PhysicalParameters']),
+-
+-	env.SharedLibrary('LeapFrogPositionIntegrator',
+-		['Engine/EngineUnit/LeapFrogPositionIntegrator.cpp'],
+-		LIBS=env['LIBS']+['yade-base',
+-			
+-			'PhysicalParametersMetaEngine',
+-			'ParticleParameters',
+-			'RigidBodyParameters'],
+-		CPPPATH=env['CPPPATH']+['DataClass/PhysicalParameters',
+-			'$PREFIX/include',
+-			'Engine/MetaEngine',
+-			'Engine/EngineUnit']),
+-
+-	env.SharedLibrary('NewtonsForceLaw',
+-		['Engine/EngineUnit/NewtonsForceLaw.cpp'],
+-		LIBS=env['LIBS']+['yade-base',
+-			
+-			'PhysicalActionApplier',
+-			'Force',
+-			'ParticleParameters',
+-			'PhysicalActionApplier',
+-			'RigidBodyParameters'],
+-		CPPPATH=env['CPPPATH']+['$PREFIX/include',
+-			'DataClass/PhysicalParameters',
+-			'Engine/MetaEngine',
+-			'DataClass/PhysicalAction',
+-			'Engine/EngineUnit',
+-			'DataClass/PhysicalParameters']),
+-
+-	env.SharedLibrary('NewtonsMomentumLaw',
+-		['Engine/EngineUnit/NewtonsMomentumLaw.cpp'],
+-		LIBS=env['LIBS']+['yade-base',
+-			
+-			'PhysicalActionApplier',
+-			'Momentum',
+-			'RigidBodyParameters',
+-			'PhysicalActionApplier'],
+-		CPPPATH=env['CPPPATH']+['$PREFIX/include',
+-			'DataClass/PhysicalParameters',
+-			'Engine/EngineUnit',
+-			'Engine/MetaEngine',
+-			'DataClass/PhysicalAction',
+-			'DataClass/PhysicalParameters']),
+-
+-	env.SharedLibrary('InteractingSphere2AABB',
+-		['Engine/EngineUnit/InteractingSphere2AABB.cpp'],
+-		LIBS=env['LIBS']+['yade-base',
+-			
+-			'BoundingVolumeMetaEngine',
+-			'InteractingSphere',
+-			'AABB',
+-			'yade-base',
+-			],
+-		CPPPATH=env['CPPPATH']+['DataClass/BoundingVolume',
+-			'$PREFIX/include',
+-			'Engine/MetaEngine',
+-			'Engine/EngineUnit',
+-			'DataClass/InteractingGeometry']),
+-
++	env.SharedLibrary('ColorizedLayerFilter',['Engine/FilterEngine/ColorizedLayerFilter.cpp'],
++		LIBS=env['LIBS']+['FilterEngine']),
++	env.SharedLibrary('ColorizedVelocityFilter',['Engine/FilterEngine/ColorizedVelocityFilter.cpp'],
++		LIBS=env['LIBS']+['FilterEngine']),
++	env.SharedLibrary('BoundingVolumeMetaEngine',['Engine/MetaEngine/BoundingVolumeMetaEngine.cpp']),
++	env.SharedLibrary('GeometricalModelMetaEngine',['Engine/MetaEngine/GeometricalModelMetaEngine.cpp']),
++	env.SharedLibrary('InteractingGeometryMetaEngine',['Engine/MetaEngine/InteractingGeometryMetaEngine.cpp']),
++	env.SharedLibrary('PhysicalParametersMetaEngine',['Engine/MetaEngine/PhysicalParametersMetaEngine.cpp']),
++	env.SharedLibrary('InteractionGeometryMetaEngine',['Engine/MetaEngine/InteractionGeometryMetaEngine.cpp']),
++	env.SharedLibrary('InteractionPhysicsMetaEngine',['Engine/MetaEngine/InteractionPhysicsMetaEngine.cpp']),
++	env.SharedLibrary('PhysicalActionApplier',['Engine/MetaEngine/PhysicalActionApplier.cpp']),
++	env.SharedLibrary('PhysicalActionDamper',['Engine/MetaEngine/PhysicalActionDamper.cpp']),
++	env.SharedLibrary('InteractingBox2AABB',['Engine/EngineUnit/InteractingBox2AABB.cpp'],
++		LIBS=env['LIBS']+['BoundingVolumeMetaEngine','InteractingBox','AABB','Box',]),
++	env.SharedLibrary('MetaInteractingGeometry2AABB',['Engine/EngineUnit/MetaInteractingGeometry2AABB.cpp'],
++		LIBS=env['LIBS']+['BoundingVolumeMetaEngine','MetaInteractingGeometry','AABB']),
++	env.SharedLibrary('InteractingEdge2AABB',['Engine/EngineUnit/InteractingEdge2AABB.cpp'],
++		LIBS=env['LIBS']+['AABB','InteractingEdge']),
++	env.SharedLibrary('InteractingFacet2AABB',['Engine/EngineUnit/InteractingFacet2AABB.cpp'],
++		LIBS=env['LIBS']+['AABB','InteractingFacet']),
++	env.SharedLibrary('LeapFrogOrientationIntegrator',['Engine/EngineUnit/LeapFrogOrientationIntegrator.cpp'],
++		LIBS=env['LIBS']+['PhysicalParametersMetaEngine','ParticleParameters','RigidBodyParameters']),
++	env.SharedLibrary('LeapFrogPositionIntegrator',['Engine/EngineUnit/LeapFrogPositionIntegrator.cpp'],
++		LIBS=env['LIBS']+['PhysicalParametersMetaEngine','ParticleParameters','RigidBodyParameters']),
++	env.SharedLibrary('NewtonsForceLaw',['Engine/EngineUnit/NewtonsForceLaw.cpp'],
++		LIBS=env['LIBS']+['PhysicalActionApplier','Force','ParticleParameters','RigidBodyParameters']),
++	env.SharedLibrary('NewtonsMomentumLaw',['Engine/EngineUnit/NewtonsMomentumLaw.cpp'],
++		LIBS=env['LIBS']+['PhysicalActionApplier','Momentum','RigidBodyParameters',]),
++	env.SharedLibrary('InteractingSphere2AABB',['Engine/EngineUnit/InteractingSphere2AABB.cpp'],
++		LIBS=env['LIBS']+['BoundingVolumeMetaEngine','InteractingSphere','AABB']),
+ 	env.SharedLibrary('CundallNonViscousForceDamping',
+ 		['Engine/EngineUnit/CundallNonViscousForceDamping.cpp'],
+-		LIBS=env['LIBS']+['yade-base',
+-			
+-			'PhysicalActionDamper',
+-			'Force',
+-			'ParticleParameters'],
+-		CPPPATH=env['CPPPATH']+['DataClass/PhysicalParameters',
+-			'Engine/EngineUnit',
+-			'$PREFIX/include',
+-			'Engine/MetaEngine',
+-			'DataClass/PhysicalAction']),
++		LIBS=env['LIBS']+['PhysicalActionDamper','Force','ParticleParameters']),
++	env.SharedLibrary('CundallNonViscousMomentumDamping',['Engine/EngineUnit/CundallNonViscousMomentumDamping.cpp'],
++		LIBS=env['LIBS']+['PhysicalActionDamper','Momentum','RigidBodyParameters']),
++	env.SharedLibrary('ElasticBodySimpleRelationship',['Engine/EngineUnit/ElasticBodySimpleRelationship.cpp'],
++		LIBS=env['LIBS']+['ElasticBodyParameters','SimpleElasticInteraction','RigidBodyParameters','ParticleParameters','InteractionPhysicsMetaEngine']),
+ 
+-	env.SharedLibrary('CundallNonViscousMomentumDamping',
+-		['Engine/EngineUnit/CundallNonViscousMomentumDamping.cpp'],
+-		LIBS=env['LIBS']+['yade-base',
+-			
+-			'PhysicalActionDamper',
+-			'Momentum',
+-			'RigidBodyParameters'],
+-		CPPPATH=env['CPPPATH']+['$PREFIX/include',
+-			'DataClass/PhysicalParameters',
+-			'Engine/EngineUnit',
+-			'DataClass/PhysicalParameters',
+-			'DataClass/PhysicalAction',
+-			'Engine/MetaEngine']),
+-
+-	env.SharedLibrary('ElasticBodySimpleRelationship',
+-		['Engine/EngineUnit/ElasticBodySimpleRelationship.cpp'],
+-		LIBS=env['LIBS']+['yade-base',
+-			
+-			'ElasticBodyParameters',
+-			'SimpleElasticInteraction',
+-			'RigidBodyParameters',
+-			'ParticleParameters',
+-			'InteractionPhysicsMetaEngine'],
+-		CPPPATH=env['CPPPATH']+['$PREFIX/include',
+-			'DataClass/PhysicalParameters',
+-			'DataClass/InteractionPhysics',
+-			'Engine/MetaEngine',
+-			'DataClass/PhysicalParameters',
+-			'Engine/EngineUnit',
+-			'DataClass/PhysicalParameters']),
+-
+ 	#env.SharedLibrary('PersistentTriangulationCollider',
+ 	#	['Engine/StandAloneEngine/PersistentTriangulationCollider.cpp'],
+ 	#	LIBPATH=env['LIBPATH']+['/home/bruno/micromacro/KdevMicroMacro/src'],
+ 	#	LIBS=env['LIBS']+['yade-base', 'TesselationWrapper', 'CGAL',  'InteractingSphere', 'RigidBodyParameters'],
+ 	#	CPPPATH=env['CPPPATH']+['Engine/StandAloneEngine', '$PREFIX/include', '/home/bruno/micromacro/KdevMicroMacro/src']),
+     
+-	env.SharedLibrary('SpatialQuickSortCollider' 
+-	    ,['Engine/StandAloneEngine/SpatialQuickSortCollider.cpp']),
+-		
+-	env.SharedLibrary('PersistentSAPCollider',
+-		['Engine/StandAloneEngine/PersistentSAPCollider.cpp'],
+-		LIBS=env['LIBS']+['yade-base'],
+-		CPPPATH=env['CPPPATH']+['Engine/StandAloneEngine', '$PREFIX/include']),
+-				
+-	env.SharedLibrary('DistantPersistentSAPCollider',
+-		['Engine/StandAloneEngine/DistantPersistentSAPCollider.cpp'],
+-		LIBS=env['LIBS']+['yade-base'],
+-		CPPPATH=env['CPPPATH']+['Engine/StandAloneEngine', '$PREFIX/include']),
+-
+-	env.SharedLibrary('SAPCollider',
+-		['Engine/StandAloneEngine/SAPCollider.cpp'],
+-		LIBS=env['LIBS']+['yade-base',
+-			
+-			'yade-serialization',
+-			'yade-base',
+-			
+-			'yade-multimethods'],
+-		CPPPATH=env['CPPPATH']+['$PREFIX/include', 'Engine/StandAloneEngine']),
+-
+-	env.SharedLibrary('PhysicalActionContainerInitializer',
+-		['Engine/StandAloneEngine/PhysicalActionContainerInitializer.cpp'],
+-		LIBS=env['LIBS']+['yade-base'],
+-		CPPPATH=env['CPPPATH']+['Engine/StandAloneEngine',
+-			'$PREFIX/include']),
+-
+-	env.SharedLibrary('PhysicalActionContainerReseter',
+-		['Engine/StandAloneEngine/PhysicalActionContainerReseter.cpp'],
+-		LIBS=env['LIBS']+['yade-base'],
+-		CPPPATH=env['CPPPATH']+['$PREFIX/include',
+-			'Engine/StandAloneEngine']),
+-
+-	env.SharedLibrary('GLDrawAABB',
+-		['RenderingEngine/GLDrawBoundingVolume/GLDrawAABB.cpp'],
+-		LIBS=env['LIBS']+['yade-base',  'AABB', 'yade-opengl'],
+-		CPPPATH=env['CPPPATH']+['DataClass/BoundingVolume',
+-			'$PREFIX/include',
+-			'RenderingEngine/OpenGLRenderingEngine',
+-			'RenderingEngine/GLDrawBoundingVolume']),
+-
+-	env.SharedLibrary('GLDrawBoundingSphere',
+-		['RenderingEngine/GLDrawBoundingVolume/GLDrawBoundingSphere.cpp'],
+-		LIBS=env['LIBS']+['yade-base',  'BoundingSphere', 'yade-opengl'],
+-		CPPPATH=env['CPPPATH']+['$PREFIX/include',
+-			'RenderingEngine/OpenGLRenderingEngine',
+-			'RenderingEngine/GLDrawBoundingVolume',
+-			'DataClass/BoundingVolume']),
+-
+-	env.SharedLibrary('GLDrawTetrahedron',
+-		['RenderingEngine/GLDrawGeometricalModel/GLDrawTetrahedron.cpp'],
+-		LIBS=env['LIBS']+['yade-base',  'Tetrahedron', 'yade-opengl'],
+-		CPPPATH=env['CPPPATH']+['RenderingEngine/GLDrawGeometricalModel',
+-			'$PREFIX/include',
+-			'RenderingEngine/OpenGLRenderingEngine',
+-			'DataClass/GeometricalModel']),
+-
+-	env.SharedLibrary('GLDrawBox',
+-		['RenderingEngine/GLDrawGeometricalModel/GLDrawBox.cpp'],
+-		LIBS=env['LIBS']+['yade-base',  'Box', 'yade-opengl'],
+-		CPPPATH=env['CPPPATH']+['$PREFIX/include',
+-			'RenderingEngine/GLDrawGeometricalModel',
+-			'RenderingEngine/OpenGLRenderingEngine',
+-			'DataClass/GeometricalModel']),
+-
+-	env.SharedLibrary('GLDrawMesh2D',
+-		['RenderingEngine/GLDrawGeometricalModel/GLDrawMesh2D.cpp'],
+-		LIBS=env['LIBS']+['yade-base',  'Mesh2D', 'yade-opengl'],
+-		CPPPATH=env['CPPPATH']+['DataClass/GeometricalModel',
+-			'$PREFIX/include',
+-			'RenderingEngine/OpenGLRenderingEngine',
+-			'RenderingEngine/GLDrawGeometricalModel']),
+-
+-	env.SharedLibrary('GLDrawSphere',
+-		['RenderingEngine/GLDrawGeometricalModel/GLDrawSphere.cpp'],
+-		LIBS=env['LIBS']+['yade-base',  'Sphere', 'yade-opengl'],
+-		CPPPATH=env['CPPPATH']+['RenderingEngine/OpenGLRenderingEngine',
+-			'$PREFIX/include',
+-			'RenderingEngine/GLDrawGeometricalModel',
+-			'DataClass/GeometricalModel']),
+-
+-	env.SharedLibrary('GLDrawQuadrilateral',
+-		['RenderingEngine/GLDrawGeometricalModel/GLDrawQuadrilateral.cpp'],
+-		LIBS=env['LIBS']+['yade-base',  'Quadrilateral', 'yade-opengl'],
+-		CPPPATH=env['CPPPATH']+['RenderingEngine/GLDrawGeometricalModel',
+-			'$PREFIX/include',
+-			'DataClass/GeometricalModel',
+-			'RenderingEngine/OpenGLRenderingEngine']),
+-    
+-	env.SharedLibrary('GLDrawVertex'
+-	    ,['RenderingEngine/GLDrawGeometricalModel/GLDrawVertex.cpp']
++	env.SharedLibrary('SpatialQuickSortCollider',['Engine/StandAloneEngine/SpatialQuickSortCollider.cpp']),
++	env.SharedLibrary('PersistentSAPCollider',['Engine/StandAloneEngine/PersistentSAPCollider.cpp']),
++	env.SharedLibrary('DistantPersistentSAPCollider',['Engine/StandAloneEngine/DistantPersistentSAPCollider.cpp']),
++	env.SharedLibrary('SAPCollider',['Engine/StandAloneEngine/SAPCollider.cpp']),
++	env.SharedLibrary('PhysicalActionContainerInitializer',['Engine/StandAloneEngine/PhysicalActionContainerInitializer.cpp']),
++	env.SharedLibrary('PhysicalActionContainerReseter',['Engine/StandAloneEngine/PhysicalActionContainerReseter.cpp']),
++	env.SharedLibrary('GLDrawAABB',['RenderingEngine/GLDrawBoundingVolume/GLDrawAABB.cpp'],
++		LIBS=env['LIBS']+['yade-base','AABB','yade-opengl']),
++	env.SharedLibrary('GLDrawBoundingSphere',['RenderingEngine/GLDrawBoundingVolume/GLDrawBoundingSphere.cpp'],
++		LIBS=env['LIBS']+['yade-base','BoundingSphere','yade-opengl']),
++	env.SharedLibrary('GLDrawTetrahedron',['RenderingEngine/GLDrawGeometricalModel/GLDrawTetrahedron.cpp'],
++		LIBS=env['LIBS']+['yade-base','Tetrahedron','yade-opengl']),
++	env.SharedLibrary('GLDrawBox',['RenderingEngine/GLDrawGeometricalModel/GLDrawBox.cpp'],
++		LIBS=env['LIBS']+['yade-base','Box','yade-opengl']),
++	env.SharedLibrary('GLDrawMesh2D',['RenderingEngine/GLDrawGeometricalModel/GLDrawMesh2D.cpp'],
++		LIBS=env['LIBS']+['yade-base','Mesh2D','yade-opengl']),
++	env.SharedLibrary('GLDrawSphere',['RenderingEngine/GLDrawGeometricalModel/GLDrawSphere.cpp'],
++		LIBS=env['LIBS']+['yade-base','Sphere','yade-opengl']),
++	env.SharedLibrary('GLDrawQuadrilateral',['RenderingEngine/GLDrawGeometricalModel/GLDrawQuadrilateral.cpp'],
++		LIBS=env['LIBS']+['yade-base','Quadrilateral','yade-opengl']),
++	env.SharedLibrary('GLDrawVertex',['RenderingEngine/GLDrawGeometricalModel/GLDrawVertex.cpp']
+ 	    ,LIBS=env['LIBS']+['yade-opengl','Vertex']),
+-	
+-	env.SharedLibrary('GLDrawGeometricalEdge'
+-	    ,['RenderingEngine/GLDrawGeometricalModel/GLDrawGeometricalEdge.cpp']
++	env.SharedLibrary('GLDrawGeometricalEdge',['RenderingEngine/GLDrawGeometricalModel/GLDrawGeometricalEdge.cpp']
+ 	    ,LIBS=env['LIBS']+['yade-opengl','GeometricalEdge']),
+-	
+-	env.SharedLibrary('GLDrawFacet'
+-	    ,['RenderingEngine/GLDrawGeometricalModel/GLDrawFacet.cpp']
++	env.SharedLibrary('GLDrawFacet',['RenderingEngine/GLDrawGeometricalModel/GLDrawFacet.cpp']
+ 	    ,LIBS=env['LIBS']+['yade-opengl','Facet']),
+-
+-	env.SharedLibrary('GLDrawInteractingBox',
+-		['RenderingEngine/GLDrawInteractingGeometry/GLDrawInteractingBox.cpp'],
+-		LIBS=env['LIBS']+['yade-base',  'InteractingBox', 'yade-opengl'],
+-		CPPPATH=env['CPPPATH']+['$PREFIX/include',
+-			'RenderingEngine/OpenGLRenderingEngine',
+-			'DataClass/InteractingGeometry',
+-			'RenderingEngine/GLDrawInteractingGeometry']),
+-
+-	env.SharedLibrary('GLDrawInteractingSphere',
+-		['RenderingEngine/GLDrawInteractingGeometry/GLDrawInteractingSphere.cpp'],
+-		LIBS=env['LIBS']+['yade-base',  'InteractingSphere', 'yade-opengl'],
+-		CPPPATH=env['CPPPATH']+['$PREFIX/include',
+-			'DataClass/InteractingGeometry',
+-			'RenderingEngine/OpenGLRenderingEngine',
+-			'RenderingEngine/GLDrawInteractingGeometry']),
+-
+-	env.SharedLibrary('GLDrawMetaInteractingGeometry',
+-		['RenderingEngine/GLDrawInteractingGeometry/GLDrawMetaInteractingGeometry.cpp'],
+-		LIBS=env['LIBS']+['yade-base',  'yade-opengl'],
+-		CPPPATH=env['CPPPATH']+['$PREFIX/include',
+-			'DataClass/InteractingGeometry',
+-			'RenderingEngine/OpenGLRenderingEngine',
+-			'RenderingEngine/GLDrawInteractingGeometry']),
+-
+-	env.SharedLibrary('GLDrawInteractingVertex'
+-	    ,['RenderingEngine/GLDrawInteractingGeometry/GLDrawInteractingVertex.cpp']
++	env.SharedLibrary('GLDrawInteractingBox',['RenderingEngine/GLDrawInteractingGeometry/GLDrawInteractingBox.cpp'],
++		LIBS=env['LIBS']+['yade-base','InteractingBox','yade-opengl']),
++	env.SharedLibrary('GLDrawInteractingSphere',['RenderingEngine/GLDrawInteractingGeometry/GLDrawInteractingSphere.cpp'],
++		LIBS=env['LIBS']+['yade-base','InteractingSphere','yade-opengl'],),
++	env.SharedLibrary('GLDrawMetaInteractingGeometry',['RenderingEngine/GLDrawInteractingGeometry/GLDrawMetaInteractingGeometry.cpp'],
++		LIBS=env['LIBS']+['yade-opengl']),
++	env.SharedLibrary('GLDrawInteractingVertex',['RenderingEngine/GLDrawInteractingGeometry/GLDrawInteractingVertex.cpp']
+ 	    ,LIBS=env['LIBS']+['yade-opengl','InteractingVertex']),
+-	
+-	env.SharedLibrary('GLDrawInteractingEdge'
+-	    ,['RenderingEngine/GLDrawInteractingGeometry/GLDrawInteractingEdge.cpp']
++	env.SharedLibrary('GLDrawInteractingEdge',['RenderingEngine/GLDrawInteractingGeometry/GLDrawInteractingEdge.cpp']
+ 	    ,LIBS=env['LIBS']+['yade-opengl','InteractingEdge']),
+-
+-	env.SharedLibrary('GLDrawInteractingFacet'
+-	    ,['RenderingEngine/GLDrawInteractingGeometry/GLDrawInteractingFacet.cpp']
++	env.SharedLibrary('GLDrawInteractingFacet',['RenderingEngine/GLDrawInteractingGeometry/GLDrawInteractingFacet.cpp']
+ 	    ,LIBS=env['LIBS']+['yade-opengl','InteractingFacet']),
+-	
+-	env.SharedLibrary('GLDrawBoxShadowVolume',
+-		['RenderingEngine/GLDrawShadowVolume/GLDrawBoxShadowVolume.cpp'],
+-		LIBS=env['LIBS']+['yade-base',
+-			
+-			'Box',
+-			'ParticleParameters',
+-			'yade-opengl',
+-			'RigidBodyParameters'],
+-		CPPPATH=env['CPPPATH']+['RenderingEngine/OpenGLRenderingEngine',
+-			'$PREFIX/include',
+-			'RenderingEngine/GLDrawShadowVolume',
+-			'DataClass/GeometricalModel']),
+-
+-	env.SharedLibrary('GLDrawSphereShadowVolume',
+-		['RenderingEngine/GLDrawShadowVolume/GLDrawSphereShadowVolume.cpp'],
+-		LIBS=env['LIBS']+['yade-base',
+-			
+-			'Sphere',
+-			'ParticleParameters',
+-			'yade-opengl'],
+-		CPPPATH=env['CPPPATH']+['RenderingEngine/GLDrawShadowVolume',
+-			'$PREFIX/include',
+-			'RenderingEngine/OpenGLRenderingEngine',
+-			'DataClass/GeometricalModel']),
+-
+-	env.SharedLibrary('GLDrawClosestFeatures',
+-		['RenderingEngine/GLDrawInteractionGeometry/GLDrawClosestFeatures.cpp'],
+-		LIBS=env['LIBS']+['yade-base',  'ClosestFeatures', 'yade-opengl'],
+-		CPPPATH=env['CPPPATH']+['$PREFIX/include',
+-			'RenderingEngine/OpenGLRenderingEngine',
+-			'DataClass/InteractionGeometry',
+-			'RenderingEngine/GLDrawInteractionGeometry']),
+-
+-	env.SharedLibrary('GLDrawSimpleElasticInteraction',
+-		['RenderingEngine/GLDrawInteractionPhysics/GLDrawSimpleElasticInteraction.cpp'],
+-		LIBS=env['LIBS']+['yade-base',
+-			
+-			'SimpleElasticInteraction',
+-			'yade-opengl'],
+-		CPPPATH=env['CPPPATH']+['RenderingEngine/OpenGLRenderingEngine',
+-			'$PREFIX/include',
+-			'DataClass/InteractionPhysics',
+-			'RenderingEngine/GLDrawInteractionPhysics']),
+-
+-	env.SharedLibrary('GLDrawParticleState',
+-		['RenderingEngine/GLDrawState/GLDrawParticleState.cpp'],
+-		LIBS=env['LIBS']+['yade-base',  'ParticleParameters', 'yade-opengl'],
+-		CPPPATH=env['CPPPATH']+['RenderingEngine/OpenGLRenderingEngine',
+-			'DataClass/PhysicalParameters',
+-			'$PREFIX/include',
+-			'RenderingEngine/GLDrawState']),
+-
+-	env.SharedLibrary('GLDrawRigidBodyState',
+-		['RenderingEngine/GLDrawState/GLDrawRigidBodyState.cpp'],
+-		LIBS=env['LIBS']+['yade-base',
+-			
+-			'ParticleParameters',
+-			'RigidBodyParameters',
+-			'GLDrawParticleState',
+-			'yade-opengl'],
+-		CPPPATH=env['CPPPATH']+['$PREFIX/include',
+-			'RenderingEngine/GLDrawState',
+-			'DataClass/PhysicalParameters',
+-			'RenderingEngine/GLDrawState',
+-			'RenderingEngine/OpenGLRenderingEngine',
+-			'DataClass/PhysicalParameters']),
+-
+-	env.SharedLibrary('OpenGLRenderingEngine',
+-		['RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.cpp'],
+-		LIBS=env['LIBS']+['yade-base',  'glut', 'GLU', 'GL'],
+-		CPPPATH=env['CPPPATH']+['$PREFIX/include', 'RenderingEngine/OpenGLRenderingEngine'])
++	env.SharedLibrary('GLDrawBoxShadowVolume',['RenderingEngine/GLDrawShadowVolume/GLDrawBoxShadowVolume.cpp'],
++		LIBS=env['LIBS']+['Box','ParticleParameters','yade-opengl','RigidBodyParameters']),
++	env.SharedLibrary('GLDrawSphereShadowVolume',['RenderingEngine/GLDrawShadowVolume/GLDrawSphereShadowVolume.cpp'],
++		LIBS=env['LIBS']+['Sphere','ParticleParameters','yade-opengl']),
++	env.SharedLibrary('GLDrawClosestFeatures',['RenderingEngine/GLDrawInteractionGeometry/GLDrawClosestFeatures.cpp'],
++		LIBS=env['LIBS']+['yade-base','ClosestFeatures','yade-opengl']),
++	env.SharedLibrary('GLDrawSimpleElasticInteraction',['RenderingEngine/GLDrawInteractionPhysics/GLDrawSimpleElasticInteraction.cpp'],LIBS=env['LIBS']+['SimpleElasticInteraction','yade-opengl']),
++	env.SharedLibrary('GLDrawParticleState',['RenderingEngine/GLDrawState/GLDrawParticleState.cpp'],
++		LIBS=env['LIBS']+['yade-base','ParticleParameters','yade-opengl']),
++	env.SharedLibrary('GLDrawRigidBodyState',['RenderingEngine/GLDrawState/GLDrawRigidBodyState.cpp'],
++		LIBS=env['LIBS']+['ParticleParameters','RigidBodyParameters','GLDrawParticleState','yade-opengl']),
++	env.SharedLibrary('OpenGLRenderingEngine',['RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.cpp'],
++		LIBS=env['LIBS']+['yade-base',  'glut', 'GLU', 'GL']),
+ ])
+ 
+
+Modified: trunk/pkg/dem/DataClass/InteractionGeometry/SpheresContactGeometry.cpp
+===================================================================
+--- trunk/pkg/dem/DataClass/InteractionGeometry/SpheresContactGeometry.cpp	2008-07-18 18:10:30 UTC (rev 1435)
++++ trunk/pkg/dem/DataClass/InteractionGeometry/SpheresContactGeometry.cpp	2008-07-21 13:12:23 UTC (rev 1436)
+@@ -7,28 +7,15 @@
+ *  This program is free software; it is licensed under the terms of the  *
+ *  GNU General Public License v2 or later. See file LICENSE for details. *
+ *************************************************************************/
+-
+ #include &quot;SpheresContactGeometry.hpp&quot;
++YADE_PLUGIN(&quot;SpheresContactGeometry&quot;);
+ 
+-SpheresContactGeometry::SpheresContactGeometry() : InteractionGeometry()
+-{
+-	createIndex();
+-}
+- 
+- 
+-SpheresContactGeometry::~SpheresContactGeometry ()
+-{
+-}
+-// 
+-// void SpheresContactGeometry::postProcessAttributes(bool)
+-// {
+-// 
+-// }
+-// 
++SpheresContactGeometry::SpheresContactGeometry() : InteractionGeometry(){createIndex();}
++SpheresContactGeometry::~SpheresContactGeometry(){}
+ void SpheresContactGeometry::registerAttributes()
+ {
+ 	REGISTER_ATTRIBUTE(radius1);
+ 	REGISTER_ATTRIBUTE(radius2);
++	REGISTER_ATTRIBUTE(contactPoint); // to allow access from python
+ }
+ 
+-YADE_PLUGIN();
+
+Modified: trunk/pkg/dem/PreProcessor/CohesiveTriaxialTest.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/CohesiveTriaxialTest.cpp	2008-07-18 18:10:30 UTC (rev 1435)
++++ trunk/pkg/dem/PreProcessor/CohesiveTriaxialTest.cpp	2008-07-21 13:12:23 UTC (rev 1436)
+@@ -40,7 +40,7 @@
+ #include&lt;yade/pkg-common/MetaInteractingGeometry2AABB.hpp&gt;
+ #include&lt;yade/pkg-common/MetaInteractingGeometry.hpp&gt;
+ 
+-#include&lt;yade/pkg-common/GravityEngine.hpp&gt;
++#include&lt;yade/pkg-common/GravityEngines.hpp&gt;
+ #include&lt;yade/pkg-dem/HydraulicForceEngine.hpp&gt;
+ #include&lt;yade/pkg-dem/InteractingSphere2InteractingSphere4DistantSpheresContactGeometry.hpp&gt;
+ #include&lt;yade/pkg-dem/InteractingBox2InteractingSphere4SpheresContactGeometry.hpp&gt;
+
+Modified: trunk/pkg/dem/PreProcessor/DirectShearCis.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/DirectShearCis.cpp	2008-07-18 18:10:30 UTC (rev 1435)
++++ trunk/pkg/dem/PreProcessor/DirectShearCis.cpp	2008-07-21 13:12:23 UTC (rev 1436)
+@@ -48,7 +48,7 @@
+ 
+ #include&lt;yade/pkg-common/CundallNonViscousForceDamping.hpp&gt;
+ #include&lt;yade/pkg-common/CundallNonViscousMomentumDamping.hpp&gt;
+-#include&lt;yade/pkg-common/GravityEngine.hpp&gt;
++#include&lt;yade/pkg-common/GravityEngines.hpp&gt;
+ #include&lt;yade/pkg-common/CinemCisEngine.hpp&gt;
+ 
+ 
+
+Modified: trunk/pkg/dem/PreProcessor/Funnel.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/Funnel.cpp	2008-07-18 18:10:30 UTC (rev 1435)
++++ trunk/pkg/dem/PreProcessor/Funnel.cpp	2008-07-21 13:12:23 UTC (rev 1436)
+@@ -35,7 +35,7 @@
+ 
+ #include&lt;yade/pkg-common/CundallNonViscousForceDamping.hpp&gt;
+ #include&lt;yade/pkg-common/CundallNonViscousMomentumDamping.hpp&gt;
+-#include&lt;yade/pkg-common/GravityEngine.hpp&gt;
++#include&lt;yade/pkg-common/GravityEngines.hpp&gt;
+ 
+ #include&lt;yade/pkg-common/InteractionGeometryMetaEngine.hpp&gt;
+ #include&lt;yade/pkg-common/InteractionPhysicsMetaEngine.hpp&gt;
+
+Modified: trunk/pkg/dem/PreProcessor/HydraulicTest.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/HydraulicTest.cpp	2008-07-18 18:10:30 UTC (rev 1435)
++++ trunk/pkg/dem/PreProcessor/HydraulicTest.cpp	2008-07-21 13:12:23 UTC (rev 1436)
+@@ -37,7 +37,7 @@
+ #include&lt;yade/pkg-common/PhysicalActionApplier.hpp&gt;
+ #include&lt;yade/pkg-common/CundallNonViscousForceDamping.hpp&gt;
+ #include&lt;yade/pkg-common/CundallNonViscousMomentumDamping.hpp&gt;
+-#include&lt;yade/pkg-common/GravityEngine.hpp&gt;
++#include&lt;yade/pkg-common/GravityEngines.hpp&gt;
+ 
+ #include&lt;yade/pkg-common/InteractionGeometryMetaEngine.hpp&gt;
+ #include&lt;yade/pkg-common/InteractionPhysicsMetaEngine.hpp&gt;
+
+Modified: trunk/pkg/dem/PreProcessor/ModifiedTriaxialTest.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/ModifiedTriaxialTest.cpp	2008-07-18 18:10:30 UTC (rev 1435)
++++ trunk/pkg/dem/PreProcessor/ModifiedTriaxialTest.cpp	2008-07-21 13:12:23 UTC (rev 1436)
+@@ -40,7 +40,7 @@
+ #include&lt;yade/pkg-common/MetaInteractingGeometry2AABB.hpp&gt;
+ #include&lt;yade/pkg-common/MetaInteractingGeometry.hpp&gt;
+ 
+-#include&lt;yade/pkg-common/GravityEngine.hpp&gt;
++#include&lt;yade/pkg-common/GravityEngines.hpp&gt;
+ #include&lt;yade/pkg-common/HydraulicForceEngine.hpp&gt;
+ #include&lt;yade/pkg-common/MakeItFlat.hpp&gt;
+ #include&lt;yade/pkg-common/PhysicalActionApplier.hpp&gt;
+
+Modified: trunk/pkg/dem/PreProcessor/SDECImpactTest.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/SDECImpactTest.cpp	2008-07-18 18:10:30 UTC (rev 1435)
++++ trunk/pkg/dem/PreProcessor/SDECImpactTest.cpp	2008-07-21 13:12:23 UTC (rev 1436)
+@@ -33,7 +33,7 @@
+ #include&lt;yade/pkg-common/MetaInteractingGeometry2AABB.hpp&gt;
+ #include&lt;yade/pkg-common/MetaInteractingGeometry.hpp&gt;
+ 
+-#include&lt;yade/pkg-common/GravityEngine.hpp&gt;
++#include&lt;yade/pkg-common/GravityEngines.hpp&gt;
+ #include&lt;yade/pkg-common/PhysicalActionApplier.hpp&gt;
+ #include&lt;yade/pkg-common/PhysicalActionDamper.hpp&gt;
+ #include&lt;yade/pkg-common/CundallNonViscousForceDamping.hpp&gt;
+
+Modified: trunk/pkg/dem/PreProcessor/SDECLinkedSpheres.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/SDECLinkedSpheres.cpp	2008-07-18 18:10:30 UTC (rev 1435)
++++ trunk/pkg/dem/PreProcessor/SDECLinkedSpheres.cpp	2008-07-21 13:12:23 UTC (rev 1436)
+@@ -40,7 +40,7 @@
+ #include&lt;yade/pkg-common/PhysicalActionApplier.hpp&gt;
+ #include&lt;yade/pkg-common/CundallNonViscousForceDamping.hpp&gt;
+ #include&lt;yade/pkg-common/CundallNonViscousMomentumDamping.hpp&gt;
+-#include&lt;yade/pkg-common/GravityEngine.hpp&gt;
++#include&lt;yade/pkg-common/GravityEngines.hpp&gt;
+ 
+ #include&lt;yade/pkg-common/InteractionGeometryMetaEngine.hpp&gt;
+ #include&lt;yade/pkg-common/InteractionPhysicsMetaEngine.hpp&gt;
+
+Modified: trunk/pkg/dem/PreProcessor/SDECMovingWall.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/SDECMovingWall.cpp	2008-07-18 18:10:30 UTC (rev 1435)
++++ trunk/pkg/dem/PreProcessor/SDECMovingWall.cpp	2008-07-21 13:12:23 UTC (rev 1436)
+@@ -38,7 +38,7 @@
+ 
+ #include&lt;yade/pkg-common/CundallNonViscousForceDamping.hpp&gt;
+ #include&lt;yade/pkg-common/CundallNonViscousMomentumDamping.hpp&gt;
+-#include&lt;yade/pkg-common/GravityEngine.hpp&gt;
++#include&lt;yade/pkg-common/GravityEngines.hpp&gt;
+ 
+ #include&lt;yade/pkg-common/TranslationEngine.hpp&gt;
+ 
+
+Modified: trunk/pkg/dem/PreProcessor/SDECSpheresPlane.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/SDECSpheresPlane.cpp	2008-07-18 18:10:30 UTC (rev 1435)
++++ trunk/pkg/dem/PreProcessor/SDECSpheresPlane.cpp	2008-07-21 13:12:23 UTC (rev 1436)
+@@ -39,7 +39,7 @@
+ 
+ #include&lt;yade/pkg-common/CundallNonViscousForceDamping.hpp&gt;
+ #include&lt;yade/pkg-common/CundallNonViscousMomentumDamping.hpp&gt;
+-#include&lt;yade/pkg-common/GravityEngine.hpp&gt;
++#include&lt;yade/pkg-common/GravityEngines.hpp&gt;
+ 
+ #include&lt;yade/pkg-common/InteractionGeometryMetaEngine.hpp&gt;
+ #include&lt;yade/pkg-common/InteractionPhysicsMetaEngine.hpp&gt;
+
+Modified: trunk/pkg/dem/PreProcessor/STLImporterTest.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/STLImporterTest.cpp	2008-07-18 18:10:30 UTC (rev 1435)
++++ trunk/pkg/dem/PreProcessor/STLImporterTest.cpp	2008-07-21 13:12:23 UTC (rev 1436)
+@@ -18,7 +18,7 @@
+ #include&lt;yade/pkg-common/BoundingVolumeMetaEngine.hpp&gt;
+ #include&lt;yade/pkg-common/CundallNonViscousForceDamping.hpp&gt;
+ #include&lt;yade/pkg-common/CundallNonViscousMomentumDamping.hpp&gt;
+-#include&lt;yade/pkg-common/GravityEngine.hpp&gt;
++#include&lt;yade/pkg-common/GravityEngines.hpp&gt;
+ #include&lt;yade/pkg-common/InteractingSphere.hpp&gt;
+ #include&lt;yade/pkg-common/InteractionGeometryMetaEngine.hpp&gt;
+ #include&lt;yade/pkg-common/InteractionPhysicsMetaEngine.hpp&gt;
+
+Modified: trunk/pkg/dem/PreProcessor/SnowCreepTest.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/SnowCreepTest.cpp	2008-07-18 18:10:30 UTC (rev 1435)
++++ trunk/pkg/dem/PreProcessor/SnowCreepTest.cpp	2008-07-21 13:12:23 UTC (rev 1436)
+@@ -40,7 +40,7 @@
+ #include&lt;yade/pkg-common/MetaInteractingGeometry2AABB.hpp&gt;
+ #include&lt;yade/pkg-common/MetaInteractingGeometry.hpp&gt;
+ 
+-#include&lt;yade/pkg-common/GravityEngine.hpp&gt;
++#include&lt;yade/pkg-common/GravityEngines.hpp&gt;
+ #include&lt;yade/pkg-dem/HydraulicForceEngine.hpp&gt;
+ #include&lt;yade/pkg-dem/InteractingSphere2InteractingSphere4DistantSpheresContactGeometry.hpp&gt;
+ #include&lt;yade/pkg-dem/InteractingBox2InteractingSphere4SpheresContactGeometry.hpp&gt;
+
+Modified: trunk/pkg/dem/PreProcessor/TestSimpleViscoelastic.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/TestSimpleViscoelastic.cpp	2008-07-18 18:10:30 UTC (rev 1435)
++++ trunk/pkg/dem/PreProcessor/TestSimpleViscoelastic.cpp	2008-07-21 13:12:23 UTC (rev 1436)
+@@ -34,7 +34,7 @@
+ #include&lt;yade/pkg-dem/SimpleViscoelasticBodyParameters.hpp&gt;
+ #include&lt;yade/pkg-dem/SimpleViscoelasticContactLaw.hpp&gt;
+ #include&lt;yade/pkg-dem/SimpleViscoelasticRelationships.hpp&gt;
+-#include&lt;yade/pkg-common/GravityEngine.hpp&gt;
++#include&lt;yade/pkg-common/GravityEngines.hpp&gt;
+ 
+ TestSimpleViscoelastic::TestSimpleViscoelastic() : FileGenerator()
+ {
+
+Modified: trunk/pkg/dem/PreProcessor/TetrahedronsTest.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/TetrahedronsTest.cpp	2008-07-18 18:10:30 UTC (rev 1435)
++++ trunk/pkg/dem/PreProcessor/TetrahedronsTest.cpp	2008-07-21 13:12:23 UTC (rev 1436)
+@@ -37,7 +37,7 @@
+ 
+ #include&lt;yade/pkg-common/CundallNonViscousForceDamping.hpp&gt;
+ #include&lt;yade/pkg-common/CundallNonViscousMomentumDamping.hpp&gt;
+-#include&lt;yade/pkg-common/GravityEngine.hpp&gt;
++#include&lt;yade/pkg-common/GravityEngines.hpp&gt;
+ 
+ #include&lt;yade/pkg-common/InteractingGeometryMetaEngine.hpp&gt;
+ #include&lt;yade/pkg-common/InteractionGeometryMetaEngine.hpp&gt;
+
+Modified: trunk/pkg/dem/PreProcessor/ThreePointBending.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/ThreePointBending.cpp	2008-07-18 18:10:30 UTC (rev 1435)
++++ trunk/pkg/dem/PreProcessor/ThreePointBending.cpp	2008-07-21 13:12:23 UTC (rev 1436)
+@@ -39,7 +39,7 @@
+ #include&lt;yade/pkg-common/PhysicalActionApplier.hpp&gt;
+ #include&lt;yade/pkg-common/CundallNonViscousForceDamping.hpp&gt;
+ #include&lt;yade/pkg-common/CundallNonViscousMomentumDamping.hpp&gt;
+-#include&lt;yade/pkg-common/GravityEngine.hpp&gt;
++#include&lt;yade/pkg-common/GravityEngines.hpp&gt;
+ 
+ #include&lt;yade/pkg-common/InteractionGeometryMetaEngine.hpp&gt;
+ #include&lt;yade/pkg-common/InteractionPhysicsMetaEngine.hpp&gt;
+
+Modified: trunk/pkg/dem/PreProcessor/TriaxialTest.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/TriaxialTest.cpp	2008-07-18 18:10:30 UTC (rev 1435)
++++ trunk/pkg/dem/PreProcessor/TriaxialTest.cpp	2008-07-21 13:12:23 UTC (rev 1436)
+@@ -44,7 +44,7 @@
+ #include&lt;yade/pkg-common/MetaInteractingGeometry2AABB.hpp&gt;
+ #include&lt;yade/pkg-common/MetaInteractingGeometry.hpp&gt;
+ 
+-#include&lt;yade/pkg-common/GravityEngine.hpp&gt;
++#include&lt;yade/pkg-common/GravityEngines.hpp&gt;
+ #include&lt;yade/pkg-common/PhysicalActionApplier.hpp&gt;
+ #include&lt;yade/pkg-common/PhysicalActionDamper.hpp&gt;
+ #include&lt;yade/pkg-common/CundallNonViscousForceDamping.hpp&gt;
+
+Modified: trunk/pkg/dem/PreProcessor/TriaxialTestWater.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/TriaxialTestWater.cpp	2008-07-18 18:10:30 UTC (rev 1435)
++++ trunk/pkg/dem/PreProcessor/TriaxialTestWater.cpp	2008-07-21 13:12:23 UTC (rev 1436)
+@@ -41,7 +41,7 @@
+ #include &lt;yade/pkg-common/MetaInteractingGeometry2AABB.hpp&gt;
+ #include &lt;yade/pkg-common/MetaInteractingGeometry.hpp&gt;
+ 
+-#include &lt;yade/pkg-common/GravityEngine.hpp&gt;
++#include &lt;yade/pkg-common/GravityEngines.hpp&gt;
+ #include &lt;yade/pkg-common/PhysicalActionApplier.hpp&gt;
+ #include &lt;yade/pkg-common/PhysicalActionDamper.hpp&gt;
+ #include &lt;yade/pkg-common/CundallNonViscousForceDamping.hpp&gt;
+
+Modified: trunk/pkg/dem/SConscript
+===================================================================
+--- trunk/pkg/dem/SConscript	2008-07-18 18:10:30 UTC (rev 1435)
++++ trunk/pkg/dem/SConscript	2008-07-21 13:12:23 UTC (rev 1436)
+@@ -395,7 +395,7 @@
+ 			'CundallNonViscousMomentumDamping',
+ 			'CundallNonViscousForceDamping',
+ 			'MetaInteractingGeometry',
+-			'GravityEngine',
++			'GravityEngines',
+ 			'yade-serialization',
+ 			'yade-base',
+ 			
+@@ -433,7 +433,7 @@
+ 			'CundallNonViscousMomentumDamping',
+ 			'CundallNonViscousForceDamping',
+ 			'MetaInteractingGeometry',
+-			'GravityEngine',
++			'GravityEngines',
+ 			'yade-serialization',
+ 			'PhysicalActionContainerInitializer',
+ 			'PhysicalActionContainerReseter',
+@@ -471,7 +471,7 @@
+ 			'CundallNonViscousMomentumDamping',
+ 			'CundallNonViscousForceDamping',
+ 			'MetaInteractingGeometry',
+-			'GravityEngine',
++			'GravityEngines',
+ 			'CinemCisEngine',
+ 			'yade-serialization',
+ 			'yade-base',
+@@ -507,7 +507,7 @@
+ 			'CundallNonViscousMomentumDamping',
+ 			'CundallNonViscousForceDamping',
+ 			'MetaInteractingGeometry',
+-			'GravityEngine',
++			'GravityEngines',
+ 			'yade-serialization',
+ 			'yade-base',
+ 			
+@@ -542,7 +542,7 @@
+ 			'CundallNonViscousMomentumDamping',
+ 			'CundallNonViscousForceDamping',
+ 			'MetaInteractingGeometry',
+-			'GravityEngine',
++			'GravityEngines',
+ 			'yade-serialization',
+ 			'yade-base',
+ 			'PhysicalActionContainerInitializer',
+@@ -576,7 +576,7 @@
+ 			'CundallNonViscousMomentumDamping',
+ 			'CundallNonViscousForceDamping',
+ 			'MetaInteractingGeometry',
+-			'GravityEngine',
++			'GravityEngines',
+ 			'TranslationEngine',
+ 			'yade-serialization',
+ 			'yade-base',
+@@ -610,7 +610,7 @@
+ 			'CundallNonViscousMomentumDamping',
+ 			'CundallNonViscousForceDamping',
+ 			'MetaInteractingGeometry',
+-			'GravityEngine',
++			'GravityEngines',
+ 			'PhysicalActionContainerInitializer',
+ 			'PhysicalActionContainerReseter',
+ 			'InteractionGeometryMetaEngine',
+@@ -648,7 +648,7 @@
+ 			'InteractingBox',
+ 			'NewtonsDampedLaw',
+ 			'MetaInteractingGeometry',
+-			'GravityEngine',
++			'GravityEngines',
+ 			'yade-serialization',
+ 			'PhysicalActionContainerInitializer',
+ 			'PhysicalActionContainerReseter',
+@@ -696,7 +696,7 @@
+ 			'CundallNonViscousMomentumDamping',
+ 			'CundallNonViscousForceDamping',
+ 			'MetaInteractingGeometry',
+-			'GravityEngine',
++			'GravityEngines',
+ 			'yade-serialization',
+ 			'PhysicalActionContainerInitializer',
+ 			'PhysicalActionContainerReseter',
+@@ -744,7 +744,7 @@
+ 			'CundallNonViscousMomentumDamping',
+ 			'CundallNonViscousForceDamping',
+ 			'MetaInteractingGeometry',
+-			'GravityEngine',
++			'GravityEngines',
+ 			'yade-serialization',
+ 			'PhysicalActionContainerInitializer',
+ 			'PhysicalActionContainerReseter',
+@@ -787,7 +787,7 @@
+ 			'CundallNonViscousMomentumDamping',
+ 			'CundallNonViscousForceDamping',
+ 			'MetaInteractingGeometry',
+-			'GravityEngine',
++			'GravityEngines',
+ 			'yade-serialization',
+ 			'yade-base',
+ 			
+@@ -860,7 +860,7 @@
+         CundallNonViscousMomentumDamping
+         CundallNonViscousForceDamping
+         MetaInteractingGeometry
+-        GravityEngine
++        GravityEngines
+         yade-serialization
+         PhysicalActionContainerInitializer
+         PhysicalActionContainerReseter
+@@ -944,7 +944,7 @@
+ 		
+ env.SharedLibrary('HydraulicForceEngine',
+ 		['Engine/DeusExMachina/HydraulicForceEngine.cpp'],
+-		LIBS=env['LIBS']+['yade-base',  'Force', 'Momentum', 'ParticleParameters', 'CohesiveFrictionalBodyParameters', 'TriaxialCompressionEngine', 'GravityEngine'],
++		LIBS=env['LIBS']+['yade-base',  'Force', 'Momentum', 'ParticleParameters', 'CohesiveFrictionalBodyParameters', 'TriaxialCompressionEngine', 'GravityEngines'],
+ 		CPPPATH=env['CPPPATH']+['Engine/DeusExMachina',
+ 			'DataClass/PhysicalAction',
+ 			'$PREFIX/include',
+@@ -983,7 +983,7 @@
+ 			'CundallNonViscousMomentumDamping',
+ 			'CundallNonViscousForceDamping',
+ 			'MetaInteractingGeometry',
+-			'GravityEngine',
++			'GravityEngines',
+ 			'yade-serialization',
+ 			'PhysicalActionContainerInitializer',
+ 			'PhysicalActionContainerReseter',
+@@ -1068,7 +1068,7 @@
+ 			    ,'SimpleViscoelasticBodyParameters'
+ 			    ,'SimpleViscoelasticInteraction'
+ 			    ,'SimpleViscoelasticSpheresInteractionRecorder'
+-			    ,'GravityEngine'
++			    ,'GravityEngines'
+ 			    ,'BodyRedirectionVector'
+ 			    ,'BoundingVolumeMetaEngine'
+ 			    ,'InteractingSphere'
+@@ -1100,7 +1100,7 @@
+ 				,'ElasticCriterionTimeStepper'
+ 				,'Facet'
+ 				,'GeometricalEdge'
+-				,'GravityEngine'
++				,'GravityEngines'
+ 				,'InteractingEdge'
+ 				,'InteractingFacet'
+ 				,'InteractingSphere'
+
+Modified: trunk/pkg/fem/PreProcessor/FEMBeam.cpp
+===================================================================
+--- trunk/pkg/fem/PreProcessor/FEMBeam.cpp	2008-07-18 18:10:30 UTC (rev 1435)
++++ trunk/pkg/fem/PreProcessor/FEMBeam.cpp	2008-07-21 13:12:23 UTC (rev 1436)
+@@ -28,7 +28,7 @@
+ #include&lt;yade/pkg-common/CundallNonViscousForceDamping.hpp&gt;
+ #include&lt;yade/pkg-common/PhysicalActionContainerInitializer.hpp&gt;
+ #include&lt;yade/pkg-common/PhysicalActionContainerReseter.hpp&gt;
+-#include&lt;yade/pkg-common/GravityEngine.hpp&gt;
++#include&lt;yade/pkg-common/GravityEngines.hpp&gt;
+ #include&lt;yade/pkg-common/TranslationEngine.hpp&gt;
+ 
+ // body
+
+Modified: trunk/pkg/fem/SConscript
+===================================================================
+--- trunk/pkg/fem/SConscript	2008-07-18 18:10:30 UTC (rev 1435)
++++ trunk/pkg/fem/SConscript	2008-07-21 13:12:23 UTC (rev 1436)
+@@ -115,7 +115,7 @@
+ 			'CundallNonViscousMomentumDamping',
+ 			'CundallNonViscousForceDamping',
+ 			'MetaInteractingGeometry',
+-			'GravityEngine',
++			'GravityEngines',
+ 			'yade-serialization',
+ 			'yade-base',
+ 			
+
+Modified: trunk/pkg/mass-spring/PreProcessor/HangingCloth.cpp
+===================================================================
+--- trunk/pkg/mass-spring/PreProcessor/HangingCloth.cpp	2008-07-18 18:10:30 UTC (rev 1435)
++++ trunk/pkg/mass-spring/PreProcessor/HangingCloth.cpp	2008-07-21 13:12:23 UTC (rev 1436)
+@@ -53,7 +53,7 @@
+ 
+ #include&lt;yade/pkg-common/PhysicalActionContainerReseter.hpp&gt;
+ #include&lt;yade/pkg-common/PhysicalActionContainerInitializer.hpp&gt;
+-#include&lt;yade/pkg-common/GravityEngine.hpp&gt;
++#include&lt;yade/pkg-common/GravityEngines.hpp&gt;
+ 
+ #include&lt;yade/pkg-common/PhysicalParametersMetaEngine.hpp&gt;
+ 
+
+Modified: trunk/pkg/mass-spring/SConscript
+===================================================================
+--- trunk/pkg/mass-spring/SConscript	2008-07-18 18:10:30 UTC (rev 1435)
++++ trunk/pkg/mass-spring/SConscript	2008-07-21 13:12:23 UTC (rev 1436)
+@@ -54,7 +54,7 @@
+ 			'yade-base',
+ 			'PhysicalActionContainerInitializer',
+ 			'PhysicalActionContainerReseter',
+-			'GravityEngine',
++			'GravityEngines',
+ 			'InteractionGeometryMetaEngine',
+ 			'InteractionPhysicsMetaEngine',
+ 			'GeometricalModelMetaEngine',
+
+Modified: trunk/pkg/realtime-rigidbody/PreProcessor/BoxStack.cpp
+===================================================================
+--- trunk/pkg/realtime-rigidbody/PreProcessor/BoxStack.cpp	2008-07-18 18:10:30 UTC (rev 1435)
++++ trunk/pkg/realtime-rigidbody/PreProcessor/BoxStack.cpp	2008-07-21 13:12:23 UTC (rev 1436)
+@@ -36,7 +36,7 @@
+ #include&lt;yade/pkg-common/MetaInteractingGeometry.hpp&gt;
+ 
+ #include&lt;yade/pkg-common/PhysicalActionContainerInitializer.hpp&gt;
+-#include&lt;yade/pkg-common/GravityEngine.hpp&gt;
++#include&lt;yade/pkg-common/GravityEngines.hpp&gt;
+ #include&lt;yade/pkg-common/PhysicalParametersMetaEngine.hpp&gt;
+ 
+ #include&lt;yade/pkg-common/BodyRedirectionVector.hpp&gt;
+
+Modified: trunk/pkg/realtime-rigidbody/PreProcessor/RotatingBox.cpp
+===================================================================
+--- trunk/pkg/realtime-rigidbody/PreProcessor/RotatingBox.cpp	2008-07-18 18:10:30 UTC (rev 1435)
++++ trunk/pkg/realtime-rigidbody/PreProcessor/RotatingBox.cpp	2008-07-21 13:12:23 UTC (rev 1436)
+@@ -30,7 +30,7 @@
+ #include&lt;yade/pkg-common/BoundingVolumeMetaEngine.hpp&gt;
+ #include&lt;yade/pkg-common/MetaInteractingGeometry2AABB.hpp&gt;
+ #include&lt;yade/pkg-common/MetaInteractingGeometry.hpp&gt;
+-#include&lt;yade/pkg-common/GravityEngine.hpp&gt;
++#include&lt;yade/pkg-common/GravityEngines.hpp&gt;
+ #include&lt;yade/pkg-common/PhysicalParametersMetaEngine.hpp&gt;
+ 
+ #include&lt;yade/pkg-common/BodyRedirectionVector.hpp&gt;
+
+Modified: trunk/pkg/realtime-rigidbody/SConscript
+===================================================================
+--- trunk/pkg/realtime-rigidbody/SConscript	2008-07-18 18:10:30 UTC (rev 1435)
++++ trunk/pkg/realtime-rigidbody/SConscript	2008-07-21 13:12:23 UTC (rev 1436)
+@@ -53,7 +53,7 @@
+ 			'InteractingBox',
+ 			'CundallNonViscousMomentumDamping',
+ 			'CundallNonViscousForceDamping',
+-			'GravityEngine',
++			'GravityEngines',
+ 			'yade-serialization',
+ 			'PhysicalActionContainerInitializer',
+ 			'PhysicalActionContainerReseter',
+@@ -86,7 +86,7 @@
+ 			'yade-serialization',
+ 			'PhysicalActionContainerInitializer',
+ 			'PhysicalActionContainerReseter',
+-			'GravityEngine',
++			'GravityEngines',
+ 			'InteractionGeometryMetaEngine',
+ 			'PhysicalActionApplier',
+ 			'PhysicalParametersMetaEngine',
+
+Modified: trunk/scripts/simple-scene.py
+===================================================================
+--- trunk/scripts/simple-scene.py	2008-07-18 18:10:30 UTC (rev 1435)
++++ trunk/scripts/simple-scene.py	2008-07-21 13:12:23 UTC (rev 1436)
+@@ -127,3 +127,6 @@
+ ## Save the scene to file, so that it can be loaded later. Supported extension are: .xml, .xml.gz, .xml.bz2.
+ o.save('/tmp/a.xml.bz2');
+ #o.run(100000); o.wait(); print o.iter/o.realtime,'iterations/sec'
++
++from yade import qt
++qt.Controller()
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000395.html">[Yade-commits] r1435 - in trunk: core gui/py gui/qt3	pkg/common/Engine/StandAloneEngine
+</A></li>
+	<LI>Next message: <A HREF="000397.html">[Yade-commits] r1437 - in trunk: gui gui/py	pkg/common/Engine/EngineUnit
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#396">[ date ]</a>
+              <a href="thread.html#396">[ thread ]</a>
+              <a href="subject.html#396">[ subject ]</a>
+              <a href="author.html#396">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

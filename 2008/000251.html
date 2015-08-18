@@ -1,0 +1,146 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1287 -	trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1287%20-%0A%09trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel&In-Reply-To=%3C200803261704.m2QH4PuV007247%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000250.html">
+   <LINK REL="Next"  HREF="000252.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1287 -	trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel</H1>
+    <B>cosurgi at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1287%20-%0A%09trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel&In-Reply-To=%3C200803261704.m2QH4PuV007247%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1287 -	trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel">cosurgi at mail.berlios.de
+       </A><BR>
+    <I>Wed Mar 26 18:04:25 CET 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000250.html">[Yade-commits] r1286 - in trunk: gui/cmd	pkg/common/RenderingEngine/GLDrawGeometricalModel	pkg/dem/Engine/StandAloneEngine	pkg/dem/RenderingEngine/GLDrawCohesiveFrictionalContactInteraction
+</A></li>
+        <LI>Next message: <A HREF="000252.html">[Yade-commits] r1288 - trunk/pkg/dem/PreProcessor
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#251">[ date ]</a>
+              <a href="thread.html#251">[ thread ]</a>
+              <a href="subject.html#251">[ subject ]</a>
+              <a href="author.html#251">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: cosurgi
+Date: 2008-03-26 18:04:24 +0100 (Wed, 26 Mar 2008)
+New Revision: 1287
+
+Modified:
+   trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawSphere.cpp
+   trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawSphere.hpp
+Log:
+in previous commit, when optimizing the circle, I committed by accident a filled version. It's just a bool to toggle between filled and not filled, but, it's not possible to change from GUI... yet.
+
+
+
+Modified: trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawSphere.cpp
+===================================================================
+--- trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawSphere.cpp	2008-03-26 14:19:53 UTC (rev 1286)
++++ trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawSphere.cpp	2008-03-26 17:04:24 UTC (rev 1287)
+@@ -68,7 +68,7 @@
+ 		glWiredSphereList = glGenLists(1);
+ 		glNewList(glWiredSphereList,GL_COMPILE);
+ 			glDisable(GL_LIGHTING);
+-			drawWiredSphere();
++			drawCircle(false);
+ 		glEndList();
+ 		glSphereList = glGenLists(1);
+ 		glNewList(glSphereList,GL_COMPILE);
+@@ -182,26 +182,26 @@
+ 		subdivideTriangle(vertices[(unsigned int)faces[i][0]],vertices[(unsigned int)faces[i][1]],vertices[(unsigned int)faces[i][2]],depth);
+ }
+ 
+-void GLDrawSphere::drawWiredSphere()
++void GLDrawSphere::drawCircle(bool filled)
+ {
+-		float vectorY1=1.0,startY=vectorY1;
+-		float vectorX1=0,startX=vectorX1;
++	float vectorY1=1.0,startY=vectorY1;
++	float vectorX1=0,startX=vectorX1;
+ 
+-	//not filled circle
+-	//glBegin(GL_LINE_STRIP);
+-//filled circle
+-glBegin(GL_POLYGON);
+-		for(float angle=0.0f ; angle &gt;= (-2.0f*3.14159) ; angle-=0.155f)
+-		{		
+-			float vectorX=((float)sin((double)angle));
+-			float vectorY=((float)cos((double)angle));		
+-			glVertex2d(vectorX1,vectorY1);
+-			vectorY1=vectorY;
+-			vectorX1=vectorX;			
+-		}
+-	//not filled circle
+-	//glVertex2d(startX,startY);
+-		glEnd();
++	if(filled)
++		glBegin(GL_POLYGON);
++	else
++		glBegin(GL_LINE_STRIP);
++	for(float angle=0.0f ; angle &gt;= (-2.0f*3.14159) ; angle-=0.155f)
++	{		
++		float vectorX=((float)sin((double)angle));
++		float vectorY=((float)cos((double)angle));		
++		glVertex2d(vectorX1,vectorY1);
++		vectorY1=vectorY;
++		vectorX1=vectorX;			
++	}
++	if(!filled)
++		glVertex2d(startX,startY);
++	glEnd();
+ }
+ 
+ void GLDrawSphere::clearGlMatrix()
+
+Modified: trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawSphere.hpp
+===================================================================
+--- trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawSphere.hpp	2008-03-26 14:19:53 UTC (rev 1286)
++++ trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawSphere.hpp	2008-03-26 17:04:24 UTC (rev 1287)
+@@ -21,7 +21,7 @@
+ 		int glSphereList;
+ 		void subdivideTriangle(Vector3r&amp; v1,Vector3r&amp; v2,Vector3r&amp; v3, int depth);
+ 		void drawSphere(int depth);
+-		void drawWiredSphere();
++		void drawCircle(bool filled);
+ 		void clearGlMatrix();
+ 	
+ 	public :
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000250.html">[Yade-commits] r1286 - in trunk: gui/cmd	pkg/common/RenderingEngine/GLDrawGeometricalModel	pkg/dem/Engine/StandAloneEngine	pkg/dem/RenderingEngine/GLDrawCohesiveFrictionalContactInteraction
+</A></li>
+	<LI>Next message: <A HREF="000252.html">[Yade-commits] r1288 - trunk/pkg/dem/PreProcessor
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#251">[ date ]</a>
+              <a href="thread.html#251">[ thread ]</a>
+              <a href="subject.html#251">[ subject ]</a>
+              <a href="author.html#251">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

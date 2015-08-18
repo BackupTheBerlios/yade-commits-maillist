@@ -1,0 +1,768 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1390 - in trunk: . core extra gui/py lib/import	lib/miniWm3 pkg/dem/Engine/DeusExMachina
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1390%20-%20in%20trunk%3A%20.%20core%20extra%20gui/py%20lib/import%0A%09lib/miniWm3%20pkg/dem/Engine/DeusExMachina&In-Reply-To=%3C200806171156.m5HBuChF020195%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000350.html">
+   <LINK REL="Next"  HREF="000352.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1390 - in trunk: . core extra gui/py lib/import	lib/miniWm3 pkg/dem/Engine/DeusExMachina</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1390%20-%20in%20trunk%3A%20.%20core%20extra%20gui/py%20lib/import%0A%09lib/miniWm3%20pkg/dem/Engine/DeusExMachina&In-Reply-To=%3C200806171156.m5HBuChF020195%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1390 - in trunk: . core extra gui/py lib/import	lib/miniWm3 pkg/dem/Engine/DeusExMachina">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Tue Jun 17 13:56:12 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000350.html">[Yade-commits] r1389 - in trunk: extra extra/usct gui/py gui/qt3	pkg/common/Engine/StandAloneEngine scripts
+</A></li>
+        <LI>Next message: <A HREF="000352.html">[Yade-commits] r1391 - in trunk: core gui/py
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#351">[ date ]</a>
+              <a href="thread.html#351">[ thread ]</a>
+              <a href="subject.html#351">[ subject ]</a>
+              <a href="author.html#351">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2008-06-17 13:56:11 +0200 (Tue, 17 Jun 2008)
+New Revision: 1390
+
+Modified:
+   trunk/
+   trunk/SConstruct
+   trunk/core/MetaBody.cpp
+   trunk/core/MetaBody.hpp
+   trunk/extra/Brefcom.cpp
+   trunk/extra/Brefcom.hpp
+   trunk/gui/py/utils.py
+   trunk/gui/py/yadeControl.cpp
+   trunk/lib/import/STLImporter.hpp
+   trunk/lib/import/STLReader.hpp
+   trunk/lib/miniWm3/Wm3Matrix3.inl
+   trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.cpp
+   trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.hpp
+Log:
+1. Add list&lt;string&gt; MetaBody::tags, which hold metadata in the key=value format; this is to workaround current serialization that errors out on map&lt;string,string&gt; in findType.
+2. Add meanStress and vlumetricStrain to Triaxial for python access
+3. add neverDamage flag to Brefcom which forces elastic behavior regardless off strain magnitude.
+4. Fix some warnings in STLImporter regarding signedness
+5. add __attribute__((unused)) to a variable in Wm3Matrix3 that was not used during optimized builds - to avoid warning.
+
+
+
+Property changes on: trunk
+___________________________________________________________________
+Name: bzr:revision-info
+   + 
+Name: bzr:revision-id:v3-trunk0
+   + 
+
+Modified: trunk/SConstruct
+===================================================================
+--- trunk/SConstruct	2008-06-17 07:15:29 UTC (rev 1389)
++++ trunk/SConstruct	2008-06-17 11:56:11 UTC (rev 1390)
+@@ -374,7 +374,7 @@
+ else:
+ 	env.Append(CPPDEFINES=[('YADE_CAST','dynamic_cast'),('YADE_PTR_CAST','dynamic_pointer_cast')])
+ 
+-if env['profile']: env.Append(CXXFLAGS=['-pg'],LINKFLAGS=['-pg'],SHLINKFLAGS=['-pg'])
++if env['gprof']: env.Append(CXXFLAGS=['-pg'],LINKFLAGS=['-pg'],SHLINKFLAGS=['-pg'])
+ env.Append(CXXFLAGS=['-pipe','-Wall'])
+ 
+ ### LINKER
+
+Modified: trunk/core/MetaBody.cpp
+===================================================================
+--- trunk/core/MetaBody.cpp	2008-06-17 07:15:29 UTC (rev 1389)
++++ trunk/core/MetaBody.cpp	2008-06-17 11:56:11 UTC (rev 1390)
+@@ -8,12 +8,14 @@
+ *  GNU General Public License v2 or later. See file LICENSE for details. *
+ *************************************************************************/
+ 
+-#include &lt;Wm3Math.h&gt;
++#include&quot;MetaBody.hpp&quot;
++#include&lt;yade/core/Engine.hpp&gt;
++#include&lt;yade/core/TimeStepper.hpp&gt;
++
++#include&lt;Wm3Math.h&gt;
+ #include&lt;yade/lib-base/yadeWm3.hpp&gt;
+-#include &quot;MetaBody.hpp&quot;
+-#include &quot;Engine.hpp&quot;
+-#include &quot;TimeStepper.hpp&quot;
+ #include&lt;boost/foreach.hpp&gt;
++#include&lt;boost/date_time/posix_time/posix_time.hpp&gt;
+ 
+ 
+ /* this is meant to improve usability: MetaBody is ready by default (so is Omega by that token)
+@@ -22,21 +24,32 @@
+ #include&lt;yade/core/InteractionVecSet.hpp&gt;
+ #include&lt;yade/core/PhysicalActionVectorVector.hpp&gt;
+ 
++// POSIX-only
++#include&lt;pwd.h&gt;
++#include&lt;unistd.h&gt;
++
+ MetaBody::MetaBody() :
+ 	  Body(),bodies(new BodyRedirectionVector),persistentInteractions(new InteractionVecSet),transientInteractions(new InteractionVecSet),physicalActions(new PhysicalActionVectorVector)
+ {	
+ 	engines.clear();
+ 	initializers.clear();
+ 	recover=false;
+-
+ 	// I must assign something to avoid &quot;nan&quot; when loading. When recover=false, those can be &quot;nan&quot; and lead to crash.
+ 	recoverCurrentIteration=1;
+ 	recoverStopAtIteration=1;
+ 	recoverSimulationTime=1;
+-
+ 	isDynamic=false;
++	dt=1e-8;
+ 
+-	dt=1e-8;
++	// fill default tags
++	struct passwd* pw;
++	char hostname[HOST_NAME_MAX];
++	gethostname(hostname,HOST_NAME_MAX);
++	pw=getpwuid(geteuid()); if(!pw) throw runtime_error(&quot;getpwuid(geteuid()) failed!&quot;);
++	// a few default tags
++	tags.push_back(string(&quot;author=&quot;)+pw-&gt;pw_gecos+&quot; (&quot;+string(pw-&gt;pw_name)+&quot;@&quot;+hostname+&quot;)&quot;);
++	tags.push_back(string(&quot;isoTime=&quot;+boost::posix_time::to_iso_string(boost::posix_time::second_clock::local_time())));
++	tags.push_back(string(&quot;description=&quot;));
+ }
+ 
+ 
+@@ -57,6 +70,7 @@
+ void MetaBody::registerAttributes()
+ {
+ 	Body::registerAttributes();
++	REGISTER_ATTRIBUTE(tags);
+ 	REGISTER_ATTRIBUTE(engines);
+ 	REGISTER_ATTRIBUTE(initializers);
+ 	REGISTER_ATTRIBUTE(bodies);
+
+Modified: trunk/core/MetaBody.hpp
+===================================================================
+--- trunk/core/MetaBody.hpp	2008-06-17 07:15:29 UTC (rev 1389)
++++ trunk/core/MetaBody.hpp	2008-06-17 11:56:11 UTC (rev 1390)
+@@ -17,14 +17,16 @@
+ 
+ class MetaBody : public Body
+ {
+-	public : // FIXME - why public?
++	public :
+ 		shared_ptr&lt;BodyContainer&gt;		bodies;
+ 		vector&lt;shared_ptr&lt;Engine&gt; &gt;		engines;
+ 		vector&lt;shared_ptr&lt;Engine&gt; &gt;		initializers; // FIXME: see MovingSupport:50
+-		shared_ptr&lt;InteractionContainer&gt;	persistentInteractions; // disappear, reappear according to physical (or any other non-spatial) criterion
++		__attribute__((__deprecated__)) shared_ptr&lt;InteractionContainer&gt;	persistentInteractions; // disappear, reappear according to physical (or any other non-spatial) criterion
+ 		shared_ptr&lt;InteractionContainer&gt;	transientInteractions;	// disappear, reappear according to spatial criterion
+ 		shared_ptr&lt;PhysicalActionContainer&gt;	physicalActions;
+ 		vector&lt;shared_ptr&lt;Serializable&gt; &gt; miscParams; // will set static parameters during deserialization (primarily for GLDraw functors which otherwise have no attribute access)
++		//! tags like mp3 tags: author, date, version, description etc.
++		list&lt;string&gt; tags;
+ 
+ 		MetaBody ();
+ 
+
+Modified: trunk/extra/Brefcom.cpp
+===================================================================
+--- trunk/extra/Brefcom.cpp	2008-06-17 07:15:29 UTC (rev 1389)
++++ trunk/extra/Brefcom.cpp	2008-06-17 11:56:11 UTC (rev 1390)
+@@ -1,4 +1,4 @@
+-// 2008 &#169; V&#225;clav &#352;milauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">eudoxos at arcig.cz</A>&gt; 
++// 2007,2008 &#169; V&#225;clav &#352;milauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">eudoxos at arcig.cz</A>&gt; 
+ #include&quot;Brefcom.hpp&quot;
+ #include&lt;yade/core/MetaBody.hpp&gt;
+ #include&lt;yade/pkg-dem/BodyMacroParameters.hpp&gt;
+@@ -52,12 +52,13 @@
+ 			/* undamagedCohesion */ S12*sigmaT,
+ 			/* equilibriumDist */ d0,
+ 			/* crossSection */ S12,
+-			/* epsCracking */ sigmaT/E12,
++			/* epsCrackOnset */ sigmaT/E12,
+ 			/* epsFracture */ 5*sigmaT/E12,
+ 			/* expBending */ expBending,
+ 			/* xiShear*/ xiShear
+ 			));
+ 		contPhys-&gt;prevNormal=contGeom-&gt;normal;
++		if(neverDamage) contPhys-&gt;neverDamage=true;
+ 		if(cohesiveThresholdIter&lt;0 || Omega::instance().getCurrentIteration()&lt;cohesiveThresholdIter) contPhys-&gt;isCohesive=true;
+ 		else contPhys-&gt;isCohesive=false;
+ 
+@@ -76,86 +77,17 @@
+ /********************** BrefcomLaw ****************************/
+ CREATE_LOGGER(BrefcomLaw);
+ 
+-
+-/*! Damage evolution law (static version: all parameters are explicitly passed).
+- *
+- * This function is zero for any eps&lt;=epsCrackOnset (no damage before the material starts cracking),
+- * therefore it will be linear-elastic. Between epsCrackOnset and espFracture (complete damage), it
+- * is a non-decreasing function (an exp curve in this case, controlled by a single parameter expBending).
+- * For any exp&gt;=expFracture, return 1 (complete damage).
+- *
+- * @param kappaD maximum positive strain so far
+- * @param expBending determines whether the function is bent up or down (and how much)
+- * @param epsCrackOnsert strain at which material begins to behave non-linearly
+- * @param epsFracture strain at which material is fully damaged
+- */
+-Real BrefcomLaw::damageEvolutionLaw_static(Real kappaD, Real expBending, Real epsCrackOnset, Real epsFracture){
+-	//double g(double x, double c, double eps0, double eps1){
+-	if(kappaD&lt;epsCrackOnset)return 0;
+-	if(kappaD&gt;epsFracture)return 1;
+-	return (1/(1-exp(-expBending)))*(1-exp(-expBending*(kappaD-epsCrackOnset)/(epsFracture-epsCrackOnset)));
+-}
+-
+-/*! Compute fracture energy by numerically integrating damageEvolutionLaw_static, using unitary stiffness.
+- *
+- * The value returned must be multiplied by E to obtain real fracture energy: Fracture energy
+- *    Gf=integral(E*(1-damage(eps))*eps)=E*integral(...) and we compute just the integral(...) part.
+- * The integration uses trapezoidal rule. All parameters except steps have the same
+- * meaning as for damageEvolutionLaw_static.
+- *
+- * @param steps Number of subdivision intervals for integration.
+- */
+-
+-Real BrefcomLaw::unitFractureEnergy(double expBending, double epsCrackOnset, double epsFracture, int steps /*=50*/){
+-	assert(steps&gt;=10);
+-	const double lo=0, hi=epsFracture;
+-	double sum=0,stepSize=(hi-lo)/steps,x1,x2;
+-	for(int i=0; i&lt;steps; i++){
+-		x1=lo+i*stepSize; x2=x1+stepSize;
+-		sum+=((1-damageEvolutionLaw_static(x1,expBending,epsCrackOnset,epsFracture))*x1+(1-damageEvolutionLaw_static(x2,expBending,epsCrackOnset,epsFracture))*x2)*.5*stepSize; /* trapezoid rule */
+-	}
+-	return sum;
+-}
+-
+-/*! Calibrate epsFracture so that the desired fracture energy is obtained, while other parameters are keps constant.
+- *
+- * The iteration relies on the fact that fractureEnergy is increasing for increasing epsFracture;
+- * first we find some strain value eps at which fractureEnergy(eps,...)&lt;Gf&lt;fractureEnergy(2*eps,...),
+- * then the interval is bisected until fractureEnergy matches Gf with desired precision.
+- *
+- * @param Gf the desired fracture energy.
+- * @param relEpsilon relative (with regards to Gf) result precision.
+- * @param maxIter number of iterations after which we throw exception, since for a reason we don't converge or converge too slowly.
+- *
+- * Other params have the same meaning as for damageEvolutionLaw_static.
+- */
+-Real BrefcomLaw::calibrateEpsFracture(double Gf, double E, double expBending, double epsCrackOnset, double epsFractureInit /*=1e-3*/, double relEpsilon /*=1e-3*/, int maxIter /*=1000*/){
+-	double E1,E2,Emid,epsLo=epsFractureInit,epsHi=epsFractureInit*2,epsMid,iter=0,Gf_div_E=Gf/E;
+-	bool goUp=unitFractureEnergy(expBending,epsCrackOnset,epsHi)&lt;Gf_div_E; // do we double up or down when finding margins?
+-	do { epsLo*=goUp?2:.5; epsHi=2*epsLo;
+-		E1=unitFractureEnergy(expBending,epsCrackOnset,epsLo); E2=unitFractureEnergy(expBending,epsCrackOnset,epsHi);
+-		if((iter++)&gt;maxIter) throw runtime_error(&quot;Convergence problem when finding margin values for bisection.&quot;);
+-	} while(!(E1&lt;Gf_div_E &amp;&amp; E2&gt;=Gf_div_E));
+-	// now E(epsLo)&lt;Gf_div_E&lt;=E(epsHi); go ahead using interval bisection
+-	do {
+-		epsMid=.5*(epsLo+epsHi); Emid=unitFractureEnergy(expBending,epsCrackOnset,epsMid);
+-		if(Emid&lt;Gf_div_E)epsLo=.5*(epsLo+epsHi);
+-		else if(Emid&gt;Gf_div_E)epsHi=.5*(epsLo+epsHi);
+-		if((iter++)&gt;maxIter) throw runtime_error(&quot;Convergence problem during bisection (relEpsilon too low?).&quot;);
+-	} while (abs(Emid-Gf_div_E)&gt;relEpsilon*Gf_div_E);
+-	return epsMid;
+-}
+-
+ void BrefcomLaw::applyForce(const Vector3r force){
+ 	Shop::Bex::force(id1,rootBody)+=force;
+ 	Shop::Bex::force(id2,rootBody)-=force;
+ 	Shop::Bex::momentum(id1,rootBody)+=(contGeom-&gt;contactPoint-rbp1-&gt;se3.position).Cross(force);
+ 	Shop::Bex::momentum(id1,rootBody)-=(contGeom-&gt;contactPoint-rbp2-&gt;se3.position).Cross(force);
+-/*	static_pointer_cast&lt;Force&gt;(rootBody-&gt;physicalActions-&gt;find(id1,ForceClassIndex))-&gt;force+=force;
++#if 0
++	static_pointer_cast&lt;Force&gt;(rootBody-&gt;physicalActions-&gt;find(id1,ForceClassIndex))-&gt;force+=force;
+ 	static_pointer_cast&lt;Force&gt;(rootBody-&gt;physicalActions-&gt;find(id2,ForceClassIndex))-&gt;force-=force;
+ 	static_pointer_cast&lt;Momentum&gt;(rootBody-&gt;physicalActions-&gt;find(id1,MomentumClassIndex))-&gt;momentum+=(contGeom-&gt;contactPoint-rbp1-&gt;se3.position).Cross(force);
+ 	static_pointer_cast&lt;Momentum&gt;(rootBody-&gt;physicalActions-&gt;find(id2,MomentumClassIndex))-&gt;momentum-=(contGeom-&gt;contactPoint-rbp2-&gt;se3.position).Cross(force);
+-*/
++#endif
+ }
+ 
+ void BrefcomLaw::action(MetaBody* _rootBody){
+@@ -363,3 +295,79 @@
+ 	}
+ }
+ #endif 
++
++
++/*****************************************************************************************************
++ ********************* static versions of damage evolution law and fracture energy integration *******
++ *****************************************************************************************************/
++
++#if 0
++/*! Damage evolution law (static version: all parameters are explicitly passed).
++ *
++ * This function is zero for any eps&lt;=epsCrackOnset (no damage before the material starts cracking),
++ * therefore it will be linear-elastic. Between epsCrackOnset and espFracture (complete damage), it
++ * is a non-decreasing function (an exp curve in this case, controlled by a single parameter expBending).
++ * For any exp&gt;=expFracture, return 1 (complete damage).
++ *
++ * @param kappaD maximum positive strain so far
++ * @param expBending determines whether the function is bent up or down (and how much)
++ * @param epsCrackOnsert strain at which material begins to behave non-linearly
++ * @param epsFracture strain at which material is fully damaged
++ */
++Real BrefcomLaw::damageEvolutionLaw_static(Real kappaD, Real expBending, Real epsCrackOnset, Real epsFracture){
++	//double g(double x, double c, double eps0, double eps1){
++	if(kappaD&lt;epsCrackOnset)return 0;
++	if(kappaD&gt;epsFracture)return 1;
++	return (1/(1-exp(-expBending)))*(1-exp(-expBending*(kappaD-epsCrackOnset)/(epsFracture-epsCrackOnset)));
++}
++/*! Compute fracture energy by numerically integrating damageEvolutionLaw_static, using unitary stiffness.
++ *
++ * The value returned must be multiplied by E to obtain real fracture energy: Fracture energy
++ *    Gf=integral(E*(1-damage(eps))*eps)=E*integral(...) and we compute just the integral(...) part.
++ * The integration uses trapezoidal rule. All parameters except steps have the same
++ * meaning as for damageEvolutionLaw_static.
++ *
++ * @param steps Number of subdivision intervals for integration.
++ */
++
++Real BrefcomLaw::unitFractureEnergy(double expBending, double epsCrackOnset, double epsFracture, int steps /*=50*/){
++	assert(steps&gt;=10);
++	const double lo=0, hi=epsFracture;
++	double sum=0,stepSize=(hi-lo)/steps,x1,x2;
++	for(int i=0; i&lt;steps; i++){
++		x1=lo+i*stepSize; x2=x1+stepSize;
++		sum+=((1-damageEvolutionLaw_static(x1,expBending,epsCrackOnset,epsFracture))*x1+(1-damageEvolutionLaw_static(x2,expBending,epsCrackOnset,epsFracture))*x2)*.5*stepSize; /* trapezoid rule */
++	}
++	return sum;
++}
++
++/*! Calibrate epsFracture so that the desired fracture energy is obtained, while other parameters are keps constant.
++ *
++ * The iteration relies on the fact that fractureEnergy is increasing for increasing epsFracture;
++ * first we find some strain value eps at which fractureEnergy(eps,...)&lt;Gf&lt;fractureEnergy(2*eps,...),
++ * then the interval is bisected until fractureEnergy matches Gf with desired precision.
++ *
++ * @param Gf the desired fracture energy.
++ * @param relEpsilon relative (with regards to Gf) result precision.
++ * @param maxIter number of iterations after which we throw exception, since for a reason we don't converge or converge too slowly.
++ *
++ * Other params have the same meaning as for damageEvolutionLaw_static.
++ */
++Real BrefcomLaw::calibrateEpsFracture(double Gf, double E, double expBending, double epsCrackOnset, double epsFractureInit /*=1e-3*/, double relEpsilon /*=1e-3*/, int maxIter /*=1000*/){
++	double E1,E2,Emid,epsLo=epsFractureInit,epsHi=epsFractureInit*2,epsMid,iter=0,Gf_div_E=Gf/E;
++	bool goUp=unitFractureEnergy(expBending,epsCrackOnset,epsHi)&lt;Gf_div_E; // do we double up or down when finding margins?
++	do { epsLo*=goUp?2:.5; epsHi=2*epsLo;
++		E1=unitFractureEnergy(expBending,epsCrackOnset,epsLo); E2=unitFractureEnergy(expBending,epsCrackOnset,epsHi);
++		if((iter++)&gt;maxIter) throw runtime_error(&quot;Convergence problem when finding margin values for bisection.&quot;);
++	} while(!(E1&lt;Gf_div_E &amp;&amp; E2&gt;=Gf_div_E));
++	// now E(epsLo)&lt;Gf_div_E&lt;=E(epsHi); go ahead using interval bisection
++	do {
++		epsMid=.5*(epsLo+epsHi); Emid=unitFractureEnergy(expBending,epsCrackOnset,epsMid);
++		if(Emid&lt;Gf_div_E)epsLo=.5*(epsLo+epsHi);
++		else if(Emid&gt;Gf_div_E)epsHi=.5*(epsLo+epsHi);
++		if((iter++)&gt;maxIter) throw runtime_error(&quot;Convergence problem during bisection (relEpsilon too low?).&quot;);
++	} while (abs(Emid-Gf_div_E)&gt;relEpsilon*Gf_div_E);
++	return epsMid;
++}
++#endif
++
+
+Modified: trunk/extra/Brefcom.hpp
+===================================================================
+--- trunk/extra/Brefcom.hpp	2008-06-17 07:15:29 UTC (rev 1389)
++++ trunk/extra/Brefcom.hpp	2008-06-17 11:56:11 UTC (rev 1390)
+@@ -25,7 +25,7 @@
+ 	private:
+ 	public:
+ 		/*! Fundamental parameters (constants) */
+-		Real E, G, tanFrictionAngle, undamagedCohesion, equilibriumDist, crossSection, epsCracking, epsFracture, expBending, xiShear;
++		Real E, G, tanFrictionAngle, undamagedCohesion, equilibriumDist, crossSection, epsCrackOnset, epsFracture, expBending, xiShear;
+ 		/*! Up to now maximum normal strain */
+ 		Real kappaD;
+ 		/*! prevNormal is oriented A&#8594;B (as in SpheresContactGeometry); */
+@@ -34,12 +34,14 @@
+ 		Vector3r epsT;
+ 		/*! if not cohesive, interaction is deleted when distance is greater than zero. */
+ 		bool isCohesive;
++		/*! the damage evlution function will always return virgin state */
++		bool neverDamage;
+ 
+ 		/*! auxiliary variable for visualization and BrefcomStiffnessCounter, recalculated by BrefcomLaw at every iteration */
+ 		Real omega, Fn, sigmaN, epsN;
+ 
+ 		BrefcomContact(): InteractionPhysics(),E(0), G(0), tanFrictionAngle(0), undamagedCohesion(0), equilibriumDist(0), crossSection(0), expBending(0), xiShear(0) { createIndex(); epsT=Vector3r::ZERO; kappaD=0; isCohesive=false; }
+-		BrefcomContact(Real _E, Real _G, Real _tanFrictionAngle, Real _undamagedCohesion, Real _equilibriumDist, Real _crossSection, Real _epsCracking, Real _epsFracture, Real _expBending, Real _xiShear=.6): InteractionPhysics(), E(_E), G(_G), tanFrictionAngle(_tanFrictionAngle), undamagedCohesion(_undamagedCohesion), equilibriumDist(_equilibriumDist), crossSection(_crossSection), epsCracking(_epsCracking), epsFracture(_epsFracture), expBending(_expBending), xiShear(_xiShear) { epsT=Vector3r::ZERO; kappaD=0; isCohesive=false; omega=0; Fn=0; /*TRVAR5(epsCracking,epsFracture,Kn,crossSection,equilibriumDist); */ }
++		BrefcomContact(Real _E, Real _G, Real _tanFrictionAngle, Real _undamagedCohesion, Real _equilibriumDist, Real _crossSection, Real _epsCrackOnset, Real _epsFracture, Real _expBending, Real _xiShear): InteractionPhysics(), E(_E), G(_G), tanFrictionAngle(_tanFrictionAngle), undamagedCohesion(_undamagedCohesion), equilibriumDist(_equilibriumDist), crossSection(_crossSection), epsCrackOnset(_epsCrackOnset), epsFracture(_epsFracture), expBending(_expBending), xiShear(_xiShear) { epsT=Vector3r::ZERO; kappaD=0; isCohesive=false; neverDamage=false; omega=0; Fn=0; /*TRVAR5(epsCrackOnset,epsFracture,Kn,crossSection,equilibriumDist); */ }
+ 
+ 
+ 		void registerAttributes(){
+@@ -50,19 +52,20 @@
+ 			REGISTER_ATTRIBUTE(undamagedCohesion);
+ 			REGISTER_ATTRIBUTE(equilibriumDist);
+ 			REGISTER_ATTRIBUTE(crossSection);
+-			REGISTER_ATTRIBUTE(epsCracking);
++			REGISTER_ATTRIBUTE(epsCrackOnset);
+ 			REGISTER_ATTRIBUTE(epsFracture);
+ 			REGISTER_ATTRIBUTE(expBending);
+ 			REGISTER_ATTRIBUTE(xiShear);
+ 
+ 			REGISTER_ATTRIBUTE(kappaD);
++			REGISTER_ATTRIBUTE(neverDamage);
+ 			REGISTER_ATTRIBUTE(prevNormal);
+ 			REGISTER_ATTRIBUTE(epsT);
+ 
+ 			REGISTER_ATTRIBUTE(isCohesive);
+ 
+ 			// auxiliary params, to make them accessible from python
+-			REGISTER_ATTRIBUTE(omega); REGISTER_ATTRIBUTE(Fn);
++			REGISTER_ATTRIBUTE(omega);REGISTER_ATTRIBUTE(Fn);
+ 		};
+ 
+ 	REGISTER_CLASS_NAME(BrefcomContact);
+@@ -99,20 +102,26 @@
+ 		#endif
+ 		void applyForce(const Vector3r);
+ 		/*! Cohesion evolution law (it is 1-funcH here) */
+-		Real funcH(Real kappaD){ return 1-funcG(kappaD); }
++		inline Real funcH(Real kappaD){ return 1-funcG(kappaD); }
+ 		/*! Damage evolution law */
+-		Real funcG(Real kappaD){ return damageEvolutionLaw_static(kappaD, BC-&gt;expBending, BC-&gt;epsCracking, BC-&gt;epsFracture); }
+-
+-		// static versions: for calibration of parameters without any existing instance
+-		static Real damageEvolutionLaw_static(Real kappaD, Real expBending, Real epsCrackOnset, Real epsFracture);
+-		static Real unitFractureEnergy(double expBending, double epsCrackOnset, double epsFracture, int steps=50);
++		inline Real funcG(Real kappaD){
++			const Real&amp; expBending=BC-&gt;expBending, epsCrackOnset=BC-&gt;epsCrackOnset, epsFracture=BC-&gt;epsFracture; const bool&amp; neverDamage=BC-&gt;neverDamage; // shorthands
++			if(kappaD&lt;epsCrackOnset || neverDamage) return 0;
++			if(kappaD&gt;epsFracture) return 1;
++			return (1/(1-exp(-expBending)))*(1-exp(-expBending*(kappaD-epsCrackOnset)/(epsFracture-epsCrackOnset)));
++		}
++		
+ 	public:
+-		static Real calibrateEpsFracture(double Gf, double E, double expBending, double epsCrackOnset, double epsFractureInit=1e-3, double relEpsilon=1e-3, int maxIter=1000);
+-
++		#if 0
++			// static versions: for calibration of parameters without any existing instance
++			static Real damageEvolutionLaw_static(Real kappaD, Real expBending, Real epsCrackOnset, Real epsFracture);
++			static Real unitFractureEnergy(double expBending, double epsCrackOnset, double epsFracture, int steps=50);
++			static Real calibrateEpsFracture(double Gf, double E, double expBending, double epsCrackOnset, double epsFractureInit=1e-3, double relEpsilon=1e-3, int maxIter=1000);
++		#endif
+ 		BrefcomLaw() {
+ 			/* cache indices for Force and Momentum */
+-			ForceClassIndex=shared_ptr&lt;PhysicalAction&gt;(new Force())-&gt;getClassIndex();
+-			MomentumClassIndex=shared_ptr&lt;PhysicalAction&gt;(new Momentum())-&gt;getClassIndex();
++			//ForceClassIndex=shared_ptr&lt;PhysicalAction&gt;(new Force())-&gt;getClassIndex();
++			//MomentumClassIndex=shared_ptr&lt;PhysicalAction&gt;(new Momentum())-&gt;getClassIndex();
+ 			Shop::Bex::initCache();
+ 		};
+ 		void action(MetaBody*);
+@@ -146,35 +155,23 @@
+ 		/* alternatively (and more cleanly), we would have subclass of ElasticBodyParameters,
+ 		 * which would define just those in addition to the elastic ones.
+ 		 * This might be done later, for now hardcode that here. */
+-		/* uniaxial traction resistance, uniaxial compression resistance, fracture energy, strain at complete fracture (calibrated in the constructor), bending parameter of the damage evolution law */
+-		Real sigmaT, /* sigmaC: unused */ /* Griffith's fracture energy: */ Gf, expBending, xiShear;
++		/* uniaxial tension resistance, bending parameter of the damage evolution law, whear weighting constant for epsT in the strain seminorm (kappa) calculation. Default to NaN so that user gets loudly notified it was not set.
++		
++		expBending is positive if the damage evolution function is concave after fracture onset;
++		reasonable value seems like 4.
++		*/
++		Real sigmaT, expBending, xiShear;
+ 		//! Should new contacts be cohesive? They will before this iter#, they will not be afterwards. If 0, they will never be. If negative, they will always be created as cohesive.
+ 		long cohesiveThresholdIter;
++		//! Create contacts that don't receive any damage (BrefcomContact::neverDamage=true); defaults to false
++		bool neverDamage;
+ 
+ 		BrefcomMakeContact(){
+ 			// init to signaling_NaN to force crash if not initialized (better than unknowingly using garbage values)
+-			alpha=beta=gamma=sigmaT=Gf=expBending=xiShear=std::numeric_limits&lt;Real&gt;::signaling_NaN();
+-			/* alpha=3.7; beta=2.198; gamma=3.79; sigmaC=30e6;
+-			//sigmaT=sigmaC/10.;
+-			expBending=4; // positive: concave function
+-			Gf=500; // J/m^2
+-			*/
++			sigmaT=expBending=xiShear=std::numeric_limits&lt;Real&gt;::signaling_NaN();
++			neverDamage=false;
++			alpha=3.7; beta=2.198; gamma=3.79; // Laurent's defaults
+ 			cohesiveThresholdIter=-1;
+-			#if 0
+-				/* calibrate epsFracture; WARNING: this is based on the default E value from Shop
+-				 * and therefore may not match the actual E !! */
+-				Real E=Shop::getDefault&lt;double&gt;(&quot;phys_young&quot;);
+-				Real epsCrackOnset=sigmaT/E;
+-				try{
+-					calibratedEpsFracture=BrefcomLaw::calibrateEpsFracture(Gf,E,expBending,epsCrackOnset);
+-					LOG_DEBUG(&quot;calibratedEpsFracture=&quot;&lt;&lt;calibratedEpsFracture);
+-					if(calibratedEpsFracture&gt;epsCrackOnset) LOG_WARN(&quot;calibratedEpsFracture=&quot;&lt;&lt;calibratedEpsFracture&lt;&lt;&quot; &lt; epsCrackOnset=&quot;&lt;&lt;epsCrackOnset&lt;&lt;&quot;, Gf=&quot;&lt;&lt;Gf&lt;&lt;&quot;, E=&quot;&lt;&lt;E&lt;&lt;&quot;, expBending=&quot;&lt;&lt;expBending);
+-				} catch (std::runtime_error&amp; e){
+-					LOG_ERROR(&quot;Caught exception from calibration: &quot;&lt;&lt;e.what());
+-					calibratedEpsFracture=3*epsCrackOnset;
+-					LOG_ERROR(&quot;Setting calibratedEpsFracture to &quot;&lt;&lt;calibratedEpsFracture);
+-				}
+-			#endif
+ 		}
+ 
+ 		virtual void go(const shared_ptr&lt;PhysicalParameters&gt;&amp; pp1, const shared_ptr&lt;PhysicalParameters&gt;&amp; pp2, const shared_ptr&lt;Interaction&gt;&amp; interaction);
+@@ -188,6 +185,7 @@
+ 			REGISTER_ATTRIBUTE(expBending);
+ 			REGISTER_ATTRIBUTE(xiShear);
+ 			REGISTER_ATTRIBUTE(sigmaT);
++			REGISTER_ATTRIBUTE(neverDamage);
+ 			// REGISTER_ATTRIBUTE(sigmaC);
+ 			/* REGISTER_ATTRIBUTE(Gf); */
+ 		}
+
+Modified: trunk/gui/py/utils.py
+===================================================================
+--- trunk/gui/py/utils.py	2008-06-17 07:15:29 UTC (rev 1389)
++++ trunk/gui/py/utils.py	2008-06-17 11:56:11 UTC (rev 1390)
+@@ -55,6 +55,21 @@
+ 		if b.phys['se3'][axis]+b.shape['radius']*distFactor&gt;=extremes[1]: ret[1].append(b.id)
+ 	return ret
+ 
++def perpendicularArea(axis,consider=lambda body: True):
++	&quot;&quot;&quot;return area perpendicular to given axis (0=x,1=y,2=z) generated by bodies
++	for which the function consider returns True (defaults to returning True always)
++	and which is of the type &quot;Sphere&quot;
++	&quot;&quot;&quot;
++	inf=float('inf')
++	ext=[[inf,inf],[-inf,-inf]]
++	otherAxes=((axis+1)%3,(axis+2)%3)
++	for b in o.bodies:
++		if consider(b) and b.shape.name=='Sphere':
++			ext[0]=[min(ext[0][i],b.phys['se3'][otherAxes[i]]-b.shape['radius']) for i in [0,1]]
++			ext[1]=[max(ext[1][i],b.phys['se3'][otherAxes[i]]+b.shape['radius']) for i in [0,1]]
++	return (ext[1][0]-ext[0][0])*(ext[1][1]-ext[0][1])
++
++
+ def randomizeColors(onShapes=True,onMolds=False,onlyDynamic=False):
+ 	&quot;&quot;&quot;Assign random colors to shape's (GeometricalModel) and/or mold's (InteractingGeometry) diffuseColor.
+ 	
+@@ -69,8 +84,10 @@
+ 		if onMolds  and (b['isDynamic'] or not onlyDynamic): b.mold['diffuseColor']=color
+ 
+ def runInQtGui(background=True):
+-	&quot;&quot;&quot;Run the current simulation with the QtGUI.
++	&quot;&quot;&quot;[OBSOLETE now that python and QtGUI coexist.]
+ 	
++	Run the current simulation with the QtGUI.
++	
+ 	If background is True, the command will be run in background and the saved simulation temporary will not be deleted.
+ 
+ 	Note that it runs in separate process, hence no changes will propagate back to this simulation.&quot;&quot;&quot;
+
+Modified: trunk/gui/py/yadeControl.cpp
+===================================================================
+--- trunk/gui/py/yadeControl.cpp	2008-06-17 07:15:29 UTC (rev 1389)
++++ trunk/gui/py/yadeControl.cpp	2008-06-17 11:56:11 UTC (rev 1390)
+@@ -14,6 +14,8 @@
+ #include&lt;boost/shared_ptr.hpp&gt;
+ #include&lt;boost/python.hpp&gt;
+ #include&lt;boost/foreach.hpp&gt;
++#include&lt;boost/algorithm/string.hpp&gt;
++
+ // [boost1.34] #include&lt;boost/python/stl_iterator.hpp&gt;
+ 
+ #include&lt;yade/lib-base/Logging.hpp&gt;
+@@ -207,6 +209,33 @@
+ 	void clear(){proxee-&gt;clear();}
+ };
+ 
++class pyTags{
++	public:
++		pyTags(const shared_ptr&lt;MetaBody&gt; _mb): mb(_mb){}
++		const shared_ptr&lt;MetaBody&gt; mb;
++		bool hasKey(string key){ FOREACH(string val, mb-&gt;tags){ if(algorithm::starts_with(val,key+&quot;=&quot;)){ return true;} } return false; }
++		string getItem(string key){
++			FOREACH(string val, mb-&gt;tags){
++				if(algorithm::starts_with(val,key+&quot;=&quot;)){ algorithm::erase_head(val,val.size()+1); return val;}
++			}
++			PyErr_SetString(PyExc_KeyError, &quot;Invalid key.&quot;);
++			python::throw_error_already_set(); /* make compiler happy; never reached */ return string();
++		}
++		void setItem(string key,string newVal){
++			FOREACH(string&amp; val, mb-&gt;tags){if(algorithm::starts_with(val,key+&quot;=&quot;)){ val=newVal; return; } }
++			mb-&gt;tags.push_back(key+&quot;=&quot;+newVal);
++			}
++		python::list keys(){
++			python::list ret;
++			FOREACH(string val, mb-&gt;tags){
++				size_t i=val.find(&quot;=&quot;);
++				if(i==string::npos) throw runtime_error(&quot;Tags must be in the key:value format&quot;);
++				algorithm::erase_head(val,i); ret.append(val);
++			}
++			return ret;
++		}
++};
++
+ class pyInteractionIterator{
+ 	InteractionContainer::iterator I, Iend;
+ 	public:
+@@ -403,6 +432,8 @@
+ 		for(map&lt;string,DynlibDescriptor&gt;::const_iterator di=Omega::instance().getDynlibsDescriptor().begin();di!=Omega::instance().getDynlibsDescriptor().end();++di) if (Omega::instance().isInheritingFrom((*di).first,base)) ret.append(di-&gt;first);
+ 		return ret;
+ 	}
++
++	pyTags tags_get(void){assertRootBody(); return pyTags(OMEGA.getRootBody());}
+ 	#undef OMEGA
+ };
+ 	
+@@ -448,8 +479,13 @@
+ 		.add_property(&quot;bodies&quot;,&amp;pyOmega::bodies_get)
+ 		.add_property(&quot;interactions&quot;,&amp;pyOmega::interactions_get)
+ 		.add_property(&quot;actions&quot;,&amp;pyOmega::actions_get)
++		.add_property(&quot;tags&quot;,&amp;pyOmega::tags_get)
+ 		.def(&quot;childClasses&quot;,&amp;pyOmega::listChildClasses)
+ 		;
++	boost::python::class_&lt;pyTags&gt;(&quot;TagsWrapper&quot;,python::init&lt;pyTags&amp;&gt;())
++		.def(&quot;__getitem__&quot;,&amp;pyTags::getItem)
++		.def(&quot;__setitem__&quot;,&amp;pyTags::setItem)
++		.def(&quot;keys&quot;,&amp;pyTags::keys);
+ 	
+ 	boost::python::class_&lt;pyBodyContainer&gt;(&quot;BodyContainer&quot;,python::init&lt;pyBodyContainer&amp;&gt;())
+ 		.def(&quot;__getitem__&quot;,&amp;pyBodyContainer::pyGetitem)
+
+Modified: trunk/lib/import/STLImporter.hpp
+===================================================================
+--- trunk/lib/import/STLImporter.hpp	2008-06-17 07:15:29 UTC (rev 1389)
++++ trunk/lib/import/STLImporter.hpp	2008-06-17 11:56:11 UTC (rev 1390)
+@@ -49,7 +49,7 @@
+ 	int number_of_flat_edges() const { return nbFlatEdges; }
+ 
+ 	/// max number of facet vertices (by default 4)
+-	int max_vertices_in_facet; 
++	size_t max_vertices_in_facet; 
+ 
+ 	void set_imported_stuff(bool v, bool e, bool f) {import_vertices=v; import_edges=e; import_facets=f;}
+ 	/// import vertices (by default true)
+
+Modified: trunk/lib/import/STLReader.hpp
+===================================================================
+--- trunk/lib/import/STLReader.hpp	2008-06-17 07:15:29 UTC (rev 1389)
++++ trunk/lib/import/STLReader.hpp	2008-06-17 11:56:11 UTC (rev 1390)
+@@ -79,7 +79,7 @@
+     if(file_size ==  expected_file_size) binary = true;
+     unsigned char tmpbuf[128];
+     fread(tmpbuf,sizeof(tmpbuf),1,fp);
+-    for(int i = 0; i &lt; sizeof(tmpbuf); i++)
++    for(size_t i = 0; i &lt; sizeof(tmpbuf); i++)
+       {
+ 	if(tmpbuf[i] &gt; 127)
+ 		{
+
+Modified: trunk/lib/miniWm3/Wm3Matrix3.inl
+===================================================================
+--- trunk/lib/miniWm3/Wm3Matrix3.inl	2008-06-17 07:15:29 UTC (rev 1389)
++++ trunk/lib/miniWm3/Wm3Matrix3.inl	2008-06-17 11:56:11 UTC (rev 1390)
+@@ -834,7 +834,7 @@
+     Real afDiag[3], afSubd[2];
+     rkRot = *this;
+     bool bReflection = rkRot.Tridiagonalize(afDiag,afSubd);
+-    bool bConverged = rkRot.QLAlgorithm(afDiag,afSubd);
++    __attribute__((unused)) bool bConverged = rkRot.QLAlgorithm(afDiag,afSubd);
+     assert(bConverged);
+ 
+     // (insertion) sort eigenvalues in increasing order, d0 &lt;= d1 &lt;= d2
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.cpp	2008-06-17 07:15:29 UTC (rev 1389)
++++ trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.cpp	2008-06-17 11:56:11 UTC (rev 1390)
+@@ -123,6 +123,10 @@
+ 	REGISTER_ATTRIBUTE(previousStress);
+ 	REGISTER_ATTRIBUTE(previousMultiplier);
+ 	REGISTER_ATTRIBUTE(internalCompaction);
++
++	// needed for access from python
++	REGISTER_ATTRIBUTE(meanStress);
++	REGISTER_ATTRIBUTE(volumetricStrain);
+ }
+ 
+ void TriaxialStressController::updateStiffness (MetaBody * ncb)
+@@ -240,7 +244,16 @@
+ 	}
+ }
+ 
+-Real TriaxialStressController::computeStressStrain(MetaBody* ncb)
++/* Compute:
++ *
++ * # strain[3] along x,y,z axes, 
++ * # volumetricStrain (&#949;_v=&#949;_x+&#949;_y+&#949;_z)
++ * # stress[6] on all walls
++ * # meanStress
++ *
++ * (This function used to return meanStress, but since the return value was not used anywhere, it now returns void)
++ */
++void TriaxialStressController::computeStressStrain(MetaBody* ncb)
+ {
+ 	
+ // 	height = p_top-&gt;se3.position.Y() - p_bottom-&gt;se3.position.Y() - thickness;
+@@ -254,6 +267,8 @@
+ 	strain[0] = Mathr::Log(width0/width);
+ 	strain[1] = Mathr::Log(height0/height);
+ 	strain[2] = Mathr::Log(depth0/depth);
++
++	volumetricStrain=strain[0]+strain[1]+strain[2];
+ 	
+ 	Real invXSurface = 1.f/(height*depth);
+ 	Real invYSurface = 1.f/(width*depth);
+@@ -272,8 +287,6 @@
+ 
+ 	for (int i=0; i&lt;6; i++) meanStress-=stress[i].Dot(normal[i]);
+ 	meanStress/=6.;
+-	// FIXME: meanStress is both returned as function value and stored in meanStress member. Confusing, change prototype to void, since return value isn't used anywhere.
+-	return meanStress;
+ }
+ 
+ void TriaxialStressController::controlInternalStress(MetaBody* ncb, Real multiplier)
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.hpp	2008-06-17 07:15:29 UTC (rev 1389)
++++ trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.hpp	2008-06-17 11:56:11 UTC (rev 1390)
+@@ -46,6 +46,7 @@
+ 		//! The value of stiffness (updated according to stiffnessUpdateInterval) 
+ 		Real		stiffness [6];
+ 		Real 		strain [3];
++		Real volumetricStrain;
+ 		Vector3r	normal [6];
+ 		//! The values of stresses 
+ 		Vector3r	stress [6];
+@@ -79,7 +80,7 @@
+ 		void controlExternalStress(int wall, MetaBody* ncb, Vector3r resultantForce, PhysicalParameters* p, Real wall_max_vel);
+ 		void controlInternalStress(MetaBody* ncb, Real multiplier);
+ 		void updateStiffness(MetaBody* ncb);
+-		Real computeStressStrain(MetaBody* ncb); //Compute stresses on walls and store the values in &quot;Vector3r stress[6]&quot;, return mean stress
++		void computeStressStrain(MetaBody* ncb); //Compute stresses on walls as &quot;Vector3r stress[6]&quot;, compute meanStress, strain[3] and mean strain
+ 		//! Compute the mean/max unbalanced force in the assembly (normalized by mean contact force)
+     		Real ComputeUnbalancedForce(MetaBody * ncb, bool maxUnbalanced=false);
+ 
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000350.html">[Yade-commits] r1389 - in trunk: extra extra/usct gui/py gui/qt3	pkg/common/Engine/StandAloneEngine scripts
+</A></li>
+	<LI>Next message: <A HREF="000352.html">[Yade-commits] r1391 - in trunk: core gui/py
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#351">[ date ]</a>
+              <a href="thread.html#351">[ thread ]</a>
+              <a href="subject.html#351">[ subject ]</a>
+              <a href="author.html#351">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

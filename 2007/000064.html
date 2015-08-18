@@ -1,0 +1,271 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1102 - in branches/scons-layout/extra: . clump	spherical-dem-simulator
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2007/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1102%20-%20in%20branches/scons-layout/extra%3A%20.%20clump%0A%09spherical-dem-simulator&In-Reply-To=%3C200703071014.l27AEBDC022598%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000063.html">
+   <LINK REL="Next"  HREF="000065.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1102 - in branches/scons-layout/extra: . clump	spherical-dem-simulator</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1102%20-%20in%20branches/scons-layout/extra%3A%20.%20clump%0A%09spherical-dem-simulator&In-Reply-To=%3C200703071014.l27AEBDC022598%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1102 - in branches/scons-layout/extra: . clump	spherical-dem-simulator">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Wed Mar  7 11:14:11 CET 2007</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000063.html">[Yade-commits] r1101 - in branches/scons-layout: gui lib pkg	pkg/common pkg/dem pkg/fem pkg/lattice pkg/mass-spring	pkg/realtime-rigidbody
+</A></li>
+        <LI>Next message: <A HREF="000065.html">[Yade-commits] r1103 - in branches/scons-layout: . core extra gui	lib pkg/common pkg/dem pkg/dem/DataClass pkg/fem pkg/lattice	pkg/mass-spring pkg/realtime-rigidbody
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#64">[ date ]</a>
+              <a href="thread.html#64">[ thread ]</a>
+              <a href="subject.html#64">[ subject ]</a>
+              <a href="author.html#64">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2007-03-07 11:14:11 +0100 (Wed, 07 Mar 2007)
+New Revision: 1102
+
+Added:
+   branches/scons-layout/extra/SConscript
+   branches/scons-layout/extra/spherical-dem-simulator/Contact.hpp
+   branches/scons-layout/extra/spherical-dem-simulator/PersistentAloneSAPCollider.cpp
+   branches/scons-layout/extra/spherical-dem-simulator/PersistentAloneSAPCollider.hpp
+   branches/scons-layout/extra/spherical-dem-simulator/SphericalDEM.hpp
+   branches/scons-layout/extra/spherical-dem-simulator/SphericalDEMSimulator.cpp
+   branches/scons-layout/extra/spherical-dem-simulator/SphericalDEMSimulator.hpp
+Removed:
+   branches/scons-layout/extra/Makefile
+   branches/scons-layout/extra/clump/SConscript
+   branches/scons-layout/extra/spherical-dem-simulator/SConscript
+   branches/scons-layout/extra/spherical-dem-simulator/SphericalDEMSimulator/
+Log:
+other garbage removed
+
+Deleted: branches/scons-layout/extra/Makefile
+===================================================================
+--- branches/scons-layout/extra/Makefile	2007-03-07 10:11:21 UTC (rev 1101)
++++ branches/scons-layout/extra/Makefile	2007-03-07 10:14:11 UTC (rev 1102)
+@@ -1,11 +0,0 @@
+-all:
+-	$(MAKE) -C yade-spherical-dem-simulator
+-
+-clean:
+-	$(MAKE) -C yade-spherical-dem-simulator clean
+-
+-install:
+-	$(MAKE) -C yade-spherical-dem-simulator install
+-
+-uninstall:
+-	$(MAKE) -C yade-spherical-dem-simulator uninstall
+
+Added: branches/scons-layout/extra/SConscript
+===================================================================
+--- branches/scons-layout/extra/SConscript	2007-03-07 10:11:21 UTC (rev 1101)
++++ branches/scons-layout/extra/SConscript	2007-03-07 10:14:11 UTC (rev 1102)
+@@ -0,0 +1,70 @@
++Import('*')
++env.Install('$PREFIX/lib/yade$POSTFIX/extra',[
++	## ..//yade-extra/yade-spherical-dem-simulator/src/SphericalDEMSimulator/SphericalDEMSimulator.pro
++	env.SharedLibrary('SphericalDEMSimulator',
++		['yade-spherical-dem-simulator/src/SphericalDEMSimulator/PersistentAloneSAPCollider.cpp',
++			'yade-spherical-dem-simulator/src/SphericalDEMSimulator/SphericalDEMSimulator.cpp'],
++		LIBS=env['LIBS']+['yade-lib-base',
++			'Wm3Foundation',
++			'MacroMicroElasticRelationships',
++			'BodyMacroParameters',
++			'CundallNonViscousMomentumDamping',
++			'CundallNonViscousForceDamping',
++			'PhysicalActionDamper',
++			'InteractionPhysicsMetaEngine',
++			'GravityEngine',
++			'Sphere',
++			'yade-lib-multimethods',
++			'yade-lib-factory',
++			'yade-lib-serialization',
++			'yade-lib-base',
++			'Wm3Foundation'],
++		CPPPATH=env['CPPPATH']+['yade-spherical-dem-simulator/src/SphericalDEMSimulator', '$PREFIX/include']),
++
++	env.SharedLibrary('Clump',
++		['Clump.cpp'],
++		LIBS=env['LIBS']+['Shop'],
++		LIBPATH=env['LIBPATH']),
++	env.SharedLibrary('PythonRecorder',['PythonRecorder.cpp']),
++	env.SharedLibrary('_pyade',['pyade.cpp'],SHLIBPREFIX='',
++		LIBS=env['LIBS']+['yade-lib-base','Wm3Foundation','ParticleParameters','RigidBodyParameters'],
++	),
++	env.File('pyade.py'),
++	env.SharedLibrary('Shop',
++		['Shop.cpp'],
++		LIBS=env['LIBS']+[
++			'ElasticContactLaw',
++			'ElasticCohesiveLaw',
++			'MacroMicroElasticRelationships',
++			'ElasticCriterionTimeStepper',
++			'PhysicalActionVectorVector',
++			'InteractionVecSet',
++			'BodyRedirectionVector',
++			'InteractingSphere',
++			'InteractingBox',
++			'CundallNonViscousMomentumDamping',
++			'CundallNonViscousForceDamping',
++			'MetaInteractingGeometry',
++			'GravityEngine',
++			'yade-lib-serialization',
++			'yade-lib-base',
++			'Wm3Foundation',
++			'PhysicalActionContainerInitializer',
++			'PhysicalActionContainerReseter',
++			'InteractionGeometryMetaEngine',
++			'InteractionPhysicsMetaEngine',
++			'PhysicalActionApplier',
++			'PhysicalParametersMetaEngine',
++			'BoundingVolumeMetaEngine',
++			'Box',
++			'Sphere',
++			'AABB',
++			'PersistentSAPCollider',
++			'ParticleParameters',
++			'SAPCollider',
++			'MetaInteractingGeometry2AABB',
++			'PythonRecorder',
++			#'Clump',
++			'yade-lib-multimethods']),
++
++])
+
+Deleted: branches/scons-layout/extra/clump/SConscript
+===================================================================
+--- branches/scons-layout/extra/clump/SConscript	2007-03-07 10:11:21 UTC (rev 1101)
++++ branches/scons-layout/extra/clump/SConscript	2007-03-07 10:14:11 UTC (rev 1102)
+@@ -1,48 +0,0 @@
+-Import('*')
+-env.Install('$PREFIX/lib/yade$POSTFIX/yade-extra',[
+-	env.SharedLibrary('Clump',
+-		['Clump.cpp'],
+-		LIBS=env['LIBS']+['Shop'],
+-		LIBPATH=env['LIBPATH']),
+-	env.SharedLibrary('PythonRecorder',['PythonRecorder.cpp']),
+-	env.SharedLibrary('_pyade',['pyade.cpp'],SHLIBPREFIX='',
+-		LIBS=env['LIBS']+['yade-lib-base','Wm3Foundation','ParticleParameters','RigidBodyParameters'],
+-	),
+-	env.File('pyade.py'),
+-	env.SharedLibrary('Shop',
+-		['Shop.cpp'],
+-		LIBS=env['LIBS']+[
+-			'ElasticContactLaw',
+-			'ElasticCohesiveLaw',
+-			'MacroMicroElasticRelationships',
+-			'ElasticCriterionTimeStepper',
+-			'PhysicalActionVectorVector',
+-			'InteractionVecSet',
+-			'BodyRedirectionVector',
+-			'InteractingSphere',
+-			'InteractingBox',
+-			'CundallNonViscousMomentumDamping',
+-			'CundallNonViscousForceDamping',
+-			'MetaInteractingGeometry',
+-			'GravityEngine',
+-			'yade-lib-serialization',
+-			'yade-lib-base',
+-			'Wm3Foundation',
+-			'PhysicalActionContainerInitializer',
+-			'PhysicalActionContainerReseter',
+-			'InteractionGeometryMetaEngine',
+-			'InteractionPhysicsMetaEngine',
+-			'PhysicalActionApplier',
+-			'PhysicalParametersMetaEngine',
+-			'BoundingVolumeMetaEngine',
+-			'Box',
+-			'Sphere',
+-			'AABB',
+-			'PersistentSAPCollider',
+-			'ParticleParameters',
+-			'SAPCollider',
+-			'MetaInteractingGeometry2AABB',
+-			'PythonRecorder',
+-			#'Clump',
+-			'yade-lib-multimethods']),
+-])
+
+Copied: branches/scons-layout/extra/spherical-dem-simulator/Contact.hpp (from rev 1101, branches/scons-layout/extra/spherical-dem-simulator/SphericalDEMSimulator/Contact.hpp)
+
+Copied: branches/scons-layout/extra/spherical-dem-simulator/PersistentAloneSAPCollider.cpp (from rev 1101, branches/scons-layout/extra/spherical-dem-simulator/SphericalDEMSimulator/PersistentAloneSAPCollider.cpp)
+
+Copied: branches/scons-layout/extra/spherical-dem-simulator/PersistentAloneSAPCollider.hpp (from rev 1101, branches/scons-layout/extra/spherical-dem-simulator/SphericalDEMSimulator/PersistentAloneSAPCollider.hpp)
+
+Deleted: branches/scons-layout/extra/spherical-dem-simulator/SConscript
+===================================================================
+--- branches/scons-layout/extra/spherical-dem-simulator/SConscript	2007-03-07 10:11:21 UTC (rev 1101)
++++ branches/scons-layout/extra/spherical-dem-simulator/SConscript	2007-03-07 10:14:11 UTC (rev 1102)
+@@ -1,25 +0,0 @@
+-Import('*')
+-env.Install('$PREFIX/lib/yade$POSTFIX/yade-extra',[
+-	## ..//yade-extra/yade-spherical-dem-simulator/src/SphericalDEMSimulator/SphericalDEMSimulator.pro
+-	env.SharedLibrary('SphericalDEMSimulator',
+-		['yade-spherical-dem-simulator/src/SphericalDEMSimulator/PersistentAloneSAPCollider.cpp',
+-			'yade-spherical-dem-simulator/src/SphericalDEMSimulator/SphericalDEMSimulator.cpp'],
+-		LIBS=env['LIBS']+['yade-lib-base',
+-			'Wm3Foundation',
+-			'MacroMicroElasticRelationships',
+-			'BodyMacroParameters',
+-			'CundallNonViscousMomentumDamping',
+-			'CundallNonViscousForceDamping',
+-			'PhysicalActionDamper',
+-			'InteractionPhysicsMetaEngine',
+-			'GravityEngine',
+-			'Sphere',
+-			'yade-lib-multimethods',
+-			'yade-lib-factory',
+-			'yade-lib-serialization',
+-			'yade-lib-base',
+-			'Wm3Foundation'],
+-		CPPPATH=env['CPPPATH']+['yade-spherical-dem-simulator/src/SphericalDEMSimulator', '$PREFIX/include'])
+-])
+-
+-env.SConscript(dirs=['clump'])
+
+Copied: branches/scons-layout/extra/spherical-dem-simulator/SphericalDEM.hpp (from rev 1101, branches/scons-layout/extra/spherical-dem-simulator/SphericalDEMSimulator/SphericalDEM.hpp)
+
+Copied: branches/scons-layout/extra/spherical-dem-simulator/SphericalDEMSimulator.cpp (from rev 1101, branches/scons-layout/extra/spherical-dem-simulator/SphericalDEMSimulator/SphericalDEMSimulator.cpp)
+
+Copied: branches/scons-layout/extra/spherical-dem-simulator/SphericalDEMSimulator.hpp (from rev 1101, branches/scons-layout/extra/spherical-dem-simulator/SphericalDEMSimulator/SphericalDEMSimulator.hpp)
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000063.html">[Yade-commits] r1101 - in branches/scons-layout: gui lib pkg	pkg/common pkg/dem pkg/fem pkg/lattice pkg/mass-spring	pkg/realtime-rigidbody
+</A></li>
+	<LI>Next message: <A HREF="000065.html">[Yade-commits] r1103 - in branches/scons-layout: . core extra gui	lib pkg/common pkg/dem pkg/dem/DataClass pkg/fem pkg/lattice	pkg/mass-spring pkg/realtime-rigidbody
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#64">[ date ]</a>
+              <a href="thread.html#64">[ thread ]</a>
+              <a href="subject.html#64">[ subject ]</a>
+              <a href="author.html#64">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

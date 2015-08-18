@@ -1,0 +1,762 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1357 - in trunk: core gui gui/py gui/qt3
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1357%20-%20in%20trunk%3A%20core%20gui%20gui/py%20gui/qt3&In-Reply-To=%3C200805191849.m4JInPae022577%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000318.html">
+   <LINK REL="Next"  HREF="000320.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1357 - in trunk: core gui gui/py gui/qt3</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1357%20-%20in%20trunk%3A%20core%20gui%20gui/py%20gui/qt3&In-Reply-To=%3C200805191849.m4JInPae022577%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1357 - in trunk: core gui gui/py gui/qt3">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Mon May 19 20:49:25 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000318.html">[Yade-commits] r1356 - branches
+</A></li>
+        <LI>Next message: <A HREF="000320.html">[Yade-commits] r1358 - in trunk: core extra extra/clump extra/usct	gui/py gui/qt3 pkg/common/Engine/DeusExMachina	pkg/common/Engine/StandAloneEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#319">[ date ]</a>
+              <a href="thread.html#319">[ thread ]</a>
+              <a href="subject.html#319">[ subject ]</a>
+              <a href="author.html#319">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2008-05-19 20:49:24 +0200 (Mon, 19 May 2008)
+New Revision: 1357
+
+Modified:
+   trunk/core/Omega.cpp
+   trunk/core/Omega.hpp
+   trunk/core/yade.cpp
+   trunk/gui/SConscript
+   trunk/gui/py/PythonUI.cpp
+   trunk/gui/py/PythonUI.hpp
+   trunk/gui/py/yadeControl.cpp
+   trunk/gui/qt3/FileDialog.cpp
+   trunk/gui/qt3/GLViewer.cpp
+   trunk/gui/qt3/QtFileGenerator.cpp
+   trunk/gui/qt3/QtGUI.cpp
+   trunk/gui/qt3/SimulationController.cpp
+   trunk/gui/qt3/SimulationControllerUpdater.cpp
+   trunk/gui/qt3/YadeQtMainWindow.cpp
+   trunk/gui/qt3/YadeQtMainWindow.hpp
+Log:
+1. QtGUI now integrated PythonUI if available. This means simulation can be controlled both from the QtGUi and the console. The
++ standalone PythonUI is available as well.
+2. Changed form workspace to MDI windows; main window is menu-only thing that hides when simulation is open.
+3. other minor changes.
+
+glitches with qt/python integration: plotting not tested at all; simulation controller doesn't open if a simulation is Omega().
++load()'ed; quitting python interpreter has no effect, the Yade main window must be closed (if hidden, simulation must be close+d first, then the main window).
+
+
+
+
+Modified: trunk/core/Omega.cpp
+===================================================================
+--- trunk/core/Omega.cpp	2008-05-18 11:57:59 UTC (rev 1356)
++++ trunk/core/Omega.cpp	2008-05-19 18:49:24 UTC (rev 1357)
+@@ -102,7 +102,7 @@
+ 	}
+ }
+ 
+-	bool Omega::isRunning(){ return simulationLoop-&gt;looping(); }
++bool Omega::isRunning(){ if(simulationLoop) return simulationLoop-&gt;looping(); else return false; }
+ 
+ void Omega::buildDynlibDatabase(const vector&lt;string&gt;&amp; dynlibsList)
+ {	
+@@ -401,7 +401,7 @@
+ 
+ void Omega::skipTimeStepper(bool s)
+ {
+-	rootBody-&gt;setTimeSteppersActive(!s);
++	if(rootBody) rootBody-&gt;setTimeSteppersActive(!s);
+ }
+ 
+ 
+
+Modified: trunk/core/Omega.hpp
+===================================================================
+--- trunk/core/Omega.hpp	2008-05-18 11:57:59 UTC (rev 1356)
++++ trunk/core/Omega.hpp	2008-05-19 18:49:24 UTC (rev 1357)
+@@ -108,6 +108,7 @@
+ 		boost::mutex&amp;	getRootBodyMutex();
+ 		
+ 		void		createSimulationLoop();
++		bool 		hasSimulationLoop(){return (bool)(simulationLoop);}
+ 		void		startSimulationLoop();
+ 		void		stopSimulationLoop();
+ 		void		finishSimulationLoop();
+
+Modified: trunk/core/yade.cpp
+===================================================================
+--- trunk/core/yade.cpp	2008-05-18 11:57:59 UTC (rev 1356)
++++ trunk/core/yade.cpp	2008-05-19 18:49:24 UTC (rev 1357)
+@@ -206,7 +206,7 @@
+ 		LOG_DEBUG(&quot;Initializing Python...&quot;);
+ 		Py_OptimizeFlag=1;
+ 		Py_Initialize();
+-		PyEval_InitThreads(); // this locks the GIL as side-effect
++		//PyEval_InitThreads(); // this locks the GIL as side-effect
+ 		//PyGILState_STATE pyState=PyGILState_Ensure(); PyGILState_Release(pyState);
+ 		signal(SIGINT,sigHandler);
+ 	#endif
+
+Modified: trunk/gui/SConscript
+===================================================================
+--- trunk/gui/SConscript	2008-05-18 11:57:59 UTC (rev 1356)
++++ trunk/gui/SConscript	2008-05-19 18:49:24 UTC (rev 1357)
+@@ -32,6 +32,7 @@
+ 				'XMLFormatManager',
+ 				'yade-serialization-qt',
+ 				'PositionOrientationRecorder',
++				'PythonUI',
+ 				'$QGLVIEWER_LIB'],
+ 			CPPPATH=env['CPPPATH']+['qt3']),
+ 	])
+
+Modified: trunk/gui/py/PythonUI.cpp
+===================================================================
+--- trunk/gui/py/PythonUI.cpp	2008-05-18 11:57:59 UTC (rev 1356)
++++ trunk/gui/py/PythonUI.cpp	2008-05-19 18:49:24 UTC (rev 1357)
+@@ -10,9 +10,18 @@
+ 
+ #include &lt;X11/Xlib.h&gt;
+ 
++
++// #define PYTHON_USE_QT3
++
++#ifdef PYTHON_USE_QT3
++	#include&lt;qapplication.h&gt;
++#endif
++
+ using namespace boost;
+ 
+ struct termios PythonUI::tios, PythonUI::tios_orig;
++string PythonUI::runScript, PythonUI::runCommands;
++bool PythonUI::stopAfter;
+ 
+ CREATE_LOGGER(PythonUI);
+ 
+@@ -21,18 +30,6 @@
+ \n\
+ 	-h       print this help\n\
+ 	-s file  run this python script before entering interactive prompt\n\
+-	/* -c cmd   run python command (may be specified multiple times, newline is appended every time) */ \n\
+-\n\
+-	Sample session:\n\
+-\n\
+-	&gt;&gt;&gt; p=Preprocessor\n\
+-	&gt;&gt;&gt; p.generator='Funnel'\n\
+-	&gt;&gt;&gt; p['density']=2000\n\
+-	&gt;&gt;&gt; p.output='/tmp/funnel.xml'\n\
+-	&gt;&gt;&gt; p.generate()\n\
+-	&gt;&gt;&gt; o=Omega()\n\
+-	&gt;&gt;&gt; o.run()\n\
+-	&gt;&gt;&gt; # ^D to exit\n\
+ &quot;;
+ }
+ 
+@@ -64,6 +61,30 @@
+ 	tcsetattr(STDIN_FILENO,TCSANOW,&amp;PythonUI::tios_orig);
+ }
+ 
++void PythonUI::pythonSession(){
++	LOG_DEBUG(&quot;PythonUI::pythonSession&quot;);
++	PyGILState_STATE pyState = PyGILState_Ensure();
++		LOG_DEBUG(&quot;Got Global Interpreter Lock, good.&quot;);
++		/* import yade (for startUI()) and yade.runtime (initially empty) namespaces */
++		PyRun_SimpleString(&quot;import sys; sys.path.insert(0,'&quot; PREFIX &quot;/lib/yade&quot; SUFFIX &quot;/gui')&quot;);
++		PyRun_SimpleString(&quot;import yade&quot;);
++
++		#define PYTHON_DEFINE_STRING(pyName,cxxName) PyRun_SimpleString((string(&quot;yade.runtime.&quot; pyName &quot;='&quot;)+cxxName+&quot;'&quot;).c_str())
++		#define PYTHON_DEFINE_BOOL(pyName,cxxName) PyRun_SimpleString((string(&quot;yade.runtime.&quot; pyName &quot;=&quot;)+(cxxName?&quot;True&quot;:&quot;False&quot;)).c_str())
++			// wrap those in python::handle&lt;&gt; ??
++			PYTHON_DEFINE_STRING(&quot;prefix&quot;,PREFIX);
++			PYTHON_DEFINE_STRING(&quot;suffix&quot;,SUFFIX);
++			PYTHON_DEFINE_STRING(&quot;executable&quot;,Omega::instance().origArgv[0]);
++			PYTHON_DEFINE_STRING(&quot;simulation&quot;,Omega::instance().getSimulationFileName());
++			PYTHON_DEFINE_STRING(&quot;script&quot;,runScript);
++			PYTHON_DEFINE_STRING(&quot;commands&quot;,runCommands);
++			PYTHON_DEFINE_BOOL(&quot;stopAfter&quot;,stopAfter);
++		#undef PYTHON_DEFINE_STRING
++		#undef PYTHON_DEFINE_BOOL
++		execScript(PREFIX &quot;/lib/yade&quot; SUFFIX &quot;/gui/PythonUI_rc.py&quot;);
++	PyGILState_Release(pyState);
++}
++
+ int PythonUI::run(int argc, char *argv[]) {
+ 	string runScript;
+ 	string runCommands;
+@@ -94,37 +115,15 @@
+ 	termSetup();
+ 	atexit(PythonUI::termRestore);
+ 
+-
+ 	XInitThreads();
+ 	PyEval_InitThreads();
+ 
+-	PyGILState_STATE pyState = PyGILState_Ensure();
++	#ifdef PYTHON_USE_QT3
++		QApplication app(0,NULL);	
++	#endif
++	
++	pythonSession();
+ 
+-		/* import yade (for startUI()) and yade.runtime (initially empty) namespaces */
+-		PyRun_SimpleString(&quot;import sys; sys.path.insert(0,'&quot; PREFIX &quot;/lib/yade&quot; SUFFIX &quot;/gui')&quot;);
+-		PyRun_SimpleString(&quot;import yade&quot;);
+-
+-		#define PYTHON_DEFINE_STRING(pyName,cxxName) PyRun_SimpleString((string(&quot;yade.runtime.&quot; pyName &quot;='&quot;)+cxxName+&quot;'&quot;).c_str())
+-		#define PYTHON_DEFINE_BOOL(pyName,cxxName) PyRun_SimpleString((string(&quot;yade.runtime.&quot; pyName &quot;=&quot;)+(cxxName?&quot;True&quot;:&quot;False&quot;)).c_str())
+-			// wrap those in python::handle&lt;&gt; ??
+-			PYTHON_DEFINE_STRING(&quot;prefix&quot;,PREFIX);
+-			PYTHON_DEFINE_STRING(&quot;suffix&quot;,SUFFIX);
+-			PYTHON_DEFINE_STRING(&quot;executable&quot;,Omega::instance().origArgv[0]);
+-			PYTHON_DEFINE_STRING(&quot;simulation&quot;,Omega::instance().getSimulationFileName());
+-			PYTHON_DEFINE_STRING(&quot;script&quot;,runScript);
+-			PYTHON_DEFINE_STRING(&quot;commands&quot;,runCommands);
+-			PYTHON_DEFINE_BOOL(&quot;stopAfter&quot;,stopAfter);
+-		#undef PYTHON_DEFINE_STRING
+-		#undef PYTHON_DEFINE_BOOL
+-		execScript(PREFIX &quot;/lib/yade&quot; SUFFIX &quot;/gui/PythonUI_rc.py&quot;);
+-
+-	PyGILState_Release(pyState);
+-
+-	tcsetattr(STDIN_FILENO,TCSANOW,&amp;tios_orig);
+-
+-	//boost::thread cmdlineThread(&amp;cmdlineThreadStart);
+-	//cmdlineThread.join();
+-
+ 	return 0;
+ }
+ 
+
+Modified: trunk/gui/py/PythonUI.hpp
+===================================================================
+--- trunk/gui/py/PythonUI.hpp	2008-05-18 11:57:59 UTC (rev 1356)
++++ trunk/gui/py/PythonUI.hpp	2008-05-19 18:49:24 UTC (rev 1357)
+@@ -8,13 +8,16 @@
+ {
+ 	private:
+ 		void help();
+-		void execScript(string);
++		static void execScript(string);
+ 		static struct termios tios,tios_orig;
+ 		static void termSetup();
+ 		static void termRestore();
++		static string runScript, runCommands;
++		static bool stopAfter;
+ 	public:
+ 		PythonUI(){};
+ 		virtual ~PythonUI(){};
++		static void pythonSession();
+ 		virtual int run(int argc, char *argv[]);
+ 	
+ 	REGISTER_CLASS_NAME(PythonUI);
+
+Modified: trunk/gui/py/yadeControl.cpp
+===================================================================
+--- trunk/gui/py/yadeControl.cpp	2008-05-18 11:57:59 UTC (rev 1356)
++++ trunk/gui/py/yadeControl.cpp	2008-05-19 18:49:24 UTC (rev 1357)
+@@ -294,7 +294,13 @@
+ 		 * Initializers are run ad this flag set to false by maybeRunInitializers when running (step or run) */
+ 		bool needsInitializers;
+ 	public:
+-	pyOmega(){ if(!OMEGA.getRootBody()){shared_ptr&lt;MetaBody&gt; mb=Shop::rootBody(); OMEGA.setRootBody(mb);} OMEGA.createSimulationLoop(); /* this is not true if another instance of Omega is created; flag should be stored inside the Omega singleton for clean solution. */ needsInitializers=true; };
++	pyOmega(){ if(!OMEGA.getRootBody()){shared_ptr&lt;MetaBody&gt; mb=Shop::rootBody(); OMEGA.setRootBody(mb);}
++		/* this is not true if another instance of Omega is created; flag should be stored inside the Omega singleton for clean solution. */
++		if(!OMEGA.hasSimulationLoop()){
++			OMEGA.createSimulationLoop();
++			needsInitializers=true;
++		}
++	};
+ 
+ 	long iter(){ return OMEGA.getCurrentIteration();}
+ 	double simulationTime(){return OMEGA.getSimulationTime();}
+
+Modified: trunk/gui/qt3/FileDialog.cpp
+===================================================================
+--- trunk/gui/qt3/FileDialog.cpp	2008-05-18 11:57:59 UTC (rev 1356)
++++ trunk/gui/qt3/FileDialog.cpp	2008-05-19 18:49:24 UTC (rev 1357)
+@@ -14,11 +14,12 @@
+ FileDialog::FileDialog (const QString&amp; directory,const QString&amp; filters,const string&amp; caption,QWidget* parent) : QFileDialog(directory,filters,parent,&quot;FileDialog&quot;,false)
+ {	
+ 	setCaption(caption);
+-	
+-	QSize s1 = parent-&gt;size();
+-	QSize s2 = size();
+-	QSize s = s1-s2;
+-	reparent(parent,QPoint(s.width()/2,s.height()/2));	
++	if(parent){	
++		QSize s1 = parent-&gt;size();
++		QSize s2 = size();
++		QSize s = s1-s2;
++		reparent(parent,QPoint(s.width()/2,s.height()/2));	
++	}
+ 	show();
+ 
+ }
+
+Modified: trunk/gui/qt3/GLViewer.cpp
+===================================================================
+--- trunk/gui/qt3/GLViewer.cpp	2008-05-18 11:57:59 UTC (rev 1356)
++++ trunk/gui/qt3/GLViewer.cpp	2008-05-19 18:49:24 UTC (rev 1357)
+@@ -42,8 +42,8 @@
+ {
+ 	camera()-&gt;frame()-&gt;setWheelSensitivity(-1.0f);
+ 	setMouseBinding(Qt::LeftButton + Qt::RightButton, CAMERA, ZOOM);
++	setMouseBinding(Qt::MidButton, CAMERA, ZOOM);
+ 	setMouseBinding(Qt::LeftButton, CAMERA, ROTATE);
+-	setMouseBinding(Qt::MidButton, CAMERA, TRANSLATE);
+ 	setMouseBinding(Qt::RightButton, CAMERA, TRANSLATE);
+ 	setWheelBinding(Qt::NoButton, CAMERA, ZOOM);
+ 	setMouseBinding(Qt::SHIFT + Qt::LeftButton, SELECT);
+
+Modified: trunk/gui/qt3/QtFileGenerator.cpp
+===================================================================
+--- trunk/gui/qt3/QtFileGenerator.cpp	2008-05-18 11:57:59 UTC (rev 1356)
++++ trunk/gui/qt3/QtFileGenerator.cpp	2008-05-19 18:49:24 UTC (rev 1357)
+@@ -213,7 +213,13 @@
+ 		bool successfullyGenerated=boost::any_cast&lt;bool&gt;(m_worker-&gt;getReturnValue());
+ 		string message=m_worker-&gt;message;
+ 
+-		shared_ptr&lt;MessageDialog&gt; md = shared_ptr&lt;MessageDialog&gt;(new MessageDialog(string(successfullyGenerated?&quot;SUCCESS:\n\n&quot;:&quot;FAILURE!\n\n&quot;)+message,this-&gt;parentWidget()-&gt;parentWidget()));
++		shared_ptr&lt;MessageDialog&gt; md = shared_ptr&lt;MessageDialog&gt;(new MessageDialog(string(successfullyGenerated?&quot;SUCCESS:\n\n&quot;:&quot;FAILURE!\n\n&quot;)+message,
++		#ifdef USE_WORKSPACE
++			this-&gt;parentWidget()-&gt;parentWidget()
++		#else
++			NULL
++		#endif
++		));
+ 		md-&gt;exec();
+ 
+ 		m_worker=shared_ptr&lt;FileGenerator&gt;();
+@@ -230,9 +236,10 @@
+ 			&amp;&amp; successfullyGenerated //filesystem::exists(filesystem::path((const char*)(leOutputFileName-&gt;text()))) 
+ 			&amp;&amp; Omega::instance().getSimulationFileName()==&quot;&quot;)
+ 		{
+-			QWidget* qw=this; while (qw-&gt;parentWidget()) qw=qw-&gt;parentWidget(); // find toplevel widget - which should be yade's main window
++			//QWidget* qw=this; while (qw-&gt;parentWidget()) qw=qw-&gt;parentWidget(); // find toplevel widget - which should be yade's main window
+ 			Omega::instance().setSimulationFileName((const char*)(leOutputFileName-&gt;text()));
+-			(dynamic_cast&lt;YadeQtMainWindow*&gt;(qw))-&gt;fileNewSimulation();
++			//(dynamic_cast&lt;YadeQtMainWindow*&gt;(qw))-&gt;fileNewSimulation();
++			dynamic_cast&lt;YadeQtMainWindow*&gt;(YadeQtMainWindow::self)-&gt;fileNewSimulation();
+ 		}
+ 	}
+ }
+@@ -261,7 +268,13 @@
+ 	string selectedFilter;
+ 	std::vector&lt;string&gt; filters;
+ 	filters.push_back(&quot;XML Yade File (*.xml)&quot;);
+-	string fileName = FileDialog::getOpenFileName(&quot;.&quot;, filters, &quot;Choose a FileGenerator configuration to load&quot;, this-&gt;parentWidget()-&gt;parentWidget(), selectedFilter );
++	string fileName = FileDialog::getOpenFileName(&quot;.&quot;, filters, &quot;Choose a FileGenerator configuration to load&quot;, 
++		#ifdef USE_WORKSPACE
++			this-&gt;parentWidget()-&gt;parentWidget()
++		#else
++			NULL
++		#endif
++		, selectedFilter );
+ 	if ( 	   fileName.size()!=0 
+ 		&amp;&amp; (selectedFilter == &quot;XML Yade File (*.xml)&quot;) 
+ 		&amp;&amp; filesystem::exists(fileName) 
+@@ -282,7 +295,13 @@
+ 		} 
+ 		catch(SerializableError&amp; e) // catching it...
+ 		{
+-			shared_ptr&lt;MessageDialog&gt; md = shared_ptr&lt;MessageDialog&gt;(new MessageDialog(string(&quot;FileGenerator failed to load: &quot;) + e.what(),this-&gt;parentWidget()-&gt;parentWidget()));
++			shared_ptr&lt;MessageDialog&gt; md = shared_ptr&lt;MessageDialog&gt;(new MessageDialog(string(&quot;FileGenerator failed to load: &quot;) + e.what(),
++			#ifdef USE_WORKSPACE
++				this-&gt;parentWidget()-&gt;parentWidget()
++			#else
++				NULL
++			#endif	
++				));
+ 			md-&gt;exec();
+ 			return;
+ 		}
+
+Modified: trunk/gui/qt3/QtGUI.cpp
+===================================================================
+--- trunk/gui/qt3/QtGUI.cpp	2008-05-18 11:57:59 UTC (rev 1356)
++++ trunk/gui/qt3/QtGUI.cpp	2008-05-19 18:49:24 UTC (rev 1357)
+@@ -17,6 +17,11 @@
+ //#endif
+ #include &lt;qapplication.h&gt;
+ 
++#ifdef EMBED_PYTHON
++	#include&lt;yade/gui-py/PythonUI.hpp&gt;
++	#include&lt;boost/thread.hpp&gt;
++#endif
++
+ QtGUI::QtGUI(){}
+ QtGUI::~QtGUI(){}
+ 
+@@ -51,6 +56,12 @@
+ 	mainWindow-&gt;show();
+ 	app.setMainWidget(mainWindow);
+ 
++	#ifdef EMBED_PYTHON
++		LOG_INFO(&quot;Launching Python thread now...&quot;);
++		//PyEval_InitThreads();
++		boost::thread pyThread(boost::function0&lt;void&gt;(&amp;PythonUI::pythonSession));
++	#endif
++
+ 	int res =  app.exec();
+ 
+ 	delete mainWindow;
+
+Modified: trunk/gui/qt3/SimulationController.cpp
+===================================================================
+--- trunk/gui/qt3/SimulationController.cpp	2008-05-18 11:57:59 UTC (rev 1356)
++++ trunk/gui/qt3/SimulationController.cpp	2008-05-19 18:49:24 UTC (rev 1357)
+@@ -6,6 +6,7 @@
+ *  GNU General Public License v2 or later. See file LICENSE for details. *
+ *************************************************************************/
+ 
++#include &quot;YadeQtMainWindow.hpp&quot;
+ #include &quot;SimulationController.hpp&quot;
+ #include &quot;MessageDialog.hpp&quot;
+ #include &quot;FileDialog.hpp&quot;
+@@ -96,6 +97,11 @@
+ 	if (Omega::instance().getSimulationFileName()!=&quot;&quot;){
+ 		loadSimulationFromFileName(Omega::instance().getSimulationFileName());
+ 	}
++	// run timer ANY TIME (simulation may be started asynchronously)
++	startTimer(refreshTime);
++	#ifndef USE_WORKSPACE
++		YadeQtMainWindow::self-&gt;hide();
++	#endif
+ }
+ 
+ 
+@@ -121,6 +127,10 @@
+ 	
+ 	filesystem::path rendererConfig = filesystem::path( Omega::instance().yadeConfigPath + &quot;/OpenGLRendererPref.xml&quot;, filesystem::native);
+ 	IOFormatManager::saveToFile(&quot;XMLFormatManager&quot;,rendererConfig.string(),&quot;renderer&quot;,renderer);
++
++	#ifndef USE_WORKSPACE
++		YadeQtMainWindow::self-&gt;show();
++	#endif
+ }
+ 
+ void SimulationController::redrawAll()
+@@ -145,9 +155,7 @@
+ 	string selectedFilter;
+ 	std::vector&lt;string&gt; filters;
+ 	filters.push_back(&quot;Yade Binary File (*.yade)&quot;);
+-	filters.push_back(&quot;XML Yade File (*.xml)&quot;);
+-	filters.push_back(&quot;XML Yade File (*.xml.gz)&quot;);
+-	filters.push_back(&quot;XML Yade File (*.xml.bz2)&quot;);
++	filters.push_back(&quot;XML Yade File (*.xml *.xml.gz *.xml.bz2)&quot;);
+ 	string fileName = FileDialog::getOpenFileName(&quot;.&quot;, filters, &quot;Choose a file to open&quot;, parentWorkspace, selectedFilter );
+ 		
+ 	if ( 	   fileName.size()!=0 
+@@ -235,9 +243,7 @@
+ 	string selectedFilter;
+ 	std::vector&lt;string&gt; filters;
+ 	filters.push_back(&quot;Yade Binary File (*.yade)&quot;);
+-	filters.push_back(&quot;XML Yade File (*.xml)&quot;);
+-	filters.push_back(&quot;XML Yade File (*.xml.gz)&quot;);
+-	filters.push_back(&quot;XML Yade File (*.xml.bz2)&quot;);
++	filters.push_back(&quot;XML Yade File (*.xml *.xml.gz *.xml.bz2)&quot;);
+ 	string fileName = FileDialog::getSaveFileName(&quot;.&quot;, filters, &quot;Specify file name to save&quot;, parentWorkspace, selectedFilter );
+ 
+ 	if(fileName.size()!=0  &amp;&amp; (fileName != &quot;/&quot;)&amp;&amp; (fileName != &quot;.&quot;))
+@@ -301,13 +307,16 @@
+ 		if (id==maxNbViews)
+ 			maxNbViews--;
+ 	}
++	else{
++		/* emit close for the whole simulation? */
++	}
+ }
+ 
+ 
+ void SimulationController::pbStopClicked()
+ {
+ 	Omega::instance().stopSimulationLoop();
+-	killTimers();
++	//killTimers();
+ }
+ 
+ 
+@@ -316,7 +325,6 @@
+ 	if(!sync)
+ 		Omega::instance().startSimulationLoop();        
+ 
+-	startTimer(refreshTime);
+ }
+ 
+ 
+@@ -331,7 +339,7 @@
+ 	if(Omega::instance().getRootBody())
+ 	{
+ 		// timeStepper setup done in loadSimulationFromFileName
+-		updater-&gt;oneLoop(); // to refresh gui
++		//updater-&gt;oneLoop(); // to refresh gui
+ 		redrawAll();
+ 	} 
+ 	else
+@@ -351,7 +359,7 @@
+ 	pbStopClicked();
+ 	Omega::instance().spawnSingleSimulationLoop();
+ 	redrawAll();
+-	updater-&gt;oneLoop();
++	//updater-&gt;oneLoop();
+ }
+ 
+ 
+
+Modified: trunk/gui/qt3/SimulationControllerUpdater.cpp
+===================================================================
+--- trunk/gui/qt3/SimulationControllerUpdater.cpp	2008-05-18 11:57:59 UTC (rev 1356)
++++ trunk/gui/qt3/SimulationControllerUpdater.cpp	2008-05-19 18:49:24 UTC (rev 1357)
+@@ -46,20 +46,22 @@
+ 	snprintf(strVirt,64,&quot;virt %02d:%03d.%03dm%03du%03dn&quot;,min,sec,msec,misec,nsec);
+ 	controller-&gt;labelSimulTime-&gt;setText(string(strVirt));
+ 
+-	time_duration duration = microsec_clock::local_time()-Omega::instance().getMsStartingSimulationTime();
+-	duration -= Omega::instance().getSimulationPauseDuration();
++	if(Omega::instance().isRunning()){
++		time_duration duration = microsec_clock::local_time()-Omega::instance().getMsStartingSimulationTime();
++		duration -= Omega::instance().getSimulationPauseDuration();
+ 
+-	unsigned int hours	= duration.hours();
+-	unsigned int minutes 	= duration.minutes();
+-	unsigned int seconds	= duration.seconds();
+-	unsigned int mseconds	= duration.fractional_seconds()/1000;
+-	unsigned int days 	= hours/24;
+-	hours			= hours-24*days;
++		unsigned int hours	= duration.hours();
++		unsigned int minutes 	= duration.minutes();
++		unsigned int seconds	= duration.seconds();
++		unsigned int mseconds	= duration.fractional_seconds()/1000;
++		unsigned int days 	= hours/24;
++		hours			= hours-24*days;
+ 
+-	char strReal[64];
+-	if(days&gt;0) snprintf(strReal,64,&quot;real %dd %02d:%02d:%03d.%03d&quot;,days,hours,minutes,seconds,mseconds);
+-	else snprintf(strReal,64,&quot;real %02d:%02d:%03d.%03d&quot;,hours,minutes,seconds,mseconds);
+-	controller-&gt;labelRealTime-&gt;setText(string(strReal));
++		char strReal[64];
++		if(days&gt;0) snprintf(strReal,64,&quot;real %dd %02d:%02d:%03d.%03d&quot;,days,hours,minutes,seconds,mseconds);
++		else snprintf(strReal,64,&quot;real %02d:%02d:%03d.%03d&quot;,hours,minutes,seconds,mseconds);
++		controller-&gt;labelRealTime-&gt;setText(string(strReal));
++	}
+ 
+ 	// update iterations per second - only one in a while (iterPerSec_TTL_ms)
+ 	// does someone need to display that with more precision than integer?
+
+Modified: trunk/gui/qt3/YadeQtMainWindow.cpp
+===================================================================
+--- trunk/gui/qt3/YadeQtMainWindow.cpp	2008-05-18 11:57:59 UTC (rev 1356)
++++ trunk/gui/qt3/YadeQtMainWindow.cpp	2008-05-19 18:49:24 UTC (rev 1357)
+@@ -5,7 +5,6 @@
+ *  This program is free software; it is licensed under the terms of the  *
+ *  GNU General Public License v2 or later. See file LICENSE for details. *
+ *************************************************************************/
+-
+ #include &quot;YadeQtMainWindow.hpp&quot;
+ #include&lt;yade/lib-serialization/IOFormatManager.hpp&gt;
+ #include&lt;yade/lib-factory/ClassFactory.hpp&gt;
+@@ -28,8 +27,11 @@
+ 
+ CREATE_LOGGER(YadeQtMainWindow);
+ 
++YadeQtMainWindow* YadeQtMainWindow::self=NULL;
++
+ YadeQtMainWindow::YadeQtMainWindow() : YadeQtGeneratedMainWindow()
+ {
++	self=this;
+ 
+ 	preferences = shared_ptr&lt;QtGUIPreferences&gt;(new QtGUIPreferences);
+ 	filesystem::path yadeQtGUIPrefPath = filesystem::path( Omega::instance().yadeConfigPath + &quot;/QtGUIPreferences.xml&quot;, filesystem::native);
+@@ -38,8 +40,11 @@
+ 	{
+ 		preferences-&gt;mainWindowPositionX	= 50;
+ 		preferences-&gt;mainWindowPositionY	= 50;
+-		preferences-&gt;mainWindowSizeX		= 1024;
+-		preferences-&gt;mainWindowSizeY		= 768;
++		#ifdef USE_WORKSPACE
++			preferences-&gt;mainWindowSizeX		= 1024; preferences-&gt;mainWindowSizeY		= 768;
++		#else
++			preferences-&gt;mainWindowSizeX		= 150; preferences-&gt;mainWindowSizeY		= 150;
++		#endif	
+ 		IOFormatManager::saveToFile(&quot;XMLFormatManager&quot;,yadeQtGUIPrefPath.string(),&quot;preferences&quot;,preferences);
+ 	}
+ 
+@@ -52,8 +57,11 @@
+ 	{
+ 		preferences-&gt;mainWindowPositionX	= 50;
+ 		preferences-&gt;mainWindowPositionY	= 50;
+-		preferences-&gt;mainWindowSizeX		= 1024;
+-		preferences-&gt;mainWindowSizeY		= 768;
++		#ifdef USE_WORKSPACE
++			preferences-&gt;mainWindowSizeX		= 1024; preferences-&gt;mainWindowSizeY		= 768;
++		#else
++			preferences-&gt;mainWindowSizeX		= 150; preferences-&gt;mainWindowSizeY		= 150;
++		#endif	
+ 		IOFormatManager::saveToFile(&quot;XMLFormatManager&quot;,yadeQtGUIPrefPath.string(),&quot;preferences&quot;,preferences);
+ 	}
+ 
+@@ -61,31 +69,25 @@
+ 	move(preferences-&gt;mainWindowPositionX,preferences-&gt;mainWindowPositionY);
+ 	
+ 	//addMenu(&quot;Edit&quot;);
+-	addMenu(&quot;Preprocessor&quot;);
+-	addMenu(&quot;Postprocessor&quot;);
+-	//addMenu(&quot;Extra&quot;);
+-
+-	//addItem(&quot;Edit&quot;,&quot;Preferences...&quot;,&quot;QtPreferencesEditor&quot;);
++	//addMenu(&quot;Preprocessor&quot;);
++	//addMenu(&quot;Postprocessor&quot;);
++	addMenu(&quot;Actions&quot;);
+ 		
+-	addItem(&quot;Preprocessor&quot;,&quot;File Generator...&quot;,&quot;QtFileGenerator&quot;);
+-	//addItem(&quot;Preprocessor&quot;,&quot;Engine Editor...&quot;,&quot;QtEngineEditor&quot;);
+-	//addItem(&quot;Preprocessor&quot;,&quot;Code Generator...&quot;,&quot;QtCodeGenerator&quot;);
++	addItem(&quot;Actions&quot;,&quot;File Generator&quot;,&quot;QtFileGenerator&quot;);
++	addItem(&quot;Actions&quot;,&quot;Simulation Player&quot;,&quot;QtSimulationPlayer&quot;);
+ 
+-	addItem(&quot;Postprocessor&quot;,&quot;Simulation Player...&quot;,&quot;QtSimulationPlayer&quot;);
+-
+-	//addItem(&quot;Extra&quot;,&quot;Spherical DEM Simulator...&quot;,&quot;QtSphericalDEM&quot;);
+-
+ 	createMenus();
+ 
+ 	QVBox *vbox = new QVBox( this );
+ 	vbox-&gt;setFrameStyle( QFrame::StyledPanel | QFrame::Sunken );
+ 	vbox-&gt;setMargin( 2 );
+ 	vbox-&gt;setLineWidth( 2 );
++	#ifdef USE_WORKSPACE
++		workspace = new QWorkspace( vbox );
++		workspace-&gt;setBackgroundMode( PaletteMid );
++		setCentralWidget( vbox );
++	#endif
+ 
+-	workspace = new QWorkspace( vbox );
+-	workspace-&gt;setBackgroundMode( PaletteMid );
+-	setCentralWidget( vbox );
+-	
+ 	simulationController = 0;
+ 	
+ 	// HACK
+@@ -121,7 +123,7 @@
+ 		items.push_back(new QAction(this, itemName.c_str()));
+ 		items.back()-&gt;setText( itemName.c_str() );
+ 		items.back()-&gt;setMenuText( itemName.c_str() );
+-		items.back()-&gt;setToolTip( (&quot;Load library &quot;+ClassFactory::instance().libNameToSystemName(className)).c_str() );
++		items.back()-&gt;setToolTip( (&quot;Load plugin &quot;+ClassFactory::instance().libNameToSystemName(className)).c_str() );
+ 		items.back()-&gt;addTo(getPopupMenu(menuName));
+ 		connect( items.back(), SIGNAL( activated() ), this, SLOT( dynamicMenuClicked() ) );
+ 	}
+@@ -140,8 +142,12 @@
+ 
+ void YadeQtMainWindow::fileNewSimulation()
+ {
+-	if(!simulationController)
+-		simulationController = new SimulationController(workspace);
++	if(!simulationController) simulationController =
++	#ifdef USE_WORKSPACE
++		new SimulationController(workspace);
++	#else
++		new SimulationController(NULL);
++	#endif
+ 	simulationController-&gt;show();
+ 	connect( simulationController, SIGNAL( closeSignal() ), this, SLOT( closeSimulationControllerEvent() ) );
+ 	fileNewSimulationAction-&gt;setEnabled(false);
+@@ -157,7 +163,11 @@
+ 	shared_ptr&lt;QWidget&gt; widget = dynamic_pointer_cast&lt;QWidget&gt;(qtWidgets.back());
+ 	if (widget) // the library is a QWidget so we set workspace as its parent
+ 	{
+-		widget-&gt;reparent(workspace,QPoint(10,10));
++		#ifdef USE_WORKSPACE
++			widget-&gt;reparent(workspace,QPoint(10,10));
++		#else
++			//widget-&gt;reparent(this,QPoint(10,10));
++		#endif
+ 		widget-&gt;show();
+ 	}
+ }
+
+Modified: trunk/gui/qt3/YadeQtMainWindow.hpp
+===================================================================
+--- trunk/gui/qt3/YadeQtMainWindow.hpp	2008-05-18 11:57:59 UTC (rev 1356)
++++ trunk/gui/qt3/YadeQtMainWindow.hpp	2008-05-19 18:49:24 UTC (rev 1357)
+@@ -9,6 +9,15 @@
+ #ifndef YADEQTMAINWINDOW_HPP
+ #define YADEQTMAINWINDOW_HPP
+ 
++/* #define this if you want to have workspace: one toplevel windows with subwindows inside it;
++ * that is the old behavior which is now deprecated, but still supported.
++ *
++ * If it is not defined, all dialogues etc will be standalone windows.
++ *
++ */
++
++// #define USE_WORKSPACE
++
+ #include &lt;qworkspace.h&gt;
+ #include &lt;qmainwindow.h&gt;
+ #include &lt;qframe.h&gt;
+@@ -22,7 +31,9 @@
+ 	protected :
+ 		shared_ptr&lt;QtGUIPreferences&gt; preferences;
+ 		SimulationController * simulationController;
+-		QWorkspace * workspace;
++		#ifdef USE_WORKSPACE
++			QWorkspace * workspace;
++		#endif
+ 		
+ 		QPopupMenu *preprocessorMenu;
+ 		vector&lt;pair&lt;string,QPopupMenu*&gt; &gt; menus;
+@@ -38,6 +49,8 @@
+ 		YadeQtMainWindow ();
+ 		virtual ~YadeQtMainWindow ();
+ 
++		static YadeQtMainWindow* self; // HACK to retrieve this &quot;singleton&quot; form elsewhere
++
+ 		void addMenu(string menuName);
+ 		void addItem(string menuName, string itemName,string className);
+ 		void createMenus();
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000318.html">[Yade-commits] r1356 - branches
+</A></li>
+	<LI>Next message: <A HREF="000320.html">[Yade-commits] r1358 - in trunk: core extra extra/clump extra/usct	gui/py gui/qt3 pkg/common/Engine/DeusExMachina	pkg/common/Engine/StandAloneEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#319">[ date ]</a>
+              <a href="thread.html#319">[ thread ]</a>
+              <a href="subject.html#319">[ subject ]</a>
+              <a href="author.html#319">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

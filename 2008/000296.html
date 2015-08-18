@@ -1,0 +1,587 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1334 - in trunk: core gui gui/py scripts
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1334%20-%20in%20trunk%3A%20core%20gui%20gui/py%20scripts&In-Reply-To=%3C200805010729.m417Tka3004526%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000295.html">
+   <LINK REL="Next"  HREF="000297.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1334 - in trunk: core gui gui/py scripts</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1334%20-%20in%20trunk%3A%20core%20gui%20gui/py%20scripts&In-Reply-To=%3C200805010729.m417Tka3004526%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1334 - in trunk: core gui gui/py scripts">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Thu May  1 09:29:46 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000295.html">[Yade-commits] r1333 - in trunk/gui: . py
+</A></li>
+        <LI>Next message: <A HREF="000297.html">[Yade-commits] r1335 - in trunk: core extra extra/clump extra/tetra	extra/usct gui/py pkg/common/Engine/DeusExMachina	pkg/common/Engine/EngineUnit pkg/common/Engine/MetaEngine	pkg/common/Engine/StandAloneEngine	pkg/common/RenderingEngine/OpenGLRenderingEngine	pkg/dem/Engine/DeusExMachina pkg/dem/Engine/StandAloneEngine	pkg/fem/Engine/StandAloneEngine	pkg/mass-spring/Engine/StandAloneEngine	pkg/realtime-rigidbody/Engine/StandAloneEngine scripts
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#296">[ date ]</a>
+              <a href="thread.html#296">[ thread ]</a>
+              <a href="subject.html#296">[ subject ]</a>
+              <a href="author.html#296">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2008-05-01 09:29:44 +0200 (Thu, 01 May 2008)
+New Revision: 1334
+
+Added:
+   trunk/gui/py/PythonUI.cpp
+   trunk/gui/py/PythonUI.hpp
+   trunk/gui/py/PythonUI_rc.py
+   trunk/gui/py/__init__.py
+Removed:
+   trunk/gui/py/__init__.py
+   trunk/gui/py/cmdGui.cpp
+   trunk/gui/py/cmdGui.hpp
+   trunk/gui/py/cmdGuiInit.py
+Modified:
+   trunk/core/yade.cpp
+   trunk/gui/SConscript
+   trunk/gui/py/runtime.py
+   trunk/scripts/default-test.py
+Log:
+Renamed cmdGui to PythonUI. Tests seem to be working now.
+
+
+Modified: trunk/core/yade.cpp
+===================================================================
+--- trunk/core/yade.cpp	2008-05-01 06:23:36 UTC (rev 1333)
++++ trunk/core/yade.cpp	2008-05-01 07:29:44 UTC (rev 1334)
+@@ -118,7 +118,7 @@
+ \n\
+ 	-h      : print this help.\n\
+ 	-n      : use NullGUI (command line interface) instead of default GUI.\n\
+-	-N name : specify the user interface (available: NullGUI, cmdGui, QtGUI)\n\
++	-N name : specify the user interface (available: NullGUI, PythonUI, QtGUI)\n\
+ 	-w      : launch the 'first run configuration'\n\
+ 	-c      : use local directory ./ as configuration directory\n\
+ 	-C path : configuration directory different than default ~/.yade/\n\
+@@ -176,7 +176,7 @@
+ 			default: printHelp(); return 1;
+ 		}
+ 	// peek to see the first non-option arg that will be passed to the gui; may affect the gui we will use
+-	if(optind&lt;argc &amp;&amp; boost::algorithm::ends_with(string(argv[optind]),string(&quot;.py&quot;))){ gui=&quot;cmdGui&quot;; LOG_DEBUG(&quot;Selecting cmdGui for .py&quot;); }
++	if(optind&lt;argc &amp;&amp; boost::algorithm::ends_with(string(argv[optind]),string(&quot;.py&quot;))){ gui=&quot;PythonUI&quot;; LOG_DEBUG(&quot;Selecting cmdGui for .py&quot;); }
+ 	// save original options
+ 	Omega::instance().origArgv=argv; Omega::instance().origArgc=argc;
+ 	// kill processed options, keep one more which is in fact non-option (normally the binary)
+
+Modified: trunk/gui/SConscript
+===================================================================
+--- trunk/gui/SConscript	2008-05-01 06:23:36 UTC (rev 1333)
++++ trunk/gui/SConscript	2008-05-01 07:29:44 UTC (rev 1334)
+@@ -39,12 +39,12 @@
+ if 'EMBED_PYTHON' in env['CPPDEFINES']:
+ 	env.Install('$PREFIX/lib/yade$SUFFIX/gui',[
+ 		env.SharedLibrary('PythonUI',['py/PythonUI.cpp']),
+-		# env.File('PythonUIInit.py','py'),
++		env.File('PythonUI_rc.py','py'),
+ 	])
+ 	# one level deeper so that you can say: from yade.wrapper import *
+ 	# (more submodules to come)
+ 	env.Install('$PREFIX/lib/yade$SUFFIX/gui/yade',[
+-		env.SharedLibrary('wrapper',['py/yadeControl.cpp','py/GLViewer4.cpp'],SHLIBPREFIX='',
++		env.SharedLibrary('wrapper',['py/yadeControl.cpp'],SHLIBPREFIX='',
+ 			LIBS=env['LIBS']+['yade-base','libboost_python','XMLFormatManager','yade-factory','yade-serialization','Shop',
+ 				'BoundingVolumeMetaEngine',
+ 				'GeometricalModelMetaEngine',
+@@ -53,6 +53,7 @@
+ 				'InteractionPhysicsMetaEngine',
+ 				'PhysicalParametersMetaEngine',
+ 			],
++			# ,'py/GLViewer4.cpp'
+ 			# '$QGLVIEWER_LIB'
+ 			#CPPPATH=env['CPPPATH']+['/usr/include/qt4','/usr/include/qt4/Qt','/usr/include/qt4/QtXml','/usr/include/qt4/QtOpenGL','/usr/include/qt4/QtCore','/usr/include/qt4/QtGui'],
+ 			CPPDEFINES=env['CPPDEFINES']+['NO_PYGLVIEWER'],
+
+Copied: trunk/gui/py/PythonUI.cpp (from rev 1333, trunk/gui/py/cmdGui.cpp)
+===================================================================
+--- trunk/gui/py/cmdGui.cpp	2008-05-01 06:23:36 UTC (rev 1333)
++++ trunk/gui/py/PythonUI.cpp	2008-05-01 07:29:44 UTC (rev 1334)
+@@ -0,0 +1,104 @@
++//#include&lt;Python.h&gt;
++#include&lt;boost/thread/thread.hpp&gt;
++#include&lt;boost/python.hpp&gt;
++#include&lt;boost/algorithm/string.hpp&gt;
++#include&lt;errno.h&gt;
++
++#include&quot;PythonUI.hpp&quot;
++
++#include &lt;X11/Xlib.h&gt;
++
++using namespace boost;
++
++//void cmdlineThreadStart(){
++//}
++
++CREATE_LOGGER(PythonUI);
++
++void PythonUI::help(){
++	cerr&lt;&lt;&quot; PythonUI (python console) frontend.\n\
++\n\
++	-h       print this help\n\
++	-s file  run this python script before entering interactive prompt\n\
++	/* -c cmd   run python command (may be specified multiple times, newline is appended every time) */ \n\
++\n\
++	Sample session:\n\
++\n\
++	&gt;&gt;&gt; p=Preprocessor\n\
++	&gt;&gt;&gt; p.generator='Funnel'\n\
++	&gt;&gt;&gt; p['density']=2000\n\
++	&gt;&gt;&gt; p.output='/tmp/funnel.xml'\n\
++	&gt;&gt;&gt; p.generate()\n\
++	&gt;&gt;&gt; o=Omega()\n\
++	&gt;&gt;&gt; o.run()\n\
++	&gt;&gt;&gt; # ^D to exit\n\
++&quot;;
++}
++
++void PythonUI::execScript(string script){
++	LOG_DEBUG(&quot;Python will now run file `&quot;&lt;&lt;script&lt;&lt;&quot;'.&quot;);
++	FILE* scriptFILE=fopen(script.c_str(),&quot;r&quot;);
++	if(scriptFILE){
++		PyRun_SimpleFile(scriptFILE,script.c_str());
++	}
++	else{
++		string strerr(strerror(errno));
++		LOG_ERROR(&quot;Unable to open file `&quot;&lt;&lt;script&lt;&lt;&quot;': &quot;&lt;&lt;strerr&lt;&lt;&quot;.&quot;);
++	}
++}
++
++int PythonUI::run(int argc, char *argv[]) {
++	string runScript;
++	string runCommands;
++	bool stopAfter=false;
++	
++	int ch;
++	while((ch=getopt(argc,argv,&quot;hs:&quot;))!=-1)
++	switch(ch){
++		case 'h': help(); return 1;
++		case 's': runScript=string(optarg); break;
++		case 'x': stopAfter=true; break;
++		//case 'c': runCommands+=string(optarg)+&quot;\n&quot;; break;
++		default:
++			LOG_ERROR(&quot;Unhandled option string: `&quot;&lt;&lt;string(optarg)&lt;&lt;&quot;' (try -h for help on options)&quot;);
++			break;
++	}
++	if(optind&lt;argc){ // process non-option arguments
++		if(boost::algorithm::ends_with(string(argv[optind]),string(&quot;.py&quot;))) runScript=string(argv[optind]);
++		else if(boost::algorithm::ends_with(string(argv[optind]),string(&quot;.xml&quot;))) Omega::instance().setSimulationFileName(string(argv[optind]));
++		else optind--;
++	}
++	for (int index = optind+1; index&lt;argc; index++) LOG_ERROR(&quot;Unprocessed non-option argument: `&quot;&lt;&lt;argv[index]&lt;&lt;&quot;'&quot;);
++
++
++	XInitThreads();
++	PyEval_InitThreads();
++
++	PyGILState_STATE pyState = PyGILState_Ensure();
++
++		/* import yade (for startUI()) and yade.runtime (initially empty) namespaces */
++		PyRun_SimpleString(&quot;import sys; sys.path.insert(0,'&quot; PREFIX &quot;/lib/yade&quot; SUFFIX &quot;/gui')&quot;);
++		PyRun_SimpleString(&quot;import yade&quot;);
++
++		#define PYTHON_DEFINE_STRING(pyName,cxxName) PyRun_SimpleString((string(&quot;yade.runtime.&quot; pyName &quot;='&quot;)+cxxName+&quot;'&quot;).c_str())
++		#define PYTHON_DEFINE_BOOL(pyName,cxxName) PyRun_SimpleString((string(&quot;yade.runtime.&quot; pyName &quot;=&quot;)+(cxxName?&quot;True&quot;:&quot;False&quot;)).c_str())
++			// wrap those in python::handle&lt;&gt; ??
++			PYTHON_DEFINE_STRING(&quot;prefix&quot;,PREFIX);
++			PYTHON_DEFINE_STRING(&quot;suffix&quot;,SUFFIX);
++			PYTHON_DEFINE_STRING(&quot;executable&quot;,Omega::instance().origArgv[0]);
++			PYTHON_DEFINE_STRING(&quot;simulation&quot;,Omega::instance().getSimulationFileName());
++			PYTHON_DEFINE_STRING(&quot;script&quot;,runScript);
++			PYTHON_DEFINE_STRING(&quot;commands&quot;,runCommands);
++			PYTHON_DEFINE_BOOL(&quot;stopAfter&quot;,stopAfter);
++		#undef PYTHON_DEFINE_STRING
++		#undef PYTHON_DEFINE_BOOL
++		execScript(PREFIX &quot;/lib/yade&quot; SUFFIX &quot;/gui/PythonUI_rc.py&quot;);
++
++	PyGILState_Release(pyState);
++
++	//boost::thread cmdlineThread(&amp;cmdlineThreadStart);
++	//cmdlineThread.join();
++
++	return 0;
++}
++
+
+Copied: trunk/gui/py/PythonUI.hpp (from rev 1333, trunk/gui/py/cmdGui.hpp)
+===================================================================
+--- trunk/gui/py/cmdGui.hpp	2008-05-01 06:23:36 UTC (rev 1333)
++++ trunk/gui/py/PythonUI.hpp	2008-05-01 07:29:44 UTC (rev 1334)
+@@ -0,0 +1,22 @@
++// &#169; 2007 V&#225;clav &#352;milauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">eudoxos at arcig.cz</A>&gt;
++#pragma once
++#include&lt;yade/core/FrontEnd.hpp&gt;
++#include&lt;boost/shared_ptr.hpp&gt;
++
++class PythonUI: public FrontEnd
++{
++	private:
++		void help();
++		void execScript(string);
++	public:
++		PythonUI(){};
++		virtual ~PythonUI(){};
++		virtual int run(int argc, char *argv[]);
++	
++	REGISTER_CLASS_NAME(PythonUI);
++	REGISTER_BASE_CLASS_NAME(FrontEnd);
++	DECLARE_LOGGER;
++};
++
++REGISTER_FACTORABLE(PythonUI);
++
+
+Added: trunk/gui/py/PythonUI_rc.py
+===================================================================
+--- trunk/gui/py/PythonUI_rc.py	2008-05-01 06:23:36 UTC (rev 1333)
++++ trunk/gui/py/PythonUI_rc.py	2008-05-01 07:29:44 UTC (rev 1334)
+@@ -0,0 +1,54 @@
++# encoding: utf-8
++&quot;&quot;&quot;Run everything that is needed at the beginning of PythonUI session. 
++
++yade.runtime must have already been populated from within c++.&quot;&quot;&quot;
++
++from yade import runtime
++import sys
++sys.excepthook=sys.__excepthook__ # apport on ubuntu override this, we don't need it
++# sys.path.insert(0,runtime.prefix+'/lib/yade'+runtime.suffix+'/extra')
++
++from yade.wrapper import *
++
++## run simulation if requested from the command line
++if runtime.simulation:
++	print &quot;Running simulation &quot;+runtime.simulation
++	o=Omega(); o.load(runtime.simulation); o.run();
++
++## run script if requested from the command line
++if runtime.script:
++	print &quot;Running script &quot;+runtime.script
++	execfile(runtime.script)
++	if runtime.stopAfter: sys.exit(0)
++
++# run commands if requested from the command line
++#if yadeRunCommands:
++#	print &quot;Running commands from commandline: &quot;+yadeRunCommands
++#	exec(yadeRunCommands)
++
++# this cannot be run directly, since importing * is allowed only at module level
++
++try:
++	# prefer ipython, since it is colorful and cool
++	from IPython.Shell import IPShellEmbed
++	sys.argv=['&lt;embedded python interpreter&gt;']
++	ipshell = IPShellEmbed()
++	ipshell()
++except ImportError:
++	## no ipython :-(, let's emulate it
++	# <A HREF="http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/473900">http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/473900</A>
++	import os, readline, rlcompleter, atexit
++	history_file = os.path.join(os.environ['HOME']+'/.yade_python_history')
++	try:
++		 readline.read_history_file(history_file)
++	except IOError:
++		 pass
++	readline.parse_and_bind(&quot;tab: complete&quot;)
++	readline.set_history_length(1000)
++	atexit.register(readline.write_history_file, history_file) # FIXME: this will probably not work!
++	#del os, readline, rlcompleter, atexit, history_file, __file__
++
++	# run interactive loop
++	import code
++	code.InteractiveConsole(globals()).interact()
++
+
+Deleted: trunk/gui/py/__init__.py
+===================================================================
+--- trunk/gui/py/__init__.py	2008-05-01 06:23:36 UTC (rev 1333)
++++ trunk/gui/py/__init__.py	2008-05-01 07:29:44 UTC (rev 1334)
+@@ -1,2 +0,0 @@
+-# this file just tells python that yade is package of python modules
+-# see <A HREF="http://http://www.python.org/doc/2.1.3/tut/node8.html#SECTION008400000000000000000">http://http://www.python.org/doc/2.1.3/tut/node8.html#SECTION008400000000000000000</A>
+
+Copied: trunk/gui/py/__init__.py (from rev 1333, trunk/gui/py/cmdGuiInit.py)
+===================================================================
+--- trunk/gui/py/cmdGuiInit.py	2008-05-01 06:23:36 UTC (rev 1333)
++++ trunk/gui/py/__init__.py	2008-05-01 07:29:44 UTC (rev 1334)
+@@ -0,0 +1,7 @@
++# The purpose of this file is twofold: 
++# 1. it tells python that yade (this directory) is package of python modules
++#	see <A HREF="http://http://www.python.org/doc/2.1.3/tut/node8.html#SECTION008400000000000000000">http://http://www.python.org/doc/2.1.3/tut/node8.html#SECTION008400000000000000000</A>
++#
++# 2. import the runtime namespace (will be populated from within c++
++#
++import runtime # will appear as yade.runtime in the global namespace
+
+Deleted: trunk/gui/py/cmdGui.cpp
+===================================================================
+--- trunk/gui/py/cmdGui.cpp	2008-05-01 06:23:36 UTC (rev 1333)
++++ trunk/gui/py/cmdGui.cpp	2008-05-01 07:29:44 UTC (rev 1334)
+@@ -1,106 +0,0 @@
+-//#include&lt;Python.h&gt;
+-#include&lt;boost/thread/thread.hpp&gt;
+-#include&lt;boost/python.hpp&gt;
+-#include&lt;boost/algorithm/string.hpp&gt;
+-#include&lt;errno.h&gt;
+-
+-#include&quot;cmdGui.hpp&quot;
+-
+-#include &lt;X11/Xlib.h&gt;
+-
+-using namespace boost;
+-
+-//void cmdlineThreadStart(){
+-//}
+-
+-CREATE_LOGGER(cmdGui);
+-
+-void cmdGui::help(){
+-	cerr&lt;&lt;&quot; cmdGui (python console) frontend.\n\
+-\n\
+-	-h       print this help\n\
+-	-s file  run this python script before entering interactive prompt\n\
+-	/* -c cmd   run python command (may be specified multiple times, newline is appended every time) */ \n\
+-\n\
+-	Sample session:\n\
+-\n\
+-	&gt;&gt;&gt; p=Preprocessor\n\
+-	&gt;&gt;&gt; p.generator='Funnel'\n\
+-	&gt;&gt;&gt; p['density']=2000\n\
+-	&gt;&gt;&gt; p.output='/tmp/funnel.xml'\n\
+-	&gt;&gt;&gt; p.generate()\n\
+-	&gt;&gt;&gt; o=Omega()\n\
+-	&gt;&gt;&gt; o.run()\n\
+-	&gt;&gt;&gt; # ^D to exit\n\
+-&quot;;
+-}
+-
+-void cmdGui::execScript(string script){
+-	LOG_DEBUG(&quot;Python will now run file `&quot;&lt;&lt;script&lt;&lt;&quot;'.&quot;);
+-	FILE* scriptFILE=fopen(script.c_str(),&quot;r&quot;);
+-	if(scriptFILE){
+-		PyRun_SimpleFile(scriptFILE,script.c_str());
+-	}
+-	else{
+-		string strerr(strerror(errno));
+-		LOG_ERROR(&quot;Unable to open file `&quot;&lt;&lt;script&lt;&lt;&quot;': &quot;&lt;&lt;strerr&lt;&lt;&quot;.&quot;);
+-	}
+-}
+-
+-int cmdGui::run(int argc, char *argv[]) {
+-	string runScript;
+-	string runCommands;
+-	bool stopAfter=false;
+-	
+-	int ch;
+-	while((ch=getopt(argc,argv,&quot;hs:&quot;))!=-1)
+-	switch(ch){
+-		case 'h': help(); return 1;
+-		case 's': runScript=string(optarg); break;
+-		case 'x': stopAfter=true; break;
+-		//case 'c': runCommands+=string(optarg)+&quot;\n&quot;; break;
+-		default:
+-			LOG_ERROR(&quot;Unhandled option string: `&quot;&lt;&lt;string(optarg)&lt;&lt;&quot;' (try -h for help on options)&quot;);
+-			break;
+-	}
+-	if(optind&lt;argc){ // process non-option arguments
+-		if(boost::algorithm::ends_with(string(argv[optind]),string(&quot;.py&quot;))) runScript=string(argv[optind]);
+-		else if(boost::algorithm::ends_with(string(argv[optind]),string(&quot;.xml&quot;))) Omega::instance().setSimulationFileName(string(argv[optind]));
+-		else optind--;
+-	}
+-	for (int index = optind+1; index&lt;argc; index++) LOG_ERROR(&quot;Unprocessed non-option argument: `&quot;&lt;&lt;argv[index]&lt;&lt;&quot;'&quot;);
+-
+-
+-	XInitThreads();
+-	PyEval_InitThreads();
+-
+-	PyGILState_STATE pyState = PyGILState_Ensure();
+-
+-		// this is needed to create the yade.runtime namespace
+-		PyRun_SimpleString(&quot;import sys; sys.path.insert(0,'&quot; PREFIX &quot;/lib/yade&quot; SUFFIX &quot;/gui')&quot;);
+-		PyRun_SimpleString(&quot;import yade.runtime&quot;);
+-
+-		#define PYTHON_DEFINE_STRING(pyName,cxxName) PyRun_SimpleString((string(&quot;yade.runtime.&quot; pyName &quot;='&quot;)+cxxName+&quot;'&quot;).c_str())
+-		#define PYTHON_DEFINE_BOOL(pyName,cxxName) PyRun_SimpleString((string(&quot;yade.runtime.&quot; pyName &quot;=&quot;)+(cxxName?&quot;True&quot;:&quot;False&quot;)).c_str())
+-		// wrap those in python::handle&lt;&gt; ??
+-		PYTHON_DEFINE_STRING(&quot;prefix&quot;,PREFIX);
+-		PYTHON_DEFINE_STRING(&quot;suffix&quot;,SUFFIX);
+-		PYTHON_DEFINE_STRING(&quot;executable&quot;,Omega::instance().origArgv[0]);
+-		PYTHON_DEFINE_STRING(&quot;simulation&quot;,Omega::instance().getSimulationFileName());
+-		PYTHON_DEFINE_STRING(&quot;script&quot;,runScript);
+-		PYTHON_DEFINE_STRING(&quot;commands&quot;,runCommands);
+-		PYTHON_DEFINE_BOOL(&quot;stopAfter&quot;,stopAfter);
+-		#undef PYTHON_DEFINE_STRING
+-		#undef PYTHON_DEFINE_BOOL
+-		execScript(PREFIX &quot;/lib/yade&quot; SUFFIX &quot;/gui/cmdGuiInit.py&quot;);
+-		
+-		//PyRun_InteractiveLoop(stdin,&quot;&lt;console&gt;&quot;);
+-
+-	PyGILState_Release(pyState);
+-
+-	//boost::thread cmdlineThread(&amp;cmdlineThreadStart);
+-	//cmdlineThread.join();
+-
+-	return 0;
+-}
+-
+
+Deleted: trunk/gui/py/cmdGui.hpp
+===================================================================
+--- trunk/gui/py/cmdGui.hpp	2008-05-01 06:23:36 UTC (rev 1333)
++++ trunk/gui/py/cmdGui.hpp	2008-05-01 07:29:44 UTC (rev 1334)
+@@ -1,24 +0,0 @@
+-// &#169; 2007 V&#225;clav &#352;milauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">eudoxos at arcig.cz</A>&gt;
+-#ifndef CMDGUI_HPP
+-#define CMDGUI_HPP
+-#include&lt;yade/core/FrontEnd.hpp&gt;
+-#include&lt;boost/shared_ptr.hpp&gt;
+-
+-class cmdGui: public FrontEnd
+-{
+-	private:
+-		void help();
+-		void execScript(string);
+-	public:
+-		cmdGui(){};
+-		virtual ~cmdGui(){};
+-		virtual int run(int argc, char *argv[]);
+-	
+-	REGISTER_CLASS_NAME(cmdGui);
+-	REGISTER_BASE_CLASS_NAME(FrontEnd);
+-	DECLARE_LOGGER;
+-};
+-
+-REGISTER_FACTORABLE(cmdGui);
+-
+-#endif
+
+Deleted: trunk/gui/py/cmdGuiInit.py
+===================================================================
+--- trunk/gui/py/cmdGuiInit.py	2008-05-01 06:23:36 UTC (rev 1333)
++++ trunk/gui/py/cmdGuiInit.py	2008-05-01 07:29:44 UTC (rev 1334)
+@@ -1,54 +0,0 @@
+-# os.path contains $PREFIX/lib/yade$SUFFIX/{extra,gui}
+-# YADE_CONFIG_DIR=~/.yade$SUFFIX is defined
+-#
+-
+-## initialization
+-
+-from yade import runtime
+-import sys
+-sys.excepthook=sys.__excepthook__ # apport on ubuntu override this, we don't need it
+-sys.path.insert(0,runtime.prefix+'/lib/yade'+runtime.suffix+'/extra')
+-sys.path.insert(0,runtime.prefix+'/lib/yade'+runtime.suffix+'/gui')
+-
+-from yade.wrapper import *
+-
+-## run simulation if requested from the command line
+-if runtime.simulation:
+-	print &quot;Running simulation &quot;+runtime.simulation
+-	o=Omega(); o.load(runtime.simulation); o.run();
+-
+-## run script if requested from the command line
+-if runtime.script:
+-	print &quot;Running script &quot;+runtime.script
+-	execfile(runtime.script)
+-	if runtime.stopAfter: sys.exit(0)
+-
+-# run commands if requested from the command line
+-#if yadeRunCommands:
+-#	print &quot;Running commands from commandline: &quot;+yadeRunCommands
+-#	exec(yadeRunCommands)
+-
+-try:
+-	# prefer ipython, since it is colorful and cool
+-	from IPython.Shell import IPShellEmbed
+-	sys.argv=['&lt;embedded python interpreter&gt;']
+-	ipshell = IPShellEmbed()
+-	ipshell()
+-except ImportError:
+-	## no ipython :-(, let's emulate it
+-	# <A HREF="http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/473900">http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/473900</A>
+-	import os, readline, rlcompleter, atexit
+-	history_file = os.path.join(os.environ['HOME']+'/.yade_python_history')
+-	try:
+-	    readline.read_history_file(history_file)
+-	except IOError:
+-	    pass
+-	readline.parse_and_bind(&quot;tab: complete&quot;)
+-	readline.set_history_length(1000)
+-	atexit.register(readline.write_history_file, history_file) # FIXME: this will probably not work!
+-	#del os, readline, rlcompleter, atexit, history_file, __file__
+-
+-	# run interactive loop
+-	import code
+-	code.InteractiveConsole(globals()).interact()
+-	
+
+Modified: trunk/gui/py/runtime.py
+===================================================================
+--- trunk/gui/py/runtime.py	2008-05-01 06:23:36 UTC (rev 1333)
++++ trunk/gui/py/runtime.py	2008-05-01 07:29:44 UTC (rev 1334)
+@@ -1 +1 @@
+-# this module is populated at initialization from the c++ part of cmdGui
++# this module is populated at initialization from the c++ part of PythonUI
+
+Modified: trunk/scripts/default-test.py
+===================================================================
+--- trunk/scripts/default-test.py	2008-05-01 06:23:36 UTC (rev 1333)
++++ trunk/scripts/default-test.py	2008-05-01 07:29:44 UTC (rev 1334)
+@@ -34,7 +34,9 @@
+ broken=[]
+ 
+ def crashProofRun():
+-	retval=os.system(&quot;%s -N cmdGui -- -s '%s'&quot;%(yadeExecutable,pyCmdFile))
++	import os
++	import yade.runtime
++	retval=os.system(&quot;%s -N PythonUI -- -s '%s'&quot;%(yade.runtime.executable,pyCmdFile))
+ 	if retval==0: return 'passed&#160;(%s iter/sec)'%(open(speedFile,'r').readline()[:-1])
+ 	else: return 'CRASHED&#160;(backtrace above)'
+ 
+@@ -65,4 +67,5 @@
+ print &quot;\n\n========================================= SUMMARY ======================================\n&quot;
+ for l in summary: print l
+ print &quot;\n====================================== END&#160;OF SUMMARY ==================================&quot;
+-quit()
++import sys
++sys.exit(0) # quit() is not in python2.4
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000295.html">[Yade-commits] r1333 - in trunk/gui: . py
+</A></li>
+	<LI>Next message: <A HREF="000297.html">[Yade-commits] r1335 - in trunk: core extra extra/clump extra/tetra	extra/usct gui/py pkg/common/Engine/DeusExMachina	pkg/common/Engine/EngineUnit pkg/common/Engine/MetaEngine	pkg/common/Engine/StandAloneEngine	pkg/common/RenderingEngine/OpenGLRenderingEngine	pkg/dem/Engine/DeusExMachina pkg/dem/Engine/StandAloneEngine	pkg/fem/Engine/StandAloneEngine	pkg/mass-spring/Engine/StandAloneEngine	pkg/realtime-rigidbody/Engine/StandAloneEngine scripts
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#296">[ date ]</a>
+              <a href="thread.html#296">[ thread ]</a>
+              <a href="subject.html#296">[ subject ]</a>
+              <a href="author.html#296">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

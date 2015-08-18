@@ -1,0 +1,260 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1043 - in trunk: yade-core/src/yade	yade-libs/yade-lib-factory/src/yade-lib-factory
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2007/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1043%20-%20in%20trunk%3A%20yade-core/src/yade%0A%09yade-libs/yade-lib-factory/src/yade-lib-factory&In-Reply-To=%3C200701231351.l0NDpDKQ010772%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000007.html">
+   <LINK REL="Next"  HREF="000009.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1043 - in trunk: yade-core/src/yade	yade-libs/yade-lib-factory/src/yade-lib-factory</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1043%20-%20in%20trunk%3A%20yade-core/src/yade%0A%09yade-libs/yade-lib-factory/src/yade-lib-factory&In-Reply-To=%3C200701231351.l0NDpDKQ010772%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1043 - in trunk: yade-core/src/yade	yade-libs/yade-lib-factory/src/yade-lib-factory">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Tue Jan 23 14:51:13 CET 2007</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000007.html">[Yade-commits] r1042 - trunk
+</A></li>
+        <LI>Next message: <A HREF="000009.html">[Yade-commits] r1044 -	trunk/yade-libs/yade-lib-loki/src/yade-lib-loki
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#8">[ date ]</a>
+              <a href="thread.html#8">[ thread ]</a>
+              <a href="subject.html#8">[ subject ]</a>
+              <a href="author.html#8">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2007-01-23 14:51:12 +0100 (Tue, 23 Jan 2007)
+New Revision: 1043
+
+Modified:
+   trunk/yade-core/src/yade/Omega.cpp
+   trunk/yade-libs/yade-lib-factory/src/yade-lib-factory/ClassFactory.hpp
+   trunk/yade-libs/yade-lib-factory/src/yade-lib-factory/DynLibManager.cpp
+   trunk/yade-libs/yade-lib-factory/src/yade-lib-factory/DynLibManager.hpp
+Log:
+Plugin loader now handles multi-class plugins, provided that they define &quot;char* yadePluginClasses[]&quot; symbol containing list of class names (sentinel=NULL) that the plugin contains. Regular one-class-per-file plugins work normally.
+
+Something like yadePluginClasses should be (in the future) extended to hold more module information (classes, module version, author, perhaps license, URL, required yade version, pointers to documentation etc.).
+
+
+
+Modified: trunk/yade-core/src/yade/Omega.cpp
+===================================================================
+--- trunk/yade-core/src/yade/Omega.cpp	2007-01-23 09:50:04 UTC (rev 1042)
++++ trunk/yade-core/src/yade/Omega.cpp	2007-01-23 13:51:12 UTC (rev 1043)
+@@ -189,13 +189,15 @@
+ 
+ //	ClassFactory::instance().unloadAll();
+ 
++	// TODO: remove all comments of the form /*DLL ... */, they comment the old code that whould not be needed any more
++
+ 	vector&lt;string&gt;::iterator dldi    = preferences-&gt;dynlibDirectories.begin();
+ 	vector&lt;string&gt;::iterator dldiEnd = preferences-&gt;dynlibDirectories.end();
+ 	for( ; dldi != dldiEnd ; ++dldi)
+ 		ClassFactory::instance().addBaseDirectory((*dldi));
+ 			
+-	vector&lt; string &gt; dynlibsList;
+-	vector&lt; int &gt;    dynlibsListLoaded;
++	vector&lt;string&gt; dynlibsList;
++	/*DLL vector&lt; int &gt;    dynlibsListLoaded; */
+ 
+ 	vector&lt;string&gt;::iterator si = preferences-&gt;dynlibDirectories.begin();
+ 	vector&lt;string&gt;::iterator siEnd = preferences-&gt;dynlibDirectories.end();
+@@ -232,7 +234,7 @@
+ 					if(dynlibsList.size()==0 || ClassFactory::instance().systemNameToLibName(name.leaf())!=dynlibsList.back()) {
+ 						LOG_DEBUG(&quot;Added plugin: &quot;&lt;&lt;*si&lt;&lt;&quot;/&quot;&lt;&lt;di-&gt;leaf()&lt;&lt;&quot;.&quot;);
+ 						dynlibsList.push_back(ClassFactory::instance().systemNameToLibName(name.leaf()));
+-						dynlibsListLoaded.push_back(false);
++						/*DLL dynlibsListLoaded.push_back(false); */
+ 					}
+ 					else LOG_DEBUG(&quot;Possible plugin discarded: &quot;&lt;&lt;*si&lt;&lt;&quot;/&quot;&lt;&lt;name.leaf()&lt;&lt;&quot;.&quot;);
+ 				} else LOG_DEBUG(&quot;File not considered a plugin: &quot;&lt;&lt;di-&gt;leaf()&lt;&lt;&quot;.&quot;);
+@@ -243,48 +245,51 @@
+ 
+ 	bool allLoaded = false;
+ 	int overflow = 30; // to prevent infinite loop
+-	assert(dynlibsList.size() == dynlibsListLoaded.size() ); 
+-	while (!allLoaded &amp;&amp; --overflow &gt; 0)
+-	{	
++	/*DLL assert(dynlibsList.size() == dynlibsListLoaded.size() ); */
++	vector&lt;string&gt; dynlibsClassList; // dynlibsList holds filenames, this holds classes defined inside (may be different if using yadePuginClasses)
++	/*DLL while (!allLoaded &amp;&amp; --overflow &gt; 0)	{	*/
+ 		vector&lt; string &gt;::iterator dlli    = dynlibsList.begin();
+ 		vector&lt; string &gt;::iterator dlliEnd = dynlibsList.end();
+-		int loaded = 0;
++		/*DLL int loaded = 0; */
+ 		allLoaded = true;
+-		for( ; dlli!=dlliEnd ; ++dlli , ++loaded )
++		for( ; dlli!=dlliEnd ; ++dlli /*DLL , ++loaded */ )
+ 		{
+-			if( dynlibsListLoaded[loaded] == false )
+-			{
+-				bool thisLoaded = ClassFactory::instance().load((*dlli));
+-				if (!thisLoaded &amp;&amp; overflow == 1){
+-//				if (!thisLoaded)
+-					string err=ClassFactory::instance().lastError();
+-					// HACK
+-					if(err.find(&quot;cannot open shared object file: No such file or directory&quot;)!=std::string::npos){
+-						LOG_INFO(&quot;Attempted to load nonexistent file; since this may be due to bad algorithm of filename construction, we pretend everything is OK (original error: `&quot;&lt;&lt;err&lt;&lt;&quot;').&quot;);
+-						thisLoaded=true;
+-					}
+-					else if(err.find(&quot;: undefined symbol: &quot;)!=std::string::npos){
+-						size_t pos=err.rfind(&quot;:&quot;);
+-						assert(pos!=std::string::npos);
+-						std::string sym(err,pos+2); //2 removes &quot;: &quot; from the beginning
+-						int status=0;
+-						char* demangled_sym=abi::__cxa_demangle(sym.c_str(),0,0,&amp;status);
+-						LOG_FATAL(&quot;Undefined symbol `&quot;&lt;&lt;demangled_sym&lt;&lt;&quot;(&quot;&lt;&lt;err&lt;&lt;&quot;).&quot;);
++			/*DLL if( dynlibsListLoaded[loaded] == false ) { */
++			bool thisLoaded = ClassFactory::instance().load((*dlli));
++			if (!thisLoaded &amp;&amp; overflow == 1){
++				string err=ClassFactory::instance().lastError();
++				// HACK
++				if(err.find(&quot;cannot open shared object file: No such file or directory&quot;)!=std::string::npos){
++					LOG_INFO(&quot;Attempted to load nonexistent file; since this may be due to bad algorithm of filename construction, we pretend everything is OK (original error: `&quot;&lt;&lt;err&lt;&lt;&quot;').&quot;);
++					thisLoaded=true;
++				}
++				else if(err.find(&quot;: undefined symbol: &quot;)!=std::string::npos){
++					size_t pos=err.rfind(&quot;:&quot;);
++					assert(pos!=std::string::npos);
++					std::string sym(err,pos+2); //2 removes &quot;: &quot; from the beginning
++					int status=0;
++					char* demangled_sym=abi::__cxa_demangle(sym.c_str(),0,0,&amp;status);
++					LOG_FATAL(&quot;Undefined symbol `&quot;&lt;&lt;demangled_sym&lt;&lt;&quot;' (&quot;&lt;&lt;err&lt;&lt;&quot;).&quot;);
+ 
+-					}
+-					else LOG_ERROR(&quot;Error loading Library `&quot;&lt;&lt;(*dlli)&lt;&lt;&quot;': &quot;&lt;&lt;err&lt;&lt;&quot; .&quot;); // leave space to not to confuse c++filt
+ 				}
+-				allLoaded &amp;= thisLoaded;
+-				if(thisLoaded)
+-					dynlibsListLoaded[loaded] = true; 
++				else LOG_ERROR(&quot;Error loading Library `&quot;&lt;&lt;(*dlli)&lt;&lt;&quot;': &quot;&lt;&lt;err&lt;&lt;&quot; .&quot;); // leave space to not to confuse c++filt
+ 			}
++			else { // no error
++				if (ClassFactory::instance().lastPluginClasses().size()==0){ // regular plugin, one class per file
++					dynlibsClassList.push_back(*dlli);
++				} else {// if plugin defines yadePluginClasses (has multiple classes), insert these into dynLibsList
++					vector&lt;string&gt; css=ClassFactory::instance().lastPluginClasses();
++					for(size_t i=0; i&lt;css.size();i++) { dynlibsClassList.push_back(css[i]); LOG_DEBUG(&quot;Plugin &quot;&lt;&lt;*dlli&lt;&lt;&quot;: added class &quot;&lt;&lt;css[i]&lt;&lt;&quot;.&quot;);  }
++				}
++			}
++			allLoaded &amp;= thisLoaded;
++			/*DLL if(thisLoaded) dynlibsListLoaded[loaded] = true; } */
+ 		}
+-	}
++	/*DLL} */
+ 
+-	if(!allLoaded)
+-		cerr &lt;&lt; &quot;Couldn't load everything, some stuff may work incorrectly.\n&quot;;
++	if(!allLoaded) LOG_WARN(&quot;Couldn't load everything, some stuff may work incorrectly.&quot;);
+ 	
+-	buildDynlibDatabase(dynlibsList);
++	buildDynlibDatabase(dynlibsClassList);
+ }
+ 
+ 
+
+Modified: trunk/yade-libs/yade-lib-factory/src/yade-lib-factory/ClassFactory.hpp
+===================================================================
+--- trunk/yade-libs/yade-lib-factory/src/yade-lib-factory/ClassFactory.hpp	2007-01-23 09:50:04 UTC (rev 1042)
++++ trunk/yade-libs/yade-lib-factory/src/yade-lib-factory/ClassFactory.hpp	2007-01-23 13:51:12 UTC (rev 1043)
+@@ -134,8 +134,9 @@
+ 
+ 		void addBaseDirectory(const string&amp; dir);
+ 
+-		bool load(const string&amp; name );
++		bool load(const string&amp; name);
+ 		std::string lastError();
++		vector&lt;string&gt; lastPluginClasses(){ return dlm.lastPluginClasses; }
+ 
+ 		string libNameToSystemName(const string&amp; name);
+ 		string systemNameToLibName(const string&amp; name);
+
+Modified: trunk/yade-libs/yade-lib-factory/src/yade-lib-factory/DynLibManager.cpp
+===================================================================
+--- trunk/yade-libs/yade-lib-factory/src/yade-lib-factory/DynLibManager.cpp	2007-01-23 09:50:04 UTC (rev 1042)
++++ trunk/yade-libs/yade-lib-factory/src/yade-lib-factory/DynLibManager.cpp	2007-01-23 13:51:12 UTC (rev 1043)
+@@ -97,6 +97,8 @@
+ 
+ bool DynLibManager::load (const string&amp; fullLibName, const string&amp; libName )
+ {
++	lastPluginClasses.clear();
++
+ 	if (libName.empty() || fullLibName.empty()){
+ 		LOG_ERROR(&quot;Empty filename for library `&quot;&lt;&lt;libName&lt;&lt;&quot;'.&quot;);
+ 		return false;
+@@ -107,9 +109,7 @@
+ 	}*/
+ 
+ #ifdef WIN32
+-	if (isLoaded(libName))
+-		return true;
+-
++	if (isLoaded(libName)) return true;
+ 	HINSTANCE handle = LoadLibraryA(fullLibName.c_str());
+ #else
+ 	void * handle = dlopen(fullLibName.data(), RTLD_NOW);
+@@ -118,6 +118,12 @@
+ 	if (!handle) return !error();
+ 
+ 	handles[libName] = handle;
++
++#ifndef WIN32
++	char**yadePluginClasses=(char**)dlsym(handle, &quot;yadePluginClasses&quot;);
++	// errors are ignored, since definition of this sybol is optional
++	if(dlerror()==NULL){ for(int i=0; yadePluginClasses[i]; i++){ lastPluginClasses.push_back(yadePluginClasses[i]); }}
++#endif
+ 	return true;
+ }
+ 
+
+Modified: trunk/yade-libs/yade-lib-factory/src/yade-lib-factory/DynLibManager.hpp
+===================================================================
+--- trunk/yade-libs/yade-lib-factory/src/yade-lib-factory/DynLibManager.hpp	2007-01-23 09:50:04 UTC (rev 1042)
++++ trunk/yade-libs/yade-lib-factory/src/yade-lib-factory/DynLibManager.hpp	2007-01-23 13:51:12 UTC (rev 1043)
+@@ -57,6 +57,7 @@
+ 		string systemNameToLibName(const string&amp; name);
+ 		string findLibDir(const string&amp; name);
+ 		string lastError();
++		vector&lt;string&gt; lastPluginClasses;
+ 		DECLARE_LOGGER;
+ 
+ 	private :
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000007.html">[Yade-commits] r1042 - trunk
+</A></li>
+	<LI>Next message: <A HREF="000009.html">[Yade-commits] r1044 -	trunk/yade-libs/yade-lib-loki/src/yade-lib-loki
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#8">[ date ]</a>
+              <a href="thread.html#8">[ thread ]</a>
+              <a href="subject.html#8">[ subject ]</a>
+              <a href="author.html#8">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

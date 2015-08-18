@@ -1,0 +1,1571 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1045 - in trunk: . yade-core/src/yade	yade-libs/yade-lib-base/src/yade-lib-base	yade-libs/yade-lib-computational-geometry/src/yade-lib-computational-geometry	yade-packages/yade-package-dem/src	yade-packages/yade-package-dem/src/DataClass/PhysicalAction	yade-packages/yade-package-dem/src/DataClass/PhysicalAction/GlobalStiffness	yade-packages/yade-package-dem/src/Engine/DeusExMachina/ResultantForceEngine	yade-packages/yade-package-dem/src/Engine/DeusExMachina/TriaxialCompressionEngine	yade-packages/yade-package-dem/src/Engine/DeusExMachina/TriaxialStressController	yade-packages/yade-package-dem/src/Engine/StandAloneEngine	yade-packages/yade-package-dem/src/Engine/StandAloneEngine/GlobalStiffnessCounter	yade-packages/yade-package-dem/src/Engine/StandAloneEngine/GlobalStiffnessTimeStepper	yade-packages/yade-package-dem/src/PreProcessor	yade-packages/yade-package-dem/src/PreProcessor/TriaxialTest
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2007/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1045%20-%20in%20trunk%3A%20.%20yade-core/src/yade%0A%09yade-libs/yade-lib-base/src/yade-lib-base%0A%09yade-libs/yade-lib-computational-geometry/src/yade-lib-computational-geometry%0A%09yade-packages/yade-package-dem/src%0A%09yade-packages/yade-package-dem/src/DataClass/PhysicalAction%0A%09yade-packages/yade-package-dem/src/DataClass/PhysicalAction/GlobalStiffness%0A%09yade-packages/yade-package-dem/src/Engine/DeusExMachina/ResultantForceEngine%0A%09yade-packages/yade-package-dem/src/Engine/DeusExMachina/TriaxialCompressionEngine%0A%09yade-packages/yade-package-dem/src/Engine/DeusExMachina/TriaxialStressController%0A%09yade-packages/yade-package-dem/src/Engine/StandAloneEngine%0A%09yade-packages/yade-package-dem/src/Engine/StandAloneEngine/GlobalStiffnessCounter%0A%09yade-packages/yade-package-dem/src/Engine/StandAloneEngine/GlobalStiffnessTimeStepper%0A%09yade-packages/yade-package-dem/src/PreProcessor%0A%09yade-packages/yade-package-dem/src/PreProcessor/TriaxialTest&In-Reply-To=%3C200701291845.l0TIjGkc030747%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000009.html">
+   <LINK REL="Next"  HREF="000011.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1045 - in trunk: . yade-core/src/yade	yade-libs/yade-lib-base/src/yade-lib-base	yade-libs/yade-lib-computational-geometry/src/yade-lib-computational-geometry	yade-packages/yade-package-dem/src	yade-packages/yade-package-dem/src/DataClass/PhysicalAction	yade-packages/yade-package-dem/src/DataClass/PhysicalAction/GlobalStiffness	yade-packages/yade-package-dem/src/Engine/DeusExMachina/ResultantForceEngine	yade-packages/yade-package-dem/src/Engine/DeusExMachina/TriaxialCompressionEngine	yade-packages/yade-package-dem/src/Engine/DeusExMachina/TriaxialStressController	yade-packages/yade-package-dem/src/Engine/StandAloneEngine	yade-packages/yade-package-dem/src/Engine/StandAloneEngine/GlobalStiffnessCounter	yade-packages/yade-package-dem/src/Engine/StandAloneEngine/GlobalStiffnessTimeStepper	yade-packages/yade-package-dem/src/PreProcessor	yade-packages/yade-package-dem/src/PreProcessor/TriaxialTest</H1>
+    <B>chareyre at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1045%20-%20in%20trunk%3A%20.%20yade-core/src/yade%0A%09yade-libs/yade-lib-base/src/yade-lib-base%0A%09yade-libs/yade-lib-computational-geometry/src/yade-lib-computational-geometry%0A%09yade-packages/yade-package-dem/src%0A%09yade-packages/yade-package-dem/src/DataClass/PhysicalAction%0A%09yade-packages/yade-package-dem/src/DataClass/PhysicalAction/GlobalStiffness%0A%09yade-packages/yade-package-dem/src/Engine/DeusExMachina/ResultantForceEngine%0A%09yade-packages/yade-package-dem/src/Engine/DeusExMachina/TriaxialCompressionEngine%0A%09yade-packages/yade-package-dem/src/Engine/DeusExMachina/TriaxialStressController%0A%09yade-packages/yade-package-dem/src/Engine/StandAloneEngine%0A%09yade-packages/yade-package-dem/src/Engine/StandAloneEngine/GlobalStiffnessCounter%0A%09yade-packages/yade-package-dem/src/Engine/StandAloneEngine/GlobalStiffnessTimeStepper%0A%09yade-packages/yade-package-dem/src/PreProcessor%0A%09yade-packages/yade-package-dem/src/PreProcessor/TriaxialTest&In-Reply-To=%3C200701291845.l0TIjGkc030747%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1045 - in trunk: . yade-core/src/yade	yade-libs/yade-lib-base/src/yade-lib-base	yade-libs/yade-lib-computational-geometry/src/yade-lib-computational-geometry	yade-packages/yade-package-dem/src	yade-packages/yade-package-dem/src/DataClass/PhysicalAction	yade-packages/yade-package-dem/src/DataClass/PhysicalAction/GlobalStiffness	yade-packages/yade-package-dem/src/Engine/DeusExMachina/ResultantForceEngine	yade-packages/yade-package-dem/src/Engine/DeusExMachina/TriaxialCompressionEngine	yade-packages/yade-package-dem/src/Engine/DeusExMachina/TriaxialStressController	yade-packages/yade-package-dem/src/Engine/StandAloneEngine	yade-packages/yade-package-dem/src/Engine/StandAloneEngine/GlobalStiffnessCounter	yade-packages/yade-package-dem/src/Engine/StandAloneEngine/GlobalStiffnessTimeStepper	yade-packages/yade-package-dem/src/PreProcessor	yade-packages/yade-package-dem/src/PreProcessor/TriaxialTest">chareyre at mail.berlios.de
+       </A><BR>
+    <I>Mon Jan 29 19:45:16 CET 2007</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000009.html">[Yade-commits] r1044 -	trunk/yade-libs/yade-lib-loki/src/yade-lib-loki
+</A></li>
+        <LI>Next message: <A HREF="000011.html">[Yade-commits] r1046 - in trunk: .	yade-libs/yade-lib-base/src/yade-lib-base
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#10">[ date ]</a>
+              <a href="thread.html#10">[ thread ]</a>
+              <a href="subject.html#10">[ subject ]</a>
+              <a href="author.html#10">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: chareyre
+Date: 2007-01-29 19:45:15 +0100 (Mon, 29 Jan 2007)
+New Revision: 1045
+
+Removed:
+   trunk/yade-packages/yade-package-dem/src/DataClass/PhysicalAction/StiffnessMatrix/
+   trunk/yade-packages/yade-package-dem/src/Engine/StandAloneEngine/StiffnessCounter/
+   trunk/yade-packages/yade-package-dem/src/Engine/StandAloneEngine/StiffnessMatrixTimeStepper/
+Modified:
+   trunk/SConstruct
+   trunk/yade-core/src/yade/yade.pro
+   trunk/yade-libs/yade-lib-base/src/yade-lib-base/Logging.hpp
+   trunk/yade-libs/yade-lib-base/src/yade-lib-base/yade-lib-base.pro
+   trunk/yade-libs/yade-lib-computational-geometry/src/yade-lib-computational-geometry/yade-lib-computational-geometry.pro
+   trunk/yade-packages/yade-package-dem/src/DataClass/PhysicalAction/GlobalStiffness/GlobalStiffness.pro
+   trunk/yade-packages/yade-package-dem/src/DataClass/PhysicalAction/PhysicalAction.pro
+   trunk/yade-packages/yade-package-dem/src/Engine/DeusExMachina/ResultantForceEngine/ResultantForceEngine.cpp
+   trunk/yade-packages/yade-package-dem/src/Engine/DeusExMachina/ResultantForceEngine/ResultantForceEngine.hpp
+   trunk/yade-packages/yade-package-dem/src/Engine/DeusExMachina/ResultantForceEngine/ResultantForceEngine.pro
+   trunk/yade-packages/yade-package-dem/src/Engine/DeusExMachina/TriaxialCompressionEngine/TriaxialCompressionEngine.cpp
+   trunk/yade-packages/yade-package-dem/src/Engine/DeusExMachina/TriaxialCompressionEngine/TriaxialCompressionEngine.pro
+   trunk/yade-packages/yade-package-dem/src/Engine/DeusExMachina/TriaxialStressController/TriaxialStressController.cpp
+   trunk/yade-packages/yade-package-dem/src/Engine/DeusExMachina/TriaxialStressController/TriaxialStressController.hpp
+   trunk/yade-packages/yade-package-dem/src/Engine/DeusExMachina/TriaxialStressController/TriaxialStressController.pro
+   trunk/yade-packages/yade-package-dem/src/Engine/StandAloneEngine/GlobalStiffnessCounter/GlobalStiffnessCounter.cpp
+   trunk/yade-packages/yade-package-dem/src/Engine/StandAloneEngine/GlobalStiffnessCounter/GlobalStiffnessCounter.hpp
+   trunk/yade-packages/yade-package-dem/src/Engine/StandAloneEngine/GlobalStiffnessCounter/GlobalStiffnessCounter.pro
+   trunk/yade-packages/yade-package-dem/src/Engine/StandAloneEngine/GlobalStiffnessTimeStepper/GlobalStiffnessTimeStepper.cpp
+   trunk/yade-packages/yade-package-dem/src/Engine/StandAloneEngine/GlobalStiffnessTimeStepper/GlobalStiffnessTimeStepper.hpp
+   trunk/yade-packages/yade-package-dem/src/Engine/StandAloneEngine/GlobalStiffnessTimeStepper/GlobalStiffnessTimeStepper.pro
+   trunk/yade-packages/yade-package-dem/src/Engine/StandAloneEngine/StandAloneEngine.pro
+   trunk/yade-packages/yade-package-dem/src/PreProcessor/PreProcessor.pro
+   trunk/yade-packages/yade-package-dem/src/PreProcessor/TriaxialTest/TriaxialTest.cpp
+   trunk/yade-packages/yade-package-dem/src/PreProcessor/TriaxialTest/TriaxialTest.hpp
+   trunk/yade-packages/yade-package-dem/src/PreProcessor/TriaxialTest/TriaxialTest.pro
+   trunk/yade-packages/yade-package-dem/src/yade-package-dem.kdevelop
+Log:
+
+
+Modified: trunk/SConstruct
+===================================================================
+--- trunk/SConstruct	2007-01-25 16:55:02 UTC (rev 1044)
++++ trunk/SConstruct	2007-01-29 18:45:15 UTC (rev 1045)
+@@ -42,13 +42,13 @@
+ #  2. lowercase options influence the building process, compiler options and the like.
+ #
+ opts.AddOptions(
+-	PathOption('PREFIX', 'Install path prefix', '/usr/local'),
++	PathOption('PREFIX', 'Install path prefix', '/home/3S-LAB/bchareyre/Programmation/YADE'),
+ 	('POSTFIX','Local version appended to binary, library and config directory (beware: if PREFIX is the same, headers of the older version will still be overwritten','',None,lambda x:x),
+ 	BoolOption('debug', 'Enable debugging information and disable optimizations',1),
+ 	BoolOption('profile','Enable profiling information',0),
+ 	BoolOption('optimize','Turn on heavy optimizations (generates SSE2 instructions)',0),
+ 	ListOption('exclude','Components that will not be built','none',names=['extra','common','dem','fem','lattice','mass-spring','realtime-rigidbody']),
+-	('CPPPATH', 'Additional paths for the C preprocessor (whitespace separated)',['/usr/include/wm3'],None,Split),
++	('CPPPATH', 'Additional paths for the C preprocessor (whitespace separated)',['/home/3S-LAB/bchareyre/Programmation/YADE/include'],None,Split),
+ 	('LIBPATH','Additional paths for the linker (whitespace separated)',None,None,Split),
+ 	('QTDIR','Directories where to look for qt3',['/usr/share/qt3','/usr/lib/qt'],None,Split),
+ 	('CXX','The c++ compiler','ccache g++-4.0'),
+
+Modified: trunk/yade-core/src/yade/yade.pro
+===================================================================
+--- trunk/yade-core/src/yade/yade.pro	2007-01-25 16:55:02 UTC (rev 1044)
++++ trunk/yade-core/src/yade/yade.pro	2007-01-29 18:45:15 UTC (rev 1045)
+@@ -81,7 +81,8 @@
+ -lboost_filesystem \
+ -lboost_thread
+ INCLUDEPATH += $${YADE_QMAKE_PATH}/include
+-QMAKE_LIBDIR = $${YADE_QMAKE_PATH}/lib/yade/yade-libs
++QMAKE_LIBDIR = $${YADE_QMAKE_PATH}/lib/yade/yade-libs/ \
++		$${YADE_QMAKE_PATH}/lib/
+ win32 {
+ TARGET = ../../../bin/yade
+ CONFIG += console
+
+Modified: trunk/yade-libs/yade-lib-base/src/yade-lib-base/Logging.hpp
+===================================================================
+--- trunk/yade-libs/yade-lib-base/src/yade-lib-base/Logging.hpp	2007-01-25 16:55:02 UTC (rev 1044)
++++ trunk/yade-libs/yade-lib-base/src/yade-lib-base/Logging.hpp	2007-01-29 18:45:15 UTC (rev 1045)
+@@ -25,6 +25,9 @@
+  *
+  */
+ 
++
++#define LOG_DEBUG
++
+ #ifdef LOG4CXX
+ 
+ #	include&lt;log4cxx/logger.h&gt;
+
+Modified: trunk/yade-libs/yade-lib-base/src/yade-lib-base/yade-lib-base.pro
+===================================================================
+--- trunk/yade-libs/yade-lib-base/src/yade-lib-base/yade-lib-base.pro	2007-01-25 16:55:02 UTC (rev 1044)
++++ trunk/yade-libs/yade-lib-base/src/yade-lib-base/yade-lib-base.pro	2007-01-29 18:45:15 UTC (rev 1045)
+@@ -20,5 +20,6 @@
+            yadeWm3Extra.hpp \
+ 			  Logging.hpp
+ SOURCES += yadeWm3Extra.cpp
++QMAKE_LIBDIR += $${YADE_QMAKE_PATH}/lib/
+ LIBS += -lWm3Foundation -rdynamic
+ QMAKE_RUN_CXX_IMP = $(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $(shell pwd)/$&lt;
+
+Modified: trunk/yade-libs/yade-lib-computational-geometry/src/yade-lib-computational-geometry/yade-lib-computational-geometry.pro
+===================================================================
+--- trunk/yade-libs/yade-lib-computational-geometry/src/yade-lib-computational-geometry/yade-lib-computational-geometry.pro	2007-01-25 16:55:02 UTC (rev 1044)
++++ trunk/yade-libs/yade-lib-computational-geometry/src/yade-lib-computational-geometry/yade-lib-computational-geometry.pro	2007-01-29 18:45:15 UTC (rev 1045)
+@@ -2,7 +2,10 @@
+ error( &quot;YADE_QMAKE_PATH internal qmake variable is not set, you should run for example qmake YADE_QMAKE_PATH=/usr/local, this will not work from inside kdevelop (when they will fix it?)&quot; )
+ }
+ 
++LIBS +=  -lyade-lib-base -lWm3Foundation -rdynamic
++QMAKE_LIBDIR = $${YADE_QMAKE_PATH}/lib/yade/yade-libs/
+ 
++
+ HEADERS += Distances2D.hpp \
+            Distances3D.hpp \
+            Intersections2D.hpp \
+@@ -24,7 +27,7 @@
+ 
+ CONFIG += debug \
+           thread \
+-warn_on \
+-dll
++	  warn_on \
++	  dll
+ TEMPLATE = lib
+ QMAKE_RUN_CXX_IMP = $(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $(shell pwd)/$&lt;
+
+Modified: trunk/yade-packages/yade-package-dem/src/DataClass/PhysicalAction/GlobalStiffness/GlobalStiffness.pro
+===================================================================
+--- trunk/yade-packages/yade-package-dem/src/DataClass/PhysicalAction/GlobalStiffness/GlobalStiffness.pro	2007-01-25 16:55:02 UTC (rev 1044)
++++ trunk/yade-packages/yade-package-dem/src/DataClass/PhysicalAction/GlobalStiffness/GlobalStiffness.pro	2007-01-29 18:45:15 UTC (rev 1045)
+@@ -5,7 +5,7 @@
+ 
+ HEADERS += GlobalStiffness.hpp 
+ SOURCES += GlobalStiffness.cpp 
+-LIBS += -rdynamic 
++LIBS += -rdynamic -lyade-lib-base -lWm3Foundation
+ QMAKE_LIBDIR = $${YADE_QMAKE_PATH}/lib/yade/yade-libs/ 
+ QMAKE_CXXFLAGS_RELEASE += -lpthread \
+                           -pthread 
+
+Modified: trunk/yade-packages/yade-package-dem/src/DataClass/PhysicalAction/PhysicalAction.pro
+===================================================================
+--- trunk/yade-packages/yade-package-dem/src/DataClass/PhysicalAction/PhysicalAction.pro	2007-01-25 16:55:02 UTC (rev 1044)
++++ trunk/yade-packages/yade-package-dem/src/DataClass/PhysicalAction/PhysicalAction.pro	2007-01-29 18:45:15 UTC (rev 1045)
+@@ -2,8 +2,7 @@
+ error( &quot;YADE_QMAKE_PATH internal qmake variable is not set, you should run for example qmake YADE_QMAKE_PATH=/usr/local, this will not work from inside kdevelop (when they will fix it?)&quot; )
+ }
+ 
+-SUBDIRS += StiffnessMatrix #\
+-	#GlobalStiffness
++SUBDIRS += GlobalStiffness
+ 
+ CONFIG += debug \
+           thread \
+
+Modified: trunk/yade-packages/yade-package-dem/src/Engine/DeusExMachina/ResultantForceEngine/ResultantForceEngine.cpp
+===================================================================
+--- trunk/yade-packages/yade-package-dem/src/Engine/DeusExMachina/ResultantForceEngine/ResultantForceEngine.cpp	2007-01-25 16:55:02 UTC (rev 1044)
++++ trunk/yade-packages/yade-package-dem/src/Engine/DeusExMachina/ResultantForceEngine/ResultantForceEngine.cpp	2007-01-29 18:45:15 UTC (rev 1045)
+@@ -12,7 +12,7 @@
+ #include &quot;ResultantForceEngine.hpp&quot;
+ #include &quot;yade/yade-package-common/ParticleParameters.hpp&quot;
+ #include &quot;yade/yade-package-common/Force.hpp&quot;
+-#include &quot;StiffnessMatrix.hpp&quot;
++#include &quot;GlobalStiffness.hpp&quot;
+ #include &lt;Wm3Math.h&gt;
+ #include &lt;yade/yade-lib-base/yadeWm3.hpp&gt;
+ #include &lt;yade/yade-lib-base/yadeWm3Extra.hpp&gt;
+@@ -22,7 +22,7 @@
+ #include &lt;yade/yade-core/MetaBody.hpp&gt;
+ 
+ 
+-ResultantForceEngine::ResultantForceEngine() : actionParameterStiffnessMatrix(new StiffnessMatrix), actionParameterForce(new Force)
++ResultantForceEngine::ResultantForceEngine() : actionParameterGlobalStiffness(new GlobalStiffness), actionParameterForce(new Force)
+ {
+ 	interval =1;
+ 	damping = 0.1;
+@@ -70,14 +70,14 @@
+ 	//{
+ 		//Update stiffness only if it has been computed by StiffnessCounter (see &quot;interval&quot;)
+ 		if (Omega::instance().getCurrentIteration() % interval == 0)	stiffness =
+-		(static_cast&lt;StiffnessMatrix*&gt;( ncb-&gt;physicalActions-&gt;find (*ii, actionParameterStiffnessMatrix-&gt;getClassIndex() ).get() ))-&gt;stiffness;
++		(static_cast&lt;GlobalStiffness*&gt;( ncb-&gt;physicalActions-&gt;find (*ii, actionParameterGlobalStiffness-&gt;getClassIndex() ).get() ))-&gt;stiffness;
+ 	
+-		//cerr &lt;&lt; &quot;static_cast&lt;StiffnessMatrix*&gt;( ncb-&gt;physicalActions-&gt;find (*ii, actionParameterStiffnessMatrix-&gt;getClassIndex() ).get() ))-&gt;stiffness&quot; &lt;&lt; std::endl;
++		//cerr &lt;&lt; &quot;static_cast&lt;GlobalStiffness*&gt;( ncb-&gt;physicalActions-&gt;find (*ii, actionParameterGlobalStiffness-&gt;getClassIndex() ).get() ))-&gt;stiffness&quot; &lt;&lt; std::endl;
+ 		
+ 		if(PhysicalParameters* p = dynamic_cast&lt;PhysicalParameters*&gt;((*bodies)[*ii]-&gt;physicalParameters.get()))
+ 		{
+ 			//cerr &lt;&lt; &quot;dynamic_cast&lt;PhysicalParameters*&gt;((*bodies)[*ii]-&gt;physicalParameters.get()&quot; &lt;&lt; std::endl;
+-			StiffnessMatrix* sm = static_cast&lt;StiffnessMatrix*&gt;( ncb-&gt;physicalActions-&gt;find (*ii, actionParameterStiffnessMatrix-&gt;getClassIndex() ).get() );
++			GlobalStiffness* sm = static_cast&lt;GlobalStiffness*&gt;( ncb-&gt;physicalActions-&gt;find (*ii, actionParameterGlobalStiffness-&gt;getClassIndex() ).get() );
+ 			
+ 			Vector3r effectiveforce =
+ 			 	static_cast&lt;Force*&gt;( ncb-&gt;physicalActions-&gt;find( *ii,actionParameterForce-&gt;getClassIndex() ).get() )-&gt;force; 
+
+Modified: trunk/yade-packages/yade-package-dem/src/Engine/DeusExMachina/ResultantForceEngine/ResultantForceEngine.hpp
+===================================================================
+--- trunk/yade-packages/yade-package-dem/src/Engine/DeusExMachina/ResultantForceEngine/ResultantForceEngine.hpp	2007-01-25 16:55:02 UTC (rev 1044)
++++ trunk/yade-packages/yade-package-dem/src/Engine/DeusExMachina/ResultantForceEngine/ResultantForceEngine.hpp	2007-01-29 18:45:15 UTC (rev 1045)
+@@ -25,7 +25,7 @@
+ class ResultantForceEngine : public DeusExMachina 
+ {
+ 	private :
+-		shared_ptr&lt;PhysicalAction&gt; actionParameterStiffnessMatrix;
++		shared_ptr&lt;PhysicalAction&gt; actionParameterGlobalStiffness;
+ 		shared_ptr&lt;PhysicalAction&gt; actionParameterForce;
+ 		
+ 			
+
+Modified: trunk/yade-packages/yade-package-dem/src/Engine/DeusExMachina/ResultantForceEngine/ResultantForceEngine.pro
+===================================================================
+--- trunk/yade-packages/yade-package-dem/src/Engine/DeusExMachina/ResultantForceEngine/ResultantForceEngine.pro	2007-01-25 16:55:02 UTC (rev 1044)
++++ trunk/yade-packages/yade-package-dem/src/Engine/DeusExMachina/ResultantForceEngine/ResultantForceEngine.pro	2007-01-29 18:45:15 UTC (rev 1045)
+@@ -7,12 +7,11 @@
+ 	-lyade-lib-base -lWm3Foundation \
+ 	-lForce \
+         -lParticleParameters \
+-	-lStiffnessMatrix \
+-	#-lStiffnessCounter \
+-        -rdynamic
++	-lGlobalStiffness \
++	-rdynamic
+ 	
+ INCLUDEPATH += $${YADE_QMAKE_PATH}/include/ \
+-               ../../../DataClass/PhysicalAction/StiffnessMatrix \
++               ../../../DataClass/PhysicalAction/GlobalStiffness \
+ 	       ../../../DataClass/PhysicalParameters/ParticleParameters \
+ 	       ../../../Engine/DeusExMachina/ResultantForceEngine
+                
+
+Modified: trunk/yade-packages/yade-package-dem/src/Engine/DeusExMachina/TriaxialCompressionEngine/TriaxialCompressionEngine.cpp
+===================================================================
+--- trunk/yade-packages/yade-package-dem/src/Engine/DeusExMachina/TriaxialCompressionEngine/TriaxialCompressionEngine.cpp	2007-01-25 16:55:02 UTC (rev 1044)
++++ trunk/yade-packages/yade-package-dem/src/Engine/DeusExMachina/TriaxialCompressionEngine/TriaxialCompressionEngine.cpp	2007-01-29 18:45:15 UTC (rev 1045)
+@@ -56,13 +56,14 @@
+ {
+ 	
+ 	UnbalancedForce=ComputeUnbalancedForce(body);
+-	cerr &lt;&lt; &quot;UnbalancedForce=&quot; &lt;&lt; UnbalancedForce &lt;&lt; endl;
++	if (Omega::instance().getCurrentIteration() % 50 == 0) cerr &lt;&lt; &quot;UnbalancedForce=&quot; &lt;&lt; UnbalancedForce &lt;&lt; endl;
+ 	if (autoCompressionActivation) compressionActivated = (UnbalancedForce&lt;=StabilityCriterion);//Is the assembly compact and stable?
+ 	if (compressionActivated)
+ 	{
+ 		wall_bottom_activated=false;//stop stress control on top and bottom wall
+ 		wall_top_activated=false;
+-		autoCompressionActivation = false; //avoid stopping compression if UnbalancedForce increases due to compression		
++		autoCompressionActivation = false; //don't stop compression when UnbalancedForce increases due to compression	
++		internalCompaction = false;	
+ 	}
+ 	
+ 	
+@@ -79,7 +80,7 @@
+ 
+         if (compressionActivated)
+         {
+-		cerr &lt;&lt; &quot;Compression started!!&quot; &lt;&lt; endl;
++		if (Omega::instance().getCurrentIteration() % 50 == 0) cerr &lt;&lt; &quot;Compression started!!&quot; &lt;&lt; endl;
+         	Real dt = Omega::instance().getTimeStep();
+                 MetaBody * ncb = static_cast&lt;MetaBody*&gt;(body);
+                 shared_ptr&lt;BodyContainer&gt;&amp; bodies = ncb-&gt;bodies;
+@@ -108,11 +109,15 @@
+         for(  ; ii!=iiEnd ; ++ii ) {
+                 if ((*ii)-&gt;isReal) {
+                         const shared_ptr&lt;Interaction&gt;&amp; contact = *ii;
++                        Real fn = (static_cast&lt;ElasticContactInteraction*&gt; (contact-&gt;interactionPhysics.get()))-&gt;normalForce.Length();
++                        if (fn!=0)
++                        {
+                         MeanForce += (static_cast&lt;ElasticContactInteraction*&gt; (contact-&gt;interactionPhysics.get()))-&gt;normalForce.Length();
+                         ++nForce;
++                        }
+                 }
+         }
+-        MeanForce /= nForce;
++        if (MeanForce!=0) MeanForce /= nForce;
+ 
+         int actionForceIndex = actionForce-&gt;getClassIndex();
+ 
+
+Modified: trunk/yade-packages/yade-package-dem/src/Engine/DeusExMachina/TriaxialCompressionEngine/TriaxialCompressionEngine.pro
+===================================================================
+--- trunk/yade-packages/yade-package-dem/src/Engine/DeusExMachina/TriaxialCompressionEngine/TriaxialCompressionEngine.pro	2007-01-25 16:55:02 UTC (rev 1044)
++++ trunk/yade-packages/yade-package-dem/src/Engine/DeusExMachina/TriaxialCompressionEngine/TriaxialCompressionEngine.pro	2007-01-29 18:45:15 UTC (rev 1045)
+@@ -8,13 +8,11 @@
+ 	-lForce \
+         -lParticleParameters \
+ 	-lElasticContactInteraction \
+-	-lStiffnessMatrix \
+ 	-lTriaxialStressController \
+ 	-rdynamic
+ 	
+ INCLUDEPATH += $${YADE_QMAKE_PATH}/include \
+-		../../../DataClass/PhysicalAction/StiffnessMatrix \
+-	       ../../../DataClass/PhysicalParameters/ParticleParameters \
++		../../../DataClass/PhysicalParameters/ParticleParameters \
+ 	       ../../../Engine/DeusExMachina/TriaxialStressController \
+ 	       ../../../DataClass/InteractionPhysics/ElasticContactInteraction 
+ QMAKE_LIBDIR = ../../../../bin \
+
+Modified: trunk/yade-packages/yade-package-dem/src/Engine/DeusExMachina/TriaxialStressController/TriaxialStressController.cpp
+===================================================================
+--- trunk/yade-packages/yade-package-dem/src/Engine/DeusExMachina/TriaxialStressController/TriaxialStressController.cpp	2007-01-25 16:55:02 UTC (rev 1044)
++++ trunk/yade-packages/yade-package-dem/src/Engine/DeusExMachina/TriaxialStressController/TriaxialStressController.cpp	2007-01-29 18:45:15 UTC (rev 1045)
+@@ -1,6 +1,6 @@
+ /*************************************************************************
+-*  Copyright (C) 2004 by Janek Kozicki                                   *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">cosurgi at berlios.de</A>                                                    *
++*  Copyright (C) 2006 by Bruno Chareyre                                   *
++* <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">bruno.chareyre at hmg.inpg.fr</A>                                                   *
+ *                                                                        *
+ *  This program is free software; it is licensed under the terms of the  *
+ *  GNU General Public License v2 or later. See file LICENSE for details. *
+@@ -8,23 +8,26 @@
+ 
+ #include &quot;TriaxialStressController.hpp&quot;
+ #include &quot;yade/yade-package-common/ParticleParameters.hpp&quot;
++#include &quot;yade/yade-package-common/InteractingSphere.hpp&quot;
++#include &quot;SpheresContactGeometry.hpp&quot;
+ #include &quot;ElasticContactInteraction.hpp&quot;
+ #include &quot;yade/yade-package-common/Force.hpp&quot;
+-#include &quot;StiffnessMatrix.hpp&quot;
++//#include &quot;GlobalStiffness.hpp&quot;
+ #include &lt;Wm3Math.h&gt;
+ #include &lt;yade/yade-lib-base/yadeWm3.hpp&gt;
+ #include &lt;yade/yade-lib-base/yadeWm3Extra.hpp&gt;
+ 
++#include &lt;yade/yade-core/MetaBody.hpp&gt;
++#include &quot;yade/yade-package-common/Sphere.hpp&quot;
+ 
+ 
+-#include &lt;yade/yade-core/MetaBody.hpp&gt;
+ 
+-
+-TriaxialStressController::TriaxialStressController() : actionParameterStiffnessMatrix(new StiffnessMatrix), actionParameterForce(new Force), wall_bottom_id(wall_id[0]), wall_top_id(wall_id[1]), wall_left_id(wall_id[2]), wall_right_id(wall_id[3]), wall_front_id(wall_id[4]), wall_back_id(wall_id[5])
++TriaxialStressController::TriaxialStressController() : actionParameterForce(new Force), wall_bottom_id(wall_id[0]), wall_top_id(wall_id[1]), wall_left_id(wall_id[2]), wall_right_id(wall_id[3]), wall_front_id(wall_id[4]), wall_back_id(wall_id[5])
+ {
+ 	//cerr &lt;&lt; &quot;constructor of TriaxialStressController&quot; &lt;&lt; std::endl;
+-	StiffnessMatrixClassIndex = actionParameterStiffnessMatrix-&gt;getClassIndex();
+ 	ForceClassIndex = actionParameterForce-&gt;getClassIndex();
++	previousStress = 0;
++	previousMultiplier = 1;
+ 	wall_bottom = 0;
+ 	wall_top = 1;
+ 	wall_left = 2;
+@@ -32,13 +35,14 @@
+ 	wall_front = 4;
+ 	wall_back = 5;
+ 	
+-	interval =1;
+-	damping = 0.1;
++	
++	interval =10;
++	wallDamping = 0.25;
+ 	force = Vector3r::ZERO;
+ 	for (int i=0; i&lt;6; ++i)
+ 	{
+ 		wall_id[i] = 0;
+-		previoustranslation[i] = Vector3r::ZERO;
++		previousTranslation[i] = Vector3r::ZERO;
+ 		stiffness[i] = 0;
+ 		normal[i] = Vector3r::ZERO;
+ 	}
+@@ -58,7 +62,9 @@
+ 	
+ 	//stiffness = Vector3r::ZERO;
+ 	max_vel = 0.001;
+-	StiffnessMatrixClassIndex = actionParameterStiffnessMatrix-&gt;getClassIndex();
++	maxMultiplier = 1.001;
++	internalCompaction = false;
++	
+ 	ForceClassIndex = actionParameterForce-&gt;getClassIndex();
+ 			
+ 	wall_bottom_activated = true;
+@@ -86,12 +92,12 @@
+ 	//cerr &lt;&lt; &quot;TriaxialStressController::registerAttributes()&quot; &lt;&lt; std::endl;
+ 	DeusExMachina::registerAttributes();
+ 	REGISTER_ATTRIBUTE(interval);
+-	REGISTER_ATTRIBUTE(damping);
++	REGISTER_ATTRIBUTE(wallDamping);
+ 	REGISTER_ATTRIBUTE(force);
+ 	
+ 	
++	
+ 	//REGISTER_ATTRIBUTE(stiffness);
+- 	REGISTER_ATTRIBUTE(max_vel);
+  	REGISTER_ATTRIBUTE(wall_bottom_id);
+  	REGISTER_ATTRIBUTE(wall_top_id);
+  	REGISTER_ATTRIBUTE(wall_left_id);
+@@ -114,14 +120,19 @@
+ 	
+ 	
+ 	REGISTER_ATTRIBUTE(sigma_iso);
++	REGISTER_ATTRIBUTE(maxMultiplier);
++	REGISTER_ATTRIBUTE(max_vel);
++	REGISTER_ATTRIBUTE(previousStress);
++	REGISTER_ATTRIBUTE(previousMultiplier);
++	REGISTER_ATTRIBUTE(internalCompaction);
+ 	//cerr &lt;&lt; &quot;fin de TriaxialStressController::registerAttributes()&quot; &lt;&lt; std::endl;
+ }
+ 
+ void TriaxialStressController::updateStiffness (MetaBody * ncb)
+ {
+-	shared_ptr&lt;BodyContainer&gt;&amp; bodies = ncb-&gt;bodies;
++	//shared_ptr&lt;BodyContainer&gt;&amp; bodies = ncb-&gt;bodies;
+ 
+-	Real dt = Omega::instance().getTimeStep();
++	//Real dt = Omega::instance().getTimeStep();
+ 
+ 	for (int i=0; i&lt;6; ++i)
+ 	{		
+@@ -153,7 +164,7 @@
+ 
+ }
+ 
+-void TriaxialStressController::controlStress(int wall, MetaBody* ncb, int id, Vector3r resultantForce, PhysicalParameters* p, Real wall_max_vel)
++void TriaxialStressController::controlExternalStress(int wall, MetaBody* ncb, int id, Vector3r resultantForce, PhysicalParameters* p, Real wall_max_vel) //FIXME remove parameter &quot;id&quot;
+ {
+ 		//Update stiffness only if it has been computed by StiffnessCounter (see &quot;interval&quot;)
+ 		//if (Omega::instance().getCurrentIteration() % interval == 0)	stiffness =
+@@ -173,33 +184,15 @@
+ 		}
+ 		
+ 		 
+-// 		cerr &lt;&lt; &quot;dint wall = &quot; &lt;&lt;  wall ;
+-// 		cerr &lt;&lt; &quot; deltaf.x() = &quot; &lt;&lt;  deltaf.x() ;
+-// 		if  (deltaf.x()!=0) translation.x() = 
+-// 		Mathr::sign(deltaf.x())*(stiffness.x()==0 ? wall_max_vel : std::min( abs(deltaf.x()/stiffness.x()), wall_max_vel));
+-// 		else translation.x() = 0;
+-// 		cerr &lt;&lt; &quot; deltaf.y() = &quot; &lt;&lt;  deltaf.y() ;
+-// 		cerr &lt;&lt; &quot; deltaf.z() = &quot; &lt;&lt;  deltaf.z() &lt;&lt; endl;
+-// 		
+-// 		if  (deltaf.y()!=0) translation.y() = 
+-// 		Mathr::sign(deltaf.y())*(stiffness.y()==0 ? wall_max_vel : std::min( abs(deltaf.y()/stiffness.y()), wall_max_vel));
+-// 		else translation.y() = 0;
+-// 		if  (deltaf.z()!=0) translation.z() = 
+-// 		Mathr::sign(deltaf.z())*(stiffness.z()==0 ? wall_max_vel : std::min( abs(deltaf.z()/stiffness.z()), wall_max_vel));
+-// 		else translation.z() = 0;
+-		
+-// 			(stiffness.x()==0 ? Mathr::sign(deltaf.x())*wall_max_vel : Mathr::sign(deltaf.x())*std::min( abs(deltaf.x()/stiffness.x()), wall_max_vel),
+-// 			stiffness.y()==0 ? Mathr::sign(deltaf.y())*wall_max_vel : Mathr::sign(deltaf.y())*std::min( abs(deltaf.y()/stiffness.y()), wall_max_vel),
+-// 			stiffness.z()==0 ? Mathr::sign(deltaf.z())*wall_max_vel : Mathr::sign(deltaf.z())*std::min( abs(deltaf.z()/stiffness.z()), wall_max_vel) );
++
+ 			
+-		previoustranslation[wall] = (1-damping)*translation*normal[wall] + 0.7*previoustranslation[wall];// formula for &quot;steady-flow&quot; evolution with fluctuations
+-		p-&gt;se3.position	+= previoustranslation[wall];
++		previousTranslation[wall] = (1-wallDamping)*translation*normal[wall] + 0.7*previousTranslation[wall];// formula for &quot;steady-flow&quot; evolution with fluctuations
++		p-&gt;se3.position	+= previousTranslation[wall];
+ 		//cerr &lt;&lt; &quot;previoustranslation[wall]=&quot; &lt;&lt; previoustranslation[wall] &lt;&lt; endl;
+ 		//p-&gt;velocity		=  previoustranslation/dt;//FIXME : useless???	
+ 	//}
+ 	
+ }
+-
+ void TriaxialStressController::applyCondition(Body* body)
+ {
+ 	//cerr &lt;&lt; &quot;void TriaxialStressController::applyCondition(Body* body)&quot; &lt;&lt; std::endl;
+@@ -229,32 +222,102 @@
+ 	PhysicalParameters* p_front = static_cast&lt;PhysicalParameters*&gt;((*bodies)[wall_front_id]-&gt;physicalParameters.get());
+ 	PhysicalParameters* p_back 	= static_cast&lt;PhysicalParameters*&gt;((*bodies)[wall_back_id]-&gt;physicalParameters.get());
+ 	
+-	{
+-		height = p_top-&gt;se3.position.Y() - p_bottom-&gt;se3.position.Y() - thickness;
+-		width = p_right-&gt;se3.position.X() - p_left-&gt;se3.position.X() - thickness;
+-		depth = p_front-&gt;se3.position.Z() - p_back-&gt;se3.position.Z() - thickness;
++	
++	height = p_top-&gt;se3.position.Y() - p_bottom-&gt;se3.position.Y() - thickness;
++	width = p_right-&gt;se3.position.X() - p_left-&gt;se3.position.X() - thickness;
++	depth = p_front-&gt;se3.position.Z() - p_back-&gt;se3.position.Z() - thickness;
+ 				
+-		
++	if (!internalCompaction)
++    	{	
+ 		Vector3r wallForce (0, sigma_iso*width*depth, 0);
+ 		if (wall_bottom_activated)
+-		controlStress(wall_bottom, ncb, wall_bottom_id, -wallForce, p_bottom, max_vel);
++		controlExternalStress(wall_bottom, ncb, wall_bottom_id, -wallForce, p_bottom, max_vel);
+ 		if (wall_top_activated)
+-		controlStress(wall_top, ncb, wall_top_id, wallForce, p_top, max_vel);
++		controlExternalStress(wall_top, ncb, wall_top_id, wallForce, p_top, max_vel);
+ 		
+ 		wallForce = Vector3r(sigma_iso*height*depth, 0, 0);
+ 		if (wall_left_activated)
+-		controlStress(wall_left, ncb, wall_left_id, -wallForce, p_left, max_vel*width/height);
++		controlExternalStress(wall_left, ncb, wall_left_id, -wallForce, p_left, max_vel*width/height);
+ 		if (wall_right_activated)
+-		controlStress(wall_right, ncb, wall_right_id, wallForce, p_right, max_vel*width/height);
++		controlExternalStress(wall_right, ncb, wall_right_id, wallForce, p_right, max_vel*width/height);
+ 		
+ 		wallForce = Vector3r(0, 0, sigma_iso*height*depth);
+ 		if (wall_back_activated)
+-		controlStress(wall_back, ncb, wall_back_id, -wallForce, p_back, max_vel*depth/height);
++		controlExternalStress(wall_back, ncb, wall_back_id, -wallForce, p_back, max_vel*depth/height);
+ 		if (wall_front_activated)
+-		controlStress(wall_front, ncb, wall_front_id, wallForce, p_front, max_vel*depth/height);
++		controlExternalStress(wall_front, ncb, wall_front_id, wallForce, p_front, max_vel*depth/height);
+ 					
+ 	//}
+ 	}
++	
++    else //if internal compaction
++    {	
++    	if (Omega::instance().getCurrentIteration() % 10 == 0) {
++    	Real s = computeStress(ncb);
++    	if (s==0) previousMultiplier = maxMultiplier; 
++    	else {
++//     		previousMultiplier = 1+0.7*(sigma_iso-s)*(previousMultiplier-1.f)/(s-previousStress); // = (Dsigma/apparentModulus)*0.7
++//     		previousMultiplier = std::max(2-maxMultiplier, std::min(previousMultiplier, maxMultiplier));
++		previousMultiplier = 1+(sigma_iso-s)/sigma_iso*(maxMultiplier-1.f); // = (Dsigma/apparentModulus)*0.7
++    	     }
++    	previousStress = s;
++    	if (Omega::instance().getCurrentIteration() % 50 == 0) cerr &lt;&lt; &quot;s= &quot; &lt;&lt; s &lt;&lt; &quot;; previousMultiplier = &quot; &lt;&lt; previousMultiplier &lt;&lt; endl;
++    	//Real apparentModulus = (s-previousStress)/(previousMultiplier-1.f);    	
++    	controlInternalStress(ncb, previousMultiplier);
++    	}
++    }
+ }
+ 
+ 
++Real TriaxialStressController::computeStress(MetaBody* ncb)
++{
++// 	height = p_top-&gt;se3.position.y() - p_bottom-&gt;se3.position.y() - thickness;
++// 	width = p_right-&gt;se3.position.x() - p_left-&gt;se3.position.x() - thickness;
++// 	depth = p_front-&gt;se3.position.z() - p_back-&gt;se3.position.z() - thickness;
++	
++	Real meanStress = 0;
++	
++	Real invXSurface = 1/(height*depth);
++	Real invYSurface = 1/(width*depth);
++	Real invZSurface = 1/(width*height);
++		
++	stress[wall_bottom]=( static_cast&lt;Force*&gt;(ncb-&gt;physicalActions-&gt;find(wall_id[wall_bottom],ForceClassIndex).get())-&gt;force ) * invYSurface;
++	stress[wall_top] = static_cast&lt;Force*&gt;( ncb-&gt;physicalActions-&gt;find(wall_id[wall_top],ForceClassIndex).get() )-&gt;force * invYSurface;
++	stress[wall_left] = ( static_cast&lt;Force*&gt;( ncb-&gt;physicalActions-&gt;find(wall_id[wall_left],ForceClassIndex).get() )-&gt;force ) * invXSurface;
++	stress[wall_right] = ( static_cast&lt;Force*&gt;( ncb-&gt;physicalActions-&gt;find(wall_id[wall_right],ForceClassIndex).get() )-&gt;force ) * invXSurface;
++	stress[wall_front] = ( static_cast&lt;Force*&gt;( ncb-&gt;physicalActions-&gt;find(wall_id[wall_front],ForceClassIndex).get() )-&gt;force ) * invZSurface;
++	stress[wall_back] = ( static_cast&lt;Force*&gt;( ncb-&gt;physicalActions-&gt;find(wall_id[wall_back],ForceClassIndex).get() )-&gt;force ) * invZSurface;	
++		
++	if (Omega::instance().getCurrentIteration() % 50 == 0) {
++	cerr &lt;&lt; &quot;stresses : &quot; &lt;&lt;  -stress[wall_bottom].Y() &lt;&lt; &quot; &quot; &lt;&lt; stress[wall_top].Y() &lt;&lt; &quot; &quot; &lt;&lt; -stress[wall_left].X() &lt;&lt; &quot; &quot; &lt;&lt; stress[wall_right].X() &lt;&lt; &quot; &quot; &lt;&lt; -stress[wall_back].Z() &lt;&lt; &quot; &quot; &lt;&lt; stress[wall_front].Z() &lt;&lt; endl;}
++	for (int i=0; i&lt;6; i++) {
++	//Real x= stress[i].dot(normal[i]);
++	//cerr &lt;&lt; i &lt;&lt; &quot; : &quot; &lt;&lt; x &lt;&lt; endl;
++	meanStress-= stress[i].Dot(normal[i]);}
++	return meanStress*0.16666666666;
++}
++
++void TriaxialStressController::controlInternalStress(MetaBody* ncb, Real multiplier)
++{
++        BodyContainer::iterator bi    = ncb-&gt;bodies-&gt;begin();
++        BodyContainer::iterator biEnd = ncb-&gt;bodies-&gt;end();
++        Real f;
++        for(  ; bi!=biEnd ; ++bi ) {
++                if ((*bi)-&gt;isDynamic) {
++                        (static_cast&lt;InteractingSphere*&gt; ((*bi)-&gt;interactingGeometry.get()))-&gt;radius *= multiplier;
++                        (static_cast&lt;Sphere*&gt;((*bi)-&gt;geometricalModel.get()))-&gt;radius *= multiplier;}
++        }
++
++        InteractionContainer::iterator ii    = ncb-&gt;transientInteractions-&gt;begin();
++        InteractionContainer::iterator iiEnd = ncb-&gt;transientInteractions-&gt;end();
++        for(  ; ii!=iiEnd ; ++ii ) {
++                if ((*ii)-&gt;isReal) {
++                        SpheresContactGeometry* contact = static_cast&lt;SpheresContactGeometry*&gt; ((*ii)-&gt;interactionGeometry.get());
++                        if ((*(ncb-&gt;bodies))[(*ii)-&gt;getId1()]-&gt;isDynamic)
++                                contact-&gt;radius1 *= multiplier;
++                        if ((*(ncb-&gt;bodies))[(*ii)-&gt;getId2()]-&gt;isDynamic)
++                                contact-&gt;radius2 *= multiplier;
++                      
++                }
++        }
++}
+
+Modified: trunk/yade-packages/yade-package-dem/src/Engine/DeusExMachina/TriaxialStressController/TriaxialStressController.hpp
+===================================================================
+--- trunk/yade-packages/yade-package-dem/src/Engine/DeusExMachina/TriaxialStressController/TriaxialStressController.hpp	2007-01-25 16:55:02 UTC (rev 1044)
++++ trunk/yade-packages/yade-package-dem/src/Engine/DeusExMachina/TriaxialStressController/TriaxialStressController.hpp	2007-01-29 18:45:15 UTC (rev 1045)
+@@ -28,11 +28,10 @@
+ class TriaxialStressController : public DeusExMachina 
+ {
+ 	private :
+-		shared_ptr&lt;PhysicalAction&gt; actionParameterStiffnessMatrix;
+ 		shared_ptr&lt;PhysicalAction&gt; actionParameterForce;
+-		int StiffnessMatrixClassIndex, ForceClassIndex;
++		int ForceClassIndex;
++		Real previousStress, previousMultiplier; //previous mean stress and size multiplier		
+ 		
+-		
+ 			
+ 	public :
+ 		unsigned int interval;
+@@ -41,31 +40,38 @@
+ 		//! Defines the prescibed resultant force 
+ 		Vector3r		force;	
+ 		//! Stores the value of the translation at the previous time step, stiffness, and normal
+-		Vector3r	previoustranslation [6];
++		Vector3r	previousTranslation [6];
+ 		//! The value of stiffness (updated according to interval) 
+ 		Real		stiffness [6];
+ 		Vector3r	normal [6];
+ 		Vector3r	stress [6];
+ 		int 		wall_id [6];
++		
+ 				
+-		//! damping coefficient - damping=0 implies a &quot;perfect&quot; control of the resultant force, damping=1 means no movement
+-		Real			damping;
++		//! wallDamping coefficient - wallDamping=0 implies a &quot;perfect&quot; control of the resultant force, wallDamping=1 means no movement
++		Real			wallDamping;
+ 		//! maximum displacement/cycle (usefull to prevent explosions when stiffness is very low...) 
+ 		Real			max_vel;
++		Real			maxMultiplier;
++		//! switch between &quot;external&quot; (walls) and &quot;internal&quot; (growth of particles) compaction 
++		bool internalCompaction; 
+ 		
++		
+ 		int &amp;wall_bottom_id, &amp;wall_top_id, &amp;wall_left_id, &amp;wall_right_id, &amp;wall_front_id, &amp;wall_back_id;
+ 		bool wall_bottom_activated, wall_top_activated, wall_left_activated, wall_right_activated, wall_front_activated, wall_back_activated;
+ 		Real height, width, depth;
+ 		Real thickness; // FIXME should retrieve &quot;extents&quot; of a InteractingBox
+ 		Real sigma_iso;
+-		
++				
+ 
+ 		TriaxialStressController();
+ 		virtual ~TriaxialStressController();
+ 	
+ 		virtual void applyCondition(Body*);
+-		void controlStress(int wall, MetaBody* ncb, int id, Vector3r resultantForce, PhysicalParameters* p, Real wall_max_vel);
++		void controlExternalStress(int wall, MetaBody* ncb, int id, Vector3r resultantForce, PhysicalParameters* p, Real wall_max_vel);
++		void controlInternalStress(MetaBody* ncb, Real multiplier);
+ 		void updateStiffness(MetaBody* ncb);
++		Real computeStress(MetaBody* ncb); //Compute stresses on walls and store the values in &quot;Vector3r stress[6]&quot;, return mean stress
+ 		
+ 	
+ 	protected :
+
+Modified: trunk/yade-packages/yade-package-dem/src/Engine/DeusExMachina/TriaxialStressController/TriaxialStressController.pro
+===================================================================
+--- trunk/yade-packages/yade-package-dem/src/Engine/DeusExMachina/TriaxialStressController/TriaxialStressController.pro	2007-01-25 16:55:02 UTC (rev 1044)
++++ trunk/yade-packages/yade-package-dem/src/Engine/DeusExMachina/TriaxialStressController/TriaxialStressController.pro	2007-01-29 18:45:15 UTC (rev 1045)
+@@ -8,15 +8,18 @@
+ 	-lForce \
+         -lParticleParameters \
+ 	-lElasticContactInteraction \
+-	-lStiffnessMatrix \
++	-lInteractingSphere \
++        -lSpheresContactGeometry \
++	-lSphere \
+ 	-rdynamic
+ 	
+ INCLUDEPATH += $${YADE_QMAKE_PATH}/include/ \
+-               ../../../DataClass/PhysicalAction/StiffnessMatrix \
+-	       ../../../DataClass/PhysicalParameters/ParticleParameters \
++               ../../../DataClass/PhysicalParameters/ParticleParameters \
++	       ../../../DataClass/InteractionGeometry/SpheresContactGeometry \
+ 	       ../../../Engine/DeusExMachina/TriaxialStressController \
+-	       ../../../DataClass/InteractionPhysics/ElasticContactInteraction 
+-               
++	       ../../../DataClass/InteractionPhysics/ElasticContactInteraction \
++	       
++
+ QMAKE_LIBDIR = ../../../../bin \
+                ../../../../bin \
+ 	       $${YADE_QMAKE_PATH}/lib/yade/yade-package-common/ \
+
+Modified: trunk/yade-packages/yade-package-dem/src/Engine/StandAloneEngine/GlobalStiffnessCounter/GlobalStiffnessCounter.cpp
+===================================================================
+--- trunk/yade-packages/yade-package-dem/src/Engine/StandAloneEngine/GlobalStiffnessCounter/GlobalStiffnessCounter.cpp	2007-01-25 16:55:02 UTC (rev 1044)
++++ trunk/yade-packages/yade-package-dem/src/Engine/StandAloneEngine/GlobalStiffnessCounter/GlobalStiffnessCounter.cpp	2007-01-29 18:45:15 UTC (rev 1045)
+@@ -6,8 +6,8 @@
+ *  GNU General Public License v2 or later. See file LICENSE for details. *
+ *************************************************************************/
+ 
+-/* Please comment out unused code, so that yade-flat will work without problems
+ 
++
+ #include &quot;BodyMacroParameters.hpp&quot;
+ #include &quot;SpheresContactGeometry.hpp&quot;
+ #include &quot;SDECLinkGeometry.hpp&quot;
+@@ -18,7 +18,7 @@
+ #include &lt;yade/yade-package-common/Force.hpp&gt;
+ #include &lt;yade/yade-package-common/Momentum.hpp&gt;
+ #include &lt;yade/yade-core/PhysicalAction.hpp&gt;
+-#include &quot;StiffnessMatrix.hpp&quot;
++#include &quot;GlobalStiffness.hpp&quot;
+ #include &quot;GlobalStiffnessCounter.hpp&quot;
+ 
+ GlobalStiffnessCounter::GlobalStiffnessCounter() : InteractionSolver() , actionForce(new Force) , actionMomentum(new Momentum), actionStiffness(new GlobalStiffness)
+@@ -47,60 +47,64 @@
+ 
+ void GlobalStiffnessCounter::action(Body* body)
+ {
+-	MetaBody * ncb = dynamic_cast&lt;MetaBody*&gt;(body);
+-	shared_ptr&lt;BodyContainer&gt;&amp; bodies = ncb-&gt;bodies;
++        MetaBody * ncb = dynamic_cast&lt;MetaBody*&gt;(body);
++        shared_ptr&lt;BodyContainer&gt;&amp; bodies = ncb-&gt;bodies;
+ 
+-	Real dt = Omega::instance().getTimeStep();
++        Real dt = Omega::instance().getTimeStep();
+ 
+-/// Non Permanents Links												///
++        /// Non Permanents Links												///
+ 
+-	InteractionContainer::iterator ii    = ncb-&gt;transientInteractions-&gt;begin();
+-	InteractionContainer::iterator iiEnd = ncb-&gt;transientInteractions-&gt;end();
+-	for(  ; ii!=iiEnd ; ++ii )
+-	{
+-		if ((*ii)-&gt;isReal)
+-		{
+-			const shared_ptr&lt;Interaction&gt;&amp; contact = *ii;
+-			int id1 = contact-&gt;getId1();
+-			int id2 = contact-&gt;getId2();
+-			
+-			//if( !( (*bodies)[id1]-&gt;getGroupMask() &amp; (*bodies)[id2]-&gt;getGroupMask() &amp; sdecGroupMask)  )
+-				//continue; // skip other groups, BTW: this is example of a good usage of 'continue' keyword
+-	
+-			SpheresContactGeometry* currentContactGeometry 	= static_cast&lt;SpheresContactGeometry*&gt;(contact-&gt;interactionGeometry.get());
+-			ElasticContactInteraction* currentContactPhysics = static_cast&lt;ElasticContactInteraction*&gt; (contact-&gt;interactionPhysics.get());
+-			
+-		
+-			Vector3r diag_stiffness = Vector3r( 	std::pow(currentContactGeometry-&gt;normal.x(),2),
+-								std::pow(currentContactGeometry-&gt;normal.y(),2),
+-								std::pow(currentContactGeometry-&gt;normal.z(),2) );
+-			diag_stiffness *= currentContactPhysics-&gt;kn-currentContactPhysics-&gt;ks;
+-			diag_stiffness = diag_stiffness + Vector3r(1,1,1)*currentContactPhysics-&gt;ks;	//diagonal terms of stiffness matrix
+-			
+-			Vector3r branch1 = currentContactGeometry-&gt;normal*currentContactGeometry-&gt;radius1;
+-			Vector3r branch2 = currentContactGeometry-&gt;normal*currentContactGeometry-&gt;radius2;
+-			Vector3r diag_Rstiffness =
+-					Vector3r( std::pow(currentContactGeometry-&gt;normal.y(),2) + std::pow(currentContactGeometry-&gt;normal.z(),2),
+-					std::pow(currentContactGeometry-&gt;normal.x(),2) + std::pow(currentContactGeometry-&gt;normal.z(),2),
+-					std::pow(currentContactGeometry-&gt;normal.y(),2) + std::pow(currentContactGeometry-&gt;normal.x(),2) );
+-			diag_Rstiffness *= currentContactPhysics-&gt;ks;
+-			
+-			
+-			PhysicalAction* st = ncb-&gt;physicalActions-&gt;find(id1,actionStiffness-&gt;getClassIndex()).get();
+-			StiffnessMatrix* s = static_cast&lt;StiffnessMatrix*&gt;(st);
+-			s-&gt;stiffness += diag_stiffness; 	
+-			st = ncb-&gt;physicalActions-&gt;find(id2,actionStiffness-&gt;getClassIndex()).get();
+-			s = static_cast&lt;StiffnessMatrix*&gt;(st);
+-			s-&gt;stiffness += diag_stiffness;
+-			//____________________________
+-			
+-			
+-		}
+-	}
++        InteractionContainer::iterator ii    = ncb-&gt;transientInteractions-&gt;begin();
++        InteractionContainer::iterator iiEnd = ncb-&gt;transientInteractions-&gt;end();
++        //cerr &lt;&lt; &quot;#############################################################################################&quot; &lt;&lt; endl;
++        for(  ; ii!=iiEnd ; ++ii ) {
++                if ((*ii)-&gt;isReal) {
++                        const shared_ptr&lt;Interaction&gt;&amp; contact = *ii;
++                        int id1 = contact-&gt;getId1();
++                        int id2 = contact-&gt;getId2();
+ 
++                        //if( !( (*bodies)[id1]-&gt;getGroupMask() &amp; (*bodies)[id2]-&gt;getGroupMask() &amp; sdecGroupMask)  )
++                        //continue; // skip other groups, BTW: this is example of a good usage of 'continue' keyword
++
++                        SpheresContactGeometry* currentContactGeometry 	= static_cast&lt;SpheresContactGeometry*&gt;(contact-&gt;interactionGeometry.get());
++                        ElasticContactInteraction * currentContactPhysics = static_cast&lt;ElasticContactInteraction *&gt; (contact-&gt;interactionPhysics.get());
++
++
++                        Real fn = (static_cast&lt;ElasticContactInteraction *&gt; (contact-&gt;interactionPhysics.get()))-&gt;normalForce.Length();
++
++                        if (fn!=0) {
++                                //Diagonal terms of the translational stiffness matrix
++                                Vector3r diag_stiffness = Vector3r( 	std::pow(currentContactGeometry-&gt;normal.X(),2),
++                                                                     std::pow(currentContactGeometry-&gt;normal.Y(),2),
++                                                                     std::pow(currentContactGeometry-&gt;normal.Z(),2) )
++                                                          ;
++                                diag_stiffness *= currentContactPhysics-&gt;kn-currentContactPhysics-&gt;ks;
++                                diag_stiffness = diag_stiffness + Vector3r(1,1,1)*currentContactPhysics-&gt;ks;
++
++                                //diagonal terms of the rotational stiffness matrix
++                                Vector3r branch1 = currentContactGeometry-&gt;normal*currentContactGeometry-&gt;radius1;
++                                Vector3r branch2 = currentContactGeometry-&gt;normal*currentContactGeometry-&gt;radius2;
++                                Vector3r diag_Rstiffness =
++                                        Vector3r( std::pow(currentContactGeometry-&gt;normal.Y(),2) + std::pow(currentContactGeometry-&gt;normal.Z(),2),
++                                                  std::pow(currentContactGeometry-&gt;normal.X(),2) + std::pow(currentContactGeometry-&gt;normal.Z(),2),
++                                                  std::pow(currentContactGeometry-&gt;normal.Y(),2) + std::pow(currentContactGeometry-&gt;normal.Y(),2) );
++                                diag_Rstiffness *= currentContactPhysics-&gt;ks;
++                                //cerr &lt;&lt; &quot;diag_Rstifness=&quot; &lt;&lt; diag_Rstiffness &lt;&lt; endl;
++
++
++                                PhysicalAction* st = ncb-&gt;physicalActions-&gt;find(id1,actionStiffness-&gt;getClassIndex()).get();
++                                GlobalStiffness* s = static_cast&lt;GlobalStiffness*&gt;(st);
++                                s-&gt;stiffness += diag_stiffness;
++                                s-&gt;Rstiffness += diag_Rstiffness;
++                                st = ncb-&gt;physicalActions-&gt;find(id2,actionStiffness-&gt;getClassIndex()).get();
++                                s = static_cast&lt;GlobalStiffness*&gt;(st);
++                                s-&gt;stiffness += diag_stiffness;
++                                s-&gt;Rstiffness += diag_Rstiffness;
++                                //____________________________
++                        }
++                }
++        }
+ }
+ 
+-*/
+ 
+ 
+-
+
+Modified: trunk/yade-packages/yade-package-dem/src/Engine/StandAloneEngine/GlobalStiffnessCounter/GlobalStiffnessCounter.hpp
+===================================================================
+--- trunk/yade-packages/yade-package-dem/src/Engine/StandAloneEngine/GlobalStiffnessCounter/GlobalStiffnessCounter.hpp	2007-01-25 16:55:02 UTC (rev 1044)
++++ trunk/yade-packages/yade-package-dem/src/Engine/StandAloneEngine/GlobalStiffnessCounter/GlobalStiffnessCounter.hpp	2007-01-29 18:45:15 UTC (rev 1045)
+@@ -6,8 +6,8 @@
+ *  GNU General Public License v2 or later. See file LICENSE for details. *
+ *************************************************************************/
+ 
+-/* Please comment out unused code, so that yade-flat will work without problems
+ 
++
+ #ifndef GLOBALSTIFFNESSCOUNTER_HPP
+ #define GLOBALSTIFFNESSCOUNTER_HPP
+ 
+@@ -51,5 +51,5 @@
+ 
+ #endif // GLOBALSTIFFNESSCOUNTER_HPP
+ 
+-*/
+ 
++
+
+Modified: trunk/yade-packages/yade-package-dem/src/Engine/StandAloneEngine/GlobalStiffnessCounter/GlobalStiffnessCounter.pro
+===================================================================
+--- trunk/yade-packages/yade-package-dem/src/Engine/StandAloneEngine/GlobalStiffnessCounter/GlobalStiffnessCounter.pro	2007-01-25 16:55:02 UTC (rev 1044)
++++ trunk/yade-packages/yade-package-dem/src/Engine/StandAloneEngine/GlobalStiffnessCounter/GlobalStiffnessCounter.pro	2007-01-29 18:45:15 UTC (rev 1045)
+@@ -9,21 +9,23 @@
+         -lSpheresContactGeometry \
+         -lBodyMacroParameters \
+         -lyade-lib-serialization \
+-        -lyade-lib-base -lWm3Foundation \
++        -lyade-lib-base \
++        -lWm3Foundation \
+         -lyade-lib-multimethods \
+         -lForce \
+ 	-lMomentum \
+         -lSphere \
+         -lRigidBodyParameters \
+-	-lStiffnessMatrix \
+-        -rdynamic 
++	-lGlobalStiffness \
++        -rdynamic
++        
+ INCLUDEPATH += $${YADE_QMAKE_PATH}/include/ \
+                ../../../DataClass/InteractionPhysics/SDECLinkPhysics \
+                ../../../DataClass/InteractionPhysics/ElasticContactInteraction \
+                ../../../DataClass/InteractionGeometry/SDECLinkGeometry \
+                ../../../DataClass/InteractionGeometry/SpheresContactGeometry \
+                ../../../DataClass/PhysicalParameters/BodyMacroParameters \
+-	       ../../../DataClass/PhysicalAction/StiffnessMatrix
++	       ../../../DataClass/PhysicalAction/GlobalStiffness
+ QMAKE_LIBDIR = ../../../../bin \
+                ../../../../bin \
+                ../../../../bin \
+
+Modified: trunk/yade-packages/yade-package-dem/src/Engine/StandAloneEngine/GlobalStiffnessTimeStepper/GlobalStiffnessTimeStepper.cpp
+===================================================================
+--- trunk/yade-packages/yade-package-dem/src/Engine/StandAloneEngine/GlobalStiffnessTimeStepper/GlobalStiffnessTimeStepper.cpp	2007-01-25 16:55:02 UTC (rev 1044)
++++ trunk/yade-packages/yade-package-dem/src/Engine/StandAloneEngine/GlobalStiffnessTimeStepper/GlobalStiffnessTimeStepper.cpp	2007-01-29 18:45:15 UTC (rev 1045)
+@@ -1,12 +1,12 @@
+ /*************************************************************************
+-*  Copyright (C) 2004 by Janek Kozicki                                   *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">cosurgi at berlios.de</A>                                                    *
++*  Copyright (C) 2006 by Bruno Chareyre                                  *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">bruno.chareyre at hmg.inpg.fr</A>                                            *
+ *                                                                        *
+ *  This program is free software; it is licensed under the terms of the  *
+ *  GNU General Public License v2 or later. See file LICENSE for details. *
+ *************************************************************************/
+ 
+-#include &quot;StiffnessMatrixTimeStepper.hpp&quot;
++#include &quot;GlobalStiffnessTimeStepper.hpp&quot;
+ #include &quot;BodyMacroParameters.hpp&quot;
+ #include &quot;ElasticContactInteraction.hpp&quot;
+ #include &quot;SpheresContactGeometry.hpp&quot;
+@@ -14,39 +14,46 @@
+ #include &lt;yade/yade-core/Interaction.hpp&gt;
+ #include &lt;yade/yade-core/MetaBody.hpp&gt;
+ #include &lt;yade/yade-package-common/Sphere.hpp&gt;
+-#include &lt;StiffnessMatrix.hpp&gt;
++#include &lt;GlobalStiffness.hpp&gt;
+ 
+ 
+-StiffnessMatrixTimeStepper::StiffnessMatrixTimeStepper() : TimeStepper() , sdecContactModel(new MacroMicroElasticRelationships), actionParameterStiffnessMatrix(new StiffnessMatrix)
++GlobalStiffnessTimeStepper::GlobalStiffnessTimeStepper() : TimeStepper() , sdecContactModel(new MacroMicroElasticRelationships), actionParameterGlobalStiffness(new GlobalStiffness)
+ {
+-	stiffnessMatrixClassIndex = actionParameterStiffnessMatrix-&gt;getClassIndex();
++cerr &lt;&lt; &quot;GlobalStiffnessTimeStepper()&quot;  &lt;&lt; endl;
++	globalStiffnessClassIndex = actionParameterGlobalStiffness-&gt;getClassIndex();
+ 	sdecGroupMask = 1;
++	timestepSafetyCoefficient = 0.8;
+ 	computedOnce = false;
++	defaultDt = 1;
+ 	
+ }
+ 
+ 
+-StiffnessMatrixTimeStepper::~StiffnessMatrixTimeStepper()
++GlobalStiffnessTimeStepper::~GlobalStiffnessTimeStepper()
+ {
+ 
+ }
+ 
+ 
+-void StiffnessMatrixTimeStepper::registerAttributes()
++void GlobalStiffnessTimeStepper::registerAttributes()
+ {
+ 	TimeStepper::registerAttributes();
+ 	REGISTER_ATTRIBUTE(sdecGroupMask);
+-	//REGISTER_ATTRIBUTE(defaultDt);
++	REGISTER_ATTRIBUTE(defaultDt);
+ }
+ 
+ 
+-void StiffnessMatrixTimeStepper::findTimeStepFromBody(const shared_ptr&lt;Body&gt;&amp; body, MetaBody * ncb)
++void GlobalStiffnessTimeStepper::findTimeStepFromBody(const shared_ptr&lt;Body&gt;&amp; body, MetaBody * ncb)
+ {
+-	BodyMacroParameters * sdec	= dynamic_cast&lt;BodyMacroParameters*&gt;(body-&gt;physicalParameters.get());
+-	Sphere* sphere 		= dynamic_cast&lt;Sphere*&gt;(body-&gt;geometricalModel.get());
+-	Vector3r&amp; stiffness = (static_cast&lt;StiffnessMatrix*&gt;( ncb-&gt;physicalActions-&gt;find (body-&gt;getId(), stiffnessMatrixClassIndex).get()))-&gt;stiffness;
++	RigidBodyParameters * sdec	= static_cast&lt;RigidBodyParameters*&gt;(body-&gt;physicalParameters.get());
++	
++	Sphere* sphere = static_cast&lt;Sphere*&gt;(body-&gt;geometricalModel.get());
++	
++	Vector3r&amp; stiffness = (static_cast&lt;GlobalStiffness*&gt;( ncb-&gt;physicalActions-&gt;find (body-&gt;getId(), globalStiffnessClassIndex).get()))-&gt;stiffness;
++	Vector3r&amp; Rstiffness = (static_cast&lt;GlobalStiffness*&gt;( ncb-&gt;physicalActions-&gt;find (body-&gt;getId(), globalStiffnessClassIndex).get()))-&gt;Rstiffness;
+ 
+-	//cerr &lt;&lt; &quot;Vector3r&amp; stiffness = (static_cast&lt;StiffnessMatrix*&gt;( ncb&quot; &lt;&lt; endl;
++
++	//cerr &lt;&lt; &quot;Vector3r&amp; stiffness = (static_cast&lt;GlobalStiffness*&gt;( ncb&quot; &lt;&lt; endl;
+ 	if(! (sphere &amp;&amp; sdec &amp;&amp; stiffness) )
+ 		return; // not possible to compute!
+ 	//cerr &lt;&lt; &quot;return; // not possible to compute!&quot; &lt;&lt; endl;
+@@ -65,67 +72,53 @@
+ // 	Real Kn		= abs((Eab*Sinit/Dinit)*( (1+alpha)/(beta*(1+Vab) + gamma*(1-alpha*Dab) ) ));
+ // 	Real Ks		= abs(Kn*(1-alpha*Vab)/(1+Vab));
+ 
+-	Real dt = min (sqrt( sdec-&gt;mass  /  stiffness.x()) ,sqrt( sdec-&gt;mass  /  stiffness.y() ) );
+-	dt = 0.5 * min (sqrt( sdec-&gt;mass  /  stiffness.z()), dt);
+ 	
++// 	Real dt = min (sqrt( sdec-&gt;mass  /  stiffness.x()) ,sqrt( sdec-&gt;mass  /  stiffness.y() ) );
++// 	dt = 0.5 * min (sqrt( sdec-&gt;mass  /  stiffness.z()), dt);
++	
++	Real dt = max( max (stiffness.X(), stiffness.Y()), stiffness.Z() );
++	dt = (dt!=0 ? sqrt(sdec-&gt;mass/dt) : Mathr::MAX_REAL);	
++		
++	Real dtx = (Rstiffness.X()!=0 ? sdec-&gt;inertia.X()/Rstiffness.X() : Mathr::MAX_REAL);
++	Real dty = (Rstiffness.Y()!=0 ? sdec-&gt;inertia.Y()/Rstiffness.Y() : Mathr::MAX_REAL);
++	Real dtz = (Rstiffness.Z()!=0 ? sdec-&gt;inertia.Z()/Rstiffness.Z() : Mathr::MAX_REAL);
++	Real Rdt = sqrt( min( min (dtx, dty), dtz ) );
++	
++	//cerr &lt;&lt; &quot;Rstiffness.x()=&quot; &lt;&lt; Rstiffness.x() &lt;&lt; &quot;  &quot; &lt;&lt; Rstiffness.y() &lt;&lt; &quot;  &quot; &lt;&lt; Rstiffness.z() &lt;&lt; endl;
++	//cerr &lt;&lt; &quot;sdec-&gt;inertia=&quot; &lt;&lt; sdec-&gt;inertia.x() &lt;&lt; &quot; &quot; &lt;&lt; sdec-&gt;inertia.x() &lt;&lt; &quot; &quot; &lt;&lt; sdec-&gt;inertia.x() &lt;&lt; endl;
++	//cerr &lt;&lt; &quot;timesteps : dt=&quot; &lt;&lt; dt &lt;&lt; &quot; / Rdt=&quot; &lt;&lt; Rdt &lt;&lt; endl;
++	
++	dt = timestepSafetyCoefficient*std::min(dt,Rdt);
++	
+ 	newDt = std::min(dt,newDt);
+ 	computedSomething = true;
++	
+ }
+ 
+ 
+-void StiffnessMatrixTimeStepper::findTimeStepFromInteraction(const shared_ptr&lt;Interaction&gt;&amp; interaction, shared_ptr&lt;BodyContainer&gt;&amp; bodies)
++void GlobalStiffnessTimeStepper::findTimeStepFromInteraction(const shared_ptr&lt;Interaction&gt;&amp; interaction, shared_ptr&lt;BodyContainer&gt;&amp; bodies)
+ {
+-	unsigned int id1 = interaction-&gt;getId1();
+-	unsigned int id2 = interaction-&gt;getId2();
+-		
+-	if( !( (*bodies)[id1]-&gt;getGroupMask() &amp; (*bodies)[id2]-&gt;getGroupMask() &amp; sdecGroupMask) )
+-		return; // skip other groups
+ 
+-	ElasticContactInteraction* sdecContact = dynamic_cast&lt;ElasticContactInteraction*&gt;(interaction-&gt;interactionPhysics.get());
+-	SpheresContactGeometry* interactionGeometry = dynamic_cast&lt;SpheresContactGeometry*&gt;(interaction-&gt;interactionGeometry.get());
+-	BodyMacroParameters * body1	= dynamic_cast&lt;BodyMacroParameters*&gt;((*bodies)[id1]-&gt;physicalParameters.get());
+-	BodyMacroParameters * body2	= dynamic_cast&lt;BodyMacroParameters*&gt;((*bodies)[id2]-&gt;physicalParameters.get());
+ 
+-	if(! (sdecContact &amp;&amp; interactionGeometry &amp;&amp; body1 &amp;&amp; body2))
+-		return;
+-	
+-	Real mass 	= std::min( body1-&gt;mass                   , body2-&gt;mass               );
+-//	if(mass == 0) 			// FIXME - remove that comment: zero mass and zero inertia are too stupid to waste time checking that.
+-//		mass 	= std::max( body1-&gt;mass                   , body2-&gt;mass               );
+-//	if(mass == 0)
+-//		return; // not possible to compute
+-	Real inertia 	= std::min( body1-&gt;inertia[0]             , body2-&gt;inertia[0]         );
+-//	if( inertia == 0)
+-//		inertia = std::max( body1-&gt;inertia[0]             , body2-&gt;inertia[0]         );
+-//	if( inertia == 0)
+-//		return;
+-	Real rad3 	= std::pow(std::max(interactionGeometry-&gt;radius1 , interactionGeometry-&gt;radius2 ) , 2); // radius to the power of 2, from sphere
+-
+-	Real dt = 0.1*min(
+-			  sqrt( mass     / abs(sdecContact-&gt;initialKn)      )
+-			, sqrt( inertia  / abs(sdecContact-&gt;initialKs*rad3) )
+-		  );
+-
+-	newDt = std::min(dt,newDt);
+-	computedSomething = true;
+ }
+ 
+-bool StiffnessMatrixTimeStepper::isActivated()
++bool GlobalStiffnessTimeStepper::isActivated()
+ {
+ 	return (active &amp;&amp; (!computedOnce || (Omega::instance().getCurrentIteration() % timeStepUpdateInterval == 0)));
+ }
+ 
+ 
+-void StiffnessMatrixTimeStepper::computeTimeStep(Body* body)
++void GlobalStiffnessTimeStepper::computeTimeStep(Body* body)
+ {
+ //cerr &lt;&lt; &quot;computeTimeStep(Body* body)&quot;  &lt;&lt; endl;
++cerr &lt;&lt; &quot;phasea1 &quot;; 
+ 	MetaBody * ncb = dynamic_cast&lt;MetaBody*&gt;(body);
+ 	shared_ptr&lt;BodyContainer&gt;&amp; bodies = ncb-&gt;bodies;
+ // 	shared_ptr&lt;InteractionContainer&gt;&amp; persistentInteractions = ncb-&gt;persistentInteractions;
+ // 	shared_ptr&lt;InteractionContainer&gt;&amp; transientInteractions = ncb-&gt;transientInteractions;
+ 
+ 	newDt = Mathr::MAX_REAL;
+-	Real defaultDt = 0.0003;
++	//Real defaultDt = 0.0003;
+ 	
+ 	computedSomething = false; // this flag is to avoid setting timestep to MAX_REAL :)
+ /*
+@@ -139,10 +132,8 @@
+ 	for(  ; ii!=iiEnd ; ++ii )
+ 		findTimeStepFromInteraction(*ii , bodies);*/
+ 
+-	if(! computedSomething)
++	if(!computedSomething)
+ 	{
+-// no transientInteractions at all? so let's try to estimate timestep by investigating bodies,
+-// simulating that a body in contact with itself. this happens only when there were not transientInteractions at all.
+ 		BodyContainer::iterator bi    = bodies-&gt;begin();
+ 		BodyContainer::iterator biEnd = bodies-&gt;end();
+ 		for(  ; bi!=biEnd ; ++bi )
+@@ -156,14 +147,17 @@
+ 				findTimeStepFromBody(b, ncb); }
+ 		}
+ 	}	
++	
++	cerr &lt;&lt; &quot;phasea9 &quot;; 
++	
+ 	if(computedSomething)
+ 	{
+ 		Omega::instance().setTimeStep(min(newDt , defaultDt));
+ 		computedOnce = true;		
+-		//cerr &lt;&lt; &quot;StiffnessMatrixTimeStepper, timestep chosen is:&quot; &lt;&lt; Omega::instance().getTimeStep() &lt;&lt; endl;
++		//cerr &lt;&lt; &quot;GlobalStiffnessTimeStepper, timestep chosen is:&quot; &lt;&lt; Omega::instance().getTimeStep() &lt;&lt; endl;
+ 	}
+-//	cerr &lt;&lt; &quot;StiffnessMatrixTimeStepper, computedSomething is:&quot; &lt;&lt; computedSomething &lt;&lt; endl;
+-	cerr &lt;&lt; &quot;StiffnessMatrixTimeStepper, newDt is:&quot; &lt;&lt; newDt &lt;&lt; endl;
++//	cerr &lt;&lt; &quot;GlobalStiffnessTimeStepper, computedSomething is:&quot; &lt;&lt; computedSomething &lt;&lt; endl;
++	cerr &lt;&lt; &quot;GlobalGlobalStiffnessTimeStepper, newDt is:&quot; &lt;&lt; newDt &lt;&lt; endl;
+ 	cerr &lt;&lt; &quot;new timestep chosen is:&quot; &lt;&lt; Omega::instance().getTimeStep() &lt;&lt; endl;
+ }
+ 
+
+Modified: trunk/yade-packages/yade-package-dem/src/Engine/StandAloneEngine/GlobalStiffnessTimeStepper/GlobalStiffnessTimeStepper.hpp
+===================================================================
+--- trunk/yade-packages/yade-package-dem/src/Engine/StandAloneEngine/GlobalStiffnessTimeStepper/GlobalStiffnessTimeStepper.hpp	2007-01-25 16:55:02 UTC (rev 1044)
++++ trunk/yade-packages/yade-package-dem/src/Engine/StandAloneEngine/GlobalStiffnessTimeStepper/GlobalStiffnessTimeStepper.hpp	2007-01-29 18:45:15 UTC (rev 1045)
+@@ -1,6 +1,6 @@
+ /*************************************************************************
+-*  Copyright (C) 2004 by Olivier Galizzi                                 *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">olivier.galizzi at imag.fr</A>                                               *
++*  Copyright (C) 2006 by Bruno Chareyre                                  *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">bruno.chareyre at hmg.inpg.fr</A>                                            *
+ *                                                                        *
+ *  This program is free software; it is licensed under the terms of the  *
+ *  GNU General Public License v2 or later. See file LICENSE for details. *
+@@ -17,25 +17,26 @@
+ class MetaBody;
+ class PhysicalAction;
+ 
+-class StiffnessMatrixTimeStepper : public TimeStepper
++class GlobalStiffnessTimeStepper : public TimeStepper
+ {
+ 	private :
+ 		Real		newDt;
+ 		bool		computedSomething,
+ 				computedOnce;
+ 		shared_ptr&lt;MacroMicroElasticRelationships&gt; sdecContactModel;
+-		shared_ptr&lt;PhysicalAction&gt; actionParameterStiffnessMatrix;
+-		int stiffnessMatrixClassIndex;
++		shared_ptr&lt;PhysicalAction&gt; actionParameterGlobalStiffness;
++		int globalStiffnessClassIndex;
+ 
+ 		void findTimeStepFromBody(const shared_ptr&lt;Body&gt;&amp; body, MetaBody * ncb);
+ 		void findTimeStepFromInteraction(const shared_ptr&lt;Interaction&gt;&amp; , shared_ptr&lt;BodyContainer&gt;&amp;);
+ 
+ 	public :
+ 		int sdecGroupMask; // FIXME - we should find a way to clean groupmask stuff
+-		//Real defaultDt;
++		Real defaultDt;
++		Real timestepSafetyCoefficient;
+ 
+-		StiffnessMatrixTimeStepper();
+-		virtual ~StiffnessMatrixTimeStepper();
++		GlobalStiffnessTimeStepper();
++		virtual ~GlobalStiffnessTimeStepper();
+ 	
+ 		virtual void computeTimeStep(Body* body);
+ 		virtual bool isActivated();
+@@ -44,11 +45,11 @@
+ 	protected :
+ 		virtual void registerAttributes();
+ 
+-	REGISTER_CLASS_NAME(StiffnessMatrixTimeStepper);
++	REGISTER_CLASS_NAME(GlobalStiffnessTimeStepper);
+ 	REGISTER_BASE_CLASS_NAME(TimeStepper);
+ };
+ 
+-REGISTER_SERIALIZABLE(StiffnessMatrixTimeStepper,false);
++REGISTER_SERIALIZABLE(GlobalStiffnessTimeStepper,false);
+ 
+-#endif //  STIFFNESS_MATRIX_TIME_STEPPER_HPP
++#endif //  GLOBAL_STIFFNESS_TIME_STEPPER_HPP
+ 
+
+Modified: trunk/yade-packages/yade-package-dem/src/Engine/StandAloneEngine/GlobalStiffnessTimeStepper/GlobalStiffnessTimeStepper.pro
+===================================================================
+--- trunk/yade-packages/yade-package-dem/src/Engine/StandAloneEngine/GlobalStiffnessTimeStepper/GlobalStiffnessTimeStepper.pro	2007-01-25 16:55:02 UTC (rev 1044)
++++ trunk/yade-packages/yade-package-dem/src/Engine/StandAloneEngine/GlobalStiffnessTimeStepper/GlobalStiffnessTimeStepper.pro	2007-01-29 18:45:15 UTC (rev 1045)
+@@ -3,18 +3,20 @@
+ }
+ 
+ 
+-LIBS += -lElasticContactInteraction \
++LIBS += -lyade-lib-base -lWm3Foundation \
++	-lElasticContactInteraction \
+         -lSpheresContactGeometry \
+         -lMacroMicroElasticRelationships \
+         -lSphere \
+-	-lStiffnessMatrix \
+-        -rdynamic 
++	-lGlobalStiffness \
++	-rdynamic
++        
+ INCLUDEPATH += $${YADE_QMAKE_PATH}/include/ \
+                ../../../Engine/EngineUnit/MacroMicroElasticRelationships \
+                ../../../DataClass/InteractionPhysics/ElasticContactInteraction \
+                ../../../DataClass/InteractionGeometry/SpheresContactGeometry \
+                ../../../DataClass/PhysicalParameters/BodyMacroParameters \
+-	       ../../../DataClass/PhysicalAction/StiffnessMatrix
++	       ../../../DataClass/PhysicalAction/GlobalStiffness
+ QMAKE_LIBDIR = ../../../../bin \
+                ../../../../bin \
+                $${YADE_QMAKE_PATH}/lib/yade/yade-package-common/ \
+@@ -29,6 +31,6 @@
+           warn_on \
+           dll 
+ TEMPLATE = lib 
+-HEADERS += StiffnessMatrixTimeStepper.hpp 
+-SOURCES += StiffnessMatrixTimeStepper.cpp 
++HEADERS += GlobalStiffnessTimeStepper.hpp 
++SOURCES += GlobalStiffnessTimeStepper.cpp 
+ QMAKE_RUN_CXX_IMP = $(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $(shell pwd)/$&lt;
+
+Modified: trunk/yade-packages/yade-package-dem/src/Engine/StandAloneEngine/StandAloneEngine.pro
+===================================================================
+--- trunk/yade-packages/yade-package-dem/src/Engine/StandAloneEngine/StandAloneEngine.pro	2007-01-25 16:55:02 UTC (rev 1044)
++++ trunk/yade-packages/yade-package-dem/src/Engine/StandAloneEngine/StandAloneEngine.pro	2007-01-29 18:45:15 UTC (rev 1045)
+@@ -11,10 +11,9 @@
+            ForceRecorder \
+            PositionOrientationRecorder \
+            VelocityRecorder \
+-	   StiffnessCounter \
+-	   StiffnessMatrixTimeStepper #\
+-	   #GlobalStiffnessCounter \		
+-	   
++	   GlobalStiffnessCounter \
++	   GlobalStiffnessTimeStepper
++
+ CONFIG += debug \
+           thread \
+ warn_on
+
+Modified: trunk/yade-packages/yade-package-dem/src/PreProcessor/PreProcessor.pro
+===================================================================
+--- trunk/yade-packages/yade-package-dem/src/PreProcessor/PreProcessor.pro	2007-01-25 16:55:02 UTC (rev 1044)
++++ trunk/yade-packages/yade-package-dem/src/PreProcessor/PreProcessor.pro	2007-01-29 18:45:15 UTC (rev 1045)
+@@ -9,8 +9,8 @@
+            SDECSpheresPlane \
+            SDECMovingWall \
+            TetrahedronsTest \
+-	   IsotropicCompressionTest \
+-	   TriaxialTest 
++	   TriaxialTest
++
+ CONFIG += debug \
+           thread \
+ warn_on
+
+Modified: trunk/yade-packages/yade-package-dem/src/PreProcessor/TriaxialTest/TriaxialTest.cpp
+===================================================================
+--- trunk/yade-packages/yade-package-dem/src/PreProcessor/TriaxialTest/TriaxialTest.cpp	2007-01-25 16:55:02 UTC (rev 1044)
++++ trunk/yade-packages/yade-package-dem/src/PreProcessor/TriaxialTest/TriaxialTest.cpp	2007-01-29 18:45:15 UTC (rev 1045)
+@@ -15,9 +15,11 @@
+ #include &quot;BodyMacroParameters.hpp&quot;
+ #include &quot;SDECLinkGeometry.hpp&quot;
+ #include &quot;SDECLinkPhysics.hpp&quot;
+-#include &quot;ElasticCriterionTimeStepper.hpp&quot;
+-#include &quot;StiffnessMatrixTimeStepper.hpp&quot;
+-#include &quot;StiffnessCounter.hpp&quot;
++//#include &quot;ElasticCriterionTimeStepper.hpp&quot;
++//#include &quot;StiffnessMatrixTimeStepper.hpp&quot;
++//#include &quot;StiffnessCounter.hpp&quot;
++#include &quot;GlobalStiffnessCounter.hpp&quot;
++#include &quot;GlobalStiffnessTimeStepper.hpp&quot;
+ 
+ #include &quot;AveragePositionRecorder.hpp&quot;
+ #include &quot;ForceRecorder.hpp&quot;
+@@ -76,6 +78,11 @@
+ using namespace std;
+ 
+ 
++typedef pair&lt;Vector3r, Real&gt; BasicSphere;
++//! make a list of spheres non-overlapping sphere
++string GenerateCloud(vector&lt;BasicSphere&gt;&amp; sphere_list, Vector3r lowerCorner, Vector3r upperCorner, long number, Real rad_std_dev, Real porosity);
++
++
+ TriaxialTest::TriaxialTest () : FileGenerator()
+ {
+ 	lowerCorner 		= Vector3r(0,0,0);
+@@ -108,6 +115,7 @@
+ 	
+ //	boxWalls 		= false;
+ 	boxWalls 		= true;
++	internalCompaction	=false;
+ 
+ //	bigBall 		= true;
+ 	bigBall 		= false;
+@@ -123,11 +131,16 @@
+ 	
+ 	dampingForce = 0.5;
+ 	dampingMomentum = 0.5;
++	defaultDt = 0.0001;
+ 	
+ 	timeStepUpdateInterval = 50;
++	timeStepOutputInterval = 50;
+ 	wallStiffnessUpdateInterval = 1;
+ 	numberOfGrains = 400;
+ 	strainRate = 0.1;
++	StabilityCriterion = 0.01;
++	autoCompressionActivation = true;
++	maxMultiplier = 1.01;
+ 	
+ 	sphereYoungModulus  = 15000000.0;
+ 	spherePoissonRatio  = 0.2;
+@@ -136,7 +149,7 @@
+ 	
+ 	boxYoungModulus   = 15000000.0;
+ 	boxPoissonRatio  = 0.2;
+-	boxFrictionDeg   = -18.0;
++	boxFrictionDeg   = 0.f;
+ 	gravity 	= Vector3r(0,-9.81,0);
+ 	
+ 	sigma_iso = 50000;
+@@ -164,7 +177,9 @@
+ 	REGISTER_ATTRIBUTE(thickness);
+ 	REGISTER_ATTRIBUTE(importFilename);
+ 	//REGISTER_ATTRIBUTE(nlayers);
+-	REGISTER_ATTRIBUTE(boxWalls);
++	//REGISTER_ATTRIBUTE(boxWalls);
++	REGISTER_ATTRIBUTE(internalCompaction);
++	REGISTER_ATTRIBUTE(maxMultiplier);
+ 
+ 	REGISTER_ATTRIBUTE(sphereYoungModulus);
+ 	REGISTER_ATTRIBUTE(spherePoissonRatio);
+@@ -175,13 +190,17 @@
+ 	REGISTER_ATTRIBUTE(boxFrictionDeg);
+ 
+ 	REGISTER_ATTRIBUTE(density);
++	REGISTER_ATTRIBUTE(defaultDt);
+ 	REGISTER_ATTRIBUTE(dampingForce);
+ 	REGISTER_ATTRIBUTE(dampingMomentum);
+ 	REGISTER_ATTRIBUTE(rotationBlocked);
+ 	REGISTER_ATTRIBUTE(timeStepUpdateInterval);
++	REGISTER_ATTRIBUTE(timeStepOutputInterval);
+ 	REGISTER_ATTRIBUTE(wallStiffnessUpdateInterval);
+ 	REGISTER_ATTRIBUTE(numberOfGrains);
+ 	REGISTER_ATTRIBUTE(strainRate);
++	REGISTER_ATTRIBUTE(StabilityCriterion);
++	REGISTER_ATTRIBUTE(autoCompressionActivation);
+ //	REGISTER_ATTRIBUTE(wall_top);
+ //	REGISTER_ATTRIBUTE(wall_bottom);
+ //	REGISTER_ATTRIBUTE(wall_1);
+@@ -205,14 +224,14 @@
+ 
+ //	REGISTER_ATTRIBUTE(gravity);
+ 	
+-	REGISTER_ATTRIBUTE(bigBall);
+-	REGISTER_ATTRIBUTE(bigBallRadius);
+-	REGISTER_ATTRIBUTE(bigBallDensity);
+-	REGISTER_ATTRIBUTE(bigBallDropTimeSeconds);
+-	REGISTER_ATTRIBUTE(bigBallFrictDeg);
+-	REGISTER_ATTRIBUTE(bigBallYoungModulus);
+-	REGISTER_ATTRIBUTE(bigBallPoissonRatio);
+-	REGISTER_ATTRIBUTE(bigBallDropHeight);
++	//REGISTER_ATTRIBUTE(bigBall);
++	//REGISTER_ATTRIBUTE(bigBallRadius);
++	//REGISTER_ATTRIBUTE(bigBallDensity);
++	//REGISTER_ATTRIBUTE(bigBallDropTimeSeconds);
++	//REGISTER_ATTRIBUTE(bigBallFrictDeg);
++	//REGISTER_ATTRIBUTE(bigBallYoungModulus);
++	//REGISTER_ATTRIBUTE(bigBallPoissonRatio);
++	//REGISTER_ATTRIBUTE(bigBallDropHeight);
+ 	REGISTER_ATTRIBUTE(sigma_iso);
+ 
+ }
+@@ -539,7 +558,8 @@
+ 	shared_ptr&lt;PhysicalActionContainerInitializer&gt; physicalActionInitializer(new PhysicalActionContainerInitializer);
+ 	physicalActionInitializer-&gt;physicalActionNames.push_back(&quot;Force&quot;);
+ 	physicalActionInitializer-&gt;physicalActionNames.push_back(&quot;Momentum&quot;);
+-	physicalActionInitializer-&gt;physicalActionNames.push_back(&quot;StiffnessMatrix&quot;);
++	//physicalActionInitializer-&gt;physicalActionNames.push_back(&quot;StiffnessMatrix&quot;);
++	physicalActionInitializer-&gt;physicalActionNames.push_back(&quot;GlobalStiffness&quot;);
+ 	
+ 	shared_ptr&lt;InteractionGeometryMetaEngine&gt; interactionGeometryDispatcher(new InteractionGeometryMetaEngine);
+ 	interactionGeometryDispatcher-&gt;add(&quot;InteractingSphere&quot;,&quot;InteractingSphere&quot;,&quot;InteractingSphere2InteractingSphere4SpheresContactGeometry&quot;);
+@@ -576,22 +596,30 @@
+ 	shared_ptr&lt;PhysicalParametersMetaEngine&gt; orientationIntegrator(new PhysicalParametersMetaEngine);
+ 	orientationIntegrator-&gt;add(&quot;RigidBodyParameters&quot;,&quot;LeapFrogOrientationIntegrator&quot;);
+ 
+-	shared_ptr&lt;ElasticCriterionTimeStepper&gt; sdecTimeStepper(new ElasticCriterionTimeStepper);
+-	sdecTimeStepper-&gt;sdecGroupMask = 2;
+-	sdecTimeStepper-&gt;timeStepUpdateInterval = timeStepUpdateInterval;
++	//shared_ptr&lt;ElasticCriterionTimeStepper&gt; sdecTimeStepper(new ElasticCriterionTimeStepper);
++	//sdecTimeStepper-&gt;sdecGroupMask = 2;
++	//sdecTimeStepper-&gt;timeStepUpdateInterval = timeStepUpdateInterval;
+ 	
+-	shared_ptr&lt;StiffnessMatrixTimeStepper&gt; stiffnessMatrixTimeStepper(new StiffnessMatrixTimeStepper);
+-	stiffnessMatrixTimeStepper-&gt;sdecGroupMask = 2;
+-	stiffnessMatrixTimeStepper-&gt;timeStepUpdateInterval = timeStepUpdateInterval;
++	//shared_ptr&lt;StiffnessMatrixTimeStepper&gt; stiffnessMatrixTimeStepper(new StiffnessMatrixTimeStepper);
++	//stiffnessMatrixTimeStepper-&gt;sdecGroupMask = 2;
++	//stiffnessMatrixTimeStepper-&gt;timeStepUpdateInterval = timeStepUpdateInterval;
+ 	
++	shared_ptr&lt;GlobalStiffnessTimeStepper&gt; globalStiffnessTimeStepper(new GlobalStiffnessTimeStepper);
++	globalStiffnessTimeStepper-&gt;sdecGroupMask = 2;
++	globalStiffnessTimeStepper-&gt;timeStepUpdateInterval = timeStepUpdateInterval;
++	globalStiffnessTimeStepper-&gt;defaultDt = defaultDt;
+ 	
+ 	shared_ptr&lt;ElasticContactLaw&gt; elasticContactLaw(new ElasticContactLaw);
+ 	elasticContactLaw-&gt;sdecGroupMask = 2;
+ 	
+-	shared_ptr&lt;StiffnessCounter&gt; stiffnesscounter(new StiffnessCounter);
+-	stiffnesscounter-&gt;sdecGroupMask = 2;
+-	stiffnesscounter-&gt;interval = timeStepUpdateInterval;
++	//shared_ptr&lt;StiffnessCounter&gt; stiffnesscounter(new StiffnessCounter);
++	//stiffnesscounter-&gt;sdecGroupMask = 2;
++	//stiffnesscounter-&gt;interval = timeStepUpdateInterval;
+ 	
++	shared_ptr&lt;GlobalStiffnessCounter&gt; globalStiffnessCounter(new GlobalStiffnessCounter);
++	globalStiffnessCounter-&gt;sdecGroupMask = 2;
++	globalStiffnessCounter-&gt;interval = timeStepUpdateInterval;
++	
+ 	// moving walls to regulate the stress applied + compress when the packing is dense an stable
+ 	cerr &lt;&lt; &quot;triaxialcompressionEngine = shared_ptr&lt;TriaxialCompressionEngine&gt; (new TriaxialCompressionEngine);&quot; &lt;&lt; std::endl;
+ 	triaxialcompressionEngine = shared_ptr&lt;TriaxialCompressionEngine&gt; (new TriaxialCompressionEngine);
+@@ -600,7 +628,11 @@
+ 	triaxialcompressionEngine-&gt; max_vel = 0.0001;
+ 	triaxialcompressionEngine-&gt; thickness = thickness;
+ 	triaxialcompressionEngine-&gt;strainRate = strainRate;
+-	triaxialcompressionEngine-&gt;StabilityCriterion = 0.01;
++	triaxialcompressionEngine-&gt;StabilityCriterion = StabilityCriterion;
++	triaxialcompressionEngine-&gt;autoCompressionActivation = autoCompressionActivation;
++	triaxialcompressionEngine-&gt;internalCompaction = internalCompaction;
++	triaxialcompressionEngine-&gt;maxMultiplier = maxMultiplier;
++		
+ 	cerr &lt;&lt; &quot;fin de section triaxialcompressionEngine = shared_ptr&lt;TriaxialCompressionEngine&gt; (new TriaxialCompressionEngine);&quot; &lt;&lt; std::endl;
+ 	
+ 	
+@@ -623,8 +655,10 @@
+ 	rootBody-&gt;engines.push_back(interactionGeometryDispatcher);
+ 	rootBody-&gt;engines.push_back(interactionPhysicsDispatcher);
+ 	rootBody-&gt;engines.push_back(elasticContactLaw);
+-	rootBody-&gt;engines.push_back(stiffnesscounter);
+-	rootBody-&gt;engines.push_back(stiffnessMatrixTimeStepper);
++	//rootBody-&gt;engines.push_back(stiffnesscounter);
++	//rootBody-&gt;engines.push_back(stiffnessMatrixTimeStepper);
++	rootBody-&gt;engines.push_back(globalStiffnessCounter);
++	rootBody-&gt;engines.push_back(globalStiffnessTimeStepper);
+ 	//rootBody-&gt;engines.push_back(gravityCondition);
+ 	rootBody-&gt;engines.push_back(actionDampingDispatcher);
+ 	rootBody-&gt;engines.push_back(applyActionDispatcher);
+@@ -673,7 +707,7 @@
+ 
+ 
+ 
+-string TriaxialTest::GenerateCloud(vector&lt;BasicSphere&gt;&amp; sphere_list, Vector3r lowerCorner, Vector3r upperCorner, long number, Real rad_std_dev, Real porosity)
++string GenerateCloud(vector&lt;BasicSphere&gt;&amp; sphere_list, Vector3r lowerCorner, Vector3r upperCorner, long number, Real rad_std_dev, Real porosity)
+ {
+ 	typedef boost::minstd_rand StdGenerator;
+ 	static StdGenerator generator;
+
+Modified: trunk/yade-packages/yade-package-dem/src/PreProcessor/TriaxialTest/TriaxialTest.hpp
+===================================================================
+--- trunk/yade-packages/yade-package-dem/src/PreProcessor/TriaxialTest/TriaxialTest.hpp	2007-01-25 16:55:02 UTC (rev 1044)
++++ trunk/yade-packages/yade-package-dem/src/PreProcessor/TriaxialTest/TriaxialTest.hpp	2007-01-29 18:45:15 UTC (rev 1045)
+@@ -43,6 +43,7 @@
+ 				,density
+ 				,dampingForce
+ 				,dampingMomentum
++				,defaultDt
+ 
+ 				,bigBallRadius
+ 				,bigBallDensity
+@@ -53,7 +54,10 @@
+ 				,bigBallDropHeight
+ 				
+ 				,sigma_iso
+-				,strainRate;
++				,strainRate
++				,StabilityCriterion
++				,autoCompressionActivation
++				,maxMultiplier; ///max multiplier of diameters during internal compaction
+ 
+ 		bool		 wall_top
+ 				,wall_bottom
+@@ -72,10 +76,12 @@
+ 				,spheresRandomColor
+ 				,recordBottomForce
+ 				,recordAveragePositions
+-				,boxWalls;
++				,boxWalls
++				,internalCompaction;
+ 
+ 		int		 recordIntervalIter
+ 				,timeStepUpdateInterval
++				,timeStepOutputInterval
+ 				,wallStiffnessUpdateInterval
+ 				,numberOfGrains;
+ 				/*,wall_top_id
+@@ -100,9 +106,6 @@
+ 		void createSphere(shared_ptr&lt;Body&gt;&amp; body, Vector3r position, Real radius,bool big,bool dynamic);
+ 		void createActors(shared_ptr&lt;MetaBody&gt;&amp; rootBody);
+ 		void positionRootBody(shared_ptr&lt;MetaBody&gt;&amp; rootBody);
+-
+-		typedef pair&lt;Vector3r, Real&gt; BasicSphere;
+-		string GenerateCloud(vector&lt;BasicSphere&gt;&amp; sphere_list, Vector3r lowerCorner, Vector3r upperCorner, long number, Real rad_std_dev, Real porosity);
+ 	
+ 	public : 
+ 		TriaxialTest ();
+
+Modified: trunk/yade-packages/yade-package-dem/src/PreProcessor/TriaxialTest/TriaxialTest.pro
+===================================================================
+--- trunk/yade-packages/yade-package-dem/src/PreProcessor/TriaxialTest/TriaxialTest.pro	2007-01-25 16:55:02 UTC (rev 1044)
++++ trunk/yade-packages/yade-package-dem/src/PreProcessor/TriaxialTest/TriaxialTest.pro	2007-01-29 18:45:15 UTC (rev 1045)
+@@ -14,7 +14,6 @@
+         -lInteractionVecSet \
+ 	-lInteractionHashMap \
+         -lBodyRedirectionVector \
+-        -lyade-lib-base -lWm3Foundation \
+         -lInteractingSphere \
+         -lInteractingBox \
+         -lCundallNonViscousMomentumDamping \
+@@ -36,13 +35,14 @@
+         -lPersistentSAPCollider \
+         -lSAPCollider \
+         -lMetaInteractingGeometry2AABB \
+-	-lStiffnessMatrix \
+-	-lStiffnessCounter \
++	-lGlobalStiffness \
++	-lGlobalStiffnessCounter \
+ 	-lResultantForceEngine \
+ 	-lTriaxialStressController \
+ 	-lTriaxialCompressionEngine \
+-	-lStiffnessMatrixTimeStepper \
+-	-rdynamic 
++	-lGlobalStiffnessTimeStepper \
++	-rdynamic -lyade-lib-base -lWm3Foundation
++	
+ INCLUDEPATH += $${YADE_QMAKE_PATH}/include/ \
+                ../../Engine/StandAloneEngine/VelocityRecorder \
+                ../../Engine/StandAloneEngine/ForceRecorder \
+@@ -52,11 +52,11 @@
+                ../../Engine/EngineUnit/MacroMicroElasticRelationships \
+                ../../DataClass/InteractionPhysics/SDECLinkPhysics \
+                ../../DataClass/InteractionGeometry/SDECLinkGeometry \
+-	        ../../DataClass/PhysicalAction/StiffnessMatrix \
+-	       ../../Engine/StandAloneEngine/StiffnessCounter \	      
++	        ../../DataClass/PhysicalAction/GlobalStiffness \
++	       ../../Engine/StandAloneEngine/GlobalStiffnessCounter \	      
+ 	       ../../Engine/DeusExMachina/TriaxialCompressionEngine \
+ 	       ../../Engine/DeusExMachina/TriaxialStressController \
+-	        ../../Engine/StandAloneEngine/StiffnessMatrixTimeStepper \
++	        ../../Engine/StandAloneEngine/GlobalStiffnessTimeStepper \
+                ../../DataClass/PhysicalParameters/BodyMacroParameters 
+ 	       
+ QMAKE_LIBDIR = ../../../bin \
+
+Modified: trunk/yade-packages/yade-package-dem/src/yade-package-dem.kdevelop
+===================================================================
+--- trunk/yade-packages/yade-package-dem/src/yade-package-dem.kdevelop	2007-01-25 16:55:02 UTC (rev 1044)
++++ trunk/yade-packages/yade-package-dem/src/yade-package-dem.kdevelop	2007-01-29 18:45:15 UTC (rev 1045)
+@@ -76,7 +76,7 @@
+       &lt;directoryradio&gt;executable&lt;/directoryradio&gt;
+     &lt;/run&gt;
+     &lt;general&gt;
+-      &lt;activedir&gt;Engine/EngineUnit/Sphere2Sphere4MacroMicroContactGeometry&lt;/activedir&gt;
++      &lt;activedir&gt;PostProcessor&lt;/activedir&gt;
+     &lt;/general&gt;
+     &lt;subclassing/&gt;
+   &lt;/kdevtrollproject&gt;
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000009.html">[Yade-commits] r1044 -	trunk/yade-libs/yade-lib-loki/src/yade-lib-loki
+</A></li>
+	<LI>Next message: <A HREF="000011.html">[Yade-commits] r1046 - in trunk: .	yade-libs/yade-lib-base/src/yade-lib-base
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#10">[ date ]</a>
+              <a href="thread.html#10">[ thread ]</a>
+              <a href="subject.html#10">[ subject ]</a>
+              <a href="author.html#10">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

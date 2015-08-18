@@ -1,0 +1,99 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1324 - trunk/pkg/dem/Engine/StandAloneEngine
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1324%20-%20trunk/pkg/dem/Engine/StandAloneEngine&In-Reply-To=%3C200804171600.m3HG0CXi018059%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000286.html">
+   <LINK REL="Next"  HREF="000288.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1324 - trunk/pkg/dem/Engine/StandAloneEngine</H1>
+    <B>chareyre at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1324%20-%20trunk/pkg/dem/Engine/StandAloneEngine&In-Reply-To=%3C200804171600.m3HG0CXi018059%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1324 - trunk/pkg/dem/Engine/StandAloneEngine">chareyre at mail.berlios.de
+       </A><BR>
+    <I>Thu Apr 17 18:00:12 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000286.html">[Yade-commits] r1323 - trunk/pkg/dem/Engine/StandAloneEngine
+</A></li>
+        <LI>Next message: <A HREF="000288.html">[Yade-commits] r1325 - trunk/pkg/dem/PreProcessor
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#287">[ date ]</a>
+              <a href="thread.html#287">[ thread ]</a>
+              <a href="subject.html#287">[ subject ]</a>
+              <a href="author.html#287">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: chareyre
+Date: 2008-04-17 18:00:12 +0200 (Thu, 17 Apr 2008)
+New Revision: 1324
+
+Modified:
+   trunk/pkg/dem/Engine/StandAloneEngine/CohesiveFrictionalContactLaw.cpp
+Log:
+Same modif as in ElasticContactLaw (previous revision) to prevent &quot;ratcheting&quot;.
+
+
+
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/CohesiveFrictionalContactLaw.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/CohesiveFrictionalContactLaw.cpp	2008-04-17 15:59:02 UTC (rev 1323)
++++ trunk/pkg/dem/Engine/StandAloneEngine/CohesiveFrictionalContactLaw.cpp	2008-04-17 16:00:12 UTC (rev 1324)
+@@ -171,15 +171,15 @@
+                 /// 							 ///
+ 
+                 Vector3r x				= currentContactGeometry-&gt;contactPoint;
+-                //Vector3r c1x				= (x - de1-&gt;se3.position);
+-                //Vector3r c2x				= (x - de2-&gt;se3.position);
++                Vector3r c1x				= (x - de1-&gt;se3.position);
++                Vector3r c2x				= (x - de2-&gt;se3.position);
+                 /// The following definition of c1x and c2x is to avoid &quot;granular ratcheting&quot; 
+ 		///  (see F. ALONSO-MARROQUIN, R. GARCIA-ROJO, H.J. HERRMANN, 
+ 		///   &quot;Micro-mechanical investigation of granular ratcheting, in Cyclic Behaviour of Soils and Liquefaction Phenomena&quot;,
+ 		///   ed. T. Triantafyllidis (Balklema, London, 2004), p. 3-10 - and a lot more papers from the same authors)
+-                Vector3r c1x	= currentContactGeometry-&gt;radius1*currentContactGeometry-&gt;normal;
+-                Vector3r c2x	= -currentContactGeometry-&gt;radius2*currentContactGeometry-&gt;normal;
+-                Vector3r relativeVelocity		= (de2-&gt;velocity+de2-&gt;angularVelocity.Cross(c2x)) - (de1-&gt;velocity+de1-&gt;angularVelocity.Cross(c1x));
++                Vector3r _c1x_	= currentContactGeometry-&gt;radius1*currentContactGeometry-&gt;normal;
++                Vector3r _c2x_	= -currentContactGeometry-&gt;radius2*currentContactGeometry-&gt;normal;
++                Vector3r relativeVelocity		= (de2-&gt;velocity+de2-&gt;angularVelocity.Cross(_c2x_)) - (de1-&gt;velocity+de1-&gt;angularVelocity.Cross(_c1x_));
+                 Vector3r shearVelocity			= relativeVelocity-currentContactGeometry-&gt;normal.Dot(relativeVelocity)*currentContactGeometry-&gt;normal;
+                 Vector3r shearDisplacement		= shearVelocity*dt;
+ 
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000286.html">[Yade-commits] r1323 - trunk/pkg/dem/Engine/StandAloneEngine
+</A></li>
+	<LI>Next message: <A HREF="000288.html">[Yade-commits] r1325 - trunk/pkg/dem/PreProcessor
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#287">[ date ]</a>
+              <a href="thread.html#287">[ thread ]</a>
+              <a href="subject.html#287">[ subject ]</a>
+              <a href="author.html#287">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

@@ -1,0 +1,774 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1202 - in trunk: . core extra/clump gui gui/cmd	gui/qt3 pkg/common/RenderingEngine/OpenGLRenderingEngine
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2007/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1202%20-%20in%20trunk%3A%20.%20core%20extra/clump%20gui%20gui/cmd%0A%09gui/qt3%20pkg/common/RenderingEngine/OpenGLRenderingEngine&In-Reply-To=%3C200706170843.l5H8h8g8008127%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000166.html">
+   <LINK REL="Next"  HREF="000168.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1202 - in trunk: . core extra/clump gui gui/cmd	gui/qt3 pkg/common/RenderingEngine/OpenGLRenderingEngine</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1202%20-%20in%20trunk%3A%20.%20core%20extra/clump%20gui%20gui/cmd%0A%09gui/qt3%20pkg/common/RenderingEngine/OpenGLRenderingEngine&In-Reply-To=%3C200706170843.l5H8h8g8008127%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1202 - in trunk: . core extra/clump gui gui/cmd	gui/qt3 pkg/common/RenderingEngine/OpenGLRenderingEngine">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Sun Jun 17 10:43:08 CEST 2007</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000166.html">[Yade-commits] r1201 - tags
+</A></li>
+        <LI>Next message: <A HREF="000168.html">[Yade-commits] r1203 - trunk/gui/cmd
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#167">[ date ]</a>
+              <a href="thread.html#167">[ thread ]</a>
+              <a href="subject.html#167">[ subject ]</a>
+              <a href="author.html#167">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2007-06-17 10:43:07 +0200 (Sun, 17 Jun 2007)
+New Revision: 1202
+
+Added:
+   trunk/gui/cmd/
+   trunk/gui/cmd/cmdGui.cpp
+   trunk/gui/cmd/cmdGui.hpp
+   trunk/gui/cmd/yadeControl.cpp
+Modified:
+   trunk/SConstruct
+   trunk/core/NullGUI.cpp
+   trunk/core/Omega.hpp
+   trunk/core/yade.cpp
+   trunk/extra/clump/PythonRecorder.cpp
+   trunk/gui/SConscript
+   trunk/gui/qt3/GLViewer.cpp
+   trunk/gui/qt3/QtGUI.cpp
+   trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.cpp
+Log:
+frontend cleanups, eperimental python console ui.
+
+Modified: trunk/SConstruct
+===================================================================
+--- trunk/SConstruct	2007-06-16 22:20:03 UTC (rev 1201)
++++ trunk/SConstruct	2007-06-17 08:43:07 UTC (rev 1202)
+@@ -144,17 +144,21 @@
+ 	&quot;Checks for functional python/c API. Sets variables if OK and returns true; otherwise returns false.&quot;
+ 	origs={'LIBS':context.env['LIBS'],'LIBPATH':context.env['LIBPATH'],'CPPPATH':context.env['CPPPATH'],'LINKFLAGS':context.env['LINKFLAGS']}
+ 	context.Message('Checking for Python development files... ')
+-	try:
+-		#FIXME: once caught, exception disappears along with the actual message of what happened...
+-		import distutils.sysconfig as ds
+-		context.env.Append(CPPPATH=ds.get_python_inc(),LIBS=ds.get_config_var('LIBS').split())
+-		context.env.Append(LINKFLAGS=ds.get_config_var('LINKFORSHARED').split()+ds.get_config_var('BLDLIBRARY').split())
+-		ret=context.TryLink('#include&lt;Python.h&gt;\nint main(int argc, char **argv){Py_Initialize(); Py_Finalize();}\n','.cpp')
+-		if not ret: raise RuntimeError
+-	except (ImportError,RuntimeError,ds.DistutilsPlatformError):
+-		for k in origs.keys(): context.env[k]=origs[k]
+-		context.Result(False)
+-		return False
++	if 1:
++		try:
++			#FIXME: once caught, exception disappears along with the actual message of what happened...
++			import distutils.sysconfig as ds
++			context.env.Append(CPPPATH=ds.get_python_inc(),LIBS=ds.get_config_var('LIBS').split())
++			context.env.Append(LINKFLAGS=ds.get_config_var('LINKFORSHARED').split()+ds.get_config_var('BLDLIBRARY').split())
++			ret=context.TryLink('#include&lt;Python.h&gt;\nint main(int argc, char **argv){Py_Initialize(); Py_Finalize();}\n','.cpp')
++			if not ret: raise RuntimeError
++		except (ImportError,RuntimeError,ds.DistutilsPlatformError):
++			for k in origs.keys(): context.env[k]=origs[k]
++			context.Result(False)
++			return False
++	else:
++		env.ParseConfig(&quot;python2.5-dbg-config --cflags&quot;)
++		env.ParseConfig(&quot;python2.5-dbg-config --ldflags&quot;)
+ 	context.Result(True)
+ 	return True
+ 
+@@ -214,7 +218,9 @@
+ 	# check optional libs
+ 	if 'log4cxx' in env['features'] and conf.CheckLibWithHeader('log4cxx','log4cxx/logger.h','c++','log4cxx::Logger::getLogger(&quot;foo&quot;);',autoadd=1):
+ 		env.Append(CPPDEFINES=['LOG4CXX'])
+-	if 'python' in env['features'] and conf.CheckPython() and conf.CheckScientificPython():
++	if 'python' in env['features'] and conf.CheckPython() and conf.CheckScientificPython() and (
++		conf.CheckLibWithHeader('boost_python-mt','boost/python.hpp','c++','boost::python::scope();',autoadd=1)
++		or conf.CheckLibWithHeader('boost_python','boost/python.hpp','c++','boost::python::scope();',autoadd=1)):
+ 		env.Append(CPPDEFINES=['EMBED_PYTHON'])
+ 
+ 	if env['useMiniWm3']: env.Append(LIBS='miniWm3',CPPDEFINES=['MINIWM3'])
+@@ -396,7 +402,7 @@
+ 	makePkgConfig('$buildDir/yade${SUFFIX}.pc')
+ 	env.Install(pcDir,'$buildDir/yade${SUFFIX}.pc')
+ 	installAlias=env.Alias('install',instDirs) # build and install everything that should go to instDirs, which are $PREFIX/{bin,lib} (uses scons' Install); include pkgconfig stuff
+-	env.Default(installAlias)
++	env.Default([installAlias,'$PREFIX'])
+ 
+ env.Export('env');
+ 
+
+Modified: trunk/core/NullGUI.cpp
+===================================================================
+--- trunk/core/NullGUI.cpp	2007-06-16 22:20:03 UTC (rev 1201)
++++ trunk/core/NullGUI.cpp	2007-06-17 08:43:07 UTC (rev 1202)
+@@ -80,7 +80,6 @@
+ {
+ 
+ 	int ch;
+-	opterr = 0;
+ 	while( ( ch = getopt(argc,argv,&quot;Hf:s:S:v:pm:t:g:bQ:F:&quot;) ) != -1)
+ 		switch(ch)
+ 		{
+
+Modified: trunk/core/Omega.hpp
+===================================================================
+--- trunk/core/Omega.hpp	2007-06-16 22:20:03 UTC (rev 1201)
++++ trunk/core/Omega.hpp	2007-06-17 08:43:07 UTC (rev 1202)
+@@ -20,7 +20,11 @@
+ #include &lt;iostream&gt;
+ #include &lt;boost/shared_ptr.hpp&gt;
+ 
+-#include &lt;Wm3Vector3.h&gt;
++#ifdef EMBED_PYTHON
++	#include&lt;Python.h&gt;
++#endif
++
++#include&lt;Wm3Vector3.h&gt;
+ #include&lt;yade/lib-base/yadeWm3.hpp&gt;
+ #include&lt;yade/lib-loki/Singleton.hpp&gt;
+ #include&lt;yade/lib-factory/ClassFactory.hpp&gt;
+
+Modified: trunk/core/yade.cpp
+===================================================================
+--- trunk/core/yade.cpp	2007-06-16 22:20:03 UTC (rev 1201)
++++ trunk/core/yade.cpp	2007-06-17 08:43:07 UTC (rev 1202)
+@@ -80,18 +80,19 @@
+ 	#ifdef YADE_DEBUG
+ 		flags+=&quot;   DEBUG&quot;;
+ 	#endif
+-	cout &lt;&lt; 
++	cerr &lt;&lt; 
+ &quot;\n&quot; &lt;&lt; Omega::instance().yadeVersionName &lt;&lt; &quot;\n\
+ \n\
+-	-h	: print this help.\n\
+-	-n	: use NullGUI (command line interface) instead of default GUI.\n\
++	-h      : print this help.\n\
++	-n      : use NullGUI (command line interface) instead of default GUI.\n\
+ 	-N name : use some other custom GUI (none available yet ;)\n\
+-	-w	: launch the 'first run configuration'\n\
+-	-c	: use local directory ./ as configuration directory\n\
++	-w      : launch the 'first run configuration'\n\
++	-c      : use local directory ./ as configuration directory\n\
+ 	-C path : configuration directory different than default ~/.yade/\n\
+ 	-S file : load simulation from file (works with QtGUI only)\n\
++	-v      : be verbose (may be repeated)\n\
+ \n\
+-Only one option can be passed to yade, all other options are passed to the selected GUI\n\
++	--      : pass all remaining options to the selected GUI\n\
+ &quot;;
+ 	if(flags!=&quot;&quot;)
+ 		cout &lt;&lt; &quot;compilation flags:\n&quot;+ flags +&quot;\n\n&quot;;
+@@ -100,16 +101,14 @@
+ 
+ int main(int argc, char *argv[])
+ {
+-	int ch;
+-	string gui = &quot;&quot;;
+-	string configPath = string(getenv(&quot;HOME&quot;)) + &quot;/.yade&quot; SUFFIX;
+-	string simulationFileName=&quot;&quot;;
+ 
+ 	// This makes boost stop bitching about dot-files and other files that may not exist on MS-DOS 3.3;
+ 	// see <A HREF="http://www.boost.org/libs/filesystem/doc/portability_guide.htm#recommendations">http://www.boost.org/libs/filesystem/doc/portability_guide.htm#recommendations</A> for what all they consider bad.
+ 	// Since it is a static variable, it infulences all boost::filesystem operations in this respect (fortunately).
+ 	filesystem::path::default_name_check(filesystem::native);
+ 
++	string configPath=string(getenv(&quot;HOME&quot;)) + &quot;/.yade&quot; SUFFIX;
++
+ 	#ifdef LOG4CXX
+ 		// read logging configuration from file and watch it (creates a separate thread)a
+ 		std::string logConf=configPath+&quot;/logging.conf&quot;;
+@@ -118,27 +117,35 @@
+ 			LOG_INFO(&quot;Logger loaded and watches configuration file: &quot;&lt;&lt;logConf&lt;&lt;&quot;.&quot;);
+ 		} else { // otherwise use simple console-directed logging
+ 			log4cxx::BasicConfigurator::configure();
+-			logger-&gt;setLevel(log4cxx::Level::INFO);
+-			LOG_INFO(&quot;Logger uses basic (console) configuration since `&quot;&lt;&lt;logConf&lt;&lt;&quot;' was not found. DEBUG messages will be ommited.&quot;);
++			logger-&gt;setLevel(log4cxx::Level::WARN);
++			LOG_INFO(&quot;Logger uses basic (console) configuration since `&quot;&lt;&lt;logConf&lt;&lt;&quot;' was not found. INFO and DEBUG messages will be ommited.&quot;);
+ 			LOG_INFO(&quot;Look at the file doc/logging.conf.sample in the source distribution as an example on how to customize logging.&quot;);
+ 		}
+ 	#endif
+-
+-
+ 	
+-	bool 	setup 		= false;
+-	if( ( ch = getopt(argc,argv,&quot;hnN:wC:cS:&quot;) ) != -1)
+-		switch(ch)
+-		{
+-			case 'h' :	printHelp();		return 1;
+-			case 'n' :	gui = &quot;NullGUI&quot;;	break;
+-			case 'N' :	gui = optarg; 		break;
+-			case 'w' :	setup = true;		break;
+-			case 'C' :	configPath = optarg; 	break;
+-			case 'c' :	configPath = &quot;.&quot;; 	break;
+-			case 'S' :	simulationFileName=optarg; break;
+-			default	 :	printHelp();		return 1;
++	int ch;
++	string gui=&quot;&quot;;
++	string simulationFileName=&quot;&quot;;
++	bool setup=false;
++	int verbose=0;
++	bool coreOptions=true;
++	while(coreOptions &amp;&amp; (ch=getopt(argc,argv,&quot;hnN:wC:cvS:&quot;))!=-1)
++		switch(ch){
++			case 'h': printHelp(); return 1;
++			case 'n': gui=&quot;NullGUI&quot;; break;
++			case 'N': gui=optarg; break;
++			case 'w': setup=true; break;
++			case 'C': configPath=optarg; break;
++			case 'c': configPath=&quot;.&quot;; break;
++			case 'v': verbose+=1; break;
++			case 'S': simulationFileName=optarg; break;
++			case '-': coreOptions=false; break;
++			default: printHelp(); return 1;
+ 		}
++	// kill processed options, keep one more which will is in faact non-option (normally the binary)
++	argv=&amp;(argv[optind-1]); argc-=optind-1;
++	// reset getopt globals for next processing
++	optind=0; opterr=0;
+ 	
+ 	if(configPath[configPath.size()-1] == '/')
+ 		configPath = configPath.substr(0,configPath.size()-1); 
+@@ -150,11 +157,19 @@
+ 	filesystem::path yadeConfigPath  = filesystem::path(Omega::instance().yadeConfigPath, filesystem::native);
+ 	filesystem::path yadeConfigFile  = filesystem::path(Omega::instance().yadeConfigPath + &quot;/preferences.xml&quot;, filesystem::native);
+ 
++	#ifdef LOG4CXX
++		if(verbose==1) logger-&gt;setLevel(log4cxx::Level::INFO);
++		else if (verbose&gt;=2) logger-&gt;setLevel(log4cxx::Level::DEBUG);
++	#endif
+ 
++
+ 	#ifdef EMBED_PYTHON
++		/* see <A HREF="http://www.python.org/dev/peps/pep-0311">http://www.python.org/dev/peps/pep-0311</A> for threading with Python embedded */
+ 		LOG_DEBUG(&quot;Initializing Python...&quot;);
+ 		Py_OptimizeFlag=1;
+ 		Py_Initialize();
++		PyEval_InitThreads(); // this locks the GIL as side-effect
++		//PyGILState_STATE pyState=PyGILState_Ensure(); PyGILState_Release(pyState);
+ 		signal(SIGINT,sigHandler);
+ 	#endif
+ 
+@@ -173,9 +188,7 @@
+ 		LOG_DEBUG(&quot;ABRT/SEGV signal handlers set, crash batch created as &quot;&lt;&lt;Omega::instance().gdbCrashBatch);
+ 	#endif
+ 
+-
+ 	LOG_INFO(&quot;Loading configuration file: &quot;&lt;&lt;yadeConfigFile.string());
+-
+ 	IOFormatManager::loadFromFile(&quot;XMLFormatManager&quot;,yadeConfigFile.string(),&quot;preferences&quot;,Omega::instance().preferences);
+ 
+ 	LOG_INFO(&quot;Loading plugins...&quot;);
+@@ -185,13 +198,13 @@
+ 
+ 	Omega::instance().setSimulationFileName(simulationFileName); //init() resets to &quot;&quot;;
+ 	
+-	if( gui.size()==0)
+-		gui = Omega::instance().preferences-&gt;defaultGUILibName;
++	if(gui.size()==0) gui=Omega::instance().preferences-&gt;defaultGUILibName;
+ 		
+ 	shared_ptr&lt;FrontEnd&gt; frontEnd = dynamic_pointer_cast&lt;FrontEnd&gt;(ClassFactory::instance().createShared(gui));
++	
++ 	for(int i=0;i&lt;argc; i++)cerr&lt;&lt;&quot;Argument &quot;&lt;&lt;i&lt;&lt;&quot;: &quot;&lt;&lt;argv[i]&lt;&lt;endl;
++	int ok = frontEnd-&gt;run(argc,argv);
+ 
+- 	int ok = frontEnd-&gt;run(argc,argv);
+-
+ 	#ifdef EMBED_PYTHON
+ 		LOG_DEBUG(&quot;Finalizing Python...&quot;);
+ 		Py_Finalize();
+
+Modified: trunk/extra/clump/PythonRecorder.cpp
+===================================================================
+--- trunk/extra/clump/PythonRecorder.cpp	2007-06-16 22:20:03 UTC (rev 1201)
++++ trunk/extra/clump/PythonRecorder.cpp	2007-06-17 08:43:07 UTC (rev 1202)
+@@ -18,22 +18,17 @@
+  */
+ 
+ PythonRecorder::PythonRecorder():DataRecorder(){
+-	PyRun_SimpleString(&quot;import sys; sys.path.insert(0,'&quot; PREFIX &quot;/lib/yade&quot; SUFFIX &quot;/extra');&quot;);
++	LOG_FATAL(&quot;what use of releasing unknown lock??!! Otherwise deadlock here.&quot;);
++	PyEval_ReleaseLock();
++	PyGILState_STATE pyState = PyGILState_Ensure();
++		PyRun_SimpleString(&quot;import sys; sys.path.insert(0,'&quot; PREFIX &quot;/lib/yade&quot; SUFFIX &quot;/extra');&quot;);
++		int status=PyRun_SimpleString(&quot;from pyade import *&quot;); // pyade will import _pyade by itself
++		if(status){ LOG_ERROR(&quot;pyade import failed.&quot;); } else LOG_DEBUG(&quot;pyade imported.&quot;);
++	PyGILState_Release(pyState);
+ 
+-	#if 0
+-	PyObject* pyModuleName=PyString_FromString(&quot;pyade&quot;);
+-	PyObject* pyModule=PyImport_Import(pyModuleName);
+-	Py_DECREF(pyModuleName);
+-	//if (!pyModule) { if (PyErr_Occurred()) PyErr_Print();	LOG_ERROR(&quot;pyade import failed.&quot;);}
+-	//else LOG_DEBUG(&quot;Python imported pyade&quot;);
+-	// for now, do a simpler thing: (FIXME: how to check for import error??)
+-	#endif
+-	int status=PyRun_SimpleString(&quot;from pyade import *&quot;); // pyade will import _pyade by itself
+-	if(status){ LOG_ERROR(&quot;pyade import failed.&quot;); }
+-	else LOG_DEBUG(&quot;pyade imported.&quot;);
+-
+ 	compiledRunExprCall=NULL;
+ }
++
+ /* Transform deserialized attributes in something useful.
+  *
+  * - runs initExpr in python.
+@@ -43,41 +38,45 @@
+  *
+  */
+ void PythonRecorder::postProcessAttributes(bool deserializing){
+-	if(outputFile.length()&gt;0){
+-		LOG_DEBUG(&quot;Redirecting python stdout to `&quot;&lt;&lt;outputFile&lt;&lt;&quot;'.&quot;);
+-		PyRun_SimpleString(string(&quot;import os; import sys; ofile=file('&quot;+outputFile+&quot;','w+'); sys.stdout=ofile&quot;).c_str());
+-	}
+-	if(initExpr.length()&gt;0){
+-		PyRun_SimpleString(initExpr.c_str());
+-	}
++	PyGILState_STATE pyState = PyGILState_Ensure();
++		if(outputFile.length()&gt;0){
++			LOG_DEBUG(&quot;Redirecting python stdout to `&quot;&lt;&lt;outputFile&lt;&lt;&quot;'.&quot;);
++			PyRun_SimpleString(string(&quot;import os; import sys; ofile=file('&quot;+outputFile+&quot;','w+'); sys.stdout=ofile&quot;).c_str());
++		}
++		if(initExpr.length()&gt;0){
++			PyRun_SimpleString(initExpr.c_str());
++		}
+ 
+-	// if this is not the first time we deserialize, free the old byte-compiled code
+-	if(compiledRunExprCall) Py_DECREF(compiledRunExprCall);
++		// if this is not the first time we deserialize, free the old byte-compiled code
++		if(compiledRunExprCall) Py_DECREF(compiledRunExprCall);
+ 
+-	if(runExpr.length()&gt;0){
+-		// transform expression to function definition
+-		runExprAsDef=&quot;def runExpr():\n&quot;+runExpr;
+-		size_t pos=0; while((pos=runExprAsDef.find('\n',pos))!=string::npos){runExprAsDef.replace(pos,1,&quot;\n\t&quot;); pos+=2;}
++		if(runExpr.length()&gt;0){
++			// transform expression to function definition
++			runExprAsDef=&quot;def runExpr():\n&quot;+runExpr;
++			size_t pos=0; while((pos=runExprAsDef.find('\n',pos))!=string::npos){runExprAsDef.replace(pos,1,&quot;\n\t&quot;); pos+=2;}
+ 
+-		if(PyRun_SimpleString(runExprAsDef.c_str())&gt;=0){ // no error running the user-supplied code...
+-			// attempt psyco machine-code compilation of runExpr
+-			PyRun_SimpleString(&quot;try:\n\timport psyco\n\tpsyco.bind(runExpr)\nexcept ImportError: pass\n&quot;);
+-			// byte-compile the actual invocation of runExpr
+-			compiledRunExprCall=Py_CompileString(&quot;runExpr()&quot;,&quot;&lt;runExpr definition&gt;&quot;, Py_single_input);
+-			// mainDict is used later, when calling the byte-compiled piece
+-			PyObject* __main__=PyImport_AddModule(&quot;__main__&quot;); // borrowed reference, no need to Py_DECREF
+-			mainDict=PyModule_GetDict(__main__); // borrowed reference as well
++			if(PyRun_SimpleString(runExprAsDef.c_str())&gt;=0){ // no error running the user-supplied code...
++				// attempt psyco machine-code compilation of runExpr
++				PyRun_SimpleString(&quot;try:\n\timport psyco\n\tpsyco.bind(runExpr)\nexcept ImportError: pass\n&quot;);
++				// byte-compile the actual invocation of runExpr
++				compiledRunExprCall=Py_CompileString(&quot;runExpr()&quot;,&quot;&lt;runExpr definition&gt;&quot;, Py_single_input);
++				// mainDict is used later, when calling the byte-compiled piece
++				PyObject* __main__=PyImport_AddModule(&quot;__main__&quot;); // borrowed reference, no need to Py_DECREF
++				mainDict=PyModule_GetDict(__main__); // borrowed reference as well
++			}
++			else {LOG_WARN(&quot;Compiling runExpr failed in Python, engine will not do anything! (expression was:\n&quot;&lt;&lt;runExprAsDef);}
+ 		}
+-		else {LOG_WARN(&quot;Compiling runExpr failed in Python, engine will not do anything! (expression was:\n&quot;&lt;&lt;runExprAsDef);}
+-	}
++	PyGILState_Release(pyState);
+ }
+ 
+ void PythonRecorder::action(Body *_rootBody)
+ {
+ 	if(compiledRunExprCall){
+-		PyObject* res=PyEval_EvalCode((PyCodeObject*)compiledRunExprCall,mainDict,mainDict);
+-		if(res) Py_DECREF(res);
+-		else { LOG_WARN(&quot;runExpr() execution in Python failed?!&quot;); }
++		PyGILState_STATE pyState = PyGILState_Ensure();
++			PyObject* res=PyEval_EvalCode((PyCodeObject*)compiledRunExprCall,mainDict,mainDict);
++			if(res) Py_DECREF(res);
++			else { LOG_WARN(&quot;runExpr() execution in Python failed?!&quot;); }
++		PyGILState_Release(pyState);
+ 	}
+ }
+ 
+
+Modified: trunk/gui/SConscript
+===================================================================
+--- trunk/gui/SConscript	2007-06-16 22:20:03 UTC (rev 1201)
++++ trunk/gui/SConscript	2007-06-17 08:43:07 UTC (rev 1202)
+@@ -42,3 +42,9 @@
+ 		CPPPATH=env['CPPPATH']+['qt3']),
+ ])
+ 
++if 'EMBED_PYTHON' in env['CPPDEFINES']:
++	env.Install('$PREFIX/lib/yade$SUFFIX/gui',[
++		env.SharedLibrary('cmdGui',['cmd/cmdGui.cpp']),
++		env.SharedLibrary('yadeControl',['cmd/yadeControl.cpp'],SHLIBPREFIX='',LIBS=env['LIBS']+['yade-base','libboost_python','QtGUI']),
++])
++
+
+Added: trunk/gui/cmd/cmdGui.cpp
+===================================================================
+--- trunk/gui/cmd/cmdGui.cpp	2007-06-16 22:20:03 UTC (rev 1201)
++++ trunk/gui/cmd/cmdGui.cpp	2007-06-17 08:43:07 UTC (rev 1202)
+@@ -0,0 +1,51 @@
++#include&lt;Python.h&gt;
++#include&lt;boost/thread/thread.hpp&gt;
++
++#include&quot;cmdGui.hpp&quot;
++
++#include &lt;X11/Xlib.h&gt;
++
++//void cmdlineThreadStart(){
++//}
++
++CREATE_LOGGER(cmdGui);
++
++
++int cmdGui::run(int argc, char *argv[]) {
++#if 0
++	opterr = 0;
++	int ch;
++	while((ch=getopt(argc,argv,&quot;t:g:&quot;))!=-1)
++		switch(ch){
++//			case 'H'	: help(); 						return 1;
++			case 't'	: Omega::instance().setTimeStep
++						(lexical_cast&lt;Real&gt;(optarg));			break;
++//			case 'g'	: Omega::instance().setGravity
++//						(Vector3r(0,-lexical_cast&lt;Real&gt;(optarg),0));	break;
++			default		: break;
++		}
++#endif
++	XInitThreads();
++
++	// thread init
++
++	PyGILState_STATE pyState = PyGILState_Ensure();	
++
++		PyRun_SimpleString(&quot;import sys, readline&quot;);
++		PyRun_SimpleString(&quot;sys.path.insert(0,'&quot; PREFIX &quot;/lib/yade&quot; SUFFIX &quot;/extra');&quot;);
++		PyRun_SimpleString(&quot;sys.path.insert(0,'&quot; PREFIX &quot;/lib/yade&quot; SUFFIX &quot;/gui');&quot;);
++
++		//int status=PyRun_SimpleString(&quot;from pyade import *&quot;); // pyade will import _pyade by itself
++		//if(status){ LOG_ERROR(&quot;pyade import failed.&quot;); } else LOG_DEBUG(&quot;pyade imported.&quot;);
++		
++		PyRun_SimpleString(&quot;from yadeControl import *&quot;);
++
++	PyGILState_Release(pyState);
++
++	//boost::thread cmdlineThread(&amp;cmdlineThreadStart);
++	//cmdlineThread.join();
++	PyRun_InteractiveLoop(stdin,&quot;&lt;console&gt;&quot;);
++
++	return 0;
++}
++
+
+Added: trunk/gui/cmd/cmdGui.hpp
+===================================================================
+--- trunk/gui/cmd/cmdGui.hpp	2007-06-16 22:20:03 UTC (rev 1201)
++++ trunk/gui/cmd/cmdGui.hpp	2007-06-17 08:43:07 UTC (rev 1202)
+@@ -0,0 +1,25 @@
++// &#169; 2007 V&#225;clav &#352;milauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">eudoxos at arcig.cz</A>&gt;
++#ifndef CMDGUI_HPP
++#define CMDGUI_HPP
++#include&lt;yade/core/FrontEnd.hpp&gt;
++#include&lt;boost/shared_ptr.hpp&gt;
++
++class RenderingEngine;
++
++
++class cmdGui: public FrontEnd
++{
++	private:
++	public:
++		cmdGui(){};
++		virtual ~cmdGui(){};
++		virtual int run(int argc, char *argv[]);
++	
++	REGISTER_CLASS_NAME(cmdGui);
++	REGISTER_BASE_CLASS_NAME(FrontEnd);
++	DECLARE_LOGGER;
++};
++
++REGISTER_FACTORABLE(cmdGui);
++
++#endif
+
+Added: trunk/gui/cmd/yadeControl.cpp
+===================================================================
+--- trunk/gui/cmd/yadeControl.cpp	2007-06-16 22:20:03 UTC (rev 1201)
++++ trunk/gui/cmd/yadeControl.cpp	2007-06-17 08:43:07 UTC (rev 1202)
+@@ -0,0 +1,134 @@
++#include&lt;yade/core/Omega.hpp&gt;
++
++#include&lt;boost/python.hpp&gt;
++#include&lt;boost/bind.hpp&gt;
++#include&lt;boost/thread/thread.hpp&gt;
++#include&lt;boost/filesystem/operations.hpp&gt;
++
++//using namespace boost::python;
++
++#include&lt;yade/gui-qt3/GLViewer.hpp&gt;
++#include&lt;qapplication.h&gt;
++
++#include&lt;unistd.h&gt;
++
++class RenderingEngine;
++
++class pyOmega{
++	public:
++	#define OMEGA Omega::instance()
++	pyOmega(){};
++
++	long iter(){ return OMEGA.getCurrentIteration();}
++	double simulationTime(){return OMEGA.getSimulationTime();}
++	// long realTime(){return OMEGA(get...);}
++	double dt_get(){return OMEGA.getTimeStep();}
++	void dt_set(double dt){OMEGA.setTimeStep(dt);}
++
++	void run(){OMEGA.startSimulationLoop(); cerr&lt;&lt;&quot;RUN!&quot;&lt;&lt;endl;}
++	// must stop, then reload
++	//void _stop(){OMEGA(resetSimulationLoop());}
++	void pause(){OMEGA.stopSimulationLoop(); cerr&lt;&lt;&quot;PAUSE!&quot;&lt;&lt;endl;}
++	void step() {OMEGA.spawnSingleSimulationLoop(); cerr&lt;&lt;&quot;STEP!&quot;&lt;&lt;endl;}
++
++	void load(std::string fileName) {
++		OMEGA.finishSimulationLoop();
++		OMEGA.joinSimulationLoop();
++		OMEGA.setSimulationFileName(fileName);
++		OMEGA.loadSimulation();
++		OMEGA.createSimulationLoop();
++		cerr&lt;&lt;&quot;LOAD!&quot;&lt;&lt;endl;
++	}
++};
++
++
++
++class pyGLViewer{
++	//DECLARE_LOGGER;
++	shared_ptr&lt;RenderingEngine&gt; renderer;
++	GLViewer* viewer;
++	static vector&lt;pyGLViewer*&gt; instances;
++	QApplication* app;
++	void redrawAlarm(void){
++		while(instances.size()&gt;0){ // this means for eternity really...
++			for(vector&lt;pyGLViewer*&gt;::iterator I=instances.begin(); I!=instances.end(); I++) (*I)-&gt;viewer-&gt;updateGL();
++			usleep(50000);
++		}
++	}
++public:
++	//void appExec(){app-&gt;exec();}
++	pyGLViewer(){
++		shared_ptr&lt;Factorable&gt; _renderer=ClassFactory::instance().createShared(&quot;OpenGLRenderingEngine&quot;);
++		renderer=static_pointer_cast&lt;RenderingEngine&gt;(_renderer);
++
++		/* this is broken:
++			Type of instance is: 15RenderingEngine
++			RuntimeError: Cannot determine type with findType()
++		*/
++		#if 0
++			if(renderer){// TODO: handle exceptions
++				filesystem::path rendererConfig=filesystem::path(Omega::instance().yadeConfigPath+&quot;/OpenGLRendererPref.xml&quot;);
++				if(filesystem::exists(rendererConfig)) IOFormatManager::loadFromFile(&quot;XMLFormatManager&quot;,rendererConfig.string(),&quot;renderer&quot;,renderer);
++			} else {cerr&lt;&lt;&quot;Cannot create renderer!!!&quot;&lt;&lt;endl; abort();}
++		#endif
++
++		// maximum: one app
++		int viewId=(int)instances.size();
++		instances.push_back(this);
++
++		if(viewId==0){ int _argc=0; char* _argv[]={&quot;foo&quot;}; app=new QApplication(_argc,_argv); }
++
++		QGLFormat format;	QGLFormat::setDefaultFormat(format); format.setStencil(TRUE); format.setAlpha(TRUE);
++		viewer=new GLViewer(viewId,renderer,format,0,viewId==0?0:instances[0]-&gt;viewer);
++		viewer-&gt;notMoving();
++
++		if(viewId==0){
++			app-&gt;setMainWidget(viewer);
++			boost::thread redrawThread(boost::bind(&amp;pyGLViewer::redrawAlarm,this));
++		}
++		boost::thread appThread(boost::bind(&amp;QApplication::exec,app));
++	}
++	~pyGLViewer(){
++		// remove this instance from the list
++		for(vector&lt;pyGLViewer*&gt;::iterator I=instances.begin(); I!=instances.end(); I++){if((*I)==this) {instances.erase(I); break;}}
++	}
++};
++
++vector&lt;pyGLViewer*&gt; pyGLViewer::instances;
++//CREATE_LOGGER(pyGLViewer);
++
++
++BOOST_PYTHON_MODULE(yadeControl)
++{
++	boost::python::class_&lt;pyOmega&gt;(&quot;Omega&quot;)
++		.add_property(&quot;iter&quot;,&amp;pyOmega::iter)
++		.add_property(&quot;time&quot;,&amp;pyOmega::simulationTime)
++		// TODO: return computation time
++		.add_property(&quot;dt&quot;,&amp;pyOmega::dt_get,&amp;pyOmega::dt_set)
++		//.add_property(&quot;timeStepper&quot;,&amp;timeStepper_get,&amp;timeStepper_set)
++		.def(&quot;load&quot;,&amp;pyOmega::load)
++		.def(&quot;run&quot;,&amp;pyOmega::run)
++		.def(&quot;pause&quot;,&amp;pyOmega::pause)
++		.def(&quot;step&quot;,&amp;pyOmega::step);
++
++	boost::python::class_&lt;pyGLViewer&gt;(&quot;View&quot;);
++
++	//		.def(&quot;greet&quot;, &amp;World::greet)
++	//		.def(&quot;set&quot;, &amp;World::set) 
++	
++	//scope().attr(&quot;iter&quot;)=OMEGA(getCurrentIteration());
++	//scope().attr(&quot;time&quot;)=realTime(getSimulationTime());
++	//scope().attr(&quot;verbose&quot;)=;
++	//scope().attr(&quot;verbose&quot;) = verbose;
++
++		#if 0
++			.def(&quot;oneStep&quot;,&amp;oneStep)
++			.def(&quot;newView&quot;, &amp;newView)
++			.def(&quot;centerScene&quot;, &amp;centerScene)
++
++		.def(&quot;greet&quot;, &amp;World::greet)
++		.def(&quot;set&quot;, &amp;World::set) 
++		;
++		#endif
++}
++
+
+Modified: trunk/gui/qt3/GLViewer.cpp
+===================================================================
+--- trunk/gui/qt3/GLViewer.cpp	2007-06-16 22:20:03 UTC (rev 1201)
++++ trunk/gui/qt3/GLViewer.cpp	2007-06-17 08:43:07 UTC (rev 1202)
+@@ -8,8 +8,8 @@
+ *  GNU General Public License v2 or later. See file LICENSE for details. *
+ *************************************************************************/
+ 
+-#include &quot;GLViewer.hpp&quot;
+-#include &lt;GL/glut.h&gt;
++#include&quot;GLViewer.hpp&quot;
++#include&lt;GL/glut.h&gt;
+ #include&lt;yade/lib-opengl/FpsTracker.hpp&gt;
+ #include&lt;yade/core/Body.hpp&gt;
+ #include&lt;yade/core/Interaction.hpp&gt;
+
+Modified: trunk/gui/qt3/QtGUI.cpp
+===================================================================
+--- trunk/gui/qt3/QtGUI.cpp	2007-06-16 22:20:03 UTC (rev 1201)
++++ trunk/gui/qt3/QtGUI.cpp	2007-06-17 08:43:07 UTC (rev 1202)
+@@ -16,18 +16,9 @@
+ //#endif
+ #include &lt;qapplication.h&gt;
+ 
+-QtGUI::QtGUI ()
+-{
++QtGUI::QtGUI(){}
++QtGUI::~QtGUI(){}
+ 
+-}
+-
+-
+-QtGUI::~QtGUI()
+-{
+-
+-}
+-
+-
+ int QtGUI::run(int argc, char *argv[])
+ {
+ //	#ifdef Q_WS_X11
+@@ -36,32 +27,25 @@
+ 
+ 	// FIXME - QtGUI is consuming CPU when idle - when computations are NOT running.
+ 
+-	opterr = 0;
+ 	int ch;
+ 	while( ( ch = getopt(argc,argv,&quot;t:g:&quot;) ) != -1)
+-		switch(ch)
+-		{
++		switch(ch){
+ //			case 'H'	: help(); 						return 1;
+-			case 't'	: Omega::instance().setTimeStep
+-						(lexical_cast&lt;Real&gt;(optarg));			break;
++			case 't'	: Omega::instance().setTimeStep(lexical_cast&lt;Real&gt;(optarg)); break;
+ //			case 'g'	: Omega::instance().setGravity
+ //						(Vector3r(0,-lexical_cast&lt;Real&gt;(optarg),0));	break;
+-			default		: break;
++			default: break;	
+ 		}
+ 
+ 	
+-    	QApplication app( argc,argv );
+-
+-	mainWindow = new YadeQtMainWindow();
+-
++   QApplication app(argc,argv);
++	mainWindow=new YadeQtMainWindow();
+ 	mainWindow-&gt;show();
++	app.setMainWidget(mainWindow);
+ 
+-	app.setMainWidget( mainWindow );
+-	
+ 	int res =  app.exec();
+-	
++
+ 	delete mainWindow;
+-	
+ 	return res;
+ }
+ 
+
+Modified: trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.cpp
+===================================================================
+--- trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.cpp	2007-06-16 22:20:03 UTC (rev 1201)
++++ trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.cpp	2007-06-17 08:43:07 UTC (rev 1202)
+@@ -534,6 +534,13 @@
+ 
+ void OpenGLRenderingEngine::renderInteractingGeometry(const shared_ptr&lt;MetaBody&gt;&amp; rootBody)
+ {
++	// Additional clipping planes: <A HREF="http://fly.srk.fer.hr/~unreal/theredbook/chapter03.html">http://fly.srk.fer.hr/~unreal/theredbook/chapter03.html</A>
++	#if 0
++		GLdouble clip0[4]={.0,1.,0.,0.}; // y&lt;0
++		glClipPlane(GL_CLIP_PLANE0,clip0);
++		glEnable(GL_CLIP_PLANE0);
++	#endif
++
+ 	BodyContainer::iterator bi    = rootBody-&gt;bodies-&gt;begin();
+ 	BodyContainer::iterator biEnd = rootBody-&gt;bodies-&gt;end();
+ 	for( ; bi!=biEnd ; ++bi)
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000166.html">[Yade-commits] r1201 - tags
+</A></li>
+	<LI>Next message: <A HREF="000168.html">[Yade-commits] r1203 - trunk/gui/cmd
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#167">[ date ]</a>
+              <a href="thread.html#167">[ thread ]</a>
+              <a href="subject.html#167">[ subject ]</a>
+              <a href="author.html#167">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

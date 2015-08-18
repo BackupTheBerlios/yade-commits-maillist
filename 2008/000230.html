@@ -1,0 +1,115 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1265 - trunk/core
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1265%20-%20trunk/core&In-Reply-To=%3C200802261412.m1QECX21000968%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000229.html">
+   <LINK REL="Next"  HREF="000231.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1265 - trunk/core</H1>
+    <B>cosurgi at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1265%20-%20trunk/core&In-Reply-To=%3C200802261412.m1QECX21000968%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1265 - trunk/core">cosurgi at mail.berlios.de
+       </A><BR>
+    <I>Tue Feb 26 15:12:33 CET 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000229.html">[Yade-commits] r1264 - in trunk/pkg: common/Container	common/Engine/StandAloneEngine dem/Engine/DeusExMachina	dem/Engine/EngineUnit dem/Engine/StandAloneEngine
+</A></li>
+        <LI>Next message: <A HREF="000231.html">[Yade-commits] r1266 - in trunk: . extra/clump gui gui/cmd lib
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#230">[ date ]</a>
+              <a href="thread.html#230">[ thread ]</a>
+              <a href="subject.html#230">[ subject ]</a>
+              <a href="author.html#230">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: cosurgi
+Date: 2008-02-26 15:12:32 +0100 (Tue, 26 Feb 2008)
+New Revision: 1265
+
+Modified:
+   trunk/core/FileGenerator.cpp
+   trunk/core/yade.cpp
+Log:
+ yade.cpp give info about cmdGui
+ -N name : specify the user interface (available: NullGUI, cmdGui, QtGUI)
+ FileGenerator catches exceptions.
+
+
+
+
+Modified: trunk/core/FileGenerator.cpp
+===================================================================
+--- trunk/core/FileGenerator.cpp	2008-02-25 18:56:20 UTC (rev 1264)
++++ trunk/core/FileGenerator.cpp	2008-02-26 14:12:32 UTC (rev 1265)
+@@ -62,15 +62,16 @@
+ 	message=&quot;&quot;;
+ 	boost::posix_time::ptime now = boost::posix_time::second_clock::local_time();
+ 	try {
+-		status=generate();
++		status=generate(); // will modify message
+ 	}
+ 	catch(SerializableError&amp; e){message+=string(&quot;SeriazableError: &quot;)+e.what(); return false;}
+ 	catch(FactoryError&amp; e){message+=string(&quot;FactoryError: &quot;)+e.what(); return false;}
+ 	catch(MultiMethodsError&amp; e){message+=string(&quot;MultiMethodsError: &quot;)+e.what(); return false;}
+ 	catch(std::exception&amp; e){
+ 		LOG_FATAL(&quot;Unhandled exception: &quot;&lt;&lt;typeid(e).name()&lt;&lt;&quot; : &quot;&lt;&lt;e.what());
+-		abort(); // use abort, since we may want to inspect core
+-		//return false;
++		//abort(); // use abort, since we may want to inspect core
++		message = message + &quot;Unhandled exception: &quot; + typeid(e).name() + &quot; : &quot; + e.what();
++		return false;
+ 	}
+ 
+ 	if(shouldTerminate())
+
+Modified: trunk/core/yade.cpp
+===================================================================
+--- trunk/core/yade.cpp	2008-02-25 18:56:20 UTC (rev 1264)
++++ trunk/core/yade.cpp	2008-02-26 14:12:32 UTC (rev 1265)
+@@ -113,7 +113,7 @@
+ \n\
+ 	-h      : print this help.\n\
+ 	-n      : use NullGUI (command line interface) instead of default GUI.\n\
+-	-N name : use some other custom GUI (none available yet ;)\n\
++	-N name : specify the user interface (available: NullGUI, cmdGui, QtGUI)\n\
+ 	-w      : launch the 'first run configuration'\n\
+ 	-c      : use local directory ./ as configuration directory\n\
+ 	-C path : configuration directory different than default ~/.yade/\n\
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000229.html">[Yade-commits] r1264 - in trunk/pkg: common/Container	common/Engine/StandAloneEngine dem/Engine/DeusExMachina	dem/Engine/EngineUnit dem/Engine/StandAloneEngine
+</A></li>
+	<LI>Next message: <A HREF="000231.html">[Yade-commits] r1266 - in trunk: . extra/clump gui gui/cmd lib
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#230">[ date ]</a>
+              <a href="thread.html#230">[ thread ]</a>
+              <a href="subject.html#230">[ subject ]</a>
+              <a href="author.html#230">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

@@ -1,0 +1,1239 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1418 - in trunk: core extra/clump	pkg/common/Engine/StandAloneEngine	pkg/dem/Engine/StandAloneEngine pkg/dem/PreProcessor
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1418%20-%20in%20trunk%3A%20core%20extra/clump%0A%09pkg/common/Engine/StandAloneEngine%0A%09pkg/dem/Engine/StandAloneEngine%20pkg/dem/PreProcessor&In-Reply-To=%3C200807092059.m69KxbEv026165%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000377.html">
+   <LINK REL="Next"  HREF="000379.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1418 - in trunk: core extra/clump	pkg/common/Engine/StandAloneEngine	pkg/dem/Engine/StandAloneEngine pkg/dem/PreProcessor</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1418%20-%20in%20trunk%3A%20core%20extra/clump%0A%09pkg/common/Engine/StandAloneEngine%0A%09pkg/dem/Engine/StandAloneEngine%20pkg/dem/PreProcessor&In-Reply-To=%3C200807092059.m69KxbEv026165%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1418 - in trunk: core extra/clump	pkg/common/Engine/StandAloneEngine	pkg/dem/Engine/StandAloneEngine pkg/dem/PreProcessor">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Wed Jul  9 22:59:37 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000377.html">[Yade-commits] r1417 - trunk/core
+</A></li>
+        <LI>Next message: <A HREF="000379.html">[Yade-commits] r1419 - in trunk: core gui/qt3 pkg/common	pkg/common/Engine pkg/common/Engine/DeusExMachina	pkg/common/Engine/FiltrEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#378">[ date ]</a>
+              <a href="thread.html#378">[ thread ]</a>
+              <a href="subject.html#378">[ subject ]</a>
+              <a href="author.html#378">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2008-07-09 22:59:35 +0200 (Wed, 09 Jul 2008)
+New Revision: 1418
+
+Removed:
+   trunk/extra/clump/pyade.cpp
+   trunk/extra/clump/pyade.py
+   trunk/extra/clump/pyadeDummy.py
+Modified:
+   trunk/core/Omega.cpp
+   trunk/core/Omega.hpp
+   trunk/extra/clump/Shop.cpp
+   trunk/pkg/common/Engine/StandAloneEngine/PeriodicEngines.hpp
+   trunk/pkg/dem/Engine/StandAloneEngine/ElasticCriterionTimeStepper.cpp
+   trunk/pkg/dem/Engine/StandAloneEngine/SQLiteRecorder.cpp
+   trunk/pkg/dem/Engine/StandAloneEngine/SQLiteRecorder.hpp
+   trunk/pkg/dem/PreProcessor/CohesiveTriaxialTest.cpp
+   trunk/pkg/dem/PreProcessor/DirectShearCis.cpp
+   trunk/pkg/dem/PreProcessor/Funnel.cpp
+   trunk/pkg/dem/PreProcessor/HydraulicTest.cpp
+   trunk/pkg/dem/PreProcessor/SDECImpactTest.cpp
+   trunk/pkg/dem/PreProcessor/SDECMovingWall.cpp
+   trunk/pkg/dem/PreProcessor/SDECSpheresPlane.cpp
+   trunk/pkg/dem/PreProcessor/STLImporterTest.cpp
+   trunk/pkg/dem/PreProcessor/TriaxialTest.cpp
+   trunk/pkg/dem/PreProcessor/TriaxialTestWater.cpp
+Log:
+1. Remove some warnings about persistentInteractions initialization (initialization is done in MetaBody constructor anyway, it can not break anything);
+2. Remove long obsolete pyade
+3. Add Omega::getComputationTime
+4. Add Omega::saveSimulationToStream and Omega::loadSimulationFromStream
+5. Improve the SQLiteRecorder: put simulation into the db, create table with pointers to other tables, declare column types. The recording part is almost done. Implementation in player is to be done.
+
+
+
+Modified: trunk/core/Omega.cpp
+===================================================================
+--- trunk/core/Omega.cpp	2008-07-08 21:20:02 UTC (rev 1417)
++++ trunk/core/Omega.cpp	2008-07-09 20:59:35 UTC (rev 1418)
+@@ -29,19 +29,30 @@
+ 
+ CREATE_LOGGER(Omega);
+ 
+-Omega::Omega()
+-{
++Omega::Omega(){
+ 	if(getenv(&quot;YADE_DEBUG&quot;)) cerr&lt;&lt;&quot;Constructing Omega; _must_ be only once, otherwise linking is broken (missing -rdynamic?)\n&quot;;
+-	init();
+-	timeInit();
++	init(); timeInit();
+ }
+ 
++Omega::~Omega(){LOG_INFO(&quot;Shuting down; duration &quot;&lt;&lt;(microsec_clock::local_time()-msStartingSimulationTime)/1000&lt;&lt;&quot; s&quot;);}
+ 
+-Omega::~Omega()
+-{
+-	LOG_INFO(&quot;Shuting down; duration &quot;&lt;&lt;(msStartingSimulationTime-microsec_clock::local_time())/1000&lt;&lt;&quot; s&quot;);
+-}
++const map&lt;string,DynlibDescriptor&gt;&amp; Omega::getDynlibsDescriptor(){return dynlibs;}
+ 
++void Omega::incrementCurrentIteration(){ ++currentIteration;}
++long int Omega::getCurrentIteration(){ return currentIteration; }
++void Omega::setSimulationFileName(const string f){simulationFileName = f;}
++string Omega::getSimulationFileName(){return simulationFileName;}
++
++const shared_ptr&lt;MetaBody&gt;&amp; Omega::getRootBody(){return rootBody;}
++void Omega::setRootBody(shared_ptr&lt;MetaBody&gt;&amp; rb){ rootBody=rb;}
++void Omega::resetRootBody(){ rootBody = shared_ptr&lt;MetaBody&gt;(new MetaBody);}
++boost::mutex&amp; Omega::getRootBodyMutex(){return rootBodyMutex;}
++
++ptime Omega::getMsStartingSimulationTime(){return msStartingSimulationTime;}
++time_duration Omega::getSimulationPauseDuration(){return simulationPauseDuration;}
++Real Omega::getComputationTime(){ return (microsec_clock::local_time()-msStartingSimulationTime-simulationPauseDuration).total_milliseconds()/1e3; }
++
++
+ void Omega::reset(){
+ 	finishSimulationLoop();
+ 	joinSimulationLoop();
+@@ -56,39 +67,19 @@
+ }
+ 
+ void Omega::timeInit(){
+-	//sStartingSimulationTime=second_clock::local_time();
+ 	msStartingSimulationTime=microsec_clock::local_time();
+ 	simulationPauseDuration=msStartingSimulationTime-msStartingSimulationTime;
+ 	msStartingPauseTime=msStartingSimulationTime;
+ }
+ 
+-void Omega::createSimulationLoop()
+-{
+-	simulationLoop   = shared_ptr&lt;ThreadRunner&gt;(new ThreadRunner(&amp;simulationFlow_));
++void Omega::createSimulationLoop(){	simulationLoop   = shared_ptr&lt;ThreadRunner&gt;(new ThreadRunner(&amp;simulationFlow_));}
++void Omega::finishSimulationLoop(){ if (simulationLoop) simulationLoop-&gt;stop();}
++void Omega::joinSimulationLoop(){
++	if (simulationLoop){ simulationLoop-&gt;stop(); simulationLoop = shared_ptr&lt;ThreadRunner&gt;(); }
+ }
+ 
+-
+-void Omega::finishSimulationLoop()
+-{
+-	if (simulationLoop)
+-		simulationLoop-&gt;stop();
+-}
+-
+-
+-void Omega::joinSimulationLoop()
+-{
+-	if (simulationLoop)
+-	{
+-		simulationLoop-&gt;stop();
+-		simulationLoop   = shared_ptr&lt;ThreadRunner&gt;();
+-	}
+-}
+-
+-
+-void Omega::spawnSingleSimulationLoop()
+-{
+-	if (simulationLoop)
+-	{
++void Omega::spawnSingleSimulationLoop(){
++	if (simulationLoop){
+ 		msStartingPauseTime = microsec_clock::local_time();
+ 		simulationLoop-&gt;spawnSingleAction();
+ 	}
+@@ -96,20 +87,16 @@
+ 
+ 
+ 
+-void Omega::startSimulationLoop()
+-{
+-	if (simulationLoop &amp;&amp; !simulationLoop-&gt;looping())
+-	{
++void Omega::startSimulationLoop(){
++	if (simulationLoop &amp;&amp; !simulationLoop-&gt;looping()){
+ 		simulationPauseDuration += microsec_clock::local_time()-msStartingPauseTime;
+ 		simulationLoop-&gt;start();
+ 	}
+ }
+ 
+ 
+-void Omega::stopSimulationLoop()
+-{
+-	if (simulationLoop &amp;&amp; simulationLoop-&gt;looping())
+-	{
++void Omega::stopSimulationLoop(){
++	if (simulationLoop &amp;&amp; simulationLoop-&gt;looping()){
+ 		msStartingPauseTime = microsec_clock::local_time();
+ 		simulationLoop-&gt;stop();
+ 	}
+@@ -117,18 +104,10 @@
+ 
+ bool Omega::isRunning(){ if(simulationLoop) return simulationLoop-&gt;looping(); else return false; }
+ 
+-void Omega::buildDynlibDatabase(const vector&lt;string&gt;&amp; dynlibsList)
+-{	
+-
+-	vector&lt; string &gt;::const_iterator dlli    = dynlibsList.begin();
+-	vector&lt; string &gt;::const_iterator dlliEnd = dynlibsList.end();
+-	for( ; dlli!=dlliEnd ; ++dlli)
+-	{
+-		string name = *dlli;
+-		//cerr&lt;&lt;&quot;Library: &quot;&lt;&lt;name&lt;&lt;&quot;\n&quot;;
++void Omega::buildDynlibDatabase(const vector&lt;string&gt;&amp; dynlibsList){	
++	FOREACH(string name, dynlibsList){
+ 		shared_ptr&lt;Factorable&gt; f;
+-		try
+-		{
++		try {
+ 			f = ClassFactory::instance().createShared(name);
+ 			dynlibs[name].isIndexable    = dynamic_pointer_cast&lt;Indexable&gt;(f);
+ 			dynlibs[name].isFactorable   = dynamic_pointer_cast&lt;Factorable&gt;(f);
+@@ -144,40 +123,21 @@
+ 
+ 	map&lt;string,DynlibDescriptor&gt;::iterator dli    = dynlibs.begin();
+ 	map&lt;string,DynlibDescriptor&gt;::iterator dliEnd = dynlibs.end();
+-	for( ; dli!=dliEnd ; ++dli)
+-	{
++	for( ; dli!=dliEnd ; ++dli){
+ 		set&lt;string&gt;::iterator bci    = (*dli).second.baseClasses.begin();
+ 		set&lt;string&gt;::iterator bciEnd = (*dli).second.baseClasses.end();
+-		for( ; bci!=bciEnd ; ++bci)
+-		{
++		for( ; bci!=bciEnd ; ++bci){
+ 			string name = *bci;
+-			if (name==&quot;MetaEngine1D&quot; || name==&quot;MetaEngine2D&quot;)
+-				(*dli).second.baseClasses.insert(&quot;MetaEngine&quot;);
+-			else if (name==&quot;EngineUnit1D&quot; || name==&quot;EngineUnit2D&quot;)
+-				(*dli).second.baseClasses.insert(&quot;EngineUnit&quot;);
+-			else if (name==&quot;Serializable&quot;)
+-				(*dli).second.baseClasses.insert(&quot;Factorable&quot;);
+-			else if (name!=&quot;Factorable&quot; &amp;&amp; name!=&quot;Indexable&quot;)
+-			{
++			if (name==&quot;MetaEngine1D&quot; || name==&quot;MetaEngine2D&quot;) (*dli).second.baseClasses.insert(&quot;MetaEngine&quot;);
++			else if (name==&quot;EngineUnit1D&quot; || name==&quot;EngineUnit2D&quot;) (*dli).second.baseClasses.insert(&quot;EngineUnit&quot;);
++			else if (name==&quot;Serializable&quot;) (*dli).second.baseClasses.insert(&quot;Factorable&quot;);
++			else if (name!=&quot;Factorable&quot; &amp;&amp; name!=&quot;Indexable&quot;) {
+ 				shared_ptr&lt;Factorable&gt; f = ClassFactory::instance().createShared(name);
+ 				for(int i=0;i&lt;f-&gt;getBaseClassNumber();i++)
+ 					dynlibs[name].baseClasses.insert(f-&gt;getBaseClassName(i));
+ 			}
+ 		}
+ 	}
+-
+-/*
+-	dli    = dynlibs.begin();
+-	dliEnd = dynlibs.end();
+-	for( ; dli!=dliEnd ; ++dli)
+-	{
+-		cerr &lt;&lt; (*dli).first &lt;&lt; &quot; : &quot; ;
+-		set&lt;string&gt;::iterator bci    = (*dli).second.baseClasses.begin();
+-		set&lt;string&gt;::iterator bciEnd = (*dli).second.baseClasses.end();
+-		for( ; bci!=bciEnd ; ++bci)
+-			cerr &lt;&lt; *bci &lt;&lt; endl;
+-		cerr &lt;&lt; endl;
+-	}*/
+ }
+ 
+ 
+@@ -189,24 +149,12 @@
+ 
+ void Omega::scanPlugins()
+ {
+-//	ClassFactory::instance().unloadAll();
+-
+-
+-	vector&lt;string&gt;::iterator dldi    = preferences-&gt;dynlibDirectories.begin();
+-	vector&lt;string&gt;::iterator dldiEnd = preferences-&gt;dynlibDirectories.end();
+-	for( ; dldi != dldiEnd ; ++dldi)
+-		ClassFactory::instance().addBaseDirectory((*dldi));
++	FOREACH(string dld,preferences-&gt;dynlibDirectories) ClassFactory::instance().addBaseDirectory(dld);
+ 			
+ 	vector&lt;string&gt; dynlibsList;
+-
+-	vector&lt;string&gt;::iterator si = preferences-&gt;dynlibDirectories.begin();
+-	vector&lt;string&gt;::iterator siEnd = preferences-&gt;dynlibDirectories.end();
+-	for( ; si != siEnd ; ++si)
+-	{
+-		filesystem::path directory((*si));
+-
+-		if ( filesystem::exists( directory ) )
+-		{
++	FOREACH(string si, preferences-&gt;dynlibDirectories)	{
++		filesystem::path directory(si);
++		if ( filesystem::exists( directory ) )	{
+ 			filesystem::directory_iterator di( directory );
+ 			filesystem::directory_iterator diEnd;
+ 			for ( ; di != diEnd; ++di )
+@@ -224,110 +172,75 @@
+ 					//
+ 					// my reading of what it is supposed to do: returns the part of filename before the first dot... !!??
+ 					// humm, perhaps it is a result of obfuscative c++ contest (obfuscative c++ = oxymoron, anyway)
+-					while (length!=prevLength)
+-					{
+-						prevLength=length;
+-						name = filesystem::path(filesystem::basename(name));
+-						length = name.leaf().size();
++					while (length!=prevLength) { prevLength=length;	name=filesystem::path(filesystem::basename(name)); length = name.leaf().size();
+ 					}
+ 					if(name.leaf().length()&lt;1) continue; // filter out 0-length filenames
+ 					if(dynlibsList.size()==0 || ClassFactory::instance().systemNameToLibName(name.leaf())!=dynlibsList.back()) {
+-						LOG_DEBUG(&quot;Added plugin: &quot;&lt;&lt;*si&lt;&lt;&quot;/&quot;&lt;&lt;di-&gt;leaf()&lt;&lt;&quot;.&quot;);
++						LOG_DEBUG(&quot;Added plugin: &quot;&lt;&lt;si&lt;&lt;&quot;/&quot;&lt;&lt;di-&gt;leaf()&lt;&lt;&quot;.&quot;);
+ 						dynlibsList.push_back(ClassFactory::instance().systemNameToLibName(name.leaf()));
+ 					}
+-					else LOG_DEBUG(&quot;Possible plugin discarded: &quot;&lt;&lt;*si&lt;&lt;&quot;/&quot;&lt;&lt;name.leaf()&lt;&lt;&quot;.&quot;);
++					else LOG_DEBUG(&quot;Possible plugin discarded: &quot;&lt;&lt;si&lt;&lt;&quot;/&quot;&lt;&lt;name.leaf()&lt;&lt;&quot;.&quot;);
+ 				} else LOG_DEBUG(&quot;File not considered a plugin: &quot;&lt;&lt;di-&gt;leaf()&lt;&lt;&quot;.&quot;);
+ 			}
+ 		}
+ 		else LOG_ERROR(&quot;Nonexistent plugin directory: &quot;&lt;&lt;directory.native_directory_string()&lt;&lt;&quot;.&quot;);
+ 	}
+ 
+-	bool allLoaded = false;
++	bool allLoaded = true;
+ 	vector&lt;string&gt; dynlibsClassList; // dynlibsList holds filenames, this holds classes defined inside (may be different if using yadePuginClasses)
+-		vector&lt; string &gt;::iterator dlli    = dynlibsList.begin();
+-		vector&lt; string &gt;::iterator dlliEnd = dynlibsList.end();
+-		allLoaded = true;
+-		for( ; dlli!=dlliEnd ; ++dlli ) {
+-			bool thisLoaded = ClassFactory::instance().load((*dlli));
+-			if (!thisLoaded){
+-				string err=ClassFactory::instance().lastError();
+-				// HACK
+-				if(err.find(&quot;cannot open shared object file: No such file or directory&quot;)!=std::string::npos){
+-					LOG_INFO(&quot;Attempted to load nonexistent file; since this may be due to bad algorithm of filename construction, we pretend everything is OK (original error: `&quot;&lt;&lt;err&lt;&lt;&quot;').&quot;);
+-					thisLoaded=true;
+-				}
+-				else if(err.find(&quot;: undefined symbol: &quot;)!=std::string::npos){
+-					size_t pos=err.rfind(&quot;:&quot;);
+-					assert(pos!=std::string::npos);
+-					std::string sym(err,pos+2); //2 removes &quot;: &quot; from the beginning
+-					int status=0;
+-					char* demangled_sym=abi::__cxa_demangle(sym.c_str(),0,0,&amp;status);
+-					LOG_FATAL(&quot;Undefined symbol `&quot;&lt;&lt;demangled_sym&lt;&lt;&quot;' (&quot;&lt;&lt;err&lt;&lt;&quot;).&quot;);
+-				}
+-				else LOG_ERROR(&quot;Error loading Library `&quot;&lt;&lt;(*dlli)&lt;&lt;&quot;': &quot;&lt;&lt;err&lt;&lt;&quot; .&quot;); // leave space to not to confuse c++filt
++	FOREACH(string dll, dynlibsList){
++		bool thisLoaded = ClassFactory::instance().load(dll);
++		if (!thisLoaded){
++			string err=ClassFactory::instance().lastError();
++			// HACK
++			if(err.find(&quot;cannot open shared object file: No such file or directory&quot;)!=std::string::npos){
++				LOG_INFO(&quot;Attempted to load nonexistent file; since this may be due to bad algorithm of filename construction, we pretend everything is OK (original error: `&quot;&lt;&lt;err&lt;&lt;&quot;').&quot;);
++				thisLoaded=true;
+ 			}
+-			else { // no error
+-				if (ClassFactory::instance().lastPluginClasses().size()==0){ // regular plugin, one class per file
+-					dynlibsClassList.push_back(*dlli);
+-					LOG_DEBUG(&quot;Plugin &quot;&lt;&lt;*dlli&lt;&lt;&quot;: loaded default class &quot;&lt;&lt;*dlli&lt;&lt;&quot;.&quot;);
+-				} else {// if plugin defines yadePluginClasses (has multiple classes), insert these into dynLibsList
+-					vector&lt;string&gt; css=ClassFactory::instance().lastPluginClasses();
+-					for(size_t i=0; i&lt;css.size();i++) { dynlibsClassList.push_back(css[i]); LOG_DEBUG(&quot;Plugin &quot;&lt;&lt;*dlli&lt;&lt;&quot;: loaded explicit class &quot;&lt;&lt;css[i]&lt;&lt;&quot;.&quot;);  }
+-				}
++			else if(err.find(&quot;: undefined symbol: &quot;)!=std::string::npos){
++				size_t pos=err.rfind(&quot;:&quot;);
++				assert(pos!=std::string::npos);
++				std::string sym(err,pos+2); //2 removes &quot;: &quot; from the beginning
++				int status=0;
++				char* demangled_sym=abi::__cxa_demangle(sym.c_str(),0,0,&amp;status);
++				LOG_FATAL(&quot;Undefined symbol `&quot;&lt;&lt;demangled_sym&lt;&lt;&quot;' (&quot;&lt;&lt;err&lt;&lt;&quot;).&quot;);
+ 			}
+-			allLoaded &amp;= thisLoaded;
++			else LOG_ERROR(&quot;Error loading Library `&quot;&lt;&lt;dll&lt;&lt;&quot;': &quot;&lt;&lt;err&lt;&lt;&quot; .&quot;); // leave space to not to confuse c++filt
+ 		}
+-	if(!allLoaded) LOG_WARN(&quot;Couldn't load everything, some stuff may work incorrectly.&quot;);
+-	
++		else { // no error
++			if (ClassFactory::instance().lastPluginClasses().size()==0){ // regular plugin, one class per file
++				dynlibsClassList.push_back(dll);
++				LOG_DEBUG(&quot;Plugin &quot;&lt;&lt;dll&lt;&lt;&quot;: loaded default class &quot;&lt;&lt;dll&lt;&lt;&quot;.&quot;);
++			} else {// if plugin defines yadePluginClasses (has multiple classes), insert these into dynLibsList
++				vector&lt;string&gt; css=ClassFactory::instance().lastPluginClasses();
++				for(size_t i=0; i&lt;css.size();i++) { dynlibsClassList.push_back(css[i]); LOG_DEBUG(&quot;Plugin &quot;&lt;&lt;dll&lt;&lt;&quot;: loaded explicit class &quot;&lt;&lt;css[i]&lt;&lt;&quot;.&quot;);  }
++			}
++		}
++		allLoaded &amp;= thisLoaded;
++	}
++	if(!allLoaded) { LOG_FATAL(&quot;Error loading a plugin (see above; run with -v to see more), bailing out.&quot;); abort(); }
+ 	buildDynlibDatabase(dynlibsClassList);
+ }
+ 
+-
+-// bool Omega::getDynlibDescriptor(const string&amp; libName, string&amp; type)
+-// {
+-// 	//LOCK(omegaMutex);
+-// 		
+-// 	map&lt;string,DynlibDescriptor&gt;::iterator it = dynlibs.find(libName);
+-// 	if (it!=dynlibs.end())
+-// 	{
+-// 		type = (*it).second.baseClass;
+-// 		return true;
+-// 	}
+-// 	else
+-// 		return false;
+-// }
+-
+-
+-const map&lt;string,DynlibDescriptor&gt;&amp; Omega::getDynlibsDescriptor()
+-{
+-	return dynlibs;
++void Omega::loadSimulationFromStream(std::istream&amp; stream){
++	LOG_DEBUG(&quot;Loading simulation from stream.&quot;);
++	resetRootBody();
++	timeInit();
++	shared_ptr&lt;IOFormatManager&gt; ioManager(YADE_PTR_CAST&lt;IOFormatManager&gt;(ClassFactory::instance().createShared(&quot;XMLFormatManager&quot;)));
++	shared_ptr&lt;Archive&gt; ac=Archive::create(&quot;rootBody&quot;,rootBody);
++	string tmp=ioManager-&gt;beginDeserialization(stream,*ac);
++	ac-&gt;deserialize(stream,*ac,tmp);
++	ioManager-&gt;finalizeDeserialization(stream,*ac);
+ }
+-
+-
+-void Omega::incrementCurrentIteration()
+-{
+-	++currentIteration;
++void Omega::saveSimulationToStream(std::ostream&amp; stream){
++	LOG_DEBUG(&quot;Saving simulation to stream.&quot;);
++	shared_ptr&lt;IOFormatManager&gt; ioManager(YADE_PTR_CAST&lt;IOFormatManager&gt;(ClassFactory::instance().createShared(&quot;XMLFormatManager&quot;)));
++	shared_ptr&lt;Archive&gt; ac=Archive::create(&quot;rootBody&quot;,rootBody);
++	ioManager-&gt;beginSerialization(stream, *ac);
++	ac-&gt;serialize(stream, *ac, 1);
++	ioManager-&gt;finalizeSerialization(stream, *ac);
+ }
+ 
+-
+-long int Omega::getCurrentIteration()
+-{
+-	return currentIteration;
+-}
+-
+-
+-void Omega::setSimulationFileName(const string f)
+-{
+-	simulationFileName = f;
+-}
+-
+-
+-string Omega::getSimulationFileName()
+-{
+-	return simulationFileName;
+-}
+-
+-
+ void Omega::loadSimulation()
+ {
+ 	if(Omega::instance().getSimulationFileName().size()==0) throw yadeBadFile(&quot;Simulation filename to load has zero length&quot;);
+@@ -363,6 +276,8 @@
+ 	}
+ }
+ 
++
++
+ void Omega::saveSimulation(const string name, bool recover)
+ {
+ 	if(name.size()==0) throw yadeBadFile(&quot;Filename with zero length.&quot;);
+@@ -390,89 +305,29 @@
+ 	rootBody-&gt;recover=false;
+ }
+ 
+-void Omega::resetRootBody()
+-{
+-	rootBody = shared_ptr&lt;MetaBody&gt;(new MetaBody);
+-}
+ 
+ 
+-// FIXME - remove that
+-void Omega::setTimeStep(const Real t)
+-{
+-	if(rootBody) rootBody-&gt;dt=t;
+-}
++void Omega::setTimeStep(const Real t){	if(rootBody) rootBody-&gt;dt=t;}
++Real Omega::getTimeStep(){	if(rootBody) return rootBody-&gt;dt; else return -1; }
++void Omega::skipTimeStepper(bool s){ if(rootBody) rootBody-&gt;setTimeSteppersActive(!s);}
+ 
+-
+-Real Omega::getTimeStep()
+-{
+-	if(rootBody) return rootBody-&gt;dt;
+-	else return -1;
+-}
+-
+-
+-void Omega::skipTimeStepper(bool s)
+-{
+-	if(rootBody) rootBody-&gt;setTimeSteppersActive(!s);
+-}
+-
+-
+ bool Omega::timeStepperActive(){
+ 	if(!rootBody) return false;
+-	for(vector&lt;shared_ptr&lt;Engine&gt; &gt;::iterator I=rootBody-&gt;engines.begin(); I!=rootBody-&gt;engines.end(); ++I){
+-		if (isInheritingFrom((*I)-&gt;getClassName(),&quot;TimeStepper&quot;)){
+-			return static_pointer_cast&lt;TimeStepper&gt;(*I)-&gt;active;
++	FOREACH(const shared_ptr&lt;Engine&gt;&amp; e, rootBody-&gt;engines){
++		if (isInheritingFrom(e-&gt;getClassName(),&quot;TimeStepper&quot;)){
++			return static_pointer_cast&lt;TimeStepper&gt;(e)-&gt;active;
+ 		}
+ 	}
+ 	return false;
+ }
+ 
+-//FIXME : make that recursive to scan all submetabodies ???
+-bool Omega::containTimeStepper()
+-{
+-        if(!rootBody) 
+-		return false;
+-
+-	vector&lt;shared_ptr&lt;Engine&gt; &gt;::iterator ai    = rootBody-&gt;engines.begin();
+-	vector&lt;shared_ptr&lt;Engine&gt; &gt;::iterator aiEnd = rootBody-&gt;engines.end();
+-	for(int i=0;ai!=aiEnd;++ai,i++)
+-	{
+-		if (isInheritingFrom((*ai)-&gt;getClassName(),&quot;TimeStepper&quot;))
+-			return true;
+-// 
+-/*		map&lt;string,DynlibDescriptor&gt;::const_iterator dli = Omega::instance().getDynlibsType().find((*ai)-&gt;getClassName());
+-		if (dli!=Omega::instance().getDynlibsType().end())
+-		{
+-			if ((*dli).second.baseClass==&quot;TimeStepper&quot;)
+-				return true;
+-		}*/
++bool Omega::containTimeStepper(){
++	if(!rootBody) return false;
++	FOREACH(const shared_ptr&lt;Engine&gt;&amp; e, rootBody-&gt;engines){
++		if (isInheritingFrom(e-&gt;getClassName(),&quot;TimeStepper&quot;)) return true;
+ 	}
+-        return false;
++	return false;
+ }
+ 
+-const shared_ptr&lt;MetaBody&gt;&amp; Omega::getRootBody()
+-{
+-	return rootBody;
+-}
+ 
+-void Omega::setRootBody(shared_ptr&lt;MetaBody&gt;&amp; rb){ rootBody=rb;}
+ 
+-
+-ptime Omega::getMsStartingSimulationTime()
+-{
+-	return msStartingSimulationTime;
+-}
+-
+-
+-time_duration Omega::getSimulationPauseDuration()
+-{
+-	return simulationPauseDuration;
+-}
+-
+-
+-
+-boost::mutex&amp; Omega::getRootBodyMutex()
+-{
+-	return rootBodyMutex;
+-}
+-
+-
+
+Modified: trunk/core/Omega.hpp
+===================================================================
+--- trunk/core/Omega.hpp	2008-07-08 21:20:02 UTC (rev 1417)
++++ trunk/core/Omega.hpp	2008-07-09 20:59:35 UTC (rev 1418)
+@@ -143,11 +143,14 @@
+ 		string	getSimulationFileName();
+ 		void		loadSimulation();
+ 		void		saveSimulation(const string name, bool recover=false);
++		void 		saveSimulationToStream(std::ostream&amp;);
++		void 		loadSimulationFromStream(std::istream&amp;);
+ 
+ 		long int	getCurrentIteration();
+ 		void		incrementCurrentIteration();
+ 		
+ 		Real		getSimulationTime() { return simulationTime;};
++		Real 		getComputationTime();
+ 		void		incrementSimulationTime() { simulationTime+=getTimeStep();};
+ 		
+ 		void init();
+
+Modified: trunk/extra/clump/Shop.cpp
+===================================================================
+--- trunk/extra/clump/Shop.cpp	2008-07-08 21:20:02 UTC (rev 1417)
++++ trunk/extra/clump/Shop.cpp	2008-07-09 20:59:35 UTC (rev 1418)
+@@ -180,7 +180,6 @@
+ 	shared_ptr&lt;AABB&gt; aabb(new AABB); aabb-&gt;diffuseColor=Vector3r(0,0,1);
+ 	rootBody-&gt;boundingVolume=YADE_PTR_CAST&lt;BoundingVolume&gt;(aabb);
+ 	
+-	rootBody-&gt;persistentInteractions=shared_ptr&lt;InteractionContainer&gt;(new InteractionVecSet);
+ 	rootBody-&gt;transientInteractions=shared_ptr&lt;InteractionContainer&gt;(new InteractionVecSet);
+ 	rootBody-&gt;physicalActions=shared_ptr&lt;PhysicalActionContainer&gt;(new PhysicalActionVectorVector);
+ 	rootBody-&gt;bodies=shared_ptr&lt;BodyContainer&gt;(new BodyRedirectionVector);
+
+Deleted: trunk/extra/clump/pyade.cpp
+===================================================================
+--- trunk/extra/clump/pyade.cpp	2008-07-08 21:20:02 UTC (rev 1417)
++++ trunk/extra/clump/pyade.cpp	2008-07-09 20:59:35 UTC (rev 1418)
+@@ -1,188 +0,0 @@
+-// (c) 2007 Vaclav Smilauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">eudoxos at arcig.cz</A>&gt; 
+-
+-#include&lt;Python.h&gt;
+-#include&lt;list&gt;
+-
+-#include&lt;boost/shared_ptr.hpp&gt;
+-#include&lt;yade/core/Body.hpp&gt;
+-#include&lt;yade/core/MetaBody.hpp&gt;
+-#include&lt;yade/pkg-common/PhysicalParametersEngineUnit.hpp&gt;
+-#include&lt;yade/pkg-common/RigidBodyParameters.hpp&gt;
+-#include&lt;yade/lib-base/Logging.hpp&gt;
+-#include&lt;yade/lib-base/yadeWm3Extra.hpp&gt;
+-#include&lt;yade/core/Omega.hpp&gt;
+-
+-
+-/******************* basic type conversions *********/
+-static PyObject* __main__; // assigned in initializer
+-PyObject* toPython(int arg){return Py_BuildValue(&quot;i&quot;,arg);}
+-//PyObject* toPython(body_id_t arg){return toPython((int)arg);}
+-PyObject* toPython(unsigned int arg){return toPython((int)arg);}
+-PyObject* toPython(long arg){return Py_BuildValue(&quot;l&quot;,arg);}
+-PyObject* toPython(bool arg){return toPython((int)arg);}
+-PyObject* toPython(double arg){return Py_BuildValue(&quot;d&quot;,arg);}
+-PyObject* toPython(std::string arg){return Py_BuildValue(&quot;s&quot;,arg.c_str());}
+-PyObject* toPython(Wm3::Vector3r arg){	return PyObject_Call(PyObject_GetAttrString(__main__,&quot;Vector&quot;),Py_BuildValue(&quot;(ddd)&quot;,arg[0],arg[1],arg[2]),NULL);}
+-PyObject* toPython(Wm3::Quaternionr arg){ return PyObject_Call(PyObject_GetAttrString(__main__,&quot;Quaternion&quot;),Py_BuildValue(&quot;(dddd)&quot;,arg[0],arg[1],arg[2],arg[3]),NULL);}
+-PyObject* toPython(list&lt;body_id_t&gt; arg){	PyObject* ret=PyList_New(0); for(list&lt;body_id_t&gt;::iterator I=arg.begin(); I!=arg.end(); I++) PyList_Append(ret,toPython(*I)); return ret;}
+- 
+-/******************* body properties ****************/
+-
+-/*! Body parameters that can be accessed through this code.
+- *
+- * @note Other attributes may still be defined in the python interface - see pyade.py for those.
+- * @todo Add a (acceleration), aa (angular acceleration).
+- * */
+-enum bodyPropCodes {/*! see Body::id [int] */ bp_id,
+-	/*! Body::clumpId [int] */ bp_clumpId,
+-	/*! centroid position [3-float-tuple] */ bp_x,
+-	/*! body's orientation [quaternion as 4-float-tuple] */ bp_r,
+-	/*! velocity [3-float-tuple] */ bp_v,
+-	/*! angular velocity [3-float-tuple] */ bp_w,
+-	/*! mass [float] */ bp_m,
+-	/*! inertia [3-float-tuple] */ bp_I,
+-	/*! Body::isClump [bool as int] */ bp_isClump,
+-	/*! Body::isClumpMember [bool as int] */ bp_isClumpMember,
+-	/*! Body::isStandalone [bool as int] */ bp_isStandalone};
+-
+-/* Retrieves this body's property.
+- *
+- * @return python object of which type depends on the property requested; bodyPropCodes has details.
+- */
+-static PyObject*
+-bodyProp(PyObject *self, PyObject *args){
+-	long id, prop;
+-	if(!PyArg_ParseTuple(args, &quot;ll&quot;, &amp;id, &amp;prop)) return NULL;
+-	shared_ptr&lt;Body&gt; B=Body::byId((body_id_t)id);
+-	shared_ptr&lt;PhysicalParameters&gt; pp=B-&gt;physicalParameters;
+-	// FIXME: we will crash if user requests rbp for a body that doesn't have it!
+-	// later, do assert(rbp), raise exception (in a pythonic way - need to see docs on that) and return None
+-	shared_ptr&lt;ParticleParameters&gt; pap=dynamic_pointer_cast&lt;ParticleParameters&gt;(pp);
+-	shared_ptr&lt;RigidBodyParameters&gt; rbp=dynamic_pointer_cast&lt;RigidBodyParameters&gt;(pp);
+-	switch(prop){
+-		/* warning: no implicit conversions in additional arguments (not even int-&gt;double), attention!! */
+-		case bp_id: return toPython(B-&gt;getId());
+-		case bp_clumpId: return toPython(B-&gt;clumpId);
+-		case bp_x: return toPython(pp-&gt;se3.position);
+-		case bp_r: return toPython(pp-&gt;se3.orientation);
+-		case bp_v: return toPython(pap-&gt;velocity);
+-		case bp_w: return toPython(rbp-&gt;angularVelocity);
+-		case bp_m: return toPython(pap-&gt;mass);
+-		case bp_I: return toPython(rbp-&gt;inertia);
+-		case bp_isClump: return toPython(B-&gt;isClump());
+-		case bp_isClumpMember: return toPython(B-&gt;isClumpMember());
+-		case bp_isStandalone: return toPython(B-&gt;isStandalone());
+-	}
+-	return Py_BuildValue(&quot;&quot;);
+-}
+-
+-// if we knew way how to make module's constant (dictionary), this would not be function returning constant dictionary.
+-static PyObject*
+-bodyPropDict(PyObject *self, PyObject *args){
+-	#define BP(name) #name,bp_##name
+-		return Py_BuildValue(&quot;{sisisisisisisisisisisi}&quot;,BP(id),BP(clumpId),BP(x),BP(r),BP(v),BP(w),BP(m),BP(I),BP(isClump),BP(isClumpMember),BP(isStandalone));
+-	#undef BP
+-}
+-
+-/************************ simulation properties *****************************/
+-/*! Simulation parameters that can be accessed through this code.
+- *
+- * @note Other attributes may still be defined in the python interface - see pyade.py for those.
+- */
+-enum simulPropCodes {/*! simulation time [double] */ sm_t,
+-	/*! iteration number [float] */ sm_i,
+-	/*! timestep [float] */ sm_dt,
+-	/*! simulation filename [float] */ sm_file,
+-	/*! number of bodies in rootBody */ sm_nBodies,
+-	/*! list of selected bodies (newest first) */ sm_sel };
+-
+-/* Retrieves simulation's property.
+- *
+- * @todo Should be able to retrieve id's of selected bodies, like S.sel[i]. This would require changes in the UI, though.
+- * Multiple selection (stack) would make it possible to display e.g. interaction forces between two specific bodies etc.
+- * Interactions should however become a new class (besided Bodies and Simul) for that.
+- * @return Python object of which type depends on the property requested; simulPropCodes has details.
+- */
+-static PyObject*
+-simulProp(PyObject *self, PyObject *args){
+-	long prop;
+-	if(!PyArg_ParseTuple(args, &quot;l&quot;, &amp;prop)) return NULL;
+-	//shared_ptr&lt;MetaBody&gt; rootBody=Omega::instance()-&gt;getRootBody();
+-	switch(prop){
+-		case sm_t: return toPython(Omega::instance().getSimulationTime());
+-		case sm_dt: return toPython(Omega::instance().getTimeStep());
+-		case sm_i: return toPython(Omega::instance().getCurrentIteration());
+-		case sm_file: return toPython(Omega::instance().getSimulationFileName());
+-		case sm_nBodies: return toPython(Omega::instance().getRootBody()-&gt;bodies-&gt;size());
+-		case sm_sel: return toPython(Omega::instance().selectedBodies);
+-	}
+-	return Py_BuildValue(&quot;&quot;);
+-}
+-
+-static PyObject*
+-simulPropDict(PyObject *self, PyObject *args){
+-	#define SM(name) #name,sm_##name
+-		return Py_BuildValue(&quot;{sisisisisisi}&quot;,SM(t),SM(dt),SM(i),SM(file),SM(nBodies),SM(sel));
+-	#undef SM
+-}
+-
+-#if 0
+-/************************ interaction properties *****************************/
+-/*! Interaction parameters that can be accessed through this code.
+- *
+- * @note Other attributes may still be defined in the python interface - see pyade.py for those.
+- */
+-enum interPropCodes { /*! id of the first body [long] */ it_id1,
+-	/*! id of the second body [long] */ it_id2,
+-	/*! contact point [Vector] */ it_cp,
+-	/*! normal [Vector] */ it_normal,
+-	/*! radius1 [float] */ it_r1,
+-	/*! radius2 [float] */ it_r2,
+-	/*! peneration depth [float] */ it_penetration }
+-
+-/* Retrieves interaction property
+- *
+- * @return Python object of which type depends on the property requested; interPropCodes has details.
+- */
+-static PyObject*
+-interProp(PyObject *self, PyObject *args){
+-	long id1,id2,prop; int isTransient;
+-	if(!PyArg_ParseTuple(args, &quot;llli&quot;, &amp;id1, &amp;id2, &amp;prop, &amp;isTransient)) return NULL;
+-	shared_ptr&lt;InteractionContainer&gt; inters=isTransient?Omega::instance()-&gt;getRootBody()-&gt;transientInteractions:Omega::instance()-&gt;getRootBody()-&gt;persistentInteractions;
+-	switch(prop){
+-		case it_id1: return toPython(id1); // hmmm, these two are not needed?!
+-		case it_id2: return toPython(id2);
+-		case it_cp:{
+-			const shared_ptr&lt;SpheresContactGeometry&gt;&amp; scg=dynamic_cast&lt;SpheresContactGeometry&gt;(inters-&gt;find(id1,id2));
+-			return return toPython(scg-&gt;contactPoint);
+-		}
+-		case sm_file: return toPython(Omega::instance().getSimulationFileName());
+-		case sm_nBodies: return toPython(Omega::instance().getRootBody()-&gt;bodies-&gt;size());
+-		case sm_sel: return toPython(Omega::instance().selectedBodies);
+-	}
+-	return Py_BuildValue(&quot;&quot;);
+-}
+-
+-static PyObject*
+-interPropDict(PyObject *self, PyObject *args){
+-	#define IT(name) #name,it_##name
+-		return Py_BuildValue(&quot;{sisisisisisisi}&quot;,IT(id1),IT(id2),IT(cp),IT(normal),IT(r1),IT(r2),IT(penetration));
+-	#undef IT
+-}
+-#endif
+-/************************ module setup *************************/
+-
+-static PyMethodDef _pyadeMethods[] = {
+-    {&quot;bodyProp&quot;, bodyProp, METH_VARARGS,&quot;Return body's (# first arg) property (second argument).&quot;},
+-    {&quot;bodyPropDict&quot;, bodyPropDict, METH_VARARGS,&quot;Dictionary of available body properties, maps symbolic names to constants.&quot;},
+-    {&quot;simulProp&quot;, simulProp, METH_VARARGS,&quot;Return some simulation property (in argument).&quot;},
+-    {&quot;simulPropDict&quot;, simulPropDict, METH_VARARGS,&quot;Dictionary of available simulation properties, maps symbolic names to constants.&quot;},
+-    {NULL, NULL, 0, NULL} /* sentinel */
+-};
+-
+-
+-PyMODINIT_FUNC init_pyade(void){
+-	(void) Py_InitModule(&quot;_pyade&quot;, _pyadeMethods);
+-	__main__=PyImport_Import(PyString_FromString(&quot;__main__&quot;));
+-	assert(__main__);
+-}
+
+Deleted: trunk/extra/clump/pyade.py
+===================================================================
+--- trunk/extra/clump/pyade.py	2008-07-08 21:20:02 UTC (rev 1417)
++++ trunk/extra/clump/pyade.py	2008-07-09 20:59:35 UTC (rev 1418)
+@@ -1,113 +0,0 @@
+-#!/usr/bin/env python
+-# (c) 2007 Vaclav Smilauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">eudoxos at arcig.cz</A>&gt; 
+-
+-from Scientific.Geometry import Vector
+-from Scientific.Geometry.Quaternion import Quaternion
+-Vector.__dict__['__str__']=lambda self: &quot;%g %g %g&quot;%(self[0],self[1],self[2])
+-Quaternion.__dict__['__str__']=lambda self: &quot;%g %g %g %g&quot;%(self[0],self[1],self[2],self[3])
+-
+-try: 
+-	import psyco; psyco.full()
+-except ImportError: pass
+-
+-if __name__=='__main__': import pyadeDummy as _pyade # testing, without yade running
+-else:	import _pyade
+-# convenience for users
+-from math import *
+-
+-&quot;&quot;&quot;
+-In order to make vector arithmetics possible, this module imports
+-Scientific.Geometry.{Quaternion,Vector}. Debian package with these modules is
+-called `python-scientific'. We overrider Vector's and Quaternion's __str__
+-method so that they are printed as numbers with spaces (suitable for gnuplot,
+-for example).
+-
+-Future things to do (maybe):
+- * use serialization attributes to access values really; something like Body.attr(name), with  Body.__getitem__(name) as shorthand.
+- * implement history:
+- 	attribute will have kw t (time) and i (iteration); for non-negative values, they are absolute; for negative, relative.
+- 	class History:
+- * Find out how to make B[5].I equivalent to B[5].I(), so that we can also say B[5].I(t=-1)
+-		If not possible, use __call__ and mandate B[5].I(). Or use B[5].attr('I',dt=...) since it will be used quite rarely
+-&quot;&quot;&quot;
+-
+-
+-class Bodies:
+-	&quot;&quot;&quot;This class accesses individual bodies. User code uses its instance conveninently named &quot;B&quot;.
+-	Iteration is supported, so you can say &quot;for b in B: ...&quot;. &quot;&quot;&quot;
+-	def __getitem__(self,id): return Bodies.Body(id)
+-	def __len__(self): return S.nBodies
+-	def __contains__(self,n): return n&lt;self.__len__()
+-	def __iter__(self):
+-		return Bodies._iterator()
+-	class _iterator:
+-		def __init__(self): self.index=0
+-		def next(self):
+-			if self.index&gt;=S.nBodies: raise StopIteration
+-			self.index+=1
+-			return B[self.index]
+-
+-	class Body:
+-		&quot;&quot;&quot;Dummy class that returns a few body parameters as if they were its attributes.
+-		C++ code in pyade.cpp is called to get the actual values.
+-		Properties calculable from those already existing may be defined here - see Etrans, Erot, Epot, E for examples.&quot;&quot;&quot;
+-		def __init__(self,id):
+-			self._id=id
+-		def __getattr__(self,name):
+-			if   name=='Etrans': return .5*self.m*sum([v**2 for v in self.v])
+-			elif name=='Erot': return sum([.5*self.I[i]*self.w[i]**2 for i in range(3)])
+-			#FIXME: gravity hardcoded...
+-			elif name=='Epot': return -sum([self.x[i]*(0,0,-10)[i] for i in range(3)])*self.m
+-			elif name=='E': return self.Etrans+self.Erot+self.Epot
+-			else: return _pyade.bodyProp(self._id,_pyade.bodyPropDict()[name])
+-
+-class Simul:
+-	&quot;&quot;&quot;Class representing (current) simulation. User code uses its instance convenintly named &quot;S&quot;. &quot;&quot;&quot;
+-	def __getattr__(self,name):
+-		return _pyade.simulProp(_pyade.simulPropDict()[name])
+-
+-class Interactions:
+-	&quot;Class accessing individual interactions, either persistent or transient (based on constructor parameter).&quot;
+-	def __len__(self): return [S.nPersistent,S.nTransient][isTransient]
+-	def __init__(self, _isTransient):
+-		self.isTransient=_isTransient
+-	class _iterator:
+-		def __init__(self,_isTransient): self.index=0
+-		def next(self):
+-			if self.index&gt;=[S.nPersistent,S.nTransient][_isTransient]: raise StopIteration
+-			self.index+=1
+-			return self.interNo(self.index)
+-			# tricky; need to call that with parameters; like self.interactionNo(n)-&gt;(id1,id2)
+-			#return B[self.index].
+-	def interNo(n): return self[_pyade.interNo(n,self.isTransient)]
+-	def __getitem__(self,id):
+-		if type(id)==tuple:
+-			#if len(id)==2: return Interactions.Interaction(id[0],id[1],self.isTransient)
+-			if len(id)==2: return self.Interaction(id[0],id[1],self.isTransient)
+-			else: raise ValueError(&quot;Interaction must be determined by 2 ids&quot;)
+-		if type(id)==int:
+-			inter=[Ip,It][self.isTransient]
+-			return [x for x in inter if x.id1==id or x.id2==id] # th
+-	class Interaction:
+-		def __init__(self, id1, id2): self._id1,self._id2,self._isTransient=id1,id2,self.isTransient
+-		def __getattr__(self,name):
+-			if name=='foo': return Vector(1,2,3)
+-			#elif ...
+-			else: return _pyade.interProp(self._id1,self._id2,_pyade.interPropDict()[name])
+-
+-
+-
+-
+-
+-
+-
+-# instances
+-B=Bodies()
+-S=Simul()
+-
+-# testing stuff
+-if __name__=='__main__':
+-		print B[0].m,B[0].I
+-		print B[2].x, B[2].r
+-		print S.nBodies
+-		for a in [(bb.m,bb.id) for bb in B if bb.id&gt;50 and bb.id%2==0]: print a[0],a[1]
+
+Deleted: trunk/extra/clump/pyadeDummy.py
+===================================================================
+--- trunk/extra/clump/pyadeDummy.py	2008-07-08 21:20:02 UTC (rev 1417)
++++ trunk/extra/clump/pyadeDummy.py	2008-07-09 20:59:35 UTC (rev 1418)
+@@ -1,9 +0,0 @@
+-from __main__ import Vector,Quaternion
+-
+-def bodyPropDict(): return {'id':0,'clumpId':1,'x':2,'r':3,'v':4,'w':5,'m':6,'I':7,'isClump':8,'isClumpMember':9,'isStandalone':10}
+-def simulPropDict(): return {'t':0,'dt':1,'i':2,'file':3,'nBodies':4,'sel':5}
+-def bodyProp(id,p):
+-	#return {0:id,1:3,2:(2.,2.,2.),3:(3.,0.,0.,0.),4:(4.,4.,4.),5:5.,6:(6.,6.,6.),7:0,8:1,9:0,10:0}[p]
+-	return {0:id,1:3,2:Vector(2.,2.,2.),3:Quaternion(3.,0.,0.,0.),4:Vector(4.,4.,4.),5:5.,6:Vector(6.,6.,6.),7:0,8:1,9:0,10:0}[p]
+-def simulProp(p):
+-	return {0:55.5,1:2.44e-4,2:13452,3:'simulation.xml',4:64}[p]
+
+Modified: trunk/pkg/common/Engine/StandAloneEngine/PeriodicEngines.hpp
+===================================================================
+--- trunk/pkg/common/Engine/StandAloneEngine/PeriodicEngines.hpp	2008-07-08 21:20:02 UTC (rev 1417)
++++ trunk/pkg/common/Engine/StandAloneEngine/PeriodicEngines.hpp	2008-07-09 20:59:35 UTC (rev 1418)
+@@ -7,7 +7,7 @@
+ /* run an action with given fixed periodicity (real time, virtual time, iteration number), by setting any of 
+  * those criteria to a number &gt; 0. */
+ class PeriodicEngine:  public StandAloneEngine {
+-	private:
++	protected:
+ 		Real getClock(){ timeval tp; gettimeofday(&amp;tp,NULL); return tp.tv_sec+tp.tv_usec/1e6; }
+ 	public:
+ 		Real virtPeriod, virtLast, realPeriod, realLast; long iterPeriod,iterLast;
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/ElasticCriterionTimeStepper.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/ElasticCriterionTimeStepper.cpp	2008-07-08 21:20:02 UTC (rev 1417)
++++ trunk/pkg/dem/Engine/StandAloneEngine/ElasticCriterionTimeStepper.cpp	2008-07-09 20:59:35 UTC (rev 1418)
+@@ -110,19 +110,20 @@
+ void ElasticCriterionTimeStepper::computeTimeStep(MetaBody* ncb)
+ {
+ 	shared_ptr&lt;BodyContainer&gt;&amp; bodies = ncb-&gt;bodies;
+-	shared_ptr&lt;InteractionContainer&gt;&amp; persistentInteractions = ncb-&gt;persistentInteractions;
+ 	shared_ptr&lt;InteractionContainer&gt;&amp; transientInteractions = ncb-&gt;transientInteractions;
+ 
+ 	newDt = Mathr::MAX_REAL;
+ 	computedSomething = false; // this flag is to avoid setting timestep to MAX_REAL :)
+-
++#if 0
++	shared_ptr&lt;InteractionContainer&gt;&amp; persistentInteractions = ncb-&gt;persistentInteractions;
+ 	InteractionContainer::iterator ii    = persistentInteractions-&gt;begin();
+ 	InteractionContainer::iterator iiEnd = persistentInteractions-&gt;end();
+ 	for(  ; ii!=iiEnd ; ++ii )
+ 		findTimeStepFromInteraction(*ii , bodies);
++#endif 
+ 
+-	ii    = transientInteractions-&gt;begin();
+-	iiEnd = transientInteractions-&gt;end();
++	InteractionContainer::iterator ii    = transientInteractions-&gt;begin();
++	InteractionContainer::iterator iiEnd = transientInteractions-&gt;end();
+ 	for(  ; ii!=iiEnd ; ++ii )
+ 		findTimeStepFromInteraction(*ii , bodies);
+ 
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/SQLiteRecorder.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/SQLiteRecorder.cpp	2008-07-08 21:20:02 UTC (rev 1417)
++++ trunk/pkg/dem/Engine/StandAloneEngine/SQLiteRecorder.cpp	2008-07-09 20:59:35 UTC (rev 1418)
+@@ -4,42 +4,65 @@
+ using namespace boost;
+ CREATE_LOGGER(SQLiteRecorder);
+ 
++/*
++
++Database structure:
++	meta: saved simulation, perhaps some metadata
++	records:	one row per saved state
++	bodies_iter_#: per-body rows
++	interactions_iter_#: per-interaction rows [NOT&#160;IMPLEMENTED]
++
++TODO: set types on columns (doubles, strings etc)
++
++*/
++
+ void SQLiteRecorder::init(MetaBody* rootBody){
+-	//sqlite3_open(dbFile.c_str(),&amp;db);
+-	//LOG_DEBUG(&quot;Created db &quot;&lt;&lt;dbFile);
+-	// create supertable: TODO
++	con=shared_ptr&lt;sqlite3x::sqlite3_connection&gt;(new sqlite3x::sqlite3_connection(dbFile));
++	LOG_DEBUG(&quot;Opened db &quot;&lt;&lt;dbFile);
++	con-&gt;executenonquery(&quot;PRAGMA synchronous = OFF&quot;);
++	// create supertable (only if the db is empty)
++	if(0==con-&gt;executeint(&quot;select count(*) from sqlite_master where name='meta';&quot;)){
++		ostringstream out;
++		LOG_DEBUG(&quot;Saving simulation to stream&quot;);
++		Omega::instance().saveSimulationToStream(out);
++		con-&gt;executenonquery(&quot;create table meta (simulationXML)&quot;);
++		LOG_DEBUG(&quot;Inserting simulation XML into the table 'meta'&quot;);
++		{ sqlite3x::sqlite3_command cmd(*con,&quot;insert into meta values (?)&quot;); cmd.bind(1,out.str()); cmd.executenonquery(); }
++		assert(con-&gt;executeint(&quot;select count(*) from sqlite_master where name='records';&quot;)==0);
++		con-&gt;executenonquery(&quot;create table records (iter INTEGER, realTime FLOAT, virtTime FLOAT, wallClock FLOAT, bodyTable STRING, interactionTable STRING);&quot;);
++	}
+ }
+ 
+-
+ void SQLiteRecorder::action(MetaBody* rootBody){
+-	//if(!db) init(rootBody);
++	if(!con) init(rootBody);
+ 	vector&lt;bool&gt; recActive(REC_SENTINEL,false);
+ 	FOREACH(string&amp; rec, recorders){
+ 		if(rec==&quot;se3&quot;) recActive[REC_SE3]=true;
+ 		else if(rec==&quot;rgb&quot;) recActive[REC_RGB]=true;
+ 		else LOG_ERROR(&quot;Unknown recorder named `&quot;&lt;&lt;rec&lt;&lt;&quot;' (supported are: se3, rgb). Ignored.&quot;);
+ 	}
+-	// init db
+-	sqlite3x::sqlite3_connection con(dbFile);	
+-	con.executenonquery(&quot;PRAGMA synchronous = OFF&quot;);
+ 
+ 	// create table
+ 	string perBodyTable=&quot;bodies_iter_&quot;+lexical_cast&lt;string&gt;(Omega::instance().getCurrentIteration());
+-	assert(0==con.executeint(&quot;select count(*) from sqlite_master where name='&quot;+perBodyTable+&quot;';&quot;)); // table shouldn't exist yet
+-	vector&lt;string&gt; columns; columns.push_back(&quot;id&quot;);
+-	if(recActive[REC_SE3]){columns.push_back(&quot;se3_x&quot;); columns.push_back(&quot;se3_y&quot;); columns.push_back(&quot;se3_z&quot;); columns.push_back(&quot;se3_ori0&quot;); columns.push_back(&quot;se3_ori1&quot;); columns.push_back(&quot;se3_ori2&quot;); columns.push_back(&quot;se3_ori3&quot;);}
+-	if(recActive[REC_RGB]){	columns.push_back(&quot;rgb_r&quot;); columns.push_back(&quot;rgb_g&quot;); columns.push_back(&quot;rgb_b&quot;);}
+-	con.executenonquery(&quot;create table &quot;+perBodyTable+&quot; (&quot;+algorithm::join(columns,&quot;,&quot;)+&quot;);&quot;);
++	assert(0==con-&gt;executeint(&quot;select count(*) from sqlite_master where name='&quot;+perBodyTable+&quot;';&quot;)); // table shouldn't exist yet
++	vector&lt;string&gt; columns; columns.push_back(&quot;id INTEGER&quot;);
++	if(recActive[REC_SE3]){columns.push_back(&quot;se3_x FLOAT&quot;); columns.push_back(&quot;se3_y FLOAT&quot;); columns.push_back(&quot;se3_z FLOAT&quot;); columns.push_back(&quot;se3_ori0 FLOAT&quot;); columns.push_back(&quot;se3_ori1 FLOAT&quot;); columns.push_back(&quot;se3_ori2 FLOAT&quot;); columns.push_back(&quot;se3_ori3 FLOAT&quot;);}
++	if(recActive[REC_RGB]){	columns.push_back(&quot;rgb_r FLOAT&quot;); columns.push_back(&quot;rgb_g FLOAT&quot;); columns.push_back(&quot;rgb_b FLOAT&quot;);}
++
++	// create record table with the right number of columns
++	con-&gt;executenonquery(&quot;create table &quot;+perBodyTable+&quot; (&quot;+algorithm::join(columns,&quot;,&quot;)+&quot;);&quot;);
+ 	LOG_DEBUG(&quot;Created table &quot;&lt;&lt;perBodyTable&lt;&lt;&quot; with columns &quot;&lt;&lt;algorithm::join(columns,&quot;,&quot;));
+-	// add table metadata to supertable
+-	// TODO
++
++	// add table to the records table
++	{	sqlite3x::sqlite3_command cmd(*con,&quot;insert into records values (?,?,?,?,?,?);&quot;); cmd.bind(1,(sqlite3x::int64_t)Omega::instance().getCurrentIteration()); cmd.bind(2,Omega::instance().getComputationTime()); cmd.bind(3,Omega::instance().getSimulationTime()); cmd.bind(4,PeriodicEngine::getClock()); cmd.bind(5,perBodyTable); cmd.bind(6,&quot;&quot;); cmd.executenonquery(); }
++
+ 	// loop over bodies
+-	sqlite3x::sqlite3_transaction transaction(con);
++	sqlite3x::sqlite3_transaction transaction(*con);
+ 	{
+-		sqlite3x::sqlite3_command cmd(con,&quot;insert into &quot;+perBodyTable+&quot; values(&quot;+algorithm::join(vector&lt;string&gt;(columns.size(),&quot;?&quot;),&quot;,&quot;)+&quot;);&quot;);
++		sqlite3x::sqlite3_command cmd(*con,&quot;insert into &quot;+perBodyTable+&quot; values (&quot;+algorithm::join(vector&lt;string&gt;(columns.size(),&quot;?&quot;),&quot;,&quot;)+&quot;);&quot;);
+ 		FOREACH(const shared_ptr&lt;Body&gt;&amp; b, *rootBody-&gt;bodies){
+ 			// placeholders are 1-based (!!!)
+-			int field=1; cmd.bind(field++,b-&gt;getId());
++			size_t field=1; cmd.bind(field++,b-&gt;getId());
+ 			if(recActive[REC_SE3]){
+ 				const Se3r&amp; se3=b-&gt;physicalParameters-&gt;se3;
+ 				cmd.bind(field++,se3.position[0]); cmd.bind(field++,se3.position[1]); cmd.bind(field++,se3.position[2]);
+@@ -49,11 +72,10 @@
+ 				const Vector3r&amp; color=b-&gt;geometricalModel-&gt;diffuseColor;
+ 				cmd.bind(field++,color[0]); cmd.bind(field++,color[1]); cmd.bind(field++,color[2]);
+ 			}
+-			assert(field-1==(int)columns.size());
++			assert(field-1==columns.size());
+ 			cmd.executenonquery();
+ 		}
+ 	}
+ 	transaction.commit();
+-	con.close();
+ }
+ 
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/SQLiteRecorder.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/SQLiteRecorder.hpp	2008-07-08 21:20:02 UTC (rev 1417)
++++ trunk/pkg/dem/Engine/StandAloneEngine/SQLiteRecorder.hpp	2008-07-09 20:59:35 UTC (rev 1418)
+@@ -4,12 +4,13 @@
+ #include&lt;yade/lib-sqlite3x/sqlite3x.hpp&gt;
+ 
+ class SQLiteRecorder: public PeriodicEngine {
+-		sqlite3* db;
++		shared_ptr&lt;sqlite3x::sqlite3_connection&gt; con;
+ 	public:
+ 		enum {REC_SE3=0,REC_RGB,REC_SENTINEL};
+ 		vector&lt;string&gt; recorders;
+ 		string dbFile;
+-		SQLiteRecorder(): db(NULL) {};
++		SQLiteRecorder() {};
++		~SQLiteRecorder(){ if(con) con-&gt;close(); }
+ 		void init(MetaBody*);
+ 		virtual void registerAttributes(){
+ 			PeriodicEngine::registerAttributes();
+
+Modified: trunk/pkg/dem/PreProcessor/CohesiveTriaxialTest.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/CohesiveTriaxialTest.cpp	2008-07-08 21:20:02 UTC (rev 1417)
++++ trunk/pkg/dem/PreProcessor/CohesiveTriaxialTest.cpp	2008-07-09 20:59:35 UTC (rev 1418)
+@@ -259,7 +259,6 @@
+ 
+ // 	rootBody-&gt;persistentInteractions	= shared_ptr&lt;InteractionContainer&gt;(new InteractionVecSet);
+ // 	rootBody-&gt;transientInteractions		= shared_ptr&lt;InteractionContainer&gt;(new InteractionVecSet);
+-	rootBody-&gt;persistentInteractions	= shared_ptr&lt;InteractionContainer&gt;(new InteractionHashMap);
+ 	rootBody-&gt;transientInteractions		= shared_ptr&lt;InteractionContainer&gt;(new InteractionHashMap);
+ 	rootBody-&gt;physicalActions		= shared_ptr&lt;PhysicalActionContainer&gt;(new PhysicalActionVectorVector);
+ 	rootBody-&gt;bodies 			= shared_ptr&lt;BodyContainer&gt;(new BodyRedirectionVector);
+
+Modified: trunk/pkg/dem/PreProcessor/DirectShearCis.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/DirectShearCis.cpp	2008-07-08 21:20:02 UTC (rev 1417)
++++ trunk/pkg/dem/PreProcessor/DirectShearCis.cpp	2008-07-09 20:59:35 UTC (rev 1418)
+@@ -149,7 +149,6 @@
+ 
+ // Container
+ 	
+-	rootBody-&gt;persistentInteractions	= shared_ptr&lt;InteractionContainer&gt;(new InteractionVecSet);
+ 	rootBody-&gt;transientInteractions		= shared_ptr&lt;InteractionContainer&gt;(new InteractionVecSet);
+ 	rootBody-&gt;physicalActions		= shared_ptr&lt;PhysicalActionContainer&gt;(new PhysicalActionVectorVector);
+ 	rootBody-&gt;bodies 			= shared_ptr&lt;BodyContainer&gt;(new BodyRedirectionVector);
+
+Modified: trunk/pkg/dem/PreProcessor/Funnel.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/Funnel.cpp	2008-07-08 21:20:02 UTC (rev 1417)
++++ trunk/pkg/dem/PreProcessor/Funnel.cpp	2008-07-09 20:59:35 UTC (rev 1418)
+@@ -109,7 +109,6 @@
+ ////////////////////////////////////
+ ///////// Container
+ 	
+-	rootBody-&gt;persistentInteractions	= shared_ptr&lt;InteractionContainer&gt;(new InteractionVecSet);
+ 	rootBody-&gt;transientInteractions		= shared_ptr&lt;InteractionContainer&gt;(new InteractionVecSet);
+ 	rootBody-&gt;physicalActions		= shared_ptr&lt;PhysicalActionContainer&gt;(new PhysicalActionVectorVector);
+ 	rootBody-&gt;bodies 			= shared_ptr&lt;BodyContainer&gt;(new BodyRedirectionVector);
+
+Modified: trunk/pkg/dem/PreProcessor/HydraulicTest.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/HydraulicTest.cpp	2008-07-08 21:20:02 UTC (rev 1417)
++++ trunk/pkg/dem/PreProcessor/HydraulicTest.cpp	2008-07-09 20:59:35 UTC (rev 1418)
+@@ -99,7 +99,6 @@
+ 
+ ////////////////////////////////////
+ 
+-	rootBody-&gt;persistentInteractions = shared_ptr&lt;InteractionContainer&gt; ( new InteractionVecSet );
+ 	rootBody-&gt;transientInteractions  = shared_ptr&lt;InteractionContainer&gt; ( new InteractionVecSet );
+ 	rootBody-&gt;physicalActions  = shared_ptr&lt;PhysicalActionContainer&gt; ( new PhysicalActionVectorVector );
+ 	rootBody-&gt;bodies    = shared_ptr&lt;BodyContainer&gt; ( new BodyRedirectionVector );
+
+Modified: trunk/pkg/dem/PreProcessor/SDECImpactTest.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/SDECImpactTest.cpp	2008-07-08 21:20:02 UTC (rev 1417)
++++ trunk/pkg/dem/PreProcessor/SDECImpactTest.cpp	2008-07-09 20:59:35 UTC (rev 1418)
+@@ -195,7 +195,6 @@
+ 	createActors(rootBody);
+ 	positionRootBody(rootBody);
+ 
+-	rootBody-&gt;persistentInteractions	= shared_ptr&lt;InteractionContainer&gt;(new InteractionVecSet);
+ 	rootBody-&gt;transientInteractions		= shared_ptr&lt;InteractionContainer&gt;(new InteractionVecSet);
+ 	rootBody-&gt;physicalActions		= shared_ptr&lt;PhysicalActionContainer&gt;(new PhysicalActionVectorVector);
+ 	rootBody-&gt;bodies 			= shared_ptr&lt;BodyContainer&gt;(new BodyRedirectionVector);
+
+Modified: trunk/pkg/dem/PreProcessor/SDECMovingWall.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/SDECMovingWall.cpp	2008-07-08 21:20:02 UTC (rev 1417)
++++ trunk/pkg/dem/PreProcessor/SDECMovingWall.cpp	2008-07-09 20:59:35 UTC (rev 1418)
+@@ -147,7 +147,6 @@
+ ////////////////////////////////////
+ ///////// Container
+ 	
+-	rootBody-&gt;persistentInteractions	= shared_ptr&lt;InteractionContainer&gt;(new InteractionVecSet);
+ 	rootBody-&gt;transientInteractions		= shared_ptr&lt;InteractionContainer&gt;(new InteractionVecSet);
+ 	rootBody-&gt;physicalActions		= shared_ptr&lt;PhysicalActionContainer&gt;(new PhysicalActionVectorVector);
+ 	rootBody-&gt;bodies 			= shared_ptr&lt;BodyContainer&gt;(new BodyRedirectionVector);
+
+Modified: trunk/pkg/dem/PreProcessor/SDECSpheresPlane.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/SDECSpheresPlane.cpp	2008-07-08 21:20:02 UTC (rev 1417)
++++ trunk/pkg/dem/PreProcessor/SDECSpheresPlane.cpp	2008-07-09 20:59:35 UTC (rev 1418)
+@@ -118,7 +118,6 @@
+ ////////////////////////////////////
+ ///////// Container
+ 	
+-	rootBody-&gt;persistentInteractions	= shared_ptr&lt;InteractionContainer&gt;(new InteractionVecSet);
+ 	rootBody-&gt;transientInteractions		= shared_ptr&lt;InteractionContainer&gt;(new InteractionVecSet);
+ 	rootBody-&gt;physicalActions		= shared_ptr&lt;PhysicalActionContainer&gt;(new PhysicalActionVectorVector);
+ 	rootBody-&gt;bodies 			= shared_ptr&lt;BodyContainer&gt;(new BodyRedirectionVector);
+
+Modified: trunk/pkg/dem/PreProcessor/STLImporterTest.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/STLImporterTest.cpp	2008-07-08 21:20:02 UTC (rev 1417)
++++ trunk/pkg/dem/PreProcessor/STLImporterTest.cpp	2008-07-09 20:59:35 UTC (rev 1418)
+@@ -111,7 +111,6 @@
+ ////////////////////////////////////
+ ///////// Container
+ 	
+-	rootBody-&gt;persistentInteractions	= shared_ptr&lt;InteractionContainer&gt;(new InteractionVecSet);
+ 	rootBody-&gt;transientInteractions		= shared_ptr&lt;InteractionContainer&gt;(new InteractionVecSet);
+ 	rootBody-&gt;physicalActions		= shared_ptr&lt;PhysicalActionContainer&gt;(new PhysicalActionVectorVector);
+ 	rootBody-&gt;bodies 			= shared_ptr&lt;BodyContainer&gt;(new BodyRedirectionVector);
+
+Modified: trunk/pkg/dem/PreProcessor/TriaxialTest.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/TriaxialTest.cpp	2008-07-08 21:20:02 UTC (rev 1417)
++++ trunk/pkg/dem/PreProcessor/TriaxialTest.cpp	2008-07-09 20:59:35 UTC (rev 1418)
+@@ -256,9 +256,6 @@
+ 	createActors(rootBody);
+ 	positionRootBody(rootBody);
+ 
+-// 	rootBody-&gt;persistentInteractions	= shared_ptr&lt;InteractionContainer&gt;(new InteractionVecSet);
+-// 	rootBody-&gt;transientInteractions		= shared_ptr&lt;InteractionContainer&gt;(new InteractionVecSet);
+-	rootBody-&gt;persistentInteractions	= shared_ptr&lt;InteractionContainer&gt;(new InteractionHashMap);
+ 	rootBody-&gt;transientInteractions		= shared_ptr&lt;InteractionContainer&gt;(new InteractionHashMap);
+ 	rootBody-&gt;physicalActions		= shared_ptr&lt;PhysicalActionContainer&gt;(new PhysicalActionVectorVector);
+ 	rootBody-&gt;bodies 			= shared_ptr&lt;BodyContainer&gt;(new BodyRedirectionVector);
+
+Modified: trunk/pkg/dem/PreProcessor/TriaxialTestWater.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/TriaxialTestWater.cpp	2008-07-08 21:20:02 UTC (rev 1417)
++++ trunk/pkg/dem/PreProcessor/TriaxialTestWater.cpp	2008-07-09 20:59:35 UTC (rev 1418)
+@@ -230,8 +230,6 @@
+ 	createActors(rootBody);
+ 	positionRootBody(rootBody);
+ 
+-	rootBody-&gt;persistentInteractions = 
+-	shared_ptr&lt;InteractionContainer&gt;(new InteractionHashMap);
+ 	rootBody-&gt;transientInteractions		=
+ 	shared_ptr&lt;InteractionContainer&gt;(new InteractionHashMap);
+ 	rootBody-&gt;physicalActions		= shared_ptr&lt;PhysicalActionContainer&gt;(new PhysicalActionVectorVector);
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000377.html">[Yade-commits] r1417 - trunk/core
+</A></li>
+	<LI>Next message: <A HREF="000379.html">[Yade-commits] r1419 - in trunk: core gui/qt3 pkg/common	pkg/common/Engine pkg/common/Engine/DeusExMachina	pkg/common/Engine/FiltrEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#378">[ date ]</a>
+              <a href="thread.html#378">[ thread ]</a>
+              <a href="subject.html#378">[ subject ]</a>
+              <a href="author.html#378">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

@@ -1,0 +1,411 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1389 - in trunk: extra extra/usct gui/py gui/qt3	pkg/common/Engine/StandAloneEngine scripts
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1389%20-%20in%20trunk%3A%20extra%20extra/usct%20gui/py%20gui/qt3%0A%09pkg/common/Engine/StandAloneEngine%20scripts&In-Reply-To=%3C200806170715.m5H7FV9o016056%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000349.html">
+   <LINK REL="Next"  HREF="000351.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1389 - in trunk: extra extra/usct gui/py gui/qt3	pkg/common/Engine/StandAloneEngine scripts</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1389%20-%20in%20trunk%3A%20extra%20extra/usct%20gui/py%20gui/qt3%0A%09pkg/common/Engine/StandAloneEngine%20scripts&In-Reply-To=%3C200806170715.m5H7FV9o016056%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1389 - in trunk: extra extra/usct gui/py gui/qt3	pkg/common/Engine/StandAloneEngine scripts">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Tue Jun 17 09:15:31 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000349.html">[Yade-commits] r1388 -	branches/przewdnik/pkg/common/Engine/StandAloneEngine/Visualisation
+</A></li>
+        <LI>Next message: <A HREF="000351.html">[Yade-commits] r1390 - in trunk: . core extra gui/py lib/import	lib/miniWm3 pkg/dem/Engine/DeusExMachina
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#350">[ date ]</a>
+              <a href="thread.html#350">[ thread ]</a>
+              <a href="subject.html#350">[ subject ]</a>
+              <a href="author.html#350">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2008-06-17 09:15:29 +0200 (Tue, 17 Jun 2008)
+New Revision: 1389
+
+Modified:
+   trunk/extra/Brefcom.cpp
+   trunk/extra/Brefcom.hpp
+   trunk/extra/usct/UniaxialStrainControlledTest.cpp
+   trunk/extra/usct/UniaxialStrainControlledTest.hpp
+   trunk/gui/py/utils.py
+   trunk/gui/qt3/SimulationController.cpp
+   trunk/gui/qt3/YadeQtMainWindow.cpp
+   trunk/pkg/common/Engine/StandAloneEngine/PersistentSAPCollider.cpp
+   trunk/pkg/common/Engine/StandAloneEngine/PersistentSAPCollider.hpp
+   trunk/scripts/simple-scene.py
+Log:
+Small fixes here and there. Merged from <A HREF="https://code.launchpad.net/~yade-team/yade/t2.">https://code.launchpad.net/~yade-team/yade/t2.</A> All changes here:
+
+    * Revert changes to running scripts from ipython itself due to namespace problems.
+    * cleanups of ipython startup code. Doesn't work, though.
+    * Run scripts and simulations inside ipython; that gives traceback in case of exception (like SyntaxError) instead of crash
+    * Attempt to close the main window cleanly if hidden and exiting via ^D (doesn't work fully?)
+    1. Add forgotten files.
+    2. Fix bug dt dropping to zero if decreasing mantissa from 1 to &quot;0&quot; in the gui.
+    1. Fix brefcom default values
+    2. Calculate forces more frequently in USCT
+    3. Hide main window is controller exists
+    4. Pass MetaBody* as 2nd optional argument to Body::byId to avoid frequent Omega::instance() calls in the collider
+
+
+
+Modified: trunk/extra/Brefcom.cpp
+===================================================================
+--- trunk/extra/Brefcom.cpp	2008-06-16 16:24:08 UTC (rev 1388)
++++ trunk/extra/Brefcom.cpp	2008-06-17 07:15:29 UTC (rev 1389)
+@@ -29,6 +29,7 @@
+ 		interaction-&gt;isNew; // just in case
+ 		//TRACE;
+ 
++
+ 		const shared_ptr&lt;BodyMacroParameters&gt;&amp; elast1=static_pointer_cast&lt;BodyMacroParameters&gt;(pp1);
+ 		const shared_ptr&lt;BodyMacroParameters&gt;&amp; elast2=static_pointer_cast&lt;BodyMacroParameters&gt;(pp2);
+ 
+@@ -37,11 +38,13 @@
+ 		Real S12=Mathr::PI*pow(min(contGeom-&gt;radius1,contGeom-&gt;radius2),2); // &quot;surface&quot; of interaction
+ 		//Real d0=contGeom-&gt;radius1 + contGeom-&gt;radius2; // equilibrium distace is &quot;just touching&quot;
+ 		Real d0=(elast1-&gt;se3.position-elast2-&gt;se3.position).Length(); // equilibrium distance is the initial contact distance
+-		Real E=(E12 /* was here for Kn:  *S12/d0  */)*((1+alpha)/(beta*(1+nu12)+gamma*(1-alpha*nu12)));
++		// Real E=(E12 /* was here for Kn:  *S12/d0  */)*((1+alpha)/(beta*(1+nu12)+gamma*(1-alpha*nu12)));
++		Real E=E12; // apply alpha, beta, gamma: garbage values of E !?
+ 
+ 		/* recommend default values for parameters
+-		 * propose ways to determine them exactly
+-		 * */
++		 * propose ways to determine them exactly */
++		assert(!isnan(expBending)); assert(!isnan(sigmaT)); assert(!isnan(xiShear));
++
+ 		shared_ptr&lt;BrefcomContact&gt; contPhys(new BrefcomContact(
+ 			/* E */ E,
+ 			/* G */ E/2*(1+nu12), //FIXME: apply apha, beta, gamma coefficients here as well?! // !!!*(1-alpha*nu12)/(1+nu12),
+@@ -189,6 +192,9 @@
+ 		Real&amp; epsN(BC-&gt;epsN); Vector3r&amp; epsT(BC-&gt;epsT); Real&amp; kappaD(BC-&gt;kappaD); const Real&amp; equilibriumDist(BC-&gt;equilibriumDist); const Real&amp; xiShear(BC-&gt;xiShear); const Real&amp; E(BC-&gt;E); const Real&amp; undamagedCohesion(BC-&gt;undamagedCohesion); const Real&amp; tanFrictionAngle(BC-&gt;tanFrictionAngle); const Real&amp; G(BC-&gt;G); const Real&amp; crossSection(BC-&gt;crossSection); Real&amp; omega(BC-&gt;omega); Real&amp; sigmaN(BC-&gt;sigmaN); 
+ 
+ 		Real dist=(rbp1-&gt;se3.position-rbp2-&gt;se3.position).Length();
++		#define NNAN(a) assert(!isnan(a));
++		assert(equilibriumDist&gt;0);
++		NNAN(dist);
+ 
+ 		/*LOG_DEBUG(&quot; ============= ITERATION&#160;&quot;&lt;&lt;Omega::instance().getCurrentIteration()&lt;&lt;&quot; ================&quot;);
+ 		TRVAR4(epsN,epsT,kappaD,equilibriumDist);
+@@ -201,25 +207,28 @@
+ 
+ 		/* normal strain */
+ 		epsN=(dist-equilibriumDist)/equilibriumDist;
++		NNAN(epsN);
+ 
+ 		// /* TODO: recover non-cohesive contact deletion: */
+ 		if(!BC-&gt;isCohesive &amp;&amp; epsN&gt;0.){ /* delete this interaction later */ /* (*I)-&gt;isReal=false; */ continue; }
+ 
+ 		/* shear strain: always use it, even for epsN&gt;0 */
+ 		/*if(false &amp;&amp; epsN&gt;0) { epsT=Vector3r::ZERO; } else {*/
+-
++				NNAN(epsT[0]); NNAN(epsT[1]);	NNAN(epsT[2]);
+ 			/* rotate epsT to the new contact plane */
+ 				const Real&amp; dt=Omega::instance().getTimeStep();
+ 				// rotation of the contact normal
+ 				//TRVAR2(epsT,BC-&gt;prevNormal.Cross(contGeom-&gt;normal));
+ 				//TRVAR1((BC-&gt;prevNormal.Cross(contGeom-&gt;normal)).Cross(epsT));
+ 				epsT+=(BC-&gt;prevNormal.Cross(contGeom-&gt;normal)).Cross(epsT);
++				NNAN(epsT[0]); NNAN(epsT[1]);	NNAN(epsT[2]);
+ 				
+ 				// mutual rotation
+ 				Real angle=dt*.5*contGeom-&gt;normal.Dot(rbp1-&gt;angularVelocity+rbp2-&gt;angularVelocity); /*assumes equal radii */
+ 				//TRVAR1(dt*.5*contGeom-&gt;normal.Dot(rbp1-&gt;angularVelocity+rbp2-&gt;angularVelocity));
+ 				//TRVAR1(epsT.Cross(angle*contGeom-&gt;normal));
+ 				epsT+=(angle*contGeom-&gt;normal).Cross(epsT);
++				NNAN(epsT[0]); NNAN(epsT[1]);	NNAN(epsT[2]);
+ 
+ 			/* calculate tangential strain increment */
+ 				Vector3r AtoC(contGeom-&gt;contactPoint-rbp1-&gt;se3.position), BtoC(contGeom-&gt;contactPoint-rbp2-&gt;se3.position);
+@@ -231,6 +240,7 @@
+ 				//TRVAR2(AtoC,BtoC);
+ 				//TRVAR3(relVelocity,tangentialDisplacement,tangentialDisplacement/dist);
+ 			epsT+=tangentialDisplacement/dist;
++				NNAN(epsT[0]); NNAN(epsT[1]);	NNAN(epsT[2]);
+ 			/* artificially remove residuum in the normal direction */
+ 			//epsT-=contGeom-&gt;normal*epsT.Dot(contGeom-&gt;normal);
+ 			//TRVAR1(epsT.Dot(contGeom-&gt;normal));
+@@ -249,6 +259,11 @@
+ 		//if(BC-&gt;omega==1){TRVAR5(equilibriumDist,dist,epsN,kappaD,BC-&gt;epsFracture);}
+ 
+ 		// store Fn (and Fs?), for use with BrefcomStiffnessCounter
++		NNAN(sigmaN);
++		NNAN(sigmaT[0]);
++		NNAN(sigmaT[1]);
++		NNAN(sigmaT[2]);
++		NNAN(crossSection);
+ 		Fn=sigmaN*crossSection;
+ 		//TRVAR5(epsN,epsT,sigmaN,sigmaT,crossSection*(contGeom-&gt;normal*sigmaN + sigmaT));
+ 		applyForce(crossSection*(contGeom-&gt;normal*sigmaN + sigmaT)); /* this is the force applied on the _first_ body */
+
+Modified: trunk/extra/Brefcom.hpp
+===================================================================
+--- trunk/extra/Brefcom.hpp	2008-06-16 16:24:08 UTC (rev 1388)
++++ trunk/extra/Brefcom.hpp	2008-06-17 07:15:29 UTC (rev 1389)
+@@ -147,15 +147,19 @@
+ 		 * which would define just those in addition to the elastic ones.
+ 		 * This might be done later, for now hardcode that here. */
+ 		/* uniaxial traction resistance, uniaxial compression resistance, fracture energy, strain at complete fracture (calibrated in the constructor), bending parameter of the damage evolution law */
+-		Real sigmaT, sigmaC, /* Griffith's fracture energy */ Gf, expBending, xiShear;
++		Real sigmaT, /* sigmaC: unused */ /* Griffith's fracture energy: */ Gf, expBending, xiShear;
+ 		//! Should new contacts be cohesive? They will before this iter#, they will not be afterwards. If 0, they will never be. If negative, they will always be created as cohesive.
+ 		long cohesiveThresholdIter;
+ 
+ 		BrefcomMakeContact(){
+-			alpha=3.7; beta=2.198; gamma=3.79; sigmaC=30e6; sigmaT=sigmaC/10.;
+-			expBending=4; /* positive: concave function */
++			// init to signaling_NaN to force crash if not initialized (better than unknowingly using garbage values)
++			alpha=beta=gamma=sigmaT=Gf=expBending=xiShear=std::numeric_limits&lt;Real&gt;::signaling_NaN();
++			/* alpha=3.7; beta=2.198; gamma=3.79; sigmaC=30e6;
++			//sigmaT=sigmaC/10.;
++			expBending=4; // positive: concave function
++			Gf=500; // J/m^2
++			*/
+ 			cohesiveThresholdIter=-1;
+-			Gf=500; /* J/m^2&#160;*/
+ 			#if 0
+ 				/* calibrate epsFracture; WARNING: this is based on the default E value from Shop
+ 				 * and therefore may not match the actual E !! */
+@@ -183,9 +187,9 @@
+ 			//REGISTER_ATTRIBUTE(calibratedEpsFracture);
+ 			REGISTER_ATTRIBUTE(expBending);
+ 			REGISTER_ATTRIBUTE(xiShear);
+-			/* REGISTER_ATTRIBUTE(sigmaT);
+-			REGISTER_ATTRIBUTE(sigmaC);
+-			REGISTER_ATTRIBUTE(Gf); */
++			REGISTER_ATTRIBUTE(sigmaT);
++			// REGISTER_ATTRIBUTE(sigmaC);
++			/* REGISTER_ATTRIBUTE(Gf); */
+ 		}
+ 
+ 		FUNCTOR2D(BodyMacroParameters,BodyMacroParameters);
+
+Modified: trunk/extra/usct/UniaxialStrainControlledTest.cpp
+===================================================================
+--- trunk/extra/usct/UniaxialStrainControlledTest.cpp	2008-06-16 16:24:08 UTC (rev 1388)
++++ trunk/extra/usct/UniaxialStrainControlledTest.cpp	2008-06-17 07:15:29 UTC (rev 1389)
+@@ -31,16 +31,30 @@
+ 	LOG_DEBUG(&quot;Reference particles: positive #&quot;&lt;&lt;posIds[0]&lt;&lt;&quot; at &quot;&lt;&lt;axisCoord(posIds[0])&lt;&lt;&quot;; negative #&quot;&lt;&lt;negIds[0]&lt;&lt;&quot; at &quot;&lt;&lt;axisCoord(negIds[0]));
+ 	LOG_INFO(&quot;Setting initial length to &quot;&lt;&lt;originalLength);
+ 	if(originalLength&lt;=0) LOG_FATAL(&quot;Initial length is negative or zero (swapped reference particles?)! &quot;&lt;&lt;originalLength);
+-	assert(originalLength&gt;0);
+-	
+-	shared_ptr&lt;AABB&gt; rbAABB;
+-	if (Omega::instance().getRootBody()-&gt;boundingVolume &amp;&amp; (rbAABB=dynamic_pointer_cast&lt;AABB&gt;(Omega::instance().getRootBody()-&gt;boundingVolume))){
+-		int axis2=(axis+1)%3, axis3=(axis+2)%3; // perpendicular axes indices
+-		crossSectionArea=4*rbAABB-&gt;halfSize[axis2]*rbAABB-&gt;halfSize[axis3];
+-		LOG_INFO(&quot;Setting crossSectionArea=&quot;&lt;&lt;crossSectionArea&lt;&lt;&quot;, using axes #&quot;&lt;&lt;axis2&lt;&lt;&quot; and #&quot;&lt;&lt;axis3&lt;&lt;&quot;.&quot;);
+-	} else {
+-		crossSectionArea=1.;
+-		LOG_WARN(&quot;No Axis Aligned Bounding Box for rootBody, using garbage value (&quot;&lt;&lt;crossSectionArea&lt;&lt;&quot;) for crossSectionArea!&quot;);
++	/* this happens is nan propagates from e.g. brefcom consitutive law in case 2 bodies have _exactly_ the same position
++	 * (the the normal strain is 0./0.=nan). That is an user's error, however and should not happen. */
++	if(isnan(originalLength)) LOG_FATAL(&quot;Initial length is NaN!&quot;);
++	assert(originalLength&gt;0 &amp;&amp; !isnan(originalLength));
++
++	/* if we have default (&lt;0) crossSectionArea, try to get it from root's AABB;
++	 * this will not work if there are foreign bodies in the simulation (like transStrainSensors),
++	 * in which case you must give the value yourself as engine attribute.
++	 *
++	 * A TODO option is to get crossSectionArea as average area of bounding boxes' of ABBBs
++	 * of posIds and negIds perpendicular to axis. That might be better, except for cases where
++	 * reference particles on either end do not coincide with the specimen cross-section.
++	 *
++	 * */
++	if(crossSectionArea&lt;=0){
++		shared_ptr&lt;AABB&gt; rbAABB;
++		if (Omega::instance().getRootBody()-&gt;boundingVolume &amp;&amp; (rbAABB=dynamic_pointer_cast&lt;AABB&gt;(Omega::instance().getRootBody()-&gt;boundingVolume))){
++			int axis2=(axis+1)%3, axis3=(axis+2)%3; // perpendicular axes indices
++			crossSectionArea=4*rbAABB-&gt;halfSize[axis2]*rbAABB-&gt;halfSize[axis3];
++			LOG_INFO(&quot;Setting crossSectionArea=&quot;&lt;&lt;crossSectionArea&lt;&lt;&quot;, using axes #&quot;&lt;&lt;axis2&lt;&lt;&quot; and #&quot;&lt;&lt;axis3&lt;&lt;&quot;.&quot;);
++		} else {
++			crossSectionArea=1.;
++			LOG_WARN(&quot;No Axis Aligned Bounding Box for rootBody, using garbage value (&quot;&lt;&lt;crossSectionArea&lt;&lt;&quot;) for crossSectionArea!&quot;);
++		}
+ 	}
+ 	assert(crossSectionArea&gt;0);
+ 
+@@ -167,7 +181,7 @@
+ 	// reverse if we're over the limit strain
+ 	if(notYetReversed &amp;&amp; limitStrain!=0 &amp;&amp; ((currentStrainRate&gt;0 &amp;&amp; strain&gt;limitStrain) || (currentStrainRate&lt;0 &amp;&amp; strain&lt;limitStrain))) { currentStrainRate*=-1; notYetReversed=false; LOG_INFO(&quot;Reversed strain rate to &quot;&lt;&lt;currentStrainRate); }
+ 
+-	if(Omega::instance().getCurrentIteration()%50==0 ) {
++	if(Omega::instance().getCurrentIteration()%10==0 ) {
+ 		computeAxialForce(rootBody);
+ 		vector&lt;Real&gt; widths;
+ 		pushTransStrainSensors(rootBody,widths);
+
+Modified: trunk/extra/usct/UniaxialStrainControlledTest.hpp
+===================================================================
+--- trunk/extra/usct/UniaxialStrainControlledTest.hpp	2008-06-16 16:24:08 UTC (rev 1388)
++++ trunk/extra/usct/UniaxialStrainControlledTest.hpp	2008-06-17 07:15:29 UTC (rev 1389)
+@@ -118,7 +118,7 @@
+ 		Real strain, avgStress, avgTransStrain;
+ 
+ 		virtual void applyCondition(MetaBody* rootBody);
+-		UniaxialStrainer(){axis=2; asymmetry=0; currentStrainRate=0; originalLength=-1; limitStrain=0; notYetReversed=true; crossSectionArea=-1; needsInit=true; clumped=false; sensorsPusher=shared_ptr&lt;UniaxialStrainSensorPusher&gt;(); recordFile=&quot;/tmp/usct.data&quot;; };
++		UniaxialStrainer(){axis=2; asymmetry=0; currentStrainRate=0; originalLength=-1; limitStrain=0; notYetReversed=true; crossSectionArea=-1; needsInit=true; clumped=false; sensorsPusher=shared_ptr&lt;UniaxialStrainSensorPusher&gt;(); recordFile=&quot;/tmp/usct.data&quot;; strain=avgStress=avgTransStrain=0; };
+ 		virtual ~UniaxialStrainer(){};
+ 		void registerAttributes(){
+ 			DeusExMachina::registerAttributes();
+
+Modified: trunk/gui/py/utils.py
+===================================================================
+--- trunk/gui/py/utils.py	2008-06-16 16:24:08 UTC (rev 1388)
++++ trunk/gui/py/utils.py	2008-06-17 07:15:29 UTC (rev 1389)
+@@ -13,7 +13,7 @@
+ 	psyco.full()
+ except ImportError: pass
+ 
+-def sphere(center,radius,density=1,young=3e9,poisson=.3,dynamic=True,color=[1,1,1]):
++def sphere(center,radius,density=1,young=30e9,poisson=.3,dynamic=True,color=[1,1,1]):
+ 	&quot;&quot;&quot;Create default sphere, with given parameters. Physical properties such as mass and inertia are calculated automatically.&quot;&quot;&quot;
+ 	s=Body()
+ 	s.shape=GeometricalModel('Sphere',{'radius':radius,'diffuseColor':color})
+@@ -25,7 +25,7 @@
+ 	s['isDynamic']=dynamic
+ 	return s
+ 
+-def box(center,extents,orientation=[1,0,0,0],density=1,young=3e9,poisson=.3,dynamic=True,color=[1,1,1]):
++def box(center,extents,orientation=[1,0,0,0],density=1,young=30e9,poisson=.3,dynamic=True,color=[1,1,1]):
+ 	&quot;&quot;&quot;Create default box (cuboid), with given parameters. Physical properties such as mass and inertia are calculated automatically.&quot;&quot;&quot;
+ 	b=Body()
+ 	b.shape=GeometricalModel('Box',{'extents':extents,'diffuseColor':color})
+@@ -49,7 +49,7 @@
+ 	for b in o.bodies:
+ 		extremes[1]=max(extremes[1],+b.shape['radius']+b.phys['se3'][axis])
+ 		extremes[0]=min(extremes[0],-b.shape['radius']+b.phys['se3'][axis])
+-	print extremes
++	#print extremes
+ 	for b in o.bodies:
+ 		if b.phys['se3'][axis]-b.shape['radius']*distFactor&lt;=extremes[0]: ret[0].append(b.id)
+ 		if b.phys['se3'][axis]+b.shape['radius']*distFactor&gt;=extremes[1]: ret[1].append(b.id)
+
+Modified: trunk/gui/qt3/SimulationController.cpp
+===================================================================
+--- trunk/gui/qt3/SimulationController.cpp	2008-06-16 16:24:08 UTC (rev 1388)
++++ trunk/gui/qt3/SimulationController.cpp	2008-06-17 07:15:29 UTC (rev 1389)
+@@ -75,7 +75,7 @@
+ 	addNewView();
+ 
+ 	// there is file existence assertion in lodSimulationFromFilename, so yade will abort cleanly...
+-	cerr&lt;&lt;&quot;Omega::instance().getSimulationFileName()=&quot;&lt;&lt;Omega::instance().getSimulationFileName()&lt;&lt;endl;
++	LOG_DEBUG(&quot;Omega's simulation filename: `&quot;&lt;&lt;Omega::instance().getSimulationFileName()&lt;&lt;&quot;'&quot;);
+ 	if (Omega::instance().getSimulationFileName()!=&quot;&quot;){
+ 		loadSimulationFromFileName(Omega::instance().getSimulationFileName());
+ 	}
+
+Modified: trunk/gui/qt3/YadeQtMainWindow.cpp
+===================================================================
+--- trunk/gui/qt3/YadeQtMainWindow.cpp	2008-06-16 16:24:08 UTC (rev 1388)
++++ trunk/gui/qt3/YadeQtMainWindow.cpp	2008-06-17 07:15:29 UTC (rev 1389)
+@@ -74,10 +74,10 @@
+ }
+ 
+ void YadeQtMainWindow::timerEvent(QTimerEvent* evt){
+-	// if hidden, GUI operations from within ipython will not work...
+-	#if 0
+-	shared_ptr&lt;MetaBody&gt; rb=Omega::instance().getRootBody();
+-		if((rb &amp;&amp; rb-&gt;bodies-&gt;size()&gt;0) || simulationController) {this-&gt;hide();}
++	#if 1
++	//shared_ptr&lt;MetaBody&gt; rb=Omega::instance().getRootBody();
++		//if((rb &amp;&amp; rb-&gt;bodies-&gt;size()&gt;0) ||
++		if(simulationController) {this-&gt;hide();}
+ 		else {this-&gt;show(); }
+ 	#endif
+ 	// update GL views (if any)
+
+Modified: trunk/pkg/common/Engine/StandAloneEngine/PersistentSAPCollider.cpp
+===================================================================
+--- trunk/pkg/common/Engine/StandAloneEngine/PersistentSAPCollider.cpp	2008-06-16 16:24:08 UTC (rev 1388)
++++ trunk/pkg/common/Engine/StandAloneEngine/PersistentSAPCollider.cpp	2008-06-17 07:15:29 UTC (rev 1389)
+@@ -34,6 +34,7 @@
+ 
+ void PersistentSAPCollider::action(MetaBody* ncb)
+ {
++	rootBody=ncb;
+ 	shared_ptr&lt;BodyContainer&gt; bodies=ncb-&gt;bodies;
+ 	
+ 	if (2*bodies-&gt;size()!=xBounds.size()){
+@@ -159,7 +160,7 @@
+ 	int offset1 = 3*id1;
+ 	int offset2 = 3*id2;
+ 	// FIXME: this is perhaps an expensive operation?!
+-	const shared_ptr&lt;Body&gt;&amp; b1(Body::byId(body_id_t(id1))), b2(Body::byId(body_id_t(id2)));
++	const shared_ptr&lt;Body&gt;&amp; b1(Body::byId(body_id_t(id1),rootBody)), b2(Body::byId(body_id_t(id2),rootBody));
+ 	bool overlap =
+ 		(b1-&gt;isStandalone() || b2-&gt;isStandalone() || b1-&gt;clumpId!=b2-&gt;clumpId ) &amp;&amp; // only collide if at least one particle is standalone or they belong to different clumps
+ 		!b1-&gt;isClump() &amp;&amp; !b2-&gt;isClump() &amp;&amp; // do not collide clumps, since they are just containers, never interact
+
+Modified: trunk/pkg/common/Engine/StandAloneEngine/PersistentSAPCollider.hpp
+===================================================================
+--- trunk/pkg/common/Engine/StandAloneEngine/PersistentSAPCollider.hpp	2008-06-16 16:24:08 UTC (rev 1388)
++++ trunk/pkg/common/Engine/StandAloneEngine/PersistentSAPCollider.hpp	2008-06-17 07:15:29 UTC (rev 1389)
+@@ -38,6 +38,8 @@
+ 			}
+ 		};
+ 
++		MetaBody* rootBody; // refreshed at every iteration; to avoid passing it to called members on stack
++
+ 	protected :
+ 		/// number of potential transientInteractions = number of interacting AABB
+ 		int nbPotentialInteractions;
+
+Modified: trunk/scripts/simple-scene.py
+===================================================================
+--- trunk/scripts/simple-scene.py	2008-06-16 16:24:08 UTC (rev 1388)
++++ trunk/scripts/simple-scene.py	2008-06-17 07:15:29 UTC (rev 1389)
+@@ -55,6 +55,10 @@
+ 	## Forces acting on bodies are damped to artificially increase energy dissipation in simulation.
+ 	## (In this model, the restitution coefficient of interaction is 1, which is not realistic.)
+ 	## This MetaEngine acts on all PhysicalActions and selects the right EngineUnit base on type of the PhysicalAction.
++	#
++	# note that following 4 engines (till the end) can be replaced by an optimized monolithic version:
++	#	DeusExMachina('NewtonsDampedLaw',{'damping':0.2}),
++	#
+ 	MetaEngine('PhysicalActionDamper',[
+ 		EngineUnit('CundallNonViscousForceDamping',{'damping':0.2}),
+ 		EngineUnit('CundallNonViscousMomentumDamping',{'damping':0.2})
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000349.html">[Yade-commits] r1388 -	branches/przewdnik/pkg/common/Engine/StandAloneEngine/Visualisation
+</A></li>
+	<LI>Next message: <A HREF="000351.html">[Yade-commits] r1390 - in trunk: . core extra gui/py lib/import	lib/miniWm3 pkg/dem/Engine/DeusExMachina
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#350">[ date ]</a>
+              <a href="thread.html#350">[ thread ]</a>
+              <a href="subject.html#350">[ subject ]</a>
+              <a href="author.html#350">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

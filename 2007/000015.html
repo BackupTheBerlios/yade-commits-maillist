@@ -1,0 +1,232 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1050 - in trunk/yade-packages:	yade-package-common/src/RenderingEngine/OpenGLRenderingEngine	yade-package-lattice/src/Engine/StandAloneEngine/MovingSupport	yade-package-lattice/src/PreProcessor/LatticeExample
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2007/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1050%20-%20in%20trunk/yade-packages%3A%0A%09yade-package-common/src/RenderingEngine/OpenGLRenderingEngine%0A%09yade-package-lattice/src/Engine/StandAloneEngine/MovingSupport%0A%09yade-package-lattice/src/PreProcessor/LatticeExample&In-Reply-To=%3C200701301354.l0UDsB2O002807%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000014.html">
+   <LINK REL="Next"  HREF="000016.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1050 - in trunk/yade-packages:	yade-package-common/src/RenderingEngine/OpenGLRenderingEngine	yade-package-lattice/src/Engine/StandAloneEngine/MovingSupport	yade-package-lattice/src/PreProcessor/LatticeExample</H1>
+    <B>cosurgi at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1050%20-%20in%20trunk/yade-packages%3A%0A%09yade-package-common/src/RenderingEngine/OpenGLRenderingEngine%0A%09yade-package-lattice/src/Engine/StandAloneEngine/MovingSupport%0A%09yade-package-lattice/src/PreProcessor/LatticeExample&In-Reply-To=%3C200701301354.l0UDsB2O002807%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1050 - in trunk/yade-packages:	yade-package-common/src/RenderingEngine/OpenGLRenderingEngine	yade-package-lattice/src/Engine/StandAloneEngine/MovingSupport	yade-package-lattice/src/PreProcessor/LatticeExample">cosurgi at mail.berlios.de
+       </A><BR>
+    <I>Tue Jan 30 14:54:11 CET 2007</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000014.html">[Yade-commits] r1049 - trunk/yade-core/src/yade
+</A></li>
+        <LI>Next message: <A HREF="000016.html">[Yade-commits] r1051 -	trunk/yade-packages/yade-package-dem/src/PreProcessor
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#15">[ date ]</a>
+              <a href="thread.html#15">[ thread ]</a>
+              <a href="subject.html#15">[ subject ]</a>
+              <a href="author.html#15">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: cosurgi
+Date: 2007-01-30 14:54:09 +0100 (Tue, 30 Jan 2007)
+New Revision: 1050
+
+Modified:
+   trunk/yade-packages/yade-package-common/src/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.cpp
+   trunk/yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/MovingSupport/MovingSupport.cpp
+   trunk/yade-packages/yade-package-lattice/src/PreProcessor/LatticeExample/LatticeExample.cpp
+   trunk/yade-packages/yade-package-lattice/src/PreProcessor/LatticeExample/LatticeExample.hpp
+Log:
+- OpenGLRenderingEngine didn't draw Body when it's groupMask was 0
+- some changes in lattice.
+
+
+
+
+
+Modified: trunk/yade-packages/yade-package-common/src/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.cpp
+===================================================================
+--- trunk/yade-packages/yade-package-common/src/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.cpp	2007-01-30 10:58:11 UTC (rev 1049)
++++ trunk/yade-packages/yade-package-common/src/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.cpp	2007-01-30 13:54:09 UTC (rev 1050)
+@@ -359,7 +359,7 @@
+ 		BodyContainer::iterator biEnd = rootBody-&gt;bodies-&gt;end();
+ 		for(; bi!=biEnd ; ++bi )
+ 		{
+-			if ((*bi)-&gt;geometricalModel-&gt;shadowCaster &amp;&amp; ( (*bi)-&gt;getGroupMask() &amp; drawMask ))
++			if ((*bi)-&gt;geometricalModel-&gt;shadowCaster &amp;&amp; ( ((*bi)-&gt;getGroupMask() &amp; drawMask) || (*bi)-&gt;getGroupMask()==0 ))
+ 				shadowVolumeDispatcher((*bi)-&gt;geometricalModel,(*bi)-&gt;physicalParameters,lightPos);
+ 		}
+ 	}
+@@ -379,7 +379,7 @@
+ 		BodyContainer::iterator biEnd = bodies-&gt;end();
+ 		for( ; bi!=biEnd ; ++bi)
+ 		{
+-			if((*bi)-&gt;geometricalModel &amp;&amp; ( (*bi)-&gt;getGroupMask() &amp; drawMask ))
++			if((*bi)-&gt;geometricalModel &amp;&amp; ( ((*bi)-&gt;getGroupMask() &amp; drawMask) || (*bi)-&gt;getGroupMask()==0 ))
+ 			{
+ 				glPushMatrix();
+ 				Se3r&amp; se3 = (*bi)-&gt;physicalParameters-&gt;se3;
+@@ -419,7 +419,7 @@
+ 	for( ; bi!=biEnd ; ++bi)
+ 	{
+ 		glPushMatrix();
+-		if((*bi)-&gt;physicalParameters &amp;&amp; ( (*bi)-&gt;getGroupMask() &amp; drawMask ))
++		if((*bi)-&gt;physicalParameters &amp;&amp; ( ((*bi)-&gt;getGroupMask() &amp; drawMask ) || (*bi)-&gt;getGroupMask()==0 ))
+ 			stateDispatcher((*bi)-&gt;physicalParameters);
+ 		glPopMatrix();
+ 	}
+@@ -438,7 +438,7 @@
+ 	for( ; bi!=biEnd ; ++bi)
+ 	{
+ 		glPushMatrix();
+-		if((*bi)-&gt;boundingVolume &amp;&amp; ( (*bi)-&gt;getGroupMask() &amp; drawMask ))
++		if((*bi)-&gt;boundingVolume &amp;&amp; ( ((*bi)-&gt;getGroupMask() &amp; drawMask) || (*bi)-&gt;getGroupMask()==0 ))
+ 			boundingVolumeDispatcher((*bi)-&gt;boundingVolume);
+ 		glPopMatrix();
+ 	}
+@@ -464,7 +464,7 @@
+ 		se3.orientation.ToAxisAngle(axis,angle);	
+ 		glTranslatef(se3.position[0],se3.position[1],se3.position[2]);
+ 		glRotatef(angle*Mathr::RAD_TO_DEG,axis[0],axis[1],axis[2]);
+-		if((*bi)-&gt;interactingGeometry &amp;&amp; ( (*bi)-&gt;getGroupMask() &amp; drawMask ))
++		if((*bi)-&gt;interactingGeometry &amp;&amp; ( ((*bi)-&gt;getGroupMask() &amp; drawMask) || (*bi)-&gt;getGroupMask()==0 ))
+ 			interactionGeometryDispatcher((*bi)-&gt;interactingGeometry,(*bi)-&gt;physicalParameters);
+ 		glPopMatrix();
+ 	}
+
+Modified: trunk/yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/MovingSupport/MovingSupport.cpp
+===================================================================
+--- trunk/yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/MovingSupport/MovingSupport.cpp	2007-01-30 10:58:11 UTC (rev 1049)
++++ trunk/yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/MovingSupport/MovingSupport.cpp	2007-01-30 13:54:09 UTC (rev 1050)
+@@ -163,9 +163,17 @@
+ 							- (*(ncb-&gt;bodies))[id2]-&gt;physicalParameters-&gt;se3.position[dir];
+ 				Real delta = (dist - current_dist)/2.0;
+ 
+-				(*(ncb-&gt;bodies))[id1]-&gt;physicalParameters-&gt;se3.position[dir] += delta;
+-				(*(ncb-&gt;bodies))[id2]-&gt;physicalParameters-&gt;se3.position[dir] -= delta;
++//				(*(ncb-&gt;bodies))[id1]-&gt;physicalParameters-&gt;se3.position[dir] += delta;
++//				(*(ncb-&gt;bodies))[id2]-&gt;physicalParameters-&gt;se3.position[dir] -= delta;
+ 
++				LatticeNodeParameters* node1 = static_cast&lt;LatticeNodeParameters*&gt;((*(ncb-&gt;bodies))[id1]-&gt;physicalParameters.get() );
++				LatticeNodeParameters* node2 = static_cast&lt;LatticeNodeParameters*&gt;((*(ncb-&gt;bodies))[id2]-&gt;physicalParameters.get() );
++//				++(node1-&gt;countIncremental);
++//				++(node2-&gt;countIncremental);
++				Vector3r DI(0,0,0);DI[dir]=delta;
++				node1-&gt;displacementIncremental += DI; 
++				node2-&gt;displacementIncremental -= DI;
++
+ 				(*(ncb-&gt;bodies))[id1]-&gt;geometricalModel-&gt;diffuseColor = Vector3f(0.0,0.0,((float)section)/2.0); // FIXME [1]
+ 				(*(ncb-&gt;bodies))[id2]-&gt;geometricalModel-&gt;diffuseColor = Vector3f(0.0,0.0,((float)section)/2.0); // FIXME [1]
+ 			}
+
+Modified: trunk/yade-packages/yade-package-lattice/src/PreProcessor/LatticeExample/LatticeExample.cpp
+===================================================================
+--- trunk/yade-packages/yade-package-lattice/src/PreProcessor/LatticeExample/LatticeExample.cpp	2007-01-30 10:58:11 UTC (rev 1049)
++++ trunk/yade-packages/yade-package-lattice/src/PreProcessor/LatticeExample/LatticeExample.cpp	2007-01-30 13:54:09 UTC (rev 1050)
+@@ -105,6 +105,16 @@
+         direction_D              = Vector3r(0,-1,0);
+         displacement_D_meters    = 0.0001;
+         
++	region_E_min 		 = Vector3r(0,0,-1);
++	region_E_max 		 = Vector3r(0,0,-1);
++        direction_E              = Vector3r(0,1,0);
++        displacement_E_meters    = 0.0;
++        
++	region_F_min 		 = Vector3r(0,0,-1);
++	region_F_max 		 = Vector3r(0,0,-1);
++        direction_F              = Vector3r(0,1,0);
++        displacement_F_meters    = 0.0;
++        
+         strainRecorder_xz_plane  = -1;
+         strainRecorder_node1     = Vector3r(0,0,0);
+         strainRecorder_node2     = Vector3r(0,1,0);
+@@ -273,6 +283,16 @@
+         REGISTER_ATTRIBUTE(direction_D);
+         REGISTER_ATTRIBUTE(displacement_D_meters);
+         
++	REGISTER_ATTRIBUTE(region_E_min);
++        REGISTER_ATTRIBUTE(region_E_max);
++        REGISTER_ATTRIBUTE(direction_E);
++        REGISTER_ATTRIBUTE(displacement_E_meters);
++        
++	REGISTER_ATTRIBUTE(region_F_min);
++        REGISTER_ATTRIBUTE(region_F_max);
++        REGISTER_ATTRIBUTE(direction_F);
++        REGISTER_ATTRIBUTE(displacement_F_meters);
++        
+ 	REGISTER_ATTRIBUTE(outputFile);
+         REGISTER_ATTRIBUTE(strainRecorder_xz_plane);
+         REGISTER_ATTRIBUTE(strainRecorder_node1);
+@@ -699,6 +719,8 @@
+         imposeTranslation(rootBody,region_B_min,region_B_max,direction_B,displacement_B_meters);
+         imposeTranslation(rootBody,region_C_min,region_C_max,direction_C,displacement_C_meters);
+         imposeTranslation(rootBody,region_D_min,region_D_max,direction_D,displacement_D_meters);
++        imposeTranslation(rootBody,region_E_min,region_E_max,direction_E,displacement_E_meters);
++        imposeTranslation(rootBody,region_F_min,region_F_max,direction_F,displacement_F_meters);
+ 
+         if(useAggregates) addAggregates(rootBody);
+ 	if(shouldTerminate()) return &quot;&quot;;
+
+Modified: trunk/yade-packages/yade-package-lattice/src/PreProcessor/LatticeExample/LatticeExample.hpp
+===================================================================
+--- trunk/yade-packages/yade-package-lattice/src/PreProcessor/LatticeExample/LatticeExample.hpp	2007-01-30 10:58:11 UTC (rev 1049)
++++ trunk/yade-packages/yade-package-lattice/src/PreProcessor/LatticeExample/LatticeExample.hpp	2007-01-30 13:54:09 UTC (rev 1050)
+@@ -92,13 +92,23 @@
+ 				 
+ 			 	,region_D_min
+ 			 	,region_D_max
+-			 	,direction_D;
++			 	,direction_D
+ 				 
++			 	,region_E_min
++			 	,region_E_max
++			 	,direction_E
++				 
++			 	,region_F_min
++			 	,region_F_max
++			 	,direction_F;
++				 
+ 						
+ 		Real		 displacement_A_meters
+ 		 		,displacement_B_meters
+                                 ,displacement_C_meters
+-                                ,displacement_D_meters;
++                                ,displacement_D_meters
++                                ,displacement_E_meters
++                                ,displacement_F_meters;
+                                 
+         // strain recorder
+                 std::vector&lt; unsigned int &gt; subscribedBodies;
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000014.html">[Yade-commits] r1049 - trunk/yade-core/src/yade
+</A></li>
+	<LI>Next message: <A HREF="000016.html">[Yade-commits] r1051 -	trunk/yade-packages/yade-package-dem/src/PreProcessor
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#15">[ date ]</a>
+              <a href="thread.html#15">[ thread ]</a>
+              <a href="subject.html#15">[ subject ]</a>
+              <a href="author.html#15">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

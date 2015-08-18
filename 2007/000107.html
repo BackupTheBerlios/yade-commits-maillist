@@ -1,0 +1,266 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1142 - in branches/scons-layout: . debian scripts
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2007/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1142%20-%20in%20branches/scons-layout%3A%20.%20debian%20scripts&In-Reply-To=%3C200703121224.l2CCO67G012363%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000106.html">
+   <LINK REL="Next"  HREF="000108.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1142 - in branches/scons-layout: . debian scripts</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1142%20-%20in%20branches/scons-layout%3A%20.%20debian%20scripts&In-Reply-To=%3C200703121224.l2CCO67G012363%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1142 - in branches/scons-layout: . debian scripts">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Mon Mar 12 13:24:06 CET 2007</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000106.html">[Yade-commits] r1141 - branches/scons-layout
+</A></li>
+        <LI>Next message: <A HREF="000108.html">[Yade-commits] r1143 - branches/scons-layout/debian
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#107">[ date ]</a>
+              <a href="thread.html#107">[ thread ]</a>
+              <a href="subject.html#107">[ subject ]</a>
+              <a href="author.html#107">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2007-03-12 13:24:05 +0100 (Mon, 12 Mar 2007)
+New Revision: 1142
+
+Added:
+   branches/scons-layout/debian/control-svn-template
+   branches/scons-layout/scripts/svn-debian-prep
+Modified:
+   branches/scons-layout/INSTALL
+   branches/scons-layout/debian/changelog
+   branches/scons-layout/debian/control
+   branches/scons-layout/debian/rules
+Log:
+debian package framework for svn snapshots.
+
+Modified: branches/scons-layout/INSTALL
+===================================================================
+--- branches/scons-layout/INSTALL	2007-03-10 12:05:33 UTC (rev 1141)
++++ branches/scons-layout/INSTALL	2007-03-12 12:24:05 UTC (rev 1142)
+@@ -25,10 +25,11 @@
+ 
+ Then go ahead:
+ 
+-	$ svn checkout <A HREF="svn://svn.berlios.de/yade/branches/scons-layout">svn://svn.berlios.de/yade/branches/scons-layout</A> yade-0.0.svn1112 # (change revision number as appropriate)
++	$ svn checkout <A HREF="svn://svn.berlios.de/yade/branches/scons-layout">svn://svn.berlios.de/yade/branches/scons-layout</A> yade-xxx # (change xxx to revision number as appropriate)
+ 	$ cd yade-0.0.svn1112
+-	$ dpkg-buildpackage -rfakeroot-tcp
+-	$ sudo dpkg -i ../yade_0.0.svn11112-1_i386.dpkg
++	$ scripts/svn-debian-prep # creates files SVNVERSION, _SVNVERSION and appropriate debian/control
++	$ dpkg-buildpackage -rfakeroot-tcp # compiles and creates source and binary packages in ../
++	$ sudo dpkg -i ../yade-svn*-0.1.1-1_i386.dpkg
+     
+ There are some limitations at this moment: version hardcoded in the control file, plain fakeroot will not work with scons (most likely because not all environment variables are propagated by scons - to be investigated).
+ 
+
+Modified: branches/scons-layout/debian/changelog
+===================================================================
+--- branches/scons-layout/debian/changelog	2007-03-10 12:05:33 UTC (rev 1141)
++++ branches/scons-layout/debian/changelog	2007-03-12 12:24:05 UTC (rev 1142)
+@@ -1,3 +1,9 @@
++yade (0.1.1) unstable; urgency=low
++
++  * Framework for building svn snapshot packages directly.
++
++ -- Vaclav Smilauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">eudoxos at arcig.cz</A>&gt;  Thu,  12 Mar 2007 12:31:19 +0100
++
+ yade (0.0.svn1110-1) unstable; urgency=low
+ 
+   * Initial debian package.
+
+Modified: branches/scons-layout/debian/control
+===================================================================
+--- branches/scons-layout/debian/control	2007-03-10 12:05:33 UTC (rev 1141)
++++ branches/scons-layout/debian/control	2007-03-12 12:24:05 UTC (rev 1142)
+@@ -1,20 +1,22 @@
+-Source: yade
++Source: yade-svn1141
+ Section: x11
+ Priority: optional
+ Maintainer: Vaclav Smilauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">eudoxos at arcig.cz</A>&gt;
+-Build-Depends: debhelper (&gt;= 5), scons, lib3dviewer-dev, libqt3-mt-dev, qt3-dev-tools, python-dev, freeglut3-dev, libboost-date-time-dev, libboost-filesystem-dev, libboost-thread-dev, liblog4cxx9-dev, docbook-to-man, python-scientific
++Build-Depends: debhelper (&gt;= 5), scons, lib3dviewer-dev, libqt3-mt-dev, qt3-dev-tools, python-dev, freeglut3-dev, libboost-date-time-dev, libboost-filesystem-dev, libboost-thread-dev, liblog4cxx9-dev, docbook-to-man, python-scientific, subversion
+ Standards-Version: 3.7.2
+ 
+-Package: yade
++Package: yade-svn1141
+ Architecture: any
++Provides: yade-svn
+ Depends: ${shlibs:Depends}, ${misc:Depends}, python-scientific
+ Description: Platform for dynamical modeling.
+  Yet Another Dynamic Engine. etc.
+  .
+  This package contains speed-optimized build of yade.
+ 
+-Package: yade-dbg
++Package: yade-svn1141-dbg
+ Architecture: any
++Provides: yade-svn-dbg
+ Depends: ${shlibs:Depends}, ${misc:Depends}, python-scientific
+ Description: Platform for dynamical modeling.
+  Yet Another Dynamic Engine. etc.
+@@ -22,9 +24,10 @@
+  This package contains debug build of yade.
+ 
+ 
+-Package: yade-dev
++Package: yade-svn1141-dev
+ Architecture: all
+-Depends: yade | yade-dbg
++Provides: yade-svn-dev
++Recommends: yade-svn1141 | yade-svn1141-dbg
+ Description: Platform for dynamical modeling.
+  Yet Another Dynamic Engine. etc.
+  .
+
+Added: branches/scons-layout/debian/control-svn-template
+===================================================================
+--- branches/scons-layout/debian/control-svn-template	2007-03-10 12:05:33 UTC (rev 1141)
++++ branches/scons-layout/debian/control-svn-template	2007-03-12 12:24:05 UTC (rev 1142)
+@@ -0,0 +1,35 @@
++Source: <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">yade at _SVNVERSION</A>@
++Section: x11
++Priority: optional
++Maintainer: Vaclav Smilauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">eudoxos at arcig.cz</A>&gt;
++Build-Depends: debhelper (&gt;= 5), scons, lib3dviewer-dev, libqt3-mt-dev, qt3-dev-tools, python-dev, freeglut3-dev, libboost-date-time-dev, libboost-filesystem-dev, libboost-thread-dev, liblog4cxx9-dev, docbook-to-man, python-scientific, subversion
++Standards-Version: 3.7.2
++
++Package: <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">yade at _SVNVERSION</A>@
++Architecture: any
++Provides: yade-svn
++Depends: ${shlibs:Depends}, ${misc:Depends}, python-scientific
++Description: Platform for dynamical modeling.
++ Yet Another Dynamic Engine. etc.
++ .
++ This package contains speed-optimized build of yade.
++
++Package: <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">yade at _SVNVERSION</A>@-dbg
++Architecture: any
++Provides: yade-svn-dbg
++Depends: ${shlibs:Depends}, ${misc:Depends}, python-scientific
++Description: Platform for dynamical modeling.
++ Yet Another Dynamic Engine. etc.
++ .
++ This package contains debug build of yade.
++
++
++Package: <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">yade at _SVNVERSION</A>@-dev
++Architecture: all
++Provides: yade-svn-dev
++Recommends: <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">yade at _SVNVERSION</A>@ | <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">yade at _SVNVERSION</A>@-dbg
++Description: Platform for dynamical modeling.
++ Yet Another Dynamic Engine. etc.
++ .
++ This package contains headers for yade.
++
+
+Modified: branches/scons-layout/debian/rules
+===================================================================
+--- branches/scons-layout/debian/rules	2007-03-10 12:05:33 UTC (rev 1141)
++++ branches/scons-layout/debian/rules	2007-03-12 12:24:05 UTC (rev 1142)
+@@ -35,6 +35,10 @@
+ 	## eudoxos: noting to be done here, will be done at the same time as installation
+ 	docbook-to-man debian/yade.sgml &gt; yade.1
+ 
++	#echo &quot;svn` svn info | egrep '^Revision:' | cut -f2 -d' ' `&quot; &gt; SVNVERSION
++	#echo -`cat SVNVERSION` &gt; _SVNVERSION ## will be used later on
++	#perl -pi~ -e&quot;s/\byade(-svn[0-9]+)?([^-]|-dbg|-dev)\b/yade`cat _SVNVERSION`\2/g&quot; debian/control
++
+ 	touch $@
+ 
+ clean:
+@@ -48,7 +52,9 @@
+ 	## eudoxos: FIXME: scons skips config when cleaning and doesn't know where it built anything
+ 	#scons -c
+ 	dh_testdir
+-	rm -rf debian/build-*
++	rm -rf debian/build* debian/yade*
++	rm -rf scons.config
++	#rm -rf SVNVERSION _SVNVERSION
+ 	dh_clean 
+ 
+ install: build
+@@ -57,17 +63,15 @@
+ 	dh_clean -k 
+ 	dh_installdirs
+ 
+-	# Add here commands to install the package into debian/yade.
+-	### $(MAKE) DESTDIR=$(CURDIR)/debian/yade install
+-	## eudoxos: FIXME: get version from debian variables!!
++	## files SVNVERSION and _SVNVERSION contain snapshot version without/with leading '-' respectively (like svn1113 and -svn1113)
+ 
+ 	#install headers
+ 	# WARNING: if this hangs later on, use fakeroot-tcp instead of fakeroot!!
+-	scons buildPrefix=debian runtimePREFIX=/usr PREFIX=debian/yade-dev/usr variant='' version=svn1113 exclude=lattice,realtime-rigidbody debian/yade-dev/usr/include
++	scons buildPrefix=debian runtimePREFIX=/usr PREFIX=debian/yade`cat _SVNVERSION`-dev/usr variant='' version=`cat SVNVERSION` exclude=lattice,realtime-rigidbody debian/yade`cat _SVNVERSION`-dev/usr/include
+ 	#debug build
+-	scons buildPrefix=debian runtimePREFIX=/usr PREFIX=debian/yade-dbg/usr variant=-dbg pretty=0 optimize=0 debug=1 version=svn1113 exclude=lattice,realtime-rigidbody
++	scons buildPrefix=debian runtimePREFIX=/usr PREFIX=debian/yade-dbg/usr variant=-dbg pretty=0 optimize=0 debug=1 version=`cat SVNVERSION` exclude=lattice,realtime-rigidbody
+ 	#optimized build
+-	scons buildPrefix=debian runtimePREFIX=/usr PREFIX=debian/yade/usr variant='' pretty=0 optimize=1 debug=0 version=svn1113 exclude=lattice,realtime-rigidbody
++	scons buildPrefix=debian runtimePREFIX=/usr PREFIX=debian/yade/usr variant='' pretty=0 optimize=1 debug=0 version=`cat SVNVERSION` exclude=lattice,realtime-rigidbody
+ 
+ 
+ # Build architecture-independent files here.
+
+Added: branches/scons-layout/scripts/svn-debian-prep
+===================================================================
+--- branches/scons-layout/scripts/svn-debian-prep	2007-03-10 12:05:33 UTC (rev 1141)
++++ branches/scons-layout/scripts/svn-debian-prep	2007-03-12 12:24:05 UTC (rev 1142)
+@@ -0,0 +1,8 @@
++#!/bin/sh
++SVNVERSION=&quot;svn$( svn info | egrep '^Revision:' | cut -f2 -d' ')&quot;
++_SVNVERSION=&quot;-$SVNVERSION&quot;
++echo $SVNVERSION &gt; SVNVERSION
++echo $_SVNVERSION &gt; _SVNVERSION
++cp debian/control-svn-template debian/control
++perl -pi -e&quot;s/@SVNVERSION@/$SVNVERSION/g&quot; debian/control
++perl -pi -e&quot;s/@_SVNVERSION@/$_SVNVERSION/g&quot; debian/control
+
+
+Property changes on: branches/scons-layout/scripts/svn-debian-prep
+___________________________________________________________________
+Name: svn:executable
+   + *
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000106.html">[Yade-commits] r1141 - branches/scons-layout
+</A></li>
+	<LI>Next message: <A HREF="000108.html">[Yade-commits] r1143 - branches/scons-layout/debian
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#107">[ date ]</a>
+              <a href="thread.html#107">[ thread ]</a>
+              <a href="subject.html#107">[ subject ]</a>
+              <a href="author.html#107">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

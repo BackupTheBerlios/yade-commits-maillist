@@ -1,0 +1,514 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1385 - in trunk: extra gui/py gui/qt3	gui/qt3/pictures pkg/common/Engine/StandAloneEngine scripts
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1385%20-%20in%20trunk%3A%20extra%20gui/py%20gui/qt3%0A%09gui/qt3/pictures%20pkg/common/Engine/StandAloneEngine%20scripts&In-Reply-To=%3C200806121150.m5CBoEij009790%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000345.html">
+   <LINK REL="Next"  HREF="000347.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1385 - in trunk: extra gui/py gui/qt3	gui/qt3/pictures pkg/common/Engine/StandAloneEngine scripts</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1385%20-%20in%20trunk%3A%20extra%20gui/py%20gui/qt3%0A%09gui/qt3/pictures%20pkg/common/Engine/StandAloneEngine%20scripts&In-Reply-To=%3C200806121150.m5CBoEij009790%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1385 - in trunk: extra gui/py gui/qt3	gui/qt3/pictures pkg/common/Engine/StandAloneEngine scripts">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Thu Jun 12 13:50:14 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000345.html">[Yade-commits] r1384 - trunk/pkg/dem/Engine/DeusExMachina
+</A></li>
+        <LI>Next message: <A HREF="000347.html">[Yade-commits] r1386 - trunk/gui/qt3
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#346">[ date ]</a>
+              <a href="thread.html#346">[ thread ]</a>
+              <a href="subject.html#346">[ subject ]</a>
+              <a href="author.html#346">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2008-06-12 13:50:13 +0200 (Thu, 12 Jun 2008)
+New Revision: 1385
+
+Added:
+   trunk/pkg/common/Engine/StandAloneEngine/PeriodicEngines.hpp
+Removed:
+   trunk/pkg/common/Engine/StandAloneEngine/PeriodicEngine.hpp
+Modified:
+   trunk/extra/Brefcom.cpp
+   trunk/extra/Brefcom.hpp
+   trunk/gui/py/PeriodicPythonRunner.hpp
+   trunk/gui/py/plot.py
+   trunk/gui/py/utils.py
+   trunk/gui/qt3/QtGeneratedSimulationController.ui
+   trunk/gui/qt3/pictures/reset.png
+   trunk/gui/qt3/pictures/step.png
+   trunk/scripts/simple-scene-graph.py
+Log:
+1. Add the possibility to save as gnuplot figure to the plotting interface
+2. Add PeriodicEngine (fixed period) as opposed to RangePeriodicEngine (variable period)
+3. Make BrefcomDamageColorizer subclass of PeriodicEngine instead of doing Omega::instance().getIteration()%interval==0
+4. Change some icons in the UI
+5. Add 'scale' parameter to loading spheres from file
+
+
+
+Modified: trunk/extra/Brefcom.cpp
+===================================================================
+--- trunk/extra/Brefcom.cpp	2008-06-12 10:34:53 UTC (rev 1384)
++++ trunk/extra/Brefcom.cpp	2008-06-12 11:50:13 UTC (rev 1385)
+@@ -199,15 +199,17 @@
+ 		TRVAR1(Omega::instance().getTimeStep());*/
+ 
+ 
+-		/* FIXME dist&gt;0 doesn't take into account interaction radius!!! */
++		/* normal strain */
++		epsN=(dist-equilibriumDist)/equilibriumDist;
++
+ 		// /* TODO: recover non-cohesive contact deletion: */
+-		if(!BC-&gt;isCohesive &amp;&amp; dist&gt;0){ /* delete this interaction later */ /* (*I)-&gt;isReal=false; */ continue; }
++		if(!BC-&gt;isCohesive &amp;&amp; epsN&gt;0.){ /* delete this interaction later */ /* (*I)-&gt;isReal=false; */ continue; }
+ 
+-		if(dist&gt;=0) { epsT=Vector3r::ZERO; }
+-		else {
++		/* shear strain: always use it, even for epsN&gt;0 */
++		/*if(false &amp;&amp; epsN&gt;0) { epsT=Vector3r::ZERO; } else {*/
++
+ 			/* rotate epsT to the new contact plane */
+ 				const Real&amp; dt=Omega::instance().getTimeStep();
+-#if 1
+ 				// rotation of the contact normal
+ 				//TRVAR2(epsT,BC-&gt;prevNormal.Cross(contGeom-&gt;normal));
+ 				//TRVAR1((BC-&gt;prevNormal.Cross(contGeom-&gt;normal)).Cross(epsT));
+@@ -219,7 +221,6 @@
+ 				//TRVAR1(epsT.Cross(angle*contGeom-&gt;normal));
+ 				epsT+=(angle*contGeom-&gt;normal).Cross(epsT);
+ 
+-#endif 
+ 			/* calculate tangential strain increment */
+ 				Vector3r AtoC(contGeom-&gt;contactPoint-rbp1-&gt;se3.position), BtoC(contGeom-&gt;contactPoint-rbp2-&gt;se3.position);
+ 				Vector3r relVelocity /* at the contact point */ = 
+@@ -233,10 +234,7 @@
+ 			/* artificially remove residuum in the normal direction */
+ 			//epsT-=contGeom-&gt;normal*epsT.Dot(contGeom-&gt;normal);
+ 			//TRVAR1(epsT.Dot(contGeom-&gt;normal));
+-		}
+ 			
+-		/* normal strain */
+-		epsN=(dist-equilibriumDist)/equilibriumDist;
+ 
+ 		Vector3r sigmaT;
+ 
+
+Modified: trunk/extra/Brefcom.hpp
+===================================================================
+--- trunk/extra/Brefcom.hpp	2008-06-12 10:34:53 UTC (rev 1384)
++++ trunk/extra/Brefcom.hpp	2008-06-12 11:50:13 UTC (rev 1385)
+@@ -10,6 +10,7 @@
+ #include&lt;yade/pkg-common/InteractionPhysicsEngineUnit.hpp&gt;
+ #include&lt;yade/pkg-dem/SpheresContactGeometry.hpp&gt;
+ #include&lt;yade/pkg-common/GLDrawInteractionPhysicsFunctor.hpp&gt;
++#include&lt;yade/pkg-common/PeriodicEngines.hpp&gt;
+ #include&lt;yade/pkg-dem/GlobalStiffness.hpp&gt;
+ 
+ // #define BREFCOM_REC
+@@ -206,15 +207,13 @@
+ };
+ REGISTER_SERIALIZABLE(GLDrawBrefcomContact,false);
+ 
+-class BrefcomDamageColorizer : public StandAloneEngine {
++class BrefcomDamageColorizer : public PeriodicEngine {
+ 	public :
+-		int interval;
+-		BrefcomDamageColorizer(){interval=100;}
++		BrefcomDamageColorizer(){}
+ 		virtual void action(MetaBody*);
+-		virtual bool isActivated(){return Omega::instance().getCurrentIteration()%interval==0;}
+-	void registerAttributes(){REGISTER_ATTRIBUTE(interval);}
++	virtual void registerAtributes(){PeriodicEngine::registerAttributes();}
+ 	REGISTER_CLASS_NAME(BrefcomDamageColorizer);
+-	REGISTER_BASE_CLASS_NAME(StandAloneEngine);
++	REGISTER_BASE_CLASS_NAME(PeriodicEngine);
+ };
+ REGISTER_SERIALIZABLE(BrefcomDamageColorizer,false);
+ 
+
+Modified: trunk/gui/py/PeriodicPythonRunner.hpp
+===================================================================
+--- trunk/gui/py/PeriodicPythonRunner.hpp	2008-06-12 10:34:53 UTC (rev 1384)
++++ trunk/gui/py/PeriodicPythonRunner.hpp	2008-06-12 11:50:13 UTC (rev 1385)
+@@ -2,14 +2,14 @@
+ #pragma once
+ #include&lt;yade/core/StandAloneEngine.hpp&gt;
+ #include&lt;yade/core/MetaBody.hpp&gt;
+-#include&lt;yade/pkg-common/PeriodicEngine.hpp&gt;
++#include&lt;yade/pkg-common/PeriodicEngines.hpp&gt;
+ /* Execute a python command (in addPlotDataCall) periodically, with defined (and adjustable) periodicity.
+  *
+  * Period constraints are iterInterval and timeInterval. When either of them is exceeded, the addPlotDataCall is run.
+  *
+  * Thie engine is primarily conceived for collecting data for yade.plot plots during simulations, hence the name.
+  */
+-class PeriodicPythonRunner: public PeriodicEngine {
++class PeriodicPythonRunner: public RangePeriodicEngine {
+ 	private:
+ 		string command;
+ 	public :
+@@ -22,11 +22,11 @@
+ 				PyRun_SimpleString(command.c_str()); // this is suboptimal, since it has to be parsed at every execution; critical?
+ 			PyGILState_Release(gstate);
+ 		}
+-		virtual void registerAttributes(){ PeriodicEngine::registerAttributes(); REGISTER_ATTRIBUTE(command); }
++		virtual void registerAttributes(){ RangePeriodicEngine::registerAttributes(); REGISTER_ATTRIBUTE(command); }
+ 	protected :
+ 		virtual void postProcessAttributes(bool deserializing){}
+ 	REGISTER_CLASS_NAME(PeriodicPythonRunner);
+-	REGISTER_BASE_CLASS_NAME(PeriodicEngine);
++	REGISTER_BASE_CLASS_NAME(RangePeriodicEngine);
+ };
+ 
+ REGISTER_SERIALIZABLE(PeriodicPythonRunner,false);
+
+Modified: trunk/gui/py/plot.py
+===================================================================
+--- trunk/gui/py/plot.py	2008-06-12 10:34:53 UTC (rev 1384)
++++ trunk/gui/py/plot.py	2008-06-12 11:50:13 UTC (rev 1385)
+@@ -76,6 +76,43 @@
+ 		pylab.xlabel(p)
+ 	pylab.show()
+ 
++def saveGnuplot(baseName,term='wxt',extension=None,timestamp=False,comment=None):
++	&quot;&quot;&quot;baseName: used for creating baseName.gnuplot (command file for gnuplot),
++			associated baseName.data (data) and output files (if applicable) in the form baseName.[plot number].extension
++		term: specify the gnuplot terminal;
++			defaults to x11, in which case gnuplot will draw persistent windows to screen and terminate
++			other useful terminals are 'png', 'cairopdf' and so on
++		extension: defaults to terminal name
++			fine for png for example; if you use 'cairopdf', you should also say extension='pdf' however
++		timestamp: append numeric time to the basename
++		comment: a user comment (may be multiline) that will be embedded in the control file
++	&quot;&quot;&quot;
++	import time,bz2
++	vars=data.keys()
++	lData=len(data[vars[0]])
++	if timestamp: baseName+=time.strftime('_%Y%m%d_%H:%m')
++	baseNameNoPath=baseName.split('/')[-1]
++	fData=bz2.BZ2File(baseName+&quot;.data.bz2&quot;,'w');
++	fData.write(&quot;# &quot;+&quot;\t\t&quot;.join(vars)+&quot;\n&quot;)
++	for i in range(lData):
++		fData.write(&quot;\t&quot;.join([str(data[key][i]) for key in data.keys()])+&quot;\n&quot;)
++	fData.close()
++	fPlot=file(baseName+&quot;.gnuplot&quot;,'w')
++	fPlot.write('#!/usr/bin/env gnuplot\n#\n# created '+time.asctime()+' ('+time.strftime('%Y%m%d_%H:%m')+')\n#\n')
++	if comment: fPlot.write('# '+comment.replace('\n','\n# ')+'#\n')
++	fPlot.write('dataFile=&quot;&lt; bzcat %s.data.bz2&quot;\n'%(baseNameNoPath))
++	if not extension: extension=term
++	i=0
++	for p in plots:
++		# print p
++		plots_p=[fillNonSequence(o) for o in plots[p]]
++		if term in ['wxt','x11']: fPlot.write(&quot;set term %s %d persist\n&quot;%(term,i))
++		else: fPlot.write(&quot;set term %s; set output '%s.%d.%s'\n&quot;%(term,baseNameNoPath,i,extension))
++		fPlot.write(&quot;plot &quot;+&quot;,&quot;.join([&quot; dataFile using %d:%d title '%s(%s)'&quot;%(vars.index(p)+1,vars.index(pp[0])+1,pp[0],p) for pp in plots_p])+&quot;\n&quot;)
++		i+=1
++	fPlot.close()
++
++
+ 	
+ import random
+ if __name__ == &quot;__main__&quot;:
+
+Modified: trunk/gui/py/utils.py
+===================================================================
+--- trunk/gui/py/utils.py	2008-06-12 10:34:53 UTC (rev 1384)
++++ trunk/gui/py/utils.py	2008-06-12 11:50:13 UTC (rev 1385)
+@@ -97,7 +97,7 @@
+ 		dt=min(dt,thisDt)
+ 	return dt
+ 
+-def spheresFromFile(filename,**kw):
++def spheresFromFile(filename,scale=1.,**kw):
+ 	&quot;&quot;&quot;Load sphere coordinates from file, create spheres, insert them to the simulation.
+ 
+ 	filename is the file holding ASCII numbers (at least 4 colums that hold x_center, y_center, z_center, radius).
+@@ -108,7 +108,7 @@
+ 	ret=[]
+ 	for l in open(filename):
+ 		ss=[float(i) for i in l.split()]
+-		id=o.bodies.append(sphere([ss[0],ss[2],ss[1]],ss[3],**kw))
++		id=o.bodies.append(sphere([scale*ss[0],scale*ss[2],scale*ss[1]],scale*ss[3],**kw))
+ 		ret.append(id)
+ 	return ret
+ 
+
+Modified: trunk/gui/qt3/QtGeneratedSimulationController.ui
+===================================================================
+--- trunk/gui/qt3/QtGeneratedSimulationController.ui	2008-06-12 10:34:53 UTC (rev 1384)
++++ trunk/gui/qt3/QtGeneratedSimulationController.ui	2008-06-12 11:50:13 UTC (rev 1385)
+@@ -671,10 +671,10 @@
+         &lt;data format=&quot;PNG&quot; length=&quot;232&quot;&gt;89504e470d0a1a0a0000000d4948445200000015000000150806000000a917a596000000af49444154388ded95a10ec33010435fa2810bbb5f181e1becbe7f8565c1fd85b01eeb401b2d8dc29ab2869c6ccb8ae5931217a7080608981922721afb640904922544841ed8c529764b98f12359424529e76718565880002cc46976597fbd9f6be621f01d4757fbbd8a82818a6266a828db09ff59e8079e8daffded4e614fb2cf423ff0d0ecd41f12ee37d6494bbd95b4f6fbd616eba4a5de4a5afbef4eef4eef4e7b767ac97bdaecf42c7657fc513f8f2ab9c097ced54c0000000049454e44ae426082&lt;/data&gt;
+     &lt;/image&gt;
+     &lt;image name=&quot;image2&quot;&gt;
+-        &lt;data format=&quot;PNG&quot; length=&quot;273&quot;&gt;89504e470d0a1a0a0000000d4948445200000015000000150806000000a917a596000000d849444154388db595310e83300c451f88c16c5c81b56c744bcf5fc66ef41cd9ea2d1d2088221a42d266b1be1dc54f6f49313e46504040551191ec5c5ab520d0f5adbb9ade757deb3a7371562d228255cb362310ca65230daa0ad44c67aa8d34a073056ec6389f55f563becda5df00aff9d1a9ae097c3f96b8f41bf6481782553f867871ba47ba10f0393f228e76ba9d87884f398d253eed348638c9e91171b2d3107196d375bd0f43e1ef57b94ea1661c9e05bf74ba26f4f7ab1ca75bc26ca77b84594ebf11263b0d1126393d223ced3486d0e7e21f7fd41b9f5d95b4bfffbba60000000049454e44ae426082&lt;/data&gt;
++        &lt;data format=&quot;PNG&quot; length=&quot;255&quot;&gt;89504e470d0a1a0a0000000d4948445200000015000000150806000000a917a596000000c649444154388db594d90a83400c458f0bd28542feff9ffa2f81822fadda87d176d4319d14bd20e38470b22a1c2fbd8ce7109e8fbdf050caf9555ad07bc2cf051d9db50679cdb30310176cd298690a98d2e4a37506340b5847bebdd5e7320f0840b778b7a0b99265f02ee9b68e660d4acb34683d4cb3e10b3569b30e7c073e80abfced72819ea86a0fd49014c0754f68153e6f79ec053d8743dad8e818943c41e3fb1e7b3a0b60fe13fe819e4037d62bc8b3a7004d6883adcc4cf516cedf4007942ad3ef38bd01af6e31af98932e9f0000000049454e44ae426082&lt;/data&gt;
+     &lt;/image&gt;
+     &lt;image name=&quot;image3&quot;&gt;
+-        &lt;data format=&quot;PNG&quot; length=&quot;210&quot;&gt;89504e470d0a1a0a0000000d4948445200000015000000150806000000a917a5960000009949444154388ded94bd0a0231108427e18ab1db67d1cef737e575f139b6733aaff0222182dc4f0a854b330cec928fafd890c70c0800014920b9bb479703045c0e92e8d1431e7337c2d2634fc2d243ebf4723d3fb1f2e5740f5f9d028f79744536c4d1689004a3bd88719a879767bd6fb44fa75b485ba7b1fe41d226d27aff4d7a383d9cfeb8d3c1e5301a4ade520a755f9268fa1fdfd31ec413524e89890537f1ed0000000049454e44ae426082&lt;/data&gt;
++        &lt;data format=&quot;PNG&quot; length=&quot;305&quot;&gt;89504e470d0a1a0a0000000d4948445200000015000000150806000000a917a596000000f849444154388db5943b12823010863f1f95158de839b0f5021ec00bd8702b8f2117e0326ab38d54385a844748086c66f49f49917d7c2cc966412501e4a38b85a536b081abc01350c9405e0dc882cd831701600daca6539340ae57a9a44d2533c069b9bf7f77f605706e96ad83922fb5a9b25bb9e5a3b7ab2559183880c6744b7bcbf201b945248eaafdf2c6b25d7f05b555fe03fafc07741b8790fdf092c7a1c7c8c2bcf8165a59b64b24d48eb739737d1a92e44e5ee6064cbc2815b06e3dcea4f19e6181e9db12d3155bcc195e80d330b49f5a2e34c51f2a1aed207904a01d5c314f017843b2768d810191ac31e3ad1af75319bf0f04f8024c83732f0a67978c0000000049454e44ae426082&lt;/data&gt;
+     &lt;/image&gt;
+     &lt;image name=&quot;image4&quot;&gt;
+         &lt;data format=&quot;PNG&quot; length=&quot;160&quot;&gt;89504e470d0a1a0a0000000d4948445200000015000000150806000000a917a5960000006749444154388dadccd10d80300c03d1947118a1fbcb23b00e2c4013dbc9fd9ef4168098eecae6def73b8eba70893a3085aa308d2ab084b2b08c32b08556b08d66700b3dc16d1478d628fa07b6d01368a31968a11528a30c28a12c48a30a48a12a58a20e1811f101d3512a7c38fee1ac0000000049454e44ae426082&lt;/data&gt;
+
+Modified: trunk/gui/qt3/pictures/reset.png
+===================================================================
+(Binary files differ)
+
+Modified: trunk/gui/qt3/pictures/step.png
+===================================================================
+(Binary files differ)
+
+Deleted: trunk/pkg/common/Engine/StandAloneEngine/PeriodicEngine.hpp
+===================================================================
+--- trunk/pkg/common/Engine/StandAloneEngine/PeriodicEngine.hpp	2008-06-12 10:34:53 UTC (rev 1384)
++++ trunk/pkg/common/Engine/StandAloneEngine/PeriodicEngine.hpp	2008-06-12 11:50:13 UTC (rev 1385)
+@@ -1,77 +0,0 @@
+-// 2008 &#169; V&#225;clav &#352;milauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">eudoxos at arcig.cz</A>&gt;
+-#pragma once
+-
+-#include&lt;time.h&gt;
+-#include&lt;yade/core/StandAloneEngine.hpp&gt;
+-#include&lt;yade/core/Omega.hpp&gt;
+-
+-/* Run an action with adjustable and constrained periodicity (real time, virtual time, iteration)
+- *
+- * 3 criteria can be used: iteration period, realTime (wallclock) period, virtTime (simulation time) period.
+- * Each of them is composed of a Vector3r with the meaning [lower limit, actual period value, upper limit].
+- * The criterion is disabled if the lower limit is &lt; 0, which is the default.
+- * If _any_ criterion from the enabled ones is satisfied (elapsed iteration period etc.), the engine becomes active.
+- *
+- * At the first run after construction, the engine will ensure period consistency,
+- * i.e. that on enabled periods, limits are properly ordered (swapped otherwise)
+- * and that the actual value is not over the upper limit (will be made equal to it otherwise) ot under the lower limit.
+- *
+- * If it is useful to make the actual periods smaller/larger, mayDouble and mayHalve signify whether actual periods
+- * (considering only enabled criteria) may be halved/doubled without getting off limits.
+- *
+- * This engine may be used only by deriving an engine with something useful in action(MetaBody*);
+- * if used as-is, it will throw when activated.
+- *
+- * @bug we use gettimeofday() to get current time; benchmark it, since it involves a syscall?; better use HPET timer (async?) instead of polling the clock?
+- */
+-class PeriodicEngine: public StandAloneEngine {
+-	private:
+-		Vector3r virtTimeLim,realTimeLim,iterLim;
+-		Real lastRealTime,lastVirtTime; long lastIter;
+-		bool mayDouble,mayHalve;
+-		bool perhapsInconsistent;
+-		void ensureConsistency(Vector3r&amp; v){
+-			if(v[0]&lt;0) return; // not active
+-			if(v[2]&lt;v[0]){Real lo=v[2]; v[2]=v[0]; v[0]=lo;} // swap limits if necessary
+-			if(v[1]&lt;v[0]) v[1]=v[0]; // put actual value below the lower limit to the lower limit
+-			if(v[1]&gt;v[2]) v[2]=v[1]; // put actual value above the upper limit to the upper limit
+-		}
+-	public :
+-		PeriodicEngine(): virtTimeLim(-1,0,0),realTimeLim(-1,0,0),iterLim(-1,0,0), lastRealTime(0.),lastVirtTime(0.),lastIter(0),mayDouble(false),mayHalve(false),perhapsInconsistent(true){};
+-		virtual void action(MetaBody* b) { throw; }
+-		virtual bool isActivated(){
+-			if(perhapsInconsistent){ ensureConsistency(virtTimeLim); ensureConsistency(realTimeLim); ensureConsistency(iterLim); perhapsInconsistent=false; }
+-
+-			mayDouble=((virtTimeLim[0]&lt;0 || 2*virtTimeLim[1]&lt;=virtTimeLim[2]) &amp;&amp; (realTimeLim[0]&lt;0 || 2*realTimeLim[1]&lt;=realTimeLim[2]) &amp;&amp; (iterLim[0]&lt;0 || 2*iterLim[1]&lt;=iterLim[2]));
+-			mayHalve=((virtTimeLim[0]&lt;0 || .5*virtTimeLim[1]&gt;=virtTimeLim[0]) &amp;&amp; (realTimeLim[0]&lt;0 &amp;&amp; .5*realTimeLim[1]&gt;=realTimeLim[0]) &amp;&amp; (iterLim[0]&lt;0 || .5*iterLim[1]&gt;=iterLim[0]));
+-			
+-			long nowIter=Omega::instance().getCurrentIteration();
+-			Real nowVirtTime=Omega::instance().getSimulationTime();
+-			timeval tp; gettimeofday(&amp;tp,NULL); Real nowRealTime=tp.tv_sec+tp.tv_usec/1e6;
+-			//cerr&lt;&lt;&quot;--------------------&quot;&lt;&lt;endl; cerr&lt;&lt;&quot;virt:&quot;&lt;&lt;virtTimeLim&lt;&lt;&quot;;&quot;&lt;&lt;lastVirtTime&lt;&lt;&quot;;&quot;&lt;&lt;nowVirtTime&lt;&lt;endl; cerr&lt;&lt;&quot;real:&quot;&lt;&lt;realTimeLim&lt;&lt;&quot;;&quot;&lt;&lt;lastRealTime&lt;&lt;&quot;;&quot;&lt;&lt;nowRealTime&lt;&lt;endl; cerr&lt;&lt;&quot;iter:&quot;&lt;&lt;iterLim&lt;&lt;&quot;;&quot;&lt;&lt;lastIter&lt;&lt;&quot;;&quot;&lt;&lt;nowIter&lt;&lt;endl;
+-			if (  (virtTimeLim[0]&gt;=0 &amp;&amp; nowVirtTime-lastVirtTime&gt;virtTimeLim[1])
+-			 || (realTimeLim[0]&gt;=0 &amp;&amp; nowRealTime-lastRealTime&gt;realTimeLim[1])
+-			 || (iterLim[0]&gt;=0     &amp;&amp; nowIter    -lastIter    &gt;iterLim[1])){
+-				lastVirtTime=nowVirtTime; lastRealTime=nowRealTime; lastIter=nowIter;
+-				return true;
+-			} else return false;
+-		}
+-		virtual void registerAttributes(){
+-			StandAloneEngine::registerAttributes();
+-			REGISTER_ATTRIBUTE(virtTimeLim);
+-			REGISTER_ATTRIBUTE(realTimeLim);
+-			REGISTER_ATTRIBUTE(iterLim);
+-			REGISTER_ATTRIBUTE(lastRealTime);
+-			REGISTER_ATTRIBUTE(lastVirtTime);
+-			REGISTER_ATTRIBUTE(lastIter);
+-			REGISTER_ATTRIBUTE(mayDouble);
+-			REGISTER_ATTRIBUTE(mayHalve);
+-		}
+-	protected :
+-		virtual void postProcessAttributes(bool deserializing){}
+-	DECLARE_LOGGER;
+-	REGISTER_CLASS_NAME(PeriodicEngine);
+-	REGISTER_BASE_CLASS_NAME(StandAloneEngine);
+-};
+-REGISTER_SERIALIZABLE(PeriodicEngine,false);
+-
+
+Copied: trunk/pkg/common/Engine/StandAloneEngine/PeriodicEngines.hpp (from rev 1383, trunk/pkg/common/Engine/StandAloneEngine/PeriodicEngine.hpp)
+===================================================================
+--- trunk/pkg/common/Engine/StandAloneEngine/PeriodicEngine.hpp	2008-06-10 10:28:40 UTC (rev 1383)
++++ trunk/pkg/common/Engine/StandAloneEngine/PeriodicEngines.hpp	2008-06-12 11:50:13 UTC (rev 1385)
+@@ -0,0 +1,109 @@
++// 2008 &#169; V&#225;clav &#352;milauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">eudoxos at arcig.cz</A>&gt;
++#pragma once
++
++#include&lt;time.h&gt;
++#include&lt;yade/core/StandAloneEngine.hpp&gt;
++#include&lt;yade/core/Omega.hpp&gt;
++/* run an action with given fixed periodicity (real time, virtual time, iteration number), by setting any of 
++ * those criteria to a number &gt; 0. */
++class PeriodicEngine:  public StandAloneEngine {
++	private:
++		Real getClock(){ timeval tp; gettimeofday(&amp;tp,NULL); return tp.tv_sec+tp.tv_usec/1e6; }
++		Real virtPeriod, virtLast, realPeriod, realLast; long iterPeriod,iterLast;
++	public:
++		PeriodicEngine(): virtPeriod(0),virtLast(0),realPeriod(0),realLast(0),iterPeriod(0),iterLast(0) { realLast=getClock(); }
++		virtual bool isActivated(){
++			Real virtNow=Omega::instance().getSimulationTime();
++			Real realNow=getClock();
++			long iterNow=Omega::instance().getCurrentIteration();
++			if((virtPeriod&gt;0 &amp;&amp; virtNow-virtLast&gt;virtPeriod) ||
++				(realPeriod&gt;0 &amp;&amp; realNow-realLast&gt;realPeriod) ||
++				(iterPeriod&gt;0 &amp;&amp; iterNow-iterLast&gt;iterPeriod)){
++				realLast=realNow; virtLast=virtNow; iterLast=iterNow;
++				return true;
++			}
++			return false;
++		}
++	protected:
++		void registerAttributes(){ StandAloneEngine::registerAttributes();
++			REGISTER_ATTRIBUTE(virtPeriod);
++			REGISTER_ATTRIBUTE(realPeriod);
++			REGISTER_ATTRIBUTE(iterPeriod);
++			REGISTER_ATTRIBUTE(virtLast);
++			REGISTER_ATTRIBUTE(realLast);
++			REGISTER_ATTRIBUTE(iterLast);
++		}
++};
++REGISTER_SERIALIZABLE(PeriodicEngine,false);
++
++/* Run an action with adjustable and constrained periodicity (real time, virtual time, iteration)
++ *
++ * 3 criteria can be used: iteration period, realTime (wallclock) period, virtTime (simulation time) period.
++ * Each of them is composed of a Vector3r with the meaning [lower limit, actual period value, upper limit].
++ * The criterion is disabled if the lower limit is &lt; 0, which is the default.
++ * If _any_ criterion from the enabled ones is satisfied (elapsed iteration period etc.), the engine becomes active.
++ *
++ * At the first run after construction, the engine will ensure period consistency,
++ * i.e. that on enabled periods, limits are properly ordered (swapped otherwise)
++ * and that the actual value is not over the upper limit (will be made equal to it otherwise) ot under the lower limit.
++ *
++ * If it is useful to make the actual periods smaller/larger, mayDouble and mayHalve signify whether actual periods
++ * (considering only enabled criteria) may be halved/doubled without getting off limits.
++ *
++ * This engine may be used only by deriving an engine with something useful in action(MetaBody*);
++ * if used as-is, it will throw when activated.
++ *
++ * @bug we use gettimeofday() to get current time; benchmark it, since it involves a syscall?; better use HPET timer (async?) instead of polling the clock?
++ */
++class RangePeriodicEngine: public StandAloneEngine {
++	private:
++		Vector3r virtTimeLim,realTimeLim,iterLim;
++		Real lastRealTime,lastVirtTime; long lastIter;
++		bool mayDouble,mayHalve;
++		bool perhapsInconsistent;
++		void ensureConsistency(Vector3r&amp; v){
++			if(v[0]&lt;0) return; // not active
++			if(v[2]&lt;v[0]){Real lo=v[2]; v[2]=v[0]; v[0]=lo;} // swap limits if necessary
++			if(v[1]&lt;v[0]) v[1]=v[0]; // put actual value below the lower limit to the lower limit
++			if(v[1]&gt;v[2]) v[2]=v[1]; // put actual value above the upper limit to the upper limit
++		}
++	public :
++		RangePeriodicEngine(): virtTimeLim(-1,0,0),realTimeLim(-1,0,0),iterLim(-1,0,0), lastRealTime(0.),lastVirtTime(0.),lastIter(0),mayDouble(false),mayHalve(false),perhapsInconsistent(true){};
++		virtual void action(MetaBody* b) { throw; }
++		virtual bool isActivated(){
++			if(perhapsInconsistent){ ensureConsistency(virtTimeLim); ensureConsistency(realTimeLim); ensureConsistency(iterLim); perhapsInconsistent=false; }
++
++			mayDouble=((virtTimeLim[0]&lt;0 || 2*virtTimeLim[1]&lt;=virtTimeLim[2]) &amp;&amp; (realTimeLim[0]&lt;0 || 2*realTimeLim[1]&lt;=realTimeLim[2]) &amp;&amp; (iterLim[0]&lt;0 || 2*iterLim[1]&lt;=iterLim[2]));
++			mayHalve=((virtTimeLim[0]&lt;0 || .5*virtTimeLim[1]&gt;=virtTimeLim[0]) &amp;&amp; (realTimeLim[0]&lt;0 &amp;&amp; .5*realTimeLim[1]&gt;=realTimeLim[0]) &amp;&amp; (iterLim[0]&lt;0 || .5*iterLim[1]&gt;=iterLim[0]));
++			
++			long nowIter=Omega::instance().getCurrentIteration();
++			Real nowVirtTime=Omega::instance().getSimulationTime();
++			//Real nowRealTime=boost::posix_time::microsec_clock::universal_time()/1e6;
++			timeval tp; gettimeofday(&amp;tp,NULL); Real nowRealTime=tp.tv_sec+tp.tv_usec/1e6;
++			//cerr&lt;&lt;&quot;--------------------&quot;&lt;&lt;endl; cerr&lt;&lt;&quot;virt:&quot;&lt;&lt;virtTimeLim&lt;&lt;&quot;;&quot;&lt;&lt;lastVirtTime&lt;&lt;&quot;;&quot;&lt;&lt;nowVirtTime&lt;&lt;endl; cerr&lt;&lt;&quot;real:&quot;&lt;&lt;realTimeLim&lt;&lt;&quot;;&quot;&lt;&lt;lastRealTime&lt;&lt;&quot;;&quot;&lt;&lt;nowRealTime&lt;&lt;endl; cerr&lt;&lt;&quot;iter:&quot;&lt;&lt;iterLim&lt;&lt;&quot;;&quot;&lt;&lt;lastIter&lt;&lt;&quot;;&quot;&lt;&lt;nowIter&lt;&lt;endl;
++			if (  (virtTimeLim[0]&gt;=0 &amp;&amp; nowVirtTime-lastVirtTime&gt;virtTimeLim[1])
++			 || (realTimeLim[0]&gt;=0 &amp;&amp; nowRealTime-lastRealTime&gt;realTimeLim[1])
++			 || (iterLim[0]&gt;=0     &amp;&amp; nowIter    -lastIter    &gt;iterLim[1])){
++				lastVirtTime=nowVirtTime; lastRealTime=nowRealTime; lastIter=nowIter;
++				return true;
++			} else return false;
++		}
++		virtual void registerAttributes(){
++			StandAloneEngine::registerAttributes();
++			REGISTER_ATTRIBUTE(virtTimeLim);
++			REGISTER_ATTRIBUTE(realTimeLim);
++			REGISTER_ATTRIBUTE(iterLim);
++			REGISTER_ATTRIBUTE(lastRealTime);
++			REGISTER_ATTRIBUTE(lastVirtTime);
++			REGISTER_ATTRIBUTE(lastIter);
++			REGISTER_ATTRIBUTE(mayDouble);
++			REGISTER_ATTRIBUTE(mayHalve);
++		}
++	protected :
++		virtual void postProcessAttributes(bool deserializing){}
++	DECLARE_LOGGER;
++	REGISTER_CLASS_NAME(RangePeriodicEngine);
++	REGISTER_BASE_CLASS_NAME(StandAloneEngine);
++};
++REGISTER_SERIALIZABLE(RangePeriodicEngine,false);
++
+
+Modified: trunk/scripts/simple-scene-graph.py
+===================================================================
+--- trunk/scripts/simple-scene-graph.py	2008-06-12 10:34:53 UTC (rev 1384)
++++ trunk/scripts/simple-scene-graph.py	2008-06-12 11:50:13 UTC (rev 1385)
+@@ -70,6 +70,8 @@
+ 	sph=o.bodies[1]
+ 	yade.plot.addData({'t':o.time,'i':o.iter,'z_sph':sph.phys['se3'][2],'v_sph':sqrt(sum([v**2 for v in sph.phys['velocity']]))})
+ 
++
++
+ o.run();
+ print &quot;&quot;&quot;Now, you can say
+ 
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000345.html">[Yade-commits] r1384 - trunk/pkg/dem/Engine/DeusExMachina
+</A></li>
+	<LI>Next message: <A HREF="000347.html">[Yade-commits] r1386 - trunk/gui/qt3
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#346">[ date ]</a>
+              <a href="thread.html#346">[ thread ]</a>
+              <a href="subject.html#346">[ subject ]</a>
+              <a href="author.html#346">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

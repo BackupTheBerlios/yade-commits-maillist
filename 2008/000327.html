@@ -1,0 +1,138 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1365 - in trunk: core gui/py gui/qt3
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1365%20-%20in%20trunk%3A%20core%20gui/py%20gui/qt3&In-Reply-To=%3C200805242002.m4OK2DgB008363%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000326.html">
+   <LINK REL="Next"  HREF="000328.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1365 - in trunk: core gui/py gui/qt3</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1365%20-%20in%20trunk%3A%20core%20gui/py%20gui/qt3&In-Reply-To=%3C200805242002.m4OK2DgB008363%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1365 - in trunk: core gui/py gui/qt3">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Sat May 24 22:02:13 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000326.html">[Yade-commits] r1364 - in trunk: core gui/py gui/qt3
+</A></li>
+        <LI>Next message: <A HREF="000328.html">[Yade-commits] r1366 - in trunk: gui/py scripts
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#327">[ date ]</a>
+              <a href="thread.html#327">[ thread ]</a>
+              <a href="subject.html#327">[ subject ]</a>
+              <a href="author.html#327">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2008-05-24 22:02:12 +0200 (Sat, 24 May 2008)
+New Revision: 1365
+
+Modified:
+   trunk/core/yade.cpp
+   trunk/gui/py/PythonUI.cpp
+   trunk/gui/qt3/QtGUI-python.cpp
+Log:
+1. Fix passing .py to PythonUI (local vars shadowing global ones); fixes default-test.py as well.
+2. Fallback to PythonUI automatically if $DISPLAY is not defined in shell
+3. Ignore closing YadeQtMainWindow if it doesnt exist instead of throwing exception
+
+
+Modified: trunk/core/yade.cpp
+===================================================================
+--- trunk/core/yade.cpp	2008-05-24 13:32:34 UTC (rev 1364)
++++ trunk/core/yade.cpp	2008-05-24 20:02:12 UTC (rev 1365)
+@@ -247,6 +247,7 @@
+ 	}
+ 
+ 	if(gui.size()==0) gui=Omega::instance().preferences-&gt;defaultGUILibName;
++	if(gui==&quot;QtGUI&quot; &amp;&amp; !getenv(&quot;DISPLAY&quot;)){ LOG_WARN(&quot;No $DISPLAY, using PythonUI instead of QtUI&quot;); gui=&quot;PythonUI&quot;; }
+ 		
+ 	shared_ptr&lt;FrontEnd&gt; frontEnd = dynamic_pointer_cast&lt;FrontEnd&gt;(ClassFactory::instance().createShared(gui));
+ 	
+
+Modified: trunk/gui/py/PythonUI.cpp
+===================================================================
+--- trunk/gui/py/PythonUI.cpp	2008-05-24 13:32:34 UTC (rev 1364)
++++ trunk/gui/py/PythonUI.cpp	2008-05-24 20:02:12 UTC (rev 1365)
+@@ -90,19 +90,16 @@
+ }
+ 
+ int PythonUI::run(int argc, char *argv[]) {
+-	string runScript;
+-	string runCommands;
+-	bool stopAfter=false;
+-	
+ 	int ch;
+-	while((ch=getopt(argc,argv,&quot;hs:x&quot;))!=-1)
+-	switch(ch){
+-		case 'h': help(); return 1;
+-		case 's': runScript=string(optarg); break;
+-		case 'x': stopAfter=true; break;
+-		default:
+-			LOG_ERROR(&quot;Unhandled option string: `&quot;&lt;&lt;string(optarg)&lt;&lt;&quot;' (try -h for help on options)&quot;);
+-			break;
++	while((ch=getopt(argc,argv,&quot;hs:x&quot;))!=-1){
++		switch(ch){
++			case 'h': help(); return 1; break;
++			case 's': runScript=string(optarg); break;
++			case 'x': stopAfter=true; break;
++			default:
++				LOG_WARN(&quot;Unhandled option string: `&quot;&lt;&lt;string(optarg)&lt;&lt;&quot;' (try -h for help on options)&quot;);
++				break;
++		}
+ 	}
+ 	if(optind&lt;argc){ // process non-option arguments
+ 		if(boost::algorithm::ends_with(string(argv[optind]),string(&quot;.py&quot;))) runScript=string(argv[optind]);
+
+Modified: trunk/gui/qt3/QtGUI-python.cpp
+===================================================================
+--- trunk/gui/qt3/QtGUI-python.cpp	2008-05-24 13:32:34 UTC (rev 1364)
++++ trunk/gui/qt3/QtGUI-python.cpp	2008-05-24 20:02:12 UTC (rev 1365)
+@@ -8,8 +8,8 @@
+ STANDALONE_MAINWINDOW_FUNC(createView);
+ STANDALONE_MAINWINDOW_FUNC(centerViews);
+ STANDALONE_MAINWINDOW_FUNC(createSimulationController);
+-STANDALONE_MAINWINDOW_FUNC(Quit);
+-//void closeMainWindow(void){ exit(0); /* this is perhaps too violent? */ }
++//STANDALONE_MAINWINDOW_FUNC(Quit);
++void Quit(void){ if(YadeQtMainWindow::self) YadeQtMainWindow::self-&gt;Quit(); }
+ 
+ 
+ BOOST_PYTHON_MODULE(qt){
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000326.html">[Yade-commits] r1364 - in trunk: core gui/py gui/qt3
+</A></li>
+	<LI>Next message: <A HREF="000328.html">[Yade-commits] r1366 - in trunk: gui/py scripts
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#327">[ date ]</a>
+              <a href="thread.html#327">[ thread ]</a>
+              <a href="subject.html#327">[ subject ]</a>
+              <a href="author.html#327">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

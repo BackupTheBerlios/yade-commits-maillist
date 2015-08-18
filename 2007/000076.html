@@ -1,0 +1,772 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1111 - in branches/scons-layout: . debian
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2007/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1111%20-%20in%20branches/scons-layout%3A%20.%20debian&In-Reply-To=%3C200703081335.l28DZrc9028926%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000075.html">
+   <LINK REL="Next"  HREF="000077.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1111 - in branches/scons-layout: . debian</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1111%20-%20in%20branches/scons-layout%3A%20.%20debian&In-Reply-To=%3C200703081335.l28DZrc9028926%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1111 - in branches/scons-layout: . debian">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Thu Mar  8 14:35:53 CET 2007</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000075.html">[Yade-commits] r1110 - in branches/scons-layout: gui/qt lib/base	lib/computational-geometry lib/factory lib/loki	lib/multimethods lib/opengl lib/serialization	lib/serialization-bin lib/serialization-qt lib/serialization-xml
+</A></li>
+        <LI>Next message: <A HREF="000077.html">[Yade-commits] r1112 - branches/scons-layout
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#76">[ date ]</a>
+              <a href="thread.html#76">[ thread ]</a>
+              <a href="subject.html#76">[ subject ]</a>
+              <a href="author.html#76">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2007-03-08 14:35:52 +0100 (Thu, 08 Mar 2007)
+New Revision: 1111
+
+Added:
+   branches/scons-layout/debian/
+   branches/scons-layout/debian/README.Debian
+   branches/scons-layout/debian/changelog
+   branches/scons-layout/debian/compat
+   branches/scons-layout/debian/control
+   branches/scons-layout/debian/copyright
+   branches/scons-layout/debian/docs
+   branches/scons-layout/debian/menu
+   branches/scons-layout/debian/postinst
+   branches/scons-layout/debian/postrm
+   branches/scons-layout/debian/preinst
+   branches/scons-layout/debian/prerm
+   branches/scons-layout/debian/rules
+   branches/scons-layout/debian/yade.sgml
+Modified:
+   branches/scons-layout/SConstruct
+Log:
+Debian packaging
+
+Modified: branches/scons-layout/SConstruct
+===================================================================
+--- branches/scons-layout/SConstruct	2007-03-07 15:06:08 UTC (rev 1110)
++++ branches/scons-layout/SConstruct	2007-03-08 13:35:52 UTC (rev 1111)
+@@ -42,7 +42,8 @@
+ #  2. lowercase options influence the building process, compiler options and the like.
+ #
+ opts.AddOptions(
+-	PathOption('PREFIX', 'Install path prefix', '/usr/local'),
++	PathOption('PREFIX', 'Install path prefix', '/usr/local',PathOption.PathIsDirCreate),
++	PathOption('runtimePREFIX','Runtime path prefix; DO NOT USE, inteded for packaging only.','$PREFIX'),
+ 	('POSTFIX','Local version appended to binary, library and config directory (beware: if PREFIX is the same, headers of the older version will still be overwritten','',None,lambda x:x),
+ 	BoolOption('debug', 'Enable debugging information and disable optimizations',1),
+ 	BoolOption('profile','Enable profiling information',0),
+@@ -51,11 +52,12 @@
+ 	('jobs','Number of jobs to run at the same time (same as -j, but saved)',4,None,int),
+ 	('extraModules', 'Extra directories with their own SConscript files (must be in-tree) (whitespace separated)',None,None,Split),
+ 	('buildPrefix','Where to create build-[version][POSTFIX] directory for intermediary files','..'),
++	('VERSION','Yade version (if not specified, guess will be attempted)',None),
+ 	('CPPPATH', 'Additional paths for the C preprocessor (whitespace separated)',['/usr/include/wm3'],None,Split),
+ 	('LIBPATH','Additional paths for the linker (whitespace separated)',None,None,Split),
+ 	('QTDIR','Directories where to look for qt3',['/usr/share/qt3','/usr/lib/qt'],None,Split),
+-	('CXX','The c++ compiler','g++-4.0'),
+-	BoolOption('pretty',&quot;Don't show compiler command line (like the Linux kernel)&quot;,1)
++	('CXX','The c++ compiler','g++'),
++	BoolOption('pretty',&quot;Don't show compiler command line (like the Linux kernel)&quot;,1),
+ )
+ 
+ ### create THE environment
+@@ -71,7 +73,28 @@
+ opts.FormatOptionHelpText=lambda env,opt,help,default,actual: &quot;%10s: %5s [%s] (%s)\n&quot;%(opt,actual,default,help)
+ Help(opts.GenerateHelpText(env))
+ 
++###########################################
++################# BUILD DIRECTORY #########
++###########################################
+ 
++##ALL generated stuff should go here - therefore we must determine it very early!!
++
++if not env.has_key('VERSION'):
++	&quot;Attempts to get yade version from local svn tree; should be extended so that it works for releases as well (not yet applicable).&quot;
++	svnRevision=None
++	for l in os.popen(&quot;svn info&quot;).readlines():
++		m=re.match(r'Revision: ([0-9]+)',l)
++		if m: env['VERSION']='svn'+m.group(1)
++	if not env.has_key('VERSION'): env['VERSION']='unknown'
++env['POSTFIX']='-'+env['VERSION']+env['POSTFIX']
++print &quot;Yade version is `%s', installed files will be suffixed with `%s'.&quot;%(env['VERSION'],env['POSTFIX'])
++buildDir=os.path.join(env['buildPrefix'],env.subst('build$POSTFIX'))
++# these MUST be first so that builddir's headers are read before any locally installed ones
++if os.path.isabs(buildDir): env.Append(CPPPATH=[os.path.join(buildDir,'include')])
++else: env.Append(CPPPATH=[os.path.join('#',buildDir,'include')])
++
++env.SConsignFile(os.path.join(buildDir,'scons-signatures'))
++
+ ##########################################################################################
+ ############# CONFIGURATION ##############################################################
+ ##########################################################################################
+@@ -120,21 +143,6 @@
+ 	except ImportError:
+ 		context.Result(False); return False
+ 
+-def CheckYadeVersion(context):
+-	&quot;Attempts to get yade version from local svn tree; should be extended so that it works for releases as well (not yet applicable).&quot;
+-	context.Message('Getting Yade version... ')
+-	svnRevision=None
+-	for l in os.popen(&quot;svn info&quot;).readlines():
+-		m=re.match(r'Revision: ([0-9]+)',l)
+-		if m:
+-			svnRevision=m.group(1)
+-			break
+-	if svnRevision:
+-		env['VERSION']='svn'+svnRevision
+-		context.Result(env['VERSION'])
+-	else:
+-		env['VERSION']=''
+-		context.Result('Svn revision not found, leaving empty')
+ 
+ def CheckCXX(context):
+ 	context.Message('Checking whether c++ compiler &quot;%s&quot; works...'%env['CXX'])
+@@ -144,17 +152,9 @@
+ 
+ 
+ if not env.GetOption('clean'):
+-	conf=Configure(env,custom_tests={'CheckQt':CheckQt,'CheckCXX':CheckCXX,'CheckPython':CheckPython,'CheckScientificPython':CheckScientificPython,'CheckYadeVersion':CheckYadeVersion})
++	conf=env.Configure(custom_tests={'CheckQt':CheckQt,'CheckCXX':CheckCXX,'CheckPython':CheckPython,'CheckScientificPython':CheckScientificPython},
++		conf_dir=os.path.join(buildDir,'.sconf_temp'),log_file=os.path.join(buildDir,'config.log'))
+ 
+-	## buildDir stuff - derived from yade version
+-	conf.CheckYadeVersion()
+-	# set some variables
+-	env['POSTFIX']='-'+env['VERSION']+env['POSTFIX']
+-	buildDir=os.path.join(env['buildPrefix'],env.subst('build$POSTFIX'))
+-	# these MUST be first so that builddir's headers are read before any locally installed ones
+-	if os.path.isabs(buildDir): env.Append(CPPPATH=[os.path.join(buildDir,'include')])
+-	else: env.Append(CPPPATH=[os.path.join('#',buildDir,'include')])
+-
+ 	ok=True
+ 	ok&amp;=conf.CheckCXX()
+ 	if not ok:
+@@ -215,13 +215,15 @@
+ instLibDirs=[os.path.join('$PREFIX','lib','yade$POSTFIX',x.replace('/','-')) for x in libDirs]
+ # will install in the following dirs (needed?)
+ instDirs=[os.path.join('$PREFIX','bin')]+instLibDirs
++# where are we going to be run - may be different (packaging)
++runtimeLibDirs=[os.path.join('$runtimePREFIX','lib','yade$POSTFIX',x.replace('/','-')) for x in libDirs]
+ 
+ ## not used for now...
+ #instIncludeDirs=['yade-core']+[os.path.join('$PREFIX','include','yade',string.split(x,os.path.sep)[-1]) for x in libDirs]
+ 
+ 
+ ### PREPROCESSOR FLAGS
+-env.Append(CPPDEFINES=[('POSTFIX',r'$POSTFIX'),('PREFIX',r'$PREFIX')])
++env.Append(CPPDEFINES=[('POSTFIX',r'$POSTFIX'),('PREFIX',r'$runtimePREFIX'),('VERSION',r'$VERSION')])
+ 
+ ### COMPILER
+ if env['debug']: env.Append(CXXFLAGS='-ggdb3',CPPDEFINES=['DEBUG','YADE_DEBUG'])
+@@ -252,10 +254,10 @@
+ # if this is not present, vtables &amp; typeinfos for classes in yade binary itself are not exported; breaks plugin loading
+ env.Append(LINKFLAGS=['-rdynamic']) 
+ # makes dynamic library loading easied (no LD_LIBRARY_PATH) and perhaps faster
+-env.Append(RPATH=instLibDirs)
++env.Append(RPATH=runtimeLibDirs)
+ # find already compiled but not yet installed libraries for linking
+ #env.Append(LIBPATH=[os.path.join('#',x) for x in libDirs]	# -floop-optimize2 is a gcc-4.x flag, doesn't exist on previous version
+-env.Append(LIBPATH=env['RPATH']) # this is if we link to libs that are installed, which is the case now
++env.Append(LIBPATH=instLibDirs) # this is if we link to libs that are installed, which is the case now
+ 
+ 
+ ### this workaround is only needed for scons&lt;=0.96.92, will disappear soon
+@@ -284,7 +286,7 @@
+ 	yadeInc=join(yadeRoot,'include','yade')
+ 
+ 	for root, dirs, files in os.walk('.'):
+-		for d in ('.svn'):
++		for d in ('.svn','debian','doc','examples','scripts'): ## skip all files that are not part of sources in the proper sense!
+ 			try: dirs.remove(d)
+ 			except ValueError: pass
+ 		for f in files:
+@@ -335,4 +337,4 @@
+ env.Alias('doc',env.Command('doc/doxygen/html/index.html',libDirs,&quot;cd doc; doxygen Doxyfile&quot;))
+ 
+ 
+-
++print env.subst('$PREFIX/lib/yade$POSTFIX/lib')
+
+Added: branches/scons-layout/debian/README.Debian
+===================================================================
+--- branches/scons-layout/debian/README.Debian	2007-03-07 15:06:08 UTC (rev 1110)
++++ branches/scons-layout/debian/README.Debian	2007-03-08 13:35:52 UTC (rev 1111)
+@@ -0,0 +1,6 @@
++yade for Debian
++---------------
++
++&lt;possible notes regarding this package - if none, delete this file&gt;
++
++ -- Vaclav Smilauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">eudoxos at arcig.cz</A>&gt;  Thu,  8 Mar 2007 11:44:19 +0100
+
+Added: branches/scons-layout/debian/changelog
+===================================================================
+--- branches/scons-layout/debian/changelog	2007-03-07 15:06:08 UTC (rev 1110)
++++ branches/scons-layout/debian/changelog	2007-03-08 13:35:52 UTC (rev 1111)
+@@ -0,0 +1,6 @@
++yade (0.0.svn1110-1) unstable; urgency=low
++
++  * Initial debian package.
++
++ -- Vaclav Smilauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">eudoxos at arcig.cz</A>&gt;  Thu,  8 Mar 2007 11:44:19 +0100
++
+
+Added: branches/scons-layout/debian/compat
+===================================================================
+--- branches/scons-layout/debian/compat	2007-03-07 15:06:08 UTC (rev 1110)
++++ branches/scons-layout/debian/compat	2007-03-08 13:35:52 UTC (rev 1111)
+@@ -0,0 +1 @@
++5
+
+Added: branches/scons-layout/debian/control
+===================================================================
+--- branches/scons-layout/debian/control	2007-03-07 15:06:08 UTC (rev 1110)
++++ branches/scons-layout/debian/control	2007-03-08 13:35:52 UTC (rev 1111)
+@@ -0,0 +1,12 @@
++Source: yade
++Section: x11
++Priority: optional
++Maintainer: Vaclav Smilauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">eudoxos at arcig.cz</A>&gt;
++Build-Depends: debhelper (&gt;= 5), scons, lib3dviewer-dev, libqt3-mt-dev, qt3-dev-tools, python-dev, freeglut3-dev, libboost-date-time-dev, libboost-filesystem-dev, libboost-thread-dev, wildmagic-dev, liblog4cxx9-dev, docbook-to-man
++Standards-Version: 3.7.2
++
++Package: yade
++Architecture: any
++Depends: ${shlibs:Depends}, ${misc:Depends}, python-scientific
++Description: Platform for dynamical modeling.
++ Yet Another Dynamic Engine. etc.
+
+Added: branches/scons-layout/debian/copyright
+===================================================================
+--- branches/scons-layout/debian/copyright	2007-03-07 15:06:08 UTC (rev 1110)
++++ branches/scons-layout/debian/copyright	2007-03-08 13:35:52 UTC (rev 1111)
+@@ -0,0 +1,14 @@
++This package was debianized by Vaclav Smilauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">eudoxos at arcig.cz</A>&gt; on
++Thu,  8 Mar 2007 11:44:19 +0100.
++
++It was downloaded from <A HREF="svn://svn.berlios.de/yade/branches/scons-layout">svn://svn.berlios.de/yade/branches/scons-layout</A>
++
++Upstream Author: Yade developers &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">yade-dev at lists.berliios.de</A>&gt;
++
++Copyright: 2004-2007 Yade develpers
++
++License: GNU GPLv2 (/usr/share/common-licenses/GPL-2)
++
++The Debian packaging is (C) 2007, Vaclav Smilauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">eudoxos at arcig.cz</A>&gt; and
++is licensed under the GPL, see `/usr/share/common-licenses/GPL'.
++
+
+Added: branches/scons-layout/debian/docs
+===================================================================
+--- branches/scons-layout/debian/docs	2007-03-07 15:06:08 UTC (rev 1110)
++++ branches/scons-layout/debian/docs	2007-03-08 13:35:52 UTC (rev 1111)
+@@ -0,0 +1,2 @@
++INSTALL
++
+
+Added: branches/scons-layout/debian/menu
+===================================================================
+--- branches/scons-layout/debian/menu	2007-03-07 15:06:08 UTC (rev 1110)
++++ branches/scons-layout/debian/menu	2007-03-08 13:35:52 UTC (rev 1111)
+@@ -0,0 +1 @@
++?package(yade):needs=&quot;X11&quot; section=&quot;Apps/Science&quot; title=&quot;yade&quot; command=&quot;/usr/bin/yade&quot;
+
+Added: branches/scons-layout/debian/postinst
+===================================================================
+--- branches/scons-layout/debian/postinst	2007-03-07 15:06:08 UTC (rev 1110)
++++ branches/scons-layout/debian/postinst	2007-03-08 13:35:52 UTC (rev 1111)
+@@ -0,0 +1,41 @@
++#!/bin/sh
++# postinst script for yade
++#
++# see: dh_installdeb(1)
++
++set -e
++
++# summary of how this script can be called:
++#        * &lt;postinst&gt; `configure' &lt;most-recently-configured-version&gt;
++#        * &lt;old-postinst&gt; `abort-upgrade' &lt;new version&gt;
++#        * &lt;conflictor's-postinst&gt; `abort-remove' `in-favour' &lt;package&gt;
++#          &lt;new-version&gt;
++#        * &lt;postinst&gt; `abort-remove'
++#        * &lt;deconfigured's-postinst&gt; `abort-deconfigure' `in-favour'
++#          &lt;failed-install-package&gt; &lt;version&gt; `removing'
++#          &lt;conflicting-package&gt; &lt;version&gt;
++# for details, see <A HREF="http://www.debian.org/doc/debian-policy/">http://www.debian.org/doc/debian-policy/</A> or
++# the debian-policy package
++
++
++case &quot;$1&quot; in
++    configure)
++    ;;
++
++    abort-upgrade|abort-remove|abort-deconfigure)
++    ;;
++
++    *)
++        echo &quot;postinst called with unknown argument \`$1'&quot; &gt;&amp;2
++        exit 1
++    ;;
++esac
++
++# dh_installdeb will replace this with shell code automatically
++# generated by other debhelper scripts.
++
++#DEBHELPER#
++
++exit 0
++
++
+
+Added: branches/scons-layout/debian/postrm
+===================================================================
+--- branches/scons-layout/debian/postrm	2007-03-07 15:06:08 UTC (rev 1110)
++++ branches/scons-layout/debian/postrm	2007-03-08 13:35:52 UTC (rev 1111)
+@@ -0,0 +1,39 @@
++#!/bin/sh
++# postrm script for yade
++#
++# see: dh_installdeb(1)
++
++set -e
++
++# summary of how this script can be called:
++#        * &lt;postrm&gt; `remove'
++#        * &lt;postrm&gt; `purge'
++#        * &lt;old-postrm&gt; `upgrade' &lt;new-version&gt;
++#        * &lt;new-postrm&gt; `failed-upgrade' &lt;old-version&gt;
++#        * &lt;new-postrm&gt; `abort-install'
++#        * &lt;new-postrm&gt; `abort-install' &lt;old-version&gt;
++#        * &lt;new-postrm&gt; `abort-upgrade' &lt;old-version&gt;
++#        * &lt;disappearer's-postrm&gt; `disappear' &lt;overwriter&gt;
++#          &lt;overwriter-version&gt;
++# for details, see <A HREF="http://www.debian.org/doc/debian-policy/">http://www.debian.org/doc/debian-policy/</A> or
++# the debian-policy package
++
++
++case &quot;$1&quot; in
++    purge|remove|upgrade|failed-upgrade|abort-install|abort-upgrade|disappear)
++    ;;
++
++    *)
++        echo &quot;postrm called with unknown argument \`$1'&quot; &gt;&amp;2
++        exit 1
++    ;;
++esac
++
++# dh_installdeb will replace this with shell code automatically
++# generated by other debhelper scripts.
++
++#DEBHELPER#
++
++exit 0
++
++
+
+Added: branches/scons-layout/debian/preinst
+===================================================================
+--- branches/scons-layout/debian/preinst	2007-03-07 15:06:08 UTC (rev 1110)
++++ branches/scons-layout/debian/preinst	2007-03-08 13:35:52 UTC (rev 1111)
+@@ -0,0 +1,37 @@
++#!/bin/sh
++# preinst script for yade
++#
++# see: dh_installdeb(1)
++
++set -e
++
++# summary of how this script can be called:
++#        * &lt;new-preinst&gt; `install'
++#        * &lt;new-preinst&gt; `install' &lt;old-version&gt;
++#        * &lt;new-preinst&gt; `upgrade' &lt;old-version&gt;
++#        * &lt;old-preinst&gt; `abort-upgrade' &lt;new-version&gt;
++# for details, see <A HREF="http://www.debian.org/doc/debian-policy/">http://www.debian.org/doc/debian-policy/</A> or
++# the debian-policy package
++
++
++case &quot;$1&quot; in
++    install|upgrade)
++    ;;
++
++    abort-upgrade)
++    ;;
++
++    *)
++        echo &quot;preinst called with unknown argument \`$1'&quot; &gt;&amp;2
++        exit 1
++    ;;
++esac
++
++# dh_installdeb will replace this with shell code automatically
++# generated by other debhelper scripts.
++
++#DEBHELPER#
++
++exit 0
++
++
+
+Added: branches/scons-layout/debian/prerm
+===================================================================
+--- branches/scons-layout/debian/prerm	2007-03-07 15:06:08 UTC (rev 1110)
++++ branches/scons-layout/debian/prerm	2007-03-08 13:35:52 UTC (rev 1111)
+@@ -0,0 +1,40 @@
++#!/bin/sh
++# prerm script for yade
++#
++# see: dh_installdeb(1)
++
++set -e
++
++# summary of how this script can be called:
++#        * &lt;prerm&gt; `remove'
++#        * &lt;old-prerm&gt; `upgrade' &lt;new-version&gt;
++#        * &lt;new-prerm&gt; `failed-upgrade' &lt;old-version&gt;
++#        * &lt;conflictor's-prerm&gt; `remove' `in-favour' &lt;package&gt; &lt;new-version&gt;
++#        * &lt;deconfigured's-prerm&gt; `deconfigure' `in-favour'
++#          &lt;package-being-installed&gt; &lt;version&gt; `removing'
++#          &lt;conflicting-package&gt; &lt;version&gt;
++# for details, see <A HREF="http://www.debian.org/doc/debian-policy/">http://www.debian.org/doc/debian-policy/</A> or
++# the debian-policy package
++
++
++case &quot;$1&quot; in
++    remove|upgrade|deconfigure)
++    ;;
++
++    failed-upgrade)
++    ;;
++
++    *)
++        echo &quot;prerm called with unknown argument \`$1'&quot; &gt;&amp;2
++        exit 1
++    ;;
++esac
++
++# dh_installdeb will replace this with shell code automatically
++# generated by other debhelper scripts.
++
++#DEBHELPER#
++
++exit 0
++
++
+
+Added: branches/scons-layout/debian/rules
+===================================================================
+--- branches/scons-layout/debian/rules	2007-03-07 15:06:08 UTC (rev 1110)
++++ branches/scons-layout/debian/rules	2007-03-08 13:35:52 UTC (rev 1111)
+@@ -0,0 +1,102 @@
++#!/usr/bin/make -f
++# -*- makefile -*-
++# Sample debian/rules that uses debhelper.
++# This file was originally written by Joey Hess and Craig Small.
++# As a special exception, when this file is copied by dh-make into a
++# dh-make output file, you may use that output file without restriction.
++# This special exception was added by Craig Small in version 0.37 of dh-make.
++
++# Uncomment this to turn on verbose mode.
++#export DH_VERBOSE=1
++
++
++
++### eudoxos: FIXME: need to pass this to scons
++#CFLAGS = -Wall -g
++#
++#ifneq (,$(findstring noopt,$(DEB_BUILD_OPTIONS)))
++#	CFLAGS += -O0
++#else
++#	CFLAGS += -O2
++#endif
++
++configure: configure-stamp
++configure-stamp:
++	dh_testdir
++	# eudoxos: all configuration done automatically when compiling &amp; installing
++	touch configure-stamp
++build: build-stamp
++
++build-stamp: configure-stamp 
++	dh_testdir
++
++	# Add here commands to compile the package.
++	#$(MAKE)
++	## eudoxos: noting to be done here, will be done at the same time as installation
++	docbook-to-man debian/yade.sgml &gt; yade.1
++
++	touch $@
++
++clean:
++	dh_testdir
++	dh_testroot
++	rm -f build-stamp configure-stamp
++
++	# Add here commands to clean up after the build process.
++	##
++	#-$(MAKE) clean
++	## eudoxos: FIXME: scons skips config when cleaning and doesn't know where it built anything
++	#scons -c
++	dh_testdir
++	rm -rf debian/build-*
++	dh_clean 
++
++install: build
++	dh_testdir
++	dh_testroot
++	dh_clean -k 
++	dh_installdirs
++
++	# Add here commands to install the package into debian/yade.
++	### $(MAKE) DESTDIR=$(CURDIR)/debian/yade install
++	## eudoxos: FIXME: get version from debian variables!
++	scons buildPrefix=debian/ runtimePREFIX=/usr PREFIX=debian/yade/usr POSTFIX=-snapshot pretty=0 optimize=0 debug=1 VERSION=svn1110
++
++
++# Build architecture-independent files here.
++binary-indep: build install
++# We have nothing to do by default.
++
++# Build architecture-dependent files here.
++binary-arch: build install
++	dh_testdir
++	dh_testroot
++	dh_installchangelogs ChangeLog
++	dh_installdocs
++	dh_installexamples
++#	dh_install
++#	dh_installmenu
++#	dh_installdebconf	
++#	dh_installlogrotate
++#	dh_installemacsen
++#	dh_installpam
++#	dh_installmime
++#	dh_python
++#	dh_installinit
++#	dh_installcron
++#	dh_installinfo
++	dh_installman
++	dh_link
++	dh_strip
++	dh_compress
++	dh_fixperms
++#	dh_perl
++#	dh_makeshlibs
++	dh_installdeb
++	dh_shlibdeps
++	dh_gencontrol
++	dh_md5sums
++	dh_builddeb
++
++binary: binary-indep binary-arch
++.PHONY: build clean binary-indep binary-arch binary install configure
+
+
+Property changes on: branches/scons-layout/debian/rules
+___________________________________________________________________
+Name: svn:executable
+   + *
+
+Added: branches/scons-layout/debian/yade.sgml
+===================================================================
+--- branches/scons-layout/debian/yade.sgml	2007-03-07 15:06:08 UTC (rev 1110)
++++ branches/scons-layout/debian/yade.sgml	2007-03-08 13:35:52 UTC (rev 1111)
+@@ -0,0 +1,156 @@
++&lt;!doctype refentry PUBLIC &quot;-//OASIS//DTD DocBook V4.1//EN&quot; [
++
++&lt;!-- Process this file with docbook-to-man to generate an nroff manual
++     page: `docbook-to-man manpage.sgml &gt; manpage.1'.  You may view
++     the manual page with: `docbook-to-man manpage.sgml | nroff -man |
++     less'.  A typical entry in a Makefile or Makefile.am is:
++
++manpage.1: manpage.sgml
++	docbook-to-man $&lt; &gt; $@
++
++    
++	The docbook-to-man binary is found in the docbook-to-man package.
++	Please remember that if you create the nroff version in one of the
++	debian/rules file targets (such as build), you will need to include
++	docbook-to-man in your Build-Depends control field.
++
++  --&gt;
++
++  &lt;!-- Fill in your name for FIRSTNAME and SURNAME. --&gt;
++  &lt;!ENTITY dhfirstname &quot;&lt;firstname&gt;FIRSTNAME&lt;/firstname&gt;&quot;&gt;
++  &lt;!ENTITY dhsurname   &quot;&lt;surname&gt;SURNAME&lt;/surname&gt;&quot;&gt;
++  &lt;!-- Please adjust the date whenever revising the manpage. --&gt;
++  &lt;!ENTITY dhdate      &quot;&lt;date&gt;b&#345;ezen  8, 2007&lt;/date&gt;&quot;&gt;
++  &lt;!-- SECTION should be 1-8, maybe w/ subsection other parameters are
++       allowed: see man(7), man(1). --&gt;
++  &lt;!ENTITY dhsection   &quot;&lt;manvolnum&gt;SECTION&lt;/manvolnum&gt;&quot;&gt;
++  &lt;!ENTITY dhemail     &quot;&lt;email&gt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">eudoxos at arcig.cz</A>&lt;/email&gt;&quot;&gt;
++  &lt;!ENTITY dhusername  &quot;Vaclav Smilauer&quot;&gt;
++  &lt;!ENTITY dhucpackage &quot;&lt;refentrytitle&gt;YADE&lt;/refentrytitle&gt;&quot;&gt;
++  &lt;!ENTITY dhpackage   &quot;yade&quot;&gt;
++
++  &lt;!ENTITY debian      &quot;&lt;productname&gt;Debian&lt;/productname&gt;&quot;&gt;
++  &lt;!ENTITY gnu         &quot;&lt;acronym&gt;GNU&lt;/acronym&gt;&quot;&gt;
++  &lt;!ENTITY gpl         &quot;&gnu; &lt;acronym&gt;GPL&lt;/acronym&gt;&quot;&gt;
++]&gt;
++
++&lt;refentry&gt;
++  &lt;refentryinfo&gt;
++    &lt;address&gt;
++      &dhemail;
++    &lt;/address&gt;
++    &lt;author&gt;
++      &dhfirstname;
++      &dhsurname;
++    &lt;/author&gt;
++    &lt;copyright&gt;
++      &lt;year&gt;2003&lt;/year&gt;
++      &lt;holder&gt;&dhusername;&lt;/holder&gt;
++    &lt;/copyright&gt;
++    &dhdate;
++  &lt;/refentryinfo&gt;
++  &lt;refmeta&gt;
++    &dhucpackage;
++
++    &dhsection;
++  &lt;/refmeta&gt;
++  &lt;refnamediv&gt;
++    &lt;refname&gt;&dhpackage;&lt;/refname&gt;
++
++    &lt;refpurpose&gt;program to do something&lt;/refpurpose&gt;
++  &lt;/refnamediv&gt;
++  &lt;refsynopsisdiv&gt;
++    &lt;cmdsynopsis&gt;
++      &lt;command&gt;&dhpackage;&lt;/command&gt;
++
++      &lt;arg&gt;&lt;option&gt;-e &lt;replaceable&gt;this&lt;/replaceable&gt;&lt;/option&gt;&lt;/arg&gt;
++
++      &lt;arg&gt;&lt;option&gt;--example &lt;replaceable&gt;that&lt;/replaceable&gt;&lt;/option&gt;&lt;/arg&gt;
++    &lt;/cmdsynopsis&gt;
++  &lt;/refsynopsisdiv&gt;
++  &lt;refsect1&gt;
++    &lt;title&gt;DESCRIPTION&lt;/title&gt;
++
++    &lt;para&gt;This manual page documents briefly the
++      &lt;command&gt;&dhpackage;&lt;/command&gt; and &lt;command&gt;bar&lt;/command&gt;
++      commands.&lt;/para&gt;
++
++    &lt;para&gt;This manual page was written for the &debian; distribution
++      because the original program does not have a manual page.
++      Instead, it has documentation in the &gnu;
++      &lt;application&gt;Info&lt;/application&gt; format; see below.&lt;/para&gt;
++
++    &lt;para&gt;&lt;command&gt;&dhpackage;&lt;/command&gt; is a program that...&lt;/para&gt;
++
++  &lt;/refsect1&gt;
++  &lt;refsect1&gt;
++    &lt;title&gt;OPTIONS&lt;/title&gt;
++
++    &lt;para&gt;These programs follow the usual &gnu; command line syntax,
++      with long options starting with two dashes (`-').  A summary of
++      options is included below.  For a complete description, see the
++      &lt;application&gt;Info&lt;/application&gt; files.&lt;/para&gt;
++
++    &lt;variablelist&gt;
++      &lt;varlistentry&gt;
++        &lt;term&gt;&lt;option&gt;-h&lt;/option&gt;
++          &lt;option&gt;--help&lt;/option&gt;
++        &lt;/term&gt;
++        &lt;listitem&gt;
++          &lt;para&gt;Show summary of options.&lt;/para&gt;
++        &lt;/listitem&gt;
++      &lt;/varlistentry&gt;
++      &lt;varlistentry&gt;
++        &lt;term&gt;&lt;option&gt;-v&lt;/option&gt;
++          &lt;option&gt;--version&lt;/option&gt;
++        &lt;/term&gt;
++        &lt;listitem&gt;
++          &lt;para&gt;Show version of program.&lt;/para&gt;
++        &lt;/listitem&gt;
++      &lt;/varlistentry&gt;
++    &lt;/variablelist&gt;
++  &lt;/refsect1&gt;
++  &lt;refsect1&gt;
++    &lt;title&gt;SEE ALSO&lt;/title&gt;
++
++    &lt;para&gt;bar (1), baz (1).&lt;/para&gt;
++
++    &lt;para&gt;The programs are documented fully by &lt;citetitle&gt;The Rise and
++      Fall of a Fooish Bar&lt;/citetitle&gt; available via the
++      &lt;application&gt;Info&lt;/application&gt; system.&lt;/para&gt;
++  &lt;/refsect1&gt;
++  &lt;refsect1&gt;
++    &lt;title&gt;AUTHOR&lt;/title&gt;
++
++    &lt;para&gt;This manual page was written by &dhusername; &dhemail; for
++      the &debian; system (but may be used by others).  Permission is
++      granted to copy, distribute and/or modify this document under
++      the terms of the &gnu; General Public License, Version 2 any 
++	  later version published by the Free Software Foundation.
++    &lt;/para&gt;
++	&lt;para&gt;
++	  On Debian systems, the complete text of the GNU General Public
++	  License can be found in /usr/share/common-licenses/GPL.
++	&lt;/para&gt;
++
++  &lt;/refsect1&gt;
++&lt;/refentry&gt;
++
++&lt;!-- Keep this comment at the end of the file
++Local variables:
++mode: sgml
++sgml-omittag:t
++sgml-shorttag:t
++sgml-minimize-attributes:nil
++sgml-always-quote-attributes:t
++sgml-indent-step:2
++sgml-indent-data:t
++sgml-parent-document:nil
++sgml-default-dtd-file:nil
++sgml-exposed-tags:nil
++sgml-local-catalogs:nil
++sgml-local-ecat-files:nil
++End:
++--&gt;
++
++
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000075.html">[Yade-commits] r1110 - in branches/scons-layout: gui/qt lib/base	lib/computational-geometry lib/factory lib/loki	lib/multimethods lib/opengl lib/serialization	lib/serialization-bin lib/serialization-qt lib/serialization-xml
+</A></li>
+	<LI>Next message: <A HREF="000077.html">[Yade-commits] r1112 - branches/scons-layout
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#76">[ date ]</a>
+              <a href="thread.html#76">[ thread ]</a>
+              <a href="subject.html#76">[ subject ]</a>
+              <a href="author.html#76">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

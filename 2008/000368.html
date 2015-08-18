@@ -1,0 +1,133 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1407 - trunk/gui/qt3
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1407%20-%20trunk/gui/qt3&In-Reply-To=%3C200806292142.m5TLgS6H027173%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000367.html">
+   <LINK REL="Next"  HREF="000369.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1407 - trunk/gui/qt3</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1407%20-%20trunk/gui/qt3&In-Reply-To=%3C200806292142.m5TLgS6H027173%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1407 - trunk/gui/qt3">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Sun Jun 29 23:42:28 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000367.html">[Yade-commits] r1406 - trunk/gui/qt3
+</A></li>
+        <LI>Next message: <A HREF="000369.html">[Yade-commits] r1408 - in trunk: core gui/py gui/qt3
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#368">[ date ]</a>
+              <a href="thread.html#368">[ thread ]</a>
+              <a href="subject.html#368">[ subject ]</a>
+              <a href="author.html#368">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2008-06-29 23:42:26 +0200 (Sun, 29 Jun 2008)
+New Revision: 1407
+
+Modified:
+   trunk/gui/qt3/GLViewer.cpp
+   trunk/gui/qt3/GLViewer.hpp
+Log:
+Median centering routine (for cases where one body went nuts and centerScene will make the whole a small point) - activated with Alt-C (both controller and viewer)
+
+
+Modified: trunk/gui/qt3/GLViewer.cpp
+===================================================================
+--- trunk/gui/qt3/GLViewer.cpp	2008-06-29 20:40:39 UTC (rev 1406)
++++ trunk/gui/qt3/GLViewer.cpp	2008-06-29 21:42:26 UTC (rev 1407)
+@@ -45,6 +45,7 @@
+ 	manipulatedFrame()-&gt;setConstraint(NULL);
+ 
+ 	setKeyDescription(Qt::Key_C,&quot;Set scene center to the selected body (if any)&quot;);
++	setKeyDescription(Qt::Key_C &amp; Qt::ALT,&quot;Set scene center to median body position&quot;);
+ 	setKeyDescription(Qt::Key_D,&quot;Toggle Body::isDynamic on selection&quot;);
+ 	setKeyDescription(Qt::Key_G,&quot;Toggle YZ grid&quot;);
+ 	setKeyDescription(Qt::Key_X,&quot;Toggle YZ grid&quot;);
+@@ -125,6 +126,7 @@
+ 		else{ displayMessage(&quot;Moving selected object&quot;); mouseMovesManipulatedFrame();}
+ 	}
+ 	else if(e-&gt;key()==Qt::Key_C &amp;&amp; selectedName() &gt;= 0 &amp;&amp; (*(Omega::instance().getRootBody()-&gt;bodies)).exists(selectedName())) setSceneCenter(manipulatedFrame()-&gt;position()), updateGL();
++	else if(e-&gt;key()==Qt::Key_C &amp;&amp; (e-&gt;state() &amp; AltButton)){ displayMessage(&quot;Median centering&quot;); centerMeanDeviate(); updateGL(); }
+ 
+ 	else if(e-&gt;key()==Qt::Key_Escape){ resetManipulation();displayMessage(&quot;Manipulating scene.&quot;); }
+ 	else if(e-&gt;key()==Qt::Key_F1 || e-&gt;key()==Qt::Key_F2 /* || ... */ ){
+@@ -203,6 +205,26 @@
+ 		QGLViewer::keyPressEvent(e);
+ }
+ 
++void GLViewer::centerMeanDeviate(){
++	std::vector&lt;Real&gt; coords[3];
++	long nBodies=Omega::instance().getRootBody()-&gt;bodies-&gt;size();
++	for(int i=0;i&lt;3;i++)coords[i].reserve(nBodies);
++	FOREACH(const shared_ptr&lt;Body&gt;&amp; b, *Omega::instance().getRootBody()-&gt;bodies){
++		for(int i=0; i&lt;3; i++) coords[i].push_back(b-&gt;physicalParameters-&gt;se3.position[i]);
++	}
++	Vector3r median,interQuart;
++	for(int i=0;i&lt;3;i++){
++		sort(coords[i].begin(),coords[i].end());
++		median[i]=*(coords[i].begin()+nBodies/2);
++		interQuart[i]=*(coords[i].begin()+3*nBodies/4)-*(coords[i].begin()+nBodies/4);
++	}
++	LOG_DEBUG(&quot;Median position is&quot;&lt;&lt;median&lt;&lt;&quot;, inter-quartile distance is &quot;&lt;&lt;interQuart);
++
++	setSceneCenter(qglviewer::Vec(median[0],median[1],median[2]));
++	setSceneRadius(2*(interQuart[0]+interQuart[1]+interQuart[2])/3.);
++	showEntireScene();
++}
++
+ void GLViewer::centerScene()
+ {
+ 	MetaBody* rb=Omega::instance().getRootBody().get();
+
+Modified: trunk/gui/qt3/GLViewer.hpp
+===================================================================
+--- trunk/gui/qt3/GLViewer.hpp	2008-06-29 20:40:39 UTC (rev 1406)
++++ trunk/gui/qt3/GLViewer.hpp	2008-06-29 21:42:26 UTC (rev 1407)
+@@ -40,6 +40,7 @@
+ 		set&lt;int&gt; boundClipPlanes;
+ 		shared_ptr&lt;qglviewer::LocalConstraint&gt; xyPlaneConstraint;
+ 		string strBoundGroup(){string ret;FOREACH(int i, boundClipPlanes) ret+=&quot; &quot;+lexical_cast&lt;string&gt;(i+1);return ret;}
++		void centerMeanDeviate();
+ 
+      public :
+ 		GLViewer (int id, shared_ptr&lt;OpenGLRenderingEngine&gt; _renderer, QWidget * parent=0, QGLWidget * shareWidget=0);
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000367.html">[Yade-commits] r1406 - trunk/gui/qt3
+</A></li>
+	<LI>Next message: <A HREF="000369.html">[Yade-commits] r1408 - in trunk: core gui/py gui/qt3
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#368">[ date ]</a>
+              <a href="thread.html#368">[ thread ]</a>
+              <a href="subject.html#368">[ subject ]</a>
+              <a href="author.html#368">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

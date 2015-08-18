@@ -1,0 +1,211 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1448 - in trunk: extra extra/usct	pkg/dem/PreProcessor scripts
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1448%20-%20in%20trunk%3A%20extra%20extra/usct%0A%09pkg/dem/PreProcessor%20scripts&In-Reply-To=%3C200807251030.m6PAUjwS002871%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000407.html">
+   <LINK REL="Next"  HREF="000409.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1448 - in trunk: extra extra/usct	pkg/dem/PreProcessor scripts</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1448%20-%20in%20trunk%3A%20extra%20extra/usct%0A%09pkg/dem/PreProcessor%20scripts&In-Reply-To=%3C200807251030.m6PAUjwS002871%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1448 - in trunk: extra extra/usct	pkg/dem/PreProcessor scripts">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Fri Jul 25 12:30:45 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000407.html">[Yade-commits] r1447 - trunk/pkg/dem/PreProcessor
+</A></li>
+        <LI>Next message: <A HREF="000409.html">[Yade-commits] r1449 - trunk/scripts
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#408">[ date ]</a>
+              <a href="thread.html#408">[ thread ]</a>
+              <a href="subject.html#408">[ subject ]</a>
+              <a href="author.html#408">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2008-07-25 12:30:44 +0200 (Fri, 25 Jul 2008)
+New Revision: 1448
+
+Modified:
+   trunk/extra/BrefcomTestGen.cpp
+   trunk/extra/usct/UniaxialStrainControlledTest.cpp
+   trunk/pkg/dem/PreProcessor/CohesiveTriaxialTest.cpp
+   trunk/pkg/dem/PreProcessor/SDECLinkedSpheres.cpp
+   trunk/pkg/dem/PreProcessor/SnowCreepTest.cpp
+   trunk/pkg/dem/PreProcessor/TriaxialTest.cpp
+   trunk/pkg/dem/PreProcessor/TriaxialTestWater.cpp
+   trunk/scripts/default-test.py
+Log:
+1. Fix default test to report errors during simulation loading as well
+2. Fix preprocessors derived from triaxial to not initializa transienInteractions, preventing crash discussed with Bruno: containes for transient and persistent must be the same, for unknown reason.
+3. Fix preprocessors using brefcom to define all variables, otherwise we have nan's in XML which crashes the deserializer.
+
+
+Modified: trunk/extra/BrefcomTestGen.cpp
+===================================================================
+--- trunk/extra/BrefcomTestGen.cpp	2008-07-24 15:40:55 UTC (rev 1447)
++++ trunk/extra/BrefcomTestGen.cpp	2008-07-25 10:30:44 UTC (rev 1448)
+@@ -98,7 +98,7 @@
+ 
+ 	shared_ptr&lt;InteractionPhysicsMetaEngine&gt; iphysDispatcher(new InteractionPhysicsMetaEngine);
+ 		shared_ptr&lt;BrefcomMakeContact&gt; bmc(new BrefcomMakeContact);
+-		bmc-&gt;cohesiveThresholdIter=-1;
++		bmc-&gt;cohesiveThresholdIter=-1; bmc-&gt;G_over_E=1; bmc-&gt;expBending=1; bmc-&gt;xiShear=.8; bmc-&gt;sigmaT=3e9; bmc-&gt;neverDamage=true; bmc-&gt;epsCrackOnset=1e-4; bmc-&gt;relDuctility=5;
+ 		//bmc-&gt;calibratedEpsFracture=.5; /* arbitrary, but large enough */
+ 		iphysDispatcher-&gt;add(bmc);
+ 	rootBody-&gt;engines.push_back(iphysDispatcher);
+
+Modified: trunk/extra/usct/UniaxialStrainControlledTest.cpp
+===================================================================
+--- trunk/extra/usct/UniaxialStrainControlledTest.cpp	2008-07-24 15:40:55 UTC (rev 1447)
++++ trunk/extra/usct/UniaxialStrainControlledTest.cpp	2008-07-25 10:30:44 UTC (rev 1448)
+@@ -320,8 +320,7 @@
+ 	shared_ptr&lt;InteractionPhysicsMetaEngine&gt; iphysDispatcher(new InteractionPhysicsMetaEngine);
+ 		shared_ptr&lt;BrefcomMakeContact&gt; bmc(new BrefcomMakeContact);
+ 		bmc-&gt;cohesiveThresholdIter=cohesiveThresholdIter;
+-		bmc-&gt;expBending=20;
+-		//bmc-&gt;calibratedEpsFracture=3e-4;
++		bmc-&gt;cohesiveThresholdIter=-1; bmc-&gt;G_over_E=1; bmc-&gt;expBending=1; bmc-&gt;xiShear=.8; bmc-&gt;sigmaT=3e9; bmc-&gt;neverDamage=true; bmc-&gt;epsCrackOnset=1e-4; bmc-&gt;relDuctility=5;
+ 		iphysDispatcher-&gt;add(bmc);
+ 	rootBody-&gt;engines.push_back(iphysDispatcher);
+ 
+
+Modified: trunk/pkg/dem/PreProcessor/CohesiveTriaxialTest.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/CohesiveTriaxialTest.cpp	2008-07-24 15:40:55 UTC (rev 1447)
++++ trunk/pkg/dem/PreProcessor/CohesiveTriaxialTest.cpp	2008-07-25 10:30:44 UTC (rev 1448)
+@@ -257,9 +257,6 @@
+ 	createActors(rootBody);
+ 	positionRootBody(rootBody);
+ 
+-// 	rootBody-&gt;persistentInteractions	= shared_ptr&lt;InteractionContainer&gt;(new InteractionVecSet);
+-// 	rootBody-&gt;transientInteractions		= shared_ptr&lt;InteractionContainer&gt;(new InteractionVecSet);
+-	rootBody-&gt;transientInteractions		= shared_ptr&lt;InteractionContainer&gt;(new InteractionHashMap);
+ 	rootBody-&gt;physicalActions		= shared_ptr&lt;PhysicalActionContainer&gt;(new PhysicalActionVectorVector);
+ 	rootBody-&gt;bodies 			= shared_ptr&lt;BodyContainer&gt;(new BodyRedirectionVector);
+ 
+
+Modified: trunk/pkg/dem/PreProcessor/SDECLinkedSpheres.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/SDECLinkedSpheres.cpp	2008-07-24 15:40:55 UTC (rev 1447)
++++ trunk/pkg/dem/PreProcessor/SDECLinkedSpheres.cpp	2008-07-25 10:30:44 UTC (rev 1448)
+@@ -122,8 +122,8 @@
+ 
+ ////////////////////////////////////
+ 	
+-	rootBody-&gt;persistentInteractions	= shared_ptr&lt;InteractionContainer&gt;(new InteractionVecSet);
+-	rootBody-&gt;transientInteractions		= shared_ptr&lt;InteractionContainer&gt;(new InteractionVecSet);
++//	rootBody-&gt;persistentInteractions	= shared_ptr&lt;InteractionContainer&gt;(new InteractionVecSet);
++//	rootBody-&gt;transientInteractions		= shared_ptr&lt;InteractionContainer&gt;(new InteractionVecSet);
+ 	rootBody-&gt;physicalActions		= shared_ptr&lt;PhysicalActionContainer&gt;(new PhysicalActionVectorVector);
+ 	rootBody-&gt;bodies 			= shared_ptr&lt;BodyContainer&gt;(new BodyRedirectionVector);
+ 
+
+Modified: trunk/pkg/dem/PreProcessor/SnowCreepTest.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/SnowCreepTest.cpp	2008-07-24 15:40:55 UTC (rev 1447)
++++ trunk/pkg/dem/PreProcessor/SnowCreepTest.cpp	2008-07-25 10:30:44 UTC (rev 1448)
+@@ -266,7 +266,6 @@
+ 
+ // 	rootBody-&gt;persistentInteractions	= shared_ptr&lt;InteractionContainer&gt;(new InteractionVecSet);
+ // 	rootBody-&gt;transientInteractions		= shared_ptr&lt;InteractionContainer&gt;(new InteractionVecSet);
+-	rootBody-&gt;transientInteractions		= shared_ptr&lt;InteractionContainer&gt;(new InteractionHashMap);
+ 	rootBody-&gt;physicalActions		= shared_ptr&lt;PhysicalActionContainer&gt;(new PhysicalActionVectorVector);
+ 	rootBody-&gt;bodies 			= shared_ptr&lt;BodyContainer&gt;(new BodyRedirectionVector);
+ 
+
+Modified: trunk/pkg/dem/PreProcessor/TriaxialTest.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/TriaxialTest.cpp	2008-07-24 15:40:55 UTC (rev 1447)
++++ trunk/pkg/dem/PreProcessor/TriaxialTest.cpp	2008-07-25 10:30:44 UTC (rev 1448)
+@@ -258,6 +258,7 @@
+ 
+ 	//rootBody-&gt;persistentInteractions	= shared_ptr&lt;InteractionContainer&gt;(new InteractionHashMap);
+ 	//rootBody-&gt;transientInteractions		= shared_ptr&lt;InteractionContainer&gt;(new InteractionHashMap);
++
+ 	rootBody-&gt;physicalActions		= shared_ptr&lt;PhysicalActionContainer&gt;(new PhysicalActionVectorVector);
+ 	rootBody-&gt;bodies 			= shared_ptr&lt;BodyContainer&gt;(new BodyRedirectionVector);
+ 
+
+Modified: trunk/pkg/dem/PreProcessor/TriaxialTestWater.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/TriaxialTestWater.cpp	2008-07-24 15:40:55 UTC (rev 1447)
++++ trunk/pkg/dem/PreProcessor/TriaxialTestWater.cpp	2008-07-25 10:30:44 UTC (rev 1448)
+@@ -230,8 +230,6 @@
+ 	createActors(rootBody);
+ 	positionRootBody(rootBody);
+ 
+-	rootBody-&gt;transientInteractions		=
+-	shared_ptr&lt;InteractionContainer&gt;(new InteractionHashMap);
+ 	rootBody-&gt;physicalActions		= shared_ptr&lt;PhysicalActionContainer&gt;(new PhysicalActionVectorVector);
+ 	rootBody-&gt;bodies 			= shared_ptr&lt;BodyContainer&gt;(new BodyRedirectionVector);
+ 
+
+Modified: trunk/scripts/default-test.py
+===================================================================
+--- trunk/scripts/default-test.py	2008-07-24 15:40:55 UTC (rev 1447)
++++ trunk/scripts/default-test.py	2008-07-25 10:30:44 UTC (rev 1448)
+@@ -14,10 +14,15 @@
+ # generated file
+ simulFile='%s'; msgFile='%s'; nIter=%d;
+ import time
+-o=Omega(); o.load(simulFile)
+-o.run(10); o.wait() # run first 10 iterations
+-start=time.time(); o.run(nIter); o.wait(); finish=time.time() # run nIter iterations, wait to finish, measure elapsed time
+-speed=nIter/(finish-start); open(msgFile,'w').write('%%g iter/sec'%%speed)
++try:
++	o=Omega(); o.load(simulFile)
++	o.run(10); o.wait() # run first 10 iterations
++	start=time.time(); o.run(nIter); o.wait(); finish=time.time() # run nIter iterations, wait to finish, measure elapsed time
++	speed=nIter/(finish-start); open(msgFile,'w').write('%%g iter/sec'%%speed)
++except:
++	import sys, traceback
++	traceback.print_exc()
++	sys.exit(1)
+ quit()
+ &quot;&quot;&quot;%(simulFile,msgFile,100)
+ 
+@@ -94,4 +99,4 @@
+ 
+ print &quot;\n\n========================================= SUMMARY ======================================\n&quot;
+ for l in summary: print &quot;%30s: %s&quot;%(l[0],l[1])
+-
++quit()
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000407.html">[Yade-commits] r1447 - trunk/pkg/dem/PreProcessor
+</A></li>
+	<LI>Next message: <A HREF="000409.html">[Yade-commits] r1449 - trunk/scripts
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#408">[ date ]</a>
+              <a href="thread.html#408">[ thread ]</a>
+              <a href="subject.html#408">[ subject ]</a>
+              <a href="author.html#408">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

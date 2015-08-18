@@ -1,0 +1,258 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1393 - in trunk/lib: QGLViewer QGLViewer/VRender	factory import serialization
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1393%20-%20in%20trunk/lib%3A%20QGLViewer%20QGLViewer/VRender%0A%09factory%20import%20serialization&In-Reply-To=%3C200806171607.m5HG7Shj013199%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000353.html">
+   <LINK REL="Next"  HREF="000355.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1393 - in trunk/lib: QGLViewer QGLViewer/VRender	factory import serialization</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1393%20-%20in%20trunk/lib%3A%20QGLViewer%20QGLViewer/VRender%0A%09factory%20import%20serialization&In-Reply-To=%3C200806171607.m5HG7Shj013199%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1393 - in trunk/lib: QGLViewer QGLViewer/VRender	factory import serialization">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Tue Jun 17 18:07:28 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000353.html">[Yade-commits] r1392 - trunk/gui/py
+</A></li>
+        <LI>Next message: <A HREF="000355.html">[Yade-commits] r1394 - in trunk: examples pkg/common	pkg/common/Engine/DeusExMachina
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#354">[ date ]</a>
+              <a href="thread.html#354">[ thread ]</a>
+              <a href="subject.html#354">[ subject ]</a>
+              <a href="author.html#354">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2008-06-17 18:07:27 +0200 (Tue, 17 Jun 2008)
+New Revision: 1393
+
+Modified:
+   trunk/lib/QGLViewer/VRender/TopologicalSortMethod.cpp
+   trunk/lib/QGLViewer/VRender/VRender.cpp
+   trunk/lib/QGLViewer/manipulatedFrame.cpp
+   trunk/lib/factory/DynLibManager.cpp
+   trunk/lib/factory/DynLibManager.hpp
+   trunk/lib/import/STLReader.hpp
+   trunk/lib/serialization/Archive.cpp
+   trunk/lib/serialization/Archive.hpp
+   trunk/lib/serialization/SerializableSingleton.cpp
+   trunk/lib/serialization/SerializableSingleton.hpp
+Log:
+Fixes for g++-4.3 compatibility (still some warnings, may need -fpermissive to compile)
+
+
+Modified: trunk/lib/QGLViewer/VRender/TopologicalSortMethod.cpp
+===================================================================
+--- trunk/lib/QGLViewer/VRender/TopologicalSortMethod.cpp	2008-06-17 14:30:05 UTC (rev 1392)
++++ trunk/lib/QGLViewer/VRender/TopologicalSortMethod.cpp	2008-06-17 16:07:27 UTC (rev 1393)
+@@ -44,7 +44,7 @@
+  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ 
+ *****************************************************************************/
+-
++#include &lt;limits.h&gt;
+ #include &lt;assert.h&gt;
+ #include &quot;VRender.h&quot;
+ #include &quot;Primitive.h&quot;
+
+Modified: trunk/lib/QGLViewer/VRender/VRender.cpp
+===================================================================
+--- trunk/lib/QGLViewer/VRender/VRender.cpp	2008-06-17 14:30:05 UTC (rev 1392)
++++ trunk/lib/QGLViewer/VRender/VRender.cpp	2008-06-17 16:07:27 UTC (rev 1393)
+@@ -55,6 +55,8 @@
+ # include &lt;GL/gl.h&gt;
+ #endif
+ 
++#include &lt;stdlib.h&gt;
++#include &lt;string.h&gt;
+ #include &lt;stdio.h&gt;
+ #include &lt;vector&gt;
+ #include &quot;VRender.h&quot;
+
+Modified: trunk/lib/QGLViewer/manipulatedFrame.cpp
+===================================================================
+--- trunk/lib/QGLViewer/manipulatedFrame.cpp	2008-06-17 14:30:05 UTC (rev 1392)
++++ trunk/lib/QGLViewer/manipulatedFrame.cpp	2008-06-17 16:07:27 UTC (rev 1393)
+@@ -22,7 +22,7 @@
+  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ 
+ *****************************************************************************/
+-
++#include&lt;stdlib.h&gt;
+ #include &quot;domUtils.h&quot;
+ #include &quot;manipulatedFrame.h&quot;
+ #include &quot;qglviewer.h&quot;
+
+Modified: trunk/lib/factory/DynLibManager.cpp
+===================================================================
+--- trunk/lib/factory/DynLibManager.cpp	2008-06-17 14:30:05 UTC (rev 1392)
++++ trunk/lib/factory/DynLibManager.cpp	2008-06-17 16:07:27 UTC (rev 1393)
+@@ -10,14 +10,15 @@
+ #include &quot;DynLibManager.hpp&quot;
+ 
+ 
+-#include &lt;fstream&gt;
+-#include &lt;boost/filesystem/operations.hpp&gt;
+-#include &lt;boost/filesystem/convenience.hpp&gt;
++#include&lt;fstream&gt;
++#include&lt;boost/filesystem/operations.hpp&gt;
++#include&lt;boost/filesystem/convenience.hpp&gt;
++#include&lt;string.h&gt;
+ 
+ #include &quot;ClassFactory.hpp&quot;
+ 
+ 
+-using namespace std;
++//using namespace std;
+ using namespace boost;
+ 
+ CREATE_LOGGER(DynLibManager);
+
+Modified: trunk/lib/factory/DynLibManager.hpp
+===================================================================
+--- trunk/lib/factory/DynLibManager.hpp	2008-06-17 14:30:05 UTC (rev 1392)
++++ trunk/lib/factory/DynLibManager.hpp	2008-06-17 16:07:27 UTC (rev 1393)
+@@ -38,9 +38,9 @@
+ {
+ 	private :
+ 		#ifdef WIN32
+-		std::map&lt;const string, HINSTANCE&gt; handles;	
++		std::map&lt;const std::string, HINSTANCE&gt; handles;	
+ 		#else	
+-		std::map&lt;const string, void *&gt; handles;
++		std::map&lt;const std::string, void *&gt; handles;
+ 		#endif
+ 
+ 		vector&lt;string&gt; baseDirs;
+@@ -49,10 +49,10 @@
+ 	public :
+ 		DynLibManager ();
+ 		~DynLibManager ();
+-		void addBaseDirectory(const string&amp; dir);
++		void addBaseDirectory(const std::string&amp; dir);
+ 
+-		bool load (const string&amp; libName, const string&amp; libName);
+-		bool loadFromDirectoryList (const string&amp; fullLibName);
++		bool load (const std::string&amp; libName, const std::string&amp; libName2);
++		bool loadFromDirectoryList (const std::string&amp; fullLibName);
+ 
+ 		bool unload (const string libName);
+ 		bool isLoaded (const string libName);
+
+Modified: trunk/lib/import/STLReader.hpp
+===================================================================
+--- trunk/lib/import/STLReader.hpp	2008-06-17 14:30:05 UTC (rev 1392)
++++ trunk/lib/import/STLReader.hpp	2008-06-17 16:07:27 UTC (rev 1393)
+@@ -9,6 +9,7 @@
+ #define __STLREADER_HPP__
+ 
+ #include &lt;stdio.h&gt;
++#include&lt;string.h&gt;
+ #include &lt;set&gt;
+ #include &lt;vector&gt;
+ #include &lt;cmath&gt;
+
+Modified: trunk/lib/serialization/Archive.cpp
+===================================================================
+--- trunk/lib/serialization/Archive.cpp	2008-06-17 14:30:05 UTC (rev 1392)
++++ trunk/lib/serialization/Archive.cpp	2008-06-17 16:07:27 UTC (rev 1393)
+@@ -12,7 +12,7 @@
+ 
+ map&lt;SerializableTypes::Type,pair&lt;SerializeFnPtr,DeserializeFnPtr&gt; &gt; Archive::serializationMap;
+ map&lt;SerializableTypes::Type,pair&lt;SerializeFnPtr,DeserializeFnPtr&gt; &gt; Archive::serializationMapOfFundamental;
+-Archive::SerializableDescriptorMap Archive::map;
++// Archive::SerializableDescriptorMap Archive::myMap;
+ 
+ void Archive::clearSerializablePointers() { serializationMap.clear(); serializationMapOfFundamental.clear(); }
+ 
+
+Modified: trunk/lib/serialization/Archive.hpp
+===================================================================
+--- trunk/lib/serialization/Archive.hpp	2008-06-17 14:30:05 UTC (rev 1392)
++++ trunk/lib/serialization/Archive.hpp	2008-06-17 16:07:27 UTC (rev 1393)
+@@ -272,7 +272,7 @@
+ 
+ 	/*! Type of a Stl map used to map the registered class name with their SerializableDescriptor */
+ 	private   : typedef std::map&lt; std::string , SerializableDescriptor &gt; SerializableDescriptorMap;
+-	private   : static SerializableDescriptorMap map;
++	// private   : static SerializableDescriptorMap myMap;
+ 	public    : static bool registerSerializableDescriptor( string name, VerifyFactorableFnPtr verify, SerializableTypes::Type type, bool f);
+ 	public    : static bool findClassInfo(const type_info&amp; tp,SerializableTypes::Type&amp; type, string&amp; serializableClassName,bool&amp; fundamental);
+ 
+
+Modified: trunk/lib/serialization/SerializableSingleton.cpp
+===================================================================
+--- trunk/lib/serialization/SerializableSingleton.cpp	2008-06-17 14:30:05 UTC (rev 1392)
++++ trunk/lib/serialization/SerializableSingleton.cpp	2008-06-17 16:07:27 UTC (rev 1393)
+@@ -20,7 +20,7 @@
+ bool SerializableSingleton::registerSerializableDescriptor( string name , VerifyFactorableFnPtr verify, SerializableTypes::Type type, bool f )
+ {
+ 
+-	bool tmp = map.insert( SerializableDescriptorMap::value_type( name , SerializableDescriptor(verify,type,f) )).second;
++	bool tmp = myMap.insert( SerializableDescriptorMap::value_type( name , SerializableDescriptor(verify,type,f) )).second;
+ 
+ 	#if 0
+ 		if (tmp)
+@@ -35,8 +35,8 @@
+ 
+ bool SerializableSingleton::findClassInfo(const type_info&amp; tp,SerializableTypes::Type&amp; type, string&amp; serializableClassName,bool&amp; fundamental)
+ {
+-	SerializableDescriptorMap::iterator mi    = map.begin();
+-	SerializableDescriptorMap::iterator miEnd = map.end();
++	SerializableDescriptorMap::iterator mi    = myMap.begin();
++	SerializableDescriptorMap::iterator miEnd = myMap.end();
+ 
+ 	for( ; mi!=miEnd ; mi++)
+ 	{
+
+Modified: trunk/lib/serialization/SerializableSingleton.hpp
+===================================================================
+--- trunk/lib/serialization/SerializableSingleton.hpp	2008-06-17 14:30:05 UTC (rev 1392)
++++ trunk/lib/serialization/SerializableSingleton.hpp	2008-06-17 16:07:27 UTC (rev 1393)
+@@ -42,7 +42,7 @@
+ 
+ 	/// Type of a Stl map used to map the registered class name with their SerializableDescriptor
+ 		typedef std::map&lt; std::string , SerializableDescriptor &gt; SerializableDescriptorMap;
+-		SerializableDescriptorMap map;
++		SerializableDescriptorMap myMap;
+ 
+ 	public :
+ 		bool registerSerializableDescriptor( string name, VerifyFactorableFnPtr verify, SerializableTypes::Type type, bool f);
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000353.html">[Yade-commits] r1392 - trunk/gui/py
+</A></li>
+	<LI>Next message: <A HREF="000355.html">[Yade-commits] r1394 - in trunk: examples pkg/common	pkg/common/Engine/DeusExMachina
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#354">[ date ]</a>
+              <a href="thread.html#354">[ thread ]</a>
+              <a href="subject.html#354">[ subject ]</a>
+              <a href="author.html#354">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

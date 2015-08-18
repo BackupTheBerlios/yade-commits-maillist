@@ -1,0 +1,123 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1248 - in trunk/pkg/dem: . PreProcessor
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1248%20-%20in%20trunk/pkg/dem%3A%20.%20PreProcessor&In-Reply-To=%3C200802151618.m1FGIrgW027165%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000212.html">
+   <LINK REL="Next"  HREF="000214.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1248 - in trunk/pkg/dem: . PreProcessor</H1>
+    <B>cosurgi at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1248%20-%20in%20trunk/pkg/dem%3A%20.%20PreProcessor&In-Reply-To=%3C200802151618.m1FGIrgW027165%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1248 - in trunk/pkg/dem: . PreProcessor">cosurgi at mail.berlios.de
+       </A><BR>
+    <I>Fri Feb 15 17:18:53 CET 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000212.html">[Yade-commits] r1247 - in trunk: core pkg/dem/PreProcessor
+</A></li>
+        <LI>Next message: <A HREF="000214.html">[Yade-commits] r1249 - trunk/core
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#213">[ date ]</a>
+              <a href="thread.html#213">[ thread ]</a>
+              <a href="subject.html#213">[ subject ]</a>
+              <a href="author.html#213">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: cosurgi
+Date: 2008-02-15 17:18:53 +0100 (Fri, 15 Feb 2008)
+New Revision: 1248
+
+Modified:
+   trunk/pkg/dem/PreProcessor/CohesiveTriaxialTest.cpp
+   trunk/pkg/dem/SConscript
+Log:
+recent changes in Dispatcher seemingly broke adding InteractingSphere2InteractingSphere4DistantSpheresContactGeometry and InteractingBox2InteractingSphere4SpheresContactGeometry as strings. Need to create class instance first, then add it as a variable (not as string).
+
+
+
+Modified: trunk/pkg/dem/PreProcessor/CohesiveTriaxialTest.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/CohesiveTriaxialTest.cpp	2008-02-15 16:12:09 UTC (rev 1247)
++++ trunk/pkg/dem/PreProcessor/CohesiveTriaxialTest.cpp	2008-02-15 16:18:53 UTC (rev 1248)
+@@ -42,6 +42,8 @@
+ 
+ #include&lt;yade/pkg-common/GravityEngine.hpp&gt;
+ #include&lt;yade/pkg-dem/HydraulicForceEngine.hpp&gt;
++#include&lt;yade/pkg-dem/InteractingSphere2InteractingSphere4DistantSpheresContactGeometry.hpp&gt;
++#include&lt;yade/pkg-dem/InteractingBox2InteractingSphere4SpheresContactGeometry.hpp&gt;
+ #include&lt;yade/pkg-common/PhysicalActionApplier.hpp&gt;
+ #include&lt;yade/pkg-common/PhysicalActionDamper.hpp&gt;
+ #include&lt;yade/pkg-common/CundallNonViscousForceDamping.hpp&gt;
+@@ -575,8 +577,10 @@
+ 	physicalActionInitializer-&gt;physicalActionNames.push_back(&quot;GlobalStiffness&quot;);
+ 	
+ 	shared_ptr&lt;InteractionGeometryMetaEngine&gt; interactionGeometryDispatcher(new InteractionGeometryMetaEngine);
+-	interactionGeometryDispatcher-&gt;add(&quot;InteractingSphere2InteractingSphere4DistantSpheresContactGeometry&quot;);
+-	interactionGeometryDispatcher-&gt;add(&quot;InteractingBox2InteractingSphere4SpheresContactGeometry&quot;);
++	shared_ptr&lt;InteractionGeometryEngineUnit&gt; s1(new InteractingSphere2InteractingSphere4DistantSpheresContactGeometry);
++	interactionGeometryDispatcher-&gt;add(s1);
++	shared_ptr&lt;InteractionGeometryEngineUnit&gt; s2(new InteractingBox2InteractingSphere4SpheresContactGeometry);
++	interactionGeometryDispatcher-&gt;add(s2);
+ 
+ 	shared_ptr&lt;CohesiveFrictionalRelationships&gt; cohesiveFrictionalRelationships = shared_ptr&lt;CohesiveFrictionalRelationships&gt; (new CohesiveFrictionalRelationships);
+ 	cohesiveFrictionalRelationships-&gt;shearCohesion = shearCohesion;
+@@ -644,7 +648,7 @@
+ 	triaxialcompressionEngine-&gt; stiffnessUpdateInterval = wallStiffnessUpdateInterval;// = stiffness update interval
+ 	triaxialcompressionEngine-&gt; radiusControlInterval = radiusControlInterval;// = stiffness update interval
+ 	triaxialcompressionEngine-&gt; sigma_iso = sigma_iso;
+-	triaxialcompressionEngine-&gt; max_vel = 1;
++	triaxialcompressionEngine-&gt; max_vel = 0.01;
+ 	triaxialcompressionEngine-&gt; thickness = thickness;
+ 	triaxialcompressionEngine-&gt;strainRate = strainRate;
+ 	triaxialcompressionEngine-&gt;StabilityCriterion = StabilityCriterion;
+
+Modified: trunk/pkg/dem/SConscript
+===================================================================
+--- trunk/pkg/dem/SConscript	2008-02-15 16:12:09 UTC (rev 1247)
++++ trunk/pkg/dem/SConscript	2008-02-15 16:18:53 UTC (rev 1248)
+@@ -568,6 +568,8 @@
+ 			'BodyRedirectionVector',
+ 			'InteractingSphere',
+ 			'InteractingBox',
++			'InteractingSphere2InteractingSphere4DistantSpheresContactGeometry',
++			'InteractingBox2InteractingSphere4SpheresContactGeometry',
+ 			'CundallNonViscousMomentumDamping',
+ 			'CundallNonViscousForceDamping',
+ 			'MetaInteractingGeometry',
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000212.html">[Yade-commits] r1247 - in trunk: core pkg/dem/PreProcessor
+</A></li>
+	<LI>Next message: <A HREF="000214.html">[Yade-commits] r1249 - trunk/core
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#213">[ date ]</a>
+              <a href="thread.html#213">[ thread ]</a>
+              <a href="subject.html#213">[ subject ]</a>
+              <a href="author.html#213">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

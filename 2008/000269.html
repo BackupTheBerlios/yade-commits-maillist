@@ -1,0 +1,152 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1306 - in trunk/pkg/dem: Engine/DeusExMachina	PreProcessor
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1306%20-%20in%20trunk/pkg/dem%3A%20Engine/DeusExMachina%0A%09PreProcessor&In-Reply-To=%3C200804101308.m3AD85DI026217%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000268.html">
+   <LINK REL="Next"  HREF="000270.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1306 - in trunk/pkg/dem: Engine/DeusExMachina	PreProcessor</H1>
+    <B>chareyre at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1306%20-%20in%20trunk/pkg/dem%3A%20Engine/DeusExMachina%0A%09PreProcessor&In-Reply-To=%3C200804101308.m3AD85DI026217%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1306 - in trunk/pkg/dem: Engine/DeusExMachina	PreProcessor">chareyre at mail.berlios.de
+       </A><BR>
+    <I>Thu Apr 10 15:08:05 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000268.html">[Yade-commits] r1305 - trunk/pkg/dem/Engine/StandAloneEngine
+</A></li>
+        <LI>Next message: <A HREF="000270.html">[Yade-commits] r1307 - trunk/pkg/dem/PreProcessor
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#269">[ date ]</a>
+              <a href="thread.html#269">[ thread ]</a>
+              <a href="subject.html#269">[ subject ]</a>
+              <a href="author.html#269">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: chareyre
+Date: 2008-04-10 15:08:04 +0200 (Thu, 10 Apr 2008)
+New Revision: 1306
+
+Modified:
+   trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.cpp
+   trunk/pkg/dem/Engine/DeusExMachina/TriaxialStateRecorder.cpp
+   trunk/pkg/dem/PreProcessor/TriaxialTest.cpp
+Log:
+1. TriaxialCompressionEngine is now saving at the end of compaction rather than at the begining of compression test, so that the 
+simulation is saved when autoCompression is not activated (before this change, the simulation was going in LIMBO state without even 
+saving, which means it was lost).
+
+2. TriaxialStateRecorder : Stress-strain history is now appended at the end of the output file, allowing to pause/save/change 
+parameters/load/run and still 
+keep the full loading history in the output file.
+
+3. TriaxialTest : oversizeFactor is now 1.3 by default (was 1 before)
+
+
+
+
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.cpp	2008-04-08 10:17:57 UTC (rev 1305)
++++ trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.cpp	2008-04-10 13:08:04 UTC (rev 1306)
+@@ -68,6 +68,7 @@
+ 	REGISTER_ATTRIBUTE(currentState);
+ 	REGISTER_ATTRIBUTE(previousState);
+ 	REGISTER_ATTRIBUTE(sigmaIsoCompaction);
++	REGISTER_ATTRIBUTE(previousSigmaIso);
+ 	REGISTER_ATTRIBUTE(sigmaLateralConfinement);
+ }
+ 
+@@ -170,12 +171,7 @@
+ 		previousSigmaIso=sigma_iso;
+ 		firstRun=false; // change this only _after_ state transitions
+ 	}
+-	if(currentState==STATE_LIMBO) return;
+-
+-   TriaxialStressController::applyCondition(body);
+-   if (Omega::instance().getCurrentIteration() % testEquilibriumInterval == 0) {
+-        updateParameters(body);
+-        if (saveSimulation) {
++	if (saveSimulation) {
+             string fileName = &quot;./&quot; + Phase1End + &quot;_&quot; +
+                               lexical_cast&lt;string&gt;(Omega::instance().getCurrentIteration()) + &quot;.xml&quot;;
+             LOG_INFO(&quot;saving snapshot: &quot;&lt;&lt;fileName);
+@@ -185,6 +181,12 @@
+ 				Shop::saveSpheresToFile(fileName);
+             saveSimulation = false;
+         }
++	if(currentState==STATE_LIMBO) return;
++
++   TriaxialStressController::applyCondition(body);
++   
++   if (Omega::instance().getCurrentIteration() % testEquilibriumInterval == 0) {
++        updateParameters(body);        
+     }
+ 	 if (currentState==STATE_TRIAX_LOADING) {
+ 	 if (Omega::instance().getCurrentIteration() % 100 == 0) {
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/TriaxialStateRecorder.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/TriaxialStateRecorder.cpp	2008-04-08 10:17:57 UTC (rev 1305)
++++ trunk/pkg/dem/Engine/DeusExMachina/TriaxialStateRecorder.cpp	2008-04-10 13:08:04 UTC (rev 1306)
+@@ -38,7 +38,7 @@
+ {
+ 	if(deserializing)
+ 	{
+-		ofile.open(outputFile.c_str());
++		ofile.open(outputFile.c_str(), std::ios::app);
+ 	}
+ }
+ 
+
+Modified: trunk/pkg/dem/PreProcessor/TriaxialTest.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/TriaxialTest.cpp	2008-04-08 10:17:57 UTC (rev 1305)
++++ trunk/pkg/dem/PreProcessor/TriaxialTest.cpp	2008-04-10 13:08:04 UTC (rev 1306)
+@@ -153,7 +153,7 @@
+ 	sigmaIsoCompaction = 50000;
+ 	sigmaLateralConfinement=sigmaIsoCompaction;
+ 
+-	wallOversizeFactor=1.;
++	wallOversizeFactor=1.3;
+ 	
+ //	wall_top_id =0;
+ // 	wall_bottom_id =0;
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000268.html">[Yade-commits] r1305 - trunk/pkg/dem/Engine/StandAloneEngine
+</A></li>
+	<LI>Next message: <A HREF="000270.html">[Yade-commits] r1307 - trunk/pkg/dem/PreProcessor
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#269">[ date ]</a>
+              <a href="thread.html#269">[ thread ]</a>
+              <a href="subject.html#269">[ subject ]</a>
+              <a href="author.html#269">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

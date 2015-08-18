@@ -1,0 +1,187 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1271 - in trunk: core extra/usct	pkg/dem/Engine/StandAloneEngine scripts
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1271%20-%20in%20trunk%3A%20core%20extra/usct%0A%09pkg/dem/Engine/StandAloneEngine%20scripts&In-Reply-To=%3C200803012145.m21Ljt5p019748%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000235.html">
+   <LINK REL="Next"  HREF="000237.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1271 - in trunk: core extra/usct	pkg/dem/Engine/StandAloneEngine scripts</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1271%20-%20in%20trunk%3A%20core%20extra/usct%0A%09pkg/dem/Engine/StandAloneEngine%20scripts&In-Reply-To=%3C200803012145.m21Ljt5p019748%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1271 - in trunk: core extra/usct	pkg/dem/Engine/StandAloneEngine scripts">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Sat Mar  1 22:45:55 CET 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000235.html">[Yade-commits] r1270 - trunk
+</A></li>
+        <LI>Next message: <A HREF="000237.html">[Yade-commits] r1272 - in trunk: core gui/cmd scripts
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#236">[ date ]</a>
+              <a href="thread.html#236">[ thread ]</a>
+              <a href="subject.html#236">[ subject ]</a>
+              <a href="author.html#236">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2008-03-01 22:45:54 +0100 (Sat, 01 Mar 2008)
+New Revision: 1271
+
+Added:
+   trunk/scripts/default-test.py
+Modified:
+   trunk/core/yade.cpp
+   trunk/extra/usct/UniaxialStrainControlledTest.cpp
+   trunk/pkg/dem/Engine/StandAloneEngine/GlobalStiffnessCounter.cpp
+   trunk/pkg/dem/Engine/StandAloneEngine/GlobalStiffnessCounter.hpp
+Log:
+1. Test suite for all preprocessors
+2. Added assumeElasticSpheres attribute to GlobalStiffnessCounter; if set to false, dynamic_casts are used to properly determine type of contact between spheres (used in USCTGen now)
+3. Debugger now dumps backtrace without interruption and exits immediately (core is still dumped)
+
+
+
+Modified: trunk/core/yade.cpp
+===================================================================
+--- trunk/core/yade.cpp	2008-03-01 07:45:09 UTC (rev 1270)
++++ trunk/core/yade.cpp	2008-03-01 21:45:54 UTC (rev 1271)
+@@ -210,7 +210,7 @@
+ 		// postponed until the config dir has been created
+ 		ofstream gdbBatch;
+ 		Omega::instance().gdbCrashBatch=(yadeConfigPath/&quot;gdb_crash_batch-pid&quot;).string()+lexical_cast&lt;string&gt;(getpid());
+-		gdbBatch.open(Omega::instance().gdbCrashBatch.c_str()); gdbBatch&lt;&lt;&quot;attach &quot;&lt;&lt;lexical_cast&lt;string&gt;(getpid())&lt;&lt;&quot;\nthread info\nthread apply all backtrace\n&quot;; gdbBatch.close();
++		gdbBatch.open(Omega::instance().gdbCrashBatch.c_str()); gdbBatch&lt;&lt;&quot;attach &quot;&lt;&lt;lexical_cast&lt;string&gt;(getpid())&lt;&lt;&quot;\nset pagination off\nthread info\nthread apply all backtrace\ndetach\nquit\n&quot;; gdbBatch.close();
+ 		signal(SIGABRT,sigHandler);
+ 		signal(SIGSEGV,sigHandler);
+ 		LOG_DEBUG(&quot;ABRT/SEGV signal handlers set, crash batch created as &quot;&lt;&lt;Omega::instance().gdbCrashBatch);
+
+Modified: trunk/extra/usct/UniaxialStrainControlledTest.cpp
+===================================================================
+--- trunk/extra/usct/UniaxialStrainControlledTest.cpp	2008-03-01 07:45:09 UTC (rev 1270)
++++ trunk/extra/usct/UniaxialStrainControlledTest.cpp	2008-03-01 21:45:54 UTC (rev 1271)
+@@ -280,6 +280,7 @@
+ 	shared_ptr&lt;GlobalStiffnessCounter&gt; globalStiffnessCounter(new GlobalStiffnessCounter);
+ 	globalStiffnessCounter-&gt;sdecGroupMask=1023;
+ 	globalStiffnessCounter-&gt;interval=100;
++	globalStiffnessCounter-&gt;assumeElasticSpheres=false;
+ 
+ 	shared_ptr&lt;GlobalStiffnessTimeStepper&gt; globalStiffnessTimeStepper(new GlobalStiffnessTimeStepper);
+ 	globalStiffnessTimeStepper-&gt;sdecGroupMask=1023; // BIN 111111111, should always match
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/GlobalStiffnessCounter.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/GlobalStiffnessCounter.cpp	2008-03-01 07:45:09 UTC (rev 1270)
++++ trunk/pkg/dem/Engine/StandAloneEngine/GlobalStiffnessCounter.cpp	2008-03-01 21:45:54 UTC (rev 1271)
+@@ -28,6 +28,7 @@
+ 	interval=1;//FIXME very high frequency - not required 
+ 	sdecGroupMask=1;
+ 	momentRotationLaw = true;
++	assumeElasticSpheres = true;
+ 	actionForceIndex = actionForce-&gt;getClassIndex();
+ 	actionMomentumIndex = actionMomentum-&gt;getClassIndex();
+ 	actionStiffnessIndex = actionStiffness-&gt;getClassIndex();
+@@ -40,6 +41,7 @@
+ 	REGISTER_ATTRIBUTE(interval);
+ 	REGISTER_ATTRIBUTE(sdecGroupMask);
+ 	REGISTER_ATTRIBUTE(momentRotationLaw);
++	REGISTER_ATTRIBUTE(assumeElasticSpheres);
+ }
+ 
+ bool GlobalStiffnessCounter::isActivated()
+@@ -149,7 +151,7 @@
+ 	//	Real dt = Omega::instance().getTimeStep();
+ 
+ 	/// transient Links
+-	traverseInteractions(ncb,ncb-&gt;transientInteractions, /*spheresOnly? */ true);
++	traverseInteractions(ncb,ncb-&gt;transientInteractions, /*spheresOnly? */ assumeElasticSpheres?true:false );
+ 
+ 	/* ignore pesistent links, unused */
+ 	// traverseInteractions(ncb,ncb-&gt;persistentInteractions);
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/GlobalStiffnessCounter.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/GlobalStiffnessCounter.hpp	2008-03-01 07:45:09 UTC (rev 1270)
++++ trunk/pkg/dem/Engine/StandAloneEngine/GlobalStiffnessCounter.hpp	2008-03-01 21:45:54 UTC (rev 1271)
+@@ -38,6 +38,7 @@
+ 		unsigned int interval;
+ 		int sdecGroupMask;
+ 		bool momentRotationLaw;
++		bool assumeElasticSpheres;
+ 	
+ 		GlobalStiffnessCounter();
+ 		void action(Body* body);
+
+Added: trunk/scripts/default-test.py
+===================================================================
+--- trunk/scripts/default-test.py	2008-03-01 07:45:09 UTC (rev 1270)
++++ trunk/scripts/default-test.py	2008-03-01 21:45:54 UTC (rev 1271)
+@@ -0,0 +1,32 @@
++# this must be run inside yade
++# coding=UTF-8
++
++import os,time,sys
++simulFile='/tmp/yade-test-%d.xml'%(os.getpid()) # generated simulations here
++broken=['SDECLinkedSpheres','SDECMovingWall','SDECSpheresPlane','ThreePointBending']
++genParams={
++	'USCTGen':{'spheresFile':'examples/small.sdec.xyz'}
++	}
++nIter=100
++summary=[]
++o=Omega()
++
++for pp in o.childClasses('FileGenerator'):
++	if pp in broken:
++		sys.stderr.write(&quot;============= (skipping broken &quot;+pp+&quot;)==============\n&quot;)
++		continue
++	sys.stderr.write(&quot;============================================= &quot;+pp+&quot; =========================================\n&quot;)
++	p=Preprocessor(pp)
++	if pp in genParams.keys(): # set preprocessor parameters, if desired
++		for k in genParams[pp].keys():
++			p[k]=genParams[pp][k]
++	if not p.generate(simulFile): # preprocessor failed 
++		summary.append('FAILED&#160;generator '+pp+'!!')
++		continue
++	o.load(simulFile)
++	o.run(10); o.wait() # run first 10 iterations
++	start=time.time(); o.run(nIter); o.wait(); finish=time.time() # run nIter iterations, wait to finish, measure elapsed time
++	speed=nIter/(finish-start) # rough estimate
++	summary.append('Passed test '+pp+' at %g iter/sec'%speed)
++
++for l in summary: print l
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000235.html">[Yade-commits] r1270 - trunk
+</A></li>
+	<LI>Next message: <A HREF="000237.html">[Yade-commits] r1272 - in trunk: core gui/cmd scripts
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#236">[ date ]</a>
+              <a href="thread.html#236">[ thread ]</a>
+              <a href="subject.html#236">[ subject ]</a>
+              <a href="author.html#236">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

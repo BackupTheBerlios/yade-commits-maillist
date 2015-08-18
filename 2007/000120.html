@@ -1,0 +1,317 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1155 - in trunk: core extra/clump lib/serialization
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2007/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1155%20-%20in%20trunk%3A%20core%20extra/clump%20lib/serialization&In-Reply-To=%3C200703311126.l2VBQHFq017608%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000119.html">
+   <LINK REL="Next"  HREF="000121.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1155 - in trunk: core extra/clump lib/serialization</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1155%20-%20in%20trunk%3A%20core%20extra/clump%20lib/serialization&In-Reply-To=%3C200703311126.l2VBQHFq017608%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1155 - in trunk: core extra/clump lib/serialization">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Sat Mar 31 13:26:17 CEST 2007</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000119.html">[Yade-commits] r1154 - trunk
+</A></li>
+        <LI>Next message: <A HREF="000121.html">[Yade-commits] r1156 - in trunk: core extra extra/clump extra/tetra	pkg/common/DataClass/GeometricalModel	pkg/common/RenderingEngine/GLDrawGeometricalModel	pkg/dem/Engine/EngineUnit pkg/dem/PreProcessor
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#120">[ date ]</a>
+              <a href="thread.html#120">[ thread ]</a>
+              <a href="subject.html#120">[ subject ]</a>
+              <a href="author.html#120">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2007-03-31 13:26:16 +0200 (Sat, 31 Mar 2007)
+New Revision: 1155
+
+Modified:
+   trunk/core/yade.cpp
+   trunk/extra/clump/Clump.cpp
+   trunk/extra/clump/PythonRecorder.cpp
+   trunk/extra/clump/PythonRecorder.hpp
+   trunk/extra/clump/Shop.cpp
+   trunk/lib/serialization/FundamentalHandler.tpp
+Log:
+1. PythonRecorder runs optimized byte-compiled expression, optionally translated to machine-code by psyco
+2. Serialization lib now properly escapes and unescapes XML-unfriendly charcters (\n,\t,&lt;,&gt;,&quot;,\\)-&gt;(\\n,\\t,\[,\],\',\\\\)
+
+
+
+Modified: trunk/core/yade.cpp
+===================================================================
+--- trunk/core/yade.cpp	2007-03-31 07:18:17 UTC (rev 1154)
++++ trunk/core/yade.cpp	2007-03-31 11:26:16 UTC (rev 1155)
+@@ -10,6 +10,7 @@
+ 
+ #ifdef EMBED_PYTHON
+ 	#include&lt;Python.h&gt;
++	extern int Py_OptimizeFlag;
+ #endif
+ 
+ #include&lt;signal.h&gt;
+@@ -151,6 +152,7 @@
+ 
+ 	#ifdef EMBED_PYTHON
+ 		LOG_DEBUG(&quot;Initializing Python...&quot;);
++		Py_OptimizeFlag=1;
+ 		Py_Initialize();
+ 		signal(SIGINT,sigHandler);
+ 	#endif
+
+Modified: trunk/extra/clump/Clump.cpp
+===================================================================
+--- trunk/extra/clump/Clump.cpp	2007-03-31 07:18:17 UTC (rev 1154)
++++ trunk/extra/clump/Clump.cpp	2007-03-31 11:26:16 UTC (rev 1155)
+@@ -338,7 +338,7 @@
+ 
+ string ClumpTestGen::generate()
+ {
+-	Shop::setDefault(&quot;param_pythonExpr&quot;,string(&quot;if (S.i%50==0): print len(S.sel),B[1].x, B[1].E&quot;));
++	Shop::setDefault(&quot;param_pythonRunExpr&quot;,string(&quot;if S.i%50==0 and S.i&lt;1000 and S.i&gt;500:\n\tprint S.i,len(S.sel),B[1].x, B[1].E&quot;));
+ 
+ 	rootBody=Shop::rootBody();
+ 	Shop::rootBodyActors(rootBody);
+
+Modified: trunk/extra/clump/PythonRecorder.cpp
+===================================================================
+--- trunk/extra/clump/PythonRecorder.cpp	2007-03-31 07:18:17 UTC (rev 1154)
++++ trunk/extra/clump/PythonRecorder.cpp	2007-03-31 11:26:16 UTC (rev 1155)
+@@ -15,13 +15,9 @@
+ 
+ /*! Constructor loads the pyade module.
+  *
+- * @todo Import path prepended to sys.path hardcoded now. Should depend on install dir (PREFIX and POSTFIX);
+- * @todo Maybe change PythonRecorder::expression to vector&lt;string&gt; so that multiple expressions may be run at a time. This is equivalent to multiline expressions, but more easily manageable from c++.
+- *
+  */
+ 
+ PythonRecorder::PythonRecorder():DataRecorder(){
+-	// FIXME: this will have to be set somehow, hardcode for now...
+ 	PyRun_SimpleString(&quot;import sys; sys.path.insert(0,'&quot; PREFIX &quot;/lib/yade&quot; SUFFIX &quot;/extra');&quot;);
+ 
+ 	#if 0
+@@ -35,22 +31,54 @@
+ 	int status=PyRun_SimpleString(&quot;from pyade import *&quot;); // pyade will import _pyade by itself
+ 	if(status){ LOG_ERROR(&quot;pyade import failed.&quot;); }
+ 	else LOG_DEBUG(&quot;pyade imported.&quot;);
++
++	compiledRunExprCall=NULL;
+ }
+-
++/* Transform deserialized attributes in something useful.
++ *
++ * - runs initExpr in python.
++ * - creates runExpr function definition
++ * - attempts its acceleration through psyco
++ * - creates bytecode for runExpr call
++ *
++ */
+ void PythonRecorder::postProcessAttributes(bool deserializing){
+ 	if(outputFile.length()&gt;0){
+ 		LOG_DEBUG(&quot;Redirecting python stdout to `&quot;&lt;&lt;outputFile&lt;&lt;&quot;'.&quot;);
+ 		PyRun_SimpleString(string(&quot;import os; import sys; ofile=file('&quot;+outputFile+&quot;','w+'); sys.stdout=ofile&quot;).c_str());
+ 	}
+-	if(initExpression.length()&gt;0){
+-		PyRun_SimpleString(initExpression.c_str());
++	if(initExpr.length()&gt;0){
++		PyRun_SimpleString(initExpr.c_str());
+ 	}
++
++	// if this is not the first time we deserialize, free the old byte-compiled code
++	if(compiledRunExprCall) Py_DECREF(compiledRunExprCall);
++
++	if(runExpr.length()&gt;0){
++		// transform expression to function definition
++		runExprAsDef=&quot;def runExpr():\n&quot;+runExpr;
++		size_t pos=0; while((pos=runExprAsDef.find('\n',pos))!=string::npos){runExprAsDef.replace(pos,1,&quot;\n\t&quot;); pos+=2;}
++
++		if(PyRun_SimpleString(runExprAsDef.c_str())&gt;=0){ // no error running the user-supplied code...
++			// attempt psyco machine-code compilation of runExpr
++			PyRun_SimpleString(&quot;try:\n\timport psyco\n\tpsyco.bind(runExpr)\nexcept ImportError: pass\n&quot;);
++			// byte-compile the actual invocation of runExpr
++			compiledRunExprCall=Py_CompileString(&quot;runExpr()&quot;,&quot;&lt;runExpr definition&gt;&quot;, Py_single_input);
++			// mainDict is used later, when calling the byte-compiled piece
++			PyObject* __main__=PyImport_AddModule(&quot;__main__&quot;); // borrowed reference, no need to Py_DECREF
++			mainDict=PyModule_GetDict(__main__); // borrowed reference as well
++		}
++		else {LOG_WARN(&quot;Compiling runExpr failed in Python, engine will not do anything! (expression was:\n&quot;&lt;&lt;runExprAsDef);}
++	}
+ }
+ 
+ void PythonRecorder::action(Body *_rootBody)
+ {
+-	//MetaBody* rootBody=YADE_CAST&lt;MetaBody*&gt;(_rootBody);
+-	PyRun_SimpleString(expression.c_str());
++	if(compiledRunExprCall){
++		PyObject* res=PyEval_EvalCode((PyCodeObject*)compiledRunExprCall,mainDict,mainDict);
++		if(res) Py_DECREF(res);
++		else { LOG_WARN(&quot;runExpr() execution in Python failed?!&quot;); }
++	}
+ }
+ 
+ 
+
+Modified: trunk/extra/clump/PythonRecorder.hpp
+===================================================================
+--- trunk/extra/clump/PythonRecorder.hpp	2007-03-31 07:18:17 UTC (rev 1154)
++++ trunk/extra/clump/PythonRecorder.hpp	2007-03-31 11:26:16 UTC (rev 1155)
+@@ -7,6 +7,7 @@
+ 	#error EMBED_PYTHON must be defined for this module to work!
+ #endif
+ 
++#include&lt;Python.h&gt;
+ #include&lt;string&gt;
+ #include&lt;yade/core/DataRecorder.hpp&gt;
+ #include&lt;yade/lib-base/Logging.hpp&gt;
+@@ -16,22 +17,27 @@
+  * The expressions to access yade's internals are described in documentation for pyade.py and pyade.cpp.
+  *
+  * */
+-class PythonRecorder : public DataRecorder
++class PythonRecorder: public DataRecorder
+ {
+ 	private:
++		//! simple call to 
++		PyObject *compiledRunExprCall;
++		//! dictionary of globals, for passing to PyEval_EvalCode
++		PyObject *mainDict;
++		//! runExpr, but string-transformed to python function definition
++		std::string runExprAsDef;
+ 	public :
+ 		//! Constructor that imports pyade module (warns if there is an error).
+ 		PythonRecorder();
+ 		virtual void action(Body* b);
+ 		virtual bool isActivated(){return true;}
+-		virtual void registerAttributes(){DataRecorder::registerAttributes(); REGISTER_ATTRIBUTE(expression); REGISTER_ATTRIBUTE(initExpression); REGISTER_ATTRIBUTE(outputFile);}
+-		//! This expression will be interpreted when the engine is called.
+-		std::string expression;
+-		//! Piece of python code run on intialization
+-		std::string initExpression;
++		virtual void registerAttributes(){DataRecorder::registerAttributes(); REGISTER_ATTRIBUTE(runExpr); REGISTER_ATTRIBUTE(initExpr); REGISTER_ATTRIBUTE(outputFile);}
++		//! This expression will be interpreted when the engine is called (every iteration)
++		std::string runExpr;
++		//! Piece of python code run on intialization (deserialization)
++		std::string initExpr;
+ 		//! If not empty, python sys.stdout will be redirected to this file (overwritten every time!)
+ 		std::string outputFile;
+-		//std::string initExpression;
+ 	protected :
+ 		virtual void postProcessAttributes(bool deserializing);
+ 	DECLARE_LOGGER;
+
+Modified: trunk/extra/clump/Shop.cpp
+===================================================================
+--- trunk/extra/clump/Shop.cpp	2007-03-31 07:18:17 UTC (rev 1154)
++++ trunk/extra/clump/Shop.cpp	2007-03-31 11:26:16 UTC (rev 1155)
+@@ -117,7 +117,7 @@
+ 	setDefault(&quot;param_momentRotationLaw&quot;,true);
+ 
+ 	setDefault(&quot;param_pythonInitExpr&quot;,string(&quot;print 'Hello world!'&quot;));
+-	setDefault(&quot;param_pythonExpr&quot;,string(&quot;&quot;));
++	setDefault(&quot;param_pythonRunExpr&quot;,string(&quot;&quot;));
+ 
+ }
+ 
+@@ -237,10 +237,10 @@
+ 	rootBody-&gt;engines.push_back(orientationIntegrator);
+ 
+ 	#ifdef EMBED_PYTHON
+-		if(getDefault&lt;string&gt;(&quot;param_pythonExpr&quot;).length()&gt;0 || getDefault&lt;string&gt;(&quot;param_pythonInitExpr&quot;).length()&gt;0){
++		if(getDefault&lt;string&gt;(&quot;param_pythonRunExpr&quot;).length()&gt;0 || getDefault&lt;string&gt;(&quot;param_pythonInitExpr&quot;).length()&gt;0){
+ 			shared_ptr&lt;PythonRecorder&gt; pythonRecorder=shared_ptr&lt;PythonRecorder&gt;(new PythonRecorder);
+-			pythonRecorder-&gt;initExpression=getDefault&lt;string&gt;(&quot;param_pythonInitExpr&quot;);
+-			pythonRecorder-&gt;expression=getDefault&lt;string&gt;(&quot;param_pythonExpr&quot;);
++			pythonRecorder-&gt;initExpr=getDefault&lt;string&gt;(&quot;param_pythonInitExpr&quot;);
++			pythonRecorder-&gt;runExpr=getDefault&lt;string&gt;(&quot;param_pythonRunExpr&quot;);
+ 			rootBody-&gt;engines.push_back(pythonRecorder);
+ 		}
+ 	#endif
+
+Modified: trunk/lib/serialization/FundamentalHandler.tpp
+===================================================================
+--- trunk/lib/serialization/FundamentalHandler.tpp	2007-03-31 07:18:17 UTC (rev 1154)
++++ trunk/lib/serialization/FundamentalHandler.tpp	2007-03-31 11:26:16 UTC (rev 1155)
+@@ -40,14 +40,13 @@
+ 		{
+ 			const string * tmpStr = any_cast&lt;const string*&gt;(a);
+ 			string * tmp = any_cast&lt;string*&gt;(ac.getAddress());
+-			*tmp = lexical_cast&lt;string&gt;(*tmpStr);
+-			/*
+-			*tmp=*tmpStr; // why not like this?
+-			#define _RESTORE_SPECIAL(escape,special)pos=0; while((pos=tmp-&gt;find(escape,pos))!=string::npos){tmp-&gt;replace(pos,2,special); cerr&lt;&lt;escape&lt;&lt;&quot; &quot;&lt;&lt;pos&lt;&lt;endl;}
++			*tmp=*tmpStr;
++			#define _RESTORE_SPECIAL(escape,special)pos=0; while((pos=tmp-&gt;find(escape,pos))!=string::npos){tmp-&gt;replace(pos,2,special);}
+ 			unsigned int pos;
+-			_RESTORE_SPECIAL(&quot;\\\\&quot;,&quot;\\&quot;); _RESTORE_SPECIAL(&quot;\\n&quot;,&quot;\n&quot;); _RESTORE_SPECIAL(&quot;\\t&quot;,&quot;\t&quot;); _RESTORE_SPECIAL(&quot;\\'&quot;,&quot;\&quot;&quot;); // order matters!
++			_RESTORE_SPECIAL(&quot;\\n&quot;,&quot;\n&quot;); _RESTORE_SPECIAL(&quot;\\t&quot;,&quot;\t&quot;); _RESTORE_SPECIAL(&quot;\\'&quot;,&quot;\&quot;&quot;);
++			_RESTORE_SPECIAL(&quot;\\[&quot;,&quot;&lt;&quot;); _RESTORE_SPECIAL(&quot;\\]&quot;,&quot;&gt;&quot;); _RESTORE_SPECIAL(&quot;\\\\&quot;,&quot;\\&quot;); // order matters!
+ 			#undef _RESTORE_SPECIAL
+-			*/
++			
+ 		}
+ 		else if (a.type()==typeid(const vector&lt;unsigned char&gt;*)) // from binary stream to Type
+ 		{
+@@ -62,19 +61,17 @@
+ 			throw HandlerError(SerializationExceptions::LexicalCopyError);
+ 	}
+ 	static void accessor(Archive&amp; ac, any&amp; a)
+-	{ // FIXME - throw when trying to serialize a string that has spaces. ( if(string.find(' ') != string.end() ...)
++	{ // FIXME - throw when trying to serialize a string that has spaces. ( if(string.find(' ') != string.end() ...) : (eudoxos: WHY?!!!!!)
+ 		if (a.type()==typeid(string*)) // serialization - writing to string from some Type
+ 		{
+ 			string * tmpStr = any_cast&lt;string*&gt;(a);
+ 			string * tmp = any_cast&lt;string*&gt;(ac.getAddress());
+-			*tmpStr = lexical_cast&lt;string&gt;(*tmp);
+-			/*
+-			*tmpStr=*tmp; // why not this?
++			*tmpStr=*tmp;
+ 			#define _ESCAPE_SPECIAL(special,escape) pos=0; while((pos=tmpStr-&gt;find(special,pos))!=string::npos){tmpStr-&gt;replace(pos,1,escape); pos+=2;}
+ 			unsigned int pos;
+-			_ESCAPE_SPECIAL(&quot;\\&quot;,&quot;\\\\&quot;); _ESCAPE_SPECIAL('\n',&quot;\\n&quot;); _ESCAPE_SPECIAL('\t',&quot;\\t&quot;); _ESCAPE_SPECIAL('\&quot;',&quot;\\'&quot;); // order matters!
++			_ESCAPE_SPECIAL(&quot;\\&quot;,&quot;\\\\&quot;); _ESCAPE_SPECIAL('\n',&quot;\\n&quot;); _ESCAPE_SPECIAL('\t',&quot;\\t&quot;); _ESCAPE_SPECIAL('\&quot;',&quot;\\'&quot;);
++			_ESCAPE_SPECIAL('&lt;',&quot;\\[&quot;); _ESCAPE_SPECIAL('&gt;',&quot;\\]&quot;);  // order matters!
+ 			#undef _ESCAPE_SPECIAL
+-			*/
+ 		}
+ 		else if (a.type()==typeid(vector&lt;unsigned char&gt;*)) // from string to binary stream
+ 		{
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000119.html">[Yade-commits] r1154 - trunk
+</A></li>
+	<LI>Next message: <A HREF="000121.html">[Yade-commits] r1156 - in trunk: core extra extra/clump extra/tetra	pkg/common/DataClass/GeometricalModel	pkg/common/RenderingEngine/GLDrawGeometricalModel	pkg/dem/Engine/EngineUnit pkg/dem/PreProcessor
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#120">[ date ]</a>
+              <a href="thread.html#120">[ thread ]</a>
+              <a href="subject.html#120">[ subject ]</a>
+              <a href="author.html#120">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

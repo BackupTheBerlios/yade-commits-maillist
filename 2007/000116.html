@@ -1,0 +1,2212 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1151 - in branches/scons-layout: . core debian	extra gui lib pkg/common pkg/dem pkg/dem/Engine/DeusExMachina	pkg/dem/Engine/EngineUnit pkg/dem/Engine/StandAloneEngine	pkg/dem/PreProcessor	pkg/dem/RenderingEngine/GLDrawInteractingMyTetrahedron	pkg/dem/RenderingEngine/GLDrawSDECLinkGeometry	pkg/dem/RenderingEngine/GLDrawSpheresContactGeometry	pkg/lattice pkg/mass-spring pkg/realtime-rigidbody
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2007/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1151%20-%20in%20branches/scons-layout%3A%20.%20core%20debian%0A%09extra%20gui%20lib%20pkg/common%20pkg/dem%20pkg/dem/Engine/DeusExMachina%0A%09pkg/dem/Engine/EngineUnit%20pkg/dem/Engine/StandAloneEngine%0A%09pkg/dem/PreProcessor%0A%09pkg/dem/RenderingEngine/GLDrawInteractingMyTetrahedron%0A%09pkg/dem/RenderingEngine/GLDrawSDECLinkGeometry%0A%09pkg/dem/RenderingEngine/GLDrawSpheresContactGeometry%0A%09pkg/lattice%20pkg/mass-spring%20pkg/realtime-rigidbody&In-Reply-To=%3C200703191947.l2JJl537014636%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000115.html">
+   <LINK REL="Next"  HREF="000117.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1151 - in branches/scons-layout: . core debian	extra gui lib pkg/common pkg/dem pkg/dem/Engine/DeusExMachina	pkg/dem/Engine/EngineUnit pkg/dem/Engine/StandAloneEngine	pkg/dem/PreProcessor	pkg/dem/RenderingEngine/GLDrawInteractingMyTetrahedron	pkg/dem/RenderingEngine/GLDrawSDECLinkGeometry	pkg/dem/RenderingEngine/GLDrawSpheresContactGeometry	pkg/lattice pkg/mass-spring pkg/realtime-rigidbody</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1151%20-%20in%20branches/scons-layout%3A%20.%20core%20debian%0A%09extra%20gui%20lib%20pkg/common%20pkg/dem%20pkg/dem/Engine/DeusExMachina%0A%09pkg/dem/Engine/EngineUnit%20pkg/dem/Engine/StandAloneEngine%0A%09pkg/dem/PreProcessor%0A%09pkg/dem/RenderingEngine/GLDrawInteractingMyTetrahedron%0A%09pkg/dem/RenderingEngine/GLDrawSDECLinkGeometry%0A%09pkg/dem/RenderingEngine/GLDrawSpheresContactGeometry%0A%09pkg/lattice%20pkg/mass-spring%20pkg/realtime-rigidbody&In-Reply-To=%3C200703191947.l2JJl537014636%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1151 - in branches/scons-layout: . core debian	extra gui lib pkg/common pkg/dem pkg/dem/Engine/DeusExMachina	pkg/dem/Engine/EngineUnit pkg/dem/Engine/StandAloneEngine	pkg/dem/PreProcessor	pkg/dem/RenderingEngine/GLDrawInteractingMyTetrahedron	pkg/dem/RenderingEngine/GLDrawSDECLinkGeometry	pkg/dem/RenderingEngine/GLDrawSpheresContactGeometry	pkg/lattice pkg/mass-spring pkg/realtime-rigidbody">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Mon Mar 19 20:47:05 CET 2007</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000115.html">[Yade-commits] r1150 - in branches/scons-layout: . debian scripts
+</A></li>
+        <LI>Next message: <A HREF="000117.html">[Yade-commits] r1152 - in branches/scons-layout: . debian scripts
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#116">[ date ]</a>
+              <a href="thread.html#116">[ thread ]</a>
+              <a href="subject.html#116">[ subject ]</a>
+              <a href="author.html#116">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2007-03-19 20:47:03 +0100 (Mon, 19 Mar 2007)
+New Revision: 1151
+
+Modified:
+   branches/scons-layout/SConstruct
+   branches/scons-layout/core/SConscript
+   branches/scons-layout/debian/control-svn-template
+   branches/scons-layout/extra/SConscript
+   branches/scons-layout/gui/SConscript
+   branches/scons-layout/lib/SConscript
+   branches/scons-layout/pkg/common/SConscript
+   branches/scons-layout/pkg/dem/Engine/DeusExMachina/ResultantForceEngine.cpp
+   branches/scons-layout/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.cpp
+   branches/scons-layout/pkg/dem/Engine/DeusExMachina/TriaxialStressController.cpp
+   branches/scons-layout/pkg/dem/Engine/EngineUnit/InteractingBox2InteractingSphere4SpheresContactGeometry.cpp
+   branches/scons-layout/pkg/dem/Engine/EngineUnit/InteractingMyTetrahedron2AABB.cpp
+   branches/scons-layout/pkg/dem/Engine/EngineUnit/InteractingMyTetrahedron2InteractingBox4InteractionOfMyTetrahedron.cpp
+   branches/scons-layout/pkg/dem/Engine/EngineUnit/InteractingMyTetrahedron2InteractingMyTetrahedron4InteractionOfMyTetrahedron.cpp
+   branches/scons-layout/pkg/dem/Engine/EngineUnit/InteractingSphere2InteractingSphere4SpheresContactGeometry.cpp
+   branches/scons-layout/pkg/dem/Engine/EngineUnit/MacroMicroElasticRelationships.cpp
+   branches/scons-layout/pkg/dem/Engine/EngineUnit/SimpleElasticRelationships.cpp
+   branches/scons-layout/pkg/dem/Engine/EngineUnit/Tetrahedron2InteractingMyTetrahedron.cpp
+   branches/scons-layout/pkg/dem/Engine/StandAloneEngine/ElasticCohesiveLaw.cpp
+   branches/scons-layout/pkg/dem/Engine/StandAloneEngine/ElasticContactLaw.cpp
+   branches/scons-layout/pkg/dem/Engine/StandAloneEngine/ElasticCriterionTimeStepper.cpp
+   branches/scons-layout/pkg/dem/Engine/StandAloneEngine/GlobalStiffnessCounter.cpp
+   branches/scons-layout/pkg/dem/Engine/StandAloneEngine/GlobalStiffnessTimeStepper.cpp
+   branches/scons-layout/pkg/dem/Engine/StandAloneEngine/MyTetrahedronLaw.cpp
+   branches/scons-layout/pkg/dem/PreProcessor/Funnel.cpp
+   branches/scons-layout/pkg/dem/PreProcessor/SDECImpactTest.cpp
+   branches/scons-layout/pkg/dem/PreProcessor/SDECLinkedSpheres.cpp
+   branches/scons-layout/pkg/dem/PreProcessor/SDECMovingWall.cpp
+   branches/scons-layout/pkg/dem/PreProcessor/SDECSpheresPlane.cpp
+   branches/scons-layout/pkg/dem/PreProcessor/TetrahedronsTest.cpp
+   branches/scons-layout/pkg/dem/PreProcessor/ThreePointBending.cpp
+   branches/scons-layout/pkg/dem/PreProcessor/TriaxialTest.cpp
+   branches/scons-layout/pkg/dem/RenderingEngine/GLDrawInteractingMyTetrahedron/GLDrawInteractingMyTetrahedron.cpp
+   branches/scons-layout/pkg/dem/RenderingEngine/GLDrawSDECLinkGeometry/GLDrawSDECLinkGeometry.cpp
+   branches/scons-layout/pkg/dem/RenderingEngine/GLDrawSpheresContactGeometry/GLDrawSpheresContactGeometry.cpp
+   branches/scons-layout/pkg/dem/SConscript
+   branches/scons-layout/pkg/lattice/SConscript
+   branches/scons-layout/pkg/mass-spring/SConscript
+   branches/scons-layout/pkg/realtime-rigidbody/SConscript
+Log:
+Cleaned up SConscript files and includes, no more CPPPATH necessary.
+
+Modified: branches/scons-layout/SConstruct
+===================================================================
+--- branches/scons-layout/SConstruct	2007-03-19 15:37:22 UTC (rev 1150)
++++ branches/scons-layout/SConstruct	2007-03-19 19:47:03 UTC (rev 1151)
+@@ -104,7 +104,7 @@
+ 	env.Append(CPPPATH=[buildInc+'/yade/lib-miniWm3'])
+ 	if not 'lattice' in env['exclude']:
+ 		print &quot;!!! Using miniWm3, lattice will be excluded !!!&quot;
+-		env.Append(exclude='lattice')
++		env.Append(exclude=['lattice'])
+ 
+ ### OLD: older scons only
+ if not os.path.exists(buildDir): os.makedirs(buildDir)
+
+Modified: branches/scons-layout/core/SConscript
+===================================================================
+--- branches/scons-layout/core/SConscript	2007-03-19 15:37:22 UTC (rev 1150)
++++ branches/scons-layout/core/SConscript	2007-03-19 19:47:03 UTC (rev 1151)
+@@ -26,16 +26,14 @@
+ 			'yade.cpp',
+ 			'yadeExceptions.cpp'],
+ 		LIBS=env['LIBS']+['yade-base',
+-			
+ 			'yade-serialization',
+ 			'yade-factory',
+ 			'yade-base',
+-			
+ 			'yade-loki',
+ 			'yade-multimethods',
+ 			'glut',
+ 			'boost_date_time',
+ 			'boost_filesystem',
+ 			'boost_thread'],
+-		CPPPATH=env['CPPPATH']+['.'])
++		)
+ ])
+
+Modified: branches/scons-layout/debian/control-svn-template
+===================================================================
+--- branches/scons-layout/debian/control-svn-template	2007-03-19 15:37:22 UTC (rev 1150)
++++ branches/scons-layout/debian/control-svn-template	2007-03-19 19:47:03 UTC (rev 1151)
+@@ -28,6 +28,7 @@
+ Architecture: all
+ Provides: yade-svn-dev
+ Recommends: <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">yade at _SVNVERSION</A>@ | <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">yade at _SVNVERSION</A>@-dbg
++Depends: pkg-config
+ Description: Platform for dynamical modeling.
+  Yet Another Dynamic Engine. etc.
+  .
+
+Modified: branches/scons-layout/extra/SConscript
+===================================================================
+--- branches/scons-layout/extra/SConscript	2007-03-19 15:37:22 UTC (rev 1150)
++++ branches/scons-layout/extra/SConscript	2007-03-19 19:47:03 UTC (rev 1151)
+@@ -18,18 +18,19 @@
+ 			'yade-factory',
+ 			'yade-serialization',
+ 			'yade-base',
+-			],
+-		CPPPATH=env['CPPPATH']+['spherical-dem-simulator/src/SphericalDEMSimulator', '$PREFIX/include']),
++			]),
+ 
+ 	env.SharedLibrary('Clump',
+ 		['clump/Clump.cpp'],
+-		LIBS=env['LIBS']+['Shop'],
+-		LIBPATH=env['LIBPATH']),
++		LIBS=env['LIBS']+['Shop']),
++
+ 	env.SharedLibrary('PythonRecorder',['clump/PythonRecorder.cpp']),
++
+ 	env.SharedLibrary('_pyade',['clump/pyade.cpp'],SHLIBPREFIX='',
+-		LIBS=env['LIBS']+['yade-base','ParticleParameters','RigidBodyParameters'],
+-	),
++		LIBS=env['LIBS']+['yade-base','ParticleParameters','RigidBodyParameters']),
++
+ 	env.File('clump/pyade.py'),
++
+ 	env.SharedLibrary('Shop',
+ 		['clump/Shop.cpp'],
+ 		LIBS=env['LIBS']+[
+@@ -47,8 +48,7 @@
+ 			'MetaInteractingGeometry',
+ 			'GravityEngine',
+ 			'yade-serialization',
+-			'yade-base',
+-			
++			'yade-base',	
+ 			'PhysicalActionContainerInitializer',
+ 			'PhysicalActionContainerReseter',
+ 			'InteractionGeometryMetaEngine',
+@@ -65,7 +65,16 @@
+ 			'MetaInteractingGeometry',
+ 			'MetaInteractingGeometry2AABB',
+ 			'PythonRecorder',
+-			'InteractingSphere2AABB','InteractingBox2AABB','NewtonsMomentumLaw','NewtonsForceLaw','LeapFrogPositionIntegrator','LeapFrogOrientationIntegrator','InteractingBox2InteractingSphere4SpheresContactGeometry','Momentum','Force','InteractingSphere2InteractingSphere4SpheresContactGeometry',
++			'InteractingSphere2AABB',\
++			'InteractingBox2AABB',
++			'NewtonsMomentumLaw',
++			'NewtonsForceLaw',
++			'LeapFrogPositionIntegrator',
++			'LeapFrogOrientationIntegrator',
++			'InteractingBox2InteractingSphere4SpheresContactGeometry',
++			'Momentum',
++			'Force',
++			'InteractingSphere2InteractingSphere4SpheresContactGeometry',
+ 			#'Clump',
+ 			'yade-multimethods']),
+ 
+
+Modified: branches/scons-layout/gui/SConscript
+===================================================================
+--- branches/scons-layout/gui/SConscript	2007-03-19 15:37:22 UTC (rev 1150)
++++ branches/scons-layout/gui/SConscript	2007-03-19 19:47:03 UTC (rev 1151)
+@@ -41,6 +41,6 @@
+ 			'3dviewer',
+ 			'boost_date_time',
+ 			'boost_filesystem'],
+-		CPPPATH=env['CPPPATH']+['qt3'])
++		CPPPATH=env['CPPPATH']+['qt3']),
+ ])
+ 
+
+Modified: branches/scons-layout/lib/SConscript
+===================================================================
+--- branches/scons-layout/lib/SConscript	2007-03-19 15:37:22 UTC (rev 1150)
++++ branches/scons-layout/lib/SConscript	2007-03-19 19:47:03 UTC (rev 1151)
+@@ -3,8 +3,7 @@
+ 
+ 	env.SharedLibrary('yade-base',
+ 		['base/yadeWm3Extra.cpp'],
+-		LIBS=env['LIBS'],
+-		CPPPATH=env['CPPPATH']+['yade-base']),
++		LIBS=env['LIBS']),
+ 
+ 	env.SharedLibrary('miniWm3',
+ 		['miniWm3/Wm3Math.cpp',
+@@ -20,8 +19,7 @@
+ 			'miniWm3/Wm3System.cpp'],
+ 		# miniWm3 cannot link with itself, filter it out.
+ 		LIBS=filter(lambda l: l!='miniWm3',env['LIBS']),
+-		CPPPATH=env['CPPPATH']+['miniWm3'],
+-		# miniWm3 will be always optimized and withoutdebugging info, even in debug builds.
++		# miniWm3 will be always optimized and without debugging info, even in debug builds.
+ 		CXXFLAGS=env['CXXFLAGS']+['-O3','-g0']),
+ 
+ 	env.SharedLibrary('yade-computational-geometry',
+@@ -30,46 +28,38 @@
+ 			'computational-geometry/Intersections2D.cpp',
+ 			'computational-geometry/Intersections3D.cpp',
+ 			'computational-geometry/MarchingCube.cpp'],
+-		LIBS=env['LIBS']+['yade-base'],
+-		CPPPATH=env['CPPPATH']+['computational-geometry']),
++		LIBS=env['LIBS']+['yade-base']),
+ 
+ 	env.SharedLibrary('yade-factory',
+ 		['factory/ClassFactory.cpp',
+ 			'factory/DynLibManager.cpp',
+-			'factory/FactoryExceptions.cpp'],
+-		CPPPATH=env['CPPPATH']+['factory']),
++			'factory/FactoryExceptions.cpp']),
+ 
+ 	env.SharedLibrary('yade-loki',
+-		['loki/_dummySourceFile.cpp'],
+-		CPPPATH=env['CPPPATH']+['loki']),
++		['loki/_dummySourceFile.cpp']),
+ 
+ 	env.SharedLibrary('yade-multimethods',
+ 		['multimethods/Indexable.cpp',
+-			'multimethods/MultiMethodsExceptions.cpp'],
+-		CPPPATH=env['CPPPATH']+['multimethods']),
++			'multimethods/MultiMethodsExceptions.cpp']),
+ 
+ 	env.SharedLibrary('yade-opengl',
+ 		['opengl/FpsTracker.cpp',
+ 			'opengl/GLTextLabel.cpp',
+ 			'opengl/GLWindow.cpp',
+ 			'opengl/GLWindowsManager.cpp'],
+-		LIBS=env['LIBS']+['glut'],
+-		CPPPATH=env['CPPPATH']+['opengl']),
++		LIBS=env['LIBS']+['glut']),
+ 
+ 	env.SharedLibrary('BINFormatManager',
+-		['serialization-bin/BINFormatManager.cpp'],
+-		CPPPATH=env['CPPPATH']+['serialization-bin']),
++		['serialization-bin/BINFormatManager.cpp']),
+ 
+ 	env.SharedLibrary('yade-serialization-qt',
+ 		['serialization-qt/QtGUIGenerator.cpp'],
+-		LIBS=env['LIBS']+['yade-base',  'XMLFormatManager'],
+-		CPPPATH=env['CPPPATH']+['serialization-qt']),
++		LIBS=env['LIBS']+['yade-base','XMLFormatManager']),
+ 
+ 	env.SharedLibrary('XMLFormatManager',
+ 		['serialization-xml/XMLFormatManager.cpp',
+ 			'serialization-xml/XMLSaxParser.cpp'],
+-		LIBS=env['LIBS']+['yade-base'],
+-		CPPPATH=env['CPPPATH']+['serialization-xml']),
++		LIBS=env['LIBS']+['yade-base']),
+ 
+ 	env.SharedLibrary('yade-serialization',
+ 		['serialization/Archive.cpp',
+@@ -77,7 +67,6 @@
+ 			'serialization/IOManagerExceptions.cpp',
+ 			'serialization/Serializable.cpp',
+ 			'serialization/SerializableSingleton.cpp',
+-			'serialization/SerializationExceptions.cpp'],
+-		CPPPATH=env['CPPPATH']+['serialization'])
++			'serialization/SerializationExceptions.cpp'])
+ ])
+ 
+
+Modified: branches/scons-layout/pkg/common/SConscript
+===================================================================
+--- branches/scons-layout/pkg/common/SConscript	2007-03-19 15:37:22 UTC (rev 1150)
++++ branches/scons-layout/pkg/common/SConscript	2007-03-19 19:47:03 UTC (rev 1151)
+@@ -4,163 +4,111 @@
+ 	env.SharedLibrary('BodyAssocVector',
+ 		['Container/BodyAssocVector.cpp',
+ 			'Container/BodyAssocVectorIterator.cpp'],
+-		LIBS=env['LIBS']+['yade-base'],
+-		CPPPATH=env['CPPPATH']+['$PREFIX/include', 'Container']),
++		LIBS=env['LIBS']+['yade-base']),
+ 
+ 	env.SharedLibrary('BodyRedirectionVector',
+ 		['Container/BodyRedirectionVector.cpp',
+ 			'Container/BodyRedirectionVectorIterator.cpp'],
+-		LIBS=env['LIBS']+['yade-base'],
+-		CPPPATH=env['CPPPATH']+['$PREFIX/include', 'Container']),
++		LIBS=env['LIBS']+['yade-base']),
+ 
+ 	env.SharedLibrary('InteractionHashMap',
+ 		['Container/InteractionHashMap.cpp',
+ 			'Container/InteractionHashMapIterator.cpp'],
+-		LIBS=env['LIBS']+['yade-base'],
+-		CPPPATH=env['CPPPATH']+['Container', '$PREFIX/include']),
++		LIBS=env['LIBS']+['yade-base']),
+ 
+ 	env.SharedLibrary('InteractionVecSet',
+ 		['Container/InteractionVecSet.cpp',
+ 			'Container/InteractionVecSetIterator.cpp'],
+-		LIBS=env['LIBS']+['yade-base'],
+-		CPPPATH=env['CPPPATH']+['$PREFIX/include', 'Container']),
++		LIBS=env['LIBS']+['yade-base']),
+ 
+ 	env.SharedLibrary('PhysicalActionVectorVector',
+ 		['Container/PhysicalActionVectorVector.cpp',
+ 			'Container/PhysicalActionVectorVectorIterator.cpp'],
+-		LIBS=env['LIBS']+['yade-base'],
+-		CPPPATH=env['CPPPATH']+['$PREFIX/include',
+-			'Container']),
++		LIBS=env['LIBS']+['yade-base']),
+ 
+ 	env.SharedLibrary('AABB',
+ 		['DataClass/BoundingVolume/AABB.cpp'],
+ 		LIBS=env['LIBS']+['yade-base',
+-			
+ 			'yade-serialization',
+-			'yade-base',
+-			],
+-		CPPPATH=env['CPPPATH']+['DataClass/BoundingVolume', '$PREFIX/include']),
++			'yade-base']),
+ 
+ 	env.SharedLibrary('BoundingSphere',
+ 		['DataClass/BoundingVolume/BoundingSphere.cpp'],
+ 		LIBS=env['LIBS']+['yade-base',
+-			
+-			'yade-serialization',
+-			'yade-base',
+-			],
+-		CPPPATH=env['CPPPATH']+['$PREFIX/include', 'DataClass/BoundingVolume']),
++			'yade-serialization']),
+ 
+ 	env.SharedLibrary('InteractingBox',
+ 		['DataClass/InteractingGeometry/InteractingBox.cpp'],
+-		LIBS=env['LIBS']+['yade-base'],
+-		CPPPATH=env['CPPPATH']+['$PREFIX/include', 'DataClass/InteractingGeometry']),
++		LIBS=env['LIBS']+['yade-base']),
+ 
+ 	env.SharedLibrary('InteractingSphere',
+ 		['DataClass/InteractingGeometry/InteractingSphere.cpp'],
+-		LIBS=env['LIBS']+['yade-base'],
+-		CPPPATH=env['CPPPATH']+['$PREFIX/include', 'DataClass/InteractingGeometry']),
++		LIBS=env['LIBS']+['yade-base']),
+ 
+ 	env.SharedLibrary('MetaInteractingGeometry',
+ 		['DataClass/InteractingGeometry/MetaInteractingGeometry.cpp'],
+-		LIBS=env['LIBS']+['yade-base'],
+-		CPPPATH=env['CPPPATH']+['$PREFIX/include',
+-			'DataClass/InteractingGeometry']),
++		LIBS=env['LIBS']+['yade-base']),
+ 
+ 	env.SharedLibrary('ParticleParameters',
+ 		['DataClass/PhysicalParameters/ParticleParameters.cpp'],
+-		LIBS=env['LIBS']+['yade-base'],
+-		CPPPATH=env['CPPPATH']+['DataClass/PhysicalParameters', '$PREFIX/include']),
++		LIBS=env['LIBS']+['yade-base']),
+ 
+ 	env.SharedLibrary('RigidBodyParameters',
+ 		['DataClass/PhysicalParameters/RigidBodyParameters.cpp'],
+ 		LIBS=env['LIBS']+['yade-base',
+-			
+ 			'ParticleParameters',
+ 			'yade-serialization',
+-			'yade-base',
+-			
+-			'yade-multimethods'],
+-		CPPPATH=env['CPPPATH']+['DataClass/PhysicalParameters',
+-			'$PREFIX/include',
+-			'DataClass/PhysicalParameters']),
++			'yade-multimethods']),
+ 
+ 	env.SharedLibrary('ElasticBodyParameters',
+ 		['DataClass/PhysicalParameters/ElasticBodyParameters.cpp'],
+ 		LIBS=env['LIBS']+['yade-base',
+-			
+ 			'RigidBodyParameters',
+ 			'ParticleParameters',
+ 			'yade-serialization',
+-			'yade-base',
+-			
+-			'yade-multimethods'],
+-		CPPPATH=env['CPPPATH']+['DataClass/PhysicalParameters',
+-			'$PREFIX/include',
+-			'DataClass/PhysicalParameters',
+-			'DataClass/PhysicalParameters']),
++			'yade-multimethods']),
+ 
+ 	env.SharedLibrary('ClosestFeatures',
+ 		['DataClass/InteractionGeometry/ClosestFeatures.cpp'],
+-		LIBS=env['LIBS']+['yade-base',
+-			
+-			'yade-serialization',
+-			'yade-base',
+-			],
+-		CPPPATH=env['CPPPATH']+['$PREFIX/include', 'DataClass/InteractionGeometry']),
++		LIBS=env['LIBS']+['yade-base',		
++			'yade-serialization']),
+ 
+ 	env.SharedLibrary('SimpleElasticInteraction',
+ 		['DataClass/InteractionPhysics/SimpleElasticInteraction.cpp'],
+-		LIBS=env['LIBS']+['yade-base'],
+-		CPPPATH=env['CPPPATH']+['$PREFIX/include',
+-			'DataClass/InteractionPhysics']),
++		LIBS=env['LIBS']+['yade-base']),
+ 
+ 	env.SharedLibrary('Force',
+ 		['DataClass/PhysicalAction/Force.cpp'],
+-		LIBS=env['LIBS']+['yade-base',  'yade-base'],
+-		CPPPATH=env['CPPPATH']+['DataClass/PhysicalAction', '$PREFIX/include']),
++		LIBS=env['LIBS']+['yade-base']),
+ 
+ 	env.SharedLibrary('Momentum',
+ 		['DataClass/PhysicalAction/Momentum.cpp'],
+-		LIBS=env['LIBS']+['yade-base',  'yade-base'],
+-		CPPPATH=env['CPPPATH']+['DataClass/PhysicalAction', '$PREFIX/include']),
++		LIBS=env['LIBS']+['yade-base','yade-base']),
+ 
+ 	env.SharedLibrary('Box',
+ 		['DataClass/GeometricalModel/Box.cpp'],
+ 		LIBS=env['LIBS']+['yade-base',
+-			
+-			'yade-base',
+-			
+-			'yade-multimethods'],
+-		CPPPATH=env['CPPPATH']+['$PREFIX/include', 'DataClass/GeometricalModel']),
++			'yade-multimethods']),
+ 
+ 	env.SharedLibrary('Mesh2D',
+ 		['DataClass/GeometricalModel/Mesh2D.cpp'],
+ 		LIBS=env['LIBS']+['yade-base',
+-			
+-			'yade-base',
+-			
+ 			'yade-multimethods',
+-			'yade-serialization'],
+-		CPPPATH=env['CPPPATH']+['DataClass/GeometricalModel', '$PREFIX/include']),
++			'yade-serialization']),
+ 
+ 	env.SharedLibrary('Sphere',
+ 		['DataClass/GeometricalModel/Sphere.cpp'],
+ 		LIBS=env['LIBS']+['yade-base',
+-			
+-			'yade-base',
+-			
+ 			'yade-multimethods',
+-			'yade-serialization'],
+-		CPPPATH=env['CPPPATH']+['$PREFIX/include', 'DataClass/GeometricalModel']),
++			'yade-serialization']),
+ 
+ 	env.SharedLibrary('Tetrahedron',
+ 		['DataClass/GeometricalModel/Tetrahedron.cpp'],
+-		LIBS=env['LIBS']+['yade-base',  'yade-multimethods'],
+-		CPPPATH=env['CPPPATH']+['$PREFIX/include', 'DataClass/GeometricalModel']),
++		LIBS=env['LIBS']+['yade-base','yade-multimethods']),
+ 
+ 	env.SharedLibrary('Quadrilateral',
+ 		['DataClass/GeometricalModel/Quadrilateral.cpp'],
+-		LIBS=env['LIBS']+['yade-base',  'yade-multimethods'],
++		LIBS=env['LIBS']+['yade-base','yade-multimethods'],
+ 		CPPPATH=env['CPPPATH']+['$PREFIX/include', 'DataClass/GeometricalModel']),
+ 
+ 	env.SharedLibrary('ForceEngine',
+
+Modified: branches/scons-layout/pkg/dem/Engine/DeusExMachina/ResultantForceEngine.cpp
+===================================================================
+--- branches/scons-layout/pkg/dem/Engine/DeusExMachina/ResultantForceEngine.cpp	2007-03-19 15:37:22 UTC (rev 1150)
++++ branches/scons-layout/pkg/dem/Engine/DeusExMachina/ResultantForceEngine.cpp	2007-03-19 19:47:03 UTC (rev 1151)
+@@ -12,7 +12,7 @@
+ #include&quot;ResultantForceEngine.hpp&quot;
+ #include&lt;yade/pkg-common/ParticleParameters.hpp&gt;
+ #include&lt;yade/pkg-common/Force.hpp&gt;
+-#include&quot;GlobalStiffness.hpp&quot;
++#include&lt;yade/pkg-dem/GlobalStiffness.hpp&gt;
+ #include&lt;Wm3Math.h&gt;
+ #include&lt;yade/lib-base/yadeWm3.hpp&gt;
+ #include&lt;yade/lib-base/yadeWm3Extra.hpp&gt;
+
+Modified: branches/scons-layout/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.cpp
+===================================================================
+--- branches/scons-layout/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.cpp	2007-03-19 15:37:22 UTC (rev 1150)
++++ branches/scons-layout/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.cpp	2007-03-19 19:47:03 UTC (rev 1151)
+@@ -10,7 +10,7 @@
+ #include&lt;yade/core/MetaBody.hpp&gt;
+ #include&lt;yade/core/Omega.hpp&gt;
+ #include&lt;yade/pkg-common/Force.hpp&gt;
+-#include &quot;ElasticContactInteraction.hpp&quot;
++#include&lt;yade/pkg-dem/ElasticContactInteraction.hpp&gt;
+ #include&lt;yade/lib-base/yadeWm3Extra.hpp&gt;
+ #include &lt;boost/lexical_cast.hpp&gt;
+ 
+
+Modified: branches/scons-layout/pkg/dem/Engine/DeusExMachina/TriaxialStressController.cpp
+===================================================================
+--- branches/scons-layout/pkg/dem/Engine/DeusExMachina/TriaxialStressController.cpp	2007-03-19 15:37:22 UTC (rev 1150)
++++ branches/scons-layout/pkg/dem/Engine/DeusExMachina/TriaxialStressController.cpp	2007-03-19 19:47:03 UTC (rev 1151)
+@@ -9,10 +9,10 @@
+ #include&quot;TriaxialStressController.hpp&quot;
+ #include&lt;yade/pkg-common/ParticleParameters.hpp&gt;
+ #include&lt;yade/pkg-common/InteractingSphere.hpp&gt;
+-#include&quot;SpheresContactGeometry.hpp&quot;
+-#include&quot;ElasticContactInteraction.hpp&quot;
++#include&lt;yade/pkg-dem/SpheresContactGeometry.hpp&gt;
++#include&lt;yade/pkg-dem/ElasticContactInteraction.hpp&gt;
+ #include&lt;yade/pkg-common/Force.hpp&gt;
+-//#include &quot;StiffnessMatrix.hpp&quot;
++//#include&lt;yade/pkg-dem/StiffnessMatrix.hpp&gt;
+ //#include&lt;yade/lib-wm3-math/Math.hpp&gt;
+ 
+ #include&lt;yade/core/MetaBody.hpp&gt;
+
+Modified: branches/scons-layout/pkg/dem/Engine/EngineUnit/InteractingBox2InteractingSphere4SpheresContactGeometry.cpp
+===================================================================
+--- branches/scons-layout/pkg/dem/Engine/EngineUnit/InteractingBox2InteractingSphere4SpheresContactGeometry.cpp	2007-03-19 15:37:22 UTC (rev 1150)
++++ branches/scons-layout/pkg/dem/Engine/EngineUnit/InteractingBox2InteractingSphere4SpheresContactGeometry.cpp	2007-03-19 19:47:03 UTC (rev 1151)
+@@ -8,8 +8,8 @@
+ *  GNU General Public License v2 or later. See file LICENSE for details. *
+ *************************************************************************/
+ 
+-#include &quot;InteractingBox2InteractingSphere4SpheresContactGeometry.hpp&quot;
+-#include &quot;SpheresContactGeometry.hpp&quot;
++#include&quot;InteractingBox2InteractingSphere4SpheresContactGeometry.hpp&quot;
++#include&lt;yade/pkg-dem/SpheresContactGeometry.hpp&gt;
+ #include&lt;yade/pkg-common/InteractingSphere.hpp&gt;
+ #include&lt;yade/pkg-common/InteractingBox.hpp&gt;
+ 
+
+Modified: branches/scons-layout/pkg/dem/Engine/EngineUnit/InteractingMyTetrahedron2AABB.cpp
+===================================================================
+--- branches/scons-layout/pkg/dem/Engine/EngineUnit/InteractingMyTetrahedron2AABB.cpp	2007-03-19 15:37:22 UTC (rev 1150)
++++ branches/scons-layout/pkg/dem/Engine/EngineUnit/InteractingMyTetrahedron2AABB.cpp	2007-03-19 19:47:03 UTC (rev 1151)
+@@ -5,8 +5,8 @@
+ *  GNU General Public License v2 or later. See file LICENSE for details. *
+ *************************************************************************/
+  
+-#include &quot;InteractingMyTetrahedron2AABB.hpp&quot;
+-#include &quot;InteractingMyTetrahedron.hpp&quot;
++#include&quot;InteractingMyTetrahedron2AABB.hpp&quot;
++#include&lt;yade/pkg-dem/InteractingMyTetrahedron.hpp&gt;
+ #include&lt;yade/pkg-common/AABB.hpp&gt;
+ #include&lt;yade/lib-base/yadeWm3Extra.hpp&gt;
+ 
+
+Modified: branches/scons-layout/pkg/dem/Engine/EngineUnit/InteractingMyTetrahedron2InteractingBox4InteractionOfMyTetrahedron.cpp
+===================================================================
+--- branches/scons-layout/pkg/dem/Engine/EngineUnit/InteractingMyTetrahedron2InteractingBox4InteractionOfMyTetrahedron.cpp	2007-03-19 15:37:22 UTC (rev 1150)
++++ branches/scons-layout/pkg/dem/Engine/EngineUnit/InteractingMyTetrahedron2InteractingBox4InteractionOfMyTetrahedron.cpp	2007-03-19 19:47:03 UTC (rev 1151)
+@@ -7,13 +7,13 @@
+ *************************************************************************/
+ 
+ #include &quot;InteractingMyTetrahedron2InteractingBox4InteractionOfMyTetrahedron.hpp&quot;
+-#include &quot;InteractionOfMyTetrahedron.hpp&quot;
++#include&lt;yade/pkg-dem/InteractionOfMyTetrahedron.hpp&gt;
+ #include&lt;yade/pkg-common/InteractingBox.hpp&gt;
+ #include&lt;yade/pkg-common/InteractingSphere.hpp&gt;
+-#include &quot;InteractingMyTetrahedron.hpp&quot;
++#include&lt;yade/pkg-dem/InteractingMyTetrahedron.hpp&gt;
+ #include&lt;yade/pkg-dem/InteractingBox2InteractingSphere4SpheresContactGeometry.hpp&gt;
+ #include &lt;boost/shared_ptr.hpp&gt;
+-#include &quot;SpheresContactGeometry.hpp&quot;
++#include&lt;yade/pkg-dem/SpheresContactGeometry.hpp&gt;
+ #include&lt;yade/core/Interaction.hpp&gt;
+ #include&lt;yade/lib-base/yadeWm3Extra.hpp&gt;
+ 
+
+Modified: branches/scons-layout/pkg/dem/Engine/EngineUnit/InteractingMyTetrahedron2InteractingMyTetrahedron4InteractionOfMyTetrahedron.cpp
+===================================================================
+--- branches/scons-layout/pkg/dem/Engine/EngineUnit/InteractingMyTetrahedron2InteractingMyTetrahedron4InteractionOfMyTetrahedron.cpp	2007-03-19 15:37:22 UTC (rev 1150)
++++ branches/scons-layout/pkg/dem/Engine/EngineUnit/InteractingMyTetrahedron2InteractingMyTetrahedron4InteractionOfMyTetrahedron.cpp	2007-03-19 19:47:03 UTC (rev 1151)
+@@ -7,8 +7,8 @@
+ *************************************************************************/
+ 
+ #include &quot;InteractingMyTetrahedron2InteractingMyTetrahedron4InteractionOfMyTetrahedron.hpp&quot;
+-#include &quot;InteractionOfMyTetrahedron.hpp&quot;
+-#include &quot;InteractingMyTetrahedron.hpp&quot;
++#include&lt;yade/pkg-dem/InteractionOfMyTetrahedron.hpp&gt;
++#include&lt;yade/pkg-dem/InteractingMyTetrahedron.hpp&gt;
+ 
+ #include&lt;yade/lib-base/yadeWm3Extra.hpp&gt;
+ 
+
+Modified: branches/scons-layout/pkg/dem/Engine/EngineUnit/InteractingSphere2InteractingSphere4SpheresContactGeometry.cpp
+===================================================================
+--- branches/scons-layout/pkg/dem/Engine/EngineUnit/InteractingSphere2InteractingSphere4SpheresContactGeometry.cpp	2007-03-19 15:37:22 UTC (rev 1150)
++++ branches/scons-layout/pkg/dem/Engine/EngineUnit/InteractingSphere2InteractingSphere4SpheresContactGeometry.cpp	2007-03-19 19:47:03 UTC (rev 1151)
+@@ -8,9 +8,9 @@
+ *  GNU General Public License v2 or later. See file LICENSE for details. *
+ *************************************************************************/
+ 
+-#include &quot;InteractingSphere2InteractingSphere4SpheresContactGeometry.hpp&quot;
+-#include &quot;SpheresContactGeometry.hpp&quot;
+-#include &quot;SDECLinkGeometry.hpp&quot;
++#include&quot;InteractingSphere2InteractingSphere4SpheresContactGeometry.hpp&quot;
++#include&lt;yade/pkg-dem/SpheresContactGeometry.hpp&gt;
++#include&lt;yade/pkg-dem/SDECLinkGeometry.hpp&gt;
+ #include&lt;yade/pkg-common/InteractingSphere.hpp&gt;
+ 
+ #include&lt;yade/lib-base/yadeWm3Extra.hpp&gt;
+
+Modified: branches/scons-layout/pkg/dem/Engine/EngineUnit/MacroMicroElasticRelationships.cpp
+===================================================================
+--- branches/scons-layout/pkg/dem/Engine/EngineUnit/MacroMicroElasticRelationships.cpp	2007-03-19 15:37:22 UTC (rev 1150)
++++ branches/scons-layout/pkg/dem/Engine/EngineUnit/MacroMicroElasticRelationships.cpp	2007-03-19 19:47:03 UTC (rev 1151)
+@@ -8,12 +8,12 @@
+ *  GNU General Public License v2 or later. See file LICENSE for details. *
+ *************************************************************************/
+ 
+-#include &quot;MacroMicroElasticRelationships.hpp&quot;
+-#include &quot;SpheresContactGeometry.hpp&quot;
+-#include &quot;ElasticContactInteraction.hpp&quot;
+-#include &quot;SDECLinkGeometry.hpp&quot; // FIXME - I can't dispatch by SDECLinkGeometry &lt;-&gt; SpheresContactGeometry !!?
+-#include &quot;SDECLinkPhysics.hpp&quot; // FIXME
+-#include &quot;BodyMacroParameters.hpp&quot;
++#include&quot;MacroMicroElasticRelationships.hpp&quot;
++#include&lt;yade/pkg-dem/SpheresContactGeometry.hpp&gt;
++#include&lt;yade/pkg-dem/ElasticContactInteraction.hpp&gt;
++#include&lt;yade/pkg-dem/SDECLinkGeometry.hpp&gt; // FIXME - I can't dispatch by SDECLinkGeometry &lt;-&gt; SpheresContactGeometry !!?
++#include&lt;yade/pkg-dem/SDECLinkPhysics.hpp&gt; // FIXME
++#include&lt;yade/pkg-dem/BodyMacroParameters.hpp&gt;
+ #include&lt;yade/core/Omega.hpp&gt;
+ #include&lt;yade/core/MetaBody.hpp&gt;
+ 
+
+Modified: branches/scons-layout/pkg/dem/Engine/EngineUnit/SimpleElasticRelationships.cpp
+===================================================================
+--- branches/scons-layout/pkg/dem/Engine/EngineUnit/SimpleElasticRelationships.cpp	2007-03-19 15:37:22 UTC (rev 1150)
++++ branches/scons-layout/pkg/dem/Engine/EngineUnit/SimpleElasticRelationships.cpp	2007-03-19 19:47:03 UTC (rev 1151)
+@@ -6,12 +6,12 @@
+ *  GNU General Public License v2 or later. See file LICENSE for details. *
+ *************************************************************************/
+ 
+-#include &quot;SimpleElasticRelationships.hpp&quot;
+-#include &quot;SpheresContactGeometry.hpp&quot;
+-#include &quot;ElasticContactInteraction.hpp&quot;
+-#include &quot;SDECLinkGeometry.hpp&quot; // FIXME - I can't dispatch by SDECLinkGeometry &lt;-&gt; SpheresContactGeometry !!?
+-#include &quot;SDECLinkPhysics.hpp&quot; // FIXME
+-#include &quot;BodyMacroParameters.hpp&quot;
++#include&quot;SimpleElasticRelationships.hpp&quot;
++#include&lt;yade/pkg-dem/SpheresContactGeometry.hpp&gt;
++#include&lt;yade/pkg-dem/ElasticContactInteraction.hpp&gt;
++#include&lt;yade/pkg-dem/SDECLinkGeometry.hpp&gt; // FIXME - I can't dispatch by SDECLinkGeometry &lt;-&gt; SpheresContactGeometry !!?
++#include&lt;yade/pkg-dem/SDECLinkPhysics.hpp&gt; // FIXME
++#include&lt;yade/pkg-dem/BodyMacroParameters.hpp&gt;
+ #include&lt;yade/core/Omega.hpp&gt;
+ #include&lt;yade/core/MetaBody.hpp&gt;
+ 
+
+Modified: branches/scons-layout/pkg/dem/Engine/EngineUnit/Tetrahedron2InteractingMyTetrahedron.cpp
+===================================================================
+--- branches/scons-layout/pkg/dem/Engine/EngineUnit/Tetrahedron2InteractingMyTetrahedron.cpp	2007-03-19 15:37:22 UTC (rev 1150)
++++ branches/scons-layout/pkg/dem/Engine/EngineUnit/Tetrahedron2InteractingMyTetrahedron.cpp	2007-03-19 19:47:03 UTC (rev 1151)
+@@ -6,7 +6,7 @@
+ *************************************************************************/
+ 
+ #include &quot;Tetrahedron2InteractingMyTetrahedron.hpp&quot;
+-#include &quot;InteractingMyTetrahedron.hpp&quot;
++#include&lt;yade/pkg-dem/InteractingMyTetrahedron.hpp&gt;
+ #include&lt;yade/pkg-common/Tetrahedron.hpp&gt;
+ 
+ 
+
+Modified: branches/scons-layout/pkg/dem/Engine/StandAloneEngine/ElasticCohesiveLaw.cpp
+===================================================================
+--- branches/scons-layout/pkg/dem/Engine/StandAloneEngine/ElasticCohesiveLaw.cpp	2007-03-19 15:37:22 UTC (rev 1150)
++++ branches/scons-layout/pkg/dem/Engine/StandAloneEngine/ElasticCohesiveLaw.cpp	2007-03-19 19:47:03 UTC (rev 1151)
+@@ -7,11 +7,11 @@
+ *************************************************************************/
+ 
+ #include &quot;ElasticCohesiveLaw.hpp&quot;
+-#include &quot;BodyMacroParameters.hpp&quot;
+-#include &quot;SpheresContactGeometry.hpp&quot;
+-#include &quot;SDECLinkGeometry.hpp&quot;
+-#include &quot;ElasticContactInteraction.hpp&quot;
+-#include &quot;SDECLinkPhysics.hpp&quot;
++#include&lt;yade/pkg-dem/BodyMacroParameters.hpp&gt;
++#include&lt;yade/pkg-dem/SpheresContactGeometry.hpp&gt;
++#include&lt;yade/pkg-dem/SDECLinkGeometry.hpp&gt;
++#include&lt;yade/pkg-dem/ElasticContactInteraction.hpp&gt;
++#include&lt;yade/pkg-dem/SDECLinkPhysics.hpp&gt;
+ 
+ 
+ #include&lt;yade/core/Omega.hpp&gt;
+
+Modified: branches/scons-layout/pkg/dem/Engine/StandAloneEngine/ElasticContactLaw.cpp
+===================================================================
+--- branches/scons-layout/pkg/dem/Engine/StandAloneEngine/ElasticContactLaw.cpp	2007-03-19 15:37:22 UTC (rev 1150)
++++ branches/scons-layout/pkg/dem/Engine/StandAloneEngine/ElasticContactLaw.cpp	2007-03-19 19:47:03 UTC (rev 1151)
+@@ -7,11 +7,11 @@
+ *************************************************************************/
+ 
+ #include &quot;ElasticContactLaw.hpp&quot;
+-#include &quot;BodyMacroParameters.hpp&quot;
+-#include &quot;SpheresContactGeometry.hpp&quot;
+-#include &quot;SDECLinkGeometry.hpp&quot;
+-#include &quot;ElasticContactInteraction.hpp&quot;
+-#include &quot;SDECLinkPhysics.hpp&quot;
++#include&lt;yade/pkg-dem/BodyMacroParameters.hpp&gt;
++#include&lt;yade/pkg-dem/SpheresContactGeometry.hpp&gt;
++#include&lt;yade/pkg-dem/SDECLinkGeometry.hpp&gt;
++#include&lt;yade/pkg-dem/ElasticContactInteraction.hpp&gt;
++#include&lt;yade/pkg-dem/SDECLinkPhysics.hpp&gt;
+ #include&lt;yade/core/Omega.hpp&gt;
+ #include&lt;yade/core/MetaBody.hpp&gt;
+ #include&lt;yade/pkg-common/Force.hpp&gt;
+
+Modified: branches/scons-layout/pkg/dem/Engine/StandAloneEngine/ElasticCriterionTimeStepper.cpp
+===================================================================
+--- branches/scons-layout/pkg/dem/Engine/StandAloneEngine/ElasticCriterionTimeStepper.cpp	2007-03-19 15:37:22 UTC (rev 1150)
++++ branches/scons-layout/pkg/dem/Engine/StandAloneEngine/ElasticCriterionTimeStepper.cpp	2007-03-19 19:47:03 UTC (rev 1151)
+@@ -7,10 +7,10 @@
+ *************************************************************************/
+ 
+ #include &quot;ElasticCriterionTimeStepper.hpp&quot;
+-#include &quot;BodyMacroParameters.hpp&quot;
+-#include &quot;ElasticContactInteraction.hpp&quot;
+-#include &quot;SpheresContactGeometry.hpp&quot;
+-#include &quot;MacroMicroElasticRelationships.hpp&quot;
++#include&lt;yade/pkg-dem/BodyMacroParameters.hpp&gt;
++#include&lt;yade/pkg-dem/ElasticContactInteraction.hpp&gt;
++#include&lt;yade/pkg-dem/SpheresContactGeometry.hpp&gt;
++#include&lt;yade/pkg-dem/MacroMicroElasticRelationships.hpp&gt;
+ #include&lt;yade/core/Interaction.hpp&gt;
+ #include&lt;yade/core/MetaBody.hpp&gt;
+ #include&lt;yade/pkg-common/Sphere.hpp&gt;
+
+Modified: branches/scons-layout/pkg/dem/Engine/StandAloneEngine/GlobalStiffnessCounter.cpp
+===================================================================
+--- branches/scons-layout/pkg/dem/Engine/StandAloneEngine/GlobalStiffnessCounter.cpp	2007-03-19 15:37:22 UTC (rev 1150)
++++ branches/scons-layout/pkg/dem/Engine/StandAloneEngine/GlobalStiffnessCounter.cpp	2007-03-19 19:47:03 UTC (rev 1151)
+@@ -8,17 +8,17 @@
+ 
+ 
+ 
+-#include &quot;BodyMacroParameters.hpp&quot;
+-#include &quot;SpheresContactGeometry.hpp&quot;
+-#include &quot;SDECLinkGeometry.hpp&quot;
+-#include &quot;ElasticContactInteraction.hpp&quot;
+-#include &quot;SDECLinkPhysics.hpp&quot;
++#include&lt;yade/pkg-dem/BodyMacroParameters.hpp&gt;
++#include&lt;yade/pkg-dem/SpheresContactGeometry.hpp&gt;
++#include&lt;yade/pkg-dem/SDECLinkGeometry.hpp&gt;
++#include&lt;yade/pkg-dem/ElasticContactInteraction.hpp&gt;
++#include&lt;yade/pkg-dem/SDECLinkPhysics.hpp&gt;
+ #include&lt;yade/core/Omega.hpp&gt;
+ #include&lt;yade/core/MetaBody.hpp&gt;
+ #include&lt;yade/pkg-common/Force.hpp&gt;
+ #include&lt;yade/pkg-common/Momentum.hpp&gt;
+ #include&lt;yade/core/PhysicalAction.hpp&gt;
+-#include &quot;GlobalStiffness.hpp&quot;
++#include&lt;yade/pkg-dem/GlobalStiffness.hpp&gt;
+ #include &quot;GlobalStiffnessCounter.hpp&quot;
+ 
+ GlobalStiffnessCounter::GlobalStiffnessCounter() : InteractionSolver() , actionForce(new Force) , actionMomentum(new Momentum), actionStiffness(new GlobalStiffness)
+
+Modified: branches/scons-layout/pkg/dem/Engine/StandAloneEngine/GlobalStiffnessTimeStepper.cpp
+===================================================================
+--- branches/scons-layout/pkg/dem/Engine/StandAloneEngine/GlobalStiffnessTimeStepper.cpp	2007-03-19 15:37:22 UTC (rev 1150)
++++ branches/scons-layout/pkg/dem/Engine/StandAloneEngine/GlobalStiffnessTimeStepper.cpp	2007-03-19 19:47:03 UTC (rev 1151)
+@@ -6,15 +6,15 @@
+ *  GNU General Public License v2 or later. See file LICENSE for details. *
+ *************************************************************************/
+ 
+-#include &quot;GlobalStiffnessTimeStepper.hpp&quot;
+-#include &quot;BodyMacroParameters.hpp&quot;
+-#include &quot;ElasticContactInteraction.hpp&quot;
+-#include &quot;SpheresContactGeometry.hpp&quot;
+-#include &quot;MacroMicroElasticRelationships.hpp&quot;
++#include&quot;GlobalStiffnessTimeStepper.hpp&quot;
++#include&lt;yade/pkg-dem/BodyMacroParameters.hpp&gt;
++#include&lt;yade/pkg-dem/ElasticContactInteraction.hpp&gt;
++#include&lt;yade/pkg-dem/SpheresContactGeometry.hpp&gt;
++#include&lt;yade/pkg-dem/MacroMicroElasticRelationships.hpp&gt;
+ #include&lt;yade/core/Interaction.hpp&gt;
+ #include&lt;yade/core/MetaBody.hpp&gt;
+ #include&lt;yade/pkg-common/Sphere.hpp&gt;
+-#include &lt;GlobalStiffness.hpp&gt;
++#include&lt;yade/pkg-dem/GlobalStiffness.hpp&gt;
+ 
+ 
+ GlobalStiffnessTimeStepper::GlobalStiffnessTimeStepper() : TimeStepper() , sdecContactModel(new MacroMicroElasticRelationships), actionParameterGlobalStiffness(new GlobalStiffness)
+
+Modified: branches/scons-layout/pkg/dem/Engine/StandAloneEngine/MyTetrahedronLaw.cpp
+===================================================================
+--- branches/scons-layout/pkg/dem/Engine/StandAloneEngine/MyTetrahedronLaw.cpp	2007-03-19 15:37:22 UTC (rev 1150)
++++ branches/scons-layout/pkg/dem/Engine/StandAloneEngine/MyTetrahedronLaw.cpp	2007-03-19 19:47:03 UTC (rev 1151)
+@@ -7,7 +7,7 @@
+ *************************************************************************/
+ 
+ #include &quot;MyTetrahedronLaw.hpp&quot;
+-#include &quot;InteractionOfMyTetrahedron.hpp&quot;
++#include&lt;yade/pkg-dem/InteractionOfMyTetrahedron.hpp&gt;
+ #include&lt;yade/pkg-common/ElasticBodyParameters.hpp&gt;
+ #include&lt;yade/pkg-common/SimpleElasticInteraction.hpp&gt;
+ #include&lt;yade/core/Omega.hpp&gt;
+
+Modified: branches/scons-layout/pkg/dem/PreProcessor/Funnel.cpp
+===================================================================
+--- branches/scons-layout/pkg/dem/PreProcessor/Funnel.cpp	2007-03-19 15:37:22 UTC (rev 1150)
++++ branches/scons-layout/pkg/dem/PreProcessor/Funnel.cpp	2007-03-19 19:47:03 UTC (rev 1151)
+@@ -8,11 +8,11 @@
+ 
+ #include &quot;Funnel.hpp&quot;
+ 
+-#include &quot;BodyMacroParameters.hpp&quot;
+-#include &quot;ElasticContactLaw.hpp&quot;
+-#include &quot;SDECLinkGeometry.hpp&quot;
+-#include &quot;MacroMicroElasticRelationships.hpp&quot;
+-#include &quot;ElasticCriterionTimeStepper.hpp&quot;
++#include&lt;yade/pkg-dem/BodyMacroParameters.hpp&gt;
++#include&lt;yade/pkg-dem/ElasticContactLaw.hpp&gt;
++#include&lt;yade/pkg-dem/SDECLinkGeometry.hpp&gt;
++#include&lt;yade/pkg-dem/MacroMicroElasticRelationships.hpp&gt;
++#include&lt;yade/pkg-dem/ElasticCriterionTimeStepper.hpp&gt;
+ 
+ 
+ #include&lt;yade/pkg-common/Box.hpp&gt;
+
+Modified: branches/scons-layout/pkg/dem/PreProcessor/SDECImpactTest.cpp
+===================================================================
+--- branches/scons-layout/pkg/dem/PreProcessor/SDECImpactTest.cpp	2007-03-19 15:37:22 UTC (rev 1150)
++++ branches/scons-layout/pkg/dem/PreProcessor/SDECImpactTest.cpp	2007-03-19 19:47:03 UTC (rev 1151)
+@@ -10,16 +10,16 @@
+ 
+ #include &quot;SDECImpactTest.hpp&quot;
+ 
+-#include &quot;ElasticContactLaw.hpp&quot;
+-#include &quot;MacroMicroElasticRelationships.hpp&quot;
+-#include &quot;BodyMacroParameters.hpp&quot;
+-#include &quot;SDECLinkGeometry.hpp&quot;
+-#include &quot;SDECLinkPhysics.hpp&quot;
+-#include &quot;ElasticCriterionTimeStepper.hpp&quot;
++#include&lt;yade/pkg-dem/ElasticContactLaw.hpp&gt;
++#include&lt;yade/pkg-dem/MacroMicroElasticRelationships.hpp&gt;
++#include&lt;yade/pkg-dem/BodyMacroParameters.hpp&gt;
++#include&lt;yade/pkg-dem/SDECLinkGeometry.hpp&gt;
++#include&lt;yade/pkg-dem/SDECLinkPhysics.hpp&gt;
++#include&lt;yade/pkg-dem/ElasticCriterionTimeStepper.hpp&gt;
+ 
+-#include &quot;AveragePositionRecorder.hpp&quot;
+-#include &quot;ForceRecorder.hpp&quot;
+-#include &quot;VelocityRecorder.hpp&quot;
++#include&lt;yade/pkg-dem/AveragePositionRecorder.hpp&gt;
++#include&lt;yade/pkg-dem/ForceRecorder.hpp&gt;
++#include&lt;yade/pkg-dem/VelocityRecorder.hpp&gt;
+ 
+ #include&lt;yade/pkg-common/Box.hpp&gt;
+ #include&lt;yade/pkg-common/AABB.hpp&gt;
+
+Modified: branches/scons-layout/pkg/dem/PreProcessor/SDECLinkedSpheres.cpp
+===================================================================
+--- branches/scons-layout/pkg/dem/PreProcessor/SDECLinkedSpheres.cpp	2007-03-19 15:37:22 UTC (rev 1150)
++++ branches/scons-layout/pkg/dem/PreProcessor/SDECLinkedSpheres.cpp	2007-03-19 19:47:03 UTC (rev 1151)
+@@ -15,13 +15,13 @@
+ 
+ #include &quot;SDECLinkedSpheres.hpp&quot;
+ 
+-#include &quot;ElasticContactLaw.hpp&quot;
+-#include &quot;ElasticCohesiveLaw.hpp&quot;
+-#include &quot;MacroMicroElasticRelationships.hpp&quot;
+-#include &quot;BodyMacroParameters.hpp&quot;
+-#include &quot;SDECLinkGeometry.hpp&quot;
+-#include &quot;SDECLinkPhysics.hpp&quot;
+-#include &quot;ElasticCriterionTimeStepper.hpp&quot;
++#include&lt;yade/pkg-dem/ElasticContactLaw.hpp&gt;
++#include&lt;yade/pkg-dem/ElasticCohesiveLaw.hpp&gt;
++#include&lt;yade/pkg-dem/MacroMicroElasticRelationships.hpp&gt;
++#include&lt;yade/pkg-dem/BodyMacroParameters.hpp&gt;
++#include&lt;yade/pkg-dem/SDECLinkGeometry.hpp&gt;
++#include&lt;yade/pkg-dem/SDECLinkPhysics.hpp&gt;
++#include&lt;yade/pkg-dem/ElasticCriterionTimeStepper.hpp&gt;
+ 
+ 
+ #include&lt;yade/pkg-common/Box.hpp&gt;
+
+Modified: branches/scons-layout/pkg/dem/PreProcessor/SDECMovingWall.cpp
+===================================================================
+--- branches/scons-layout/pkg/dem/PreProcessor/SDECMovingWall.cpp	2007-03-19 15:37:22 UTC (rev 1150)
++++ branches/scons-layout/pkg/dem/PreProcessor/SDECMovingWall.cpp	2007-03-19 19:47:03 UTC (rev 1151)
+@@ -10,12 +10,12 @@
+ 
+ #include &quot;SDECMovingWall.hpp&quot;
+ 
+-#include &quot;BodyMacroParameters.hpp&quot;
+-#include &quot;ElasticContactLaw.hpp&quot;
+-#include &quot;SDECLinkGeometry.hpp&quot;
+-#include &quot;MacroMicroElasticRelationships.hpp&quot;
+-#include &quot;ElasticCriterionTimeStepper.hpp&quot;
+-#include &quot;PositionOrientationRecorder.hpp&quot;
++#include&lt;yade/pkg-dem/BodyMacroParameters.hpp&gt;
++#include&lt;yade/pkg-dem/ElasticContactLaw.hpp&gt;
++#include&lt;yade/pkg-dem/SDECLinkGeometry.hpp&gt;
++#include&lt;yade/pkg-dem/MacroMicroElasticRelationships.hpp&gt;
++#include&lt;yade/pkg-dem/ElasticCriterionTimeStepper.hpp&gt;
++#include&lt;yade/pkg-dem/PositionOrientationRecorder.hpp&gt;
+ 
+ 
+ #include&lt;yade/pkg-common/Box.hpp&gt;
+
+Modified: branches/scons-layout/pkg/dem/PreProcessor/SDECSpheresPlane.cpp
+===================================================================
+--- branches/scons-layout/pkg/dem/PreProcessor/SDECSpheresPlane.cpp	2007-03-19 15:37:22 UTC (rev 1150)
++++ branches/scons-layout/pkg/dem/PreProcessor/SDECSpheresPlane.cpp	2007-03-19 19:47:03 UTC (rev 1151)
+@@ -11,12 +11,12 @@
+ 
+ #include &quot;SDECSpheresPlane.hpp&quot;
+ 
+-#include &quot;BodyMacroParameters.hpp&quot;
+-#include &quot;ElasticContactLaw.hpp&quot;
+-#include &quot;SDECLinkGeometry.hpp&quot;
+-#include &quot;MacroMicroElasticRelationships.hpp&quot;
+-#include &quot;ElasticCriterionTimeStepper.hpp&quot;
+-#include &quot;PositionOrientationRecorder.hpp&quot;
++#include&lt;yade/pkg-dem/BodyMacroParameters.hpp&gt;
++#include&lt;yade/pkg-dem/ElasticContactLaw.hpp&gt;
++#include&lt;yade/pkg-dem/SDECLinkGeometry.hpp&gt;
++#include&lt;yade/pkg-dem/MacroMicroElasticRelationships.hpp&gt;
++#include&lt;yade/pkg-dem/ElasticCriterionTimeStepper.hpp&gt;
++#include&lt;yade/pkg-dem/PositionOrientationRecorder.hpp&gt;
+ 
+ 
+ #include&lt;yade/pkg-common/Box.hpp&gt;
+
+Modified: branches/scons-layout/pkg/dem/PreProcessor/TetrahedronsTest.cpp
+===================================================================
+--- branches/scons-layout/pkg/dem/PreProcessor/TetrahedronsTest.cpp	2007-03-19 15:37:22 UTC (rev 1150)
++++ branches/scons-layout/pkg/dem/PreProcessor/TetrahedronsTest.cpp	2007-03-19 19:47:03 UTC (rev 1151)
+@@ -11,9 +11,9 @@
+ #include &quot;TetrahedronsTest.hpp&quot;
+ 
+ #include&lt;yade/pkg-common/ElasticBodyParameters.hpp&gt;
+-#include &quot;ElasticCriterionTimeStepper.hpp&quot;
+-#include &quot;InteractingMyTetrahedron.hpp&quot;
+-#include &quot;MyTetrahedronLaw.hpp&quot;
++#include&lt;yade/pkg-dem/ElasticCriterionTimeStepper.hpp&gt;
++#include&lt;yade/pkg-dem/InteractingMyTetrahedron.hpp&gt;
++#include&lt;yade/pkg-dem/MyTetrahedronLaw.hpp&gt;
+ 
+ #include&lt;yade/lib-base/yadeWm3Extra.hpp&gt;
+ 
+
+Modified: branches/scons-layout/pkg/dem/PreProcessor/ThreePointBending.cpp
+===================================================================
+--- branches/scons-layout/pkg/dem/PreProcessor/ThreePointBending.cpp	2007-03-19 15:37:22 UTC (rev 1150)
++++ branches/scons-layout/pkg/dem/PreProcessor/ThreePointBending.cpp	2007-03-19 19:47:03 UTC (rev 1151)
+@@ -13,13 +13,13 @@
+ 
+ #include &quot;ThreePointBending.hpp&quot;
+ 
+-#include &quot;ElasticContactLaw.hpp&quot;
+-#include &quot;ElasticCohesiveLaw.hpp&quot;
+-#include &quot;MacroMicroElasticRelationships.hpp&quot;
+-#include &quot;BodyMacroParameters.hpp&quot;
+-#include &quot;SDECLinkGeometry.hpp&quot;
+-#include &quot;SDECLinkPhysics.hpp&quot;
+-#include &quot;ElasticCriterionTimeStepper.hpp&quot;
++#include&lt;yade/pkg-dem/ElasticContactLaw.hpp&gt;
++#include&lt;yade/pkg-dem/ElasticCohesiveLaw.hpp&gt;
++#include&lt;yade/pkg-dem/MacroMicroElasticRelationships.hpp&gt;
++#include&lt;yade/pkg-dem/BodyMacroParameters.hpp&gt;
++#include&lt;yade/pkg-dem/SDECLinkGeometry.hpp&gt;
++#include&lt;yade/pkg-dem/SDECLinkPhysics.hpp&gt;
++#include&lt;yade/pkg-dem/ElasticCriterionTimeStepper.hpp&gt;
+ 
+ 
+ #include&lt;yade/core/yadeExceptions.hpp&gt;
+
+Modified: branches/scons-layout/pkg/dem/PreProcessor/TriaxialTest.cpp
+===================================================================
+--- branches/scons-layout/pkg/dem/PreProcessor/TriaxialTest.cpp	2007-03-19 15:37:22 UTC (rev 1150)
++++ branches/scons-layout/pkg/dem/PreProcessor/TriaxialTest.cpp	2007-03-19 19:47:03 UTC (rev 1151)
+@@ -12,22 +12,22 @@
+ 
+ #include &quot;TriaxialTest.hpp&quot;
+ 
+-#include &quot;ElasticContactLaw.hpp&quot;
+-#include &quot;SimpleElasticRelationships.hpp&quot;
+-#include &quot;BodyMacroParameters.hpp&quot;
+-#include &quot;SDECLinkGeometry.hpp&quot;
+-#include &quot;SDECLinkPhysics.hpp&quot;
+-//#include &quot;ElasticCriterionTimeStepper.hpp&quot;
+-//#include &quot;StiffnessMatrixTimeStepper.hpp&quot;
+-//#include &quot;StiffnessCounter.hpp&quot;
+-#include &quot;GlobalStiffnessCounter.hpp&quot;
+-#include &quot;GlobalStiffnessTimeStepper.hpp&quot;
++#include&lt;yade/pkg-dem/ElasticContactLaw.hpp&gt;
++#include&lt;yade/pkg-dem/SimpleElasticRelationships.hpp&gt;
++#include&lt;yade/pkg-dem/BodyMacroParameters.hpp&gt;
++#include&lt;yade/pkg-dem/SDECLinkGeometry.hpp&gt;
++#include&lt;yade/pkg-dem/SDECLinkPhysics.hpp&gt;
++//#include&lt;yade/pkg-dem/ElasticCriterionTimeStepper.hpp&gt;
++//#include&lt;yade/pkg-dem/StiffnessMatrixTimeStepper.hpp&gt;
++//#include&lt;yade/pkg-dem/StiffnessCounter.hpp&gt;
++#include&lt;yade/pkg-dem/GlobalStiffnessCounter.hpp&gt;
++#include&lt;yade/pkg-dem/GlobalStiffnessTimeStepper.hpp&gt;
+ 
+-#include &quot;AveragePositionRecorder.hpp&quot;
+-#include &quot;ForceRecorder.hpp&quot;
+-#include &quot;VelocityRecorder.hpp&quot;
+-#include &quot;TriaxialStressController.hpp&quot;
+-#include &quot;TriaxialCompressionEngine.hpp&quot;
++#include&lt;yade/pkg-dem/AveragePositionRecorder.hpp&gt;
++#include&lt;yade/pkg-dem/ForceRecorder.hpp&gt;
++#include&lt;yade/pkg-dem/VelocityRecorder.hpp&gt;
++#include&lt;yade/pkg-dem/TriaxialStressController.hpp&gt;
++#include&lt;yade/pkg-dem/TriaxialCompressionEngine.hpp&gt;
+ 
+ #include&lt;yade/pkg-common/Box.hpp&gt;
+ #include&lt;yade/pkg-common/AABB.hpp&gt;
+
+Modified: branches/scons-layout/pkg/dem/RenderingEngine/GLDrawInteractingMyTetrahedron/GLDrawInteractingMyTetrahedron.cpp
+===================================================================
+--- branches/scons-layout/pkg/dem/RenderingEngine/GLDrawInteractingMyTetrahedron/GLDrawInteractingMyTetrahedron.cpp	2007-03-19 15:37:22 UTC (rev 1150)
++++ branches/scons-layout/pkg/dem/RenderingEngine/GLDrawInteractingMyTetrahedron/GLDrawInteractingMyTetrahedron.cpp	2007-03-19 19:47:03 UTC (rev 1151)
+@@ -6,7 +6,7 @@
+ *************************************************************************/
+ 
+ #include &quot;GLDrawInteractingMyTetrahedron.hpp&quot;
+-#include &quot;InteractingMyTetrahedron.hpp&quot;
++#include&lt;yade/pkg-dem/InteractingMyTetrahedron.hpp&gt;
+ #include&lt;yade/lib-opengl/OpenGLWrapper.hpp&gt;
+ 
+ void GLDrawInteractingMyTetrahedron::go(const shared_ptr&lt;InteractingGeometry&gt;&amp; cm, const shared_ptr&lt;PhysicalParameters&gt;&amp; ,bool)
+
+Modified: branches/scons-layout/pkg/dem/RenderingEngine/GLDrawSDECLinkGeometry/GLDrawSDECLinkGeometry.cpp
+===================================================================
+--- branches/scons-layout/pkg/dem/RenderingEngine/GLDrawSDECLinkGeometry/GLDrawSDECLinkGeometry.cpp	2007-03-19 15:37:22 UTC (rev 1150)
++++ branches/scons-layout/pkg/dem/RenderingEngine/GLDrawSDECLinkGeometry/GLDrawSDECLinkGeometry.cpp	2007-03-19 19:47:03 UTC (rev 1151)
+@@ -7,9 +7,9 @@
+ *************************************************************************/
+ 
+ #include&quot;GLDrawSDECLinkGeometry.hpp&quot;
+-#include&quot;SDECLinkGeometry.hpp&quot;
++#include&lt;yade/pkg-dem/SDECLinkGeometry.hpp&gt;
+ #include&lt;yade/pkg-common/SimpleElasticInteraction.hpp&gt;
+-#include&quot;SDECLinkPhysics.hpp&quot;
++#include&lt;yade/pkg-dem/SDECLinkPhysics.hpp&gt;
+ 
+ #include&lt;yade/lib-opengl/OpenGLWrapper.hpp&gt;
+ 
+
+Modified: branches/scons-layout/pkg/dem/RenderingEngine/GLDrawSpheresContactGeometry/GLDrawSpheresContactGeometry.cpp
+===================================================================
+--- branches/scons-layout/pkg/dem/RenderingEngine/GLDrawSpheresContactGeometry/GLDrawSpheresContactGeometry.cpp	2007-03-19 15:37:22 UTC (rev 1150)
++++ branches/scons-layout/pkg/dem/RenderingEngine/GLDrawSpheresContactGeometry/GLDrawSpheresContactGeometry.cpp	2007-03-19 19:47:03 UTC (rev 1151)
+@@ -7,9 +7,9 @@
+ *************************************************************************/
+ 
+ #include &quot;GLDrawSpheresContactGeometry.hpp&quot;
+-#include &quot;SpheresContactGeometry.hpp&quot;
++#include&lt;yade/pkg-dem/SpheresContactGeometry.hpp&gt;
+ #include&lt;yade/pkg-common/SimpleElasticInteraction.hpp&gt;
+-#include &quot;ElasticContactInteraction.hpp&quot;
++#include&lt;yade/pkg-dem/ElasticContactInteraction.hpp&gt;
+ 
+ #include&lt;yade/lib-opengl/OpenGLWrapper.hpp&gt;
+ 
+
+Modified: branches/scons-layout/pkg/dem/SConscript
+===================================================================
+--- branches/scons-layout/pkg/dem/SConscript	2007-03-19 15:37:22 UTC (rev 1150)
++++ branches/scons-layout/pkg/dem/SConscript	2007-03-19 19:47:03 UTC (rev 1151)
+@@ -2,9 +2,7 @@
+ env.Install('$PREFIX/lib/yade$SUFFIX/pkg-dem',[
+ 
+ 	env.SharedLibrary('InteractingMyTetrahedron',
+-		['DataClass/InteractingGeometry/InteractingMyTetrahedron.cpp'],
+-		CPPPATH=env['CPPPATH']+['$PREFIX/include',
+-			'DataClass/InteractingGeometry']),
++		['DataClass/InteractingGeometry/InteractingMyTetrahedron.cpp']),
+ 
+ 	env.SharedLibrary('BodyMacroParameters',
+ 		['DataClass/PhysicalParameters/BodyMacroParameters.cpp'],
+@@ -12,40 +10,30 @@
+ 			'ElasticBodyParameters',
+ 			'yade-serialization',
+ 			'yade-base',
+-			
+-			'yade-multimethods'],
+-		CPPPATH=env['CPPPATH']+['$PREFIX/include', 'DataClass/PhysicalParameters']),
++			'yade-multimethods']),
+ 
+ 	env.SharedLibrary('SpheresContactGeometry',
+ 		['DataClass/InteractionGeometry/SpheresContactGeometry.cpp'],
+-		LIBS=env['LIBS']+['yade-serialization', 'yade-base'],
+-		CPPPATH=env['CPPPATH']+['$PREFIX/include', 'DataClass/InteractionGeometry']),
++		LIBS=env['LIBS']+['yade-serialization','yade-base']),
+ 
+ 	env.SharedLibrary('SDECLinkGeometry',
+ 		['DataClass/InteractionGeometry/SDECLinkGeometry.cpp'],
+-		LIBS=env['LIBS']+['yade-serialization', 'yade-base'],
+-		CPPPATH=env['CPPPATH']+['$PREFIX/include', 'DataClass/InteractionGeometry']),
++		LIBS=env['LIBS']+['yade-serialization','yade-base']),
+ 
+ 	env.SharedLibrary('InteractionOfMyTetrahedron',
+ 		['DataClass/InteractionGeometry/InteractionOfMyTetrahedron.cpp'],
+-		LIBS=env['LIBS']+['yade-serialization', 'yade-base'],
+-		CPPPATH=env['CPPPATH']+['$PREFIX/include',
+-			'DataClass/InteractionGeometry']),
++		LIBS=env['LIBS']+['yade-serialization', 'yade-base']),
+ 
+ 	env.SharedLibrary('ElasticContactInteraction',
+ 		['DataClass/InteractionPhysics/ElasticContactInteraction.cpp'],
+-		LIBS=env['LIBS']+['SimpleElasticInteraction'],
+-		CPPPATH=env['CPPPATH']+['$PREFIX/include',
+-			'DataClass/InteractionPhysics']),
++		LIBS=env['LIBS']+['SimpleElasticInteraction']),
+ 
+ 	env.SharedLibrary('SDECLinkPhysics',
+-		['DataClass/InteractionPhysics/SDECLinkPhysics.cpp'],
+-		CPPPATH=env['CPPPATH']+['DataClass/InteractionPhysics', '$PREFIX/include']),
++		['DataClass/InteractionPhysics/SDECLinkPhysics.cpp']),
+ 
+ 	env.SharedLibrary('GlobalStiffness',
+ 		['DataClass/PhysicalAction/GlobalStiffness.cpp'],
+-		LIBS=env['LIBS']+['yade-base'],
+-		CPPPATH=env['CPPPATH']+['$PREFIX/include', 'DataClass/PhysicalAction']),
++		LIBS=env['LIBS']+['yade-base']),
+ 
+ 	env.SharedLibrary('MacroMicroElasticRelationships',
+ 		['Engine/EngineUnit/MacroMicroElasticRelationships.cpp'],
+@@ -56,14 +44,7 @@
+ 			'BodyMacroParameters',
+ 			'RigidBodyParameters',
+ 			'ParticleParameters',
+-			'InteractionPhysicsMetaEngine'],
+-		CPPPATH=env['CPPPATH']+['$PREFIX/include',
+-			'DataClass/InteractionPhysics',
+-			'DataClass/InteractionPhysics',
+-			'DataClass/PhysicalParameters',
+-			'DataClass/InteractionGeometry',
+-			'DataClass/InteractionGeometry',
+-			'Engine/EngineUnit']),
++			'InteractionPhysicsMetaEngine']),
+ 
+ 	env.SharedLibrary('SimpleElasticRelationships',
+ 		['Engine/EngineUnit/SimpleElasticRelationships.cpp'],
+@@ -74,27 +55,16 @@
+ 			'BodyMacroParameters',
+ 			'RigidBodyParameters',
+ 			'ParticleParameters',
+-			'InteractionPhysicsMetaEngine'],
+-		CPPPATH=env['CPPPATH']+['$PREFIX/include',
+-			'DataClass/InteractionPhysics',
+-			'DataClass/InteractionPhysics',
+-			'Engine/EngineUnit',
+-			'DataClass/PhysicalParameters',
+-			'DataClass/InteractionGeometry',
+-			'DataClass/InteractionGeometry']),
++			'InteractionPhysicsMetaEngine']),
+ 
+ 	env.SharedLibrary('InteractingBox2InteractingSphere4SpheresContactGeometry',
+ 		['Engine/EngineUnit/InteractingBox2InteractingSphere4SpheresContactGeometry.cpp'],
+ 		LIBS=env['LIBS']+['SpheresContactGeometry',
+ 			'InteractionGeometryMetaEngine',
+ 			'yade-base',
+-			
+ 			'yade-multimethods',
+ 			'InteractingSphere',
+-			'InteractingBox'],
+-		CPPPATH=env['CPPPATH']+['$PREFIX/include',
+-			'DataClass/InteractionGeometry',
+-			'Engine/EngineUnit']),
++			'InteractingBox']),
+ 
+ 	env.SharedLibrary('InteractingSphere2InteractingSphere4SpheresContactGeometry',
+ 		['Engine/EngineUnit/InteractingSphere2InteractingSphere4SpheresContactGeometry.cpp'],
+@@ -102,39 +72,24 @@
+ 			'SpheresContactGeometry',
+ 			'InteractionGeometryMetaEngine',
+ 			'yade-base',
+-			
+ 			'yade-multimethods',
+-			'InteractingSphere'],
+-		CPPPATH=env['CPPPATH']+['$PREFIX/include',
+-			'DataClass/InteractionGeometry',
+-			'Engine/EngineUnit',
+-			'DataClass/InteractionGeometry']),
++			'InteractingSphere']),
+ 
+ 	env.SharedLibrary('InteractingMyTetrahedron2AABB',
+ 		['Engine/EngineUnit/InteractingMyTetrahedron2AABB.cpp'],
+ 		LIBS=env['LIBS']+['BoundingVolumeMetaEngine',
+ 			'InteractingMyTetrahedron',
+ 			'AABB',
+-			'yade-base',
+-			],
+-		CPPPATH=env['CPPPATH']+['$PREFIX/include',
+-			'Engine/EngineUnit',
+-			'DataClass/InteractingGeometry']),
++			'yade-base']),
+ 
+ 	env.SharedLibrary('InteractingMyTetrahedron2InteractingMyTetrahedron4InteractionOfMyTetrahedron',
+ 		['Engine/EngineUnit/InteractingMyTetrahedron2InteractingMyTetrahedron4InteractionOfMyTetrahedron.cpp'],
+ 		LIBS=env['LIBS']+['InteractionOfMyTetrahedron',
+ 			'InteractionGeometryMetaEngine',
+ 			'yade-base',
+-			
+ 			'yade-multimethods',
+ 			'InteractingMyTetrahedron',
+-			'yade-base',
+-			],
+-		CPPPATH=env['CPPPATH']+['$PREFIX/include',
+-			'DataClass/InteractionGeometry',
+-			'DataClass/InteractingGeometry',
+-			'Engine/EngineUnit']),
++			'yade-base']),
+ 
+ 	env.SharedLibrary('InteractingMyTetrahedron2InteractingBox4InteractionOfMyTetrahedron',
+ 		['Engine/EngineUnit/InteractingMyTetrahedron2InteractingBox4InteractionOfMyTetrahedron.cpp'],
+@@ -145,21 +100,12 @@
+ 			'InteractingSphere',
+ 			'SpheresContactGeometry',
+ 			'yade-base',
+-			
+ 			'yade-multimethods',
+-			'InteractingMyTetrahedron'],
+-		CPPPATH=env['CPPPATH']+['DataClass/InteractionGeometry',
+-			'$PREFIX/include',
+-			'Engine/EngineUnit',
+-			'DataClass/InteractingGeometry',
+-			'DataClass/InteractionGeometry']),
++			'InteractingMyTetrahedron']),
+ 
+ 	env.SharedLibrary('Tetrahedron2InteractingMyTetrahedron',
+ 		['Engine/EngineUnit/Tetrahedron2InteractingMyTetrahedron.cpp'],
+-		LIBS=env['LIBS']+['InteractingMyTetrahedron', 'InteractingGeometryMetaEngine', 'Tetrahedron'],
+-		CPPPATH=env['CPPPATH']+['$PREFIX/include',
+-			'Engine/EngineUnit',
+-			'DataClass/InteractingGeometry']),
++		LIBS=env['LIBS']+['InteractingMyTetrahedron', 'InteractingGeometryMetaEngine', 'Tetrahedron']),
+ 
+ 	env.SharedLibrary('ElasticCohesiveLaw',
+ 		['Engine/StandAloneEngine/ElasticCohesiveLaw.cpp'],
+@@ -169,19 +115,11 @@
+ 			'SpheresContactGeometry',
+ 			'BodyMacroParameters',
+ 			'yade-base',
+-			
+ 			'yade-multimethods',
+ 			'Force',
+ 			'Momentum',
+ 			'Sphere',
+-			'RigidBodyParameters'],
+-		CPPPATH=env['CPPPATH']+['$PREFIX/include',
+-			'DataClass/InteractionPhysics',
+-			'DataClass/InteractionPhysics',
+-			'DataClass/PhysicalParameters',
+-			'Engine/StandAloneEngine',
+-			'DataClass/InteractionGeometry',
+-			'DataClass/InteractionGeometry']),
++			'RigidBodyParameters']),
+ 
+ 	env.SharedLibrary('ElasticContactLaw',
+ 		['Engine/StandAloneEngine/ElasticContactLaw.cpp'],
+@@ -197,14 +135,7 @@
+ 			'Force',
+ 			'Momentum',
+ 			'Sphere',
+-			'RigidBodyParameters'],
+-		CPPPATH=env['CPPPATH']+['$PREFIX/include',
+-			'DataClass/InteractionPhysics',
+-			'Engine/StandAloneEngine',
+-			'DataClass/InteractionPhysics',
+-			'DataClass/PhysicalParameters',
+-			'DataClass/InteractionGeometry',
+-			'DataClass/InteractionGeometry']),
++			'RigidBodyParameters']),
+ 
+ 	env.SharedLibrary('MyTetrahedronLaw',
+ 		['Engine/StandAloneEngine/MyTetrahedronLaw.cpp'],
+@@ -214,49 +145,34 @@
+ 			'ElasticBodyParameters',
+ 			'yade-serialization',
+ 			'yade-base',
+-			
+ 			'yade-multimethods',
+ 			'Force',
+ 			'Momentum',
+ 			'Sphere',
+-			'RigidBodyParameters'],
+-		CPPPATH=env['CPPPATH']+['$PREFIX/include',
+-			'DataClass/InteractionPhysics',
+-			'Engine/StandAloneEngine',
+-			'DataClass/InteractionGeometry']),
++			'RigidBodyParameters']),
+ 
+ 	env.SharedLibrary('ElasticCriterionTimeStepper',
+ 		['Engine/StandAloneEngine/ElasticCriterionTimeStepper.cpp'],
+ 		LIBS=env['LIBS']+['ElasticContactInteraction',
+ 			'SpheresContactGeometry',
+ 			'MacroMicroElasticRelationships',
+-			'Sphere'],
+-		CPPPATH=env['CPPPATH']+['$PREFIX/include',
+-			'DataClass/InteractionPhysics',
+-			'Engine/StandAloneEngine',
+-			'DataClass/PhysicalParameters',
+-			'DataClass/InteractionGeometry',
+-			'Engine/EngineUnit']),
++			'Sphere']),
+ 
+ 	env.SharedLibrary('AveragePositionRecorder',
+ 		['Engine/StandAloneEngine/AveragePositionRecorder.cpp'],
+-		LIBS=env['LIBS']+['RigidBodyParameters'],
+-		CPPPATH=env['CPPPATH']+['Engine/StandAloneEngine', '$PREFIX/include']),
++		LIBS=env['LIBS']+['RigidBodyParameters']),
+ 
+ 	env.SharedLibrary('ForceRecorder',
+ 		['Engine/StandAloneEngine/ForceRecorder.cpp'],
+-		LIBS=env['LIBS']+['RigidBodyParameters', 'Force'],
+-		CPPPATH=env['CPPPATH']+['$PREFIX/include', 'Engine/StandAloneEngine']),
++		LIBS=env['LIBS']+['RigidBodyParameters', 'Force']),
+ 
+ 	env.SharedLibrary('PositionOrientationRecorder',
+ 		['Engine/StandAloneEngine/PositionOrientationRecorder.cpp'],
+-		LIBS=env['LIBS']+['RigidBodyParameters'],
+-		CPPPATH=env['CPPPATH']+['Engine/StandAloneEngine', '$PREFIX/include']),
++		LIBS=env['LIBS']+['RigidBodyParameters']),
+ 
+ 	env.SharedLibrary('VelocityRecorder',
+ 		['Engine/StandAloneEngine/VelocityRecorder.cpp'],
+-		LIBS=env['LIBS']+['ParticleParameters'],
+-		CPPPATH=env['CPPPATH']+['$PREFIX/include', 'Engine/StandAloneEngine']),
++		LIBS=env['LIBS']+['ParticleParameters']),
+ 
+ 	env.SharedLibrary('GlobalStiffnessCounter',
+ 		['Engine/StandAloneEngine/GlobalStiffnessCounter.cpp'],
+@@ -266,22 +182,13 @@
+ 			'SpheresContactGeometry',
+ 			'BodyMacroParameters',
+ 			'yade-serialization',
+-			'yade-base',
+-			
++			'yade-base',		
+ 			'yade-multimethods',
+ 			'Force',
+ 			'Momentum',
+ 			'Sphere',
+ 			'RigidBodyParameters',
+-			'GlobalStiffness'],
+-		CPPPATH=env['CPPPATH']+['$PREFIX/include',
+-			'DataClass/InteractionPhysics',
+-			'DataClass/PhysicalAction',
+-			'DataClass/InteractionPhysics',
+-			'Engine/StandAloneEngine',
+-			'DataClass/PhysicalParameters',
+-			'DataClass/InteractionGeometry',
+-			'DataClass/InteractionGeometry']),
++			'GlobalStiffness']),
+ 
+ 	env.SharedLibrary('GlobalStiffnessTimeStepper',
+ 		['Engine/StandAloneEngine/GlobalStiffnessTimeStepper.cpp'],
+@@ -291,93 +198,57 @@
+ 			'SpheresContactGeometry',
+ 			'MacroMicroElasticRelationships',
+ 			'Sphere',
+-			'GlobalStiffness'],
+-		CPPPATH=env['CPPPATH']+['Engine/StandAloneEngine',
+-			'$PREFIX/include',
+-			'DataClass/InteractionPhysics',
+-			'DataClass/PhysicalAction',
+-			'DataClass/PhysicalParameters',
+-			'DataClass/InteractionGeometry',
+-			'Engine/EngineUnit']),
++			'GlobalStiffness']),
+ 
+ 	env.SharedLibrary('GeometricalModelForceColorizer',
+ 		['Engine/StandAloneEngine/GeometricalModelForceColorizer.cpp'],
+-		LIBS=env['LIBS']+['RigidBodyParameters', 'Force'],
+-		CPPPATH=env['CPPPATH']+['$PREFIX/include',
+-			'Engine/StandAloneEngine']),
++		LIBS=env['LIBS']+['RigidBodyParameters', 'Force']),
+ 
+ 	env.SharedLibrary('ResultantForceEngine',
+ 		['Engine/DeusExMachina/ResultantForceEngine.cpp'],
+ 		LIBS=env['LIBS']+['yade-factory',
+-			'yade-base',
+-			
++			'yade-base',		
+ 			'Force',
+ 			'ParticleParameters',
+-			'GlobalStiffness'],
+-		CPPPATH=env['CPPPATH']+['$PREFIX/include',
+-			'DataClass/PhysicalAction',
+-			'Engine/DeusExMachina']),
++			'GlobalStiffness']),
+ 
+ 	env.SharedLibrary('TriaxialStressController',
+ 		['Engine/DeusExMachina/TriaxialStressController.cpp'],
+ 		LIBS=env['LIBS']+['yade-factory',
+ 			'yade-base',
+-			
+ 			'Force',
+ 			'ParticleParameters',
+ 			'ElasticContactInteraction',
+ 			'InteractingSphere',
+ 			'SpheresContactGeometry',
+-			'Sphere'],
+-		CPPPATH=env['CPPPATH']+['DataClass/InteractionPhysics',
+-			'Engine/DeusExMachina',
+-			'$PREFIX/include',
+-			'DataClass/InteractionGeometry']),
++			'Sphere']),
+ 
+ 	env.SharedLibrary('TriaxialCompressionEngine',
+ 		['Engine/DeusExMachina/TriaxialCompressionEngine.cpp'],
+ 		LIBS=env['LIBS']+['yade-factory',
+ 			'yade-base',
+-			
+ 			'Force',
+ 			'ParticleParameters',
+ 			'ElasticContactInteraction',
+-			'TriaxialStressController'],
+-		CPPPATH=env['CPPPATH']+['Engine/DeusExMachina',
+-			'$PREFIX/include',
+-			'DataClass/InteractionPhysics',
+-			'Engine/DeusExMachina']),
++			'TriaxialStressController']),
+ 
+ 	env.SharedLibrary('GLDrawInteractingMyTetrahedron',
+ 		['RenderingEngine/GLDrawInteractingMyTetrahedron/GLDrawInteractingMyTetrahedron.cpp'],
+-		LIBS=env['LIBS']+['InteractingMyTetrahedron', 'yade-opengl'],
+-		CPPPATH=env['CPPPATH']+['RenderingEngine/GLDrawInteractingMyTetrahedron',
+-			'$PREFIX/include',
+-			'DataClass/InteractingGeometry']),
++		LIBS=env['LIBS']+['InteractingMyTetrahedron', 'yade-opengl']),
+ 
+ 	env.SharedLibrary('GLDrawSpheresContactGeometry',
+ 		['RenderingEngine/GLDrawSpheresContactGeometry/GLDrawSpheresContactGeometry.cpp'],
+ 		LIBS=env['LIBS']+['SpheresContactGeometry',
+ 			'ElasticContactInteraction',
+ 			'SimpleElasticInteraction',
+-			'yade-opengl'],
+-		CPPPATH=env['CPPPATH']+['DataClass/InteractionPhysics',
+-			'RenderingEngine/GLDrawSpheresContactGeometry',
+-			'$PREFIX/include',
+-			'../yade-package-common/src/DataClass/InteractionPhysics/SimpleElasticInteraction',
+-			'DataClass/InteractionGeometry']),
++			'yade-opengl']),
+ 
+ 	env.SharedLibrary('GLDrawSDECLinkGeometry',
+ 		['RenderingEngine/GLDrawSDECLinkGeometry/GLDrawSDECLinkGeometry.cpp'],
+ 		LIBS=env['LIBS']+['SDECLinkGeometry',
+ 			'SDECLinkPhysics',
+ 			'SimpleElasticInteraction',
+-			'yade-opengl'],
+-		CPPPATH=env['CPPPATH']+['DataClass/InteractionPhysics',
+-			'$PREFIX/include',
+-			'../yade-package-common/src/DataClass/InteractionPhysics/SimpleElasticInteraction',
+-			'RenderingEngine/GLDrawSDECLinkGeometry',
+-			'DataClass/InteractionGeometry']),
++			'yade-opengl']),
+ 
+ 	env.SharedLibrary('Funnel',
+ 		['PreProcessor/Funnel.cpp'],
+@@ -411,14 +282,7 @@
+ 			'ParticleParameters',
+ 			'SAPCollider',
+ 			'MetaInteractingGeometry2AABB',
+-			'yade-multimethods'],
+-		CPPPATH=env['CPPPATH']+['$PREFIX/include',
+-			'Engine/StandAloneEngine',
+-			'PreProcessor',
+-			'Engine/StandAloneEngine',
+-			'DataClass/PhysicalParameters',
+-			'DataClass/InteractionGeometry',
+-			'Engine/EngineUnit']),
++			'yade-multimethods']),
+ 
+ 	env.SharedLibrary('SDECImpactTest',
+ 		['PreProcessor/SDECImpactTest.cpp'],
+@@ -433,7 +297,6 @@
+ 			'InteractionVecSet',
+ 			'BodyRedirectionVector',
+ 			'yade-base',
+-			
+ 			'InteractingSphere',
+ 			'InteractingBox',
+ 			'CundallNonViscousMomentumDamping',
+@@ -454,18 +317,7 @@
+ 			'AABB',
+ 			'PersistentSAPCollider',
+ 			'SAPCollider',
+-			'MetaInteractingGeometry2AABB'],
+-		CPPPATH=env['CPPPATH']+['Engine/StandAloneEngine',
+-			'$PREFIX/include',
+-			'PreProcessor',
+-			'DataClass/InteractionPhysics',
+-			'Engine/StandAloneEngine',
+-			'Engine/StandAloneEngine',
+-			'Engine/StandAloneEngine',
+-			'DataClass/PhysicalParameters',
+-			'Engine/StandAloneEngine',
+-			'DataClass/InteractionGeometry',
+-			'Engine/EngineUnit']),
++			'MetaInteractingGeometry2AABB']),
+ 
+ 	env.SharedLibrary('SDECLinkedSpheres',
+ 		['PreProcessor/SDECLinkedSpheres.cpp'],
+@@ -500,16 +352,7 @@
+ 			'ParticleParameters',
+ 			'SAPCollider',
+ 			'MetaInteractingGeometry2AABB',
+-			'yade-multimethods'],
+-		CPPPATH=env['CPPPATH']+['$PREFIX/include',
+-			'DataClass/InteractionPhysics',
+-			'Engine/StandAloneEngine',
+-			'Engine/StandAloneEngine',
+-			'DataClass/PhysicalParameters',
+-			'Engine/StandAloneEngine',
+-			'PreProcessor',
+-			'DataClass/InteractionGeometry',
+-			'Engine/EngineUnit']),
++			'yade-multimethods']),
+ 
+ 	env.SharedLibrary('SDECSpheresPlane',
+ 		['PreProcessor/SDECSpheresPlane.cpp'],
+@@ -529,7 +372,6 @@
+ 			'GravityEngine',
+ 			'yade-serialization',
+ 			'yade-base',
+-			
+ 			'PhysicalActionContainerInitializer',
+ 			'PhysicalActionContainerReseter',
+ 			'InteractionGeometryMetaEngine',
+@@ -544,15 +386,7 @@
+ 			'ParticleParameters',
+ 			'SAPCollider',
+ 			'MetaInteractingGeometry2AABB',
+-			'yade-multimethods'],
+-		CPPPATH=env['CPPPATH']+['$PREFIX/include',
+-			'Engine/StandAloneEngine',
+-			'PreProcessor',
+-			'Engine/StandAloneEngine',
+-			'DataClass/PhysicalParameters',
+-			'Engine/StandAloneEngine',
+-			'DataClass/InteractionGeometry',
+-			'Engine/EngineUnit']),
++			'yade-multimethods']),
+ 
+ 	env.SharedLibrary('SDECMovingWall',
+ 		['PreProcessor/SDECMovingWall.cpp'],
+@@ -573,7 +407,6 @@
+ 			'TranslationEngine',
+ 			'yade-serialization',
+ 			'yade-base',
+-			
+ 			'PhysicalActionContainerInitializer',
+ 			'PhysicalActionContainerReseter',
+ 			'InteractionGeometryMetaEngine',
+@@ -588,15 +421,7 @@
+ 			'ParticleParameters',
+ 			'SAPCollider',
+ 			'MetaInteractingGeometry2AABB',
+-			'yade-multimethods'],
+-		CPPPATH=env['CPPPATH']+['$PREFIX/include',
+-			'Engine/StandAloneEngine',
+-			'Engine/StandAloneEngine',
+-			'PreProcessor',
+-			'DataClass/PhysicalParameters',
+-			'Engine/StandAloneEngine',
+-			'DataClass/InteractionGeometry',
+-			'Engine/EngineUnit']),
++			'yade-multimethods']),
+ 
+ 	env.SharedLibrary('TetrahedronsTest',
+ 		['PreProcessor/TetrahedronsTest.cpp'],
+@@ -631,13 +456,7 @@
+ 			'Tetrahedron',
+ 			'yade-serialization',
+ 			'yade-base',
+-			
+-			'yade-multimethods'],
+-		CPPPATH=env['CPPPATH']+['PreProcessor',
+-			'$PREFIX/include',
+-			'Engine/StandAloneEngine',
+-			'DataClass/InteractingGeometry',
+-			'Engine/StandAloneEngine']),
++			'yade-multimethods']),
+ 
+ 	env.SharedLibrary('TriaxialTest',
+ 		['PreProcessor/TriaxialTest.cpp'],
+@@ -679,24 +498,7 @@
+ 			'TriaxialStressController',
+ 			'TriaxialCompressionEngine',
+ 			'GlobalStiffnessTimeStepper',
+-			'yade-base',
+-			],
+-		CPPPATH=env['CPPPATH']+['Engine/StandAloneEngine',
+-			'Engine/StandAloneEngine',
+-			'$PREFIX/include',
+-			'DataClass/PhysicalAction',
+-			'DataClass/InteractionPhysics',
+-			'Engine/DeusExMachina',
+-			'Engine/StandAloneEngine',
+-			'PreProcessor',
+-			'Engine/EngineUnit',
+-			'Engine/StandAloneEngine',
+-			'Engine/StandAloneEngine',
+-			'Engine/StandAloneEngine',
+-			'DataClass/PhysicalParameters',
+-			'Engine/DeusExMachina',
+-			'Engine/StandAloneEngine',
+-			'DataClass/InteractionGeometry']),
++			'yade-base']),
+ 
+ 	env.SharedLibrary('ThreePointBending',
+ 		['PreProcessor/ThreePointBending.cpp'],
+@@ -733,15 +535,6 @@
+ 			'MetaInteractingGeometry2AABB',
+ 			'yade-multimethods',
+ 			'boost_filesystem',
+-			'TranslationEngine'],
+-		CPPPATH=env['CPPPATH']+['$PREFIX/include',
+-			'DataClass/InteractionPhysics',
+-			'PreProcessor',
+-			'Engine/StandAloneEngine',
+-			'Engine/StandAloneEngine',
+-			'DataClass/PhysicalParameters',
+-			'Engine/StandAloneEngine',
+-			'DataClass/InteractionGeometry',
+-			'Engine/EngineUnit'])
++			'TranslationEngine']),
+ ])
+ 
+
+Modified: branches/scons-layout/pkg/lattice/SConscript
+===================================================================
+--- branches/scons-layout/pkg/lattice/SConscript	2007-03-19 15:37:22 UTC (rev 1150)
++++ branches/scons-layout/pkg/lattice/SConscript	2007-03-19 19:47:03 UTC (rev 1151)
+@@ -3,70 +3,47 @@
+ 
+ 	env.SharedLibrary('LatticeInteractingGeometry',
+ 		['DataClass/InteractingGeometry/LatticeInteractingGeometry.cpp'],
+-		LIBS=env['LIBS']+['yade-base',  'MetaInteractingGeometry'],
+-		CPPPATH=env['CPPPATH']+['$PREFIX/include',
+-			'DataClass/InteractingGeometry']),
++		LIBS=env['LIBS']+['yade-base','MetaInteractingGeometry']),
+ 
+ 	env.SharedLibrary('LatticeSetGeometry',
+ 		['DataClass/GeometricalModel/LatticeSetGeometry.cpp'],
+-		LIBS=env['LIBS']+['yade-base',  'yade-multimethods'],
+-		CPPPATH=env['CPPPATH']+['$PREFIX/include', 'DataClass/GeometricalModel']),
++		LIBS=env['LIBS']+['yade-base','yade-multimethods']),
+ 
+ 	env.SharedLibrary('LineSegment',
+ 		['DataClass/GeometricalModel/LineSegment.cpp'],
+-		LIBS=env['LIBS']+['yade-base',  'yade-multimethods'],
+-		CPPPATH=env['CPPPATH']+['$PREFIX/include', 'DataClass/GeometricalModel']),
++		LIBS=env['LIBS']+['yade-base',  'yade-multimethods']),
+ 
+ 	env.SharedLibrary('LatticeBeamParameters',
+ 		['DataClass/PhysicalParameters/LatticeBeamParameters.cpp'],
+ 		LIBS=env['LIBS']+['yade-base',
+-			
+-			'yade-base',
+-			
+ 			'yade-multimethods',
+-			'yade-serialization'],
+-		CPPPATH=env['CPPPATH']+['DataClass/PhysicalParameters', '$PREFIX/include']),
++			'yade-serialization']),
+ 
+ 	env.SharedLibrary('LatticeNodeParameters',
+ 		['DataClass/PhysicalParameters/LatticeNodeParameters.cpp'],
+ 		LIBS=env['LIBS']+['yade-base',
+-			
+-			'yade-base',
+-			
+ 			'yade-multimethods',
+-			'yade-serialization'],
+-		CPPPATH=env['CPPPATH']+['DataClass/PhysicalParameters', '$PREFIX/include']),
++			'yade-serialization']),
+ 
+ 	env.SharedLibrary('LatticeSetParameters',
+ 		['DataClass/PhysicalParameters/LatticeSetParameters.cpp'],
+-		LIBS=env['LIBS']+['yade-base'],
+-		CPPPATH=env['CPPPATH']+['$PREFIX/include', 'DataClass/PhysicalParameters']),
++		LIBS=env['LIBS']+['yade-base']),
+ 
+ 	env.SharedLibrary('LatticeBeamAngularSpring',
+ 		['DataClass/InteractionPhysics/LatticeBeamAngularSpring.cpp'],
+ 		LIBS=env['LIBS']+['yade-base',
+-			
+-			'yade-base',
+-			
+ 			'yade-multimethods',
+-			'yade-serialization'],
+-		CPPPATH=env['CPPPATH']+['DataClass/InteractionPhysics',
+-			'$PREFIX/include']),
++			'yade-serialization']),
+ 
+ 	env.SharedLibrary('NonLocalDependency',
+ 		['DataClass/InteractionPhysics/NonLocalDependency.cpp'],
+ 		LIBS=env['LIBS']+['yade-base',
+-			
+-			'yade-base',
+-			
+ 			'yade-multimethods',
+-			'yade-serialization'],
+-		CPPPATH=env['CPPPATH']+['$PREFIX/include', 'DataClass/InteractionPhysics']),
++			'yade-serialization']),
+ 
+ 	env.SharedLibrary('LatticeSet2LatticeBeams',
+ 		['Engine/EngineUnit/LatticeSet2LatticeBeams.cpp'],
+ 		LIBS=env['LIBS']+['yade-base',
+-			
+ 			'LineSegment',
+ 			'LatticeSetParameters',
+ 			'LatticeBeamParameters',
+@@ -81,125 +58,84 @@
+ 	env.SharedLibrary('LatticeLaw',
+ 		['Engine/StandAloneEngine/LatticeLaw.cpp'],
+ 		LIBS=env['LIBS']+['yade-base',
+-			
+ 			'LatticeBeamParameters',
+ 			'LatticeNodeParameters',
+ 			'LatticeSetParameters',
+ 			'LatticeBeamAngularSpring',
+ 			'NonLocalDependency'],
+-		CPPPATH=env['CPPPATH']+['$PREFIX/include',
+-			'DataClass/InteractionPhysics',
+-			'DataClass/InteractionPhysics',
+-			'DataClass/PhysicalParameters',
+-			'Engine/StandAloneEngine',
+-			'DataClass/PhysicalParameters',
++		CPPPATH=env['CPPPATH']+['DataClass/InteractionPhysics',
+ 			'DataClass/PhysicalParameters']),
+ 
+ 	env.SharedLibrary('NonLocalInitializer',
+ 		['Engine/StandAloneEngine/NonLocalInitializer.cpp'],
+ 		LIBS=env['LIBS']+['yade-base',
+-			
+ 			'LatticeBeamParameters',
+ 			'LatticeNodeParameters',
+ 			'LatticeSetParameters',
+ 			'NonLocalDependency'],
+-		CPPPATH=env['CPPPATH']+['Engine/StandAloneEngine',
+-			'$PREFIX/include',
+-			'DataClass/PhysicalParameters',
+-			'DataClass/InteractionPhysics',
+-			'DataClass/PhysicalParameters',
++		CPPPATH=env['CPPPATH']+['DataClass/InteractionPhysics',
+ 			'DataClass/PhysicalParameters']),
+ 
+ 	env.SharedLibrary('MeasurePoisson',
+ 		['Engine/StandAloneEngine/MeasurePoisson.cpp'],
+ 		LIBS=env['LIBS']+['yade-base',
+-			
+ 			'LatticeBeamParameters',
+ 			'LatticeNodeParameters'],
+-		CPPPATH=env['CPPPATH']+['DataClass/PhysicalParameters',
+-			'DataClass/PhysicalParameters',
+-			'$PREFIX/include',
+-			'Engine/StandAloneEngine']),
++		CPPPATH=env['CPPPATH']+['DataClass/PhysicalParameters']),
+ 
+ 	env.SharedLibrary('StrainRecorder',
+ 		['Engine/StandAloneEngine/StrainRecorder.cpp'],
+ 		LIBS=env['LIBS']+['yade-base',
+-			
+ 			'LatticeBeamParameters',
+ 			'LatticeNodeParameters'],
+-		CPPPATH=env['CPPPATH']+['DataClass/PhysicalParameters',
+-			'DataClass/PhysicalParameters',
+-			'$PREFIX/include',
+-			'Engine/StandAloneEngine']),
++		CPPPATH=env['CPPPATH']+['DataClass/PhysicalParameters']),
+ 
+ 	env.SharedLibrary('NodeRecorder',
+ 		['Engine/StandAloneEngine/NodeRecorder.cpp'],
+ 		LIBS=env['LIBS']+['yade-base',
+-			
+ 			'LatticeBeamParameters',
+ 			'LatticeNodeParameters'],
+-		CPPPATH=env['CPPPATH']+['DataClass/PhysicalParameters',
+-			'DataClass/PhysicalParameters',
+-			'$PREFIX/include',
+-			'Engine/StandAloneEngine']),
++		CPPPATH=env['CPPPATH']+['DataClass/PhysicalParameters']),
+ 
+ 	env.SharedLibrary('BeamRecorder',
+ 		['Engine/StandAloneEngine/BeamRecorder.cpp'],
+ 		LIBS=env['LIBS']+['yade-base',
+-			
+ 			'LatticeBeamParameters',
+ 			'LatticeNodeParameters'],
+-		CPPPATH=env['CPPPATH']+['DataClass/PhysicalParameters',
+-			'DataClass/PhysicalParameters',
+-			'$PREFIX/include',
+-			'Engine/StandAloneEngine']),
++		CPPPATH=env['CPPPATH']+['DataClass/PhysicalParameters']),
+ 
+ 	env.SharedLibrary('MovingSupport',
+ 		['Engine/StandAloneEngine/MovingSupport.cpp'],
+ 		LIBS=env['LIBS']+['yade-base',
+-			
+ 			'LatticeBeamParameters',
+ 			'LatticeNodeParameters'],
+-		CPPPATH=env['CPPPATH']+['DataClass/PhysicalParameters',
+-			'DataClass/PhysicalParameters',
+-			'$PREFIX/include',
+-			'Engine/StandAloneEngine']),
++		CPPPATH=env['CPPPATH']+['DataClass/PhysicalParameters']),
+ 
+ 	env.SharedLibrary('GLDrawLineSegment',
+ 		['RenderingEngine/GLDrawLineSegment/GLDrawLineSegment.cpp'],
+ 		LIBS=env['LIBS']+['yade-base',  'LineSegment', 'yade-opengl'],
+-		CPPPATH=env['CPPPATH']+['RenderingEngine/GLDrawLineSegment',
+-			'$PREFIX/include',
+-			'DataClass/GeometricalModel']),
++		CPPPATH=env['CPPPATH']+['DataClass/GeometricalModel']),
+ 
+ 	env.SharedLibrary('GLDrawLatticeBeamState',
+ 		['RenderingEngine/GLDrawLatticeBeamState/GLDrawLatticeBeamState.cpp'],
+ 		LIBS=env['LIBS']+['yade-base',  'LatticeBeamParameters', 'yade-opengl'],
+-		CPPPATH=env['CPPPATH']+['DataClass/PhysicalParameters',
+-			'$PREFIX/include',
+-			'RenderingEngine/GLDrawLatticeBeamState']),
++		CPPPATH=env['CPPPATH']+['DataClass/PhysicalParameters']),
+ 
+ 	env.SharedLibrary('GLDrawLatticeSetGeometry',
+ 		['RenderingEngine/GLDrawLatticeSetGeometry/GLDrawLatticeSetGeometry.cpp'],
+ 		LIBS=env['LIBS']+['yade-base',
+-			
+ 			'LatticeSetGeometry',
+ 			'LatticeSetParameters',
+ 			'LatticeBeamParameters',
+ 			'LatticeNodeParameters',
+ 			'yade-opengl',
+ 			'yade-computational-geometry'],
+-		CPPPATH=env['CPPPATH']+['$PREFIX/include',
+-			'DataClass/GeometricalModel',
+-			'DataClass/PhysicalParameters',
+-			'DataClass/PhysicalParameters',
+-			'RenderingEngine/GLDrawLatticeSetGeometry',
++		CPPPATH=env['CPPPATH']+['DataClass/GeometricalModel',
+ 			'DataClass/PhysicalParameters']),
+ 
+ 	env.SharedLibrary('GLDrawLatticeInteractingGeometry',
+ 		['RenderingEngine/GLDrawLatticeInteractingGeometry/GLDrawLatticeInteractingGeometry.cpp'],
+ 		LIBS=env['LIBS']+['yade-base',
+-			
+ 			'LatticeSetGeometry',
+ 			'LatticeSetParameters',
+ 			'LatticeBeamParameters',
+@@ -207,18 +143,13 @@
+ 			'LatticeInteractingGeometry',
+ 			'yade-opengl',
+ 			'yade-computational-geometry'],
+-		CPPPATH=env['CPPPATH']+['$PREFIX/include',
+-			'DataClass/GeometricalModel',
+-			'DataClass/PhysicalParameters',
+-			'RenderingEngine/GLDrawLatticeInteractingGeometry',
+-			'DataClass/PhysicalParameters',
++		CPPPATH=env['CPPPATH']+['DataClass/GeometricalModel',
+ 			'DataClass/InteractingGeometry',
+ 			'DataClass/PhysicalParameters']),
+ 
+ 	env.SharedLibrary('LatticeExample',
+ 		['PreProcessor/LatticeExample.cpp'],
+ 		LIBS=env['LIBS']+['yade-base',
+-			
+ 			'LineSegment',
+ 			'LatticeSetParameters',
+ 			'LatticeBeamParameters',
+@@ -252,19 +183,8 @@
+ 			'yade-base',
+ 			],
+ 		CPPPATH=env['CPPPATH']+['Engine/StandAloneEngine',
+-			'$PREFIX/include',
+-			'Engine/StandAloneEngine',
+ 			'DataClass/InteractionPhysics',
+-			'Engine/StandAloneEngine',
+-			'PreProcessor',
+-			'Engine/StandAloneEngine',
+-			'DataClass/InteractionPhysics',
+-			'Engine/StandAloneEngine',
+-			'DataClass/PhysicalParameters',
+-			'Engine/StandAloneEngine',
+-			'DataClass/PhysicalParameters',
+ 			'DataClass/GeometricalModel',
+-			'Engine/StandAloneEngine',
+ 			'DataClass/InteractingGeometry',
+ 			'DataClass/PhysicalParameters'])
+ ])
+
+Modified: branches/scons-layout/pkg/mass-spring/SConscript
+===================================================================
+--- branches/scons-layout/pkg/mass-spring/SConscript	2007-03-19 15:37:22 UTC (rev 1150)
++++ branches/scons-layout/pkg/mass-spring/SConscript	2007-03-19 19:47:03 UTC (rev 1151)
+@@ -3,53 +3,41 @@
+ 
+ 	env.SharedLibrary('ParticleSetParameters',
+ 		['DataClass/PhysicalParameters/ParticleSetParameters.cpp'],
+-		LIBS=env['LIBS']+['yade-base'],
+-		CPPPATH=env['CPPPATH']+['$PREFIX/include', 'DataClass/PhysicalParameters']),
++		LIBS=env['LIBS']+['yade-base']),
+ 
+ 	env.SharedLibrary('SpringGeometry',
+ 		['DataClass/InteractionGeometry/SpringGeometry.cpp'],
+-		LIBS=env['LIBS']+['yade-base'],
+-		CPPPATH=env['CPPPATH']+['$PREFIX/include', 'DataClass/InteractionGeometry']),
++		LIBS=env['LIBS']+['yade-base']),
+ 
+ 	env.SharedLibrary('SpringPhysics',
+ 		['DataClass/InteractionPhysics/SpringPhysics.cpp'],
+-		LIBS=env['LIBS']+['yade-base'],
+-		CPPPATH=env['CPPPATH']+['DataClass/InteractionPhysics', '$PREFIX/include']),
++		LIBS=env['LIBS']+['yade-base']),
+ 
+ 	env.SharedLibrary('ParticleSet2Mesh2D',
+ 		['Engine/EngineUnit/ParticleSet2Mesh2D.cpp'],
+ 		LIBS=env['LIBS']+['yade-base',
+-			
+ 			'ParticleSetParameters',
+ 			'GeometricalModelMetaEngine',
+ 			'Mesh2D'],
+-		CPPPATH=env['CPPPATH']+['DataClass/PhysicalParameters',
+-			'$PREFIX/include',
+-			'Engine/EngineUnit']),
++		CPPPATH=env['CPPPATH']+['DataClass/PhysicalParameters']),
+ 
+ 	env.SharedLibrary('MassSpringLaw',
+ 		['Engine/StandAloneEngine/MassSpringLaw.cpp'],
+ 		LIBS=env['LIBS']+['yade-base',
+-			
+ 			'SpringPhysics',
+ 			'SpringGeometry',
+ 			'ParticleParameters',
+ 			'yade-serialization',
+-			'yade-base',
+-			
+ 			'yade-multimethods',
+ 			'Force',
+ 			'Momentum',
+ 			'Mesh2D'],
+ 		CPPPATH=env['CPPPATH']+['DataClass/InteractionPhysics',
+-			'$PREFIX/include',
+-			'Engine/StandAloneEngine',
+ 			'DataClass/InteractionGeometry']),
+ 
+ 	env.SharedLibrary('HangingCloth',
+ 		['PreProcessor/HangingCloth.cpp'],
+ 		LIBS=env['LIBS']+['yade-base',
+-			
+ 			'SpringGeometry',
+ 			'SpringPhysics',
+ 			'ParticleSetParameters',
+@@ -64,7 +52,6 @@
+ 			'MacroMicroElasticRelationships',
+ 			'yade-serialization',
+ 			'yade-base',
+-			
+ 			'PhysicalActionContainerInitializer',
+ 			'PhysicalActionContainerReseter',
+ 			'GravityEngine',
+@@ -89,10 +76,8 @@
+ 			'MassSpringLaw',
+ 			'ElasticContactLaw'],
+ 		CPPPATH=env['CPPPATH']+['DataClass/InteractionPhysics',
+-			'$PREFIX/include',
+ 			'Engine/StandAloneEngine',
+ 			'Engine/EngineUnit',
+-			'PreProcessor',
+ 			'DataClass/PhysicalParameters',
+ 			'DataClass/InteractionGeometry'])
+ ])
+
+Modified: branches/scons-layout/pkg/realtime-rigidbody/SConscript
+===================================================================
+--- branches/scons-layout/pkg/realtime-rigidbody/SConscript	2007-03-19 15:37:22 UTC (rev 1150)
++++ branches/scons-layout/pkg/realtime-rigidbody/SConscript	2007-03-19 19:47:03 UTC (rev 1151)
+@@ -4,139 +4,95 @@
+ 	env.SharedLibrary('ErrorTolerantContact',
+ 		['DataClass/InteractionGeometry/ErrorTolerantContact.cpp'],
+ 		LIBS=env['LIBS']+['yade-base',
+-			
+ 			'yade-base',
+-			
+ 			'yade-serialization',
+-			'yade-factory'],
+-		CPPPATH=env['CPPPATH']+['$PREFIX/include', 'DataClass/InteractionGeometry']),
++			'yade-factory']),
+ 
+ 	env.SharedLibrary('AAInteractingBox2InteractingSphere4ClosestFeatures',
+ 		['Engine/EngineUnit/AAInteractingBox2InteractingSphere4ClosestFeatures.cpp'],
+ 		LIBS=env['LIBS']+['yade-base',
+-			
+ 			'InteractionGeometryMetaEngine',
+-			'yade-base',
+-			
+ 			'yade-multimethods',
+ 			'InteractingSphere',
+ 			'InteractingBox',
+ 			'Box',
+ 			'Sphere',
+-			'ClosestFeatures'],
+-		CPPPATH=env['CPPPATH']+['$PREFIX/include',
+-			'Engine/EngineUnit']),
++			'ClosestFeatures']),
+ 
+ 	env.SharedLibrary('InteractingBox2InteractingBox4ClosestFeatures',
+ 		['Engine/EngineUnit/InteractingBox2InteractingBox4ClosestFeatures.cpp'],
+ 		LIBS=env['LIBS']+['yade-base',
+-			
+ 			'InteractionGeometryMetaEngine',
+-			'yade-base',
+-			
+ 			'yade-multimethods',
+ 			'yade-computational-geometry',
+ 			'InteractingBox',
+ 			'Box',
+-			'ClosestFeatures'],
+-		CPPPATH=env['CPPPATH']+['Engine/EngineUnit',
+-			'$PREFIX/include']),
++			'ClosestFeatures']),
+ 
+ 	env.SharedLibrary('InteractingBox2InteractingSphere4ClosestFeatures',
+ 		['Engine/EngineUnit/InteractingBox2InteractingSphere4ClosestFeatures.cpp'],
+ 		LIBS=env['LIBS']+['yade-base',
+-			
+ 			'InteractionGeometryMetaEngine',
+-			'yade-base',
+-			
+ 			'yade-multimethods',
+ 			'InteractingBox',
+ 			'InteractingSphere',
+ 			'Box',
+ 			'Sphere',
+-			'ClosestFeatures'],
+-		CPPPATH=env['CPPPATH']+['Engine/EngineUnit',
+-			'$PREFIX/include']),
++			'ClosestFeatures']),
+ 
+ 	env.SharedLibrary('InteractingBox2InteractingSphere4ErrorTolerantContact',
+ 		['Engine/EngineUnit/InteractingBox2InteractingSphere4ErrorTolerantContact.cpp'],
+ 		LIBS=env['LIBS']+['yade-base',
+-			
+ 			'ErrorTolerantContact',
+ 			'InteractionGeometryMetaEngine',
+ 			'yade-factory',
+-			'yade-base',
+-			
+ 			'yade-multimethods',
+ 			'InteractingBox',
+ 			'InteractingSphere'],
+-		CPPPATH=env['CPPPATH']+['Engine/EngineUnit',
+-			'$PREFIX/include',
+-			'DataClass/InteractionGeometry']),
++		CPPPATH=env['CPPPATH']+['DataClass/InteractionGeometry']),
+ 
+ 	env.SharedLibrary('InteractingSphere2InteractingSphere4ClosestFeatures',
+ 		['Engine/EngineUnit/InteractingSphere2InteractingSphere4ClosestFeatures.cpp'],
+ 		LIBS=env['LIBS']+['yade-base',
+-			
+ 			'InteractionGeometryMetaEngine',
+-			'yade-base',
+-			
+ 			'yade-multimethods',
+ 			'InteractingSphere',
+ 			'Sphere',
+-			'ClosestFeatures'],
+-		CPPPATH=env['CPPPATH']+['Engine/EngineUnit',
+-			'$PREFIX/include']),
++			'ClosestFeatures']),
+ 
+ 	env.SharedLibrary('InteractingSphere2InteractingSphere4ErrorTolerantContact',
+ 		['Engine/EngineUnit/InteractingSphere2InteractingSphere4ErrorTolerantContact.cpp'],
+ 		LIBS=env['LIBS']+['yade-base',
+-			
+ 			'ErrorTolerantContact',
+ 			'InteractionGeometryMetaEngine',
+ 			'yade-multimethods',
+ 			'yade-factory',
+-			'yade-base',
+-			
+ 			'Sphere'],
+-		CPPPATH=env['CPPPATH']+['$PREFIX/include',
+-			'DataClass/InteractionGeometry',
+-			'Engine/EngineUnit']),
++		CPPPATH=env['CPPPATH']+['DataClass/InteractionGeometry']),
+ 
+ 	env.SharedLibrary('ErrorTolerantLaw',
+ 		['Engine/StandAloneEngine/ErrorTolerantLaw.cpp'],
+ 		LIBS=env['LIBS']+['yade-base',
+-			
+ 			'ErrorTolerantContact',
+ 			'RigidBodyParameters',
+-			'yade-base',
+-			
+ 			'yade-serialization',
+ 			'yade-factory',
+ 			'yade-multimethods'],
+-		CPPPATH=env['CPPPATH']+['$PREFIX/include',
+-			'DataClass/InteractionGeometry',
+-			'Engine/StandAloneEngine']),
++		CPPPATH=env['CPPPATH']+['DataClass/InteractionGeometry']),
+ 
+ 	env.SharedLibrary('FrictionLessElasticContactLaw',
+ 		['Engine/StandAloneEngine/FrictionLessElasticContactLaw.cpp'],
+ 		LIBS=env['LIBS']+['yade-base',
+-			
+ 			'yade-serialization',
+-			'yade-base',
+-			
+ 			'yade-multimethods',
+ 			'Momentum',
+ 			'Force',
+ 			'ClosestFeatures',
+-			'RigidBodyParameters'],
+-		CPPPATH=env['CPPPATH']+['$PREFIX/include',
+-			'Engine/StandAloneEngine']),
++			'RigidBodyParameters']),
+ 
+ 	env.SharedLibrary('BoxStack',
+ 		['PreProcessor/BoxStack.cpp'],
+ 		LIBS=env['LIBS']+['yade-base',
+-			
+ 			'FrictionLessElasticContactLaw',
+ 			'RigidBodyParameters',
+ 			'PhysicalActionVectorVector',
+@@ -148,8 +104,6 @@
+ 			'CundallNonViscousForceDamping',
+ 			'GravityEngine',
+ 			'yade-serialization',
+-			'yade-base',
+-			
+ 			'PhysicalActionContainerInitializer',
+ 			'PhysicalActionContainerReseter',
+ 			'InteractionGeometryMetaEngine',
+@@ -163,14 +117,11 @@
+ 			'MetaInteractingGeometry2AABB',
+ 			'TranslationEngine',
+ 			'yade-multimethods'],
+-		CPPPATH=env['CPPPATH']+['$PREFIX/include',
+-			'Engine/StandAloneEngine',
+-			'PreProcessor']),
++		CPPPATH=env['CPPPATH']+['Engine/StandAloneEngine']),
+ 
+ 	env.SharedLibrary('RotatingBox',
+ 		['PreProcessor/RotatingBox.cpp'],
+ 		LIBS=env['LIBS']+['yade-base',
+-			
+ 			'FrictionLessElasticContactLaw',
+ 			'RigidBodyParameters',
+ 			'InteractionVecSet',
+@@ -182,8 +133,6 @@
+ 			'CundallNonViscousMomentumDamping',
+ 			'MetaInteractingGeometry',
+ 			'yade-serialization',
+-			'yade-base',
+-			
+ 			'PhysicalActionContainerInitializer',
+ 			'PhysicalActionContainerReseter',
+ 			'GravityEngine',
+@@ -198,8 +147,6 @@
+ 			'MetaInteractingGeometry2AABB',
+ 			'RotationEngine',
+ 			'yade-multimethods'],
+-		CPPPATH=env['CPPPATH']+['$PREFIX/include',
+-			'Engine/StandAloneEngine',
+-			'PreProcessor'])
++		CPPPATH=env['CPPPATH']+['Engine/StandAloneEngine'])
+ ])
+ 
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000115.html">[Yade-commits] r1150 - in branches/scons-layout: . debian scripts
+</A></li>
+	<LI>Next message: <A HREF="000117.html">[Yade-commits] r1152 - in branches/scons-layout: . debian scripts
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#116">[ date ]</a>
+              <a href="thread.html#116">[ thread ]</a>
+              <a href="subject.html#116">[ subject ]</a>
+              <a href="author.html#116">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

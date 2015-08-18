@@ -1,0 +1,104 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1112 - branches/scons-layout
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2007/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1112%20-%20branches/scons-layout&In-Reply-To=%3C200703081338.l28DcX5F029575%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000076.html">
+   <LINK REL="Next"  HREF="000078.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1112 - branches/scons-layout</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1112%20-%20branches/scons-layout&In-Reply-To=%3C200703081338.l28DcX5F029575%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1112 - branches/scons-layout">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Thu Mar  8 14:38:33 CET 2007</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000076.html">[Yade-commits] r1111 - in branches/scons-layout: . debian
+</A></li>
+        <LI>Next message: <A HREF="000078.html">[Yade-commits] r1113 - branches/scons-layout
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#77">[ date ]</a>
+              <a href="thread.html#77">[ thread ]</a>
+              <a href="subject.html#77">[ subject ]</a>
+              <a href="author.html#77">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2007-03-08 14:38:33 +0100 (Thu, 08 Mar 2007)
+New Revision: 1112
+
+Modified:
+   branches/scons-layout/SConstruct
+Log:
+scons fix
+
+Modified: branches/scons-layout/SConstruct
+===================================================================
+--- branches/scons-layout/SConstruct	2007-03-08 13:35:52 UTC (rev 1111)
++++ branches/scons-layout/SConstruct	2007-03-08 13:38:33 UTC (rev 1112)
+@@ -206,6 +206,8 @@
+ 	env.Replace(QT_MOCCOMSTR='M ${SOURCES}')
+ 
+ ### DIRECTORIES
++## PREFIX must be absolute path. Why?!
++env['PREFIX']=os.path.abspath(env['PREFIX'])
+ 
+ # paths to in-tree SConscript files
+ libDirs=['lib','pkg/common','pkg/dem','pkg/fem','pkg/lattice','pkg/mass-spring','pkg/realtime-rigidbody','extra','gui']
+@@ -285,10 +287,11 @@
+ 	else: yadeRoot=prefix
+ 	yadeInc=join(yadeRoot,'include','yade')
+ 
+-	for root, dirs, files in os.walk('.'):
+-		for d in ('.svn','debian','doc','examples','scripts'): ## skip all files that are not part of sources in the proper sense!
++	for root, dirs, files in os.walk('.',topdown=True):
++		for d in ('.svn'): ## skip all files that are not part of sources in the proper sense!
+ 			try: dirs.remove(d)
+ 			except ValueError: pass
++		if not re.match(r'\.[/\\](core|lib|pkg|gui|extra)[/\\]?.*',root): continue
+ 		for f in files:
+ 			if f.split('.')[-1] in ('hpp','inl','ipp','tpp','h'):
+ 				#m=re.match('^\./([^/]*)/.*$',root)
+@@ -336,5 +339,3 @@
+ env.Command('tags',libDirs,&quot;ctags -R --extra=+q --fields=+n --exclude='.*' --exclude=yade-flat --exclude=include --exclude='*.so'&quot;)
+ env.Alias('doc',env.Command('doc/doxygen/html/index.html',libDirs,&quot;cd doc; doxygen Doxyfile&quot;))
+ 
+-
+-print env.subst('$PREFIX/lib/yade$POSTFIX/lib')
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000076.html">[Yade-commits] r1111 - in branches/scons-layout: . debian
+</A></li>
+	<LI>Next message: <A HREF="000078.html">[Yade-commits] r1113 - branches/scons-layout
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#77">[ date ]</a>
+              <a href="thread.html#77">[ thread ]</a>
+              <a href="subject.html#77">[ subject ]</a>
+              <a href="author.html#77">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

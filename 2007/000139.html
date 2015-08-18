@@ -1,0 +1,119 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1174 - trunk
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2007/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1174%20-%20trunk&In-Reply-To=%3C200705281437.l4SEbsej021999%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000138.html">
+   <LINK REL="Next"  HREF="000140.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1174 - trunk</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1174%20-%20trunk&In-Reply-To=%3C200705281437.l4SEbsej021999%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1174 - trunk">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Mon May 28 16:37:54 CEST 2007</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000138.html">[Yade-commits] r1173 - in trunk/pkg: common/Container	common/Engine/StandAloneEngine dem/Engine/EngineUnit
+</A></li>
+        <LI>Next message: <A HREF="000140.html">[Yade-commits] r1175 - in trunk: core gui/qt3	pkg/realtime-rigidbody/PreProcessor
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#139">[ date ]</a>
+              <a href="thread.html#139">[ thread ]</a>
+              <a href="subject.html#139">[ subject ]</a>
+              <a href="author.html#139">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2007-05-28 16:37:54 +0200 (Mon, 28 May 2007)
+New Revision: 1174
+
+Modified:
+   trunk/SConstruct
+Log:
+1. Fix soname on shared libs (no soname at all; bug with &quot;&quot; in the name previously). Is it good for something?
+2. Add 'features' option to scons, which can enable/disable python and log4cxx at compile-time (extensible)
+
+
+
+Modified: trunk/SConstruct
+===================================================================
+--- trunk/SConstruct	2007-05-28 14:37:24 UTC (rev 1173)
++++ trunk/SConstruct	2007-05-28 14:37:54 UTC (rev 1174)
+@@ -49,7 +49,8 @@
+ 	BoolOption('debug', 'Enable debugging information and disable optimizations',1),
+ 	BoolOption('profile','Enable profiling information',0),
+ 	BoolOption('optimize','Turn on heavy optimizations (generates SSE2 instructions)',0),
+-	ListOption('exclude','Components that will not be built','none',names=['gui','extra','common','dem','fem','lattice','mass-spring','realtime-rigidbody']),
++	ListOption('exclude','Yade components that will not be built','none',names=['gui','extra','common','dem','fem','lattice','mass-spring','realtime-rigidbody']),
++	ListOption('features','Optional features that are turned on','all',names=['python','log4cxx']),
+ 	('jobs','Number of jobs to run at the same time (same as -j, but saved)',4,None,int),
+ 	('extraModules', 'Extra directories with their own SConscript files (must be in-tree) (whitespace separated)',None,None,Split),
+ 	('buildPrefix','Where to create build-[version][variant] directory for intermediary files','..'),
+@@ -86,7 +87,7 @@
+ if not env.has_key('version'):
+ 	&quot;Attempts to get yade version from local svn tree; should be extended so that it works for releases as well (not yet applicable).&quot;
+ 	svnRevision=None
+-	for l in os.popen(&quot;svn info&quot;).readlines():
++	for l in os.popen(&quot;LC_ALL=c svn info&quot;).readlines():
+ 		m=re.match(r'Revision: ([0-9]+)',l)
+ 		if m: env['version']='svn'+m.group(1)
+ 	if not env.has_key('version'): env['version']='unknown'
+@@ -200,9 +201,9 @@
+ 		Exit(1)
+ 
+ 	# check optional libs
+-	if conf.CheckLibWithHeader('log4cxx','log4cxx/logger.h','c++','log4cxx::Logger::getLogger(&quot;foo&quot;);'):
++	if 'log4cxx' in env['features'] and conf.CheckLibWithHeader('log4cxx','log4cxx/logger.h','c++','log4cxx::Logger::getLogger(&quot;foo&quot;);'):
+ 		env.Append(LIBS='log4cxx',CPPDEFINES=['LOG4CXX'])
+-	if conf.CheckPython() and conf.CheckScientificPython():
++	if 'python' in env['features'] and conf.CheckPython() and conf.CheckScientificPython():
+ 		env.Append(CPPDEFINES=['EMBED_PYTHON'])
+ 
+ 	# append essential libs		
+@@ -287,7 +288,8 @@
+ ### LINKER
+ #env['NONPLUGIN_LIBS']=env['LIBS']
+ ## libs for all plugins
+-env.Append(LIBS=[],SHLINKFLAGS=['-Wl,-soname=\&quot;${TARGET.file}\&quot;','-rdynamic'])
++# Investigate whether soname is useful for something. Probably not: SHLINKFLAGS=['-Wl,-soname=${TARGET.file},'-rdynamic']
++env.Append(LIBS=[],SHLINKFLAGS=['-rdynamic'])
+ 
+ #env.Append(LIBS=['yade-core']); env.Append(SHLINKFLAGS=['-Wl,--no-undefined']);
+ 
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000138.html">[Yade-commits] r1173 - in trunk/pkg: common/Container	common/Engine/StandAloneEngine dem/Engine/EngineUnit
+</A></li>
+	<LI>Next message: <A HREF="000140.html">[Yade-commits] r1175 - in trunk: core gui/qt3	pkg/realtime-rigidbody/PreProcessor
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#139">[ date ]</a>
+              <a href="thread.html#139">[ thread ]</a>
+              <a href="subject.html#139">[ subject ]</a>
+              <a href="author.html#139">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

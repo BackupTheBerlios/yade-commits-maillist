@@ -1,0 +1,99 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1229 - trunk/pkg/dem/Engine/DeusExMachina
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2007/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1229%20-%20trunk/pkg/dem/Engine/DeusExMachina&In-Reply-To=%3C200707160935.l6G9Zwnu010143%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000193.html">
+   <LINK REL="Next"  HREF="000195.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1229 - trunk/pkg/dem/Engine/DeusExMachina</H1>
+    <B>chareyre at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1229%20-%20trunk/pkg/dem/Engine/DeusExMachina&In-Reply-To=%3C200707160935.l6G9Zwnu010143%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1229 - trunk/pkg/dem/Engine/DeusExMachina">chareyre at mail.berlios.de
+       </A><BR>
+    <I>Mon Jul 16 11:35:58 CEST 2007</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000193.html">[Yade-commits] r1228 - in trunk: . core	pkg/common/Engine/StandAloneEngine pkg/dem	pkg/dem/Engine/DeusExMachina pkg/dem/Engine/EngineUnit	pkg/dem/Engine/StandAloneEngine pkg/dem/PreProcessor
+</A></li>
+        <LI>Next message: <A HREF="000195.html">[Yade-commits] r1230 - in trunk/pkg/dem: .	DataClass/InteractionPhysics DataClass/PhysicalParameters	Engine/DeusExMachina Engine/EngineUnit	Engine/StandAloneEngine PreProcessor
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#194">[ date ]</a>
+              <a href="thread.html#194">[ thread ]</a>
+              <a href="subject.html#194">[ subject ]</a>
+              <a href="author.html#194">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: chareyre
+Date: 2007-07-16 11:35:58 +0200 (Mon, 16 Jul 2007)
+New Revision: 1229
+
+Modified:
+   trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.cpp
+Log:
+FIXED : TriaxialCompressionEngine was stopping the simulation at each 
+time step...
+
+
+
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.cpp	2007-07-16 07:50:51 UTC (rev 1228)
++++ trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.cpp	2007-07-16 09:35:58 UTC (rev 1229)
+@@ -111,12 +111,13 @@
+ 	if(!autoCompressionActivation &amp;&amp; UnbalancedForce&lt;=StabilityCriterion &amp;&amp; Omega::instance().getCurrentIteration() &gt; 1000)
+ 	{
+ 		internalCompaction = false;
+-		Phase1 = true;
+-		string fileName = &quot;../data/&quot; + Phase1End + &quot;_&quot; + 
+-		lexical_cast&lt;string&gt;(Omega::instance().getCurrentIteration()) + &quot;.xml&quot;;
+-		cerr &lt;&lt; &quot;saving snapshot: &quot; &lt;&lt; fileName &lt;&lt; &quot; ...&quot;;
+-		Omega::instance().saveSimulation(fileName);
+-		Omega::instance().stopSimulationLoop();
++		if (!Phase1) {		
++			string fileName = &quot;../data/&quot; + Phase1End + &quot;_&quot; + 
++			lexical_cast&lt;string&gt;(Omega::instance().getCurrentIteration()) + &quot;.xml&quot;;
++			cerr &lt;&lt; &quot;saving snapshot: &quot; &lt;&lt; fileName &lt;&lt; &quot; ...&quot;;
++			Omega::instance().saveSimulation(fileName);
++			Omega::instance().stopSimulationLoop();
++			Phase1 = true; }
+ 	}
+ 		
+ }
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000193.html">[Yade-commits] r1228 - in trunk: . core	pkg/common/Engine/StandAloneEngine pkg/dem	pkg/dem/Engine/DeusExMachina pkg/dem/Engine/EngineUnit	pkg/dem/Engine/StandAloneEngine pkg/dem/PreProcessor
+</A></li>
+	<LI>Next message: <A HREF="000195.html">[Yade-commits] r1230 - in trunk/pkg/dem: .	DataClass/InteractionPhysics DataClass/PhysicalParameters	Engine/DeusExMachina Engine/EngineUnit	Engine/StandAloneEngine PreProcessor
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#194">[ date ]</a>
+              <a href="thread.html#194">[ thread ]</a>
+              <a href="subject.html#194">[ subject ]</a>
+              <a href="author.html#194">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

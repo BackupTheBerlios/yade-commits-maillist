@@ -1,0 +1,1179 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1335 - in trunk: core extra extra/clump extra/tetra	extra/usct gui/py pkg/common/Engine/DeusExMachina	pkg/common/Engine/EngineUnit pkg/common/Engine/MetaEngine	pkg/common/Engine/StandAloneEngine	pkg/common/RenderingEngine/OpenGLRenderingEngine	pkg/dem/Engine/DeusExMachina pkg/dem/Engine/StandAloneEngine	pkg/fem/Engine/StandAloneEngine	pkg/mass-spring/Engine/StandAloneEngine	pkg/realtime-rigidbody/Engine/StandAloneEngine scripts
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1335%20-%20in%20trunk%3A%20core%20extra%20extra/clump%20extra/tetra%0A%09extra/usct%20gui/py%20pkg/common/Engine/DeusExMachina%0A%09pkg/common/Engine/EngineUnit%20pkg/common/Engine/MetaEngine%0A%09pkg/common/Engine/StandAloneEngine%0A%09pkg/common/RenderingEngine/OpenGLRenderingEngine%0A%09pkg/dem/Engine/DeusExMachina%20pkg/dem/Engine/StandAloneEngine%0A%09pkg/fem/Engine/StandAloneEngine%0A%09pkg/mass-spring/Engine/StandAloneEngine%0A%09pkg/realtime-rigidbody/Engine/StandAloneEngine%20scripts&In-Reply-To=%3C200805021000.m42A0IxJ017374%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000296.html">
+   <LINK REL="Next"  HREF="000298.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1335 - in trunk: core extra extra/clump extra/tetra	extra/usct gui/py pkg/common/Engine/DeusExMachina	pkg/common/Engine/EngineUnit pkg/common/Engine/MetaEngine	pkg/common/Engine/StandAloneEngine	pkg/common/RenderingEngine/OpenGLRenderingEngine	pkg/dem/Engine/DeusExMachina pkg/dem/Engine/StandAloneEngine	pkg/fem/Engine/StandAloneEngine	pkg/mass-spring/Engine/StandAloneEngine	pkg/realtime-rigidbody/Engine/StandAloneEngine scripts</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1335%20-%20in%20trunk%3A%20core%20extra%20extra/clump%20extra/tetra%0A%09extra/usct%20gui/py%20pkg/common/Engine/DeusExMachina%0A%09pkg/common/Engine/EngineUnit%20pkg/common/Engine/MetaEngine%0A%09pkg/common/Engine/StandAloneEngine%0A%09pkg/common/RenderingEngine/OpenGLRenderingEngine%0A%09pkg/dem/Engine/DeusExMachina%20pkg/dem/Engine/StandAloneEngine%0A%09pkg/fem/Engine/StandAloneEngine%0A%09pkg/mass-spring/Engine/StandAloneEngine%0A%09pkg/realtime-rigidbody/Engine/StandAloneEngine%20scripts&In-Reply-To=%3C200805021000.m42A0IxJ017374%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1335 - in trunk: core extra extra/clump extra/tetra	extra/usct gui/py pkg/common/Engine/DeusExMachina	pkg/common/Engine/EngineUnit pkg/common/Engine/MetaEngine	pkg/common/Engine/StandAloneEngine	pkg/common/RenderingEngine/OpenGLRenderingEngine	pkg/dem/Engine/DeusExMachina pkg/dem/Engine/StandAloneEngine	pkg/fem/Engine/StandAloneEngine	pkg/mass-spring/Engine/StandAloneEngine	pkg/realtime-rigidbody/Engine/StandAloneEngine scripts">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Fri May  2 12:00:18 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000296.html">[Yade-commits] r1334 - in trunk: core gui gui/py scripts
+</A></li>
+        <LI>Next message: <A HREF="000298.html">[Yade-commits] r1336 - trunk/core
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#297">[ date ]</a>
+              <a href="thread.html#297">[ thread ]</a>
+              <a href="subject.html#297">[ subject ]</a>
+              <a href="author.html#297">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2008-05-02 12:00:06 +0200 (Fri, 02 May 2008)
+New Revision: 1335
+
+Modified:
+   trunk/core/Engine.hpp
+   trunk/core/EngineUnit.hpp
+   trunk/core/Omega.cpp
+   trunk/core/PhysicalAction.hpp
+   trunk/core/SConscript
+   trunk/extra/Brefcom.hpp
+   trunk/extra/clump/Shop.cpp
+   trunk/extra/tetra/Tetra.hpp
+   trunk/extra/usct/UniaxialStrainControlledTest.cpp
+   trunk/extra/usct/UniaxialStrainControlledTest.hpp
+   trunk/gui/py/PythonUI_rc.py
+   trunk/gui/py/yadeControl.cpp
+   trunk/pkg/common/Engine/DeusExMachina/CentralGravityEngine.hpp
+   trunk/pkg/common/Engine/DeusExMachina/ForceEngine.hpp
+   trunk/pkg/common/Engine/DeusExMachina/GravityEngine.hpp
+   trunk/pkg/common/Engine/DeusExMachina/MomentEngine.hpp
+   trunk/pkg/common/Engine/EngineUnit/CundallNonViscousForceDamping.hpp
+   trunk/pkg/common/Engine/EngineUnit/CundallNonViscousMomentumDamping.hpp
+   trunk/pkg/common/Engine/EngineUnit/NewtonsForceLaw.hpp
+   trunk/pkg/common/Engine/EngineUnit/NewtonsMomentumLaw.hpp
+   trunk/pkg/common/Engine/MetaEngine/BoundingVolumeMetaEngine.hpp
+   trunk/pkg/common/Engine/MetaEngine/GeometricalModelMetaEngine.hpp
+   trunk/pkg/common/Engine/MetaEngine/InteractingGeometryMetaEngine.hpp
+   trunk/pkg/common/Engine/MetaEngine/InteractionGeometryMetaEngine.hpp
+   trunk/pkg/common/Engine/MetaEngine/InteractionPhysicsMetaEngine.hpp
+   trunk/pkg/common/Engine/MetaEngine/PhysicalActionApplier.hpp
+   trunk/pkg/common/Engine/MetaEngine/PhysicalActionDamper.hpp
+   trunk/pkg/common/Engine/MetaEngine/PhysicalParametersMetaEngine.hpp
+   trunk/pkg/common/Engine/StandAloneEngine/PhysicalActionContainerInitializer.cpp
+   trunk/pkg/common/Engine/StandAloneEngine/PhysicalActionContainerInitializer.hpp
+   trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.hpp
+   trunk/pkg/dem/Engine/DeusExMachina/CapillaryRecorder.hpp
+   trunk/pkg/dem/Engine/DeusExMachina/HydraulicForceEngine.hpp
+   trunk/pkg/dem/Engine/DeusExMachina/MakeItFlat.hpp
+   trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.hpp
+   trunk/pkg/dem/Engine/DeusExMachina/ResultantForceEngine.hpp
+   trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.hpp
+   trunk/pkg/dem/Engine/DeusExMachina/WallStressRecorder.hpp
+   trunk/pkg/dem/Engine/StandAloneEngine/CapillaryCohesiveLaw.hpp
+   trunk/pkg/dem/Engine/StandAloneEngine/CohesiveFrictionalContactLaw.hpp
+   trunk/pkg/dem/Engine/StandAloneEngine/ElasticContactLaw.hpp
+   trunk/pkg/dem/Engine/StandAloneEngine/ForceRecorder.hpp
+   trunk/pkg/dem/Engine/StandAloneEngine/GeometricalModelForceColorizer.hpp
+   trunk/pkg/dem/Engine/StandAloneEngine/GlobalStiffnessCounter.hpp
+   trunk/pkg/dem/Engine/StandAloneEngine/GlobalStiffnessTimeStepper.hpp
+   trunk/pkg/dem/Engine/StandAloneEngine/MyTetrahedronLaw.hpp
+   trunk/pkg/dem/Engine/StandAloneEngine/SimpleViscoelasticContactLaw.hpp
+   trunk/pkg/dem/Engine/StandAloneEngine/VolumicContactLaw.hpp
+   trunk/pkg/fem/Engine/StandAloneEngine/FEMLaw.hpp
+   trunk/pkg/mass-spring/Engine/StandAloneEngine/MassSpringLaw.hpp
+   trunk/pkg/realtime-rigidbody/Engine/StandAloneEngine/FrictionLessElasticContactLaw.hpp
+   trunk/scripts/default-test.py
+   trunk/scripts/simple-scene.py
+Log:
+1. Define macro NEEDS_BEX() that engines can use to advertise what physical actions they need. This avoids the necessity of passing that to PhysicalActionContainerInitializer. The change is backwards-compatible, all present engines were adapted however.
+2. Fix BrefcomTestGen and USCTGen: don't crash anymore.
+3. Small fixes in python code.
+
+
+
+Modified: trunk/core/Engine.hpp
+===================================================================
+--- trunk/core/Engine.hpp	2008-05-01 07:29:44 UTC (rev 1334)
++++ trunk/core/Engine.hpp	2008-05-02 10:00:06 UTC (rev 1335)
+@@ -24,6 +24,8 @@
+ 	
+ 		virtual bool isActivated() { return true; };
+ 		virtual void action(MetaBody*) { throw; };
++		/* returns all BodyExternalVariable's (Bex; formerly PhysicalActions) that this engine needs */
++		virtual list&lt;string&gt; getNeededBex(){return list&lt;string&gt;();}
+ 
+ 	REGISTER_CLASS_NAME(Engine);
+ 	REGISTER_BASE_CLASS_NAME(Serializable);
+
+Modified: trunk/core/EngineUnit.hpp
+===================================================================
+--- trunk/core/EngineUnit.hpp	2008-05-01 07:29:44 UTC (rev 1334)
++++ trunk/core/EngineUnit.hpp	2008-05-02 10:00:06 UTC (rev 1335)
+@@ -16,6 +16,7 @@
+ class EngineUnit : public Serializable
+ {
+ 	public: virtual vector&lt;std::string&gt; getFunctorTypes(){throw;}
++		virtual list&lt;string&gt; getNeededBex(){return list&lt;string&gt;();}
+ 	REGISTER_CLASS_NAME(EngineUnit);
+ 	REGISTER_BASE_CLASS_NAME(Serializable);
+ };
+
+Modified: trunk/core/Omega.cpp
+===================================================================
+--- trunk/core/Omega.cpp	2008-05-01 07:29:44 UTC (rev 1334)
++++ trunk/core/Omega.cpp	2008-05-02 10:00:06 UTC (rev 1335)
+@@ -137,8 +137,8 @@
+ 		for( ; bci!=bciEnd ; ++bci)
+ 		{
+ 			string name = *bci;
+-			if (name==&quot;MetaDispatchingEngine1D&quot; || name==&quot;MetaDispatchingEngine2D&quot;)
+-				(*dli).second.baseClasses.insert(&quot;MetaDispatchingEngine&quot;);
++			if (name==&quot;MetaEngine1D&quot; || name==&quot;MetaEngine2D&quot;)
++				(*dli).second.baseClasses.insert(&quot;MetaEngine&quot;);
+ 			else if (name==&quot;EngineUnit1D&quot; || name==&quot;EngineUnit2D&quot;)
+ 				(*dli).second.baseClasses.insert(&quot;EngineUnit&quot;);
+ 			else if (name==&quot;Serializable&quot;)
+
+Modified: trunk/core/PhysicalAction.hpp
+===================================================================
+--- trunk/core/PhysicalAction.hpp	2008-05-01 07:29:44 UTC (rev 1334)
++++ trunk/core/PhysicalAction.hpp	2008-05-02 10:00:06 UTC (rev 1335)
+@@ -15,6 +15,8 @@
+ #include&lt;yade/lib-serialization/Serializable.hpp&gt;
+ #include&lt;yade/lib-multimethods/Indexable.hpp&gt;
+ 
++/* Helper macro for Engines and Engine units to declare what PhysicalParameters (Bex, BodyExternalVariables) they want to use */
++#define NEEDS_BEX(...) public: virtual std::list&lt;std::string&gt; getNeededBex(){ const char* bex[]={ __VA_ARGS__ &quot;&quot;, NULL}; std::list&lt;std::string&gt; ret; for(int i=0; bex[i]!=NULL;i++){ret.push_back(std::string(bex[i]));} return ret; }
+ 
+ class PhysicalAction : public Serializable, public Indexable
+ {
+
+Modified: trunk/core/SConscript
+===================================================================
+--- trunk/core/SConscript	2008-05-01 07:29:44 UTC (rev 1334)
++++ trunk/core/SConscript	2008-05-02 10:00:06 UTC (rev 1335)
+@@ -12,7 +12,7 @@
+ 			'Interaction.cpp',
+ 			'InteractionContainer.cpp',
+ 			'MetaBody.cpp',
+-			'MetaDispatchingEngine.cpp',
++			'MetaEngine.cpp',
+ 			'NullGUI.cpp',
+ 			'Omega.cpp',
+ 			'PhysicalActionContainer.cpp',
+
+Modified: trunk/extra/Brefcom.hpp
+===================================================================
+--- trunk/extra/Brefcom.hpp	2008-05-01 07:29:44 UTC (rev 1334)
++++ trunk/extra/Brefcom.hpp	2008-05-02 10:00:06 UTC (rev 1335)
+@@ -122,7 +122,7 @@
+ 			recStream.open(&quot;/tmp/breflaw.data&quot;)
+ 		#endif
+ 		; }
+-
++	NEEDS_BEX(&quot;Force&quot;,&quot;Momentum&quot;);
+ 	REGISTER_CLASS_NAME(BrefcomLaw);
+ 	REGISTER_BASE_CLASS_NAME(InteractionSolver);
+ 	DECLARE_LOGGER;
+@@ -230,6 +230,7 @@
+ 		virtual bool isActivated(){return (Omega::instance().getCurrentIteration()%interval)==0;}
+ 	protected :
+ 		void registerAttributes(){REGISTER_ATTRIBUTE(interval);}
++	NEEDS_BEX(&quot;Force&quot;,&quot;Momentum&quot;,&quot;GlobalStiffness&quot;);
+ 	REGISTER_CLASS_NAME(BrefcomStiffnessCounter);
+ 	REGISTER_BASE_CLASS_NAME(InteractionSolver);
+ };
+
+Modified: trunk/extra/clump/Shop.cpp
+===================================================================
+--- trunk/extra/clump/Shop.cpp	2008-05-01 07:29:44 UTC (rev 1334)
++++ trunk/extra/clump/Shop.cpp	2008-05-02 10:00:06 UTC (rev 1335)
+@@ -442,12 +442,13 @@
+ 
+ 
+ vector&lt;pair&lt;Vector3r,Real&gt; &gt; Shop::loadSpheresSmallSdecXyz(Vector3r&amp; minXYZ, Vector3r&amp; maxXYZ){
+-	int i=0;
++	int i=-1;
+ 	vector&lt;pair&lt;Vector3r,Real&gt; &gt; spheres;
+-	while(Shop::smallSdecXyzData[i].r&lt;0){
++	while(Shop::smallSdecXyzData[++i].r&gt;0){
+ 		Vector3r C(smallSdecXyzData[i].C0,smallSdecXyzData[i].C1,smallSdecXyzData[i].C2); Real r(smallSdecXyzData[i].r);
+ 		for(int j=0; j&lt;3; j++) { minXYZ[j]=(spheres.size()&gt;0?min(C[j]-r,minXYZ[j]):C[j]-r); maxXYZ[j]=(spheres.size()&gt;0?max(C[j]+r,maxXYZ[j]):C[j]+r);}
+ 		spheres.push_back(pair&lt;Vector3r,Real&gt;(C,r));
++		//LOG_DEBUG(&quot;Loaded sphere with radius &quot;&lt;&lt;r&lt;&lt;&quot; at &quot;&lt;&lt;C);
+ 	}
+ 	return spheres;
+ }
+@@ -1065,7 +1066,7 @@
+ 	{0.362861,0.429363,0.031830,0.012967},
+ 	{0.340153,0.437578,0.060896,0.007843},
+ 	{0.370512,0.415453,0.055970,0.010546},
+-	{0,0,0,0}
++	{-1.,-1.,-1.,-1. } /* sentinel: non-positive radius */
+ };
+ 
+ /* Create permanent link between partcles that have transient link now, return number of created permalinks.
+
+Modified: trunk/extra/tetra/Tetra.hpp
+===================================================================
+--- trunk/extra/tetra/Tetra.hpp	2008-05-01 07:29:44 UTC (rev 1334)
++++ trunk/extra/tetra/Tetra.hpp	2008-05-02 10:00:06 UTC (rev 1335)
+@@ -152,6 +152,7 @@
+ 		DECLARE_LOGGER;
+ 	protected:
+ 		void registerAttributes(){InteractionSolver::registerAttributes(); /* &#8230; */ }
++		NEEDS_BEX(&quot;Force&quot;,&quot;Momentum&quot;);
+ 		REGISTER_CLASS_NAME(TetraLaw);
+ 		REGISTER_BASE_CLASS_NAME(InteractionSolver);
+ };
+
+Modified: trunk/extra/usct/UniaxialStrainControlledTest.cpp
+===================================================================
+--- trunk/extra/usct/UniaxialStrainControlledTest.cpp	2008-05-01 07:29:44 UTC (rev 1334)
++++ trunk/extra/usct/UniaxialStrainControlledTest.cpp	2008-05-02 10:00:06 UTC (rev 1335)
+@@ -15,13 +15,15 @@
+ void UniaxialStrainer::init(){
+ 	needsInit=false;
+ 
++	assert(posIds.size()&gt;0);
++	assert(negIds.size()&gt;0);
+ 	posCoords.clear(); negCoords.clear();
+ 	BOOST_FOREACH(body_id_t id,posIds){ const shared_ptr&lt;Body&gt;&amp; b=Body::byId(id); posCoords.push_back(b-&gt;physicalParameters-&gt;se3.position[axis]); b-&gt;isDynamic=false;}
+ 	BOOST_FOREACH(body_id_t id,negIds){ const shared_ptr&lt;Body&gt;&amp; b=Body::byId(id); negCoords.push_back(b-&gt;physicalParameters-&gt;se3.position[axis]); b-&gt;isDynamic=false;}
+ 	assert(posIds.size()==posCoords.size() &amp;&amp; negIds.size()==negCoords.size());
+ 
+-	originalLength=USCT_AXIS_COORD(posIds[0])-USCT_AXIS_COORD(negIds[0]);
+-	LOG_DEBUG(&quot;Reference particles: positive #&quot;&lt;&lt;posIds[0]&lt;&lt;&quot; at &quot;&lt;&lt;USCT_AXIS_COORD(posIds[0])&lt;&lt;&quot;; negative #&quot;&lt;&lt;negIds[0]&lt;&lt;&quot; at &quot;&lt;&lt;USCT_AXIS_COORD(negIds[0]));
++	originalLength=axisCoord(posIds[0])-axisCoord(negIds[0]);
++	LOG_DEBUG(&quot;Reference particles: positive #&quot;&lt;&lt;posIds[0]&lt;&lt;&quot; at &quot;&lt;&lt;axisCoord(posIds[0])&lt;&lt;&quot;; negative #&quot;&lt;&lt;negIds[0]&lt;&lt;&quot; at &quot;&lt;&lt;axisCoord(negIds[0]));
+ 	LOG_INFO(&quot;Setting initial length to &quot;&lt;&lt;originalLength);
+ 	if(originalLength&lt;=0) LOG_FATAL(&quot;Initial length is negative or zero (swapped reference particles?)! &quot;&lt;&lt;originalLength);
+ 	assert(originalLength&gt;0);
+@@ -35,7 +37,7 @@
+ 		crossSectionArea=1.;
+ 		LOG_WARN(&quot;No Axis Aligned Bounding Box for rootBody, using garbage value (&quot;&lt;&lt;crossSectionArea&lt;&lt;&quot;) for crossSectionArea!&quot;);
+ 	}
+-	assert(crossSectionArea&gt;1);
++	assert(crossSectionArea&gt;0);
+ 
+ 	recStream.open(&quot;/tmp/usct.data&quot;);
+ }
+@@ -43,7 +45,7 @@
+ void UniaxialStrainer::applyCondition(MetaBody* rootBody){
+ 	if(needsInit) init();
+ 	// postconditions for initParams
+-	assert(posIds.size()==posCoords.size() &amp;&amp; negIds.size()==negCoords.size() &amp;&amp; originalLength&gt;0 &amp;&amp; crossSectionArea&gt;1);
++	assert(posIds.size()==posCoords.size() &amp;&amp; negIds.size()==negCoords.size() &amp;&amp; originalLength&gt;0 &amp;&amp; crossSectionArea&gt;0);
+ 	//nothing to do
+ 	if(posIds.size()==0 || negIds.size()==0) return;
+ 	// linearly increase strain to the desired value
+@@ -52,14 +54,14 @@
+ 	Real dAX=(asymmetry==0?.5:1)*currentStrainRate*originalLength*Omega::instance().getTimeStep();
+ 	for(size_t i=0; i&lt;negIds.size(); i++){
+ 		if(asymmetry==0 || asymmetry==-1 /* for +1, don't move*/) negCoords[i]-=dAX;
+-		USCT_AXIS_COORD(negIds[i])=negCoords[i]; // update current position
++		axisCoord(negIds[i])=negCoords[i]; // update current position
+ 	}
+ 	for(size_t i=0; i&lt;posIds.size(); i++){
+ 		if(asymmetry==0 || asymmetry==1 /* for -1, don't move */) posCoords[i]+=dAX;
+-		USCT_AXIS_COORD(posIds[i])=posCoords[i];
++		axisCoord(posIds[i])=posCoords[i];
+ 	}
+ 
+-	Real axialLength=USCT_AXIS_COORD(posIds[0])-USCT_AXIS_COORD(negIds[0]);
++	Real axialLength=axisCoord(posIds[0])-axisCoord(negIds[0]);
+ 	Real strain=axialLength/originalLength-1;
+ 	if(Omega::instance().getCurrentIteration()%400==0) TRVAR5(dAX,axialLength,originalLength,currentStrainRate,strain);
+ 
+
+Modified: trunk/extra/usct/UniaxialStrainControlledTest.hpp
+===================================================================
+--- trunk/extra/usct/UniaxialStrainControlledTest.hpp	2008-05-01 07:29:44 UTC (rev 1334)
++++ trunk/extra/usct/UniaxialStrainControlledTest.hpp	2008-05-02 10:00:06 UTC (rev 1335)
+@@ -5,6 +5,7 @@
+ #include&lt;yade/extra/Shop.hpp&gt;
+ #include&lt;yade/core/FileGenerator.hpp&gt;
+ #include&lt;yade/core/DeusExMachina.hpp&gt;
++#include&lt;yade/core/PhysicalAction.hpp&gt;
+ 
+ class USCTGen: public FileGenerator {
+ 	private:
+@@ -27,6 +28,7 @@
+ 			REGISTER_ATTRIBUTE(damping);
+ 			REGISTER_ATTRIBUTE(cohesiveThresholdIter);
+ 		}
++	NEEDS_BEX(&quot;Force&quot;,&quot;Momentum&quot;,&quot;GlobalStiffness&quot;);
+ 	REGISTER_CLASS_NAME(USCTGen);
+ 	REGISTER_BASE_CLASS_NAME(FileGenerator);
+ 	DECLARE_LOGGER;
+@@ -42,7 +44,7 @@
+ 		void computeAxialForce(MetaBody* rootBody);
+ 		ofstream recStream;
+ 		bool needsInit;
+-		#define USCT_AXIS_COORD(id) (Body::byId(id)-&gt;physicalParameters-&gt;se3.position[axis])
++		Real&amp; axisCoord(body_id_t id){ return Body::byId(id)-&gt;physicalParameters-&gt;se3.position[axis]; };
+ 	public:
+ 		Real strainRate,currentStrainRate,originalLength,limitStrain;
+ 		Real sumPosForces,sumNegForces;
+
+Modified: trunk/gui/py/PythonUI_rc.py
+===================================================================
+--- trunk/gui/py/PythonUI_rc.py	2008-05-01 07:29:44 UTC (rev 1334)
++++ trunk/gui/py/PythonUI_rc.py	2008-05-02 10:00:06 UTC (rev 1335)
+@@ -10,6 +10,11 @@
+ 
+ from yade.wrapper import *
+ 
++# python2.4 workaround (so that quit() works as it does in 2.5)
++if not callable(__builtins__.quit):
++	def _quit(): import sys; sys.exit(0)
++	__builtins__.quit=_quit
++
+ ## run simulation if requested from the command line
+ if runtime.simulation:
+ 	print &quot;Running simulation &quot;+runtime.simulation
+
+Modified: trunk/gui/py/yadeControl.cpp
+===================================================================
+--- trunk/gui/py/yadeControl.cpp	2008-05-01 07:29:44 UTC (rev 1334)
++++ trunk/gui/py/yadeControl.cpp	2008-05-02 10:00:06 UTC (rev 1335)
+@@ -22,9 +22,9 @@
+ #include&lt;yade/core/FileGenerator.hpp&gt;
+ 
+ 
+-#include&lt;yade/core/MetaDispatchingEngine.hpp&gt;
+-#include&lt;yade/core/MetaDispatchingEngine1D.hpp&gt;
+-#include&lt;yade/core/MetaDispatchingEngine2D.hpp&gt;
++#include&lt;yade/core/MetaEngine.hpp&gt;
++#include&lt;yade/core/MetaEngine1D.hpp&gt;
++#include&lt;yade/core/MetaEngine2D.hpp&gt;
+ #include&lt;yade/core/StandAloneEngine.hpp&gt;
+ #include&lt;yade/core/DeusExMachina.hpp&gt;
+ #include&lt;yade/core/EngineUnit.hpp&gt;
+@@ -157,11 +157,11 @@
+ BASIC_PY_PROXY_TAIL;
+ 
+ 
+-BASIC_PY_PROXY_HEAD(pyMetaEngine,MetaDispatchingEngine)
++BASIC_PY_PROXY_HEAD(pyMetaEngine,MetaEngine)
+ 		// additional constructor
+ 		pyMetaEngine(string clss, python::list functors){init(clss); functors_set(functors);}
+ 		python::list functors_get(void){
+-			ensureAcc(); shared_ptr&lt;MetaDispatchingEngine&gt; me=dynamic_pointer_cast&lt;MetaDispatchingEngine&gt;(proxee); if(!me) throw runtime_error(&quot;Proxied class not a MetaDispatchingEngine (WTF?)&quot;); python::list ret;
++			ensureAcc(); shared_ptr&lt;MetaEngine&gt; me=dynamic_pointer_cast&lt;MetaEngine&gt;(proxee); if(!me) throw runtime_error(&quot;Proxied class not a MetaEngine (WTF?)&quot;); python::list ret;
+ 			/* garbage design: functorArguments are instances of EngineUnits, but they may not be present; therefore, only use them if they exist; our pyMetaEngine, however, will always have both names and EnguneUnit objects in the same count */
+ 			for(size_t i=0; i&lt;me-&gt;functorNames.size(); i++){
+ 				shared_ptr&lt;EngineUnit&gt; eu;
+@@ -176,7 +176,7 @@
+ 			return ret;
+ 		}
+ 		void functors_set(python::list ftrs){
+-			ensureAcc(); shared_ptr&lt;MetaDispatchingEngine&gt; me=dynamic_pointer_cast&lt;MetaDispatchingEngine&gt;(proxee); if(!me) throw runtime_error(&quot;Proxied class not a MetaDispatchingEngine. (WTF?)&quot;);
++			ensureAcc(); shared_ptr&lt;MetaEngine&gt; me=dynamic_pointer_cast&lt;MetaEngine&gt;(proxee); if(!me) throw runtime_error(&quot;Proxied class not a MetaEngine. (WTF?)&quot;);
+ 			me-&gt;clear(); int len=PySequence_Size(ftrs.ptr()) /*[boost1.34] python::len(ftrs)*/;
+ 			for(int i=0; i&lt;len; i++){
+ 				python::extract&lt;pyEngineUnit&gt; euEx(ftrs[i]); if(!euEx.check()) throw invalid_argument(&quot;Unable to extract type EngineUnit from sequence.&quot;);
+@@ -363,8 +363,8 @@
+ 		python::list ret; 
+ 		BOOST_FOREACH(shared_ptr&lt;Engine&gt;&amp; eng, engContainer){
+ 			#define APPEND_ENGINE_IF_POSSIBLE(engineType,pyEngineType) { shared_ptr&lt;engineType&gt; e=dynamic_pointer_cast&lt;engineType&gt;(eng); if(e) { ret.append(pyEngineType(e)); continue; } }
+-			APPEND_ENGINE_IF_POSSIBLE(MetaDispatchingEngine,pyMetaEngine); APPEND_ENGINE_IF_POSSIBLE(StandAloneEngine,pyStandAloneEngine); APPEND_ENGINE_IF_POSSIBLE(DeusExMachina,pyDeusExMachina);
+-			throw std::runtime_error(&quot;Unknown engine type: `&quot;+eng-&gt;getClassName()+&quot;' (only MetaDispatchingEngine, StandAloneEngine and DeusExMachina are supported)&quot;);
++			APPEND_ENGINE_IF_POSSIBLE(MetaEngine,pyMetaEngine); APPEND_ENGINE_IF_POSSIBLE(StandAloneEngine,pyStandAloneEngine); APPEND_ENGINE_IF_POSSIBLE(DeusExMachina,pyDeusExMachina);
++			throw std::runtime_error(&quot;Unknown engine type: `&quot;+eng-&gt;getClassName()+&quot;' (only MetaEngine, StandAloneEngine and DeusExMachina are supported)&quot;);
+ 		}
+ 		return ret;
+ 	}
+
+Modified: trunk/pkg/common/Engine/DeusExMachina/CentralGravityEngine.hpp
+===================================================================
+--- trunk/pkg/common/Engine/DeusExMachina/CentralGravityEngine.hpp	2008-05-01 07:29:44 UTC (rev 1334)
++++ trunk/pkg/common/Engine/DeusExMachina/CentralGravityEngine.hpp	2008-05-02 10:00:06 UTC (rev 1335)
+@@ -26,6 +26,7 @@
+ 		virtual void applyCondition(MetaBody*);
+ 	protected:
+ 		virtual void registerAttributes(){REGISTER_ATTRIBUTE(centralBody); REGISTER_ATTRIBUTE(kappa);}
++		NEEDS_BEX(&quot;Force&quot;);
+ 		REGISTER_CLASS_NAME(CentralGravityEngine);
+ 		REGISTER_BASE_CLASS_NAME(DeusExMachina);
+ };
+@@ -49,6 +50,7 @@
+ 		virtual void applyCondition(MetaBody*);
+ 	protected:
+ 		virtual void registerAttributes(){REGISTER_ATTRIBUTE(axisPoint); REGISTER_ATTRIBUTE(axisDirection); REGISTER_ATTRIBUTE(acceleration); }
++		NEEDS_BEX(&quot;Force&quot;);
+ 		REGISTER_CLASS_NAME(AxialGravityEngine);
+ 		REGISTER_BASE_CLASS_NAME(DeusExMachina);
+ 		DECLARE_LOGGER;
+
+Modified: trunk/pkg/common/Engine/DeusExMachina/ForceEngine.hpp
+===================================================================
+--- trunk/pkg/common/Engine/DeusExMachina/ForceEngine.hpp	2008-05-01 07:29:44 UTC (rev 1334)
++++ trunk/pkg/common/Engine/DeusExMachina/ForceEngine.hpp	2008-05-02 10:00:06 UTC (rev 1335)
+@@ -27,6 +27,7 @@
+ 	
+ 	protected :
+ 		virtual void registerAttributes();
++	NEEDS_BEX(&quot;Force&quot;);
+ 	REGISTER_CLASS_NAME(ForceEngine);
+ 	REGISTER_BASE_CLASS_NAME(DeusExMachina);
+ };
+
+Modified: trunk/pkg/common/Engine/DeusExMachina/GravityEngine.hpp
+===================================================================
+--- trunk/pkg/common/Engine/DeusExMachina/GravityEngine.hpp	2008-05-01 07:29:44 UTC (rev 1334)
++++ trunk/pkg/common/Engine/DeusExMachina/GravityEngine.hpp	2008-05-02 10:00:06 UTC (rev 1335)
+@@ -27,6 +27,7 @@
+ 	
+ 	protected :
+ 		virtual void registerAttributes();
++	NEEDS_BEX(&quot;Force&quot;);
+ 	REGISTER_CLASS_NAME(GravityEngine);
+ 	REGISTER_BASE_CLASS_NAME(DeusExMachina);
+ };
+
+Modified: trunk/pkg/common/Engine/DeusExMachina/MomentEngine.hpp
+===================================================================
+--- trunk/pkg/common/Engine/DeusExMachina/MomentEngine.hpp	2008-05-01 07:29:44 UTC (rev 1334)
++++ trunk/pkg/common/Engine/DeusExMachina/MomentEngine.hpp	2008-05-02 10:00:06 UTC (rev 1335)
+@@ -27,6 +27,7 @@
+ 	
+ 	protected :
+ 		virtual void registerAttributes();
++	NEEDS_BEX(&quot;Momentum&quot;);
+ 	REGISTER_CLASS_NAME(MomentEngine);
+ 	REGISTER_BASE_CLASS_NAME(DeusExMachina);
+ };
+
+Modified: trunk/pkg/common/Engine/EngineUnit/CundallNonViscousForceDamping.hpp
+===================================================================
+--- trunk/pkg/common/Engine/EngineUnit/CundallNonViscousForceDamping.hpp	2008-05-01 07:29:44 UTC (rev 1334)
++++ trunk/pkg/common/Engine/EngineUnit/CundallNonViscousForceDamping.hpp	2008-05-02 10:00:06 UTC (rev 1335)
+@@ -25,8 +25,8 @@
+ 	protected :
+ 		virtual void registerAttributes();
+ 
++	NEEDS_BEX(&quot;Force&quot;);
+ 	FUNCTOR2D(Force,ParticleParameters);
+-
+ 	REGISTER_CLASS_NAME(CundallNonViscousForceDamping);
+ 	REGISTER_BASE_CLASS_NAME(PhysicalActionDamperUnit);
+ };
+
+Modified: trunk/pkg/common/Engine/EngineUnit/CundallNonViscousMomentumDamping.hpp
+===================================================================
+--- trunk/pkg/common/Engine/EngineUnit/CundallNonViscousMomentumDamping.hpp	2008-05-01 07:29:44 UTC (rev 1334)
++++ trunk/pkg/common/Engine/EngineUnit/CundallNonViscousMomentumDamping.hpp	2008-05-02 10:00:06 UTC (rev 1335)
+@@ -25,6 +25,7 @@
+ 	protected :
+ 		 virtual void registerAttributes();
+ 
++	NEEDS_BEX(&quot;Momentum&quot;);
+ 	FUNCTOR2D(Momentum,RigidBodyParameters);
+ 	REGISTER_CLASS_NAME(CundallNonViscousMomentumDamping);
+ 	REGISTER_BASE_CLASS_NAME(PhysicalActionDamperUnit);
+
+Modified: trunk/pkg/common/Engine/EngineUnit/NewtonsForceLaw.hpp
+===================================================================
+--- trunk/pkg/common/Engine/EngineUnit/NewtonsForceLaw.hpp	2008-05-01 07:29:44 UTC (rev 1334)
++++ trunk/pkg/common/Engine/EngineUnit/NewtonsForceLaw.hpp	2008-05-02 10:00:06 UTC (rev 1335)
+@@ -17,7 +17,7 @@
+ 		virtual void go( 	  const shared_ptr&lt;PhysicalAction&gt;&amp;
+ 					, const shared_ptr&lt;PhysicalParameters&gt;&amp;
+ 					, const Body*);
+-
++	NEEDS_BEX(&quot;Force&quot;);
+ 	FUNCTOR2D(Force,ParticleParameters);
+ 	REGISTER_CLASS_NAME(NewtonsForceLaw);
+ 	REGISTER_BASE_CLASS_NAME(PhysicalActionApplierUnit);
+
+Modified: trunk/pkg/common/Engine/EngineUnit/NewtonsMomentumLaw.hpp
+===================================================================
+--- trunk/pkg/common/Engine/EngineUnit/NewtonsMomentumLaw.hpp	2008-05-01 07:29:44 UTC (rev 1334)
++++ trunk/pkg/common/Engine/EngineUnit/NewtonsMomentumLaw.hpp	2008-05-02 10:00:06 UTC (rev 1335)
+@@ -17,7 +17,8 @@
+ 		virtual void go( 	  const shared_ptr&lt;PhysicalAction&gt;&amp;
+ 					, const shared_ptr&lt;PhysicalParameters&gt;&amp;
+ 					, const Body*);
+-
++	
++	NEEDS_BEX(&quot;Momentum&quot;);
+ 	FUNCTOR2D(Momentum,RigidBodyParameters);
+ 	REGISTER_CLASS_NAME(NewtonsMomentumLaw);
+ 	REGISTER_BASE_CLASS_NAME(PhysicalActionApplierUnit);
+
+Modified: trunk/pkg/common/Engine/MetaEngine/BoundingVolumeMetaEngine.hpp
+===================================================================
+--- trunk/pkg/common/Engine/MetaEngine/BoundingVolumeMetaEngine.hpp	2008-05-01 07:29:44 UTC (rev 1334)
++++ trunk/pkg/common/Engine/MetaEngine/BoundingVolumeMetaEngine.hpp	2008-05-02 10:00:06 UTC (rev 1335)
+@@ -11,13 +11,13 @@
+ 
+ #include &quot;BoundingVolumeEngineUnit.hpp&quot;
+ 
+-#include&lt;yade/core/MetaDispatchingEngine2D.hpp&gt;
++#include&lt;yade/core/MetaEngine2D.hpp&gt;
+ #include&lt;yade/lib-multimethods/DynLibDispatcher.hpp&gt;
+ #include&lt;yade/core/InteractingGeometry.hpp&gt;
+ #include&lt;yade/core/BoundingVolume.hpp&gt;
+ #include&lt;yade/core/Body.hpp&gt;
+ 
+-class BoundingVolumeMetaEngine :	public MetaDispatchingEngine2D
++class BoundingVolumeMetaEngine :	public MetaEngine2D
+ 					&lt;	
+ 						InteractingGeometry,						// base classe for dispatch
+ 						BoundingVolume,							// second base classe for dispatch
+@@ -36,7 +36,7 @@
+ 		virtual void action(MetaBody*);
+ 
+ 	REGISTER_CLASS_NAME(BoundingVolumeMetaEngine);
+-	REGISTER_BASE_CLASS_NAME(MetaDispatchingEngine2D);
++	REGISTER_BASE_CLASS_NAME(MetaEngine2D);
+ };
+ 
+ REGISTER_SERIALIZABLE(BoundingVolumeMetaEngine,false);
+
+Modified: trunk/pkg/common/Engine/MetaEngine/GeometricalModelMetaEngine.hpp
+===================================================================
+--- trunk/pkg/common/Engine/MetaEngine/GeometricalModelMetaEngine.hpp	2008-05-01 07:29:44 UTC (rev 1334)
++++ trunk/pkg/common/Engine/MetaEngine/GeometricalModelMetaEngine.hpp	2008-05-02 10:00:06 UTC (rev 1335)
+@@ -10,13 +10,13 @@
+ #define GEOMETRICAL_MODEL_DISPATCHER_HPP
+ 
+ #include &quot;GeometricalModelEngineUnit.hpp&quot;
+-#include&lt;yade/core/MetaDispatchingEngine2D.hpp&gt;
++#include&lt;yade/core/MetaEngine2D.hpp&gt;
+ #include&lt;yade/lib-multimethods/DynLibDispatcher.hpp&gt;
+ #include&lt;yade/core/PhysicalParameters.hpp&gt;
+ #include&lt;yade/core/GeometricalModel.hpp&gt;
+ #include&lt;yade/core/Body.hpp&gt;
+ 
+-class GeometricalModelMetaEngine :	public MetaDispatchingEngine2D
++class GeometricalModelMetaEngine :	public MetaEngine2D
+ 					&lt;	
+ 						PhysicalParameters,
+ 						GeometricalModel,
+@@ -32,7 +32,7 @@
+ 		virtual void action(MetaBody*);
+ 
+ 	REGISTER_CLASS_NAME(GeometricalModelMetaEngine);
+-	REGISTER_BASE_CLASS_NAME(MetaDispatchingEngine2D);
++	REGISTER_BASE_CLASS_NAME(MetaEngine2D);
+ };
+ 
+ REGISTER_SERIALIZABLE(GeometricalModelMetaEngine,false);
+
+Modified: trunk/pkg/common/Engine/MetaEngine/InteractingGeometryMetaEngine.hpp
+===================================================================
+--- trunk/pkg/common/Engine/MetaEngine/InteractingGeometryMetaEngine.hpp	2008-05-01 07:29:44 UTC (rev 1334)
++++ trunk/pkg/common/Engine/MetaEngine/InteractingGeometryMetaEngine.hpp	2008-05-02 10:00:06 UTC (rev 1335)
+@@ -11,13 +11,13 @@
+ 
+ #include &quot;InteractingGeometryEngineUnit.hpp&quot;
+ 
+-#include&lt;yade/core/MetaDispatchingEngine2D.hpp&gt;
++#include&lt;yade/core/MetaEngine2D.hpp&gt;
+ #include&lt;yade/lib-multimethods/DynLibDispatcher.hpp&gt;
+ #include&lt;yade/core/GeometricalModel.hpp&gt;
+ #include&lt;yade/core/InteractingGeometry.hpp&gt;
+ #include&lt;yade/core/Body.hpp&gt;
+ 
+-class InteractingGeometryMetaEngine : 	public MetaDispatchingEngine2D
++class InteractingGeometryMetaEngine : 	public MetaEngine2D
+ 					&lt;	
+ 						GeometricalModel,						// base classe for dispatch
+ 						InteractingGeometry,						// base classe for dispatch
+@@ -34,7 +34,7 @@
+ 		virtual void action(MetaBody*);
+ 
+ 	REGISTER_CLASS_NAME(InteractingGeometryMetaEngine);
+-	REGISTER_BASE_CLASS_NAME(MetaDispatchingEngine2D);
++	REGISTER_BASE_CLASS_NAME(MetaEngine2D);
+ };
+ 
+ REGISTER_SERIALIZABLE(InteractingGeometryMetaEngine,false);
+
+Modified: trunk/pkg/common/Engine/MetaEngine/InteractionGeometryMetaEngine.hpp
+===================================================================
+--- trunk/pkg/common/Engine/MetaEngine/InteractionGeometryMetaEngine.hpp	2008-05-01 07:29:44 UTC (rev 1334)
++++ trunk/pkg/common/Engine/MetaEngine/InteractionGeometryMetaEngine.hpp	2008-05-02 10:00:06 UTC (rev 1335)
+@@ -14,13 +14,13 @@
+ 
+ #include&lt;yade/core/Interaction.hpp&gt;
+ #include&lt;yade/lib-multimethods/DynLibDispatcher.hpp&gt;
+-#include&lt;yade/core/MetaDispatchingEngine2D.hpp&gt;
++#include&lt;yade/core/MetaEngine2D.hpp&gt;
+ #include&lt;yade/core/InteractingGeometry.hpp&gt;
+ #include &quot;InteractionGeometryEngineUnit.hpp&quot;
+ 
+ class Body;
+ 
+-class InteractionGeometryMetaEngine :	public MetaDispatchingEngine2D
++class InteractionGeometryMetaEngine :	public MetaEngine2D
+ 					&lt;	
+ 						InteractingGeometry,						// base classe for dispatch
+ 						InteractingGeometry,						// base classe for dispatch
+@@ -39,7 +39,7 @@
+ 		virtual void action(MetaBody*);
+ 
+ 	REGISTER_CLASS_NAME(InteractionGeometryMetaEngine);
+-	REGISTER_BASE_CLASS_NAME(MetaDispatchingEngine2D);
++	REGISTER_BASE_CLASS_NAME(MetaEngine2D);
+ };
+ 
+ REGISTER_SERIALIZABLE(InteractionGeometryMetaEngine,false);
+
+Modified: trunk/pkg/common/Engine/MetaEngine/InteractionPhysicsMetaEngine.hpp
+===================================================================
+--- trunk/pkg/common/Engine/MetaEngine/InteractionPhysicsMetaEngine.hpp	2008-05-01 07:29:44 UTC (rev 1334)
++++ trunk/pkg/common/Engine/MetaEngine/InteractionPhysicsMetaEngine.hpp	2008-05-02 10:00:06 UTC (rev 1335)
+@@ -10,13 +10,13 @@
+ #define INTERACTIONPHYSICSMETAENGINE_HPP 
+ 
+ 
+-#include&lt;yade/core/MetaDispatchingEngine2D.hpp&gt;
++#include&lt;yade/core/MetaEngine2D.hpp&gt;
+ #include&lt;yade/lib-multimethods/DynLibDispatcher.hpp&gt;
+ #include&lt;yade/core/PhysicalParameters.hpp&gt;
+ #include&lt;yade/core/Interaction.hpp&gt;
+ #include &quot;InteractionPhysicsEngineUnit.hpp&quot;
+ 
+-class InteractionPhysicsMetaEngine : 	public MetaDispatchingEngine2D
++class InteractionPhysicsMetaEngine : 	public MetaEngine2D
+ 					&lt;	
+ 						PhysicalParameters,					// base classe for dispatch
+ 						PhysicalParameters,					// base classe for dispatch
+@@ -32,7 +32,7 @@
+ 		virtual void action(MetaBody*);
+ 
+ 	REGISTER_CLASS_NAME(InteractionPhysicsMetaEngine);
+-	REGISTER_BASE_CLASS_NAME(MetaDispatchingEngine2D);
++	REGISTER_BASE_CLASS_NAME(MetaEngine2D);
+ };
+ 
+ REGISTER_SERIALIZABLE(InteractionPhysicsMetaEngine,false);
+
+Modified: trunk/pkg/common/Engine/MetaEngine/PhysicalActionApplier.hpp
+===================================================================
+--- trunk/pkg/common/Engine/MetaEngine/PhysicalActionApplier.hpp	2008-05-01 07:29:44 UTC (rev 1334)
++++ trunk/pkg/common/Engine/MetaEngine/PhysicalActionApplier.hpp	2008-05-02 10:00:06 UTC (rev 1335)
+@@ -12,7 +12,7 @@
+ #define PHYSICALACTIONAPPLIER_HPP
+ 
+ 
+-#include&lt;yade/core/MetaDispatchingEngine2D.hpp&gt;
++#include&lt;yade/core/MetaEngine2D.hpp&gt;
+ #include&lt;yade/lib-multimethods/DynLibDispatcher.hpp&gt;
+ #include&lt;yade/core/PhysicalAction.hpp&gt;
+ 
+@@ -20,7 +20,7 @@
+ 
+ class Body;
+ 
+-class PhysicalActionApplier :	public MetaDispatchingEngine2D
++class PhysicalActionApplier :	public MetaEngine2D
+ 				&lt;
+ 					PhysicalAction ,					// base classe for dispatch
+ 					PhysicalParameters,					// base classe for dispatch
+@@ -36,7 +36,7 @@
+ 		virtual void action(MetaBody*);
+ 
+ 	REGISTER_CLASS_NAME(PhysicalActionApplier);
+-	REGISTER_BASE_CLASS_NAME(MetaDispatchingEngine2D);
++	REGISTER_BASE_CLASS_NAME(MetaEngine2D);
+ };
+ 
+ REGISTER_SERIALIZABLE(PhysicalActionApplier,false);
+
+Modified: trunk/pkg/common/Engine/MetaEngine/PhysicalActionDamper.hpp
+===================================================================
+--- trunk/pkg/common/Engine/MetaEngine/PhysicalActionDamper.hpp	2008-05-01 07:29:44 UTC (rev 1334)
++++ trunk/pkg/common/Engine/MetaEngine/PhysicalActionDamper.hpp	2008-05-02 10:00:06 UTC (rev 1335)
+@@ -9,14 +9,14 @@
+ #ifndef PHYSICALACTIONDAMPER_HPP
+ #define PHYSICALACTIONDAMPER_HPP
+ 
+-#include&lt;yade/core/MetaDispatchingEngine2D.hpp&gt;
++#include&lt;yade/core/MetaEngine2D.hpp&gt;
+ #include&lt;yade/lib-multimethods/DynLibDispatcher.hpp&gt;
+ #include&lt;yade/core/PhysicalAction.hpp&gt;
+ #include &quot;PhysicalActionDamperUnit.hpp&quot;
+ 
+ class Body;
+ 
+-class PhysicalActionDamper : public MetaDispatchingEngine2D
++class PhysicalActionDamper : public MetaEngine2D
+ 				&lt;	PhysicalAction,						// base classe for dispatch
+ 					PhysicalParameters,					// base classe for dispatch
+ 					PhysicalActionDamperUnit,				// class that provides multivirtual call
+@@ -31,7 +31,7 @@
+ 		virtual void action(MetaBody*);
+ 
+ 	REGISTER_CLASS_NAME(PhysicalActionDamper);
+-	REGISTER_BASE_CLASS_NAME(MetaDispatchingEngine2D);
++	REGISTER_BASE_CLASS_NAME(MetaEngine2D);
+ };
+ 
+ REGISTER_SERIALIZABLE(PhysicalActionDamper,false);
+
+Modified: trunk/pkg/common/Engine/MetaEngine/PhysicalParametersMetaEngine.hpp
+===================================================================
+--- trunk/pkg/common/Engine/MetaEngine/PhysicalParametersMetaEngine.hpp	2008-05-01 07:29:44 UTC (rev 1334)
++++ trunk/pkg/common/Engine/MetaEngine/PhysicalParametersMetaEngine.hpp	2008-05-02 10:00:06 UTC (rev 1335)
+@@ -10,12 +10,12 @@
+ #define BODY_PHYSICAL_PARAMETERS_DISPATCHER_HPP 
+ 
+ #include &quot;PhysicalParametersEngineUnit.hpp&quot;
+-#include&lt;yade/core/MetaDispatchingEngine1D.hpp&gt;
++#include&lt;yade/core/MetaEngine1D.hpp&gt;
+ #include&lt;yade/lib-multimethods/DynLibDispatcher.hpp&gt;
+ #include&lt;yade/core/PhysicalParameters.hpp&gt;
+ #include&lt;yade/core/Body.hpp&gt;
+ 
+-class PhysicalParametersMetaEngine :	public MetaDispatchingEngine1D
++class PhysicalParametersMetaEngine :	public MetaEngine1D
+ 					&lt;	
+ 						PhysicalParameters ,
+ 						PhysicalParametersEngineUnit,
+@@ -29,7 +29,7 @@
+ 		virtual void action(MetaBody*);
+ 
+ 	REGISTER_CLASS_NAME(PhysicalParametersMetaEngine);
+-	REGISTER_BASE_CLASS_NAME(MetaDispatchingEngine1D);
++	REGISTER_BASE_CLASS_NAME(MetaEngine1D);
+ 
+ };
+ 
+
+Modified: trunk/pkg/common/Engine/StandAloneEngine/PhysicalActionContainerInitializer.cpp
+===================================================================
+--- trunk/pkg/common/Engine/StandAloneEngine/PhysicalActionContainerInitializer.cpp	2008-05-01 07:29:44 UTC (rev 1334)
++++ trunk/pkg/common/Engine/StandAloneEngine/PhysicalActionContainerInitializer.cpp	2008-05-02 10:00:06 UTC (rev 1335)
+@@ -10,7 +10,10 @@
+ #include&lt;yade/core/MetaBody.hpp&gt;
+ #include&lt;yade/lib-factory/ClassFactory.hpp&gt;
+ #include&lt;yade/core/PhysicalAction.hpp&gt;
++#include&lt;yade/core/Engine.hpp&gt;
++#include&lt;boost/foreach.hpp&gt;
+ 
++CREATE_LOGGER(PhysicalActionContainerInitializer);
+ 
+ PhysicalActionContainerInitializer::PhysicalActionContainerInitializer() 
+ {
+@@ -28,16 +31,26 @@
+ 
+ void PhysicalActionContainerInitializer::action(MetaBody* ncb)
+ {
+-	
++	list&lt;string&gt; allNames;
++	// copy physical action names that were passed by the user directly
++	allNames.insert(allNames.end(),physicalActionNames.begin(),physicalActionNames.end());
++	LOG_DEBUG(&quot;allNames as defined by the user: &quot;);	BOOST_FOREACH(string an,allNames) LOG_DEBUG(an);
++	// loop over all engines, get Bex from them
++	BOOST_FOREACH(shared_ptr&lt;Engine&gt; e, ncb-&gt;engines){
++		list&lt;string&gt; bex=e-&gt;getNeededBex();
++		allNames.insert(allNames.end(),bex.begin(),bex.end());
++		LOG_DEBUG(&quot;The following engines were inserted by &quot;&lt;&lt;e-&gt;getClassName()&lt;&lt;&quot;:&quot;); BOOST_FOREACH(string b,bex) LOG_DEBUG(b);
++	}
++	LOG_DEBUG(&quot;allNames after loop over engines: &quot;);	BOOST_FOREACH(string an,allNames) LOG_DEBUG(an);
++	// eliminate all duplicates
++	allNames.sort();
++	allNames.unique();
++	LOG_DEBUG(&quot;allNames after sort and unique: &quot;);	BOOST_FOREACH(string an,allNames) LOG_DEBUG(an);
++
+ 	vector&lt;shared_ptr&lt;PhysicalAction&gt; &gt; physicalActions;
+-	physicalActions.clear();
+-	
+-	for(unsigned int i = 0 ; i &lt; physicalActionNames.size() ; ++i )
+-		physicalActions.push_back(
+-			YADE_PTR_CAST&lt;PhysicalAction&gt;
+-				(ClassFactory::instance().createShared(physicalActionNames[i]))
+-		);
+-	
++	BOOST_FOREACH(string physicalActionName, allNames){
++		physicalActions.push_back(YADE_PTR_CAST&lt;PhysicalAction&gt;(ClassFactory::instance().createShared(physicalActionName)));
++	}
+ 	ncb-&gt;physicalActions-&gt;prepare(physicalActions);
+ 	
+ }
+
+Modified: trunk/pkg/common/Engine/StandAloneEngine/PhysicalActionContainerInitializer.hpp
+===================================================================
+--- trunk/pkg/common/Engine/StandAloneEngine/PhysicalActionContainerInitializer.hpp	2008-05-01 07:29:44 UTC (rev 1334)
++++ trunk/pkg/common/Engine/StandAloneEngine/PhysicalActionContainerInitializer.hpp	2008-05-02 10:00:06 UTC (rev 1335)
+@@ -28,6 +28,8 @@
+ 	protected : 
+ 		virtual void registerAttributes();
+ 
++	DECLARE_LOGGER;
++
+ 	REGISTER_CLASS_NAME(PhysicalActionContainerInitializer);
+ 	REGISTER_BASE_CLASS_NAME(StandAloneEngine);
+ };
+
+Modified: trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.hpp
+===================================================================
+--- trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.hpp	2008-05-01 07:29:44 UTC (rev 1334)
++++ trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.hpp	2008-05-02 10:00:06 UTC (rev 1335)
+@@ -11,7 +11,7 @@
+ 
+ #include&lt;yade/core/RenderingEngine.hpp&gt;
+ #include&lt;yade/lib-multimethods/DynLibDispatcher.hpp&gt;
+-#include&lt;yade/core/MetaDispatchingEngine1D.hpp&gt;
++#include&lt;yade/core/MetaEngine1D.hpp&gt;
+ #include&lt;yade/core/Body.hpp&gt;
+ 
+ #include &quot;GLDrawStateFunctor.hpp&quot;
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/CapillaryRecorder.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/CapillaryRecorder.hpp	2008-05-01 07:29:44 UTC (rev 1334)
++++ trunk/pkg/dem/Engine/DeusExMachina/CapillaryRecorder.hpp	2008-05-02 10:00:06 UTC (rev 1335)
+@@ -38,6 +38,7 @@
+ 
+ 	protected :
+ 		virtual void postProcessAttributes(bool deserializing);
++	NEEDS_BEX(&quot;Force&quot;);
+ 	REGISTER_CLASS_NAME(CapillaryRecorder);
+ 	REGISTER_BASE_CLASS_NAME(DataRecorder);
+ };
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/HydraulicForceEngine.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/HydraulicForceEngine.hpp	2008-05-01 07:29:44 UTC (rev 1334)
++++ trunk/pkg/dem/Engine/DeusExMachina/HydraulicForceEngine.hpp	2008-05-02 10:00:06 UTC (rev 1335)
+@@ -31,6 +31,7 @@
+ 	
+ 	protected :
+ 		virtual void registerAttributes();
++	NEEDS_BEX(&quot;Force&quot;,&quot;Momentum&quot;);
+ 	REGISTER_CLASS_NAME(HydraulicForceEngine);
+ 	REGISTER_BASE_CLASS_NAME(DeusExMachina);
+ };
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/MakeItFlat.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/MakeItFlat.hpp	2008-05-01 07:29:44 UTC (rev 1334)
++++ trunk/pkg/dem/Engine/DeusExMachina/MakeItFlat.hpp	2008-05-02 10:00:06 UTC (rev 1335)
+@@ -26,6 +26,7 @@
+ 	
+ 	protected :
+ 		virtual void registerAttributes();
++	NEEDS_BEX(&quot;Force&quot;);
+ 	REGISTER_CLASS_NAME(MakeItFlat);
+ 	REGISTER_BASE_CLASS_NAME(DeusExMachina);
+ };
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.hpp	2008-05-01 07:29:44 UTC (rev 1334)
++++ trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.hpp	2008-05-02 10:00:06 UTC (rev 1335)
+@@ -55,7 +55,8 @@
+ 	
+ 	protected :
+ 		virtual void registerAttributes();
+-	
++
++	NEEDS_BEX(&quot;Force&quot;,&quot;Momentum&quot;);	
+ 	REGISTER_CLASS_NAME(NewtonsDampedLaw);
+ 	REGISTER_BASE_CLASS_NAME(DeusExMachina);
+ };
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/ResultantForceEngine.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/ResultantForceEngine.hpp	2008-05-01 07:29:44 UTC (rev 1334)
++++ trunk/pkg/dem/Engine/DeusExMachina/ResultantForceEngine.hpp	2008-05-02 10:00:06 UTC (rev 1335)
+@@ -51,6 +51,7 @@
+ 	
+ 	protected :
+ 		virtual void registerAttributes();
++	NEEDS_BEX(&quot;Force&quot;,&quot;GlobalStiffness&quot;);
+ 	REGISTER_CLASS_NAME(ResultantForceEngine);
+ 	REGISTER_BASE_CLASS_NAME(DeusExMachina);
+ };
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.hpp	2008-05-01 07:29:44 UTC (rev 1334)
++++ trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.hpp	2008-05-02 10:00:06 UTC (rev 1335)
+@@ -88,6 +88,7 @@
+ 	
+ 	protected :
+ 		virtual void registerAttributes();
++	NEEDS_BEX(&quot;Force&quot;);
+ 	REGISTER_CLASS_NAME(TriaxialStressController);
+ 	REGISTER_BASE_CLASS_NAME(DeusExMachina);
+ };
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/WallStressRecorder.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/WallStressRecorder.hpp	2008-05-01 07:29:44 UTC (rev 1334)
++++ trunk/pkg/dem/Engine/DeusExMachina/WallStressRecorder.hpp	2008-05-02 10:00:06 UTC (rev 1335)
+@@ -42,6 +42,7 @@
+ 
+ 	protected :
+ 		virtual void postProcessAttributes(bool deserializing);
++	NEEDS_BEX(&quot;Force&quot;);
+ 	REGISTER_CLASS_NAME(WallStressRecorder);
+ 	REGISTER_BASE_CLASS_NAME(DataRecorder);
+ };
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/CapillaryCohesiveLaw.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/CapillaryCohesiveLaw.hpp	2008-05-01 07:29:44 UTC (rev 1334)
++++ trunk/pkg/dem/Engine/StandAloneEngine/CapillaryCohesiveLaw.hpp	2008-05-02 10:00:06 UTC (rev 1335)
+@@ -62,6 +62,7 @@
+ 
+ 	protected : 
+ 		void registerAttributes();
++	NEEDS_BEX(&quot;Force&quot;,&quot;Momentum&quot;);
+ 	REGISTER_CLASS_NAME(CapillaryCohesiveLaw);
+ 	REGISTER_BASE_CLASS_NAME(InteractionSolver);
+ 
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/CohesiveFrictionalContactLaw.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/CohesiveFrictionalContactLaw.hpp	2008-05-01 07:29:44 UTC (rev 1334)
++++ trunk/pkg/dem/Engine/StandAloneEngine/CohesiveFrictionalContactLaw.hpp	2008-05-02 10:00:06 UTC (rev 1335)
+@@ -35,6 +35,7 @@
+ 
+ 	protected :
+ 		void registerAttributes();
++	NEEDS_BEX(&quot;Force&quot;,&quot;Momentum&quot;);
+ 	REGISTER_CLASS_NAME(CohesiveFrictionalContactLaw);
+ 	REGISTER_BASE_CLASS_NAME(InteractionSolver);
+ };
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/ElasticContactLaw.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/ElasticContactLaw.hpp	2008-05-01 07:29:44 UTC (rev 1334)
++++ trunk/pkg/dem/Engine/StandAloneEngine/ElasticContactLaw.hpp	2008-05-02 10:00:06 UTC (rev 1335)
+@@ -10,6 +10,7 @@
+ #define ELASTIC_CONTACT_LAW_HPP
+ 
+ #include&lt;yade/core/InteractionSolver.hpp&gt;
++#include&lt;yade/core/PhysicalAction.hpp&gt;
+ 
+ #include &lt;set&gt;
+ #include &lt;boost/tuple/tuple.hpp&gt;
+@@ -34,6 +35,8 @@
+ 
+ 	protected :
+ 		void registerAttributes();
++
++	NEEDS_BEX(&quot;Force&quot;,&quot;Momentum&quot;);
+ 	REGISTER_CLASS_NAME(ElasticContactLaw);
+ 	REGISTER_BASE_CLASS_NAME(InteractionSolver);
+ };
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/ForceRecorder.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/ForceRecorder.hpp	2008-05-01 07:29:44 UTC (rev 1334)
++++ trunk/pkg/dem/Engine/StandAloneEngine/ForceRecorder.hpp	2008-05-02 10:00:06 UTC (rev 1335)
+@@ -38,6 +38,7 @@
+ 
+ 	protected :
+ 		virtual void postProcessAttributes(bool deserializing);
++	NEEDS_BEX(&quot;Force&quot;);
+ 	REGISTER_CLASS_NAME(ForceRecorder);
+ 	REGISTER_BASE_CLASS_NAME(DataRecorder);
+ };
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/GeometricalModelForceColorizer.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/GeometricalModelForceColorizer.hpp	2008-05-01 07:29:44 UTC (rev 1334)
++++ trunk/pkg/dem/Engine/StandAloneEngine/GeometricalModelForceColorizer.hpp	2008-05-02 10:00:06 UTC (rev 1335)
+@@ -23,7 +23,8 @@
+ 
+ 		virtual void action(MetaBody*);
+ 		virtual bool isActivated();
+-
++	
++	NEEDS_BEX(&quot;Force&quot;);	
+ 	REGISTER_CLASS_NAME(GeometricalModelForceColorizer);
+ 	REGISTER_BASE_CLASS_NAME(StandAloneEngine);
+ };
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/GlobalStiffnessCounter.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/GlobalStiffnessCounter.hpp	2008-05-01 07:29:44 UTC (rev 1334)
++++ trunk/pkg/dem/Engine/StandAloneEngine/GlobalStiffnessCounter.hpp	2008-05-02 10:00:06 UTC (rev 1335)
+@@ -46,6 +46,7 @@
+ 
+ 	protected :
+ 		void registerAttributes();
++	NEEDS_BEX(&quot;Force&quot;,&quot;Momentum&quot;,&quot;GlobalStiffness&quot;);
+ 	REGISTER_CLASS_NAME(GlobalStiffnessCounter);
+ 	REGISTER_BASE_CLASS_NAME(InteractionSolver);
+ };
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/GlobalStiffnessTimeStepper.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/GlobalStiffnessTimeStepper.hpp	2008-05-01 07:29:44 UTC (rev 1334)
++++ trunk/pkg/dem/Engine/StandAloneEngine/GlobalStiffnessTimeStepper.hpp	2008-05-02 10:00:06 UTC (rev 1335)
+@@ -55,6 +55,7 @@
+ 	protected :
+ 		virtual void registerAttributes();
+ 
++	NEEDS_BEX(&quot;GlobalStiffness&quot;);
+ 	REGISTER_CLASS_NAME(GlobalStiffnessTimeStepper);
+ 	REGISTER_BASE_CLASS_NAME(TimeStepper);
+ };
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/MyTetrahedronLaw.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/MyTetrahedronLaw.hpp	2008-05-01 07:29:44 UTC (rev 1334)
++++ trunk/pkg/dem/Engine/StandAloneEngine/MyTetrahedronLaw.hpp	2008-05-02 10:00:06 UTC (rev 1335)
+@@ -49,6 +49,7 @@
+ 
+ 	protected :
+ 		void registerAttributes();
++	NEEDS_BEX(&quot;Force&quot;,&quot;Momentum&quot;);
+ 	REGISTER_CLASS_NAME(MyTetrahedronLaw);
+ 	REGISTER_BASE_CLASS_NAME(InteractionSolver);
+ };
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/SimpleViscoelasticContactLaw.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/SimpleViscoelasticContactLaw.hpp	2008-05-01 07:29:44 UTC (rev 1334)
++++ trunk/pkg/dem/Engine/StandAloneEngine/SimpleViscoelasticContactLaw.hpp	2008-05-02 10:00:06 UTC (rev 1335)
+@@ -35,6 +35,7 @@
+ 
+ 	protected :
+ 		void registerAttributes();
++	NEEDS_BEX(&quot;Force&quot;,&quot;Momentum&quot;);
+ 	REGISTER_CLASS_NAME(SimpleViscoelasticContactLaw);
+ 	REGISTER_BASE_CLASS_NAME(InteractionSolver);
+ };
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/VolumicContactLaw.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/VolumicContactLaw.hpp	2008-05-01 07:29:44 UTC (rev 1334)
++++ trunk/pkg/dem/Engine/StandAloneEngine/VolumicContactLaw.hpp	2008-05-02 10:00:06 UTC (rev 1335)
+@@ -34,6 +34,7 @@
+ 
+ 	protected :
+ 		void registerAttributes();
++	NEEDS_BEX(&quot;Force&quot;,&quot;Momentum&quot;);
+ 	REGISTER_CLASS_NAME(VolumicContactLaw);
+ 	REGISTER_BASE_CLASS_NAME(InteractionSolver);
+ };
+
+Modified: trunk/pkg/fem/Engine/StandAloneEngine/FEMLaw.hpp
+===================================================================
+--- trunk/pkg/fem/Engine/StandAloneEngine/FEMLaw.hpp	2008-05-01 07:29:44 UTC (rev 1334)
++++ trunk/pkg/fem/Engine/StandAloneEngine/FEMLaw.hpp	2008-05-02 10:00:06 UTC (rev 1335)
+@@ -31,6 +31,7 @@
+ /// Serializtion
+ 	protected :
+ 		virtual void registerAttributes();
++	NEEDS_BEX(&quot;Force&quot;);
+ 	REGISTER_CLASS_NAME(FEMLaw);
+ 	REGISTER_BASE_CLASS_NAME(InteractionSolver);
+ 
+
+Modified: trunk/pkg/mass-spring/Engine/StandAloneEngine/MassSpringLaw.hpp
+===================================================================
+--- trunk/pkg/mass-spring/Engine/StandAloneEngine/MassSpringLaw.hpp	2008-05-01 07:29:44 UTC (rev 1334)
++++ trunk/pkg/mass-spring/Engine/StandAloneEngine/MassSpringLaw.hpp	2008-05-02 10:00:06 UTC (rev 1335)
+@@ -25,6 +25,7 @@
+ 
+ 	protected :
+ 		void registerAttributes();
++	NEEDS_BEX(&quot;Force&quot;,&quot;Momentum&quot;);
+ 	REGISTER_CLASS_NAME(MassSpringLaw);
+ 	REGISTER_BASE_CLASS_NAME(InteractionSolver);
+ };
+
+Modified: trunk/pkg/realtime-rigidbody/Engine/StandAloneEngine/FrictionLessElasticContactLaw.hpp
+===================================================================
+--- trunk/pkg/realtime-rigidbody/Engine/StandAloneEngine/FrictionLessElasticContactLaw.hpp	2008-05-01 07:29:44 UTC (rev 1334)
++++ trunk/pkg/realtime-rigidbody/Engine/StandAloneEngine/FrictionLessElasticContactLaw.hpp	2008-05-02 10:00:06 UTC (rev 1335)
+@@ -25,6 +25,7 @@
+ 
+ 	protected :
+ 		 void registerAttributes();
++	NEEDS_BEX(&quot;Force&quot;,&quot;Momentum&quot;);
+ 	REGISTER_CLASS_NAME(FrictionLessElasticContactLaw);
+ 	REGISTER_BASE_CLASS_NAME(InteractionSolver);
+ 
+
+Modified: trunk/scripts/default-test.py
+===================================================================
+--- trunk/scripts/default-test.py	2008-05-01 07:29:44 UTC (rev 1334)
++++ trunk/scripts/default-test.py	2008-05-02 10:00:06 UTC (rev 1335)
+@@ -18,7 +18,6 @@
+ start=time.time(); o.run(nIter); o.wait(); finish=time.time() # run nIter iterations, wait to finish, measure elapsed time
+ speed=nIter/(finish-start) # rough estimate
+ open(speedFile,'w').write('%%g'%%speed)
+-print quit
+ quit()
+ &quot;&quot;&quot;%(simulFile,speedFile,100)
+ 
+
+Modified: trunk/scripts/simple-scene.py
+===================================================================
+--- trunk/scripts/simple-scene.py	2008-05-01 07:29:44 UTC (rev 1334)
++++ trunk/scripts/simple-scene.py	2008-05-02 10:00:06 UTC (rev 1335)
+@@ -7,8 +7,9 @@
+ aabbDisp=MetaEngine('BoundingVolumeMetaEngine',[EngineUnit('InteractingSphere2AABB'),EngineUnit('InteractingBox2AABB'),EngineUnit('MetaInteractingGeometry2AABB')])
+ 
+ o.initializers=[
+-	StandAloneEngine('PhysicalActionContainerInitializer',{'physicalActionNames':['Force','Momentum','GlobalStiffness']}),
+-	aabbDisp]
++	StandAloneEngine('PhysicalActionContainerInitializer'),
++	aabbDisp
++	]
+ 
+ o.engines=[
+ 	StandAloneEngine('PhysicalActionContainerReseter'),
+@@ -41,11 +42,11 @@
+ o.bodies.append(utils.sphere(1,[0,0,2],color=[0,1,0]))
+ # o.dt=.2*utils.PWaveTimeStep()
+ 
+-o.save('/tmp/a.xml')
+-print &quot;===================== SAVING&#160;FINISHED&#160;=====================&quot;
+-o.load('/tmp/a.xml')
+-import sys
+-sys.exit(0)
++#o.save('/tmp/a.xml')
++#print &quot;===================== SAVING&#160;FINISHED&#160;=====================&quot;
++#o.load('/tmp/a.xml')
++#import sys
++#sys.exit(0)
+ 
+ if True: # shorter, but doesn't test the (de)serializer, since binary format is used
+ 	# will run in background
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000296.html">[Yade-commits] r1334 - in trunk: core gui gui/py scripts
+</A></li>
+	<LI>Next message: <A HREF="000298.html">[Yade-commits] r1336 - trunk/core
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#297">[ date ]</a>
+              <a href="thread.html#297">[ thread ]</a>
+              <a href="subject.html#297">[ subject ]</a>
+              <a href="author.html#297">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

@@ -1,0 +1,409 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1114 - in branches/scons-layout: . core debian	extra/clump lib
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2007/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1114%20-%20in%20branches/scons-layout%3A%20.%20core%20debian%0A%09extra/clump%20lib&In-Reply-To=%3C200703091653.l29GrpXK026626%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000078.html">
+   <LINK REL="Next"  HREF="000080.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1114 - in branches/scons-layout: . core debian	extra/clump lib</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1114%20-%20in%20branches/scons-layout%3A%20.%20core%20debian%0A%09extra/clump%20lib&In-Reply-To=%3C200703091653.l29GrpXK026626%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1114 - in branches/scons-layout: . core debian	extra/clump lib">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Fri Mar  9 17:53:51 CET 2007</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000078.html">[Yade-commits] r1113 - branches/scons-layout
+</A></li>
+        <LI>Next message: <A HREF="000080.html">[Yade-commits] r1115 - in branches/scons-layout: . debian
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#79">[ date ]</a>
+              <a href="thread.html#79">[ thread ]</a>
+              <a href="subject.html#79">[ subject ]</a>
+              <a href="author.html#79">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2007-03-09 17:53:51 +0100 (Fri, 09 Mar 2007)
+New Revision: 1114
+
+Modified:
+   branches/scons-layout/SConstruct
+   branches/scons-layout/core/yade.cpp
+   branches/scons-layout/debian/control
+   branches/scons-layout/debian/rules
+   branches/scons-layout/extra/clump/PythonRecorder.cpp
+   branches/scons-layout/lib/SConscript
+Log:
+Debian fixes, POSTFIX renamed to SUFFIX and is properly -D defined quoted (as PREFIX is now). Support for pkg-config. Gdb crash batch deleted when yade finishes.
+
+
+Modified: branches/scons-layout/SConstruct
+===================================================================
+--- branches/scons-layout/SConstruct	2007-03-08 13:48:22 UTC (rev 1113)
++++ branches/scons-layout/SConstruct	2007-03-09 16:53:51 UTC (rev 1114)
+@@ -38,21 +38,21 @@
+ # The convention now is, that
+ #  1. CAPITALIZED options are
+ #   (a) notorious shell variables (they correspons most the time to SCons environment options of the same name - like CPPPATH)
+-#   (b) c preprocessor macros available to the program source (like PREFIX and POSTFIX)
++#   (b) c preprocessor macros available to the program source (like PREFIX and SUFFIX)
+ #  2. lowercase options influence the building process, compiler options and the like.
+ #
+ opts.AddOptions(
+ 	PathOption('PREFIX', 'Install path prefix', '/usr/local',PathOption.PathIsDirCreate),
+ 	PathOption('runtimePREFIX','Runtime path prefix; DO NOT USE, inteded for packaging only.','$PREFIX'),
+-	('POSTFIX','Local version appended to binary, library and config directory (beware: if PREFIX is the same, headers of the older version will still be overwritten','',None,lambda x:x),
++	('variant','Build variant, will be suffixed to all files, along with version (beware: if PREFIX is the same, headers of the older version will still be overwritten','',None,lambda x:x),
+ 	BoolOption('debug', 'Enable debugging information and disable optimizations',1),
+ 	BoolOption('profile','Enable profiling information',0),
+ 	BoolOption('optimize','Turn on heavy optimizations (generates SSE2 instructions)',0),
+ 	ListOption('exclude','Components that will not be built','none',names=['extra','common','dem','fem','lattice','mass-spring','realtime-rigidbody']),
+ 	('jobs','Number of jobs to run at the same time (same as -j, but saved)',4,None,int),
+ 	('extraModules', 'Extra directories with their own SConscript files (must be in-tree) (whitespace separated)',None,None,Split),
+-	('buildPrefix','Where to create build-[version][POSTFIX] directory for intermediary files','..'),
+-	('VERSION','Yade version (if not specified, guess will be attempted)',None),
++	('buildPrefix','Where to create build-[version][variant] directory for intermediary files','..'),
++	('version','Yade version (if not specified, guess will be attempted)',None),
+ 	('CPPPATH', 'Additional paths for the C preprocessor (whitespace separated)',['/usr/include/wm3'],None,Split),
+ 	('LIBPATH','Additional paths for the linker (whitespace separated)',None,None,Split),
+ 	('QTDIR','Directories where to look for qt3',['/usr/share/qt3','/usr/lib/qt'],None,Split),
+@@ -79,19 +79,20 @@
+ 
+ ##ALL generated stuff should go here - therefore we must determine it very early!!
+ 
+-if not env.has_key('VERSION'):
++if not env.has_key('version'):
+ 	&quot;Attempts to get yade version from local svn tree; should be extended so that it works for releases as well (not yet applicable).&quot;
+ 	svnRevision=None
+ 	for l in os.popen(&quot;svn info&quot;).readlines():
+ 		m=re.match(r'Revision: ([0-9]+)',l)
+-		if m: env['VERSION']='svn'+m.group(1)
+-	if not env.has_key('VERSION'): env['VERSION']='unknown'
+-env['POSTFIX']='-'+env['VERSION']+env['POSTFIX']
+-print &quot;Yade version is `%s', installed files will be suffixed with `%s'.&quot;%(env['VERSION'],env['POSTFIX'])
+-buildDir=os.path.join(env['buildPrefix'],env.subst('build$POSTFIX'))
++		if m: env['version']='svn'+m.group(1)
++	if not env.has_key('version'): env['version']='unknown'
++env['SUFFIX']='-'+env['version']+env['variant']
++print &quot;Yade version is `%s', installed files will be suffixed with `%s'.&quot;%(env['version'],env['SUFFIX'])
++buildDir=os.path.join(env['buildPrefix'],env.subst('build$SUFFIX'))
++print &quot;All intermediary files will be in `%s'.&quot;%buildDir
+ # these MUST be first so that builddir's headers are read before any locally installed ones
+-if os.path.isabs(buildDir): env.Append(CPPPATH=[os.path.join(buildDir,'include')])
+-else: env.Append(CPPPATH=[os.path.join('#',buildDir,'include')])
++if os.path.isabs(buildDir): env.Append(CPPPATH=[os.path.join(buildDir,'include','yade-$version')])
++else: env.Append(CPPPATH=[os.path.join('#',buildDir,'include','yade-$version')])
+ 
+ env.SConsignFile(os.path.join(buildDir,'scons-signatures'))
+ 
+@@ -214,18 +215,20 @@
+ # BUT: exclude stuff that should be excluded
+ libDirs=[x for x in libDirs if not re.match('^.*/('+'|'.join(env['exclude'])+')$',x)]
+ # where are we going to be installed... pkg/dem becomes pkg-dem
+-instLibDirs=[os.path.join('$PREFIX','lib','yade$POSTFIX',x.replace('/','-')) for x in libDirs]
++instLibDirs=[os.path.join('$PREFIX','lib','yade$SUFFIX',x.replace('/','-')) for x in libDirs]
++# directory for yade-$version.pc
++pcDir=os.path.join('$PREFIX','lib','pkgconfig')
+ # will install in the following dirs (needed?)
+-instDirs=[os.path.join('$PREFIX','bin')]+instLibDirs
++instDirs=[os.path.join('$PREFIX','bin')]+instLibDirs+[pcDir]
+ # where are we going to be run - may be different (packaging)
+-runtimeLibDirs=[os.path.join('$runtimePREFIX','lib','yade$POSTFIX',x.replace('/','-')) for x in libDirs]
++runtimeLibDirs=[os.path.join('$runtimePREFIX','lib','yade$SUFFIX',x.replace('/','-')) for x in libDirs]
+ 
+ ## not used for now...
+ #instIncludeDirs=['yade-core']+[os.path.join('$PREFIX','include','yade',string.split(x,os.path.sep)[-1]) for x in libDirs]
+ 
+ 
+ ### PREPROCESSOR FLAGS
+-env.Append(CPPDEFINES=[('POSTFIX',r'$POSTFIX'),('PREFIX',r'$runtimePREFIX'),('VERSION',r'$VERSION')])
++env.Append(CPPDEFINES=[('SUFFIX',r'\&quot;$SUFFIX\&quot;'),('PREFIX',r'\&quot;$runtimePREFIX\&quot;')])
+ 
+ ### COMPILER
+ if env['debug']: env.Append(CXXFLAGS='-ggdb3',CPPDEFINES=['DEBUG','YADE_DEBUG'])
+@@ -276,7 +279,7 @@
+ 	createDirs(instDirs)
+ 	#createDirs(instIncludeDirs)
+ 	
+-def prepareIncludes(prefix=None):
++def installHeaders(prefix=None):
+ 	&quot;&quot;&quot;symlink all in-tree headers into  some include directory so that we can build before headers are installed.
+ 	If prefix is given, headers will be copied there.
+ 	If not, include tree will be created and syumlinked in buildDir, using relative symlinks.&quot;&quot;&quot;
+@@ -285,7 +288,8 @@
+ 	from os.path import join,split,isabs,isdir,exists,islink,isfile,sep
+ 	if not prefix: yadeRoot=buildDir
+ 	else: yadeRoot=prefix
+-	yadeInc=join(yadeRoot,'include','yade')
++	yadeInc=join(yadeRoot,'include','yade-%s'%env['version'],'yade')
++	#print &quot;CALLED, prefix=%s, yadeInc=%s&quot;%(prefix,yadeInc)
+ 
+ 	for root, dirs, files in os.walk('.',topdown=True):
+ 		for d in ('.svn'): ## skip all files that are not part of sources in the proper sense!
+@@ -311,19 +315,39 @@
+ 				else: # install directory: use scons' Install facility
+ 					env.Install(subInc,join(root,f))
+ 
++def makePkgConfig(fileName):
++	cflags,libs='Cflags: ','Libs: '
++	cflags+=' '+' '.join(env['CXXFLAGS'])
++	for df in env['CPPDEFINES']:
++		if type(df)==tuple: cflags+=' -D%s=%s'%(df[0],df[1])
++		else: cflags+=' -D%s'%df
++	for p in env['CPPPATH']:
++		if p[0]=='#': cflags+=' -I$PREFIX/include/yade$SUFFIX'
++		else: cflags+=' -I%s'%p
++	for l in env['SHLINKFLAGS']:
++		if not l.find('soname')&gt;=0: libs+=' '+l # skip -Wl,soname=...
++	for p in env['RPATH']: libs+=' -Wl,-rpath=%s'%p
++	for p in env['LIBPATH']: libs+=' -L%s'%p
++	pc='Name: Yade\nVersion: %s\n%s\n%s\n'%(env['version'],cflags,libs)
++	pc+='yadeLibDir: $PREFIX/lib/yade$SUFFIX\n'
++	pc=re.sub(r'\bPREFIX\b','runtimePREFIX',pc)
++	pc=env.subst(pc)+'\n'
++	f=file(env.subst(fileName),'w'); f.write(pc); f.close()
++	return None
++
+ # 1. symlink all headers to buildDir/include before the actual build
+ # 2. (unused now) instruct scons to install (not symlink) all headers to the right place as well
+ # 3. set the &quot;install&quot; target as default (if scons is called without any arguments), which triggers build in turn
+ # Should be cleaned up.
+ 
+ if not env.GetOption('clean'):
+-	prepareLocalIncludesProxy=prepareIncludes()
+-	#prepareIncludesProxy=prepareIncludes(prefix=env['PREFIX'])
+-	prebuildAlias=env.Alias('prebuild',[prepareLocalIncludesProxy])
+-	# must tell scons that instDirs are really Dirs (otherwise, if nonexistent, they would become File nodes and it would fail)
+-	installAlias=env.Alias('install',instDirs) #,os.path.join('$PREFIX','include','yade')]) #prepareIncludesProxy,
+-	Depends(installAlias,prebuildAlias)
+-	Default(installAlias)
++	# how to make that executed automatically??! For now, run always.
++	#env.AddPreAction(installAlias,installHeaders)
++	installHeaders() # install to buildDir always
++	installHeaders(env.subst('$PREFIX/include')) # install to $PREFIX if specifically requested: like &quot;scons /usr/local/include&quot;
++	makePkgConfig(pcDir+'/yade-${SUFFIX}.pc')
++	installAlias=env.Alias('install',instDirs) # build and install everything that should go to instDirs, which are $PREFIX/{bin,lib} (uses scons' Install); include pkgconfig stuff
++	env.Default(installAlias)
+ 
+ env.Export('env');
+ 
+@@ -339,3 +363,5 @@
+ env.Command('tags',libDirs,&quot;ctags -R --extra=+q --fields=+n --exclude='.*' --exclude=yade-flat --exclude=include --exclude='*.so'&quot;)
+ env.Alias('doc',env.Command('doc/doxygen/html/index.html',libDirs,&quot;cd doc; doxygen Doxyfile&quot;))
+ 
++
++
+
+Modified: branches/scons-layout/core/yade.cpp
+===================================================================
+--- branches/scons-layout/core/yade.cpp	2007-03-08 13:48:22 UTC (rev 1113)
++++ branches/scons-layout/core/yade.cpp	2007-03-09 16:53:51 UTC (rev 1114)
+@@ -26,7 +26,6 @@
+ #include &quot;FrontEnd.hpp&quot;
+ #include &quot;Preferences.hpp&quot;
+ 
+-
+ using namespace std;
+ 
+ #ifdef LOG4CXX
+@@ -57,27 +56,6 @@
+ 	#endif
+ }
+ 
+-// FIXME - those two function will be moved to some class responsible for configuration
+-std::string getPrefix()
+-{
+-	// I had to use BOOST_PP_STRINGIZE because g++3.3 tried to insert the path verbatim (not as a string)
+-	// and there was a compilation error
+-	std::string tmp(BOOST_PP_STRINGIZE(PREFIX));
+-	if(tmp==&quot;PREFIX&quot;) // if PREFIX is undefined, BOOST_PP_STRINGIZE returns the name instead of empty value
+-	{
+-		LOG_FATAL(&quot;\n\nundefined PREFIX, aborting!! You should compile with CXXFLAGS eg. -DPREFIX=/home/user/YADE\n\n&quot;);
+-		exit(1);
+-	};
+-	return tmp;
+-};
+-
+-std::string getPostfix()
+-{
+-	std::string tmp(BOOST_PP_STRINGIZE(POSTFIX));
+-	if(tmp==&quot;POSTFIX&quot;) tmp=&quot;&quot;; // if POSTFIX is undefined, BOOST_PP_STRINGIZE returns the name instead of empty value
+-	return tmp;
+-};
+-
+ void firstRunSetup(shared_ptr&lt;Preferences&gt;&amp; pref)
+ {
+ 	char *libDirs[]={&quot;extra&quot;,&quot;gui&quot;,&quot;lib&quot;,&quot;pkg-common&quot;,&quot;pkg-dem&quot;,&quot;pkg-fem&quot;,&quot;pkg-lattice&quot;,&quot;pkg-mass-spring&quot;,&quot;pkg-realtime-rigidbody&quot;,NULL /* sentinel */};
+@@ -85,7 +63,7 @@
+ 	LOG_INFO(&quot;Creating default configuration file: &quot;&lt;&lt;cfgFile&lt;&lt;&quot;. Please tune by hand if needed.&quot;);
+ 	string expLibDir;
+ 	for(int i=0; libDirs[i]!=NULL; i++) {
+-		expLibDir=getPrefix() + &quot;/lib/yade&quot; + getPostfix() + &quot;/&quot; + libDirs[i];
++		expLibDir=string(PREFIX &quot;/lib/yade&quot; SUFFIX &quot;/&quot;) + libDirs[i];
+ 		LOG_INFO(&quot;Adding plugin directory &quot;&lt;&lt;expLibDir&lt;&lt;&quot;.&quot;);
+ 		pref-&gt;dynlibDirectories.push_back(expLibDir);
+ 	}
+@@ -97,8 +75,8 @@
+ void printHelp()
+ {
+ 	string flags(&quot;&quot;);
+-	flags=flags+&quot;   PREFIX=&quot; +getPrefix()+ &quot;\n&quot;;
+-	flags=flags+&quot;   POSTFIX=&quot; + getPostfix() + &quot;\n&quot;;
++	flags=flags+&quot;   PREFIX=&quot; PREFIX  &quot;\n&quot;;
++	flags=flags+&quot;   SUFFIX=&quot; SUFFIX &quot;\n&quot;;
+ 	#ifdef YADE_DEBUG
+ 		flags+=&quot;   DEBUG&quot;;
+ 	#endif
+@@ -124,7 +102,7 @@
+ {
+ 	int ch;
+ 	string gui = &quot;&quot;;
+-	string configPath = string(getenv(&quot;HOME&quot;)) + &quot;/.yade&quot; + getPostfix();
++	string configPath = string(getenv(&quot;HOME&quot;)) + &quot;/.yade&quot; SUFFIX;
+ 	string simulationFileName=&quot;&quot;;
+ 
+ 	// This makes boost stop bitching about dot-files and other files that may not exist on MS-DOS 3.3;
+@@ -172,7 +150,7 @@
+ 
+ 	#ifdef YADE_DEBUG
+ 		ofstream gdbBatch;
+-		gdbCrashBatch=(yadeConfigPath/&quot;gdb_crash_batch&quot;).string();
++		gdbCrashBatch=(yadeConfigPath/&quot;gdb_crash_batch-pid&quot;).string()+lexical_cast&lt;string&gt;(getpid());
+ 		gdbBatch.open(gdbCrashBatch.c_str()); gdbBatch&lt;&lt;&quot;attach &quot;&lt;&lt;lexical_cast&lt;string&gt;(getpid())&lt;&lt;&quot;\nthread info\nthread apply all backtrace\n&quot;; gdbBatch.close();
+ 		signal(SIGABRT,sigHandler);
+ 		signal(SIGSEGV,sigHandler);
+@@ -212,6 +190,9 @@
+ 		LOG_DEBUG(&quot;Finalizing Python...&quot;);
+ 		Py_Finalize();
+ 	#endif
++	#ifdef YADE_DEBUG
++		unlink(gdbCrashBatch.c_str());
++	#endif
+ 
+ 	LOG_INFO(&quot;Yade: normal exit.&quot;);
+ 	return ok;
+
+Modified: branches/scons-layout/debian/control
+===================================================================
+--- branches/scons-layout/debian/control	2007-03-08 13:48:22 UTC (rev 1113)
++++ branches/scons-layout/debian/control	2007-03-09 16:53:51 UTC (rev 1114)
+@@ -10,3 +10,23 @@
+ Depends: ${shlibs:Depends}, ${misc:Depends}, python-scientific
+ Description: Platform for dynamical modeling.
+  Yet Another Dynamic Engine. etc.
++ .
++ This package contains speed-optimized build of yade.
++
++Package: yade-debug
++Architecture: any
++Depends: ${shlibs:Depends}, ${misc:Depends}, python-scientific
++Description: Platform for dynamical modeling.
++ Yet Another Dynamic Engine. etc.
++ .
++ This package contains debug build of yade.
++
++
++Package: yade-dev
++Architecture: all
++Depends: yade | yade-dbg
++Description: Platform for dynamical modeling.
++ Yet Another Dynamic Engine. etc.
++ .
++ This package contains headers for yade.
++
+
+Modified: branches/scons-layout/debian/rules
+===================================================================
+--- branches/scons-layout/debian/rules	2007-03-08 13:48:22 UTC (rev 1113)
++++ branches/scons-layout/debian/rules	2007-03-09 16:53:51 UTC (rev 1114)
+@@ -59,10 +59,16 @@
+ 
+ 	# Add here commands to install the package into debian/yade.
+ 	### $(MAKE) DESTDIR=$(CURDIR)/debian/yade install
+-	## eudoxos: FIXME: get version from debian variables!
+-	scons buildPrefix=debian/ runtimePREFIX=/usr PREFIX=debian/yade/usr POSTFIX=-snapshot pretty=0 optimize=0 debug=1 VERSION=svn1110
++	## eudoxos: FIXME: get version from debian variables!!
+ 
++	#install headers
++	scons buildPrefix=debian runtimePREFIX=/usr PREFIX=debian/yade-dev/usr variant='' version=svn1113 /debian/yade-dev/usr/include
++	#debug build
++	scons buildPrefix=debian runtimePREFIX=/usr PREFIX=debian/yade-dbg/usr variant=-dbg pretty=0 optimize=0 debug=1 version=svn1113
++	#optimized build
++	scons buildPrefix=debian runtimePREFIX=/usr PREFIX=debian/yade/usr variant='' pretty=0 optimize=1 debug=0 version=svn1113
+ 
++
+ # Build architecture-independent files here.
+ binary-indep: build install
+ # We have nothing to do by default.
+@@ -87,6 +93,7 @@
+ #	dh_installinfo
+ 	dh_installman
+ 	dh_link
++	# do NOT use this!!! debug builds need symbols, optimized builds don't have them already.
+ 	dh_strip
+ 	dh_compress
+ 	dh_fixperms
+
+Modified: branches/scons-layout/extra/clump/PythonRecorder.cpp
+===================================================================
+--- branches/scons-layout/extra/clump/PythonRecorder.cpp	2007-03-08 13:48:22 UTC (rev 1113)
++++ branches/scons-layout/extra/clump/PythonRecorder.cpp	2007-03-09 16:53:51 UTC (rev 1114)
+@@ -22,7 +22,7 @@
+ 
+ PythonRecorder::PythonRecorder():DataRecorder(){
+ 	// FIXME: this will have to be set somehow, hardcode for now...
+-	PyRun_SimpleString((string(&quot;import sys; sys.path.insert(0,'&quot;)+BOOST_PP_STRINGIZE(PREFIX)+&quot;/lib/yade&quot;+BOOST_PP_STRINGIZE(POSTFIX)+&quot;/extra');&quot;).c_str());
++	PyRun_SimpleString(&quot;import sys; sys.path.insert(0,'&quot; PREFIX &quot;/lib/yade&quot; SUFFIX &quot;/extra');&quot;);
+ 
+ 	#if 0
+ 	PyObject* pyModuleName=PyString_FromString(&quot;pyade&quot;);
+
+Modified: branches/scons-layout/lib/SConscript
+===================================================================
+--- branches/scons-layout/lib/SConscript	2007-03-08 13:48:22 UTC (rev 1113)
++++ branches/scons-layout/lib/SConscript	2007-03-09 16:53:51 UTC (rev 1114)
+@@ -1,5 +1,5 @@
+ Import('*')
+-env.Install('$PREFIX/lib/yade$POSTFIX/lib',[
++env.Install('$PREFIX/lib/yade$SUFFIX/lib',[
+ 
+ 	env.SharedLibrary('yade-base',
+ 		['base/yadeWm3Extra.cpp'],
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000078.html">[Yade-commits] r1113 - branches/scons-layout
+</A></li>
+	<LI>Next message: <A HREF="000080.html">[Yade-commits] r1115 - in branches/scons-layout: . debian
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#79">[ date ]</a>
+              <a href="thread.html#79">[ thread ]</a>
+              <a href="subject.html#79">[ subject ]</a>
+              <a href="author.html#79">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

@@ -1,0 +1,183 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1374 - trunk/gui/qt3
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1374%20-%20trunk/gui/qt3&In-Reply-To=%3C200806040627.m546RPmS001982%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000334.html">
+   <LINK REL="Next"  HREF="000336.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1374 - trunk/gui/qt3</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1374%20-%20trunk/gui/qt3&In-Reply-To=%3C200806040627.m546RPmS001982%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1374 - trunk/gui/qt3">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Wed Jun  4 08:27:25 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000334.html">[Yade-commits] r1373 - trunk/gui/qt3
+</A></li>
+        <LI>Next message: <A HREF="000336.html">[Yade-commits] r1375 - trunk/gui
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#335">[ date ]</a>
+              <a href="thread.html#335">[ thread ]</a>
+              <a href="subject.html#335">[ subject ]</a>
+              <a href="author.html#335">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2008-06-04 08:27:24 +0200 (Wed, 04 Jun 2008)
+New Revision: 1374
+
+Modified:
+   trunk/gui/qt3/QtGeneratedSimulationController.ui
+   trunk/gui/qt3/SimulationController.cpp
+Log:
+Fix setting timeStepper / fixed timestep from the qt3 ui
+
+
+Modified: trunk/gui/qt3/QtGeneratedSimulationController.ui
+===================================================================
+--- trunk/gui/qt3/QtGeneratedSimulationController.ui	2008-06-04 06:02:27 UTC (rev 1373)
++++ trunk/gui/qt3/QtGeneratedSimulationController.ui	2008-06-04 06:27:24 UTC (rev 1374)
+@@ -149,22 +149,6 @@
+             &lt;/widget&gt;
+             &lt;widget class=&quot;QPushButton&quot;&gt;
+                 &lt;property name=&quot;name&quot;&gt;
+-                    &lt;cstring&gt;pbLoadSimulation&lt;/cstring&gt;
+-                &lt;/property&gt;
+-                &lt;property name=&quot;geometry&quot;&gt;
+-                    &lt;rect&gt;
+-                        &lt;x&gt;10&lt;/x&gt;
+-                        &lt;y&gt;10&lt;/y&gt;
+-                        &lt;width&gt;72&lt;/width&gt;
+-                        &lt;height&gt;33&lt;/height&gt;
+-                    &lt;/rect&gt;
+-                &lt;/property&gt;
+-                &lt;property name=&quot;text&quot;&gt;
+-                    &lt;string&gt;Load&lt;/string&gt;
+-                &lt;/property&gt;
+-            &lt;/widget&gt;
+-            &lt;widget class=&quot;QPushButton&quot;&gt;
+-                &lt;property name=&quot;name&quot;&gt;
+                     &lt;cstring&gt;pbSaveSimulation&lt;/cstring&gt;
+                 &lt;/property&gt;
+                 &lt;property name=&quot;geometry&quot;&gt;
+@@ -387,6 +371,22 @@
+                     &lt;number&gt;40&lt;/number&gt;
+                 &lt;/property&gt;
+             &lt;/widget&gt;
++            &lt;widget class=&quot;QPushButton&quot;&gt;
++                &lt;property name=&quot;name&quot;&gt;
++                    &lt;cstring&gt;pbLoadSimulation&lt;/cstring&gt;
++                &lt;/property&gt;
++                &lt;property name=&quot;geometry&quot;&gt;
++                    &lt;rect&gt;
++                        &lt;x&gt;10&lt;/x&gt;
++                        &lt;y&gt;10&lt;/y&gt;
++                        &lt;width&gt;72&lt;/width&gt;
++                        &lt;height&gt;33&lt;/height&gt;
++                    &lt;/rect&gt;
++                &lt;/property&gt;
++                &lt;property name=&quot;text&quot;&gt;
++                    &lt;string&gt;Load&lt;/string&gt;
++                &lt;/property&gt;
++            &lt;/widget&gt;
+             &lt;widget class=&quot;QButtonGroup&quot;&gt;
+                 &lt;property name=&quot;name&quot;&gt;
+                     &lt;cstring&gt;timestep&lt;/cstring&gt;
+@@ -420,6 +420,9 @@
+                     &lt;property name=&quot;text&quot;&gt;
+                         &lt;string&gt;Fixed step&lt;/string&gt;
+                     &lt;/property&gt;
++                    &lt;property name=&quot;buttonGroupId&quot;&gt;
++                        &lt;number&gt;2&lt;/number&gt;
++                    &lt;/property&gt;
+                 &lt;/widget&gt;
+                 &lt;widget class=&quot;QRadioButton&quot;&gt;
+                     &lt;property name=&quot;name&quot;&gt;
+@@ -439,6 +442,9 @@
+                     &lt;property name=&quot;text&quot;&gt;
+                         &lt;string&gt;Time stepper&lt;/string&gt;
+                     &lt;/property&gt;
++                    &lt;property name=&quot;buttonGroupId&quot;&gt;
++                        &lt;number&gt;0&lt;/number&gt;
++                    &lt;/property&gt;
+                 &lt;/widget&gt;
+             &lt;/widget&gt;
+         &lt;/widget&gt;
+@@ -781,6 +787,12 @@
+         &lt;receiver&gt;QtGeneratedSimulationController&lt;/receiver&gt;
+         &lt;slot&gt;pbSaveClicked()&lt;/slot&gt;
+     &lt;/connection&gt;
++    &lt;connection&gt;
++        &lt;sender&gt;timestep&lt;/sender&gt;
++        &lt;signal&gt;clicked(int)&lt;/signal&gt;
++        &lt;receiver&gt;QtGeneratedSimulationController&lt;/receiver&gt;
++        &lt;slot&gt;bgTimeStepClicked(int)&lt;/slot&gt;
++    &lt;/connection&gt;
+ &lt;/connections&gt;
+ &lt;includes&gt;
+     &lt;include location=&quot;local&quot; impldecl=&quot;in implementation&quot;&gt;QtGeneratedSimulationController.ui.h&lt;/include&gt;
+
+Modified: trunk/gui/qt3/SimulationController.cpp
+===================================================================
+--- trunk/gui/qt3/SimulationController.cpp	2008-06-04 06:02:27 UTC (rev 1373)
++++ trunk/gui/qt3/SimulationController.cpp	2008-06-04 06:27:24 UTC (rev 1374)
+@@ -265,7 +265,9 @@
+ 
+ void SimulationController::bgTimeStepClicked(int i)
+ {
+-	switch (i) // FIXME wtf ? (code written by Olivier)
++	// cerr&lt;&lt;&quot;CHANGING&#160;TIME&#160;STEP: i=&quot;&lt;&lt;i&lt;&lt;endl;
++	/* i: buttonGroupId, which is 0 for timeStepper, 2 for fixed step */
++	switch (i)
+ 	{
+ 		case 0 : //Use timeStepper
+ 			changeSkipTimeStepper = true;
+@@ -413,7 +415,8 @@
+ 	controller-&gt;pbResetSimulation-&gt;setEnabled(hasSimulation &amp;&amp; hasFileName);
+ 	controller-&gt;pbOneSimulationStep-&gt;setEnabled(hasSimulation &amp;&amp; !isRunning);
+ 	controller-&gt;rbTimeStepper-&gt;setEnabled(hasTimeStepper);
+-	controller-&gt;rbFixed-&gt;setChecked(!usesTimeStepper);
+-	controller-&gt;rbTimeStepper-&gt;setChecked(usesTimeStepper);
++	// conditionals only avoid setting the state that is already set, to avoid spurious signals
++	if(controller-&gt;rbFixed-&gt;isChecked()==usesTimeStepper) controller-&gt;rbFixed-&gt;setChecked(!usesTimeStepper);
++	if(controller-&gt;rbTimeStepper-&gt;isChecked()!=usesTimeStepper) controller-&gt;rbTimeStepper-&gt;setChecked(usesTimeStepper);
+ }
+ 
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000334.html">[Yade-commits] r1373 - trunk/gui/qt3
+</A></li>
+	<LI>Next message: <A HREF="000336.html">[Yade-commits] r1375 - trunk/gui
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#335">[ date ]</a>
+              <a href="thread.html#335">[ thread ]</a>
+              <a href="subject.html#335">[ subject ]</a>
+              <a href="author.html#335">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

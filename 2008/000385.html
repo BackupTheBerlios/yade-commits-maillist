@@ -1,0 +1,119 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1425 - trunk/gui/qt3
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1425%20-%20trunk/gui/qt3&In-Reply-To=%3C200807110832.m6B8WB46014192%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000384.html">
+   <LINK REL="Next"  HREF="000386.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1425 - trunk/gui/qt3</H1>
+    <B>sega at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1425%20-%20trunk/gui/qt3&In-Reply-To=%3C200807110832.m6B8WB46014192%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1425 - trunk/gui/qt3">sega at mail.berlios.de
+       </A><BR>
+    <I>Fri Jul 11 10:32:11 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000384.html">[Yade-commits] r1424 - in trunk: gui gui/qt3 pkg/common	pkg/common/Engine pkg/common/Engine/FilterEngine
+</A></li>
+        <LI>Next message: <A HREF="000386.html">[Yade-commits] r1426 - in trunk: . gui/qt3 scripts
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#385">[ date ]</a>
+              <a href="thread.html#385">[ thread ]</a>
+              <a href="subject.html#385">[ subject ]</a>
+              <a href="author.html#385">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: sega
+Date: 2008-07-11 10:32:11 +0200 (Fri, 11 Jul 2008)
+New Revision: 1425
+
+Modified:
+   trunk/gui/qt3/GLSimulationPlayerViewer.cpp
+Log:
+Fix in SimulationPlayer: search filters and updateGL after loading simulation
+
+Modified: trunk/gui/qt3/GLSimulationPlayerViewer.cpp
+===================================================================
+--- trunk/gui/qt3/GLSimulationPlayerViewer.cpp	2008-07-11 08:01:51 UTC (rev 1424)
++++ trunk/gui/qt3/GLSimulationPlayerViewer.cpp	2008-07-11 08:32:11 UTC (rev 1425)
+@@ -80,7 +80,6 @@
+ 
+ void GLSimulationPlayerViewer::load(const string&amp; fileName, bool fromFile)
+ {
+-	updateGL();
+ 	frameNumber=0;
+ 	setSnapshotCounter(0);
+ 	simPlayer-&gt;enableControls(false);
+@@ -88,12 +87,6 @@
+ 	xyzNames.clear();
+ 	filters.clear();
+ 
+-	FOREACH(shared_ptr&lt;Engine&gt;&amp; e, Omega::instance().getRootBody()-&gt;engines){
+-		// FIXME
+-		#warning FIXME: this gives me syntax error (invalid conversion) ?!
+-		if(dynamic_cast&lt;FilterEngine*&gt;(e.get())) filters.push_back(e);
+-	}
+-
+ 	if(!useSQLite){
+ 		if(fromFile){	
+ 			Omega::instance().setSimulationFileName(fileName);
+@@ -158,6 +151,14 @@
+ 			}
+ 		}
+ 	}
++	/* Filters */
++	FOREACH(shared_ptr&lt;Engine&gt;&amp; e, Omega::instance().getRootBody()-&gt;engines){
++		if(dynamic_cast&lt;FilterEngine*&gt;(e.get())) {
++			filters.push_back(e);
++			simPlayer-&gt;pushMessage(&quot;Find filter: &quot;+e-&gt;getClassName());
++		}
++	}
++
+ 	/* strided access is common for both db and file access */
+ 	int stride=simPlayer-&gt;sbStride-&gt;value();
+ 	xyzNames.sort();
+@@ -174,6 +175,7 @@
+ 	simPlayer-&gt;pushMessage(&quot;Found &quot;+lexical_cast&lt;string&gt;(xyzNames.size())+&quot; states to process.&quot;);
+ 	xyzNamesIter=xyzNames.begin();
+ 	simPlayer-&gt;enableControls(true);
++	updateGL();
+ }
+ 
+ void GLSimulationPlayerViewer::doOneStep(){
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000384.html">[Yade-commits] r1424 - in trunk: gui gui/qt3 pkg/common	pkg/common/Engine pkg/common/Engine/FilterEngine
+</A></li>
+	<LI>Next message: <A HREF="000386.html">[Yade-commits] r1426 - in trunk: . gui/qt3 scripts
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#385">[ date ]</a>
+              <a href="thread.html#385">[ thread ]</a>
+              <a href="subject.html#385">[ subject ]</a>
+              <a href="author.html#385">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

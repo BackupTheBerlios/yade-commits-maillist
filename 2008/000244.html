@@ -1,0 +1,148 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1279 - in trunk: . lib
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1279%20-%20in%20trunk%3A%20.%20lib&In-Reply-To=%3C200803171912.m2HJC9dq031184%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000243.html">
+   <LINK REL="Next"  HREF="000245.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1279 - in trunk: . lib</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1279%20-%20in%20trunk%3A%20.%20lib&In-Reply-To=%3C200803171912.m2HJC9dq031184%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1279 - in trunk: . lib">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Mon Mar 17 20:12:09 CET 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000243.html">[Yade-commits] r1278 - in trunk: gui/cmd lib lib/QGLViewer
+</A></li>
+        <LI>Next message: <A HREF="000245.html">[Yade-commits] r1280 - in trunk: lib/serialization pkg/common	pkg/common/Engine/DeusExMachina pkg/common/Engine/MetaEngine	pkg/common/RenderingEngine/GLDrawGeometricalModel	pkg/common/RenderingEngine/OpenGLRenderingEngine pkg/dem	pkg/dem/DataClass/InteractionPhysics	pkg/dem/Engine/EngineUnit pkg/dem/Engine/StandAloneEngine	pkg/dem/PreProcessor pkg/dem/RenderingEngine	pkg/dem/RenderingEngine/GLDrawCohesiveFrictionalContactInteraction	pkg/dem/RenderingEngine/GLDrawElasticContactInteraction	pkg/lattice/Engine/StandAloneEngine pkg/lattice/PreProcessor
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#244">[ date ]</a>
+              <a href="thread.html#244">[ thread ]</a>
+              <a href="subject.html#244">[ subject ]</a>
+              <a href="author.html#244">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2008-03-17 20:12:09 +0100 (Mon, 17 Mar 2008)
+New Revision: 1279
+
+Modified:
+   trunk/SConstruct
+   trunk/lib/SConscript
+Log:
+Add tags, doc and clean &quot;targets&quot; to scons do their job, short-circuit the rest of building process and exit. Clean only removes builddir, _not_ installed files as -c would do. (LP: #202067)
+
+
+
+Modified: trunk/SConstruct
+===================================================================
+--- trunk/SConstruct	2008-03-14 08:52:25 UTC (rev 1278)
++++ trunk/SConstruct	2008-03-17 19:12:09 UTC (rev 1279)
+@@ -36,6 +36,7 @@
+ if len(ver)&gt;1: sconsVersion+=100*float(ver[1])
+ if len(ver)&gt;2: sconsVersion+=float(ver[2])
+ # print sconsVersion
++#
+ 
+ ##########################################################################################
+ ########## PROXY TO NEWER SCONS (DOWNLOADED IF NEEDED) ###################################
+@@ -147,14 +148,32 @@
+ if env['useMiniWm3']: env.Append(CPPPATH=[buildInc+'/yade/lib-miniWm3'])
+ #if env['useLocalQGLViewer']: env.Append(CPPPATH=[buildInc+'/yade/lib-QGLViewer'])
+ 
+-if env.GetOption('clean'):
+-	print &quot;Removing build directory `%s'&quot;%buildDir
+-	shutil.rmtree(buildDir)
+-	Exit()
++env.SConsignFile(buildDir+'/scons-signatures')
+ 
++##########################################################################################
++############# SHORTCUT&#160;TARGETS ###########################################################
++##########################################################################################
+ 
+-env.SConsignFile(buildDir+'/scons-signatures')
++if len(sys.argv)&gt;1:
++	if 'clean' in sys.argv:
++		if os.path.exists(buildDir):
++			print &quot;Cleaning: %s.&quot;%buildDir; shutil.rmtree(buildDir)
++		else: print &quot;Nothing to clean: %s.&quot;%buildDir
++		sys.argv.remove('clean')
++	if 'tags' in sys.argv:
++		cmd=&quot;ctags -R --extra=+q --fields=+n --exclude='.*' --exclude=scons-local --exclude=include --exclude='*.so' --langmap=c++:+.inl&quot;
++		print cmd; os.system(cmd)
++		sys.argv.remove('tags')
++	if 'doc' in sys.argv:
++		cmd=&quot;cd doc; doxygen Doxyfile&quot;
++		print cmd; os.system(cmd)
++		sys.argv.remove('doc')
++	# still something on the command line? Ignore, but warn about that
++	if len(sys.argv)&gt;1: print &quot;!!!&#160;WARNING: Shortcuts (clean,tags,doc) cannot be mixed with regular targets or options; ignoring:\n&quot;+''.join([&quot;!!!\t&quot;+a+&quot;\n&quot; for a in sys.argv[1:]])
++	# bail out
++	Exit(0)
+ 
++
+ ##########################################################################################
+ ############# CONFIGURATION ##############################################################
+ ##########################################################################################
+@@ -464,9 +483,7 @@
+ # read top-level SConscript file. It is used only so that build_dir is set. This file reads all SConscripts from in yadeModules
+ env.SConscript(dirs=['.'],build_dir=buildDir,duplicate=0)
+ 
+-############# OTHER TARGETS #####################
+-env.Command('tags',libDirs,&quot;ctags -R --extra=+q --fields=+n --exclude='.*' --exclude=yade-flat --exclude=include --exclude='*.so'&quot;)
+-env.Alias('doc',env.Command('doc/doxygen/html/index.html',libDirs,&quot;cd doc; doxygen Doxyfile&quot;))
+ 
+ 
+ 
++
+
+Modified: trunk/lib/SConscript
+===================================================================
+--- trunk/lib/SConscript	2008-03-14 08:52:25 UTC (rev 1278)
++++ trunk/lib/SConscript	2008-03-17 19:12:09 UTC (rev 1279)
+@@ -8,7 +8,6 @@
+ 		env.SharedLibrary('yade-QGLViewer',Split('''
+ 				QGLViewer/VRenderInterface_Qt3.ui
+ 				QGLViewer/ImageInterface_Qt3.ui
+-
+ 				QGLViewer/qglviewer.cpp 
+ 				QGLViewer/camera.cpp 
+ 				QGLViewer/manipulatedFrame.cpp 
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000243.html">[Yade-commits] r1278 - in trunk: gui/cmd lib lib/QGLViewer
+</A></li>
+	<LI>Next message: <A HREF="000245.html">[Yade-commits] r1280 - in trunk: lib/serialization pkg/common	pkg/common/Engine/DeusExMachina pkg/common/Engine/MetaEngine	pkg/common/RenderingEngine/GLDrawGeometricalModel	pkg/common/RenderingEngine/OpenGLRenderingEngine pkg/dem	pkg/dem/DataClass/InteractionPhysics	pkg/dem/Engine/EngineUnit pkg/dem/Engine/StandAloneEngine	pkg/dem/PreProcessor pkg/dem/RenderingEngine	pkg/dem/RenderingEngine/GLDrawCohesiveFrictionalContactInteraction	pkg/dem/RenderingEngine/GLDrawElasticContactInteraction	pkg/lattice/Engine/StandAloneEngine pkg/lattice/PreProcessor
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#244">[ date ]</a>
+              <a href="thread.html#244">[ thread ]</a>
+              <a href="subject.html#244">[ subject ]</a>
+              <a href="author.html#244">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

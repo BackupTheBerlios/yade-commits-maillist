@@ -1,0 +1,162 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1062 -	trunk/yade-packages/yade-package-dem/src/Engine/EngineUnit/InteractingSphere2InteractingSphere4SpheresContactGeometry
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2007/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1062%20-%0A%09trunk/yade-packages/yade-package-dem/src/Engine/EngineUnit/InteractingSphere2InteractingSphere4SpheresContactGeometry&In-Reply-To=%3C200702151625.l1FGP48K008284%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000026.html">
+   <LINK REL="Next"  HREF="000028.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1062 -	trunk/yade-packages/yade-package-dem/src/Engine/EngineUnit/InteractingSphere2InteractingSphere4SpheresContactGeometry</H1>
+    <B>chareyre at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1062%20-%0A%09trunk/yade-packages/yade-package-dem/src/Engine/EngineUnit/InteractingSphere2InteractingSphere4SpheresContactGeometry&In-Reply-To=%3C200702151625.l1FGP48K008284%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1062 -	trunk/yade-packages/yade-package-dem/src/Engine/EngineUnit/InteractingSphere2InteractingSphere4SpheresContactGeometry">chareyre at mail.berlios.de
+       </A><BR>
+    <I>Thu Feb 15 17:25:04 CET 2007</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000026.html">[Yade-commits] r1061 - in	trunk/yade-packages/yade-package-common/src/Engine/EngineUnit:	CundallNonViscousForceDamping CundallNonViscousMomentumDamping
+</A></li>
+        <LI>Next message: <A HREF="000028.html">[Yade-commits] r1063 - in trunk: yade-core/src/yade	yade-extra/clump yade-libs/yade-lib-base/src/yade-lib-base	yade-packages/yade-package-common/src/Engine/EngineUnit/NewtonsForceLaw
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#27">[ date ]</a>
+              <a href="thread.html#27">[ thread ]</a>
+              <a href="subject.html#27">[ subject ]</a>
+              <a href="author.html#27">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: chareyre
+Date: 2007-02-15 17:25:03 +0100 (Thu, 15 Feb 2007)
+New Revision: 1062
+
+Modified:
+   trunk/yade-packages/yade-package-dem/src/Engine/EngineUnit/InteractingSphere2InteractingSphere4SpheresContactGeometry/InteractingSphere2InteractingSphere4SpheresContactGeometry.cpp
+   trunk/yade-packages/yade-package-dem/src/Engine/EngineUnit/InteractingSphere2InteractingSphere4SpheresContactGeometry/InteractingSphere2InteractingSphere4SpheresContactGeometry.hpp
+Log:
+
+Squared distances are now compared instead of simple distances (faster) to
+decide if two grains are in contact.
+In addition, InteractionDetectionFactor is added as member data.
+The default value is 1, a value greater than one will allow the geometry
+of contacts to be created as soon as the distance is less than
+Factor*SumOfRadii. Usefull for interactions at longer distances
+(like capillary effects).
+
+
+
+Modified: trunk/yade-packages/yade-package-dem/src/Engine/EngineUnit/InteractingSphere2InteractingSphere4SpheresContactGeometry/InteractingSphere2InteractingSphere4SpheresContactGeometry.cpp
+===================================================================
+--- trunk/yade-packages/yade-package-dem/src/Engine/EngineUnit/InteractingSphere2InteractingSphere4SpheresContactGeometry/InteractingSphere2InteractingSphere4SpheresContactGeometry.cpp	2007-02-15 15:41:39 UTC (rev 1061)
++++ trunk/yade-packages/yade-package-dem/src/Engine/EngineUnit/InteractingSphere2InteractingSphere4SpheresContactGeometry/InteractingSphere2InteractingSphere4SpheresContactGeometry.cpp	2007-02-15 16:25:03 UTC (rev 1062)
+@@ -16,6 +16,16 @@
+ #include &lt;yade/yade-lib-base/yadeWm3Extra.hpp&gt;
+ 
+ 
++InteractingSphere2InteractingSphere4SpheresContactGeometry::InteractingSphere2InteractingSphere4SpheresContactGeometry()
++{
++	InteractionDetectionFactor = 1;
++}
++
++void InteractingSphere2InteractingSphere4SpheresContactGeometry::registerAttributes()
++{	
++	REGISTER_ATTRIBUTE(InteractionDetectionFactor);
++}
++
+ bool InteractingSphere2InteractingSphere4SpheresContactGeometry::go(	const shared_ptr&lt;InteractingGeometry&gt;&amp; cm1,
+ 							const shared_ptr&lt;InteractingGeometry&gt;&amp; cm2,
+ 							const Se3r&amp; se31,
+@@ -26,12 +36,14 @@
+ 	InteractingSphere* s2 = static_cast&lt;InteractingSphere*&gt;(cm2.get());
+ 
+ 	Vector3r normal = se32.position-se31.position;
+-	Real penetrationDepth = s1-&gt;radius+s2-&gt;radius-normal.Normalize();
++	Real penetrationDepth = pow(InteractionDetectionFactor*(s1-&gt;radius+s2-&gt;radius), 2) - normal.SquaredLength();// Compute a wrong value just to check sign - faster than computing distances
++	//Real penetrationDepth = s1-&gt;radius+s2-&gt;radius-normal.Normalize();
+ 
+ 	shared_ptr&lt;SpheresContactGeometry&gt; scm;
+ 	if (c-&gt;interactionGeometry)
+ 	{
+-		scm = dynamic_pointer_cast&lt;SpheresContactGeometry&gt;(c-&gt;interactionGeometry);
++		//scm = dynamic_pointer_cast&lt;SpheresContactGeometry&gt;(c-&gt;interactionGeometry);
++		scm = static_pointer_cast&lt;SpheresContactGeometry&gt;(c-&gt;interactionGeometry);
+ 	// BEGIN .......  FIXME FIXME	- wrong hack, to make cohesion work.
+ 		if(! scm) // this is not SpheresContactGeometry, so it is SDECLinkGeometry, dispatcher should do this job.
+ 		{
+@@ -54,6 +66,7 @@
+ 		
+ 	if (penetrationDepth&gt;0)
+ 	{
++		penetrationDepth = s1-&gt;radius+s2-&gt;radius-normal.Normalize();
+ 		scm-&gt;contactPoint = se31.position+(s1-&gt;radius-0.5*penetrationDepth)*normal;//0.5*(pt1+pt2);
+ 		scm-&gt;normal = normal;
+ 		scm-&gt;penetrationDepth = penetrationDepth;
+@@ -65,8 +78,7 @@
+ 	
+ 		return true;
+ 	}
+-	else
+-		return false;
++	else return false;
+ }
+ 
+ 
+
+Modified: trunk/yade-packages/yade-package-dem/src/Engine/EngineUnit/InteractingSphere2InteractingSphere4SpheresContactGeometry/InteractingSphere2InteractingSphere4SpheresContactGeometry.hpp
+===================================================================
+--- trunk/yade-packages/yade-package-dem/src/Engine/EngineUnit/InteractingSphere2InteractingSphere4SpheresContactGeometry/InteractingSphere2InteractingSphere4SpheresContactGeometry.hpp	2007-02-15 15:41:39 UTC (rev 1061)
++++ trunk/yade-packages/yade-package-dem/src/Engine/EngineUnit/InteractingSphere2InteractingSphere4SpheresContactGeometry/InteractingSphere2InteractingSphere4SpheresContactGeometry.hpp	2007-02-15 16:25:03 UTC (rev 1062)
+@@ -24,11 +24,19 @@
+ 					const Se3r&amp; se31,
+ 					const Se3r&amp; se32,
+ 					const shared_ptr&lt;Interaction&gt;&amp; c);
++					
++		InteractingSphere2InteractingSphere4SpheresContactGeometry();		
++					
++		double InteractionDetectionFactor;// InteractionGeometry will be computed when InteractionDetectionFactor*(rad1+rad2) &gt; distance 		
++	
+ 
+ 	REGISTER_CLASS_NAME(InteractingSphere2InteractingSphere4SpheresContactGeometry);
+ 	REGISTER_BASE_CLASS_NAME(InteractionGeometryEngineUnit);
+ 
+ 	DEFINE_FUNCTOR_ORDER_2D(InteractingSphere,InteractingSphere);
++	
++	protected :
++		virtual void registerAttributes();
+ };
+ 
+ REGISTER_SERIALIZABLE(InteractingSphere2InteractingSphere4SpheresContactGeometry,false);
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000026.html">[Yade-commits] r1061 - in	trunk/yade-packages/yade-package-common/src/Engine/EngineUnit:	CundallNonViscousForceDamping CundallNonViscousMomentumDamping
+</A></li>
+	<LI>Next message: <A HREF="000028.html">[Yade-commits] r1063 - in trunk: yade-core/src/yade	yade-extra/clump yade-libs/yade-lib-base/src/yade-lib-base	yade-packages/yade-package-common/src/Engine/EngineUnit/NewtonsForceLaw
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#27">[ date ]</a>
+              <a href="thread.html#27">[ thread ]</a>
+              <a href="subject.html#27">[ subject ]</a>
+              <a href="author.html#27">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

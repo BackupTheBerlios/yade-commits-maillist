@@ -1,0 +1,156 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1351 - trunk
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1351%20-%20trunk&In-Reply-To=%3C200805122032.m4CKWhQo000172%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000312.html">
+   <LINK REL="Next"  HREF="000314.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1351 - trunk</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1351%20-%20trunk&In-Reply-To=%3C200805122032.m4CKWhQo000172%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1351 - trunk">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Mon May 12 22:32:43 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000312.html">[Yade-commits] r1350 - trunk/gui/qt3
+</A></li>
+        <LI>Next message: <A HREF="000314.html">[Yade-commits] r1352 - trunk/lib/import
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#313">[ date ]</a>
+              <a href="thread.html#313">[ thread ]</a>
+              <a href="subject.html#313">[ subject ]</a>
+              <a href="author.html#313">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2008-05-12 22:32:43 +0200 (Mon, 12 May 2008)
+New Revision: 1351
+
+Modified:
+   trunk/SConstruct
+Log:
+1. Fix tabs in SConstruct.
+
+(testing launchpad.net bugs:) this might close &quot;scons clean&quot; (LP: #202067) and also LP:?\194?\160#200731 for python simulation creation.
+
+
+
+
+Modified: trunk/SConstruct
+===================================================================
+--- trunk/SConstruct	2008-05-11 10:19:05 UTC (rev 1350)
++++ trunk/SConstruct	2008-05-12 20:32:43 UTC (rev 1351)
+@@ -420,41 +420,41 @@
+ 	yadeInc=join(yadeRoot,'include','yade-%s'%env['version'],'yade')
+ 	#print &quot;CALLED, prefix=%s, yadeInc=%s&quot;%(prefix,yadeInc)
+ 
+-	__paths = ['.']
++	paths = ['.']
+ 	for root, dirs, files in os.walk('.'):
+-	    for dir in dirs:
+-		if os.path.islink(os.path.join(root,dir)):
+-		    __paths = __paths + [os.path.join(root,dir)]
+-	for __path in __paths:
+-	    for root, dirs, files in os.walk(__path,topdown=True):
+-		for d in ('.svn'): ## skip all files that are not part of sources in the proper sense!
+-			try: dirs.remove(d)
+-			except ValueError: pass
+-		# exclude non-lib directories (like doc, scripts, ...)
+-		if not re.match(r'\.[/\\](core|lib|pkg|gui|extra)[/\\]?.*',root): continue
+-		# exclude headers from excluded stuff
+-		if re.match(r'^.*/('+'|'.join(env['exclude'])+')/',root): continue
+-		for f in files:
+-			if f.split('.')[-1] in ('hpp','inl','ipp','tpp','h','mcr'):
+-				#m=re.match('^\./([^/]*)/.*$',root)
+-				m=re.match('^.*?'+sep+'((extra|core)|((gui|lib|pkg)'+sep+'.*?))(|'+sep+'.*)$',root)
+-				if not m:
+-					print &quot;WARNING: file %s skipped while scanning for headers (no module)&quot;
+-					continue
+-				subInc=join(yadeInc,m.group(1).replace(sep,'-')) # replace pkg/lattice by pkg-lattice
+-				if not prefix: # local include directory: do symlinks
+-					if not isdir(subInc): os.makedirs(subInc)
+-					def relpath(pf,pt):
+-						&quot;&quot;&quot;Returns relative path from pf (path from) to pt (path to) as string.
+-						Last component of pf MUST be filename, not directory name. It can be empty, though. Legal pf's: 'dir1/dir2/something.cc', 'dir1/dir2/'. Illegal: 'dir1/dir2'.&quot;&quot;&quot;
+-						from os.path import sep,join,abspath,split
+-						apfl=abspath(split(pf)[0]).split(sep); aptl=abspath(pt).split(sep); i=0
+-						while apfl[i]==aptl[i] and i&lt;min(len(apfl),len(aptl))-1: i+=1
+-						return sep.join(['..' for j in range(0,len(apfl)-i)]+aptl[i:])
+-					linkName=join(subInc,f); linkTarget=relpath(linkName,join(root,f))
+-					if not exists(linkName): os.symlink(linkTarget,linkName)
+-				else: # install directory: use scons' Install facility
+-					env.Install(subInc,join(root,f))
++		for dir in dirs:
++			if os.path.islink(os.path.join(root,dir)):
++				paths.append(os.path.join(root,dir))
++	for path in paths:
++		for root, dirs, files in os.walk(path,topdown=True):
++			for d in ('.svn'): ## skip all files that are not part of sources in the proper sense!
++				try: dirs.remove(d)
++				except ValueError: pass
++			# exclude non-lib directories (like doc, scripts, ...)
++			if not re.match(r'\.[/\\](core|lib|pkg|gui|extra)[/\\]?.*',root): continue
++			# exclude headers from excluded stuff
++			if re.match(r'^.*/('+'|'.join(env['exclude'])+')/',root): continue
++			for f in files:
++				if f.split('.')[-1] in ('hpp','inl','ipp','tpp','h','mcr'):
++					#m=re.match('^\./([^/]*)/.*$',root)
++					m=re.match('^.*?'+sep+'((extra|core)|((gui|lib|pkg)'+sep+'.*?))(|'+sep+'.*)$',root)
++					if not m:
++						print &quot;WARNING: file %s skipped while scanning for headers (no module)&quot;
++						continue
++					subInc=join(yadeInc,m.group(1).replace(sep,'-')) # replace pkg/lattice by pkg-lattice
++					if not prefix: # local include directory: do symlinks
++						if not isdir(subInc): os.makedirs(subInc)
++						def relpath(pf,pt):
++							&quot;&quot;&quot;Returns relative path from pf (path from) to pt (path to) as string.
++							Last component of pf MUST be filename, not directory name. It can be empty, though. Legal pf's: 'dir1/dir2/something.cc', 'dir1/dir2/'. Illegal: 'dir1/dir2'.&quot;&quot;&quot;
++							from os.path import sep,join,abspath,split
++							apfl=abspath(split(pf)[0]).split(sep); aptl=abspath(pt).split(sep); i=0
++							while apfl[i]==aptl[i] and i&lt;min(len(apfl),len(aptl))-1: i+=1
++							return sep.join(['..' for j in range(0,len(apfl)-i)]+aptl[i:])
++						linkName=join(subInc,f); linkTarget=relpath(linkName,join(root,f))
++						if not exists(linkName): os.symlink(linkTarget,linkName)
++					else: # install directory: use scons' Install facility
++						env.Install(subInc,join(root,f))
+ 
+ def makePkgConfig(fileName):
+ 	cflags,libs='Cflags: ','Libs: '
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000312.html">[Yade-commits] r1350 - trunk/gui/qt3
+</A></li>
+	<LI>Next message: <A HREF="000314.html">[Yade-commits] r1352 - trunk/lib/import
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#313">[ date ]</a>
+              <a href="thread.html#313">[ thread ]</a>
+              <a href="subject.html#313">[ subject ]</a>
+              <a href="author.html#313">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

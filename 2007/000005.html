@@ -1,0 +1,1606 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1040 - in trunk: yade-core/src/yade yade-guis/yade-gui-qt/src/QtGUI yade-libs/yade-lib-base yade-libs/yade-lib-computational-geometry/src/yade-lib-computational-geometry yade-libs/yade-lib-serialization-qt/src/yade-lib-serialization-qt yade-packages/yade-package-dem/src/PreProcessor/Funnel yade-packages/yade-package-dem/src/PreProcessor/IsotropicCompressionTest yade-packages/yade-package-dem/src/PreProcessor/SDECImpactTest yade-packages/yade-package-dem/src/PreProcessor/SDECLinkedSpheres yade-packages/yade-package-dem/src/PreProcessor/SDECMovingWall yade-packages/yade-package-dem/src/PreProcessor/SDECSpheresPlane yade-packages/yade-package-dem/src/PreProcessor/TetrahedronsTest yade-packages/yade-package-dem/src/PreProcessor/TriaxialTest yade-packages/yade-package-fem/src/PreProcessor/FEMBeam yade-packages/yade-package-lattice/src/DataClass/PhysicalParameters/LatticeBeamParameters yade-packages/yade-package-lattice/src/Engine/EngineUnit/LatticeSet2LatticeBeams yade-! packages/yade-package-lattice/src/Engine/StandAloneEngine/MeasurePoisson yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/StrainRecorder yade-packages/yade-package-lattice/src/PreProcessor/LatticeExample yade-packages/yade-package-lattice/src/RenderingEngine yade-packages/yade-package-lattice/src/RenderingEngine/GLDrawLatticeSetGeometry yade-packages/yade-package-lattice/src/RenderingEngine/GLDrawLineSegment yade-packages/yade-package-mass-spring/src/PreProcessor/HangingCloth
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2007/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1040%20-%20in%20trunk%3A%20yade-core/src/yade%0A%20yade-guis/yade-gui-qt/src/QtGUI%20yade-libs/yade-lib-base%0A%20yade-libs/yade-lib-computational-geometry/src/yade-lib-computational-geometry%0A%20yade-libs/yade-lib-serialization-qt/src/yade-lib-serialization-qt%0A%20yade-packages/yade-package-dem/src/PreProcessor/Funnel%0A%20yade-packages/yade-package-dem/src/PreProcessor/IsotropicCompressionTest%0A%20yade-packages/yade-package-dem/src/PreProcessor/SDECImpactTest%0A%20yade-packages/yade-package-dem/src/PreProcessor/SDECLinkedSpheres%0A%20yade-packages/yade-package-dem/src/PreProcessor/SDECMovingWall%0A%20yade-packages/yade-package-dem/src/PreProcessor/SDECSpheresPlane%0A%20yade-packages/yade-package-dem/src/PreProcessor/TetrahedronsTest%0A%20yade-packages/yade-package-dem/src/PreProcessor/TriaxialTest%0A%20yade-packages/yade-package-fem/src/PreProcessor/FEMBeam%0A%20yade-packages/yade-package-lattice/src/DataClass/PhysicalParameters/LatticeBeamParameters%0A%20yade-packages/yade-package-lattice/src/Engine/EngineUnit/LatticeSet2LatticeBeams%0A%20yade-%21%0A%20packages/yade-package-lattice/src/Engine/StandAloneEngine/MeasurePoisson%0A%20yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/StrainRecorder%0A%20yade-packages/yade-package-lattice/src/PreProcessor/LatticeExample%0A%20yade-packages/yade-package-lattice/src/RenderingEngine%0A%20yade-packages/yade-package-lattice/src/RenderingEngine/GLDrawLatticeSetGeometry%0A%20yade-packages/yade-package-lattice/src/RenderingEngine/GLDrawLineSegment%0A%20yade-packages/yade-package-mass-spring/src/PreProcessor/HangingCloth&In-Reply-To=%3C200701201211.l0KCBVm7003333%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000004.html">
+   <LINK REL="Next"  HREF="000006.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1040 - in trunk: yade-core/src/yade yade-guis/yade-gui-qt/src/QtGUI yade-libs/yade-lib-base yade-libs/yade-lib-computational-geometry/src/yade-lib-computational-geometry yade-libs/yade-lib-serialization-qt/src/yade-lib-serialization-qt yade-packages/yade-package-dem/src/PreProcessor/Funnel yade-packages/yade-package-dem/src/PreProcessor/IsotropicCompressionTest yade-packages/yade-package-dem/src/PreProcessor/SDECImpactTest yade-packages/yade-package-dem/src/PreProcessor/SDECLinkedSpheres yade-packages/yade-package-dem/src/PreProcessor/SDECMovingWall yade-packages/yade-package-dem/src/PreProcessor/SDECSpheresPlane yade-packages/yade-package-dem/src/PreProcessor/TetrahedronsTest yade-packages/yade-package-dem/src/PreProcessor/TriaxialTest yade-packages/yade-package-fem/src/PreProcessor/FEMBeam yade-packages/yade-package-lattice/src/DataClass/PhysicalParameters/LatticeBeamParameters yade-packages/yade-package-lattice/src/Engine/EngineUnit/LatticeSet2LatticeBeams yade-! packages/yade-package-lattice/src/Engine/StandAloneEngine/MeasurePoisson yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/StrainRecorder yade-packages/yade-package-lattice/src/PreProcessor/LatticeExample yade-packages/yade-package-lattice/src/RenderingEngine yade-packages/yade-package-lattice/src/RenderingEngine/GLDrawLatticeSetGeometry yade-packages/yade-package-lattice/src/RenderingEngine/GLDrawLineSegment yade-packages/yade-package-mass-spring/src/PreProcessor/HangingCloth</H1>
+    <B>cosurgi at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1040%20-%20in%20trunk%3A%20yade-core/src/yade%0A%20yade-guis/yade-gui-qt/src/QtGUI%20yade-libs/yade-lib-base%0A%20yade-libs/yade-lib-computational-geometry/src/yade-lib-computational-geometry%0A%20yade-libs/yade-lib-serialization-qt/src/yade-lib-serialization-qt%0A%20yade-packages/yade-package-dem/src/PreProcessor/Funnel%0A%20yade-packages/yade-package-dem/src/PreProcessor/IsotropicCompressionTest%0A%20yade-packages/yade-package-dem/src/PreProcessor/SDECImpactTest%0A%20yade-packages/yade-package-dem/src/PreProcessor/SDECLinkedSpheres%0A%20yade-packages/yade-package-dem/src/PreProcessor/SDECMovingWall%0A%20yade-packages/yade-package-dem/src/PreProcessor/SDECSpheresPlane%0A%20yade-packages/yade-package-dem/src/PreProcessor/TetrahedronsTest%0A%20yade-packages/yade-package-dem/src/PreProcessor/TriaxialTest%0A%20yade-packages/yade-package-fem/src/PreProcessor/FEMBeam%0A%20yade-packages/yade-package-lattice/src/DataClass/PhysicalParameters/LatticeBeamParameters%0A%20yade-packages/yade-package-lattice/src/Engine/EngineUnit/LatticeSet2LatticeBeams%0A%20yade-%21%0A%20packages/yade-package-lattice/src/Engine/StandAloneEngine/MeasurePoisson%0A%20yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/StrainRecorder%0A%20yade-packages/yade-package-lattice/src/PreProcessor/LatticeExample%0A%20yade-packages/yade-package-lattice/src/RenderingEngine%0A%20yade-packages/yade-package-lattice/src/RenderingEngine/GLDrawLatticeSetGeometry%0A%20yade-packages/yade-package-lattice/src/RenderingEngine/GLDrawLineSegment%0A%20yade-packages/yade-package-mass-spring/src/PreProcessor/HangingCloth&In-Reply-To=%3C200701201211.l0KCBVm7003333%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1040 - in trunk: yade-core/src/yade yade-guis/yade-gui-qt/src/QtGUI yade-libs/yade-lib-base yade-libs/yade-lib-computational-geometry/src/yade-lib-computational-geometry yade-libs/yade-lib-serialization-qt/src/yade-lib-serialization-qt yade-packages/yade-package-dem/src/PreProcessor/Funnel yade-packages/yade-package-dem/src/PreProcessor/IsotropicCompressionTest yade-packages/yade-package-dem/src/PreProcessor/SDECImpactTest yade-packages/yade-package-dem/src/PreProcessor/SDECLinkedSpheres yade-packages/yade-package-dem/src/PreProcessor/SDECMovingWall yade-packages/yade-package-dem/src/PreProcessor/SDECSpheresPlane yade-packages/yade-package-dem/src/PreProcessor/TetrahedronsTest yade-packages/yade-package-dem/src/PreProcessor/TriaxialTest yade-packages/yade-package-fem/src/PreProcessor/FEMBeam yade-packages/yade-package-lattice/src/DataClass/PhysicalParameters/LatticeBeamParameters yade-packages/yade-package-lattice/src/Engine/EngineUnit/LatticeSet2LatticeBeams yade-! packages/yade-package-lattice/src/Engine/StandAloneEngine/MeasurePoisson yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/StrainRecorder yade-packages/yade-package-lattice/src/PreProcessor/LatticeExample yade-packages/yade-package-lattice/src/RenderingEngine yade-packages/yade-package-lattice/src/RenderingEngine/GLDrawLatticeSetGeometry yade-packages/yade-package-lattice/src/RenderingEngine/GLDrawLineSegment yade-packages/yade-package-mass-spring/src/PreProcessor/HangingCloth">cosurgi at mail.berlios.de
+       </A><BR>
+    <I>Sat Jan 20 13:11:31 CET 2007</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000004.html">[Yade-commits] r1039 - trunk
+</A></li>
+        <LI>Next message: <A HREF="000006.html">[Yade-commits] r1041 - in trunk: yade-core/src/yade	yade-guis/yade-gui-qt/src/QtGUI	yade-libs/yade-lib-serialization-bin/src/yade-lib-serialization-bin	yade-packages/yade-package-lattice/src/Engine/EngineUnit/LatticeSet2LatticeBeams	yade-packages/yade-package-lattice/src/Engine/StandAloneEngine	yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/BeamRecorder	yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/LatticeLaw	yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/MovingSupport	yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/NodeRecorder	yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/StrainRecorder	yade-packages/yade-package-lattice/src/PreProcessor/LatticeExample	yade-packages/yade-package-lattice/src/RenderingEngine/GLDrawLatticeBeamState
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#5">[ date ]</a>
+              <a href="thread.html#5">[ thread ]</a>
+              <a href="subject.html#5">[ subject ]</a>
+              <a href="author.html#5">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: cosurgi
+Date: 2007-01-20 13:11:21 +0100 (Sat, 20 Jan 2007)
+New Revision: 1040
+
+Added:
+   trunk/yade-libs/yade-lib-base/bin/
+   trunk/yade-packages/yade-package-lattice/src/RenderingEngine/GLDrawLatticeSetGeometry/
+   trunk/yade-packages/yade-package-lattice/src/RenderingEngine/GLDrawLatticeSetGeometry/GLDrawLatticeSetGeometry.cpp
+   trunk/yade-packages/yade-package-lattice/src/RenderingEngine/GLDrawLatticeSetGeometry/GLDrawLatticeSetGeometry.hpp
+   trunk/yade-packages/yade-package-lattice/src/RenderingEngine/GLDrawLatticeSetGeometry/GLDrawLatticeSetGeometry.pro
+Modified:
+   trunk/yade-core/src/yade/FileGenerator.cpp
+   trunk/yade-core/src/yade/FileGenerator.hpp
+   trunk/yade-core/src/yade/Omega.cpp
+   trunk/yade-core/src/yade/Omega.hpp
+   trunk/yade-core/src/yade/ThreadWorker.hpp
+   trunk/yade-core/src/yade/yade.cpp
+   trunk/yade-guis/yade-gui-qt/src/QtGUI/GLViewer.cpp
+   trunk/yade-guis/yade-gui-qt/src/QtGUI/QtFileGenerator.cpp
+   trunk/yade-guis/yade-gui-qt/src/QtGUI/SimulationController.cpp
+   trunk/yade-libs/yade-lib-computational-geometry/src/yade-lib-computational-geometry/MarchingCube.cpp
+   trunk/yade-libs/yade-lib-computational-geometry/src/yade-lib-computational-geometry/MarchingCube.hpp
+   trunk/yade-libs/yade-lib-serialization-qt/src/yade-lib-serialization-qt/QtGUIGenerator.cpp
+   trunk/yade-packages/yade-package-dem/src/PreProcessor/Funnel/Funnel.cpp
+   trunk/yade-packages/yade-package-dem/src/PreProcessor/IsotropicCompressionTest/IsotropicCompressionTest.cpp
+   trunk/yade-packages/yade-package-dem/src/PreProcessor/SDECImpactTest/SDECImpactTest.cpp
+   trunk/yade-packages/yade-package-dem/src/PreProcessor/SDECLinkedSpheres/SDECLinkedSpheres.cpp
+   trunk/yade-packages/yade-package-dem/src/PreProcessor/SDECMovingWall/SDECMovingWall.cpp
+   trunk/yade-packages/yade-package-dem/src/PreProcessor/SDECSpheresPlane/SDECSpheresPlane.cpp
+   trunk/yade-packages/yade-package-dem/src/PreProcessor/TetrahedronsTest/TetrahedronsTest.cpp
+   trunk/yade-packages/yade-package-dem/src/PreProcessor/TriaxialTest/TriaxialTest.cpp
+   trunk/yade-packages/yade-package-fem/src/PreProcessor/FEMBeam/FEMBeam.cpp
+   trunk/yade-packages/yade-package-lattice/src/DataClass/PhysicalParameters/LatticeBeamParameters/LatticeBeamParameters.cpp
+   trunk/yade-packages/yade-package-lattice/src/Engine/EngineUnit/LatticeSet2LatticeBeams/LatticeSet2LatticeBeams.cpp
+   trunk/yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/MeasurePoisson/MeasurePoisson.cpp
+   trunk/yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/StrainRecorder/StrainRecorder.cpp
+   trunk/yade-packages/yade-package-lattice/src/PreProcessor/LatticeExample/LatticeExample.cpp
+   trunk/yade-packages/yade-package-lattice/src/PreProcessor/LatticeExample/LatticeExample.hpp
+   trunk/yade-packages/yade-package-lattice/src/RenderingEngine/GLDrawLineSegment/GLDrawLineSegment.cpp
+   trunk/yade-packages/yade-package-lattice/src/RenderingEngine/RenderingEngine.pro
+   trunk/yade-packages/yade-package-mass-spring/src/PreProcessor/HangingCloth/HangingCloth.cpp
+Log:
+- FileGenerator shows generation time, and saving time
+
+- FileGenerator saves output file name (it was always fixed at
+  &quot;../data/scene.xml&quot;) and serialization dynlib (BIN / XML) so currently
+  ../data/scene.xml is just a default value. But saving a filegenerator
+  remembers target output file.
+  - To make it work I had to add a line FileGenerator::registerAttributes(); in
+    all FileGenerator-s (so it is a call to the base class, so it can register
+    file name and serialization dynlib.
+  - also, to make it work I had to make a dirty HACK in
+    yade-lib-serialization-qt. I don't feel much guilt, because it is already
+    decided that we will scrap yade's serialization and switch to
+    boost::serialization. Then this hack will disappear.
+
+- SimulationController will not reopen a file, when closed and opened. That was
+  a bit annoying when last file loaded was big.
+
+- some fixes in MarchingCube
+
+- Lattice can display its own aggregates using marching cubes. Like with
+  Quadrilaterals, I had to make a hasck to get it to work. And it again proves
+  that GLDraw* mechanisms need improvement. I had to add a global variable in
+  Omega, to transmit parameters between user input and the GLDrawer. The
+  parameters are changed inside GLViewer, which is a hack too. I had to do this
+  now, because there is no way to parametrise GLDrawers from user interface.
+  ( GLDrawLatticeSetGeometry )
+
+- MeasurePoisson improvement, LatticeExample can now generate using Delaunay, 
+
+
+
+
+Modified: trunk/yade-core/src/yade/FileGenerator.cpp
+===================================================================
+--- trunk/yade-core/src/yade/FileGenerator.cpp	2007-01-16 11:38:44 UTC (rev 1039)
++++ trunk/yade-core/src/yade/FileGenerator.cpp	2007-01-20 12:11:21 UTC (rev 1040)
+@@ -44,7 +44,8 @@
+ 
+ void FileGenerator::registerAttributes() 
+ {	
+-
++	REGISTER_ATTRIBUTE(outputFileName);
++	REGISTER_ATTRIBUTE(serializationDynlib);
+ }
+ 
+ 
+@@ -87,8 +88,12 @@
+ 		{
+ 			return std::string(&quot;File &quot;+outputFileName+&quot; cannot be saved: &quot;+e.what());
+ 		}
+-		return std::string(&quot;File &quot;+outputFileName+&quot; generated successfully (time: &quot;
+-				+ boost::posix_time::to_simple_string(generationTime) +&quot;).\n\n&quot;)+message;
++		boost::posix_time::ptime now3 = boost::posix_time::second_clock::local_time();
++		boost::posix_time::time_duration saveTime = now3 - now2; // save time
++		return std::string(&quot;File &quot;+outputFileName+&quot; generated successfully.&quot;
++				+ &quot;\ngeneration time: &quot; + boost::posix_time::to_simple_string(generationTime) 
++				+ &quot;\nsave time: &quot;       + boost::posix_time::to_simple_string(saveTime)
++				+&quot;\n\n&quot;)+message;
+ 	}
+ }
+ 
+
+Modified: trunk/yade-core/src/yade/FileGenerator.hpp
+===================================================================
+--- trunk/yade-core/src/yade/FileGenerator.hpp	2007-01-16 11:38:44 UTC (rev 1039)
++++ trunk/yade-core/src/yade/FileGenerator.hpp	2007-01-20 12:11:21 UTC (rev 1040)
+@@ -28,6 +28,8 @@
+ 		std::string generateAndSave();
+ 		void setFileName(const string&amp; fileName);
+ 		void setSerializationLibrary(const string&amp; lib);
++		std::string getFileName() {return outputFileName;}; // stupid? better make that variable public.. ech.
++		std::string getSerializationLibrary() {return serializationDynlib;};
+ 		
+ 		FileGenerator ();
+ 		virtual ~FileGenerator ();
+
+Modified: trunk/yade-core/src/yade/Omega.cpp
+===================================================================
+--- trunk/yade-core/src/yade/Omega.cpp	2007-01-16 11:38:44 UTC (rev 1039)
++++ trunk/yade-core/src/yade/Omega.cpp	2007-01-20 12:11:21 UTC (rev 1040)
+@@ -260,7 +260,7 @@
+ 					string err=ClassFactory::instance().lastError();
+ 					// HACK
+ 					if(err.find(&quot;cannot open shared object file: No such file or directory&quot;)!=std::string::npos){
+-						LOG_INFO(&quot;Attemted to load nonexistent file; since this may be due to bad algorithm of filename construction, we pretend everything is OK (original error: `&quot;&lt;&lt;err&lt;&lt;&quot;').&quot;);
++						LOG_INFO(&quot;Attempted to load nonexistent file; since this may be due to bad algorithm of filename construction, we pretend everything is OK (original error: `&quot;&lt;&lt;err&lt;&lt;&quot;').&quot;);
+ 						thisLoaded=true;
+ 					}
+ 					else if(err.find(&quot;: undefined symbol: &quot;)!=std::string::npos){
+
+Modified: trunk/yade-core/src/yade/Omega.hpp
+===================================================================
+--- trunk/yade-core/src/yade/Omega.hpp	2007-01-16 11:38:44 UTC (rev 1039)
++++ trunk/yade-core/src/yade/Omega.hpp	2007-01-20 12:11:21 UTC (rev 1040)
+@@ -77,6 +77,10 @@
+ 		void logMessage(const string&amp; str);
+ 		void logError(const string&amp; str);
+ 		
++		float	isoValue;
++		float	isoThick;
++		int     isoSec;
++		
+ 		boost::mutex&amp;	getRootBodyMutex();
+ 		
+ 		void		createSimulationLoop();
+
+Modified: trunk/yade-core/src/yade/ThreadWorker.hpp
+===================================================================
+--- trunk/yade-core/src/yade/ThreadWorker.hpp	2007-01-16 11:38:44 UTC (rev 1039)
++++ trunk/yade-core/src/yade/ThreadWorker.hpp	2007-01-20 12:11:21 UTC (rev 1040)
+@@ -52,7 +52,7 @@
+ 		virtual		~ThreadWorker() {};
+ 
+ 		/// Returns a value between 0.0 and 1.0. Useful for updating a progress bar.
+-		float		progress();
++		float		progress(); // get_progress ? (pick a naming convention, efngh)
+ 		/// You can display a message in GUI about what is the current work status
+ 		std::string	message();
+ 		/// Check whether execution is finished,
+
+Modified: trunk/yade-core/src/yade/yade.cpp
+===================================================================
+--- trunk/yade-core/src/yade/yade.cpp	2007-01-16 11:38:44 UTC (rev 1039)
++++ trunk/yade-core/src/yade/yade.cpp	2007-01-20 12:11:21 UTC (rev 1040)
+@@ -71,7 +71,7 @@
+ 	flags=flags+&quot;PREFIX=&quot; +getPrefix()+ &quot;\n&quot;;
+ 	flags=flags+&quot;POSTFIX=&quot; + getPostfix() + &quot;\n&quot;;
+ #ifdef SINGLE_PRECISION
+-	flags+=&quot;DOUBLE_PRECISION &quot;;
++	flags+=&quot;SINGLE_PRECISION &quot;;
+ #endif
+ #ifdef DOUBLE_PRECISION
+ 	flags+=&quot;DOUBLE_PRECISION &quot;;
+
+Modified: trunk/yade-guis/yade-gui-qt/src/QtGUI/GLViewer.cpp
+===================================================================
+--- trunk/yade-guis/yade-gui-qt/src/QtGUI/GLViewer.cpp	2007-01-16 11:38:44 UTC (rev 1039)
++++ trunk/yade-guis/yade-gui-qt/src/QtGUI/GLViewer.cpp	2007-01-20 12:11:21 UTC (rev 1040)
+@@ -77,11 +77,38 @@
+ 			setWheelBinding(Qt::NoButton , FRAME, ZOOM);
+ 		}
+ 	else if( e-&gt;key()==Qt::Key_C &amp;&amp; selectedName() != -1 &amp;&amp; (*(Omega::instance().getRootBody()-&gt;bodies)).exists(selectedName()))
+-		setSceneCenter(manipulatedFrame()-&gt;position());
++		setSceneCenter(manipulatedFrame()-&gt;position()), updateGL();
+ 	else if( e-&gt;key()==Qt::Key_D )
+ 		wasDynamic = true;
+ 	else if( e-&gt;key()==Qt::Key_G )
+-		drawGrid = !drawGrid;
++		drawGrid = !drawGrid, updateGL();
++
++// FIXME BEGIN - arguments for GLDraw*ers should be from dialog box, not through Omega !!!
++	else if( e-&gt;key()==Qt::Key_Delete )
++		Omega::instance().isoValue-=0.05, updateGL();
++	else if( e-&gt;key()==Qt::Key_Insert )
++		Omega::instance().isoValue+=0.05, updateGL();
++
++	else if( e-&gt;key()==Qt::Key_Next )
++		Omega::instance().isoThick-=0.05, updateGL();
++	else if( e-&gt;key()==Qt::Key_Prior )
++		Omega::instance().isoThick+=0.05, updateGL();
++
++	else if( e-&gt;key()==Qt::Key_End )
++		Omega::instance().isoSec=std::max(4, Omega::instance().isoSec-1), updateGL();
++	else if( e-&gt;key()==Qt::Key_Home )
++		Omega::instance().isoSec+=1, updateGL();
++// FIXME END
++
++	else if (e-&gt;key() == Qt::Key_T)
++	{ // 'T' changes the projection type : perspective or orthogonal
++		if (camera()-&gt;type() == qglviewer::Camera::ORTHOGRAPHIC)
++			camera()-&gt;setType(qglviewer::Camera::PERSPECTIVE);
++		else
++			camera()-&gt;setType(qglviewer::Camera::ORTHOGRAPHIC);
++		updateGL();
++	}
++
+ 	else if( e-&gt;key()!=Qt::Key_Escape &amp;&amp; e-&gt;key()!=Qt::Key_Space )
+ 		QGLViewer::keyPressEvent(e);
+ }
+
+Modified: trunk/yade-guis/yade-gui-qt/src/QtGUI/QtFileGenerator.cpp
+===================================================================
+--- trunk/yade-guis/yade-gui-qt/src/QtGUI/QtFileGenerator.cpp	2007-01-16 11:38:44 UTC (rev 1039)
++++ trunk/yade-guis/yade-gui-qt/src/QtGUI/QtFileGenerator.cpp	2007-01-20 12:11:21 UTC (rev 1040)
+@@ -177,11 +177,11 @@
+ 
+ 	m_worker = static_pointer_cast&lt;FileGenerator&gt;(ClassFactory::instance().createShared(cbGeneratorName-&gt;currentText()));
+ 	
++	guiGen.deserialize(m_worker);
++
+ 	m_worker-&gt;setFileName(leOutputFileName-&gt;text());
+ 	m_worker-&gt;setSerializationLibrary(cbSerializationName-&gt;currentText());
+-	
+-	guiGen.deserialize(m_worker);
+-	
++		
+ 	m_runner   = shared_ptr&lt;ThreadRunner&gt;(new ThreadRunner(m_worker.get()));
+ 	m_runner-&gt;spawnSingleAction();
+ 
+@@ -263,6 +263,12 @@
+ 			return;
+ 		}
+ 	}
++	std::string tmp=fg-&gt;getFileName();
++	if(tmp!=&quot;../data/scene.xml&quot;) // this check to avoid resetting data, when loading older file.
++	{
++		leOutputFileName-&gt;setText(tmp);
++		setSerializationName(fg-&gt;getSerializationLibrary());
++	}
+ }
+ 
+ void QtFileGenerator::pbSaveClicked()
+@@ -270,9 +276,9 @@
+ 	// FIXME add some test to avoid crashing
+ 	shared_ptr&lt;FileGenerator&gt; fg = static_pointer_cast&lt;FileGenerator&gt;(ClassFactory::instance().createShared(cbGeneratorName-&gt;currentText()));
+ 	
++	guiGen.deserialize(fg);
+ 	fg-&gt;setFileName(leOutputFileName-&gt;text());
+ 	fg-&gt;setSerializationLibrary(cbSerializationName-&gt;currentText());
+-	guiGen.deserialize(fg);
+ 	
+ 	string selectedFilter;
+ 	std::vector&lt;string&gt; filters;
+
+Modified: trunk/yade-guis/yade-gui-qt/src/QtGUI/SimulationController.cpp
+===================================================================
+--- trunk/yade-guis/yade-gui-qt/src/QtGUI/SimulationController.cpp	2007-01-16 11:38:44 UTC (rev 1039)
++++ trunk/yade-guis/yade-gui-qt/src/QtGUI/SimulationController.cpp	2007-01-20 12:11:21 UTC (rev 1040)
+@@ -107,6 +107,9 @@
+ 	Omega::instance().finishSimulationLoop();
+ 	Omega::instance().joinSimulationLoop();
+ 
++	// to avoid loading that file next time, when SimulationController is opened again.
++	Omega::instance().setSimulationFileName(&quot;&quot;);
++
+ 	map&lt;int,GLViewer*&gt;::reverse_iterator gi = glViews.rbegin();
+ 	map&lt;int,GLViewer*&gt;::reverse_iterator giEnd = glViews.rend();
+ 	for(;gi!=giEnd;++gi)
+
+Modified: trunk/yade-libs/yade-lib-computational-geometry/src/yade-lib-computational-geometry/MarchingCube.cpp
+===================================================================
+--- trunk/yade-libs/yade-lib-computational-geometry/src/yade-lib-computational-geometry/MarchingCube.cpp	2007-01-16 11:38:44 UTC (rev 1039)
++++ trunk/yade-libs/yade-lib-computational-geometry/src/yade-lib-computational-geometry/MarchingCube.cpp	2007-01-20 12:11:21 UTC (rev 1040)
+@@ -48,12 +48,16 @@
+ 
+ void MarchingCube::resizeScalarField(vector&lt;vector&lt;vector&lt;float&gt; &gt; &gt;&amp; scalarField, int sx, int sy, int sz)
+ {
++	sizeX = sx;
++	sizeY = sy;
++	sizeZ = sz;
++	
+ 	scalarField.resize(sx);
+ 	for(int i=0;i&lt;sx;i++)
+-			scalarField[i].resize(sx); 
++			scalarField[i].resize(sy); 
+ 	for(int i=0;i&lt;sx;i++)
+ 		for(int j=0;j&lt;sy;j++)
+-				scalarField[i][j].resize(sz); 
++				scalarField[i][j].resize(sz,0); 
+ }
+ 
+ 
+
+Modified: trunk/yade-libs/yade-lib-computational-geometry/src/yade-lib-computational-geometry/MarchingCube.hpp
+===================================================================
+--- trunk/yade-libs/yade-lib-computational-geometry/src/yade-lib-computational-geometry/MarchingCube.hpp	2007-01-16 11:38:44 UTC (rev 1039)
++++ trunk/yade-libs/yade-lib-computational-geometry/src/yade-lib-computational-geometry/MarchingCube.hpp	2007-01-20 12:11:21 UTC (rev 1040)
+@@ -1,81 +1,81 @@
+-/*************************************************************************
+-*  Copyright (C) 2004 by Olivier Galizzi                                 *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">olivier.galizzi at imag.fr</A>                                               *
+-*                                                                        *
+-*  This program is free software; it is licensed under the terms of the  *
+-*  GNU General Public License v2 or later. See file LICENSE for details. *
+-*************************************************************************/
+-
+-#ifndef  MARCHINGCUBE_HPP
+-#define  MARCHINGCUBE_HPP
+-
+-#include &lt;cmath&gt;
+-#include &lt;string&gt;
+-#include &lt;vector&gt;
++/*************************************************************************
++*  Copyright (C) 2004 by Olivier Galizzi                                 *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">olivier.galizzi at imag.fr</A>                                               *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#ifndef  MARCHINGCUBE_HPP
++#define  MARCHINGCUBE_HPP
++
++#include &lt;cmath&gt;
++#include &lt;string&gt;
++#include &lt;vector&gt;
+ #include &lt;Wm3Vector3.h&gt;
+-#include &lt;yade/yade-lib-base/yadeWm3.hpp&gt;
+-#include &lt;yade/yade-lib-base/yadeWm3Extra.hpp&gt;
+-
+-using namespace std;
+-
+-class MarchingCube 
+-{
+-
+-/// ATTRIBUTES
+-
+-	private : vector&lt;Vector3r&gt; triangles;
+-	public  : const vector&lt;Vector3r&gt;&amp; getTriangles() { return triangles; }
+-	
+-	private : vector&lt;Vector3r&gt; normals;
+-	public  : const vector&lt;Vector3r&gt;&amp; getNormals() { return normals; }
+-
+-	private : int nbTriangles;
+-	public  : int getNbTriangles() { return nbTriangles; }
+-  
+-	private : Vector3r beta;
+-	private : Vector3r alpha;
+-	private : int sizeX,sizeY,sizeZ;
+-	private : float isoValue;
+-  
+-	private : vector&lt;vector&lt;vector&lt;Vector3r&gt; &gt; &gt; positions;
+-	private : static const int edgeArray[256];
+-	private : static const int triTable[256][16];
+-	Vector3r aNormal;	
+-	
+-/// PRIVATE METHOD
+-  
+-	/** triangulate cell  (x,y,z) **/
+-	private : void polygonize (const vector&lt;vector&lt;vector&lt;float&gt; &gt; &gt;&amp; scalarField, int x, int y, int z);
+-
+-	/** compute normals of the triangles previously found with polygonizecalcule les normales des triangles trouver dans la case (x,y,z)
+-		@param n : indice of the first triangle to process
+-	**/
+-  	private : void computeNormal(const vector&lt;vector&lt;vector&lt;float&gt; &gt; &gt;&amp; scalarField, int x, int y, int z,int offset, int triangleNum);
+-	
+-	/** interpolate coordinates of point vect (that is on isosurface) from coordinates of points vect1 et vect2 **/
+-	private : void interpolate (const Vector3r&amp;  vect1, const Vector3r&amp; vect2, float val1, float val2,Vector3r&amp; vect);
+-
+-	/** Same as interpolate but in 1D **/
+-	private : float interpolateValue(float val1, float val2, float val_cible1, float val_cible2);
+-
+-	/** Compute normal to vertice or triangle inside cell (x,y,z) **/
+-	private : const Vector3r&amp; computeNormalX(const vector&lt;vector&lt;vector&lt;float&gt; &gt; &gt;&amp; scalarField, int x, int y, int z);
+-	private : const Vector3r&amp; computeNormalY(const vector&lt;vector&lt;vector&lt;float&gt; &gt; &gt;&amp; scalarField, int x, int y, int z );
+-	private : const Vector3r&amp; computeNormalZ(const vector&lt;vector&lt;vector&lt;float&gt; &gt; &gt;&amp; scalarField, int x, int y, int z); 
+-
+-/// CONSTRUCTOR/DESTRUCTOR
+-
+-	public  : MarchingCube ();
+-	public  : ~MarchingCube ();
+-
+-/// PULIC METHODS
+-
+-	public  : void computeTriangulation(const vector&lt;vector&lt;vector&lt;float&gt; &gt; &gt;&amp; scalarField, float iso);
+-
+-	public  : void init(int sx, int sy, int sz, const Vector3r&amp; min, const Vector3r&amp; max);
+-
+-	public  : void resizeScalarField(vector&lt;vector&lt;vector&lt;float&gt; &gt; &gt;&amp; scalarField, int sx, int sy, int sz);
+-};
+-
+-#endif // MARCHINGCUBE_HPP
+-
++#include &lt;yade/yade-lib-base/yadeWm3.hpp&gt;
++#include &lt;yade/yade-lib-base/yadeWm3Extra.hpp&gt;
++
++using namespace std;
++
++class MarchingCube 
++{
++
++/// ATTRIBUTES
++
++	private : vector&lt;Vector3r&gt; triangles;
++	public  : const vector&lt;Vector3r&gt;&amp; getTriangles() { return triangles; }
++	
++	private : vector&lt;Vector3r&gt; normals;
++	public  : const vector&lt;Vector3r&gt;&amp; getNormals() { return normals; }
++
++	private : int nbTriangles;
++	public  : int getNbTriangles() { return nbTriangles; }
++  
++	private : Vector3r beta;
++	private : Vector3r alpha;
++	private : int sizeX,sizeY,sizeZ;
++	private : float isoValue;
++  
++	private : vector&lt;vector&lt;vector&lt;Vector3r&gt; &gt; &gt; positions;
++	private : static const int edgeArray[256];
++	private : static const int triTable[256][16];
++	Vector3r aNormal;	
++	
++/// PRIVATE METHOD
++  
++	/** triangulate cell  (x,y,z) **/
++	private : void polygonize (const vector&lt;vector&lt;vector&lt;float&gt; &gt; &gt;&amp; scalarField, int x, int y, int z);
++
++	/** compute normals of the triangles previously found with polygonizecalcule les normales des triangles trouver dans la case (x,y,z)
++		@param n : indice of the first triangle to process
++	**/
++  	private : void computeNormal(const vector&lt;vector&lt;vector&lt;float&gt; &gt; &gt;&amp; scalarField, int x, int y, int z,int offset, int triangleNum);
++	
++	/** interpolate coordinates of point vect (that is on isosurface) from coordinates of points vect1 et vect2 **/
++	private : void interpolate (const Vector3r&amp;  vect1, const Vector3r&amp; vect2, float val1, float val2,Vector3r&amp; vect);
++
++	/** Same as interpolate but in 1D **/
++	private : float interpolateValue(float val1, float val2, float val_cible1, float val_cible2);
++
++	/** Compute normal to vertice or triangle inside cell (x,y,z) **/
++	private : const Vector3r&amp; computeNormalX(const vector&lt;vector&lt;vector&lt;float&gt; &gt; &gt;&amp; scalarField, int x, int y, int z);
++	private : const Vector3r&amp; computeNormalY(const vector&lt;vector&lt;vector&lt;float&gt; &gt; &gt;&amp; scalarField, int x, int y, int z );
++	private : const Vector3r&amp; computeNormalZ(const vector&lt;vector&lt;vector&lt;float&gt; &gt; &gt;&amp; scalarField, int x, int y, int z); 
++
++/// CONSTRUCTOR/DESTRUCTOR
++
++	public  : MarchingCube ();
++	public  : ~MarchingCube ();
++
++/// PULIC METHODS
++
++	public  : void computeTriangulation(const vector&lt;vector&lt;vector&lt;float&gt; &gt; &gt;&amp; scalarField, float iso);
++
++	public  : void init(int sx, int sy, int sz, const Vector3r&amp; min, const Vector3r&amp; max);
++
++	public  : void resizeScalarField(vector&lt;vector&lt;vector&lt;float&gt; &gt; &gt;&amp; scalarField, int sx, int sy, int sz);
++};
++
++#endif // MARCHINGCUBE_HPP
++
+
+Modified: trunk/yade-libs/yade-lib-serialization-qt/src/yade-lib-serialization-qt/QtGUIGenerator.cpp
+===================================================================
+--- trunk/yade-libs/yade-lib-serialization-qt/src/yade-lib-serialization-qt/QtGUIGenerator.cpp	2007-01-16 11:38:44 UTC (rev 1039)
++++ trunk/yade-libs/yade-lib-serialization-qt/src/yade-lib-serialization-qt/QtGUIGenerator.cpp	2007-01-20 12:11:21 UTC (rev 1040)
+@@ -109,7 +109,13 @@
+ 	Serializable::Archives::iterator aiEnd = archives.end();
+ 	for( ; ai!=aiEnd ; ++ai)
+ 	{
+-		if ((*ai)-&gt;isFundamental())
++		if (       (*ai)-&gt;isFundamental()
++		        // FIXME ...
++			// oh well. It is already decided that we will use boost::serialization. And this hack only proves that
++			// current system is broken. I am so tired of NOT loading the filename from generator save files, 
++			// that I had to add this....
++		        &amp;&amp; (*ai)-&gt;getName() != &quot;outputFileName&quot;
++			&amp;&amp; (*ai)-&gt;getName() != &quot;serializationDynlib&quot; )
+ 		{
+ 			shared_ptr&lt;AttributeDescriptor&gt; descriptor(new AttributeDescriptor);
+ 			
+@@ -194,7 +200,13 @@
+ 	Serializable::Archives::iterator aiEnd = archives.end();
+ 	for(; ai!=aiEnd ; ++ai)
+ 	{
+-		if ((*ai)-&gt;isFundamental())
++		if (       (*ai)-&gt;isFundamental()
++		        // FIXME ...
++			// oh well. It is already decided that we will use boost::serialization. And this hack only proves that
++			// current system is broken. I am so tired of NOT loading the filename from generator save files, 
++			// that I had to add this....
++		        &amp;&amp; (*ai)-&gt;getName() != &quot;outputFileName&quot;
++			&amp;&amp; (*ai)-&gt;getName() != &quot;serializationDynlib&quot; )
+ 		{
+ 			string str;
+ 			int i = lookUp[(*ai)-&gt;getName()];
+
+Modified: trunk/yade-packages/yade-package-dem/src/PreProcessor/Funnel/Funnel.cpp
+===================================================================
+--- trunk/yade-packages/yade-package-dem/src/PreProcessor/Funnel/Funnel.cpp	2007-01-16 11:38:44 UTC (rev 1039)
++++ trunk/yade-packages/yade-package-dem/src/PreProcessor/Funnel/Funnel.cpp	2007-01-20 12:11:21 UTC (rev 1040)
+@@ -82,6 +82,7 @@
+ 
+ void Funnel::registerAttributes()
+ {
++	FileGenerator::registerAttributes();
+ 	REGISTER_ATTRIBUTE(nbSpheres);
+ 	REGISTER_ATTRIBUTE(minRadius);
+ 	REGISTER_ATTRIBUTE(maxRadius);
+
+Modified: trunk/yade-packages/yade-package-dem/src/PreProcessor/IsotropicCompressionTest/IsotropicCompressionTest.cpp
+===================================================================
+--- trunk/yade-packages/yade-package-dem/src/PreProcessor/IsotropicCompressionTest/IsotropicCompressionTest.cpp	2007-01-16 11:38:44 UTC (rev 1039)
++++ trunk/yade-packages/yade-package-dem/src/PreProcessor/IsotropicCompressionTest/IsotropicCompressionTest.cpp	2007-01-20 12:11:21 UTC (rev 1040)
+@@ -154,6 +154,7 @@
+ 
+ void IsotropicCompressionTest::registerAttributes()
+ {
++	FileGenerator::registerAttributes();
+ 	REGISTER_ATTRIBUTE(lowerCorner);
+ 	REGISTER_ATTRIBUTE(upperCorner);
+ 	REGISTER_ATTRIBUTE(thickness);
+
+Modified: trunk/yade-packages/yade-package-dem/src/PreProcessor/SDECImpactTest/SDECImpactTest.cpp
+===================================================================
+--- trunk/yade-packages/yade-package-dem/src/PreProcessor/SDECImpactTest/SDECImpactTest.cpp	2007-01-16 11:38:44 UTC (rev 1039)
++++ trunk/yade-packages/yade-package-dem/src/PreProcessor/SDECImpactTest/SDECImpactTest.cpp	2007-01-20 12:11:21 UTC (rev 1040)
+@@ -132,6 +132,7 @@
+ 
+ void SDECImpactTest::registerAttributes()
+ {
++	FileGenerator::registerAttributes();
+ //	REGISTER_ATTRIBUTE(lowerCorner);
+ //	REGISTER_ATTRIBUTE(upperCorner);
+ //	REGISTER_ATTRIBUTE(thickness);
+
+Modified: trunk/yade-packages/yade-package-dem/src/PreProcessor/SDECLinkedSpheres/SDECLinkedSpheres.cpp
+===================================================================
+--- trunk/yade-packages/yade-package-dem/src/PreProcessor/SDECLinkedSpheres/SDECLinkedSpheres.cpp	2007-01-16 11:38:44 UTC (rev 1039)
++++ trunk/yade-packages/yade-package-dem/src/PreProcessor/SDECLinkedSpheres/SDECLinkedSpheres.cpp	2007-01-20 12:11:21 UTC (rev 1040)
+@@ -93,6 +93,7 @@
+ 
+ void SDECLinkedSpheres::registerAttributes()
+ {
++	FileGenerator::registerAttributes();
+ 	REGISTER_ATTRIBUTE(nbSpheres);
+ 	REGISTER_ATTRIBUTE(minRadius);
+ 	REGISTER_ATTRIBUTE(maxRadius);
+
+Modified: trunk/yade-packages/yade-package-dem/src/PreProcessor/SDECMovingWall/SDECMovingWall.cpp
+===================================================================
+--- trunk/yade-packages/yade-package-dem/src/PreProcessor/SDECMovingWall/SDECMovingWall.cpp	2007-01-16 11:38:44 UTC (rev 1039)
++++ trunk/yade-packages/yade-package-dem/src/PreProcessor/SDECMovingWall/SDECMovingWall.cpp	2007-01-20 12:11:21 UTC (rev 1040)
+@@ -104,6 +104,7 @@
+ 
+ void SDECMovingWall::registerAttributes()
+ {
++	FileGenerator::registerAttributes();
+ 	REGISTER_ATTRIBUTE(nbSpheres);
+ 	REGISTER_ATTRIBUTE(minRadius);
+ 	REGISTER_ATTRIBUTE(maxRadius);
+
+Modified: trunk/yade-packages/yade-package-dem/src/PreProcessor/SDECSpheresPlane/SDECSpheresPlane.cpp
+===================================================================
+--- trunk/yade-packages/yade-package-dem/src/PreProcessor/SDECSpheresPlane/SDECSpheresPlane.cpp	2007-01-16 11:38:44 UTC (rev 1039)
++++ trunk/yade-packages/yade-package-dem/src/PreProcessor/SDECSpheresPlane/SDECSpheresPlane.cpp	2007-01-20 12:11:21 UTC (rev 1040)
+@@ -89,6 +89,7 @@
+ 
+ void SDECSpheresPlane::registerAttributes()
+ {
++	FileGenerator::registerAttributes();
+ 	REGISTER_ATTRIBUTE(nbSpheres);
+ 	REGISTER_ATTRIBUTE(minRadius);
+ 	REGISTER_ATTRIBUTE(maxRadius);
+
+Modified: trunk/yade-packages/yade-package-dem/src/PreProcessor/TetrahedronsTest/TetrahedronsTest.cpp
+===================================================================
+--- trunk/yade-packages/yade-package-dem/src/PreProcessor/TetrahedronsTest/TetrahedronsTest.cpp	2007-01-16 11:38:44 UTC (rev 1039)
++++ trunk/yade-packages/yade-package-dem/src/PreProcessor/TetrahedronsTest/TetrahedronsTest.cpp	2007-01-20 12:11:21 UTC (rev 1040)
+@@ -106,6 +106,7 @@
+ 
+ void TetrahedronsTest::registerAttributes()
+ {
++	FileGenerator::registerAttributes();
+ 	REGISTER_ATTRIBUTE(nbTetrahedrons);
+ 	REGISTER_ATTRIBUTE(minSize);
+ 	REGISTER_ATTRIBUTE(maxSize);
+
+Modified: trunk/yade-packages/yade-package-dem/src/PreProcessor/TriaxialTest/TriaxialTest.cpp
+===================================================================
+--- trunk/yade-packages/yade-package-dem/src/PreProcessor/TriaxialTest/TriaxialTest.cpp	2007-01-16 11:38:44 UTC (rev 1039)
++++ trunk/yade-packages/yade-package-dem/src/PreProcessor/TriaxialTest/TriaxialTest.cpp	2007-01-20 12:11:21 UTC (rev 1040)
+@@ -158,6 +158,7 @@
+ 
+ void TriaxialTest::registerAttributes()
+ {
++	FileGenerator::registerAttributes();
+ 	REGISTER_ATTRIBUTE(lowerCorner);
+ 	REGISTER_ATTRIBUTE(upperCorner);
+ 	REGISTER_ATTRIBUTE(thickness);
+
+Modified: trunk/yade-packages/yade-package-fem/src/PreProcessor/FEMBeam/FEMBeam.cpp
+===================================================================
+--- trunk/yade-packages/yade-package-fem/src/PreProcessor/FEMBeam/FEMBeam.cpp	2007-01-16 11:38:44 UTC (rev 1039)
++++ trunk/yade-packages/yade-package-fem/src/PreProcessor/FEMBeam/FEMBeam.cpp	2007-01-20 12:11:21 UTC (rev 1040)
+@@ -96,6 +96,7 @@
+ 
+ void FEMBeam::registerAttributes()
+ {
++	FileGenerator::registerAttributes();
+ 	REGISTER_ATTRIBUTE(femTxtFile);
+ 	REGISTER_ATTRIBUTE(gravity);
+ 	
+
+Modified: trunk/yade-packages/yade-package-lattice/src/DataClass/PhysicalParameters/LatticeBeamParameters/LatticeBeamParameters.cpp
+===================================================================
+--- trunk/yade-packages/yade-package-lattice/src/DataClass/PhysicalParameters/LatticeBeamParameters/LatticeBeamParameters.cpp	2007-01-16 11:38:44 UTC (rev 1039)
++++ trunk/yade-packages/yade-package-lattice/src/DataClass/PhysicalParameters/LatticeBeamParameters/LatticeBeamParameters.cpp	2007-01-20 12:11:21 UTC (rev 1040)
+@@ -59,6 +59,7 @@
+ #define chk(x,y) std::cout &lt;&lt; #y &lt;&lt; &quot;,      &quot; &lt;&lt; x &lt;&lt; &quot; = &quot; &lt;&lt; y &lt;&lt; &quot;\n&quot;
+ 		if(criticalTensileStrain &gt; 0.00015) // E.l
+ 		{ // CEMENT MATRIX
++			static int cement=0;	++cement;
+ 			static bool d1=true;
+ 			if(d1)
+ 			{
+@@ -73,6 +74,7 @@
+ 		}
+ 		else if(criticalTensileStrain &gt; 0.00006) // E.l
+ 		{ // AGGREGATE
++			static int aggregate=0; ++aggregate;
+ 			static bool d2=true;
+ 			if(d2)
+ 			{
+@@ -87,6 +89,7 @@
+ 		}
+ 		else
+ 		{ // BOND / INTERFACE
++			static int bond=0; ++bond;
+ 			static bool d3=true;
+ 			if(d3)
+ 			{
+
+Modified: trunk/yade-packages/yade-package-lattice/src/Engine/EngineUnit/LatticeSet2LatticeBeams/LatticeSet2LatticeBeams.cpp
+===================================================================
+--- trunk/yade-packages/yade-package-lattice/src/Engine/EngineUnit/LatticeSet2LatticeBeams/LatticeSet2LatticeBeams.cpp	2007-01-16 11:38:44 UTC (rev 1039)
++++ trunk/yade-packages/yade-package-lattice/src/Engine/EngineUnit/LatticeSet2LatticeBeams/LatticeSet2LatticeBeams.cpp	2007-01-20 12:11:21 UTC (rev 1040)
+@@ -39,6 +39,8 @@
+ 			      if(beam-&gt;criticalTensileStrain &gt; 0.00015) line-&gt;diffuseColor = Vector3f(0.6,0.6,0.6); else // CEMENT
+ 			      if(beam-&gt;criticalTensileStrain &gt; 0.00006) line-&gt;diffuseColor = Vector3f(0.0,0.0,0.0); else // AGGREGATE
+ 			                                                line-&gt;diffuseColor = Vector3f(0.3,0.3,0.3);      // BOND
++
++			      if(beam-&gt;longitudalStiffness &gt; 3.6 ) line-&gt;diffuseColor = Vector3f(1.0,0.0,0.0); // NON-DESTROY
+ 		}
+ 	}
+ }
+
+Modified: trunk/yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/MeasurePoisson/MeasurePoisson.cpp
+===================================================================
+--- trunk/yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/MeasurePoisson/MeasurePoisson.cpp	2007-01-16 11:38:44 UTC (rev 1039)
++++ trunk/yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/MeasurePoisson/MeasurePoisson.cpp	2007-01-20 12:11:21 UTC (rev 1040)
+@@ -13,6 +13,7 @@
+ // to calculate strain of whole speciemen - first two bodies in subscribedBodies are Nodes. FIXME - make it clean!
+ #include &lt;boost/lexical_cast.hpp&gt;
+ 
++#include &lt;cmath&gt;
+ 
+ MeasurePoisson::MeasurePoisson () : DataRecorder()
+ {
+@@ -75,11 +76,23 @@
+ 	
+ 	// FIXME - zamiast &#182;ledzi&#230; tylko dwa punkty (jeden na dole i jeden u g&#243;ry), to lepiej zaznaczy&#230; dwa obszary punkt&#243;w i liczy&#230; &#182;redni&#177; ich po&#179;o&#191;enia,
+ 	// bo teraz, je&#182;li kt&#243;ry&#182; punkt zostanie wykasowany, to nie jest mo&#191;liwe kontynuowanie pomiar&#243;w.
+-	
+-	Real 	 poisson = -1.0* ( (((node_right -&gt;se3.position[0] - node_left  -&gt;se3.position[0])-horizontal)/horizontal)
++
++	Real	d  = horizontal;
++	Real	dd = ((node_right -&gt;se3.position[0] - node_left  -&gt;se3.position[0])-horizontal);
++	Real	L  = vertical;
++	Real	dL = ((node_upper -&gt;se3.position[1] - node_bottom-&gt;se3.position[1])-vertical  );
++
++	Real 	poisson1 = -1.0* ( (((node_right -&gt;se3.position[0] - node_left  -&gt;se3.position[0])-horizontal)/horizontal)
+ 			         / (((node_upper -&gt;se3.position[1] - node_bottom-&gt;se3.position[1])-vertical  )/vertical  ));
+ 	
+-	ofile	&lt;&lt; lexical_cast&lt;string&gt;(poisson) &lt;&lt; &quot; &quot; 
++	Real 	poisson2 = -1.0* ( (dd/d)
++			          / (dL/L));
++
++	Real	poisson3 = std::log(d/(dd-d))/std::log(dL/L+1.0);
++	
++	ofile	&lt;&lt; lexical_cast&lt;string&gt;(poisson1) &lt;&lt; &quot; &quot; 
++		&lt;&lt; lexical_cast&lt;string&gt;(poisson2) &lt;&lt; &quot; &quot; 
++		&lt;&lt; lexical_cast&lt;string&gt;(poisson3) &lt;&lt; &quot; &quot; 
+ 		&lt;&lt; endl; 
+ 		
+ 	// [1]
+
+Modified: trunk/yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/StrainRecorder/StrainRecorder.cpp
+===================================================================
+--- trunk/yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/StrainRecorder/StrainRecorder.cpp	2007-01-16 11:38:44 UTC (rev 1039)
++++ trunk/yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/StrainRecorder/StrainRecorder.cpp	2007-01-20 12:11:21 UTC (rev 1040)
+@@ -51,8 +51,8 @@
+ 
+ void StrainRecorder::action(Body * body)
+ {
+-//	std::cerr &lt;&lt; &quot;StrainRecorder quits\n&quot;;
+-//	return;
++	std::cerr &lt;&lt; &quot;StrainRecorder quits\n&quot;;
++	return;
+ 	
+ 	MetaBody * ncb = static_cast&lt;MetaBody*&gt;(body);
+ 	Real strain_y=0,stress_y=0;//,stress_nonlocal_y=0;
+@@ -60,9 +60,11 @@
+ 	std::vector&lt;unsigned int&gt;::iterator i   = subscribedBodies.begin();
+ 	std::vector&lt;unsigned int&gt;::iterator end = subscribedBodies.end();
+ 	
++	if(!ncb-&gt;bodies-&gt;exists(*i)) std::cerr &lt;&lt; &quot;StrainRecorder missing node\n&quot;, exit(1);
+ 	LatticeNodeParameters* node1 = dynamic_cast&lt;LatticeNodeParameters*&gt;( (*(ncb-&gt;bodies))[*i]-&gt;physicalParameters . get() );
+ 	(*(ncb-&gt;bodies))[*i]-&gt;geometricalModel-&gt;diffuseColor = Vector3f(1.0,0.0,0.0); // FIXME [1]
+ 	++i;
++	if(!ncb-&gt;bodies-&gt;exists(*i)) std::cerr &lt;&lt; &quot;StrainRecorder missing node\n&quot;, exit(1);
+ 	LatticeNodeParameters* node2 = dynamic_cast&lt;LatticeNodeParameters*&gt;( (*(ncb-&gt;bodies))[*i]-&gt;physicalParameters . get() );
+ 	(*(ncb-&gt;bodies))[*i]-&gt;geometricalModel-&gt;diffuseColor = Vector3f(1.0,0.0,0.0); // FIXME [1]
+ 	++i;
+
+Modified: trunk/yade-packages/yade-package-lattice/src/PreProcessor/LatticeExample/LatticeExample.cpp
+===================================================================
+--- trunk/yade-packages/yade-package-lattice/src/PreProcessor/LatticeExample/LatticeExample.cpp	2007-01-16 11:38:44 UTC (rev 1039)
++++ trunk/yade-packages/yade-package-lattice/src/PreProcessor/LatticeExample/LatticeExample.cpp	2007-01-20 12:11:21 UTC (rev 1040)
+@@ -42,6 +42,11 @@
+ #include &lt;yade/yade-package-common/Quadrilateral.hpp&gt;
+ #include &lt;yade/yade-package-common/ParticleParameters.hpp&gt;
+ 
++// Delaunay
++#include &lt;Wm3Delaunay3.h&gt;
++#include &lt;Wm3Delaunay2.h&gt;
++#include &lt;Wm3Query.h&gt;
++
+ using namespace boost;
+ using namespace std;
+ 
+@@ -54,6 +59,7 @@
+         
+         speciemen_size_in_meters = Vector3r(0.1,0.1,0.0001);
+         cellsizeUnit_in_meters   = 0.003;
++	use_Delaunay		 = true;
+         minAngle_betweenBeams_deg= 20.0;
+         disorder_in_cellsizeUnit = Vector3r(0.6,0.6,0.0);
+         maxLength_in_cellsizeUnit= 1.9;
+@@ -118,6 +124,17 @@
+         regionDelete_F_min       = Vector3r(0,0,0);
+         regionDelete_F_max       = Vector3r(0,0,0);
+ 
++        regionDelete_1_min       = Vector3r(0,0,0);
++        regionDelete_1_max       = Vector3r(0,0,0);
++        regionDelete_2_min       = Vector3r(0,0,0);
++        regionDelete_2_max       = Vector3r(0,0,0);
++        regionDelete_3_min       = Vector3r(0,0,0);
++        regionDelete_3_max       = Vector3r(0,0,0);
++        regionDelete_4_min       = Vector3r(0,0,0);
++        regionDelete_4_max       = Vector3r(0,0,0);
++        regionDelete_5_min       = Vector3r(0,0,0);
++        regionDelete_5_max       = Vector3r(0,0,0);
++
+         nonDestroy_A_min         = Vector3r(0,0,0);
+         nonDestroy_A_max         = Vector3r(0,0,0);
+         nonDestroy_B_min         = Vector3r(0,0,0);
+@@ -152,11 +169,13 @@
+ 
+ void LatticeExample::registerAttributes()
+ {
++	FileGenerator::registerAttributes();
+ 	REGISTER_ATTRIBUTE(speciemen_size_in_meters); 	// size
+ 	REGISTER_ATTRIBUTE(cellsizeUnit_in_meters);	// g [m]  	- cell size
+ 	REGISTER_ATTRIBUTE(minAngle_betweenBeams_deg); 	// a [deg] 	- min angle
+         REGISTER_ATTRIBUTE(disorder_in_cellsizeUnit);   // s [-]        - disorder 
+         REGISTER_ATTRIBUTE(maxLength_in_cellsizeUnit);  // r [-]        - max beam length
++	REGISTER_ATTRIBUTE(use_Delaunay);
+         
+         REGISTER_ATTRIBUTE(crit_TensileStrain);         // E_min [%]    - default 0.02 %
+         REGISTER_ATTRIBUTE(crit_ComprStrain);           // E_max [%]    - default 0.2 %
+@@ -217,6 +236,17 @@
+         REGISTER_ATTRIBUTE(regionDelete_F_min);
+         REGISTER_ATTRIBUTE(regionDelete_F_max);
+ 
++        REGISTER_ATTRIBUTE(regionDelete_1_min);
++        REGISTER_ATTRIBUTE(regionDelete_1_max);
++        REGISTER_ATTRIBUTE(regionDelete_2_min);
++        REGISTER_ATTRIBUTE(regionDelete_2_max);
++        REGISTER_ATTRIBUTE(regionDelete_3_min);
++        REGISTER_ATTRIBUTE(regionDelete_3_max);
++        REGISTER_ATTRIBUTE(regionDelete_4_min);
++        REGISTER_ATTRIBUTE(regionDelete_4_max);
++        REGISTER_ATTRIBUTE(regionDelete_5_min);
++        REGISTER_ATTRIBUTE(regionDelete_5_max);
++
+         REGISTER_ATTRIBUTE(nonDestroy_A_min);
+         REGISTER_ATTRIBUTE(nonDestroy_A_max);
+         REGISTER_ATTRIBUTE(nonDestroy_B_min);
+@@ -263,8 +293,12 @@
+ 	if(triangularBaseGrid3D)
+ 		nbNodes[2] *= 1.22475; // bigger by (1/3)*(sqrt(6)) factor
+ 
++
++	bool FLAT = speciemen_size_in_meters[2]&lt;cellsizeUnit_in_meters;
++	std::vector&lt;Vector2r&gt; vert2; vert2.clear(); // Delaunay
++	std::vector&lt;Vector3r&gt; vert3; vert3.clear(); // Delaunay
++
+         unsigned int totalNodesCount = 0;
+-
+ 	{
+ 		setMessage(&quot;creating nodes...&quot;);
+ 		float all = nbNodes[0]*nbNodes[1]*nbNodes[2];
+@@ -281,7 +315,13 @@
+ 
+ 					shared_ptr&lt;Body&gt; node;
+ 					if(createNode(node,i,j,k) || quads)
++					{
+ 						rootBody-&gt;bodies-&gt;insert(node), ++totalNodesCount;
++						if(FLAT)
++							vert2.push_back(Vector2r(node-&gt;physicalParameters-&gt;se3.position[0],node-&gt;physicalParameters-&gt;se3.position[1])); // Delaunay
++						else
++							vert3.push_back(node-&gt;physicalParameters-&gt;se3.position); // Delaunay
++					}
+ 				}
+ 		}
+ 	}
+@@ -292,6 +332,69 @@
+ 	BodyContainer::iterator bi    = rootBody-&gt;bodies-&gt;begin();
+ 	BodyContainer::iterator bi2;
+ 	BodyContainer::iterator biEnd = rootBody-&gt;bodies-&gt;end();
++
++	if(use_Delaunay) // create beams, Delaunay
++	{
++		std::set&lt; std::pair&lt;int,int&gt; &gt; pairs;
++		int I,J;
++		if(FLAT)
++		{
++			setProgress(0); setMessage(&quot;Delaunay 2d...&quot;);
++			Delaunay2&lt;Real&gt; del2(vert2.size(),&amp;(vert2[0]),cellsizeUnit_in_meters/50,false, Query::QT_INTEGER); // Delaunay
++
++			int del2_i = 0;
++			int del2_ind[3];
++			while(del2.GetIndexSet(del2_i++,del2_ind))
++			{
++				if(shouldTerminate()) return &quot;&quot;;
++				setProgress((float)del2_i/(float)del2.GetSimplexQuantity());
++				shared_ptr&lt;Body&gt; beam;
++
++				for(int zzz=0 ; zzz&lt;3 ; ++zzz)
++				{
++					I=del2_ind[zzz];J=del2_ind[(zzz+1)%3];
++					if(J&gt;I) std::swap(I,J);
++					if(pairs.insert(std::make_pair(I,J)).second)
++					{
++						createBeam(beam,I,J);
++						if(calcBeamPositionOrientationLength(beam)&lt;maxLength_in_cellsizeUnit*cellsizeUnit_in_meters)
++							if(notDeleted(beam-&gt;physicalParameters-&gt;se3.position)) 
++								bc.insert(beam);
++					}
++				}
++			}
++		}
++		else
++		{
++			setProgress(0); setMessage(&quot;Delaunay 3d...&quot;);
++			Delaunay3&lt;Real&gt; del3(vert3.size(),&amp;(vert3[0]),cellsizeUnit_in_meters/50,false, Query::QT_INTEGER); // Delaunay
++			
++			int del3_i = 0;
++			int del3_ind[4];
++			while(del3.GetIndexSet(del3_i++,del3_ind))
++			{
++				if(shouldTerminate()) return &quot;&quot;;
++				setProgress((float)del3_i/(float)del3.GetSimplexQuantity());
++				shared_ptr&lt;Body&gt; beam;
++
++				for(int zzz=0 ; zzz&lt;4 ; ++zzz)
++				{
++					I=del3_ind[zzz];J=del3_ind[(zzz+1)%4];
++					if(J&gt;I) std::swap(I,J);
++					if(pairs.insert(std::make_pair(I,J)).second)
++					{
++						createBeam(beam,I,J);
++						if(calcBeamPositionOrientationLength(beam)&lt;maxLength_in_cellsizeUnit*cellsizeUnit_in_meters)
++							if(notDeleted(beam-&gt;physicalParameters-&gt;se3.position)) 
++								bc.insert(beam);
++					}
++				}
++			}
++		}
++
++	}
++	else
++	{ //  create beams, old method
+ 	int beam_counter = 0;
+ 	float nodes_a=0;
+ 	float nodes_all = rootBody-&gt;bodies-&gt;size();
+@@ -333,12 +436,15 @@
+ 						setProgress(std::pow(nodes_a/nodes_all,2));
+ 					}
+ 					
+-					bc.insert(beam);
++					if(notDeleted(beam-&gt;physicalParameters-&gt;se3.position)) 
++						bc.insert(beam);
+ 				}
+ 			}
+                 }
+         }
++	} // beams are created
+ 
++
+         { // subscribe two nodes, that are monitored by strain recoder to get a measure of length
+                 bi    = rootBody-&gt;bodies-&gt;begin();
+                 biEnd = rootBody-&gt;bodies-&gt;end();
+@@ -449,7 +555,7 @@
+ 
+ 			if( ++current % 100 == 0 )
+ 			{
+-				cerr &lt;&lt; &quot;angular springs: &quot; &lt;&lt; current &lt;&lt; &quot; , &quot; &lt;&lt; ((static_cast&lt;float&gt;(current)/all_bodies)*100.0) &lt;&lt; &quot; %\n&quot;;
++				//cerr &lt;&lt; &quot;angular springs: &quot; &lt;&lt; current &lt;&lt; &quot; , &quot; &lt;&lt; ((static_cast&lt;float&gt;(current)/all_bodies)*100.0) &lt;&lt; &quot; %\n&quot;;
+ 				setProgress(((float)(current)/all_bodies));
+ 			}
+ 				
+@@ -480,13 +586,18 @@
+ 		}
+ 	};
+         
+-        
+-        regionDelete(rootBody,regionDelete_A_min,regionDelete_A_max);
+-        regionDelete(rootBody,regionDelete_B_min,regionDelete_B_max);
+-        regionDelete(rootBody,regionDelete_C_min,regionDelete_C_max);
+-        regionDelete(rootBody,regionDelete_D_min,regionDelete_D_max);
+-        regionDelete(rootBody,regionDelete_E_min,regionDelete_E_max);
+-        regionDelete(rootBody,regionDelete_F_min,regionDelete_F_max);
++//	setMessage(&quot;Deleting A...&quot;); regionDelete(rootBody,regionDelete_A_min,regionDelete_A_max); if(shouldTerminate()) return &quot;&quot;;
++//	setMessage(&quot;Deleting B...&quot;); regionDelete(rootBody,regionDelete_B_min,regionDelete_B_max); if(shouldTerminate()) return &quot;&quot;;
++//	setMessage(&quot;Deleting C...&quot;); regionDelete(rootBody,regionDelete_C_min,regionDelete_C_max); if(shouldTerminate()) return &quot;&quot;;
++//	setMessage(&quot;Deleting D...&quot;); regionDelete(rootBody,regionDelete_D_min,regionDelete_D_max); if(shouldTerminate()) return &quot;&quot;;
++//	setMessage(&quot;Deleting E...&quot;); regionDelete(rootBody,regionDelete_E_min,regionDelete_E_max); if(shouldTerminate()) return &quot;&quot;;
++//	setMessage(&quot;Deleting F...&quot;); regionDelete(rootBody,regionDelete_F_min,regionDelete_F_max); if(shouldTerminate()) return &quot;&quot;;
++//
++//	setMessage(&quot;Deleting 1...&quot;); regionDelete(rootBody,regionDelete_1_min,regionDelete_1_max); if(shouldTerminate()) return &quot;&quot;;
++//	setMessage(&quot;Deleting 2...&quot;); regionDelete(rootBody,regionDelete_2_min,regionDelete_2_max); if(shouldTerminate()) return &quot;&quot;;
++//	setMessage(&quot;Deleting 3...&quot;); regionDelete(rootBody,regionDelete_3_min,regionDelete_3_max); if(shouldTerminate()) return &quot;&quot;;
++//	setMessage(&quot;Deleting 4...&quot;); regionDelete(rootBody,regionDelete_4_min,regionDelete_4_max); if(shouldTerminate()) return &quot;&quot;;
++//	setMessage(&quot;Deleting 5...&quot;); regionDelete(rootBody,regionDelete_5_min,regionDelete_5_max); if(shouldTerminate()) return &quot;&quot;;
+ 
+         imposeTranslation(rootBody,region_A_min,region_A_max,direction_A,displacement_A_meters);
+         imposeTranslation(rootBody,region_B_min,region_B_max,direction_B,displacement_B_meters);
+@@ -494,6 +605,7 @@
+         imposeTranslation(rootBody,region_D_min,region_D_max,direction_D,displacement_D_meters);
+ 
+         if(useAggregates) addAggregates(rootBody);
++	if(shouldTerminate()) return &quot;&quot;;
+         
+         nonDestroy(rootBody,nonDestroy_A_min,nonDestroy_A_max);
+         nonDestroy(rootBody,nonDestroy_B_min,nonDestroy_B_max);
+@@ -502,7 +614,9 @@
+ 
+         return &quot;Number of nodes created:\n&quot; + lexical_cast&lt;string&gt;(nbNodes[0]) + &quot;,&quot;
+                                             + lexical_cast&lt;string&gt;(nbNodes[1]) + &quot;,&quot;
+-                                            + lexical_cast&lt;string&gt;(nbNodes[2]) + &quot;\n\nNOTE: sometimes it can look better when 'drawWireFrame' is enabled in Display tab.&quot;;
++                                            + lexical_cast&lt;string&gt;(nbNodes[2]) + &quot;,&quot;
++	     + &quot;Number of beams: &quot; + lexical_cast&lt;string&gt;(bc.size()) + &quot;\n&quot;
++	     + &quot;\nNOTE: sometimes it can look better when 'drawWireFrame' is enabled in Display tab.&quot;;
+ 
+ }
+ 
+@@ -660,7 +774,7 @@
+ }
+ 
+ 
+-void LatticeExample::calcBeamPositionOrientationLength(shared_ptr&lt;Body&gt;&amp; body)
++Real LatticeExample::calcBeamPositionOrientationLength(shared_ptr&lt;Body&gt;&amp; body)
+ {
+ 	LatticeBeamParameters* beam = static_cast&lt;LatticeBeamParameters*&gt;(body-&gt;physicalParameters.get());
+ 	shared_ptr&lt;Body&gt;&amp; bodyA = (*(rootBody-&gt;bodies))[beam-&gt;id1];
+@@ -689,6 +803,8 @@
+ 	beam-&gt;se3Displacement.orientation.Align(dist,dist);
+ 
+ 	beam-&gt;otherDirection	= beam-&gt;se3.orientation*Vector3r::UNIT_Y; // any unit vector that is orthogonal to direction.
++
++	return length;
+ }
+ 
+ void LatticeExample::calcAxisAngle(LatticeBeamParameters* beam1, BodyContainer* bodies, unsigned int otherId, InteractionContainer* ints, unsigned int thisId)
+@@ -861,6 +977,37 @@
+         }
+ }
+ 
++bool LatticeExample::isDeleted(Vector3r pos, Vector3r min, Vector3r max)
++{
++	return(
++		   pos[0] &gt; min[0] 
++		&amp;&amp; pos[1] &gt; min[1] 
++		&amp;&amp; pos[2] &gt; min[2] 
++		&amp;&amp; pos[0] &lt; max[0] 
++		&amp;&amp; pos[1] &lt; max[1] 
++		&amp;&amp; pos[2] &lt; max[2] 
++	      );
++}
++
++bool LatticeExample::notDeleted(Vector3r pos)
++{
++//	return true;
++	return (!(
++		   isDeleted(pos,regionDelete_A_min,regionDelete_A_max)
++        	|| isDeleted(pos,regionDelete_B_min,regionDelete_B_max)
++        	|| isDeleted(pos,regionDelete_C_min,regionDelete_C_max)
++        	|| isDeleted(pos,regionDelete_D_min,regionDelete_D_max)
++        	|| isDeleted(pos,regionDelete_E_min,regionDelete_E_max)
++        	|| isDeleted(pos,regionDelete_F_min,regionDelete_F_max)
++
++		|| isDeleted(pos,regionDelete_1_min,regionDelete_1_max)
++        	|| isDeleted(pos,regionDelete_2_min,regionDelete_2_max)
++        	|| isDeleted(pos,regionDelete_3_min,regionDelete_3_max)
++        	|| isDeleted(pos,regionDelete_4_min,regionDelete_4_max)
++        	|| isDeleted(pos,regionDelete_5_min,regionDelete_5_max)
++	));
++};
++
+ void LatticeExample::regionDelete(shared_ptr&lt;MetaBody&gt;&amp; rootBody, Vector3r min, Vector3r max)
+ {
+         vector&lt;unsigned int&gt; futureDeletes;
+@@ -934,7 +1081,7 @@
+ 
+ struct Circle
+ {
+-        float x,y,d;
++        float x,y,z,d;
+ };
+ 
+ bool overlaps(Circle&amp; cc,std::vector&lt;Circle&gt;&amp; c)
+@@ -942,7 +1089,7 @@
+         std::vector&lt;Circle&gt;::iterator end=c.end();
+         for(std::vector&lt;Circle&gt;::iterator i=c.begin();i!=end;++i)
+         {
+-                float dist2 = std::pow(i-&gt;x - cc.x ,2)+std::pow(i-&gt;y - cc.y,2);
++                float dist2 = std::pow(i-&gt;x - cc.x ,2)+std::pow(i-&gt;y - cc.y,2)+std::pow(i-&gt;z - cc.z,2);
+                 float r2    = std::pow( 1.1*(i-&gt;d+cc.d)/2.0 ,2); // FIXME - 1.1 is hardcoded. van Mier's min distance is 1.1*(D1+D2)/2
+                 if(dist2&lt;r2)
+                         return true;
+@@ -959,11 +1106,11 @@
+         //      if(i-&gt;r &lt; cellsizeUnit_in_meters) // FIXME
+         //              continue;
+ 
+-                float dist2 = std::pow(i-&gt;x - a[0],2)+std::pow(i-&gt;y - a[1],2);
++                float dist2 = std::pow(i-&gt;x - a[0],2)+std::pow(i-&gt;y - a[1],2)+std::pow(i-&gt;z - a[2],2);
+                 float r2    = std::pow(i-&gt;d*0.5,2);
+                 if(dist2&lt;r2) res=1; else res=0;
+ 
+-                dist2 = std::pow(i-&gt;x - b[0],2)+std::pow(i-&gt;y - b[1],2);
++                dist2 = std::pow(i-&gt;x - b[0],2)+std::pow(i-&gt;y - b[1],2)+std::pow(i-&gt;z - b[2],2);
+                 if(dist2&lt;r2) ++res;
+ 
+                 if(res!=0) return res;
+@@ -980,6 +1127,15 @@
+         return aggArea;
+ }
+ 
++float aggsVolumes(std::vector&lt;Circle&gt;&amp; c)
++{
++        float aggVolume=0.0;
++        std::vector&lt;Circle&gt;::iterator end=c.end();
++        for(std::vector&lt;Circle&gt;::iterator i=c.begin();i!=end;++i)
++                aggVolume += (4.0/3.0)*3.14159265358979323846*std::pow(i-&gt;d*0.5 ,3);
++        return aggVolume;
++}
++
+ // random
+ #include &lt;boost/random/linear_congruential.hpp&gt;
+ #include &lt;boost/random/uniform_real.hpp&gt;
+@@ -993,6 +1149,9 @@
+ 
+         Real AGGREGATES_X=speciemen_size_in_meters[0];
+         Real AGGREGATES_Y=speciemen_size_in_meters[1];
++        Real AGGREGATES_Z=speciemen_size_in_meters[2];
++	if(AGGREGATES_Z &lt; cellsizeUnit_in_meters )
++		AGGREGATES_Z = 0.0;
+         Real MAX_DIAMETER  =aggregateMaxDiameter;
+         Real MIN_DIAMETER  =aggregateMinDiameter;
+         Real MEAN_DIAMETER =aggregateMeanDiameter;
+@@ -1009,23 +1168,29 @@
+ 	setMessage(  &quot;generating aggregates...&quot;);
+         do
+         {
++		if(shouldTerminate()) return;
++
+                 Circle cc;
+-                cc.x=random1()*AGGREGATES_X, cc.y=random1()*AGGREGATES_Y;
++                cc.x=random1()*AGGREGATES_X, cc.y=random1()*AGGREGATES_Y, cc.z=AGGREGATES_Z==0?0:random1()*AGGREGATES_Z;
+                 do { cc.d=randomN(); } while (cc.d&gt;=MAX_DIAMETER || cc.d&lt;=MIN_DIAMETER);
+                 for(int i=0 ; i&lt;1000 ; ++i)
+                         if(overlaps(cc,c))
+-                                cc.x=random1()*AGGREGATES_X, cc.y=random1()*AGGREGATES_Y;
++                                cc.x=random1()*AGGREGATES_X, cc.y=random1()*AGGREGATES_Y, cc.z=AGGREGATES_Z==0?0:random1()*AGGREGATES_Z;
+                         else
+                         {
+                                 c.push_back(cc);
+                 //              std::cerr &lt;&lt; cc.x &lt;&lt; &quot; &quot; &lt;&lt; cc.y &lt;&lt; &quot; &quot; &lt;&lt; cc.d &lt;&lt; &quot;\n&quot;;
+                                 break;
+                         }
+-		setProgress((aggsAreas(c)/(AGGREGATES_X*AGGREGATES_Y))/(aggregatePercent/100.0));
++		if(AGGREGATES_Z == 0)
++			setProgress((aggsAreas(c)/(AGGREGATES_X*AGGREGATES_Y))/(aggregatePercent/100.0));
++		else
++			setProgress((aggsVolumes(c)/(AGGREGATES_X*AGGREGATES_Y*AGGREGATES_Z))/(aggregatePercent/100.0));
+         }
+-        while(aggregatePercent/100.0 &gt; aggsAreas(c)/(AGGREGATES_X*AGGREGATES_Y) );
++        //while(aggregatePercent/100.0 &gt; aggsAreas(c)/(AGGREGATES_X*AGGREGATES_Y) );
++        while( progress() &lt; 1.0 );
+ 
+-        std::cerr &lt;&lt; &quot;done. &quot; &lt;&lt; c.size() &lt;&lt; &quot; aggregates generated, area: &quot; &lt;&lt; aggsAreas(c)/(AGGREGATES_X*AGGREGATES_Y) &lt;&lt; &quot;\n&quot;;
++        std::cerr &lt;&lt; &quot;done. &quot; &lt;&lt; c.size() &lt;&lt; &quot; area: &quot; &lt;&lt; aggsAreas(c)/(AGGREGATES_X*AGGREGATES_Y) &lt;&lt; &quot; vol: &quot; &lt;&lt; aggsVolumes(c)/(AGGREGATES_X*AGGREGATES_Y*AGGREGATES_Z) &lt;&lt; &quot;\n&quot;;
+ 
+         { // set different properties for beams that lie in an aggregate
+           // parametrize from above - takes three arguments: 
+
+Modified: trunk/yade-packages/yade-package-lattice/src/PreProcessor/LatticeExample/LatticeExample.hpp
+===================================================================
+--- trunk/yade-packages/yade-package-lattice/src/PreProcessor/LatticeExample/LatticeExample.hpp	2007-01-16 11:38:44 UTC (rev 1039)
++++ trunk/yade-packages/yade-package-lattice/src/PreProcessor/LatticeExample/LatticeExample.hpp	2007-01-20 12:11:21 UTC (rev 1040)
+@@ -42,6 +42,7 @@
+                                 
+                 bool             triangularBaseGrid
+ 				,triangularBaseGrid3D
++				,use_Delaunay
+                                 ,useNonLocalModel
+                                 ,useBendTensileSoftening
+                                 ,useStiffnessSoftening
+@@ -119,8 +120,19 @@
+                                 ,regionDelete_E_min
+                                 ,regionDelete_E_max
+                                 ,regionDelete_F_min
+-                                ,regionDelete_F_max;
++                                ,regionDelete_F_max
+ 
++                                ,regionDelete_1_min
++                                ,regionDelete_1_max
++                                ,regionDelete_2_min
++                                ,regionDelete_2_max
++                                ,regionDelete_3_min
++                                ,regionDelete_3_max
++                                ,regionDelete_4_min
++                                ,regionDelete_4_max
++                                ,regionDelete_5_min
++                                ,regionDelete_5_max;
++
+         // non destroy areas
+                 Vector3r         nonDestroy_A_min
+                                 ,nonDestroy_A_max
+@@ -141,7 +153,9 @@
+ 		bool createNode(shared_ptr&lt;Body&gt;&amp; body, int i, int j, int k);
+ 		bool createQuad(shared_ptr&lt;Body&gt;&amp; body, int i, int j, Vector3r);
+                 void createBeam(shared_ptr&lt;Body&gt;&amp; body, unsigned int i, unsigned int j);
+-                void calcBeamPositionOrientationLength(shared_ptr&lt;Body&gt;&amp; body);
++                Real calcBeamPositionOrientationLength(shared_ptr&lt;Body&gt;&amp; body);
++                bool notDeleted(Vector3r pos);
++		bool isDeleted(Vector3r pos, Vector3r min, Vector3r max);
+                 void calcBeamAngles(Body* body, BodyContainer* bodies,InteractionContainer* ints);
+                 void calcAxisAngle(LatticeBeamParameters* beam, BodyContainer* bodies, unsigned int otherId,InteractionContainer* ints,unsigned int thisId);
+                 bool checkMinimumAngle(BodyRedirectionVector&amp;,shared_ptr&lt;Body&gt;&amp;);
+
+Added: trunk/yade-packages/yade-package-lattice/src/RenderingEngine/GLDrawLatticeSetGeometry/GLDrawLatticeSetGeometry.cpp
+===================================================================
+--- trunk/yade-packages/yade-package-lattice/src/RenderingEngine/GLDrawLatticeSetGeometry/GLDrawLatticeSetGeometry.cpp	2007-01-16 11:38:44 UTC (rev 1039)
++++ trunk/yade-packages/yade-package-lattice/src/RenderingEngine/GLDrawLatticeSetGeometry/GLDrawLatticeSetGeometry.cpp	2007-01-20 12:11:21 UTC (rev 1040)
+@@ -0,0 +1,235 @@
++/*************************************************************************
++*  Copyright (C) 2004 by Janek Kozicki                                   *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">cosurgi at berlios.de</A>                                                    *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#include &quot;GLDrawLatticeSetGeometry.hpp&quot;
++#include &quot;LatticeSetGeometry.hpp&quot;
++#include &quot;LatticeSetParameters.hpp&quot;
++#include &quot;LatticeBeamParameters.hpp&quot;
++#include &quot;LatticeNodeParameters.hpp&quot;
++#include &lt;yade/yade-lib-opengl/OpenGLWrapper.hpp&gt;
++#include &lt;yade/yade-core/MetaBody.hpp&gt;
++#include &lt;yade/yade-core/Omega.hpp&gt;
++#include &lt;yade/yade-lib-base/yadeWm3Extra.hpp&gt;
++
++void GLDrawLatticeSetGeometry::calcMinMax()
++{
++/*	min=Vector3r(0,0,0);
++	max=Vector3r(0.18,0.18,0.04);
++	sizeX=10;
++	sizeY=10;
++	sizeZ=3;
++*/
++	min = Vector3r(1,1,1)*10000.0;
++	max = min*(-1.0);
++	
++	MetaBody * lattice = static_cast&lt;MetaBody*&gt;(Omega::instance().getRootBody().get());
++	int nodeGroupMask  = static_cast&lt;LatticeSetParameters*&gt;(lattice-&gt;physicalParameters.get())-&gt;nodeGroupMask;
++	BodyContainer* bodies = lattice-&gt;bodies.get();
++	BodyContainer::iterator bi    = bodies-&gt;begin();
++	BodyContainer::iterator biEnd = bodies-&gt;end();
++	for(  ; bi!=biEnd ; ++bi )  // loop over all nodes
++	{
++		Body* body = (*bi).get();
++		if( ! ( body-&gt;getGroupMask() &amp; nodeGroupMask ) )
++			continue; // skip non-beams
++		// next node
++		LatticeNodeParameters* node = static_cast&lt;LatticeNodeParameters*&gt;(body-&gt;physicalParameters.get() );
++		
++	 	max = componentMaxVector(max,node-&gt;se3.position);
++ 		min = componentMinVector(min,node-&gt;se3.position);
++	}
++	float mm = std::min(max[0]-min[0],std::min(max[1]-min[1],max[2]-min[2]));
++	sizeX = (int)((float)Omega::instance().isoSec*(float)(max[0]-min[0])/mm);
++	sizeY = (int)((float)Omega::instance().isoSec*(float)(max[1]-min[1])/mm);
++	sizeZ = (int)((float)Omega::instance().isoSec*(float)(max[2]-min[2])/mm);
++	
++	float dx = (max[0]-min[0])/((float)(sizeX));
++	float dy = (max[1]-min[1])/((float)(sizeY));
++	float dz = (max[2]-min[2])/((float)(sizeZ));
++
++	isoStep=Vector3r(dx,dy,dz);
++	max += Vector3r(dx,dy,dz)*3.0;
++	min -= Vector3r(dx,dy,dz)*1.0;
++
++	sizeX += 4;
++	sizeY += 4;
++	sizeZ += 4;
++
++//	max[0] += (max[0]-min[0])/((float)(sizeX));
++//	max[1] += (max[1]-min[1])/((float)(sizeX));
++//	max[2] += (max[2]-min[2])/((float)(sizeX));
++
++}
++
++void GLDrawLatticeSetGeometry::drawPoint(Vector3r a,float color,float thickness)
++{
++	float I = ((a[0]-(min[0]+isoStep[0]))/((max[0]-isoStep[0]*3.0)-(min[0]+isoStep[0])))*((float)(sizeX-4))+1.5;
++	float J = ((a[1]-(min[1]+isoStep[1]))/((max[1]-isoStep[1]*3.0)-(min[1]+isoStep[1])))*((float)(sizeY-4))+1.5;
++	float K = ((a[2]-(min[2]+isoStep[2]))/((max[2]-isoStep[2]*3.0)-(min[2]+isoStep[2])))*((float)(sizeZ-4))+1.5;
++	float t2=std::pow(thickness,2);
++	int mi=std::max(0,(int)(std::floor(I)-thickness-1));int Mi=std::min(sizeX,(int)(std::ceil(I)+thickness+1));
++	int mj=std::max(0,(int)(std::floor(J)-thickness-1));int Mj=std::min(sizeY,(int)(std::ceil(J)+thickness+1));
++	int mk=std::max(0,(int)(std::floor(K)-thickness-1));int Mk=std::min(sizeZ,(int)(std::ceil(K)+thickness+1));
++	for(int i=mi; i&lt;Mi; i++)
++		for(int j=mj; j&lt;Mj; j++)
++			for(int k=mk; k&lt;Mk; k++)
++			{
++				if(   std::pow(i-I,2)+std::pow(j-J,2)+std::pow(k-K,2) &lt; t2 )
++				{
++					//scalarField[i][j][k] = color;
++					scalarField[i][j][k] += color; // dodawa&#230; a na koniec u&#182;redni&#230;
++					++weights[i][j][k];
++				}
++			}
++}
++
++void GLDrawLatticeSetGeometry::drawLine(Vector3r a,Vector3r b,float color,float thickness)
++{
++//	Vector3r d = (b-a)*0.125;
++//	for( float i=0 ; i&lt;=8  ; a+=d, ++i )
++//	Vector3r d = (b-a)*0.2;
++//	for( float i=0 ; i&lt;=5  ; a+=d, ++i )
++	Vector3r d = (b-a)*0.333333;
++	for( float i=0 ; i&lt; 3  ; a+=d, ++i )
++		drawPoint(a,color,thickness);
++	
++}
++
++void GLDrawLatticeSetGeometry::generateScalarField()
++{
++	for(int i=0;i&lt;sizeX;i++)
++		for(int j=0;j&lt;sizeY;j++)
++			for(int k=0;k&lt;sizeZ;k++)
++			{
++				scalarField[i][j][k] = 0;//(float)(i*j*k)*0.001;
++				weights[i][j][k]=0;
++			}
++
++
++	MetaBody * lattice = static_cast&lt;MetaBody*&gt;(Omega::instance().getRootBody().get());
++
++	int nodeGroupMask  = static_cast&lt;LatticeSetParameters*&gt;(lattice-&gt;physicalParameters.get())-&gt;nodeGroupMask;
++	int beamGroupMask  = static_cast&lt;LatticeSetParameters*&gt;(lattice-&gt;physicalParameters.get())-&gt;beamGroupMask;
++
++	BodyContainer* bodies = lattice-&gt;bodies.get();
++
++	BodyContainer::iterator bi    = bodies-&gt;begin();
++	BodyContainer::iterator biEnd = bodies-&gt;end();
++
++	for(  ; bi!=biEnd ; ++bi )  // loop over all beams
++	{
++		Body* body = (*bi).get();
++		if( ! ( body-&gt;getGroupMask() &amp; beamGroupMask ) )
++			continue; // skip non-beams
++		// next beam
++		LatticeBeamParameters* beam = static_cast&lt;LatticeBeamParameters*&gt;(body-&gt;physicalParameters.get() );
++		LatticeNodeParameters* node1 = static_cast&lt;LatticeNodeParameters*&gt;(((*(bodies))[beam-&gt;id1])-&gt;physicalParameters.get());
++		LatticeNodeParameters* node2 = static_cast&lt;LatticeNodeParameters*&gt;(((*(bodies))[beam-&gt;id2])-&gt;physicalParameters.get());
++
++		drawLine(node1-&gt;se3.position , node2-&gt;se3.position , beam-&gt;longitudalStiffness , Omega::instance().isoThick);
++	}
++	
++	for(int i=0;i&lt;sizeX;i++)
++		for(int j=0;j&lt;sizeY;j++)
++			for(int k=0;k&lt;sizeZ;k++)
++				scalarField[i][j][k] /= weights[i][j][k];
++}
++
++void GLDrawLatticeSetGeometry::go(const shared_ptr&lt;GeometricalModel&gt;&amp; gm, const shared_ptr&lt;PhysicalParameters&gt;&amp;,bool wire)
++{
++	return;
++	static bool initialized=false;
++	if(!initialized)
++	{
++		Omega::instance().isoValue=1.55;
++		Omega::instance().isoSec=30;
++		Omega::instance().isoThick=1.0;
++		oldIsoValue=0;
++		oldIsoSec=0;
++		oldIsoThick=0;
++		initialized=true;
++	}
++	if(Omega::instance().isoValue!=oldIsoValue || Omega::instance().isoSec!=oldIsoSec || Omega::instance().isoThick!=oldIsoThick )
++	{
++		oldIsoValue=Omega::instance().isoValue;
++		oldIsoSec  =Omega::instance().isoSec;
++		oldIsoThick=Omega::instance().isoThick;
++		calcMinMax();
++		std::cerr&lt;&lt; &quot;iso: &quot; &lt;&lt; Omega::instance().isoValue &lt;&lt; &quot; sect: &quot; &lt;&lt; Omega::instance().isoSec &lt;&lt; &quot; thick: &quot; &lt;&lt; Omega::instance().isoThick
++			&lt;&lt; &quot;\nmin/max:&quot; &lt;&lt; min &lt;&lt; &quot; / &quot; &lt;&lt; max 
++			&lt;&lt; &quot;\nsx/sy/sz: &quot; &lt;&lt; sizeX &lt;&lt; &quot; / &quot; &lt;&lt; sizeY &lt;&lt; &quot; / &quot; &lt;&lt; sizeZ &lt;&lt; &quot;\n&quot;;
++		mc.init(sizeX,sizeY,sizeZ,min,max);
++		mc.resizeScalarField(scalarField,sizeX,sizeY,sizeZ);	
++		mc.resizeScalarField(weights,sizeX,sizeY,sizeZ);	
++		generateScalarField();
++		mc.computeTriangulation(scalarField,Omega::instance().isoValue);
++	}
++
++	// FIXME : check that : one of those 2 lines are useless
++  	glMaterialv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, gm-&gt;diffuseColor);
++	glColor3v(gm-&gt;diffuseColor);
++	
++	//Real len = (static_cast&lt;LatticeSetGeometry*&gt;(gm.get()))-&gt;length;
++
++	// FIXME - there must be a way to tell this from outside
++//	glScalef(len,0.010,0.010); // it's a box, not a line. looks better :)
++	//glScalef(len,0.001,0.001); // it's a box, not a line. looks better :)
++/*
++	if (gm-&gt;wire || wire)
++	{
++		glBegin(GL_LINES);
++		glDisable(GL_LIGHTING);
++
++		glVertex3(-0.5,0.0,0.0);
++		glVertex3( 0.5,0.0,0.0);
++
++		glEnd();
++	}
++	else
++	{
++		glEnable(GL_LIGHTING);
++		glutSolidCube(1);
++	}
++	*/
++
++
++	{
++		const vector&lt;Vector3r&gt;&amp; triangles 	= mc.getTriangles();
++		int nbTriangles				= mc.getNbTriangles();
++		const vector&lt;Vector3r&gt;&amp; normals 	= mc.getNormals();	
++
++		glDisable(GL_CULL_FACE);
++		glEnable(GL_LIGHTING); // 2D
++		//glFrontFace(GL_CCW);//: GL_CW);
++		glEnable(GL_NORMALIZE);
++		glBegin(GL_TRIANGLES);
++			glColor3f(0.4,0.4,1.0);
++			for(int i=0;i&lt;3*nbTriangles;++i)
++			{
++				glNormal3dv(normals[i]);
++				glVertex3dv(triangles[i]);
++				glNormal3dv(normals[++i]);
++				glVertex3dv(triangles[i]);
++				glNormal3dv(normals[++i]);
++				glVertex3dv(triangles[i]);
++			}
++		glEnd();
++	
++		//Vector3r size = max-min;
++		//glPushMatrix();
++		//glDisable(GL_LIGHTING);
++		//glColor3f(1.0,1.0,1.0);
++		//glScalef(size[0],size[1],size[2]);
++		//glutWireCube(1);
++		//glEnable(GL_LIGHTING); // 2D
++		//glPopMatrix();
++	}
++
++//	std::cerr &lt;&lt; &quot;GLDrawLatticeSetGeometry\n&quot;;
++}
++
+
+Added: trunk/yade-packages/yade-package-lattice/src/RenderingEngine/GLDrawLatticeSetGeometry/GLDrawLatticeSetGeometry.hpp
+===================================================================
+--- trunk/yade-packages/yade-package-lattice/src/RenderingEngine/GLDrawLatticeSetGeometry/GLDrawLatticeSetGeometry.hpp	2007-01-16 11:38:44 UTC (rev 1039)
++++ trunk/yade-packages/yade-package-lattice/src/RenderingEngine/GLDrawLatticeSetGeometry/GLDrawLatticeSetGeometry.hpp	2007-01-20 12:11:21 UTC (rev 1040)
+@@ -0,0 +1,43 @@
++/*************************************************************************
++*  Copyright (C) 2004 by Janek Kozicki                                   *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">cosurgi at berlios.de</A>                                                    *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#ifndef GLDRAW_LATTICE_SET_GEOMETRY_HPP
++#define GLDRAW_LATTICE_SET_GEOMETRY_HPP
++
++#include &lt;yade/yade-package-common/GLDrawGeometricalModelFunctor.hpp&gt;
++#include &lt;yade/yade-lib-computational-geometry/MarchingCube.hpp&gt;
++#include &lt;vector&gt;
++
++class GLDrawLatticeSetGeometry : public GLDrawGeometricalModelFunctor
++{
++	public :
++		virtual void go(const shared_ptr&lt;GeometricalModel&gt;&amp;, const shared_ptr&lt;PhysicalParameters&gt;&amp;,bool);
++
++	RENDERS(LatticeSetGeometry);
++	REGISTER_CLASS_NAME(GLDrawLatticeSetGeometry);
++	REGISTER_BASE_CLASS_NAME(GLDrawGeometricalModelFunctor);
++
++	private :
++		MarchingCube mc;
++		Vector3r min,max;
++		int sizeX,sizeY,sizeZ;
++		vector&lt;vector&lt;vector&lt;float &gt; &gt; &gt; 	scalarField,weights;
++		void generateScalarField();
++		void calcMinMax();
++		float oldIsoValue,oldIsoSec,oldIsoThick;
++		Vector3r isoStep;
++		void drawLine(Vector3r a,Vector3r b,float color,float thickness);
++		void drawPoint(Vector3r a,float color,float thickness);
++
++
++};
++
++REGISTER_SERIALIZABLE(GLDrawLatticeSetGeometry,false);
++
++#endif // GLDRAW_LINE_SEGMENT_HPP
++
+
+Added: trunk/yade-packages/yade-package-lattice/src/RenderingEngine/GLDrawLatticeSetGeometry/GLDrawLatticeSetGeometry.pro
+===================================================================
+--- trunk/yade-packages/yade-package-lattice/src/RenderingEngine/GLDrawLatticeSetGeometry/GLDrawLatticeSetGeometry.pro	2007-01-16 11:38:44 UTC (rev 1039)
++++ trunk/yade-packages/yade-package-lattice/src/RenderingEngine/GLDrawLatticeSetGeometry/GLDrawLatticeSetGeometry.pro	2007-01-20 12:11:21 UTC (rev 1040)
+@@ -0,0 +1,33 @@
++isEmpty ( YADE_QMAKE_PATH ) {
++error( &quot;YADE_QMAKE_PATH internal qmake variable is not set, you should run for example qmake YADE_QMAKE_PATH=/usr/local, this will not work from inside kdevelop (when they will fix it?)&quot; )
++}
++
++
++LIBS += -lLatticeSetGeometry \
++	-lLatticeSetParameters \
++	-lLatticeBeamParameters \
++	-lLatticeNodeParameters \
++        -lyade-lib-opengl \
++	-lyade-lib-computational-geometry \
++        -rdynamic 
++INCLUDEPATH += $${YADE_QMAKE_PATH}/include/ \
++               ../../DataClass/PhysicalParameters/LatticeSetParameters \
++               ../../DataClass/PhysicalParameters/LatticeBeamParameters \
++               ../../DataClass/PhysicalParameters/LatticeNodeParameters \
++               ../../DataClass/GeometricalModel/LatticeSetGeometry 
++QMAKE_LIBDIR = ../../../bin \
++               $${YADE_QMAKE_PATH}/lib/yade/yade-package-common/ \
++               $${YADE_QMAKE_PATH}/lib/yade/yade-libs/ 
++QMAKE_CXXFLAGS_RELEASE += -lpthread \
++                          -pthread 
++QMAKE_CXXFLAGS_DEBUG += -lpthread \
++                        -pthread 
++DESTDIR = ../../../bin 
++CONFIG += debug \
++          thread \
++          warn_on \
++          dll 
++TEMPLATE = lib 
++HEADERS += GLDrawLatticeSetGeometry.hpp 
++SOURCES += GLDrawLatticeSetGeometry.cpp 
++QMAKE_RUN_CXX_IMP = $(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $(shell pwd)/$&lt;
+
+Modified: trunk/yade-packages/yade-package-lattice/src/RenderingEngine/GLDrawLineSegment/GLDrawLineSegment.cpp
+===================================================================
+--- trunk/yade-packages/yade-package-lattice/src/RenderingEngine/GLDrawLineSegment/GLDrawLineSegment.cpp	2007-01-16 11:38:44 UTC (rev 1039)
++++ trunk/yade-packages/yade-package-lattice/src/RenderingEngine/GLDrawLineSegment/GLDrawLineSegment.cpp	2007-01-20 12:11:21 UTC (rev 1040)
+@@ -21,7 +21,8 @@
+ 	// FIXME - there must be a way to tell this from outside
+ //	glScalef(len,0.030,0.030); // it's a box, not a line. looks better :)
+ //	glScalef(len,0.010,0.010); // it's a box, not a line. looks better :)
+-	glScalef(len,0.001,0.001); // it's a box, not a line. looks better :)
++//	glScalef(len,0.001,0.001); // it's a box, not a line. looks better :)
++	glScalef(len,0.00007,0.00007); // it's a box, not a line. looks better :)
+ 
+ 	if (gm-&gt;wire || wire)
+ 	{
+
+Modified: trunk/yade-packages/yade-package-lattice/src/RenderingEngine/RenderingEngine.pro
+===================================================================
+--- trunk/yade-packages/yade-package-lattice/src/RenderingEngine/RenderingEngine.pro	2007-01-16 11:38:44 UTC (rev 1039)
++++ trunk/yade-packages/yade-package-lattice/src/RenderingEngine/RenderingEngine.pro	2007-01-20 12:11:21 UTC (rev 1040)
+@@ -4,7 +4,8 @@
+ 
+ 
+ SUBDIRS += GLDrawLineSegment \
+-           GLDrawLatticeBeamState
++           GLDrawLatticeBeamState \
++	   GLDrawLatticeSetGeometry
+ CONFIG += debug \
+           thread \
+ warn_on
+
+Modified: trunk/yade-packages/yade-package-mass-spring/src/PreProcessor/HangingCloth/HangingCloth.cpp
+===================================================================
+--- trunk/yade-packages/yade-package-mass-spring/src/PreProcessor/HangingCloth/HangingCloth.cpp	2007-01-16 11:38:44 UTC (rev 1039)
++++ trunk/yade-packages/yade-package-mass-spring/src/PreProcessor/HangingCloth/HangingCloth.cpp	2007-01-20 12:11:21 UTC (rev 1040)
+@@ -108,6 +108,7 @@
+ 
+ void HangingCloth::registerAttributes()
+ {
++	FileGenerator::registerAttributes();
+ 	REGISTER_ATTRIBUTE(width);
+ 	REGISTER_ATTRIBUTE(height);
+ 	REGISTER_ATTRIBUTE(springStiffness);
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000004.html">[Yade-commits] r1039 - trunk
+</A></li>
+	<LI>Next message: <A HREF="000006.html">[Yade-commits] r1041 - in trunk: yade-core/src/yade	yade-guis/yade-gui-qt/src/QtGUI	yade-libs/yade-lib-serialization-bin/src/yade-lib-serialization-bin	yade-packages/yade-package-lattice/src/Engine/EngineUnit/LatticeSet2LatticeBeams	yade-packages/yade-package-lattice/src/Engine/StandAloneEngine	yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/BeamRecorder	yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/LatticeLaw	yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/MovingSupport	yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/NodeRecorder	yade-packages/yade-package-lattice/src/Engine/StandAloneEngine/StrainRecorder	yade-packages/yade-package-lattice/src/PreProcessor/LatticeExample	yade-packages/yade-package-lattice/src/RenderingEngine/GLDrawLatticeBeamState
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#5">[ date ]</a>
+              <a href="thread.html#5">[ thread ]</a>
+              <a href="subject.html#5">[ subject ]</a>
+              <a href="author.html#5">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

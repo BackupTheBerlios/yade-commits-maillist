@@ -1,0 +1,967 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1421 - in trunk: core debian gui gui/qt3 pkg/common	pkg/common/Engine/FiltrEngine pkg/common/Engine/StandAloneEngine	pkg/dem/Engine/StandAloneEngine
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1421%20-%20in%20trunk%3A%20core%20debian%20gui%20gui/qt3%20pkg/common%0A%09pkg/common/Engine/FiltrEngine%20pkg/common/Engine/StandAloneEngine%0A%09pkg/dem/Engine/StandAloneEngine&In-Reply-To=%3C200807101909.m6AJ9UKR017496%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000380.html">
+   <LINK REL="Next"  HREF="000382.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1421 - in trunk: core debian gui gui/qt3 pkg/common	pkg/common/Engine/FiltrEngine pkg/common/Engine/StandAloneEngine	pkg/dem/Engine/StandAloneEngine</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1421%20-%20in%20trunk%3A%20core%20debian%20gui%20gui/qt3%20pkg/common%0A%09pkg/common/Engine/FiltrEngine%20pkg/common/Engine/StandAloneEngine%0A%09pkg/dem/Engine/StandAloneEngine&In-Reply-To=%3C200807101909.m6AJ9UKR017496%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1421 - in trunk: core debian gui gui/qt3 pkg/common	pkg/common/Engine/FiltrEngine pkg/common/Engine/StandAloneEngine	pkg/dem/Engine/StandAloneEngine">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Thu Jul 10 21:09:30 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000380.html">[Yade-commits] r1420 - trunk/pkg/common
+</A></li>
+        <LI>Next message: <A HREF="000382.html">[Yade-commits] r1422 - in trunk: gui gui/qt3 pkg/common scripts
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#381">[ date ]</a>
+              <a href="thread.html#381">[ thread ]</a>
+              <a href="subject.html#381">[ subject ]</a>
+              <a href="author.html#381">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2008-07-10 21:09:28 +0200 (Thu, 10 Jul 2008)
+New Revision: 1421
+
+Added:
+   trunk/pkg/common/Engine/FiltrEngine/FiltrEngine.cpp
+   trunk/pkg/common/Engine/FiltrEngine/FiltrEngine.hpp
+Removed:
+   trunk/core/FiltrEngine.cpp
+   trunk/core/FiltrEngine.hpp
+Modified:
+   trunk/core/MetaBody.cpp
+   trunk/core/MetaBody.hpp
+   trunk/core/Omega.cpp
+   trunk/core/Omega.hpp
+   trunk/core/SConscript
+   trunk/debian/control-template
+   trunk/gui/SConscript
+   trunk/gui/qt3/GLSimulationPlayerViewer.cpp
+   trunk/gui/qt3/GLSimulationPlayerViewer.hpp
+   trunk/gui/qt3/QtSimulationPlayer.cpp
+   trunk/pkg/common/Engine/FiltrEngine/ColorizedLayerFilter.hpp
+   trunk/pkg/common/Engine/FiltrEngine/ColorizedVelocityFilter.cpp
+   trunk/pkg/common/Engine/FiltrEngine/ColorizedVelocityFilter.hpp
+   trunk/pkg/common/Engine/StandAloneEngine/PeriodicEngines.hpp
+   trunk/pkg/common/SConscript
+   trunk/pkg/dem/Engine/StandAloneEngine/SQLiteRecorder.cpp
+   trunk/pkg/dem/Engine/StandAloneEngine/SQLiteRecorder.hpp
+Log:
+1. Move FiltrEngine from core to common (I know this is arguable, given that DeusExMachina and StandAloneEngine are in core as well. I think, however, that common is a more appropriate place since these engines are not as important...)
+2. Completed the recording sqlite part
+3. Completed the player part of sqlite (in player)
+4. Added libsqlite3-dev to debian build depends
+5. PeriodicEngine now is activated when the priod is reached, not afterwards (&gt; vs. &gt;=)
+
+
+
+Deleted: trunk/core/FiltrEngine.cpp
+===================================================================
+--- trunk/core/FiltrEngine.cpp	2008-07-10 17:45:58 UTC (rev 1420)
++++ trunk/core/FiltrEngine.cpp	2008-07-10 19:09:28 UTC (rev 1421)
+@@ -1,20 +0,0 @@
+-/*************************************************************************
+-*  Copyright (C) 2008 by Sergei Dorofeenko                               *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">sega at users.berlios.de</A>                                                 *
+-*                                                                        *
+-*  This program is free software; it is licensed under the terms of the  *
+-*  GNU General Public License v2 or later. See file LICENSE for details. *
+-*************************************************************************/
+-
+-#include &quot;FiltrEngine.hpp&quot;
+-
+-bool FiltrEngine::isFiltrationActivated = false;
+-
+-FiltrEngine::FiltrEngine() : DeusExMachina(), isFilterActivated(false)
+-{
+-}
+-
+-bool FiltrEngine::isActivated() 
+-{
+-	return FiltrEngine::isFiltrationActivated &amp;&amp; isFilterActivated; 
+-}
+
+Deleted: trunk/core/FiltrEngine.hpp
+===================================================================
+--- trunk/core/FiltrEngine.hpp	2008-07-10 17:45:58 UTC (rev 1420)
++++ trunk/core/FiltrEngine.hpp	2008-07-10 19:09:28 UTC (rev 1421)
+@@ -1,40 +0,0 @@
+-/*************************************************************************
+-*  Copyright (C) 2008 by Sergei Dorofeenko                               *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">sega at users.berlios.de</A>                                                 *
+-*                                                                        *
+-*  This program is free software; it is licensed under the terms of the  *
+-*  GNU General Public License v2 or later. See file LICENSE for details. *
+-*************************************************************************/
+-
+-#ifndef FILTRATIONAL_ENGINE_HPP
+-#define FILTRATIONAL_ENGINE_HPP
+-
+-#include&lt;yade/core/DeusExMachina.hpp&gt;
+-
+-class FiltrEngine : public DeusExMachina {
+-	public:
+-		/// Activation of filtration from GUI
+-		static bool isFiltrationActivated;
+-
+-		/// Activation of the filter
+-		bool isFilterActivated;
+-
+-		bool isActivated();
+-
+-		FiltrEngine();
+-	
+-		void registerAttributes()
+-		{
+-//			REGISTER_ATTRIBUTE(isFiltrationActivated);
+-			REGISTER_ATTRIBUTE(isFilterActivated);
+-		}
+-
+-	protected :
+-	REGISTER_CLASS_NAME(FiltrEngine);
+-	REGISTER_BASE_CLASS_NAME(DeusExMachina);
+-};
+-
+-REGISTER_SERIALIZABLE(FiltrEngine,false);
+-
+-#endif // FILTRATIONAL_ENGINE_HPP
+-
+
+Modified: trunk/core/MetaBody.cpp
+===================================================================
+--- trunk/core/MetaBody.cpp	2008-07-10 17:45:58 UTC (rev 1420)
++++ trunk/core/MetaBody.cpp	2008-07-10 19:09:28 UTC (rev 1421)
+@@ -37,9 +37,9 @@
+ 	needsInitializers=true;
+ 	recover=false;
+ 	// I must assign something to avoid &quot;nan&quot; when loading. When recover=false, those can be &quot;nan&quot; and lead to crash.
+-	recoverCurrentIteration=1;
++	currentIteration=0;
++	simulationTime=0;
+ 	recoverStopAtIteration=1;
+-	recoverSimulationTime=1;
+ 	isDynamic=false;
+ 	dt=1e-8;
+ 
+@@ -81,11 +81,11 @@
+ 	REGISTER_ATTRIBUTE(physicalActions); // FIXME - needed or not ? - Olivier : yes it is needed if there is no default initialization into constructor
+ 	REGISTER_ATTRIBUTE(miscParams);
+ 	REGISTER_ATTRIBUTE(dt);
++	REGISTER_ATTRIBUTE(currentIteration);
++	REGISTER_ATTRIBUTE(simulationTime);
+ 
+ 	REGISTER_ATTRIBUTE(recover);
+-	REGISTER_ATTRIBUTE(recoverCurrentIteration);
+ 	REGISTER_ATTRIBUTE(recoverStopAtIteration);
+-	REGISTER_ATTRIBUTE(recoverSimulationTime);
+ }
+ 
+ 
+
+Modified: trunk/core/MetaBody.hpp
+===================================================================
+--- trunk/core/MetaBody.hpp	2008-07-10 17:45:58 UTC (rev 1420)
++++ trunk/core/MetaBody.hpp	2008-07-10 19:09:28 UTC (rev 1421)
+@@ -39,11 +39,11 @@
+ 		 *	Copying is being done ine Omega::loadSimulation and Omega::saveSimulation -- keep vars in sync.
+ 		 * */
+ 		bool recover;
+-		long recoverCurrentIteration;
+ 		long recoverStopAtIteration;
+-		Real recoverSimulationTime;
+ 
+ 		Real dt;
++		long currentIteration;
++		Real simulationTime;
+ 
+ 		bool needsInitializers;
+ /// Serialization
+
+Modified: trunk/core/Omega.cpp
+===================================================================
+--- trunk/core/Omega.cpp	2008-07-10 17:45:58 UTC (rev 1420)
++++ trunk/core/Omega.cpp	2008-07-10 19:09:28 UTC (rev 1421)
+@@ -38,10 +38,13 @@
+ 
+ const map&lt;string,DynlibDescriptor&gt;&amp; Omega::getDynlibsDescriptor(){return dynlibs;}
+ 
+-void Omega::incrementCurrentIteration(){ ++currentIteration;}
+-long int Omega::getCurrentIteration(){ return currentIteration; }
+-void Omega::setCurrentIteration(long int i) { currentIteration=i; }
++void Omega::incrementCurrentIteration(){ if(rootBody) rootBody-&gt;currentIteration++;}
++long int Omega::getCurrentIteration(){ return (rootBody?rootBody-&gt;currentIteration:-1); }
++void Omega::setCurrentIteration(long int i) { if(rootBody) rootBody-&gt;currentIteration=i; }
+ 
++Real Omega::getSimulationTime() { return rootBody?rootBody-&gt;simulationTime:-1;};
++void Omega::incrementSimulationTime() { if(rootBody) rootBody-&gt;simulationTime+=getTimeStep();};
++
+ void Omega::setSimulationFileName(const string f){simulationFileName = f;}
+ string Omega::getSimulationFileName(){return simulationFileName;}
+ 
+@@ -63,7 +66,6 @@
+ 
+ void Omega::init(){
+ 	simulationFileName=&quot;&quot;;
+-	currentIteration = 0;
+ 	stopAtIteration = 0;
+ 	resetRootBody();
+ }
+@@ -266,14 +268,10 @@
+ 	timeInit();
+ 
+ 	LOG_DEBUG(&quot;Simulation loaded&quot;);
+-	currentIteration = 0;
+-	simulationTime = 0;
+ 
+ 	if(rootBody-&gt;recover){
+ 		LOG_INFO(&quot;Simulation recovery effective.&quot;);
+-		currentIteration=rootBody-&gt;recoverCurrentIteration;
+ 		stopAtIteration=rootBody-&gt;recoverStopAtIteration;
+-		simulationTime=rootBody-&gt;recoverSimulationTime;	
+ 		rootBody-&gt;recover=false;
+ 	}
+ }
+@@ -287,9 +285,7 @@
+ 	if(recover){
+ 		LOG_INFO(&quot;Simulation recovery enabled.&quot;);
+ 		rootBody-&gt;recover=true;
+-		rootBody-&gt;recoverCurrentIteration=currentIteration;
+ 		rootBody-&gt;recoverStopAtIteration=stopAtIteration;
+-		rootBody-&gt;recoverSimulationTime=simulationTime;
+ 	}
+ 
+ 	if(algorithm::ends_with(name,&quot;.xml&quot;) || algorithm::ends_with(name,&quot;.xml.gz&quot;) || algorithm::ends_with(name,&quot;.xml.bz2&quot;)){
+
+Modified: trunk/core/Omega.hpp
+===================================================================
+--- trunk/core/Omega.hpp	2008-07-10 17:45:58 UTC (rev 1420)
++++ trunk/core/Omega.hpp	2008-07-10 19:09:28 UTC (rev 1421)
+@@ -85,8 +85,6 @@
+ 		ptime				 msStartingPauseTime;
+ 		time_duration			 simulationPauseDuration;
+ 		string				 simulationFileName;
+-		long int			currentIteration;
+-		Real				simulationTime;
+ 		void buildDynlibDatabase(const vector&lt;string&gt;&amp; dynlibsList); // FIXME - maybe in ClassFactory ?
+ 
+ 		public: long int stopAtIteration;
+@@ -150,9 +148,9 @@
+ 		void		setCurrentIteration(long int i);
+ 		void		incrementCurrentIteration();
+ 		
+-		Real		getSimulationTime() { return simulationTime;};
++		Real		getSimulationTime();
+ 		Real 		getComputationTime();
+-		void		incrementSimulationTime() { simulationTime+=getTimeStep();};
++		void		incrementSimulationTime();
+ 		
+ 		void init();
+ 		void timeInit();
+
+Modified: trunk/core/SConscript
+===================================================================
+--- trunk/core/SConscript	2008-07-10 17:45:58 UTC (rev 1420)
++++ trunk/core/SConscript	2008-07-10 19:09:28 UTC (rev 1421)
+@@ -5,7 +5,6 @@
+ 			'BodyContainer.cpp',
+ 			'BoundingVolume.cpp',
+ 			'DeusExMachina.cpp',
+-			'FiltrEngine.cpp',
+ 			'FileGenerator.cpp',
+ 			'FrontEnd.cpp',
+ 			'GeometricalModel.cpp',
+
+Modified: trunk/debian/control-template
+===================================================================
+--- trunk/debian/control-template	2008-07-10 17:45:58 UTC (rev 1420)
++++ trunk/debian/control-template	2008-07-10 19:09:28 UTC (rev 1421)
+@@ -2,7 +2,7 @@
+ Section: x11
+ Priority: optional
+ Maintainer: Vaclav Smilauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">eudoxos at arcig.cz</A>&gt;
+-Build-Depends: debhelper (&gt;= 5), scons, libqt3-mt-dev, qt3-dev-tools, freeglut3-dev, libboost-dev (&gt;=1.34), libboost-date-time-dev (&gt;=1.34), libboost-filesystem-dev (&gt;=1.34), libboost-thread-dev (&gt;=1.34), libboost-regex-dev (&gt;=1.34), libboost-python-dev (&gt;=1.34), libboost-iostreams-dev (&gt;=1.34), liblog4cxx9-dev, docbook-to-man, python-scientific
++Build-Depends: debhelper (&gt;= 5), scons, libqt3-mt-dev, qt3-dev-tools, freeglut3-dev, libboost-dev (&gt;=1.34), libboost-date-time-dev (&gt;=1.34), libboost-filesystem-dev (&gt;=1.34), libboost-thread-dev (&gt;=1.34), libboost-regex-dev (&gt;=1.34), libboost-python-dev (&gt;=1.34), libboost-iostreams-dev (&gt;=1.34), liblog4cxx9-dev, docbook-to-man, python-scientific, libsqlite3-dev
+ Standards-Version: 3.7.2
+ 
+ Package: <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">yade at _VERSION</A>@
+
+Modified: trunk/gui/SConscript
+===================================================================
+--- trunk/gui/SConscript	2008-07-10 17:45:58 UTC (rev 1420)
++++ trunk/gui/SConscript	2008-07-10 19:09:28 UTC (rev 1421)
+@@ -35,6 +35,7 @@
+ 				'yade-serialization-qt',
+ 				'OpenGLRenderingEngine',
+ 				'PositionOrientationRecorder',
++				'sqlite3x',
+ 				'$QGLVIEWER_LIB']+linkPythonUI,
+ 			CPPPATH=env['CPPPATH']+['qt3']),
+ 	])
+
+Modified: trunk/gui/qt3/GLSimulationPlayerViewer.cpp
+===================================================================
+--- trunk/gui/qt3/GLSimulationPlayerViewer.cpp	2008-07-10 17:45:58 UTC (rev 1420)
++++ trunk/gui/qt3/GLSimulationPlayerViewer.cpp	2008-07-10 19:09:28 UTC (rev 1421)
+@@ -20,6 +20,7 @@
+ #include&lt;boost/algorithm/string.hpp&gt;
+ 
+ #include&lt;yade/lib-opengl/OpenGLWrapper.hpp&gt;
++#include&lt;yade/pkg-common/FiltrEngine.hpp&gt;
+ #include&lt;qspinbox.h&gt;
+ #include&quot;QtSimulationPlayer.hpp&quot;
+ 
+@@ -47,9 +48,10 @@
+ void GLSimulationPlayerViewer::animate(){
+ 	long ETA_TTL_ms=10000;
+ 	boost::posix_time::ptime now=microsec_clock::local_time();
++	// display the ETA
+ 	if ((now-lastCheckPointTime).total_milliseconds()&gt;ETA_TTL_ms){
+ 		long elapsedFrames=frameNumber-lastCheckPointFrame;
+-		long framesToGo=xyzFiles.size()-frameNumber;
++		long framesToGo=xyzNames.size()-frameNumber;
+ 		if(elapsedFrames&gt;0 &amp;&amp; framesToGo&gt;0){
+ 			long ETA_s=((now-lastCheckPointTime).total_milliseconds()/elapsedFrames)*(framesToGo)/1000;
+ 			simPlayer-&gt;pushMessage(lexical_cast&lt;string&gt;(framesToGo)+&quot; frames to go, ETA &quot;+lexical_cast&lt;string&gt;(ETA_s/3600)+&quot;:&quot;+lexical_cast&lt;string&gt;((ETA_s%3600)/60)+&quot;:&quot;+lexical_cast&lt;string&gt;(ETA_s%60));
+@@ -57,7 +59,8 @@
+ 		lastCheckPointTime=now;
+ 		lastCheckPointFrame=frameNumber;
+ 	}
+-	if (!loadPositionOrientationFile()){
++	// try loading next state
++	if (!loadNextRecordedData()){
+ 		frameNumber=0;
+ 		stopAnimation();
+ 		simPlayer-&gt;pushMessage(&quot;FINISHED&quot;);
+@@ -68,7 +71,7 @@
+ 			saveSnapshot(/*automatic*/true,/*overwrite*/ true);
+ 			// mimick qglviewer's algorithm for making snapshot filename
+ 			char num[64]; snprintf(num,64,&quot;%04d&quot;,frameNumber);
+-			simPlayer-&gt;pushMessage(lexical_cast&lt;string&gt;(frameNumber)+&quot;/&quot;+lexical_cast&lt;string&gt;(xyzFiles.size())+&quot; -&gt; &quot;+outputBaseDirectory+&quot;/&quot;+outputBaseName+&quot;-&quot;+num+&quot;.png&quot;);
++			simPlayer-&gt;pushMessage(lexical_cast&lt;string&gt;(frameNumber)+&quot;/&quot;+lexical_cast&lt;string&gt;(xyzNames.size())+&quot; -&gt; &quot;+outputBaseDirectory+&quot;/&quot;+outputBaseName+&quot;-&quot;+num+&quot;.png&quot;);
+ 		}
+ 		frameNumber++;
+ 	}
+@@ -77,126 +80,178 @@
+ 
+ void GLSimulationPlayerViewer::load(const string&amp; fileName, bool fromFile)
+ {
+-	if(fromFile){	
+-		Omega::instance().setSimulationFileName(fileName);
+-		Omega::instance().loadSimulation();
+-		filters.clear();
+-		FOREACH(shared_ptr&lt;Engine&gt; e, Omega::instance().getRootBody()-&gt;engines){
+-			if( dynamic_cast&lt;FiltrationalEngine*&gt;(e.get()) ) filters.push_back(e);
+-		}
+-	}
+ 	updateGL();
+ 	frameNumber=0;
+ 	setSnapshotCounter(0);
++	simPlayer-&gt;enableControls(false);
++	useSQLite=!(algorithm::ends_with(fileName,&quot;.xml.bz2&quot;)||algorithm::ends_with(fileName,&quot;.xml.gz&quot;)||algorithm::ends_with(fileName,&quot;.xml&quot;));
++	xyzNames.clear();
++	filters.clear();
+ 
+-	shared_ptr&lt;Engine&gt; _por=Omega::instance().getRootBody()-&gt;engineByName(&quot;PositionOrientationRecorder&quot;);
+-	if(_por){
+-		const shared_ptr&lt;PositionOrientationRecorder&gt; por=dynamic_pointer_cast&lt;PositionOrientationRecorder&gt;(_por);
+-		assert(por);
+-		LOG_DEBUG(&quot;Got PositionOrientationRecorder&quot;);
+-		size_t dirSep=por-&gt;outputFile.rfind(&quot;/&quot;);
+-		string path,prefix;
+-		if(dirSep!=string::npos){
+-			path=por-&gt;outputFile.substr(0,dirSep);
+-			prefix=por-&gt;outputFile.substr(dirSep+1 /* without slash, till the end */);
+-		} else { prefix=por-&gt;outputFile; }
+-		//if(inputBaseDirectory.empty()){ inputBaseDirectory=path; } if(inputBaseName.empty()){ inputBaseName=prefix; }
+-		inputBaseDirectory=path; inputBaseName=prefix; 
+-	} else { simPlayer-&gt;pushMessage(&quot;No PositionOrientationEngine in simulation file. ABORTED.&quot;);  return; }
++	FOREACH(shared_ptr&lt;Engine&gt;&amp; e, Omega::instance().getRootBody()-&gt;engines){
++		if(dynamic_cast&lt;FiltrEngine*&gt;(e.get())) filters.push_back(e);
++	}
+ 
+-	simPlayer-&gt;pushMessage(&quot;Using directory &quot;+inputBaseDirectory+&quot; and basename &quot;+inputBaseName+&quot;.&quot;);
+-	LOG_DEBUG(&quot;Using directory `&quot;&lt;&lt;inputBaseDirectory&lt;&lt;&quot;' and basename `&quot;&lt;&lt;inputBaseName&lt;&lt;&quot;'.&quot;);
+-	if(!filesystem::exists(filesystem::path(inputBaseDirectory))) 
+-	{ 
+-		if (inputBaseDirectory[0]!='/')  // may be relative path?
+-		{
+-				size_t dirSep=fileName.rfind(&quot;/&quot;);
+-				string path;
+-				if(dirSep!=string::npos) path=fileName.substr(0,dirSep);
+-				inputBaseDirectory=path+&quot;/&quot;+inputBaseDirectory;
++	if(!useSQLite){
++		if(fromFile){	
++			Omega::instance().setSimulationFileName(fileName);
++			Omega::instance().loadSimulation();
+ 		}
+-		if(!filesystem::exists(filesystem::path(inputBaseDirectory)))
+-		{
+-			LOG_FATAL(&quot;Base xyz directory `&quot;&lt;&lt;inputBaseDirectory&lt;&lt;&quot;' doesn't exist!!&quot;); 
+-			xyzFiles.clear();
+-			simPlayer-&gt;enableControls(false);
+-			return;
++		shared_ptr&lt;Engine&gt; _por=Omega::instance().getRootBody()-&gt;engineByName(&quot;PositionOrientationRecorder&quot;);
++		if(_por){
++			const shared_ptr&lt;PositionOrientationRecorder&gt; por=dynamic_pointer_cast&lt;PositionOrientationRecorder&gt;(_por);
++			assert(por);
++			LOG_DEBUG(&quot;Got PositionOrientationRecorder&quot;);
++			size_t dirSep=por-&gt;outputFile.rfind(&quot;/&quot;);
++			string path,prefix;
++			if(dirSep!=string::npos){
++				path=por-&gt;outputFile.substr(0,dirSep);
++				prefix=por-&gt;outputFile.substr(dirSep+1 /* without slash, till the end */);
++			} else { prefix=por-&gt;outputFile; }
++			//if(inputBaseDirectory.empty()){ inputBaseDirectory=path; } if(inputBaseName.empty()){ inputBaseName=prefix; }
++			inputBaseDirectory=path; inputBaseName=prefix; 
++		} else { simPlayer-&gt;pushMessage(&quot;No PositionOrientationEngine in simulation file. ABORTED.&quot;);  return; }
++
++		simPlayer-&gt;pushMessage(&quot;Using directory &quot;+inputBaseDirectory+&quot; and basename &quot;+inputBaseName+&quot;.&quot;);
++		LOG_DEBUG(&quot;Using directory `&quot;&lt;&lt;inputBaseDirectory&lt;&lt;&quot;' and basename `&quot;&lt;&lt;inputBaseName&lt;&lt;&quot;'.&quot;);
++		if(!filesystem::exists(filesystem::path(inputBaseDirectory))) 
++		{ 
++			if (inputBaseDirectory[0]!='/')  // may be relative path?
++			{
++					size_t dirSep=fileName.rfind(&quot;/&quot;);
++					string path;
++					if(dirSep!=string::npos) path=fileName.substr(0,dirSep);
++					inputBaseDirectory=path+&quot;/&quot;+inputBaseDirectory;
++			}
++			if(!filesystem::exists(filesystem::path(inputBaseDirectory)))
++			{
++				LOG_FATAL(&quot;Base xyz directory `&quot;&lt;&lt;inputBaseDirectory&lt;&lt;&quot;' doesn't exist!!&quot;); 
++				xyzNames.clear();
++				return;
++			}
+ 		}
+-	}
+ 	
+-	filesystem::directory_iterator dEnd;
+-	xyzFiles.clear();
+-	for(filesystem::directory_iterator dIter(inputBaseDirectory); dIter!=dEnd; dIter++){
+-		if(dIter-&gt;leaf().find(inputBaseName)!=0 || filesystem::extension(*dIter)==&quot;.rgb&quot; || algorithm::ends_with(dIter-&gt;string(),&quot;.rgb.bz2&quot;) || filesystem::is_directory(*dIter) || !filesystem::exists(*dIter)) continue;
+-		xyzFiles.push_back(dIter-&gt;string());
++		filesystem::directory_iterator dEnd;
++		xyzNames.clear();
++		for(filesystem::directory_iterator dIter(inputBaseDirectory); dIter!=dEnd; dIter++){
++			if(dIter-&gt;leaf().find(inputBaseName)!=0 || filesystem::extension(*dIter)==&quot;.rgb&quot; || algorithm::ends_with(dIter-&gt;string(),&quot;.rgb.bz2&quot;) || filesystem::is_directory(*dIter) || !filesystem::exists(*dIter)) continue;
++			xyzNames.push_back(dIter-&gt;string());
++		}
++	} else { /* load from sqlite database */
++		con=shared_ptr&lt;sqlite3x::sqlite3_connection&gt;(new sqlite3x::sqlite3_connection(fileName));
++		LOG_DEBUG(&quot;Opened sqlite db &quot;&lt;&lt;fileName);
++		if(0==con-&gt;executeint(&quot;select count(*) from sqlite_master where name='meta';&quot;)){ LOG_ERROR(&quot;Database doesn't have the 'meta' table.&quot;); return; }
++		if(0==con-&gt;executeint(&quot;select count(*) from sqlite_master where name='records';&quot;)){ LOG_ERROR(&quot;Database doesn't have the 'records' table.&quot;); return; }
++		simPlayer-&gt;pushMessage(&quot;Database OK.&quot;);
++		// load simulation
++		string xml=con-&gt;executestring(&quot;select simulationXML from 'meta';&quot;);
++		istringstream xmlStream(xml); Omega::instance().loadSimulationFromStream(xmlStream);
++		{ // the &quot;ORDER&#160;BY&quot; seems to be broken in some cases (lexical comparison instead of numerical? But the field is INTEGER)
++			sqlite3x::sqlite3_command cmd(*con,&quot;select bodyTable from 'records' ORDER BY 'iter';&quot;);
++			sqlite3x::sqlite3_cursor reader=cmd.executecursor();
++			assert(reader.colcount()==1);
++			while(reader.step()){
++				xyzNames.push_back(reader.getstring(0)); // first column
++				LOG_DEBUG(&quot;Added table &quot;&lt;&lt;reader.getstring(0));
++			}
++		}
+ 	}
++	/* strided access is common for both db and file access */
+ 	int stride=simPlayer-&gt;sbStride-&gt;value();
+-	xyzFiles.sort();
++	xyzNames.sort();
+ 	if(stride&gt;1){
+ 		list&lt;string&gt; xyz2;
+ 		long i=stride-1;
+-		FOREACH(string f,xyzFiles){
++		FOREACH(string f,xyzNames){
+ 			if(i++&lt;stride-1) continue;
+ 			i=0; xyz2.push_back(f);
+ 		}
+-		simPlayer-&gt;pushMessage(&quot;Using stride of &quot;+lexical_cast&lt;string&gt;(stride)+&quot;, reduced files from &quot;+lexical_cast&lt;string&gt;(xyzFiles.size())+&quot; to &quot;+lexical_cast&lt;string&gt;(xyz2.size()));
+-		xyzFiles=xyz2;
++		simPlayer-&gt;pushMessage(&quot;Using stride of &quot;+lexical_cast&lt;string&gt;(stride)+&quot;, reduced states from &quot;+lexical_cast&lt;string&gt;(xyzNames.size())+&quot; to &quot;+lexical_cast&lt;string&gt;(xyz2.size()));
++		xyzNames=xyz2;
+ 	}
+-	simPlayer-&gt;pushMessage(&quot;Found &quot;+lexical_cast&lt;string&gt;(xyzFiles.size())+&quot; files to process.&quot;);
+-	xyzFilesIter=xyzFiles.begin();
++	simPlayer-&gt;pushMessage(&quot;Found &quot;+lexical_cast&lt;string&gt;(xyzNames.size())+&quot; states to process.&quot;);
++	xyzNamesIter=xyzNames.begin();
+ 	simPlayer-&gt;enableControls(true);
+ }
+ 
+-
+ void GLSimulationPlayerViewer::doOneStep(){
+-	if (!loadPositionOrientationFile()){
++	if (!loadNextRecordedData()){
+ 		frameNumber=0;	stopAnimation();
+ 		simPlayer-&gt;pushMessage(&quot;End of files, stopped.&quot;);
+ 	} else frameNumber++;
+ 	updateGL();
+ }
+ 
+-
+ void GLSimulationPlayerViewer::reset()
+ {
+ 	frameNumber=0;
+ 	setSnapshotCounter(0);
+-	xyzFilesIter=xyzFiles.begin();
+-	loadPositionOrientationFile();
++	xyzNamesIter=xyzNames.begin();
++	loadNextRecordedData();
+ 	frameNumber++;
+ 	updateGL();
+ }
+ 
+ 
+-bool GLSimulationPlayerViewer::loadPositionOrientationFile(){
+-	if(xyzFilesIter==xyzFiles.end()) return false;
+-	fileName=*(xyzFilesIter++);
+-	iostreams::filtering_istream f; if(boost::algorithm::ends_with(fileName,&quot;.bz2&quot;)) f.push(iostreams::bzip2_decompressor()); f.push(iostreams::file_source(fileName));
+-	// strip .bz2 from the filename
+-	if(boost::algorithm::ends_with(fileName,&quot;.bz2&quot;)) algorithm::replace_last(fileName,&quot;.bz2&quot;,&quot;&quot;);
+-	// append .rgb[.bz2]
+-	string rgbFileName=fileName+&quot;.rgb&quot;;
+-	if(!filesystem::exists(rgbFileName)) rgbFileName+=&quot;.bz2&quot;;
+-	iostreams::filtering_istream rgb; if(boost::algorithm::ends_with(rgbFileName,&quot;.bz2&quot;)) rgb.push(iostreams::bzip2_decompressor()); rgb.push(iostreams::file_source(rgbFileName));
+-	bool doRgb=rgb.good() &amp;&amp; filesystem::exists(rgbFileName); // doesn't indicate that the file doesn't exist ?!
+-	simPlayer-&gt;pushMessage(lexical_cast&lt;string&gt;(frameNumber)+&quot;/&quot;+lexical_cast&lt;string&gt;(xyzFiles.size())+&quot; &quot;+fileName+(doRgb?&quot; (+rgb)&quot;:&quot;&quot;));
+-	if(!f.good()){LOG_FATAL(&quot;Snapshot file &quot;&lt;&lt;fileName&lt;&lt;&quot; could not be opened for reading (fatal, ending sequence)?!&quot;); return false;}
+-	LOG_TRACE(fileName);
+-	size_t nBodies=Omega::instance().getRootBody()-&gt;bodies-&gt;size();
+-	for(unsigned long id=0; !f.eof() &amp;&amp; !f.fail() &amp;&amp; id&lt;nBodies; id++){
+-		shared_ptr&lt;Body&gt; b=Body::byId(id);
+-		if(!b){ LOG_ERROR(&quot;Body #&quot;&lt;&lt;id&lt;&lt;&quot; doesn't exist (skipped)!&quot;); continue; }
+-		if(!b-&gt;physicalParameters) {LOG_ERROR(&quot;Body #&quot;&lt;&lt;id&lt;&lt;&quot; has no physical parameters?! (skipping)&quot;); continue; }
+-		Se3r&amp; mySe3=b-&gt;physicalParameters-&gt;se3;
+-		f&gt;&gt;mySe3.position[0]&gt;&gt;mySe3.position[1]&gt;&gt;mySe3.position[2]&gt;&gt;mySe3.orientation[0]&gt;&gt;mySe3.orientation[1]&gt;&gt;mySe3.orientation[2]&gt;&gt;mySe3.orientation[3];
+-		if(doRgb &amp;&amp; !rgb.eof() &amp;&amp; !rgb.fail()) {
+-			if(!b-&gt;geometricalModel) {LOG_ERROR(&quot;Body #&quot;&lt;&lt;id&lt;&lt;&quot; has no geometrical model?! (skipping)&quot;); continue; }
+-			Vector3r&amp; myColor=b-&gt;geometricalModel-&gt;diffuseColor;
+-			rgb&gt;&gt;myColor[0]&gt;&gt;myColor[1]&gt;&gt;myColor[2];
++bool GLSimulationPlayerViewer::loadNextRecordedData(){
++	if(xyzNamesIter==xyzNames.end()) return false;
++	if(!useSQLite){
++		fileName=*(xyzNamesIter++);
++		iostreams::filtering_istream f; if(boost::algorithm::ends_with(fileName,&quot;.bz2&quot;)) f.push(iostreams::bzip2_decompressor()); f.push(iostreams::file_source(fileName));
++		// strip .bz2 from the filename
++		if(boost::algorithm::ends_with(fileName,&quot;.bz2&quot;)) algorithm::replace_last(fileName,&quot;.bz2&quot;,&quot;&quot;);
++		// append .rgb[.bz2]
++		string rgbFileName=fileName+&quot;.rgb&quot;;
++		if(!filesystem::exists(rgbFileName)) rgbFileName+=&quot;.bz2&quot;;
++		iostreams::filtering_istream rgb; if(boost::algorithm::ends_with(rgbFileName,&quot;.bz2&quot;)) rgb.push(iostreams::bzip2_decompressor()); rgb.push(iostreams::file_source(rgbFileName));
++		bool doRgb=rgb.good() &amp;&amp; filesystem::exists(rgbFileName); // doesn't indicate that the file doesn't exist ?!
++		simPlayer-&gt;pushMessage(lexical_cast&lt;string&gt;(frameNumber)+&quot;/&quot;+lexical_cast&lt;string&gt;(xyzNames.size())+&quot; &quot;+fileName+(doRgb?&quot; (+rgb)&quot;:&quot;&quot;));
++		if(!f.good()){LOG_FATAL(&quot;Snapshot file &quot;&lt;&lt;fileName&lt;&lt;&quot; could not be opened for reading (fatal, ending sequence)?!&quot;); return false;}
++		LOG_TRACE(fileName);
++		size_t nBodies=Omega::instance().getRootBody()-&gt;bodies-&gt;size();
++		for(unsigned long id=0; !f.eof() &amp;&amp; !f.fail() &amp;&amp; id&lt;nBodies; id++){
++			shared_ptr&lt;Body&gt; b=Body::byId(id);
++			if(!b){ LOG_ERROR(&quot;Body #&quot;&lt;&lt;id&lt;&lt;&quot; doesn't exist (skipped)!&quot;); continue; }
++			if(!b-&gt;physicalParameters) {LOG_ERROR(&quot;Body #&quot;&lt;&lt;id&lt;&lt;&quot; has no physical parameters?! (skipping)&quot;); continue; }
++			Se3r&amp; mySe3=b-&gt;physicalParameters-&gt;se3;
++			f&gt;&gt;mySe3.position[0]&gt;&gt;mySe3.position[1]&gt;&gt;mySe3.position[2]&gt;&gt;mySe3.orientation[0]&gt;&gt;mySe3.orientation[1]&gt;&gt;mySe3.orientation[2]&gt;&gt;mySe3.orientation[3];
++			if(doRgb &amp;&amp; !rgb.eof() &amp;&amp; !rgb.fail()) {
++				if(!b-&gt;geometricalModel) {LOG_ERROR(&quot;Body #&quot;&lt;&lt;id&lt;&lt;&quot; has no geometrical model?! (skipping)&quot;); continue; }
++				Vector3r&amp; myColor=b-&gt;geometricalModel-&gt;diffuseColor;
++				rgb&gt;&gt;myColor[0]&gt;&gt;myColor[1]&gt;&gt;myColor[2];
++			}
+ 		}
++		Omega::instance().setCurrentIteration(atoi(fileName.substr(fileName.rfind('_')+1).c_str()));
++		FOREACH(const shared_ptr&lt;FiltrationalEngine&gt;&amp; e, filters) 
++			{ if(e-&gt;isActivated()) e-&gt;action(Omega::instance().getRootBody().get()); }
++	} else {
++		string tableName=*(xyzNamesIter++);
++		simPlayer-&gt;pushMessage(lexical_cast&lt;string&gt;(frameNumber)+&quot;/&quot;+lexical_cast&lt;string&gt;(xyzNames.size())+&quot; &quot;+tableName);
++		sqlite3x::sqlite3_command cmd(*con,&quot;select * from '&quot;+tableName+&quot;';&quot;);
++		sqlite3x::sqlite3_cursor reader=cmd.executecursor();
++		int colcount=reader.colcount();
++		int col_id=-1,col_se3_x=-1,col_se3_y=-1,col_se3_z=-1,col_se3_ori0=-1,col_se3_ori1=-1,col_se3_ori2=-1,col_se3_ori3=-1,col_rgb_r=-1, col_rgb_g=-1,col_rgb_b=-1;
++		for(int i=0;i&lt;colcount;i++){
++			string col=reader.getcolname(i);
++			#define ASSIGN_COL(colname) if(col==#colname) col_##colname=i;
++			ASSIGN_COL(id) else ASSIGN_COL(se3_x) else ASSIGN_COL(se3_y) else ASSIGN_COL(se3_z) else ASSIGN_COL(se3_ori0) else ASSIGN_COL(se3_ori1) else ASSIGN_COL(se3_ori2) else ASSIGN_COL(se3_ori3) else ASSIGN_COL(rgb_r) else ASSIGN_COL(rgb_g) else ASSIGN_COL(rgb_b) else LOG_ERROR(&quot;Unhandled column name: '&quot;&lt;&lt;col&lt;&lt;&quot;'&quot;);
++		}
++		assert(col_id&gt;=0);
++		while(reader.step()){
++			const shared_ptr&lt;Body&gt;&amp; b=Body::byId(reader.getint(col_id));
++			Se3r&amp; se3=b-&gt;physicalParameters-&gt;se3;
++			if(col_se3_x&gt;=0) se3.position[0]=reader.getdouble(col_se3_x);
++			if(col_se3_y&gt;=0) se3.position[1]=reader.getdouble(col_se3_y);
++			if(col_se3_z&gt;=0) se3.position[2]=reader.getdouble(col_se3_z);
++			if(col_se3_ori0&gt;=0) se3.orientation[0]=reader.getdouble(col_se3_ori0);
++			if(col_se3_ori1&gt;=0) se3.orientation[1]=reader.getdouble(col_se3_ori1);
++			if(col_se3_ori2&gt;=0) se3.orientation[2]=reader.getdouble(col_se3_ori2);
++			if(col_se3_ori3&gt;=0) se3.orientation[3]=reader.getdouble(col_se3_ori3);
++			se3.orientation.Normalize();
++			if(col_rgb_r&gt;=0) b-&gt;geometricalModel-&gt;diffuseColor[0]=reader.getdouble(col_rgb_r);
++			if(col_rgb_g&gt;=0) b-&gt;geometricalModel-&gt;diffuseColor[1]=reader.getdouble(col_rgb_g);
++			if(col_rgb_b&gt;=0) b-&gt;geometricalModel-&gt;diffuseColor[2]=reader.getdouble(col_rgb_b);
++		}
+ 	}
+-	Omega::instance().setCurrentIteration(atoi(fileName.substr(fileName.rfind('_')+1).c_str()));
+-	FOREACH(const shared_ptr&lt;FiltrationalEngine&gt;&amp; e, filters) 
+-		{ if(e-&gt;isActivated()) e-&gt;action(Omega::instance().getRootBody().get()); }
+ 	return true;
+ }
+
+Modified: trunk/gui/qt3/GLSimulationPlayerViewer.hpp
+===================================================================
+--- trunk/gui/qt3/GLSimulationPlayerViewer.hpp	2008-07-10 17:45:58 UTC (rev 1420)
++++ trunk/gui/qt3/GLSimulationPlayerViewer.hpp	2008-07-10 19:09:28 UTC (rev 1421)
+@@ -11,21 +11,23 @@
+ 
+ #include&lt;yade/core/Omega.hpp&gt;
+ #include&lt;yade/core/RenderingEngine.hpp&gt;
+-#include&lt;yade/core/FiltrationalEngine.hpp&gt;
+ #include&lt;yade/core/MetaBody.hpp&gt;
+-//#include&lt;yade/lib-QGLViewer/qglviewer.h&gt;
+ #include&lt;yade/gui-qt3/GLViewer.hpp&gt;
+-
+ #include&lt;boost/filesystem/operations.hpp&gt;
+ #include&lt;boost/filesystem/convenience.hpp&gt;
+ #include &lt;boost/date_time/posix_time/posix_time.hpp&gt;
+ 
++#include&lt;yade/lib-sqlite3x/sqlite3x.hpp&gt;
++
+ class QtSimulationPlayer;
++class FiltrEngine;
+ 
+ class GLSimulationPlayerViewer: public GLViewer {
+ 	private :
+ 		shared_ptr&lt;MetaBody&gt;		 rootBody;
+ 		void tryFillingOutputPattern();	
++		bool useSQLite;
++		shared_ptr&lt;sqlite3x::sqlite3_connection&gt; con;
+ 	public:
+ 		QtSimulationPlayer* simPlayer;
+ 		boost::posix_time::ptime lastCheckPointTime;
+@@ -33,10 +35,11 @@
+ 		string fileName, inputBaseName, inputBaseDirectory, outputBaseName, outputBaseDirectory;
+ 		bool saveSnapShots;
+ 		int frameNumber;
+-		bool loadPositionOrientationFile();
+-		list&lt;string&gt; xyzFiles;
+-		list&lt;string&gt;::iterator xyzFilesIter;
+-		vector&lt; shared_ptr&lt; FiltrationalEngine &gt; &gt;   filters;
++ 		bool loadNextRecordedData();
++ 		//! filenames or table names (if useSQLite)
++ 		list&lt;string&gt; xyzNames;
++ 		list&lt;string&gt;::iterator xyzNamesIter;
++		vector&lt; shared_ptr&lt; FiltrEngine &gt; &gt;   filters;
+ 	public :
+ 		GLSimulationPlayerViewer(QWidget* parent,char* name);
+ 		virtual ~GLSimulationPlayerViewer(){};
+
+Modified: trunk/gui/qt3/QtSimulationPlayer.cpp
+===================================================================
+--- trunk/gui/qt3/QtSimulationPlayer.cpp	2008-07-10 17:45:58 UTC (rev 1420)
++++ trunk/gui/qt3/QtSimulationPlayer.cpp	2008-07-10 19:09:28 UTC (rev 1421)
+@@ -10,7 +10,7 @@
+ #include &quot;FileDialog.hpp&quot;
+ #include &quot;GLSimulationPlayerViewer.hpp&quot;
+ #include&lt;yade/core/FileGenerator.hpp&gt;
+-#include&lt;yade/core/FiltrationalEngine.hpp&gt;
++#include&lt;yade/pkg-common/FiltrEngine.hpp&gt;
+ #include &lt;qlineedit.h&gt;
+ #include &lt;qpushbutton.h&gt;
+ #include &lt;qspinbox.h&gt;
+@@ -36,8 +36,9 @@
+ 	string selectedFilter;
+ 	std::vector&lt;string&gt; filters;
+ 	filters.push_back(&quot;XML Yade File (*.xml *.xml.gz *.xml.bz2)&quot;);
++	filters.push_back(&quot;SQLite simulation states (*)&quot;);
+ 	string fileName = FileDialog::getOpenFileName(&quot;.&quot;, filters, &quot;Choose a file to load&quot;,NULL,selectedFilter );
+-	if (!fileName.empty() &amp;&amp; selectedFilter == &quot;XML Yade File (*.xml *.xml.gz *.xml.bz2)&quot;)
++	if (!fileName.empty()) // &amp;&amp; selectedFilter== &quot;XML Yade File (*.xml *.xml.gz *.xml.bz2)&quot;)
+ 		leInputConfigFile-&gt;setText(fileName);
+ }
+ void QtSimulationPlayer::pbInputDirectoryClicked(){
+
+Modified: trunk/pkg/common/Engine/FiltrEngine/ColorizedLayerFilter.hpp
+===================================================================
+--- trunk/pkg/common/Engine/FiltrEngine/ColorizedLayerFilter.hpp	2008-07-10 17:45:58 UTC (rev 1420)
++++ trunk/pkg/common/Engine/FiltrEngine/ColorizedLayerFilter.hpp	2008-07-10 19:09:28 UTC (rev 1421)
+@@ -9,7 +9,7 @@
+ #ifndef COLORIZED_LAYER_FILTER_HPP
+ #define COLORIZED_LAYER_FILTER_HPP 
+ 
+-#include&lt;yade/core/FiltrEngine.hpp&gt;
++#include&lt;yade/pkg-common/FiltrEngine.hpp&gt;
+ #include&lt;yade/core/MetaBody.hpp&gt;
+ 
+ class ColorizedLayerFilter : public FiltrEngine {
+
+Modified: trunk/pkg/common/Engine/FiltrEngine/ColorizedVelocityFilter.cpp
+===================================================================
+--- trunk/pkg/common/Engine/FiltrEngine/ColorizedVelocityFilter.cpp	2008-07-10 17:45:58 UTC (rev 1420)
++++ trunk/pkg/common/Engine/FiltrEngine/ColorizedVelocityFilter.cpp	2008-07-10 19:09:28 UTC (rev 1421)
+@@ -8,6 +8,8 @@
+ 
+ #include&quot;ColorizedVelocityFilter.hpp&quot;
+ 
++CREATE_LOGGER(ColorizedVelocityFilter);
++
+ ColorizedVelocityFilter::ColorizedVelocityFilter() : FiltrEngine() 
+ {
+ 	first=true;
+
+Modified: trunk/pkg/common/Engine/FiltrEngine/ColorizedVelocityFilter.hpp
+===================================================================
+--- trunk/pkg/common/Engine/FiltrEngine/ColorizedVelocityFilter.hpp	2008-07-10 17:45:58 UTC (rev 1420)
++++ trunk/pkg/common/Engine/FiltrEngine/ColorizedVelocityFilter.hpp	2008-07-10 19:09:28 UTC (rev 1421)
+@@ -9,7 +9,7 @@
+ #ifndef COLORIZED_VELOCITY_FILTER_HPP
+ #define COLORIZED_VELOCITY_FILTER_HPP 
+ 
+-#include&lt;yade/core/FiltrEngine.hpp&gt;
++#include&lt;yade/pkg-common/FiltrEngine.hpp&gt;
+ #include&lt;yade/core/MetaBody.hpp&gt;
+ 
+ class ColorizedVelocityFilter : public FiltrEngine {
+@@ -38,6 +38,7 @@
+ 	
+ 		virtual void registerAttributes();
+ 		//virtual void postProcessAttributes(bool deserializing);
++		DECLARE_LOGGER;
+ 	REGISTER_CLASS_NAME(ColorizedVelocityFilter);
+ 	REGISTER_BASE_CLASS_NAME(FiltrEngine);
+ };
+
+Copied: trunk/pkg/common/Engine/FiltrEngine/FiltrEngine.cpp (from rev 1420, trunk/core/FiltrEngine.cpp)
+
+Copied: trunk/pkg/common/Engine/FiltrEngine/FiltrEngine.hpp (from rev 1420, trunk/core/FiltrEngine.hpp)
+===================================================================
+--- trunk/core/FiltrEngine.hpp	2008-07-10 17:45:58 UTC (rev 1420)
++++ trunk/pkg/common/Engine/FiltrEngine/FiltrEngine.hpp	2008-07-10 19:09:28 UTC (rev 1421)
+@@ -0,0 +1,40 @@
++/*************************************************************************
++*  Copyright (C) 2008 by Sergei Dorofeenko                               *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">sega at users.berlios.de</A>                                                 *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#ifndef FILTRATIONAL_ENGINE_HPP
++#define FILTRATIONAL_ENGINE_HPP
++
++#include&lt;yade/core/DeusExMachina.hpp&gt;
++class FiltrEngine : public DeusExMachina {
++	public:
++		/// Activation of filtration from GUI
++		static bool isFiltrationActivated;
++
++		/// Activation of the filter
++		bool isFilterActivated;
++
++		bool isActivated();
++
++		FiltrEngine();
++	
++		void registerAttributes()
++		{
++//			REGISTER_ATTRIBUTE(isFiltrationActivated);
++			REGISTER_ATTRIBUTE(isFilterActivated);
++		}
++
++	protected :
++	REGISTER_CLASS_NAME(FiltrEngine);
++	REGISTER_BASE_CLASS_NAME(DeusExMachina);
++};
++REGISTER_SERIALIZABLE(FiltrEngine,false);
++
++typedef FiltrEngine FiltrationalEngine;
++
++#endif // FILTRATIONAL_ENGINE_HPP
++
+
+Modified: trunk/pkg/common/Engine/StandAloneEngine/PeriodicEngines.hpp
+===================================================================
+--- trunk/pkg/common/Engine/StandAloneEngine/PeriodicEngines.hpp	2008-07-10 17:45:58 UTC (rev 1420)
++++ trunk/pkg/common/Engine/StandAloneEngine/PeriodicEngines.hpp	2008-07-10 19:09:28 UTC (rev 1421)
+@@ -16,9 +16,9 @@
+ 			Real virtNow=Omega::instance().getSimulationTime();
+ 			Real realNow=getClock();
+ 			long iterNow=Omega::instance().getCurrentIteration();
+-			if((virtPeriod&gt;0 &amp;&amp; virtNow-virtLast&gt;virtPeriod) ||
+-				(realPeriod&gt;0 &amp;&amp; realNow-realLast&gt;realPeriod) ||
+-				(iterPeriod&gt;0 &amp;&amp; iterNow-iterLast&gt;iterPeriod)){
++			if((virtPeriod&gt;0 &amp;&amp; virtNow-virtLast&gt;=virtPeriod) ||
++				(realPeriod&gt;0 &amp;&amp; realNow-realLast&gt;=realPeriod) ||
++				(iterPeriod&gt;0 &amp;&amp; iterNow-iterLast&gt;=iterPeriod)){
+ 				realLast=realNow; virtLast=virtNow; iterLast=iterNow;
+ 				return true;
+ 			}
+
+Modified: trunk/pkg/common/SConscript
+===================================================================
+--- trunk/pkg/common/SConscript	2008-07-10 17:45:58 UTC (rev 1420)
++++ trunk/pkg/common/SConscript	2008-07-10 19:09:28 UTC (rev 1421)
+@@ -260,8 +260,10 @@
+ 			'yade-loki',
+ 			'yade-multimethods',
+ 			'ParticleParameters'],
+-		CPPPATH=env['CPPPATH']+['$PREFIX/include', 'Engine/DeusExMachina']),
++		CPPPATH=env['CPPPATH']+['$PREFIX/include','Engine/DeusExMachina']),
+ 	
++	env.SharedLibrary('FiltrEngine',['Engine/FiltrEngine/FiltrEngine.cpp']),
++
+ 	env.SharedLibrary('ColorizedLayerFilter',
+ 		['Engine/FiltrEngine/ColorizedLayerFilter.cpp'],
+ 		LIBS=env['LIBS']+['yade-base',
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/SQLiteRecorder.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/SQLiteRecorder.cpp	2008-07-10 17:45:58 UTC (rev 1420)
++++ trunk/pkg/dem/Engine/StandAloneEngine/SQLiteRecorder.cpp	2008-07-10 19:09:28 UTC (rev 1421)
+@@ -1,5 +1,7 @@
+ #include&quot;SQLiteRecorder.hpp&quot;
+ #include&lt;boost/algorithm/string.hpp&gt;
++#include&lt;boost/filesystem/operations.hpp&gt;
++#include&lt;boost/filesystem/convenience.hpp&gt;
+ #include&lt;yade/core/MetaBody.hpp&gt;
+ using namespace boost;
+ CREATE_LOGGER(SQLiteRecorder);
+@@ -22,14 +24,28 @@
+ 	con-&gt;executenonquery(&quot;PRAGMA synchronous = OFF&quot;);
+ 	// create supertable (only if the db is empty)
+ 	if(0==con-&gt;executeint(&quot;select count(*) from sqlite_master where name='meta';&quot;)){
+-		ostringstream out;
+-		LOG_DEBUG(&quot;Saving simulation to stream&quot;);
+-		Omega::instance().saveSimulationToStream(out);
+-		con-&gt;executenonquery(&quot;create table meta (simulationXML)&quot;);
++		LOG_DEBUG(&quot;Saving simulation to stream&quot;); ostringstream out; Omega::instance().saveSimulationToStream(out);
++		con-&gt;executenonquery(&quot;create table meta (simulationXML STRING,maxIter INTEGER)&quot;);
+ 		LOG_DEBUG(&quot;Inserting simulation XML into the table 'meta'&quot;);
+-		{ sqlite3x::sqlite3_command cmd(*con,&quot;insert into meta values (?)&quot;); cmd.bind(1,out.str()); cmd.executenonquery(); }
++		{ sqlite3x::sqlite3_command cmd(*con,&quot;insert into meta values (?,-1)&quot;); cmd.bind(1,out.str()); cmd.executenonquery(); }
+ 		assert(con-&gt;executeint(&quot;select count(*) from sqlite_master where name='records';&quot;)==0);
+ 		con-&gt;executenonquery(&quot;create table records (iter INTEGER, realTime FLOAT, virtTime FLOAT, wallClock FLOAT, bodyTable STRING, interactionTable STRING);&quot;);
++	} else { /* db exists already! */
++		/* if the last iteration saved is greater or equal to ours, we're not running the same simulation.
++		 * The database will be renamed and init() called again.
++		 */
++		long maxIter=con-&gt;executeint(&quot;SELECT maxIter from meta;&quot;);
++		LOG_DEBUG(&quot;maxIter in existing database is &quot;&lt;&lt;maxIter);
++		if(maxIter&gt;=Omega::instance().getCurrentIteration()){
++			LOG_DEBUG(&quot;This db is not continuation of current simulation (maxIter&gt;currentIter), will be moved away.&quot;);
++			assert(filesystem::exists(dbFile));
++			int i=0;
++			while(filesystem::exists(dbFile+&quot;~&quot;+lexical_cast&lt;string&gt;(i))) i++;
++			string newDbFile=dbFile+&quot;~&quot;+lexical_cast&lt;string&gt;(i);
++			filesystem::rename(dbFile,newDbFile);
++			LOG_INFO(&quot;Renamed old database &quot;&lt;&lt;dbFile&lt;&lt;&quot; to &quot;&lt;&lt;newDbFile&lt;&lt;&quot; (rerun initialization).&quot;);
++			init(rootBody);
++		}
+ 	}
+ }
+ 
+@@ -41,9 +57,10 @@
+ 		else if(rec==&quot;rgb&quot;) recActive[REC_RGB]=true;
+ 		else LOG_ERROR(&quot;Unknown recorder named `&quot;&lt;&lt;rec&lt;&lt;&quot;' (supported are: se3, rgb). Ignored.&quot;);
+ 	}
+-
+ 	// create table
+-	string perBodyTable=&quot;bodies_iter_&quot;+lexical_cast&lt;string&gt;(Omega::instance().getCurrentIteration());
++	char iterPadded[16]; snprintf(iterPadded,16,&quot;%07ld&quot;,Omega::instance().getCurrentIteration());
++	string perBodyTable=&quot;bodies_iter_&quot;+string(iterPadded);
++	// FIXME: handle this gracefully
+ 	assert(0==con-&gt;executeint(&quot;select count(*) from sqlite_master where name='&quot;+perBodyTable+&quot;';&quot;)); // table shouldn't exist yet
+ 	vector&lt;string&gt; columns; columns.push_back(&quot;id INTEGER&quot;);
+ 	if(recActive[REC_SE3]){columns.push_back(&quot;se3_x FLOAT&quot;); columns.push_back(&quot;se3_y FLOAT&quot;); columns.push_back(&quot;se3_z FLOAT&quot;); columns.push_back(&quot;se3_ori0 FLOAT&quot;); columns.push_back(&quot;se3_ori1 FLOAT&quot;); columns.push_back(&quot;se3_ori2 FLOAT&quot;); columns.push_back(&quot;se3_ori3 FLOAT&quot;);}
+@@ -75,6 +92,7 @@
+ 			assert(field-1==columns.size());
+ 			cmd.executenonquery();
+ 		}
++		con-&gt;executenonquery(&quot;UPDATE 'meta' SET maxIter=&quot;+lexical_cast&lt;string&gt;(Omega::instance().getCurrentIteration())+&quot;;&quot;);
+ 	}
+ 	transaction.commit();
+ }
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/SQLiteRecorder.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/SQLiteRecorder.hpp	2008-07-10 17:45:58 UTC (rev 1420)
++++ trunk/pkg/dem/Engine/StandAloneEngine/SQLiteRecorder.hpp	2008-07-10 19:09:28 UTC (rev 1421)
+@@ -2,7 +2,39 @@
+ #pragma once
+ #include&lt;yade/pkg-common/PeriodicEngines.hpp&gt;
+ #include&lt;yade/lib-sqlite3x/sqlite3x.hpp&gt;
+-
++/*
++ * Extensible class for recording of structured data for later use with simulation player (uses sqlite).
++ *
++ * You need to set recorders and dbFile to use this engine. The resulting file is directly supported
++ * by the simulation player (and can be browsed/processed using regular sqlite means) and contains
++ * the whole simulation setup (the XML is embedded in the db and loaded by player) and saved states.
++ * YOU&#160;NEED&#160;ONLY&#160;THIS&#160;SINGLE&#160;FILE to replay the simulation.
++ *
++ * Available recorders are: 'se3' (position and orientation) and 'rgb' (geometricalModel::diffuseColor).
++ *
++ * See scripts/simple-scene-player.py for example.
++ *
++ * Speed: the db is considerably faster for reading (replaying) and slightly slower for writing (with simple-scene).
++ *
++ * If the database file exists already, it is used iff the last iteration that was saved in this file is smaller
++ * the current iteration. Otherwise the file is renamed to *~1 (or *~2 etc. if that exists already) and
++ * new database is created. This permits to save, reload and rerun the simulation while writing into the same
++ * database, but when you run it again, the results will be saved to different db and the old one backed up.
++ *
++ * Extensibility: if you want to add your own recorder, use this checklist:
++ *
++ * 1. add REC_NEWREC to the enum (keep REC_SENTINEL as last!)
++ * 2. go through the action(MetaBody*) code and add appropriate conditionals (REC_SE3 and REC_RGB will guid you).
++ * 2a. add the recorder activation condition
++ * 2b. add appropriate columns to the database table. Name those newrec_*
++ * 2c. insert your values into the INSERT as appropriate
++ * 3. Edit GLSimulationPlayerViewer::loadNextRecordedData, test if your columns are present,
++ * 	get their values and adjust simulation.
++ *
++ * Currently, only per-body records are supported (per-interaction records were in consideration, but the difficulty is
++ * how to handle appearing/disappearing interactions).
++ *
++ */
+ class SQLiteRecorder: public PeriodicEngine {
+ 		shared_ptr&lt;sqlite3x::sqlite3_connection&gt; con;
+ 	public:
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000380.html">[Yade-commits] r1420 - trunk/pkg/common
+</A></li>
+	<LI>Next message: <A HREF="000382.html">[Yade-commits] r1422 - in trunk: gui gui/qt3 pkg/common scripts
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#381">[ date ]</a>
+              <a href="thread.html#381">[ thread ]</a>
+              <a href="subject.html#381">[ subject ]</a>
+              <a href="author.html#381">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

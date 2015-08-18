@@ -1,0 +1,193 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1327 - in trunk/pkg: common/Engine/DeusExMachina	dem/Engine/EngineUnit dem/Engine/StandAloneEngine
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1327%20-%20in%20trunk/pkg%3A%20common/Engine/DeusExMachina%0A%09dem/Engine/EngineUnit%20dem/Engine/StandAloneEngine&In-Reply-To=%3C200804180557.m3I5vHqF013263%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000288.html">
+   <LINK REL="Next"  HREF="000290.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1327 - in trunk/pkg: common/Engine/DeusExMachina	dem/Engine/EngineUnit dem/Engine/StandAloneEngine</H1>
+    <B>cosurgi at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1327%20-%20in%20trunk/pkg%3A%20common/Engine/DeusExMachina%0A%09dem/Engine/EngineUnit%20dem/Engine/StandAloneEngine&In-Reply-To=%3C200804180557.m3I5vHqF013263%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1327 - in trunk/pkg: common/Engine/DeusExMachina	dem/Engine/EngineUnit dem/Engine/StandAloneEngine">cosurgi at mail.berlios.de
+       </A><BR>
+    <I>Fri Apr 18 07:57:17 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000288.html">[Yade-commits] r1325 - trunk/pkg/dem/PreProcessor
+</A></li>
+        <LI>Next message: <A HREF="000290.html">[Yade-commits] r1328 - in trunk/pkg/dem: .	DataClass/InteractionPhysics Engine/StandAloneEngine PreProcessor
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#289">[ date ]</a>
+              <a href="thread.html#289">[ thread ]</a>
+              <a href="subject.html#289">[ subject ]</a>
+              <a href="author.html#289">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: cosurgi
+Date: 2008-04-18 07:57:16 +0200 (Fri, 18 Apr 2008)
+New Revision: 1327
+
+Modified:
+   trunk/pkg/common/Engine/DeusExMachina/DisplacementEngine.cpp
+   trunk/pkg/common/Engine/DeusExMachina/DisplacementEngine.hpp
+   trunk/pkg/dem/Engine/EngineUnit/SimpleElasticRelationships.cpp
+   trunk/pkg/dem/Engine/StandAloneEngine/CapillaryCohesiveLaw.cpp
+   trunk/pkg/dem/Engine/StandAloneEngine/CohesiveFrictionalContactLaw.cpp
+   trunk/pkg/dem/Engine/StandAloneEngine/CohesiveFrictionalContactLaw.hpp
+Log:
+- flag 'active' in DisplacementEngine
+- CapillaryCohesiveLaw now complains to stderr (could use LOG_WARN as well, but didn't compile)
+- flag 'always_use_moment_law' in CohesiveFrictionalContactLaw (so is possible to use even for broken contacts)
+- added comment about the contact law from PFC-3D (I used it for comparison with Wenjie)
+
+
+
+Modified: trunk/pkg/common/Engine/DeusExMachina/DisplacementEngine.cpp
+===================================================================
+--- trunk/pkg/common/Engine/DeusExMachina/DisplacementEngine.cpp	2008-04-17 16:14:11 UTC (rev 1326)
++++ trunk/pkg/common/Engine/DeusExMachina/DisplacementEngine.cpp	2008-04-18 05:57:16 UTC (rev 1327)
+@@ -35,8 +35,13 @@
+ 	DeusExMachina::registerAttributes();
+ 	REGISTER_ATTRIBUTE(displacement);
+ 	REGISTER_ATTRIBUTE(translationAxis);
++	REGISTER_ATTRIBUTE(active);
+ }
+ 
++bool DisplacementEngine::isActivated()
++{
++   return active;
++}
+ 
+ void DisplacementEngine::applyCondition(Body * body)
+ {
+
+Modified: trunk/pkg/common/Engine/DeusExMachina/DisplacementEngine.hpp
+===================================================================
+--- trunk/pkg/common/Engine/DeusExMachina/DisplacementEngine.hpp	2008-04-17 16:14:11 UTC (rev 1326)
++++ trunk/pkg/common/Engine/DeusExMachina/DisplacementEngine.hpp	2008-04-18 05:57:16 UTC (rev 1327)
+@@ -19,6 +19,9 @@
+ 		Real displacement;
+ 		Vector3r translationAxis;
+ 		void applyCondition(Body * body);
++		bool active;
++		DisplacementEngine():active(true){};
++		bool isActivated();
+ 
+ 	protected :
+ 		virtual void postProcessAttributes(bool);
+
+Modified: trunk/pkg/dem/Engine/EngineUnit/SimpleElasticRelationships.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/EngineUnit/SimpleElasticRelationships.cpp	2008-04-17 16:14:11 UTC (rev 1326)
++++ trunk/pkg/dem/Engine/EngineUnit/SimpleElasticRelationships.cpp	2008-04-18 05:57:16 UTC (rev 1327)
+@@ -64,6 +64,13 @@
+ 			Real Kn = 2*Ea*Da*Eb*Db/(Ea*Da+Eb*Db);//harmonic average of two stiffnesses
+ 			Real Ks = 2*Ea*Da*Va*Eb*Db*Vb/(Ea*Da*Va+Eb*Db*Va);//harmonic average of two stiffnesses with ks=V*kn for each sphere
+ 
++
++	//This is the formula used in PFC-3D
++	//
++	//Real Kn = 4 * ((Ea+Eb)*0.5) * ((Da+Db)*0.5);
++	//Real Ks = Kn/2.0;
++
++
+ 			contactPhysics-&gt;initialKn			= Kn;
+ 			contactPhysics-&gt;initialKs			= Ks;
+ //cerr &lt;&lt; &quot;Ks: &quot; &lt;&lt;       contactPhysics-&gt;initialKs			&lt;&lt; endl;
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/CapillaryCohesiveLaw.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/CapillaryCohesiveLaw.cpp	2008-04-17 16:14:11 UTC (rev 1326)
++++ trunk/pkg/dem/Engine/StandAloneEngine/CapillaryCohesiveLaw.cpp	2008-04-18 05:57:16 UTC (rev 1327)
+@@ -324,7 +324,7 @@
+ 		static bool first=true;
+ 		if(first)
+ 		{
+-	                cout &lt;&lt; &quot;WARNING: cannot open file used for capillary law, in TriaxalTestWater&quot; &lt;&lt; endl;
++	                std::cerr &lt;&lt; &quot;WARNING: cannot open file used for capillary law, in TriaxalTestWater&quot; &lt;&lt; endl;
+ 			first=false;
+ 		}
+ 		return;
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/CohesiveFrictionalContactLaw.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/CohesiveFrictionalContactLaw.cpp	2008-04-17 16:14:11 UTC (rev 1326)
++++ trunk/pkg/dem/Engine/StandAloneEngine/CohesiveFrictionalContactLaw.cpp	2008-04-18 05:57:16 UTC (rev 1327)
+@@ -27,7 +27,8 @@
+ 	sdecGroupMask=1;
+ 	momentRotationLaw = true;
+ 	erosionActivated = false;
+-	detectBrokenBodies = true;
++	detectBrokenBodies = false;
++	always_use_moment_law = false;
+ }
+ 
+ 
+@@ -38,6 +39,7 @@
+ 	REGISTER_ATTRIBUTE(momentRotationLaw);
+ 	REGISTER_ATTRIBUTE(erosionActivated);
+ 	REGISTER_ATTRIBUTE(detectBrokenBodies);
++	REGISTER_ATTRIBUTE(always_use_moment_law);
+ }
+ 
+ void out(Quaternionr q)
+@@ -296,7 +298,7 @@
+ /////	/// Moment law	END				 	 ///
+ 
+ 	/// Moment law					 	 ///
+-		if(momentRotationLaw &amp;&amp; currentContactPhysics-&gt;cohesionBroken == false )
++		if(momentRotationLaw &amp;&amp; (currentContactPhysics-&gt;cohesionBroken == false || always_use_moment_law) )
+ 		{
+ 			{// updates only orientation of contact (local coordinate system)
+ 				Vector3r axis = currentContactPhysics-&gt;prevNormal.UnitCross(currentContactGeometry-&gt;normal);
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/CohesiveFrictionalContactLaw.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/CohesiveFrictionalContactLaw.hpp	2008-04-17 16:14:11 UTC (rev 1326)
++++ trunk/pkg/dem/Engine/StandAloneEngine/CohesiveFrictionalContactLaw.hpp	2008-04-18 05:57:16 UTC (rev 1327)
+@@ -25,7 +25,7 @@
+ 
+ 	public :
+ 		int sdecGroupMask;
+-		bool momentRotationLaw, erosionActivated, detectBrokenBodies;
++		bool momentRotationLaw, erosionActivated, detectBrokenBodies,always_use_moment_law;
+ 		long iter;/// used for checking if new iteration
+ 	
+ 		CohesiveFrictionalContactLaw();
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000288.html">[Yade-commits] r1325 - trunk/pkg/dem/PreProcessor
+</A></li>
+	<LI>Next message: <A HREF="000290.html">[Yade-commits] r1328 - in trunk/pkg/dem: .	DataClass/InteractionPhysics Engine/StandAloneEngine PreProcessor
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#289">[ date ]</a>
+              <a href="thread.html#289">[ thread ]</a>
+              <a href="subject.html#289">[ subject ]</a>
+              <a href="author.html#289">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

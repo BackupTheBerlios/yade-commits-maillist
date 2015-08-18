@@ -1,0 +1,1115 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1154 - trunk
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2007/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1154%20-%20trunk&In-Reply-To=%3C200703310718.l2V7IPAE025882%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000118.html">
+   <LINK REL="Next"  HREF="000120.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1154 - trunk</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1154%20-%20trunk&In-Reply-To=%3C200703310718.l2V7IPAE025882%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1154 - trunk">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Sat Mar 31 09:18:25 CEST 2007</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000118.html">[Yade-commits] r1153 - branches/scons-layout/debian
+</A></li>
+        <LI>Next message: <A HREF="000120.html">[Yade-commits] r1155 - in trunk: core extra/clump lib/serialization
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#119">[ date ]</a>
+              <a href="thread.html#119">[ thread ]</a>
+              <a href="subject.html#119">[ subject ]</a>
+              <a href="author.html#119">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2007-03-31 09:18:17 +0200 (Sat, 31 Mar 2007)
+New Revision: 1154
+
+Added:
+   trunk/Yade.kdevelop
+   trunk/core/
+   trunk/debian/
+   trunk/doc/
+   trunk/examples/
+   trunk/extra/
+   trunk/gui/
+   trunk/lib/
+   trunk/pkg/
+   trunk/scripts/
+Removed:
+   trunk/Makefile
+   trunk/packaging/
+   trunk/yade-all.kdevelop
+   trunk/yade-all.pro
+   trunk/yade-core/
+   trunk/yade-doc/
+   trunk/yade-examples/
+   trunk/yade-extra/
+   trunk/yade-flat/
+   trunk/yade-guis/
+   trunk/yade-libs/
+   trunk/yade-packages/
+   trunk/yade-scripts/
+Modified:
+   trunk/INSTALL
+   trunk/SConstruct
+Log:
+Merged the scons-layout branch to trunk.
+
+Modified: trunk/INSTALL
+===================================================================
+--- trunk/INSTALL	2007-03-22 10:29:21 UTC (rev 1153)
++++ trunk/INSTALL	2007-03-31 07:18:17 UTC (rev 1154)
+@@ -1,292 +1,41 @@
+-This file is a copy/paste of information in <A HREF="http://yade.berlios.de/index.php?m=700">http://yade.berlios.de/index.php?m=700</A>
+-you can check there for more up to date information.
++COMPILATION
++===========
+ 
++This version of yade relies uniquely on the scons build system. You can download if from <A HREF="http://www.scons.org,">http://www.scons.org,</A> but chances are, that scons exists for your distribution (package scons, most likely). Its usage is very simple. Type &quot;scons -h&quot; to see available options for yade. Type &quot;scons -H&quot; to see options for scons proper. You need to set yade options only once, they will be remembered (in the scons.conf file). The ones you may need are:
+ 
+-----------------------------------------------------------------------------
+-COMPILING CURRENT RELEASE
++ 1. CPPPATH: to add some search paths for preprocessor
++ 2. CXX: to change compiler
++ 3. LIBPATH: extra directories for linker
++ 4. PREFIX: where to install: default is /usr/local
++ 5. POSTFIX: distinguishes different installations of yade; it will really be version-POSTFIX; if you don't specify anything, svn version (like r1088) will be used
++ 6. buildPrefix: where to create build directory; default is '..'
+ 
+-From yade-all directory level you can install whole yade at once. It's a good
+-solution when installing yade for the first time. When you install something
+-next time, it is better to install only from directories that have changed
+-their version numbers - you will save on compilation time.
++Scons will autodetect libraries as needed, if anything fails, see config.log.
+ 
+-To compile and install whole yade execute following commands:
++After compilation and installation (which are really not separate), you will be able to run yade - look in $PREFIX/bin directory for the executable.
+ 
+-   make compile_install
+-   make clean            # to clean afterwards
++DEBIAN PACKAGE COMPILATION AND INSTALLATION
++===========================================
+ 
+-WARNING: command 'make compile_install' is compiling and installing, this is
+-because compiling next packege requires the previous one to be already
+-installed otherwise compilation will fail (normally we should invoke 'make &amp;&amp;
+-make install', so this is an exception).
++Make sure you have all packages needed for building:
+ 
+-NOTE: By default everything is installed in directory INSTALL_DIR=/usr/local,
+-it is however recommended to install yade in your home directory, read on
+-below:
++	$ sudo apt-get install debhelper scons lib3dviewer-dev libqt3-mt-dev qt3-dev-tools python-dev freeglut3-dev libboost-date-time-dev libboost-filesystem-dev libboost-thread-dev wildmagic-dev liblog4cxx9-dev docbook-to-man
+ 
++Note that lib3dviewer-dev and wildmagic-dev are not in official archives - see <A HREF="http://yade.berlios.de">http://yade.berlios.de</A> or <A HREF="http://beta.arcig.cz/~eudoxos/phd/index.cgi/YaDe/DebianSnapshotInstallHowto">http://beta.arcig.cz/~eudoxos/phd/index.cgi/YaDe/DebianSnapshotInstallHowto</A> on how to get them.
+ 
+-----------------------------------------------------------------------------
+-RECOMMENDED INSTALLATION METHOD
++Then go ahead:
+ 
+-Because yade is still in early development stage, and most likely you will edit
+-the sources and recompile, then it is recommended that you install yade as a
+-user without root privileages (execute this comamnd from inside
+-yade-all-0.10.0/ directory):
++	$ svn checkout <A HREF="svn://svn.berlios.de/yade/branches/scons-layout">svn://svn.berlios.de/yade/branches/scons-layout</A> yade-xxx # (change xxx to revision number as appropriate)
++	$ cd yade-0.0.svn1112
++	$ scripts/svn-debian-prep # creates files SVNVERSION, _SVNVERSION and appropriate debian/control
++	$ dpkg-buildpackage -rfakeroot-tcp # compiles and creates source and binary packages in ../
++	$ sudo dpkg -i ../yade-svn*-0.1.1-1_i386.dpkg
++    
++There are some limitations at this moment: version hardcoded in the control file, plain fakeroot will not work with scons (most likely because not all environment variables are propagated by scons - to be investigated).
+ 
+-   mkdir ~/YADE
+-   make compile_install INSTALL_DIR='/YADE' PREFIX_DIR='/home/joeuser'
++RUNNING
++=======
+ 
+-Remember to replace &quot;joeuser&quot; with your user name.
++Yade must be able to find its plugins if it is to function correctly - that should happen automatically. ~/.yade-??? will hold file named preferences.xml, which will be created on the first run.
+ 
+-Read section about starting yade &gt;&gt;.
+-Remember to add plugin directories as described in first time setup &gt;&gt;.
+-
+-
+-----------------------------------------------------------------------------
+-COMPILING WITH SCONS
+-
+-Yade will eventually (hopefully) use scons instead of make. As of now, scons features
+-some autodetection capabilities, robust support for parallel builds and nice output.
+-Scons is probably packaged for your distribution - if not, go to <A HREF="http://www.scons.org">http://www.scons.org</A>
+-and download it. It is written in pure python, there is no need to compile.
+-
+-Scons build files (SConscript) will be generated automatically from .pro files on the first run.
+-Warnings can be safely ignored.
+-
+-There are some options that may interest you.
+-
+-	1. &quot;scons -j4&quot; will make scons compile 4 files at a time. Major speedup for multicore machines.
+-
+-	2. CPPPATH and LIBPATH to find headers and libraries in non-standard locations. For example,
+-
+-		scons CPPPATH=&quot;/usr/local/include/wm3&quot; LIBPATH=&quot;/usr/local/lib&quot;
+-
+-	3. PREFIX indicates where to install. /usr/local is the default.
+-
+-For other options, try &quot;scons -h&quot;. Note that the options given by 'scons -h' are remembered accross runs
+-(yade.scons.conf) and you do not need to enter them every time.
+-
+-
+-----------------------------------------------------------------------------
+-OTHER COMPILATION VARIANTS
+-
+-As a root user:
+-
+-   make compile_install INSTALL_DIR='/usr'
+-
+-If you are a package maintaner, you may want to install everything in different
+-directory tree:
+-
+-   make compile_install PREFIX_DIR='/tmp/foo' INSTALL_DIR='/usr'
+-
+-
+-----------------------------------------------------------------------------
+-SUMMARY OF YADE COMPILATION OPTIONS
+-
+-   1. INSTALL_DIR - determines the installation directory, starts with / , ends without /
+-
+-   2. PREFIX_DIR - determines prefix for installation directory, starts with / , ends without /
+-
+-   3. CXXFLAGS='-DDOUBLE_PRECISION' - yade is compiled using 'double' as a base
+-   type for calculation. This gives higher precision than 'float'. On some
+-   computers it is faster (like AMD64), on others it is slower - this really
+-   depends on your machine.
+-   // Now SINGLE_PRCISION must be defined for floats, since doubles are what the default is.
+-   // SINGLE_PRECISION will deprecated shortly anyway
+-
+-   4. CXXFLAGS='-DNO_GLUTINIT' - older versions of libglut do not have function
+-   glutInit(), you should use this compilation flag then.
+-
+-   5. CXXFLAGS='-DQGLVIEWER20' - If you are using older QGLViewer (version 2.0)
+-   you should use this flag, otherwise you will get error about setFileName()
+-
+-
+-----------------------------------------------------------------------------
+-COMPILATION NOTES
+-
+-   1. Both INSTALL_DIR and PREFIX_DIR should start with / and shouldn't have
+-   trailing slash.
+-
+-   2. If compilation is interrupted (eg. due to some compilation error), and
+-   then resumed with different INSTALL_DIR or PREFIX_DIR, then all *.pro files
+-   (used by qmake) will be damaged (wrong INSTALL_DIR and PREFIX_DIR inside)
+-
+-   3. If you are compiling with gcc3.3, you need to pass additional argument:
+-
+-         make compile_install CXXFLAGS='-pthread -lpthread'
+-
+-   4. flag CXXFLAGS can be used to set some compilation options, like:
+-
+-         CXXFLAGS='-O3'                     # optimize code for speed
+-         CXXFLAGS='-pthread -lpthread -O3'  # gcc3.3, and optimize for speed
+-         CXXFLAGS='-g'                      # debugging symbols - gdb's backtrace can display line numbers
+-         CXXFLAGS='-DDOUBLE_PRECISION -O3'  # for calculation use double precision instead of float and optimize for speed
+-
+-   5. If you ever want to uninstall, you can invoke this command (with correct INSTALL_DIR, and PREFIX_DIR):
+-
+-         make uninstall
+-
+-   6. AMD64: when compiling on AMD64 an additional -fPIC option is required:
+-         make compile_install CXXFLAGS='-fPIC -pthread -lpthread -O3' INSTALL_DIR='/YADE' PREFIX_DIR='/home/joeuser'
+-
+-   7. Fedora core 4: gcc 4 generates an error when it encounters an anonymous enum. It is no longer possible to write
+-
+-         enum {value = 1 }
+-
+-      It must be written instead:
+-         enum enumname {value = 1 }
+-
+-      Under fedora 4 the default compiler is gcc 4 and some header files from
+-      stl still contain anonymous enums. You must edit those .h files and give
+-      any name to those enums. Among other files this must be corrected:
+-      /usr/include/c++/4.0.?/bits/cpp_type_traits.h, and some of QT headers,
+-      like qcolor.h. Remember to give different name to each enum. Inside there
+-      is something like this:
+-
+-      template&lt;&gt;
+-          struct __is_integer&lt;bool&gt;
+-          {
+-            enum { __value = 1 };
+-            typedef __true_type __type;
+-          };
+-
+-      Replace it with:
+-
+-      template&lt;&gt;
+-          struct __is_integer&lt;bool&gt;
+-          {
+-            enum enumname1 { __value = 1 };
+-            typedef __true_type __type;
+-          };
+-
+-      In above case the compilation error was reported as:
+-         .../yade/yade-lib-wm3-math/Math.ipp:53: error:
+-         `std::__is _integer&lt;double&gt;::&lt;anonymous enum&gt;' is/uses anonymous type
+-
+-   8. If you get an error:
+-         glut.so: undefined reference
+-      you have to edit file yade-core/src/yade/yade.pro and add -lGL and -lGLU at the bottom.
+-
+-   9. Gentoo: If you get an error:
+-         GL/freeglut_ext.h: No such file or directory
+-      You have to replace file glut with freeglut.
+-
+-
+-----------------------------------------------------------------------------
+-STARTING YADE
+-
+-To start correctly, yade must be able to find its libraries. It means that you
+-should set LD_LIBRARY_PATH environment variable to point to the right
+-directory. Depending on where yade is installed, it can be one of those:
+-
+-   /usr/local/lib/yade/yade-libs
+-   /home/joeuser/YADE/lib/yade/yade-libs
+-   /usr/lib/yade/yade-libs
+-
+-You can do this in following ways:
+-
+-   1. add following line to your ~/.bashrc or ~/.zshenv
+-
+-         export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/lib/yade/yade-libs
+-
+-   2. or everytime before you first start yade in a given terminal issue a command:
+-
+-         export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/lib/yade/yade-libs
+-
+-NOTE: csh uses setenv instead of export
+-
+-If you fail to do what is described above, you will get the following error:
+-
+-./yade: error while loading shared libraries: libyade-lib-time.so.1: cannot open shared object file: No such file or directory
+-
+-
+-----------------------------------------------------------------------------
+-FIRST TIME SETUP
+-
+-After launching yade for the first time, you will be welcomed by 'Yade first
+-use wizard'. You will be asked questions, and your answers will be saved in the
+-directory ~/.yade
+-
+-1. Specify default GUI name [QtGUI] :
+-
+-You can safely press enter here. Yade can use many different GUI plugins,
+-currently there are only two: QtGUI and NullGUI. QtGUI is currently a standard
+-graphical frontend for yade. NullGUI is a command line interface for yade. In
+-the future more GUIs can appear, like: ncurses based, GTK, etc.
+-
+-2. Specify the path where to find it [/usr/local/lib/yade/yade-guis] :
+-
+-Here you should specify path to yade-guis, it can be one of the following:
+-
+-   /usr/local/lib/yade/yade-guis
+-   /home/joeuser/YADE/lib/yade/yade-guis
+-   /usr/lib/yade/yade-guis
+-
+-Then a graphical window should appear. Next step is to add directories with all
+-other plugins used by yade. To do so click 'Edit-&gt;Preferences-&gt;Plugin Folders',
+-and add all directories from lib/yade/ path. This is a daunting task, since
+-there are currently 8 directories to add (will be fixed with bug #004858). But
+-you should do it only once. If you are developing your own plugins, and they
+-reside in some other directory, you should add this directory here.
+-
+-Then click 'Plugins' on the left, and click a button 'Rescan'. You should see
+-all C++ classes that are recognized by yade from those plugins.
+-
+-
+-----------------------------------------------------------------------------
+-FILEGENERATORS
+-
+-Filegenerators are used to generate an input file for yade to simulate
+-something. Later this section will be extended with explanations on how to
+-write a new filegenerator. But for now, you can try using some of the existing
+-ones.
+-
+-In yade QtGUI click 'Preprocessor-&gt;File Generator'.
+-
+-By default the output file name is ../data/scene.xml. That is because currently
+-yade is assuming that is is ran from somewhere/bin/ directory, and there exists
+-a directory named somewhere/data/. This behaviour will change after fixing bug
+-#004853. For now you can use ../data directory.
+-
+-Output library name is a serialization plugin used to save the file. Currently
+-we have only support for XML, but soon binary format will appear.
+-
+-Generator name is the name of the class used to generate this file. You can
+-pick anything from the list, and see what it generates. If you happen to write
+-a new generator plugin, and a path to this plugin was added in preferences,
+-then it will automatically appear in this drop down list.
+-
+-Below are parameters that the plugin uses to generate a file.
+-
+-Finally you can click 'Generate' button. And an output file will be saved.
+-
+-You can use 'Load' and 'Save' buttons to store various configurations of
+-currently selected filegenerator.
+-
+-EXAMPLES
+-
+-Some of filegenerators described above need an input file which can be found in
+-yade-examples &gt;&gt;. Currently we have:
+-
+-- 2 examples for FEM
+-- 1 example for SDEC Impact test
+-
+-Other filegenerators work without need for any input file. They generate
+-examples just by parameters given to them. In the future yade-examples will
+-contain more.
+-
+-Put those examples in mentioned above somewhere/data/ directory, so that
+-filegenerators will find them.
+-
+-FIRST SIMULATION
+-
+-Once you have succesfully generated an input file for the simulation (called
+-../scene.xml by default), you can load and run it. Click 'File-&gt;New
+-Simulation', and you will see a Simulation Controller window. Inside it click
+-Load and choose scene.xml.
+-
+-You can manipulate the qglviewer graphical window by dragging and scrolling
+-with the mouse. To run the simulation click the button play (play).  From now
+-on you can start exploring yade yourself.
+-
+-
++For the rest, head over to <A HREF="http://yade.berlios.de">http://yade.berlios.de</A> and read documentation.
+
+Deleted: trunk/Makefile
+===================================================================
+--- trunk/Makefile	2007-03-22 10:29:21 UTC (rev 1153)
++++ trunk/Makefile	2007-03-31 07:18:17 UTC (rev 1154)
+@@ -1,59 +0,0 @@
+-all:
+-	@echo --
+-	@echo Please invoke \'make compile_install\' because \'make\' itself
+-	@echo is unable to do everything needed. See INSTALL for details
+-	@echo --
+-
+-clean:
+-	$(MAKE) -C yade-libs clean
+-	$(MAKE) -C yade-core clean
+-	$(MAKE) -C yade-guis clean
+-	$(MAKE) -C yade-packages clean
+-	$(MAKE) -C yade-extra clean
+-	rm -rf config.log .sconf_temp include .sconsign.dblite # scons.config should be kept alone
+-	find -name &quot;.sconsign&quot; -exec rm -rf {} \;
+-	find -name &quot;SConscript&quot; -exec rm -rf {} \;
+-
+-compile_install:
+-	$(MAKE) -C yade-libs compile_install
+-	
+-	$(MAKE) -C yade-core
+-	$(MAKE) -C yade-core install
+-	
+-	$(MAKE) -C yade-guis
+-	$(MAKE) -C yade-guis install
+-	
+-	$(MAKE) -C yade-packages compile_install
+-	
+-	$(MAKE) -C yade-extra
+-	$(MAKE) -C yade-extra install
+-	
+-	@echo --
+-	@echo Compilation and installation finished.
+-	@echo --
+-
+-uninstall:
+-	$(MAKE) -C yade-libs uninstall
+-	$(MAKE) -C yade-core uninstall
+-	$(MAKE) -C yade-guis uninstall
+-	$(MAKE) -C yade-packages uninstall
+-	$(MAKE) -C yade-extra uninstall
+-
+-tags:
+-	# prevent generated symlinked files from yade-flat and include to be parsed
+-	ctags -R --extra=+q --fields=+n --exclude='.*' --exclude=yade-flat --exclude=include --exclude='*.so'
+-
+-doc:
+-	cd yade-doc; doxygen Doxyfile
+-
+-ChangeLog:
+-	svn log --xml --verbose | xsltproc yade-scripts/svn2cl.xsl - &gt; ChangeLog
+-
+-#### convenience and individual targets; saves typing.
+-# helper target for parallel compilation which is broken generally and needs to be tried repeatedly until it succeeds (or not)
+-ci:
+-	$(MAKE) compile_install || $(MAKE) compile_install || $(MAKE) compile_install || $(MAKE) compile_install || $(MAKE) compile_install || $(MAKE) compile_install || $(MAKE) compile_install || $(MAKE) compile_install || $(MAKE) compile_install || $(MAKE) compile_install || $(MAKE) compile_install || $(MAKE) compile_install || $(MAKE) compile_install || $(MAKE) compile_install
+-
+-eudoxos:
+-	$(MAKE) ci -j4 INSTALL_DIR='/YADE' PREFIX_DIR=/tmp CXX=&quot;distcc g++-4.0&quot; LINK=&quot;g++-4.0&quot; CXXFLAGS=&quot;-I/usr/local/include/wm3&quot;
+-
+
+Modified: trunk/SConstruct
+===================================================================
+--- trunk/SConstruct	2007-03-22 10:29:21 UTC (rev 1153)
++++ trunk/SConstruct	2007-03-31 07:18:17 UTC (rev 1154)
+@@ -38,24 +38,29 @@
+ # The convention now is, that
+ #  1. CAPITALIZED options are
+ #   (a) notorious shell variables (they correspons most the time to SCons environment options of the same name - like CPPPATH)
+-#   (b) c preprocessor macros available to the program source (like PREFIX and POSTFIX)
++#   (b) c preprocessor macros available to the program source (like PREFIX and SUFFIX)
+ #  2. lowercase options influence the building process, compiler options and the like.
+ #
+ opts.AddOptions(
+-	PathOption('PREFIX', 'Install path prefix', '/usr/local'),
+-	('POSTFIX','Local version appended to binary, library and config directory (beware: if PREFIX is the same, headers of the older version will still be overwritten','',None,lambda x:x),
++	### OLD: use PathOption with PathOption.PathIsDirCreate, but that doesn't exist in 0.96.1!
++	('PREFIX','Install path prefix','/usr/local'),
++	PathOption('runtimePREFIX','Runtime path prefix; DO NOT USE, inteded for packaging only.','$PREFIX'),
++	('variant','Build variant, will be suffixed to all files, along with version (beware: if PREFIX is the same, headers of the older version will still be overwritten','',None,lambda x:x),
+ 	BoolOption('debug', 'Enable debugging information and disable optimizations',1),
+ 	BoolOption('profile','Enable profiling information',0),
+ 	BoolOption('optimize','Turn on heavy optimizations (generates SSE2 instructions)',0),
+ 	ListOption('exclude','Components that will not be built','none',names=['extra','common','dem','fem','lattice','mass-spring','realtime-rigidbody']),
+ 	('jobs','Number of jobs to run at the same time (same as -j, but saved)',4,None,int),
+ 	('extraModules', 'Extra directories with their own SConscript files (must be in-tree) (whitespace separated)',None,None,Split),
+-	('buildPrefix','Where to create build-[version][POSTFIX] directory for intermediary files','..'),
+-	('CPPPATH', 'Additional paths for the C preprocessor (whitespace separated)',['/usr/include/wm3'],None,Split),
++	('buildPrefix','Where to create build-[version][variant] directory for intermediary files','..'),
++	('version','Yade version (if not specified, guess will be attempted)',None),
++	('CPPPATH', 'Additional paths for the C preprocessor (whitespace separated)',None,None,Split),
+ 	('LIBPATH','Additional paths for the linker (whitespace separated)',None,None,Split),
+ 	('QTDIR','Directories where to look for qt3',['/usr/share/qt3','/usr/lib/qt'],None,Split),
+-	('CXX','The c++ compiler','distcc g++-4.0'),
+-	BoolOption('pretty',&quot;Don't show compiler command line (like the Linux kernel)&quot;,1)
++	('CXX','The c++ compiler','g++'),
++	('CXXFLAGS','Additional compiler flags; you can use them for tuning like -march=pentium4.',None,None,Split), # not tested if really propagates
++	BoolOption('pretty',&quot;Don't show compiler command line (like the Linux kernel)&quot;,1),
++	BoolOption('useMiniWm3','use local miniWm3 library instead of Wm3Foundation',0),
+ )
+ 
+ ### create THE environment
+@@ -63,7 +68,8 @@
+ # do not propagate PATH from outside, to ensure identical builds on different machines
+ #env.Append(ENV={'PATH':['/usr/local/bin','/bin','/usr/bin']})
+ # ccache needs $HOME to be set; colorgcc needs $TERM; distcc wants DISTCC_HOSTS
+-propagatedEnvVars=['HOME','TERM','DISTCC_HOSTS']
++# fakeroot needs FAKEROOTKEY and LD_PRELOAD
++propagatedEnvVars=['HOME','TERM','DISTCC_HOSTS','LD_PRELOAD','FAKEROOTKEY','LD_LIBRARY_PATH']
+ for v in propagatedEnvVars:
+ 	if os.environ.has_key(v): env.Append(ENV={v:os.environ[v]})
+ 
+@@ -71,12 +77,46 @@
+ opts.FormatOptionHelpText=lambda env,opt,help,default,actual: &quot;%10s: %5s [%s] (%s)\n&quot;%(opt,actual,default,help)
+ Help(opts.GenerateHelpText(env))
+ 
++###########################################
++################# BUILD DIRECTORY #########
++###########################################
+ 
++##ALL generated stuff should go here - therefore we must determine it very early!!
++
++if not env.has_key('version'):
++	&quot;Attempts to get yade version from local svn tree; should be extended so that it works for releases as well (not yet applicable).&quot;
++	svnRevision=None
++	for l in os.popen(&quot;svn info&quot;).readlines():
++		m=re.match(r'Revision: ([0-9]+)',l)
++		if m: env['version']='svn'+m.group(1)
++	if not env.has_key('version'): env['version']='unknown'
++env['SUFFIX']='-'+env['version']+env['variant']
++print &quot;Yade version is `%s', installed files will be suffixed with `%s'.&quot;%(env['version'],env['SUFFIX'])
++# make buildDir absolute, saves hassles later
++buildDir=os.path.abspath(env.subst('$buildPrefix/build$SUFFIX'))
++print &quot;All intermediary files will be in `%s'.&quot;%env.subst(buildDir)
++env['buildDir']=buildDir
++# these MUST be first so that builddir's headers are read before any locally installed ones
++buildInc='$buildDir/include/yade-$version'
++env.Append(CPPPATH=[buildInc])
++
++if env['useMiniWm3']:
++	env.Append(CPPPATH=[buildInc+'/yade/lib-miniWm3'])
++	if not 'lattice' in env['exclude']:
++		print &quot;!!! Using miniWm3, lattice will be excluded !!!&quot;
++		env.Append(exclude=['lattice'])
++
++### OLD: older scons only
++if not os.path.exists(buildDir): os.makedirs(buildDir)
++
++env.SConsignFile(buildDir+'/scons-signatures')
++
+ ##########################################################################################
+ ############# CONFIGURATION ##############################################################
+ ##########################################################################################
+ 
+-env.Append(CPPPATH='',LIBPATH='',LIBS='')
++# ensure non-None
++env.Append(CPPPATH='',LIBPATH='',LIBS='',CXXFLAGS='')
+ 
+ def CheckQt(context, qtdirs):
+ 	&quot;Attempts to localize qt3 installation in given qtdirs. Sets necessary variables if found and returns True; otherwise returns False.&quot;
+@@ -120,21 +160,6 @@
+ 	except ImportError:
+ 		context.Result(False); return False
+ 
+-def CheckYadeVersion(context):
+-	&quot;Attempts to get yade version from local svn tree; should be extended so that it works for releases as well (not yet applicable).&quot;
+-	context.Message('Getting Yade version... ')
+-	svnRevision=None
+-	for l in os.popen(&quot;svn info&quot;).readlines():
+-		m=re.match(r'Revision: ([0-9]+)',l)
+-		if m:
+-			svnRevision=m.group(1)
+-			break
+-	if svnRevision:
+-		env['VERSION']='svn'+svnRevision
+-		context.Result(env['VERSION'])
+-	else:
+-		env['VERSION']=''
+-		context.Result('Svn revision not found, leaving empty')
+ 
+ def CheckCXX(context):
+ 	context.Message('Checking whether c++ compiler &quot;%s&quot; works...'%env['CXX'])
+@@ -144,42 +169,40 @@
+ 
+ 
+ if not env.GetOption('clean'):
+-	conf=Configure(env,custom_tests={'CheckQt':CheckQt,'CheckCXX':CheckCXX,'CheckPython':CheckPython,'CheckScientificPython':CheckScientificPython,'CheckYadeVersion':CheckYadeVersion})
++	conf=env.Configure(custom_tests={'CheckQt':CheckQt,'CheckCXX':CheckCXX,'CheckPython':CheckPython,'CheckScientificPython':CheckScientificPython},
++		conf_dir='$buildDir/.sconf_temp',log_file='$buildDir/config.log')
+ 
+-	## buildDir stuff - derived from yade version
+-	conf.CheckYadeVersion()
+-	# set some variables
+-	env['POSTFIX']='-'+env['VERSION']+env['POSTFIX']
+-	buildDir=os.path.join(env['buildPrefix'],env.subst('build$POSTFIX'))
+-	# these MUST be first so that builddir's headers are read before any locally installed ones
+-	if os.path.isabs(buildDir): env.Append(CPPPATH=[os.path.join(buildDir,'include')])
+-	else: env.Append(CPPPATH=[os.path.join('#',buildDir,'include')])
+-
+ 	ok=True
+ 	ok&amp;=conf.CheckCXX()
+ 	if not ok:
+-			print &quot;\nYour compiler is broken, no point in continuing. See `config.log' for what went wrong and use the CXX parameter to change your compiler.&quot;
++			print &quot;\nYour compiler is broken, no point in continuing. See `%s' for what went wrong and use the CXX/CXXFLAGS parameters to change your compiler.&quot;%(buildDir+'/config.log')
+ 			Exit(1)
+-	# essential libs
++	# check essential libs
+ 	ok&amp;=conf.CheckLibWithHeader('pthread','pthread.h','c','pthread_exit(NULL);')
+ 	ok&amp;=conf.CheckLibWithHeader('glut','GL/glut.h','c','glutGetModifiers();')
+ 	ok&amp;=conf.CheckLibWithHeader('boost_date_time','boost/date_time/posix_time/posix_time.hpp','c++','boost::posix_time::time_duration::time_duration();')
+ 	ok&amp;=conf.CheckLibWithHeader('boost_thread','boost/thread/thread.hpp','c++','boost::thread::thread();')
+ 	ok&amp;=conf.CheckLibWithHeader('boost_filesystem','boost/filesystem/path.hpp','c++','boost::filesystem::path();')
+-	ok&amp;=conf.CheckLibWithHeader('Wm3Foundation','Wm3Math.h','c++','Wm3::Math&lt;double&gt;::PI;')
++	if not env['useMiniWm3']: ok&amp;=conf.CheckLibWithHeader('Wm3Foundation','Wm3Math.h','c++','Wm3::Math&lt;double&gt;::PI;')
+ 	ok&amp;=conf.CheckQt(env['QTDIR'])
+ 	env.Tool('qt'); env.Replace(QT_LIB='qt-mt')
+-	ok&amp;=conf.CheckLibWithHeader('QGLViewer','QGLViewer/qglviewer.h','c++','QGLViewer(1);')
++	ok&amp;=conf.CheckLibWithHeader('3dviewer','QGLViewer/qglviewer.h','c++','QGLViewer(1);')
+ 	if not ok:
+-		print &quot;\nOne of the essential libraries above was not found, unable to continue.\n\nCheck config.log for possible causes, note that there are options that you may need to customize:\n\n&quot;+opts.GenerateHelpText(env)
++		print &quot;\nOne of the essential libraries above was not found, unable to continue.\n\nCheck `%s' for possible causes, note that there are options that you may need to customize:\n\n&quot;%(buildDir+'/config.log')+opts.GenerateHelpText(env)
+ 		Exit(1)
+-	env.Append(LIBS=['glut','boost_date_time','boost_filesystem','boost_thread','pthread','Wm3Foundation'])
+ 
+-	#optional libs
++	# check optional libs
+ 	if conf.CheckLibWithHeader('log4cxx','log4cxx/logger.h','c++','log4cxx::Logger::getLogger(&quot;foo&quot;);'):
+ 		env.Append(LIBS='log4cxx',CPPDEFINES=['LOG4CXX'])
+ 	if conf.CheckPython() and conf.CheckScientificPython(): env.Append(CPPDEFINES=['EMBED_PYTHON'])
+ 
++	# append essential libs		
++	env.Append(LIBS=['glut','boost_date_time','boost_filesystem','boost_thread','pthread'])
++
++	if env['useMiniWm3']: env.Append(LIBS='miniWm3')
++	else: env.Append(LIBS='Wm3Foundation')
++	#'Wm3Foundation'
++
+ 	env=conf.Finish()
+ 
+ 
+@@ -206,20 +229,28 @@
+ 	env.Replace(QT_MOCCOMSTR='M ${SOURCES}')
+ 
+ ### DIRECTORIES
++## PREFIX must be absolute path. Why?!
++env['PREFIX']=os.path.abspath(env['PREFIX'])
+ 
+ # paths to in-tree SConscript files
+-libDirs=['yade-libs','yade-packages/yade-package-common','yade-packages/yade-package-dem','yade-packages/yade-package-fem','yade-packages/yade-package-lattice','yade-packages/yade-package-mass-spring','yade-packages/yade-package-realtime-rigidbody','yade-extra','yade-guis']
++libDirs=['lib','pkg/common','pkg/dem','pkg/fem','pkg/lattice','pkg/mass-spring','pkg/realtime-rigidbody','extra','gui']
+ # BUT: exclude stuff that should be excluded
+-libDirs=[x for x in libDirs if not re.match('^.*-('+'|'.join(env['exclude'])+')$',x)]
++libDirs=[x for x in libDirs if not re.match('^.*/('+'|'.join(env['exclude'])+')$',x)]
++# where are we going to be installed... pkg/dem becomes pkg-dem
++instLibDirs=[os.path.join('$PREFIX','lib','yade$SUFFIX',x.replace('/','-')) for x in libDirs]
++# directory for yade-$version.pc
++pcDir=os.path.join('$PREFIX','lib','pkgconfig')
+ # will install in the following dirs (needed?)
+-instDirs=[os.path.join('$PREFIX','bin')]+[os.path.join('$PREFIX','lib','yade$POSTFIX',string.split(x,os.path.sep)[-1]) for x in libDirs]
++instDirs=[os.path.join('$PREFIX','bin')]+instLibDirs+[pcDir]
++# where are we going to be run - may be different (packaging)
++runtimeLibDirs=[os.path.join('$runtimePREFIX','lib','yade$SUFFIX',x.replace('/','-')) for x in libDirs]
+ 
+ ## not used for now...
+ #instIncludeDirs=['yade-core']+[os.path.join('$PREFIX','include','yade',string.split(x,os.path.sep)[-1]) for x in libDirs]
+ 
+ 
+ ### PREPROCESSOR FLAGS
+-env.Append(CPPDEFINES=[('POSTFIX',r'$POSTFIX'),('PREFIX',r'$PREFIX')])
++env.Append(CPPDEFINES=[('SUFFIX',r'\&quot;$SUFFIX\&quot;'),('PREFIX',r'\&quot;$runtimePREFIX\&quot;')])
+ 
+ ### COMPILER
+ if env['debug']: env.Append(CXXFLAGS='-ggdb3',CPPDEFINES=['DEBUG','YADE_DEBUG'])
+@@ -236,8 +267,9 @@
+ 	# sure CRASH: -ftree-vectorize
+ 	# CRASH (one of them): -fivopts -fgcse-sm -fgcse-las (one of them - not sure which one exactly)
+ 	# ?: -ftree-loop-linear -ftree-loop-ivcanon
+-	archFlags=Split('-march=pentium4 -mfpmath=sse,387') #-malign-double')
+-	env.Append(CXXFLAGS=archFlags,LINKFLAGS=archFlags,SHLINKFLAGS=archFlags)
++	## this will fail on non-i386 archs (includeing AMD64)
++	#archFlags=Split('-march=pentium4 -mfpmath=sse,387') #-malign-double')
++	#env.Append(CXXFLAGS=archFlags,LINKFLAGS=archFlags,SHLINKFLAGS=archFlags)
+ else:
+ 	env.Append(CPPDEFINES=[('YADE_CAST','dynamic_cast'),('YADE_PTR_CAST','dynamic_pointer_cast')])
+ 
+@@ -246,14 +278,14 @@
+ 
+ ### LINKER
+ env.Append(LIBS=[]) # ensure existence of the flag
+-env.Append(SHLINKFLAGS=['-Wl,-soname=${TARGET.file}','-rdynamic'])
++env.Append(SHLINKFLAGS=['-Wl,-soname=\&quot;${TARGET.file}\&quot;','-rdynamic']) #,'-Wl,-z,defs'])
+ # if this is not present, vtables &amp; typeinfos for classes in yade binary itself are not exported; breaks plugin loading
+ env.Append(LINKFLAGS=['-rdynamic']) 
+ # makes dynamic library loading easied (no LD_LIBRARY_PATH) and perhaps faster
+-env.Append(RPATH=[os.path.join('$PREFIX','lib','yade$POSTFIX',string.split(x,os.path.sep)[-1]) for x in libDirs])
++env.Append(RPATH=runtimeLibDirs)
+ # find already compiled but not yet installed libraries for linking
+ #env.Append(LIBPATH=[os.path.join('#',x) for x in libDirs]	# -floop-optimize2 is a gcc-4.x flag, doesn't exist on previous version
+-env.Append(LIBPATH=env['RPATH']) # this is if we link to libs that are installed, which is the case now
++env.Append(LIBPATH=instLibDirs) # this is if we link to libs that are installed, which is the case now
+ 
+ 
+ ### this workaround is only needed for scons&lt;=0.96.92, will disappear soon
+@@ -270,7 +302,7 @@
+ 	createDirs(instDirs)
+ 	#createDirs(instIncludeDirs)
+ 	
+-def prepareIncludes(prefix=None):
++def installHeaders(prefix=None):
+ 	&quot;&quot;&quot;symlink all in-tree headers into  some include directory so that we can build before headers are installed.
+ 	If prefix is given, headers will be copied there.
+ 	If not, include tree will be created and syumlinked in buildDir, using relative symlinks.&quot;&quot;&quot;
+@@ -279,16 +311,22 @@
+ 	from os.path import join,split,isabs,isdir,exists,islink,isfile,sep
+ 	if not prefix: yadeRoot=buildDir
+ 	else: yadeRoot=prefix
+-	yadeInc=join(yadeRoot,'include','yade')
++	yadeInc=join(yadeRoot,'include','yade-%s'%env['version'],'yade')
++	#print &quot;CALLED, prefix=%s, yadeInc=%s&quot;%(prefix,yadeInc)
+ 
+-	for root, dirs, files in os.walk('.'):
+-		for d in ('.svn','yade-flat','include'):
++	for root, dirs, files in os.walk('.',topdown=True):
++		for d in ('.svn'): ## skip all files that are not part of sources in the proper sense!
+ 			try: dirs.remove(d)
+ 			except ValueError: pass
++		# exclude non-lib directories (like doc, scripts, ...)
++		if not re.match(r'\.[/\\](core|lib|pkg|gui|extra)[/\\]?.*',root): continue
++		# exclude headers from excluded stuff
++		if re.match(r'^.*/('+'|'.join(env['exclude'])+')/',root): continue
+ 		for f in files:
+-			if f.split('.')[-1] in ('hpp','inl','ipp','tpp','h'):
+-				m=re.match('^.*?'+os.path.sep+'(yade-((extra|core)|((gui|lib|package)-.*?)))'+os.path.sep+'.*$',root)
+-				subInc=join(yadeInc,m.group(1))
++			if f.split('.')[-1] in ('hpp','inl','ipp','tpp','h','mcr'):
++				#m=re.match('^\./([^/]*)/.*$',root)
++				m=re.match('^.*?'+sep+'((extra|core)|((gui|lib|pkg)'+sep+'.*?))(|'+sep+'.*)$',root)
++				subInc=join(yadeInc,m.group(1).replace(sep,'-')) # replace pkg/lattice by pkg-lattice
+ 				if not prefix: # local include directory: do symlinks
+ 					if not isdir(subInc): os.makedirs(subInc)
+ 					def relpath(pf,pt):
+@@ -303,37 +341,55 @@
+ 				else: # install directory: use scons' Install facility
+ 					env.Install(subInc,join(root,f))
+ 
+-# 1. re-generate SConscript files if some of them do not exist. This must be done in-place for
+-#		scons postpones all actions after having processed SConscruct and SConscript files.
+-# 2. symlink all headers to buildDir/include before the actual build
+-# 3. (unused now) instruct scons to install (not symlink) all headers to the right place as well
+-# 4. set the &quot;install&quot; target as default (if scons is called without any arguments), which triggers build in turn
++def makePkgConfig(fileName):
++	cflags,libs='Cflags: ','Libs: '
++	cflags+=' '+' '.join(env['CXXFLAGS'])
++	for df in env['CPPDEFINES']:
++		if type(df)==tuple: cflags+=' -D%s=%s'%(df[0],df[1])
++		else: cflags+=' -D%s'%df
++	for p in env['CPPPATH']:
++		if p[0]=='#': cflags+=' -I$PREFIX/include/yade$SUFFIX'
++		else: cflags+=' -I%s'%p
++	for l in env['SHLINKFLAGS']:
++		if not l.find('soname')&gt;=0: libs+=' '+l # skip -Wl,soname=...
++	for p in env['RPATH']: libs+=' -Wl,-rpath=%s'%p
++	for p in env['LIBPATH']: libs+=' -L%s'%p
++	pc='Name: Yade\nDescription: Platform for dynamic mechanics\nVersion: %s\n%s\n%s\n'%(env['version'],cflags,libs)
++	pc+='yadeLibDir: $PREFIX/lib/yade$SUFFIX\n'
++	pc=re.sub(r'\bPREFIX\b','runtimePREFIX',pc) # fix prefix paths
++	pc=re.sub(r'\bbuildDir\b','runtimePREFIX',pc) # fix include paths: divert to the installed location
++	pc=env.subst(pc)+'\n'
++	f=file(env.subst(fileName),'w'); f.write(pc); f.close()
++	return None
++
++# 1. symlink all headers to buildDir/include before the actual build
++# 2. (unused now) instruct scons to install (not symlink) all headers to the right place as well
++# 3. set the &quot;install&quot; target as default (if scons is called without any arguments), which triggers build in turn
+ # Should be cleaned up.
+ 
+ if not env.GetOption('clean'):
+-	## re-run erskine if needed
+-	from os.path import exists
+-	if len([1 for x in [os.path.join(x,'SConscript') for x in libDirs+['yade-core']] if not exists(x)]):
+-		print &quot;Generating SConscript files (warnings can be ignored safely)...&quot;
+-		ret=os.system('cd yade-scripts &amp;&amp; sh erskine3-apply.sh')
+-		if ret!=0:
+-			print &quot;Error running yade-scripts/erskine3-apply.sh, try doing it by hand.&quot;
+-			Exit(1)
++	# how to make that executed automatically??! For now, run always.
++	#env.AddPreAction(installAlias,installHeaders)
++	installHeaders() # install to buildDir always
++	installHeaders(env.subst('$PREFIX')) # install to $PREFIX if specifically requested: like &quot;scons /usr/local/include&quot;
++	makePkgConfig('$buildDir/yade${SUFFIX}.pc')
++	env.Install(pcDir,'$buildDir/yade${SUFFIX}.pc')
++	installAlias=env.Alias('install',instDirs) # build and install everything that should go to instDirs, which are $PREFIX/{bin,lib} (uses scons' Install); include pkgconfig stuff
++	env.Default(installAlias)
+ 
+-	prepareLocalIncludesProxy=prepareIncludes()
+-	#prepareIncludesProxy=prepareIncludes(prefix=env['PREFIX'])
+-	prebuildAlias=env.Alias('prebuild',[prepareLocalIncludesProxy])
+-	installAlias=env.Alias('install',[instDirs]) #,os.path.join('$PREFIX','include','yade')]) #prepareIncludesProxy,
+-	Depends(installAlias,prebuildAlias)
+-	Default(installAlias)
+-
+ env.Export('env');
+ 
+ if env.has_key('extraModules'):
+-	env['yadeModules']=env['extraModules']+libDirs+['yade-core']
++	env['yadeModules']=env['extraModules']+libDirs+['core']
+ 	env.Append(LIBPATH=[os.path.join('#',x) for x in env['extraModules']])
+-else: env['yadeModules']=libDirs+['yade-core']
++else: env['yadeModules']=libDirs+['core']
+ 
+ # read top-level SConscript file. It is used only so that build_dir is set. This file reads all SConscripts from in yadeModules
+ env.SConscript(dirs=['.'],build_dir=buildDir,duplicate=0)
+ 
++############# OTHER TARGETS #####################
++env.Command('tags',libDirs,&quot;ctags -R --extra=+q --fields=+n --exclude='.*' --exclude=yade-flat --exclude=include --exclude='*.so'&quot;)
++env.Alias('doc',env.Command('doc/doxygen/html/index.html',libDirs,&quot;cd doc; doxygen Doxyfile&quot;))
++
++
++
+
+Copied: trunk/Yade.kdevelop (from rev 1153, branches/scons-layout/Yade.kdevelop)
+
+Copied: trunk/core (from rev 1153, branches/scons-layout/core)
+
+Copied: trunk/debian (from rev 1153, branches/scons-layout/debian)
+
+Copied: trunk/doc (from rev 1153, branches/scons-layout/doc)
+
+Copied: trunk/examples (from rev 1153, branches/scons-layout/examples)
+
+Copied: trunk/extra (from rev 1153, branches/scons-layout/extra)
+
+Copied: trunk/gui (from rev 1153, branches/scons-layout/gui)
+
+Copied: trunk/lib (from rev 1153, branches/scons-layout/lib)
+
+Copied: trunk/pkg (from rev 1153, branches/scons-layout/pkg)
+
+Copied: trunk/scripts (from rev 1153, branches/scons-layout/scripts)
+
+Deleted: trunk/yade-all.kdevelop
+===================================================================
+--- trunk/yade-all.kdevelop	2007-03-22 10:29:21 UTC (rev 1153)
++++ trunk/yade-all.kdevelop	2007-03-31 07:18:17 UTC (rev 1154)
+@@ -1,183 +0,0 @@
+-&lt;?xml version = '1.0'?&gt;
+-&lt;kdevelop&gt;
+-  &lt;general&gt;
+-    &lt;author&gt;Olivier Galizzi&lt;/author&gt;
+-    &lt;email&gt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">olivier.galizzi at imag.fr</A>&lt;/email&gt;
+-    &lt;version&gt;0.1&lt;/version&gt;
+-    &lt;projectmanagement&gt;KDevTrollProject&lt;/projectmanagement&gt;
+-    &lt;primarylanguage&gt;C++&lt;/primarylanguage&gt;
+-    &lt;keywords&gt;
+-      &lt;keyword&gt;Qt&lt;/keyword&gt;
+-    &lt;/keywords&gt;
+-    &lt;ignoreparts/&gt;
+-    &lt;projectdirectory&gt;.&lt;/projectdirectory&gt;
+-    &lt;absoluteprojectpath&gt;false&lt;/absoluteprojectpath&gt;
+-    &lt;description/&gt;
+-    &lt;secondaryLanguages/&gt;
+-    &lt;versioncontrol/&gt;
+-  &lt;/general&gt;
+-  &lt;kdevfileview&gt;
+-    &lt;groups&gt;
+-      &lt;group pattern=&quot;*.cpp;*.cxx;*.h;*.hpp;*.tpp;*.ipp&quot; name=&quot;Sources&quot; /&gt;
+-      &lt;group pattern=&quot;*.ui&quot; name=&quot;User Interface&quot; /&gt;
+-      &lt;group pattern=&quot;*.png&quot; name=&quot;Icons&quot; /&gt;
+-      &lt;group pattern=&quot;*&quot; name=&quot;Others&quot; /&gt;
+-      &lt;hidenonprojectfiles&gt;false&lt;/hidenonprojectfiles&gt;
+-      &lt;hidenonlocation&gt;false&lt;/hidenonlocation&gt;
+-    &lt;/groups&gt;
+-    &lt;tree&gt;
+-      &lt;hidepatterns&gt;*.o,*.lo,CVS&lt;/hidepatterns&gt;
+-      &lt;hidenonprojectfiles&gt;false&lt;/hidenonprojectfiles&gt;
+-      &lt;showvcsfields&gt;false&lt;/showvcsfields&gt;
+-    &lt;/tree&gt;
+-  &lt;/kdevfileview&gt;
+-  &lt;kdevdoctreeview&gt;
+-    &lt;ignoretocs&gt;
+-      &lt;toc&gt;ada&lt;/toc&gt;
+-      &lt;toc&gt;ada_bugs_gcc&lt;/toc&gt;
+-      &lt;toc&gt;bash&lt;/toc&gt;
+-      &lt;toc&gt;bash_bugs&lt;/toc&gt;
+-      &lt;toc&gt;clanlib&lt;/toc&gt;
+-      &lt;toc&gt;w3c-dom-level2-html&lt;/toc&gt;
+-      &lt;toc&gt;fortran_bugs_gcc&lt;/toc&gt;
+-      &lt;toc&gt;gnome1&lt;/toc&gt;
+-      &lt;toc&gt;gnustep&lt;/toc&gt;
+-      &lt;toc&gt;gtk&lt;/toc&gt;
+-      &lt;toc&gt;gtk_bugs&lt;/toc&gt;
+-      &lt;toc&gt;haskell&lt;/toc&gt;
+-      &lt;toc&gt;haskell_bugs_ghc&lt;/toc&gt;
+-      &lt;toc&gt;java_bugs_gcc&lt;/toc&gt;
+-      &lt;toc&gt;java_bugs_sun&lt;/toc&gt;
+-      &lt;toc&gt;kde2book&lt;/toc&gt;
+-      &lt;toc&gt;opengl&lt;/toc&gt;
+-      &lt;toc&gt;pascal_bugs_fp&lt;/toc&gt;
+-      &lt;toc&gt;php&lt;/toc&gt;
+-      &lt;toc&gt;php_bugs&lt;/toc&gt;
+-      &lt;toc&gt;perl&lt;/toc&gt;
+-      &lt;toc&gt;perl_bugs&lt;/toc&gt;
+-      &lt;toc&gt;python&lt;/toc&gt;
+-      &lt;toc&gt;python_bugs&lt;/toc&gt;
+-      &lt;toc&gt;ruby&lt;/toc&gt;
+-      &lt;toc&gt;ruby_bugs&lt;/toc&gt;
+-      &lt;toc&gt;sdl&lt;/toc&gt;
+-      &lt;toc&gt;stl&lt;/toc&gt;
+-      &lt;toc&gt;w3c-svg&lt;/toc&gt;
+-      &lt;toc&gt;sw&lt;/toc&gt;
+-      &lt;toc&gt;w3c-uaag10&lt;/toc&gt;
+-      &lt;toc&gt;wxwidgets_bugs&lt;/toc&gt;
+-    &lt;/ignoretocs&gt;
+-    &lt;ignoredoxygen&gt;
+-      &lt;toc&gt;KDE Libraries (Doxygen)&lt;/toc&gt;
+-    &lt;/ignoredoxygen&gt;
+-  &lt;/kdevdoctreeview&gt;
+-  &lt;kdevdebugger&gt;
+-    &lt;general&gt;
+-      &lt;dbgshell/&gt;
+-      &lt;programargs/&gt;
+-      &lt;gdbpath/&gt;
+-      &lt;configGdbScript/&gt;
+-      &lt;runShellScript/&gt;
+-      &lt;runGdbScript/&gt;
+-      &lt;breakonloadinglibs&gt;true&lt;/breakonloadinglibs&gt;
+-      &lt;separatetty&gt;false&lt;/separatetty&gt;
+-      &lt;floatingtoolbar&gt;false&lt;/floatingtoolbar&gt;
+-    &lt;/general&gt;
+-    &lt;display&gt;
+-      &lt;staticmembers&gt;false&lt;/staticmembers&gt;
+-      &lt;demanglenames&gt;true&lt;/demanglenames&gt;
+-      &lt;outputradix&gt;10&lt;/outputradix&gt;
+-    &lt;/display&gt;
+-  &lt;/kdevdebugger&gt;
+-  &lt;kdevtrollproject&gt;
+-    &lt;run&gt;
+-      &lt;mainprogram&gt;bin/yade&lt;/mainprogram&gt;
+-      &lt;programargs/&gt;
+-      &lt;directoryradio&gt;executable&lt;/directoryradio&gt;
+-      &lt;customdirectory&gt;/&lt;/customdirectory&gt;
+-      &lt;terminal&gt;false&lt;/terminal&gt;
+-      &lt;autocompile&gt;true&lt;/autocompile&gt;
+-      &lt;envvars/&gt;
+-    &lt;/run&gt;
+-    &lt;general&gt;
+-      &lt;activedir&gt;yade-packages/yade-package-realtime-rigidbody/src&lt;/activedir&gt;
+-    &lt;/general&gt;
+-    &lt;make&gt;
+-      &lt;abortonerror&gt;false&lt;/abortonerror&gt;
+-      &lt;numberofjobs&gt;1&lt;/numberofjobs&gt;
+-      &lt;dontact&gt;false&lt;/dontact&gt;
+-      &lt;makebin/&gt;
+-      &lt;prio&gt;0&lt;/prio&gt;
+-      &lt;envvars/&gt;
+-    &lt;/make&gt;
+-    &lt;subclassing/&gt;
+-  &lt;/kdevtrollproject&gt;
+-  &lt;kdevfilecreate&gt;
+-    &lt;filetypes/&gt;
+-    &lt;useglobaltypes&gt;
+-      &lt;type ext=&quot;ui&quot; /&gt;
+-      &lt;type ext=&quot;cpp&quot; /&gt;
+-      &lt;type ext=&quot;h&quot; /&gt;
+-      &lt;type ext=&quot;ts&quot; /&gt;
+-    &lt;/useglobaltypes&gt;
+-  &lt;/kdevfilecreate&gt;
+-  &lt;kdevdocumentation&gt;
+-    &lt;projectdoc&gt;
+-      &lt;docsystem&gt;Doxygen Documentation Collection&lt;/docsystem&gt;
+-      &lt;docurl&gt;yade.tag&lt;/docurl&gt;
+-      &lt;usermanualurl/&gt;
+-    &lt;/projectdoc&gt;
+-  &lt;/kdevdocumentation&gt;
+-  &lt;substmap&gt;
+-    &lt;APPNAME&gt;yade&lt;/APPNAME&gt;
+-    &lt;APPNAMELC&gt;yade&lt;/APPNAMELC&gt;
+-    &lt;APPNAMEUC&gt;YADE&lt;/APPNAMEUC&gt;
+-    &lt;AUTHOR&gt;Olivier Galizzi&lt;/AUTHOR&gt;
+-    &lt;EMAIL&gt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">olivier.galizzi at imag.fr</A>&lt;/EMAIL&gt;
+-    &lt;LICENSE&gt;GPL&lt;/LICENSE&gt;
+-    &lt;LICENSEFILE&gt;COPYING&lt;/LICENSEFILE&gt;
+-    &lt;VERSION&gt;0.1&lt;/VERSION&gt;
+-    &lt;dest&gt;/home/evasion/galizzi/devel/yade/yade/projects/yade&lt;/dest&gt;
+-  &lt;/substmap&gt;
+-  &lt;kdevcppsupport&gt;
+-    &lt;references/&gt;
+-    &lt;codecompletion&gt;
+-      &lt;includeGlobalFunctions&gt;true&lt;/includeGlobalFunctions&gt;
+-      &lt;includeTypes&gt;true&lt;/includeTypes&gt;
+-      &lt;includeEnums&gt;true&lt;/includeEnums&gt;
+-      &lt;includeTypedefs&gt;false&lt;/includeTypedefs&gt;
+-      &lt;automaticCodeCompletion&gt;true&lt;/automaticCodeCompletion&gt;
+-      &lt;automaticArgumentsHint&gt;true&lt;/automaticArgumentsHint&gt;
+-      &lt;automaticHeaderCompletion&gt;true&lt;/automaticHeaderCompletion&gt;
+-      &lt;codeCompletionDelay&gt;250&lt;/codeCompletionDelay&gt;
+-      &lt;argumentsHintDelay&gt;400&lt;/argumentsHintDelay&gt;
+-      &lt;headerCompletionDelay&gt;250&lt;/headerCompletionDelay&gt;
+-    &lt;/codecompletion&gt;
+-    &lt;creategettersetter&gt;
+-      &lt;prefixGet/&gt;
+-      &lt;prefixSet&gt;set&lt;/prefixSet&gt;
+-      &lt;prefixVariable&gt;m_,_&lt;/prefixVariable&gt;
+-      &lt;parameterName&gt;theValue&lt;/parameterName&gt;
+-      &lt;inlineGet&gt;true&lt;/inlineGet&gt;
+-      &lt;inlineSet&gt;true&lt;/inlineSet&gt;
+-    &lt;/creategettersetter&gt;
+-  &lt;/kdevcppsupport&gt;
+-  &lt;cppsupportpart&gt;
+-    &lt;filetemplates&gt;
+-      &lt;interfacesuffix&gt;.hpp&lt;/interfacesuffix&gt;
+-      &lt;implementationsuffix&gt;.cpp&lt;/implementationsuffix&gt;
+-    &lt;/filetemplates&gt;
+-  &lt;/cppsupportpart&gt;
+-  &lt;kdevvisualadvance&gt;
+-    &lt;emulator&gt;VisualBoyAdvance&lt;/emulator&gt;
+-    &lt;binary/&gt;
+-    &lt;addOptions/&gt;
+-    &lt;terminal&gt;false&lt;/terminal&gt;
+-    &lt;fullscreen&gt;false&lt;/fullscreen&gt;
+-    &lt;graphicFilter&gt;-f0&lt;/graphicFilter&gt;
+-    &lt;scaling&gt;-1&lt;/scaling&gt;
+-  &lt;/kdevvisualadvance&gt;
+-  &lt;ctagspart&gt;
+-    &lt;customArguments/&gt;
+-    &lt;customTagfilePath/&gt;
+-  &lt;/ctagspart&gt;
+-&lt;/kdevelop&gt;
+
+Deleted: trunk/yade-all.pro
+===================================================================
+--- trunk/yade-all.pro	2007-03-22 10:29:21 UTC (rev 1153)
++++ trunk/yade-all.pro	2007-03-31 07:18:17 UTC (rev 1154)
+@@ -1,54 +0,0 @@
+-isEmpty ( YADE_QMAKE_PATH ) {
+-error( &quot;YADE_QMAKE_PATH internal qmake variable is not set, you should run for example qmake YADE_QMAKE_PATH=/home/janek/YADE, this will not work from inside kdevelop (when they will fix it?)&quot; )
+-}
+-
+-
+-SUBDIRS += \
+-yade-core/src yade-libs/yade-lib-base/src \
+-yade-libs/yade-lib-computational-geometry/src \
+-yade-libs/yade-lib-factory/src \
+-yade-libs/yade-lib-loki/src \
+-yade-libs/yade-lib-multimethods/src \
+-yade-libs/yade-lib-opengl/src \
+-yade-libs/yade-lib-serialization-bin/src \
+-yade-libs/yade-lib-serialization-qt/src \
+-yade-libs/yade-lib-serialization/src \
+-yade-libs/yade-lib-serialization-xml/src \
+-yade-guis/yade-gui-qt/src \
+-yade-extra/yade-spherical-dem-simulator/src \
+-yade-packages/yade-package-common/src \
+-yade-packages/yade-package-dem/src \
+-yade-packages/yade-package-fem/src \
+-yade-packages/yade-package-lattice/src \
+-yade-packages/yade-package-mass-spring/src \
+-yade-packages/yade-package-realtime-rigidbody/src
+-
+-#yade-core/src/yade.pro
+-#yade-libs/yade-lib-base/src/yade-lib-base.pro
+-#yade-libs/yade-lib-computational-geometry/src/yade-lib-computational-geometry.pro
+-#yade-libs/yade-lib-factory/src/yade-lib-factory.pro
+-#yade-libs/yade-lib-loki/src/yade-lib-loki.pro
+-#yade-libs/yade-lib-multimethods/src/yade-lib-multimethods.pro
+-#yade-libs/yade-lib-opengl/src/yade-lib-opengl.pro
+-#yade-libs/yade-lib-serialization-bin/src/yade-lib-serialization-bin.pro
+-#yade-libs/yade-lib-serialization-qt/src/yade-lib-serialization-qt.pro
+-#yade-libs/yade-lib-serialization/src/yade-lib-serialization.pro
+-#yade-libs/yade-lib-serialization-xml/src/yade-lib-serialization-xml.pro
+-#yade-guis/yade-gui-qt/src/QtGUI.pro
+-#yade-extra/yade-spherical-dem-simulator/src/yade-spherical-dem-simulator.pro
+-#yade-packages/yade-package-common/src/yade-package-common.pro
+-#yade-packages/yade-package-dem/src/yade-package-dem.pro
+-#yade-packages/yade-package-fem/src/yade-package-fem.pro
+-#yade-packages/yade-package-lattice/src/yade-package-lattice.pro
+-#yade-packages/yade-package-mass-spring/src/yade-package-mass-spring.pro
+-#yade-packages/yade-package-realtime-rigidbody/src/yade-package-realtime-rigidbody.pro
+-
+-MOC_DIR = $(YADECOMPILATIONPATH)
+-UI_DIR = $(YADECOMPILATIONPATH)
+-OBJECTS_DIR = $(YADECOMPILATIONPATH)
+-DEFINES = DEBUG
+-CONFIG += debug thread warn_on
+-TEMPLATE = subdirs
+-INCLUDEPATH += $${YADE_QMAKE_PATH}/include
+-
+-QMAKE_RUN_CXX_IMP = $(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $(shell pwd)/$&lt;
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000118.html">[Yade-commits] r1153 - branches/scons-layout/debian
+</A></li>
+	<LI>Next message: <A HREF="000120.html">[Yade-commits] r1155 - in trunk: core extra/clump lib/serialization
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#119">[ date ]</a>
+              <a href="thread.html#119">[ thread ]</a>
+              <a href="subject.html#119">[ subject ]</a>
+              <a href="author.html#119">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

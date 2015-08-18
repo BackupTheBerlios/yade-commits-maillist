@@ -1,0 +1,316 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1303 - trunk/pkg/dem/PreProcessor
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1303%20-%20trunk/pkg/dem/PreProcessor&In-Reply-To=%3C200804072002.m37K2Prf012570%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000265.html">
+   <LINK REL="Next"  HREF="000267.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1303 - trunk/pkg/dem/PreProcessor</H1>
+    <B>chareyre at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1303%20-%20trunk/pkg/dem/PreProcessor&In-Reply-To=%3C200804072002.m37K2Prf012570%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1303 - trunk/pkg/dem/PreProcessor">chareyre at mail.berlios.de
+       </A><BR>
+    <I>Mon Apr  7 22:02:25 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000265.html">[Yade-commits] r1302 - trunk/pkg/dem/Engine/StandAloneEngine
+</A></li>
+        <LI>Next message: <A HREF="000267.html">[Yade-commits] r1304 - trunk/pkg/dem/Engine/StandAloneEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#266">[ date ]</a>
+              <a href="thread.html#266">[ thread ]</a>
+              <a href="subject.html#266">[ subject ]</a>
+              <a href="author.html#266">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: chareyre
+Date: 2008-04-07 22:02:24 +0200 (Mon, 07 Apr 2008)
+New Revision: 1303
+
+Modified:
+   trunk/pkg/dem/PreProcessor/TriaxialTest.cpp
+   trunk/pkg/dem/PreProcessor/TriaxialTest.hpp
+Log:
+A bit (lot) of cleaning in TriaxialTest.
+Useless recorders inherited from the early ages of Yade are no longer 
+present.
+
+
+
+
+Modified: trunk/pkg/dem/PreProcessor/TriaxialTest.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/TriaxialTest.cpp	2008-04-07 17:11:16 UTC (rev 1302)
++++ trunk/pkg/dem/PreProcessor/TriaxialTest.cpp	2008-04-07 20:02:24 UTC (rev 1303)
+@@ -49,6 +49,7 @@
+ #include&lt;yade/pkg-common/PhysicalActionDamper.hpp&gt;
+ #include&lt;yade/pkg-common/CundallNonViscousForceDamping.hpp&gt;
+ #include&lt;yade/pkg-common/CundallNonViscousMomentumDamping.hpp&gt;
++#include&lt;yade/pkg-dem/NewtonsDampedLaw.hpp&gt;
+ 
+ #include&lt;yade/pkg-common/InteractionGeometryMetaEngine.hpp&gt;
+ #include&lt;yade/pkg-common/InteractionPhysicsMetaEngine.hpp&gt;
+@@ -81,6 +82,7 @@
+ 
+ 
+ 
++
+ using namespace boost;
+ using namespace std;
+ 
+@@ -112,12 +114,7 @@
+ 	wall_4_wire		= true;
+ 	spheresColor		= Vector3r(0.8,0.3,0.3);
+ 	spheresRandomColor	= false;
+-	recordBottomForce	= true;
+-	forceRecordFile		= &quot;./force&quot;;
+-	recordAveragePositions	= true;
+-	positionRecordFile	= &quot;./positions&quot;;
+ 	recordIntervalIter	= 20;
+-	velocityRecordFile 	= &quot;./velocities&quot;;
+ 	saveAnimationSnapshots = false;
+ 	AnimationSnapshotsBaseName = &quot;./snapshots/snap&quot;;
+ 	WallStressRecordFile = &quot;./WallStresses&quot;;
+@@ -126,18 +123,6 @@
+ 	//	boxWalls 		= false;
+ 	boxWalls 		= true;
+ 	internalCompaction	=false;
+-
+-//	bigBall 		= true;
+-	bigBall 		= false;
+-	bigBallRadius		= 0.075;
+-	bigBallPoissonRatio 	= 0.3;
+-	bigBallYoungModulus 	= 10000000.0;
+-	bigBallFrictDeg 	= 60;
+-//	bigBallCohesion 	= 10000000000;
+-//	bigBallTensionStr 	= 10000000000;
+-	bigBallDensity		= 7800;
+-	bigBallDropTimeSeconds	= 30;
+-	bigBallDropHeight 	= 3.04776;
+ 	
+ 	dampingForce = 0.2;
+ 	dampingMomentum = 0.2;
+@@ -234,11 +219,6 @@
+ //	REGISTER_ATTRIBUTE(wall_4_wire);
+ //	REGISTER_ATTRIBUTE(spheresColor);
+ //	REGISTER_ATTRIBUTE(spheresRandomColor);
+-	REGISTER_ATTRIBUTE(recordBottomForce);
+-	REGISTER_ATTRIBUTE(forceRecordFile);
+-//	REGISTER_ATTRIBUTE(recordAveragePositions);
+-	REGISTER_ATTRIBUTE(positionRecordFile);
+-	REGISTER_ATTRIBUTE(velocityRecordFile);
+ 	REGISTER_ATTRIBUTE(recordIntervalIter);
+ 	REGISTER_ATTRIBUTE(saveAnimationSnapshots);
+ 	REGISTER_ATTRIBUTE(AnimationSnapshotsBaseName);
+@@ -283,19 +263,6 @@
+ 	
+ 	
+ 	
+-
+-// create bigBall
+-	//Vector3r position = (upperCorner+lowerCorner)*0.5 + Vector3r(0,bigBallDropHeight,0);
+-	//createSphere(body,position,bigBallRadius,true,false);	
+-	//int bigId = 0;
+-// 	if(bigBall)
+-// 		rootBody-&gt;bodies-&gt;insert(body);
+-// 	bigId = body-&gt;getId();
+-	//forcerec-&gt;startId = startId;
+-	//forcerec-&gt;endId   = endId;
+-	//averagePositionRecorder-&gt;bigBallId = bigId;
+-	//velocityRecorder-&gt;bigBallId = bigId;
+-
+ 	if(boxWalls)
+ 	{
+ 	// bottom box
+@@ -314,8 +281,6 @@
+ 			//(resultantforceEngine-&gt;subscribedBodies).push_back(body-&gt;getId());
+ 			triaxialcompressionEngine-&gt;wall_bottom_id = body-&gt;getId();
+ 			//triaxialStateRecorder-&gt;wall_bottom_id = body-&gt;getId();
+-			forcerec-&gt;startId = body-&gt;getId();
+-			forcerec-&gt;endId   = body-&gt;getId();
+ 			}
+ 		//forcerec-&gt;id = body-&gt;getId();
+ 	
+@@ -401,6 +366,7 @@
+ 			 
+ 	}
+ 	
++	
+ 	vector&lt;BasicSphere&gt; sphere_list;
+ 	if(importFilename!=&quot;&quot;) sphere_list=Shop::loadSpheresFromFile(importFilename,lowerCorner,upperCorner);
+ 	else message+=GenerateCloud(sphere_list, lowerCorner, upperCorner, numberOfGrains, 0.3, 0.75);
+@@ -413,8 +379,9 @@
+ 		cerr &lt;&lt; &quot;sphere (&quot; &lt;&lt; it-&gt;first &lt;&lt; &quot; &quot; &lt;&lt; it-&gt;second &lt;&lt; &quot;)&quot;&lt;&lt;endl;
+ 		createSphere(body,it-&gt;first,it-&gt;second,false,true);
+ 		rootBody-&gt;bodies-&gt;insert(body);
+-	}
++	}	
+ 	
++	
+ 	return true;
+ //  	return &quot;Generated a sample inside box of dimensions: (&quot; 
+ //  		+ lexical_cast&lt;string&gt;(lowerCorner[0]) + &quot;,&quot; 
+@@ -442,15 +409,15 @@
+ 	
+ 	physics-&gt;angularVelocity	= Vector3r(0,0,0);
+ 	physics-&gt;velocity		= Vector3r(0,0,0);
+-	physics-&gt;mass			= 4.0/3.0*Mathr::PI*radius*radius*radius*(big ? bigBallDensity : density);
++	physics-&gt;mass			= 4.0/3.0*Mathr::PI*radius*radius*radius*density;
+ 	
+ 	physics-&gt;inertia		= Vector3r( 	2.0/5.0*physics-&gt;mass*radius*radius,
+ 							2.0/5.0*physics-&gt;mass*radius*radius,
+ 							2.0/5.0*physics-&gt;mass*radius*radius);
+ 	physics-&gt;se3			= Se3r(position,q);
+-	physics-&gt;young			= big ? bigBallYoungModulus : sphereYoungModulus;
+-	physics-&gt;poisson		= big ? bigBallPoissonRatio : spherePoissonRatio;
+-	physics-&gt;frictionAngle		= (big ? bigBallFrictDeg : sphereFrictionDeg ) * Mathr::PI/180.0;
++	physics-&gt;young			= sphereYoungModulus;
++	physics-&gt;poisson		= spherePoissonRatio;
++	physics-&gt;frictionAngle		= sphereFrictionDeg * Mathr::PI/180.0;
+ 
+ 	if((!big) &amp;&amp; (!dynamic) &amp;&amp; (!boxWalls))
+ 	{
+@@ -528,19 +495,6 @@
+ 
+ void TriaxialTest::createActors(shared_ptr&lt;MetaBody&gt;&amp; rootBody)
+ {
+-// recording average positions
+-	averagePositionRecorder = shared_ptr&lt;AveragePositionRecorder&gt;(new AveragePositionRecorder);
+-	averagePositionRecorder -&gt; outputFile 		= positionRecordFile;
+-	averagePositionRecorder -&gt; interval 		= recordIntervalIter;
+-// recording forces
+-	forcerec = shared_ptr&lt;ForceRecorder&gt;(new ForceRecorder);
+-	forcerec -&gt; outputFile 	= forceRecordFile;
+-	forcerec -&gt; interval 	= recordIntervalIter;
+-// recording velocities
+-	velocityRecorder = shared_ptr&lt;VelocityRecorder&gt;(new VelocityRecorder);
+-	velocityRecorder-&gt; outputFile 	= velocityRecordFile;
+-	velocityRecorder-&gt; interval 	= recordIntervalIter;
+-
+ 	shared_ptr&lt;PhysicalActionContainerInitializer&gt; physicalActionInitializer(new PhysicalActionContainerInitializer);
+ 	physicalActionInitializer-&gt;physicalActionNames.push_back(&quot;Force&quot;);
+ 	physicalActionInitializer-&gt;physicalActionNames.push_back(&quot;Momentum&quot;);
+@@ -654,6 +608,7 @@
+ 		//cerr &lt;&lt; &quot;fin de sezction triaxialstressController = shared_ptr&lt;TriaxialStressController&gt; (new TriaxialStressController);&quot; &lt;&lt; std::endl;
+ 	#endif
+ 	
++	
+ 	rootBody-&gt;engines.clear();
+ 	rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new PhysicalActionContainerReseter));
+ //	rootBody-&gt;engines.push_back(sdecTimeStepper);	
+@@ -671,19 +626,15 @@
+ 	rootBody-&gt;engines.push_back(triaxialcompressionEngine);
+ 	rootBody-&gt;engines.push_back(triaxialStateRecorder);
+ 	//rootBody-&gt;engines.push_back(gravityCondition);
+-	rootBody-&gt;engines.push_back(actionDampingDispatcher);
+-	rootBody-&gt;engines.push_back(applyActionDispatcher);
+-	rootBody-&gt;engines.push_back(positionIntegrator);
+-	if(!rotationBlocked)
+-		rootBody-&gt;engines.push_back(orientationIntegrator);
++	
++	rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt; (new NewtonsDampedLaw));
++	
++	//if(!rotationBlocked)
++	//	rootBody-&gt;engines.push_back(orientationIntegrator);
+ 	//rootBody-&gt;engines.push_back(resultantforceEngine);
+ 	//rootBody-&gt;engines.push_back(triaxialstressController);
+ 	
+ 		
+-	rootBody-&gt;engines.push_back(averagePositionRecorder);
+-	//rootBody-&gt;engines.push_back(velocityRecorder);
+-	//rootBody-&gt;engines.push_back(forcerec);
+-	
+ 	if (saveAnimationSnapshots) {
+ 	shared_ptr&lt;PositionOrientationRecorder&gt; positionOrientationRecorder(new PositionOrientationRecorder);
+ 	positionOrientationRecorder-&gt;outputFile = AnimationSnapshotsBaseName;
+
+Modified: trunk/pkg/dem/PreProcessor/TriaxialTest.hpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/TriaxialTest.hpp	2008-04-07 17:11:16 UTC (rev 1302)
++++ trunk/pkg/dem/PreProcessor/TriaxialTest.hpp	2008-04-07 20:02:24 UTC (rev 1303)
+@@ -63,16 +63,8 @@
+ 				,dampingForce
+ 				,dampingMomentum
+ 				,defaultDt
+-
+-				,bigBallRadius
+-				,bigBallDensity
+-				,bigBallDropTimeSeconds
+-				,bigBallPoissonRatio
+-				,bigBallYoungModulus
+-				,bigBallFrictDeg
+-				,bigBallDropHeight,
+ 				
+-				sigmaIsoCompaction,
++				,sigmaIsoCompaction,
+ 				sigmaLateralConfinement,
+ 				strainRate,
+ 				maxWallVelocity,
+@@ -95,11 +87,9 @@
+ 				,wall_4_wire
+ 				//! do we just want to generate a stable packing under isotropic pressure (false) or do we want the triaxial loading to start automatically right after compaction stage (true)?
+ 				,autoCompressionActivation
+-				,bigBall
++			
+ 				,rotationBlocked
+ 				,spheresRandomColor
+-				,recordBottomForce
+-				,recordAveragePositions
+ 				,boxWalls
+ 				//! flag for choosing between moving boundaries or increasing particles sizes during the compaction stage.
+ 				,internalCompaction
+@@ -118,16 +108,10 @@
+ 				,wall_front_id
+ 				,wall_back_id;*/
+ 		
+-		string		 forceRecordFile
+-				,positionRecordFile
+-				,velocityRecordFile
+-				,importFilename
++		string		importFilename
+ 				,AnimationSnapshotsBaseName
+ 				,WallStressRecordFile;
+ 	
+-		shared_ptr&lt;ForceRecorder&gt; forcerec;
+-		shared_ptr&lt;VelocityRecorder&gt; velocityRecorder;
+-		shared_ptr&lt;AveragePositionRecorder&gt; averagePositionRecorder;
+ 		shared_ptr&lt;TriaxialCompressionEngine&gt; triaxialcompressionEngine;
+ 		shared_ptr&lt;TriaxialStressController&gt; triaxialstressController;
+ 		shared_ptr&lt;TriaxialStateRecorder&gt; triaxialStateRecorder;
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000265.html">[Yade-commits] r1302 - trunk/pkg/dem/Engine/StandAloneEngine
+</A></li>
+	<LI>Next message: <A HREF="000267.html">[Yade-commits] r1304 - trunk/pkg/dem/Engine/StandAloneEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#266">[ date ]</a>
+              <a href="thread.html#266">[ thread ]</a>
+              <a href="subject.html#266">[ subject ]</a>
+              <a href="author.html#266">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

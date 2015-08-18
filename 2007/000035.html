@@ -1,0 +1,910 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1070 - in trunk/yade-packages/yade-package-dem/src:	Engine/DeusExMachina/TriaxialCompressionEngine	Engine/DeusExMachina/TriaxialStressController	PreProcessor/TriaxialTest
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2007/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1070%20-%20in%20trunk/yade-packages/yade-package-dem/src%3A%0A%09Engine/DeusExMachina/TriaxialCompressionEngine%0A%09Engine/DeusExMachina/TriaxialStressController%0A%09PreProcessor/TriaxialTest&In-Reply-To=%3C200702231726.l1NHQPO9028088%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000034.html">
+   <LINK REL="Next"  HREF="000036.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1070 - in trunk/yade-packages/yade-package-dem/src:	Engine/DeusExMachina/TriaxialCompressionEngine	Engine/DeusExMachina/TriaxialStressController	PreProcessor/TriaxialTest</H1>
+    <B>chareyre at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1070%20-%20in%20trunk/yade-packages/yade-package-dem/src%3A%0A%09Engine/DeusExMachina/TriaxialCompressionEngine%0A%09Engine/DeusExMachina/TriaxialStressController%0A%09PreProcessor/TriaxialTest&In-Reply-To=%3C200702231726.l1NHQPO9028088%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1070 - in trunk/yade-packages/yade-package-dem/src:	Engine/DeusExMachina/TriaxialCompressionEngine	Engine/DeusExMachina/TriaxialStressController	PreProcessor/TriaxialTest">chareyre at mail.berlios.de
+       </A><BR>
+    <I>Fri Feb 23 18:26:25 CET 2007</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000034.html">[Yade-commits] r1069 - in	trunk/yade-packages/yade-package-dem/src/Engine/EngineUnit: .	SimpleElasticRelationships
+</A></li>
+        <LI>Next message: <A HREF="000036.html">[Yade-commits] r1071 -	trunk/yade-packages/yade-package-dem/src/Engine/EngineUnit
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#35">[ date ]</a>
+              <a href="thread.html#35">[ thread ]</a>
+              <a href="subject.html#35">[ subject ]</a>
+              <a href="author.html#35">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: chareyre
+Date: 2007-02-23 18:26:24 +0100 (Fri, 23 Feb 2007)
+New Revision: 1070
+
+Modified:
+   trunk/yade-packages/yade-package-dem/src/Engine/DeusExMachina/TriaxialCompressionEngine/TriaxialCompressionEngine.cpp
+   trunk/yade-packages/yade-package-dem/src/Engine/DeusExMachina/TriaxialCompressionEngine/TriaxialCompressionEngine.hpp
+   trunk/yade-packages/yade-package-dem/src/Engine/DeusExMachina/TriaxialStressController/TriaxialStressController.cpp
+   trunk/yade-packages/yade-package-dem/src/Engine/DeusExMachina/TriaxialStressController/TriaxialStressController.hpp
+   trunk/yade-packages/yade-package-dem/src/PreProcessor/TriaxialTest/TriaxialTest.cpp
+   trunk/yade-packages/yade-package-dem/src/PreProcessor/TriaxialTest/TriaxialTest.hpp
+   trunk/yade-packages/yade-package-dem/src/PreProcessor/TriaxialTest/TriaxialTest.pro
+Log:
+
+A lot of small changes in triaxial classes, impossible to comment all of them;
+but note that :
+- TriaxialCompressionEngine can compress a sample to a dense isotropic state (either
+by moving walls or increasing the size of the spheres),
+- then change the confining pressure if needed (for running tests with different confining 
+pressure on the same sample),
+- then start a triaxial compression test at constant zz strain rate and constant 
+xx and yy stress (when the sample is considered stable based on StabilityCriterion).
+- The transitions between the different phases are (in principle) very smooth.
+
+note also that the contact laws are now defined using SimpleElasticLaw.
+
+
+
+
+
+
+Modified: trunk/yade-packages/yade-package-dem/src/Engine/DeusExMachina/TriaxialCompressionEngine/TriaxialCompressionEngine.cpp
+===================================================================
+--- trunk/yade-packages/yade-package-dem/src/Engine/DeusExMachina/TriaxialCompressionEngine/TriaxialCompressionEngine.cpp	2007-02-23 16:46:29 UTC (rev 1069)
++++ trunk/yade-packages/yade-package-dem/src/Engine/DeusExMachina/TriaxialCompressionEngine/TriaxialCompressionEngine.cpp	2007-02-23 17:26:24 UTC (rev 1070)
+@@ -12,13 +12,19 @@
+ #include &lt;yade/yade-package-common/Force.hpp&gt;
+ #include &quot;ElasticContactInteraction.hpp&quot;
+ #include &lt;yade/yade-lib-base/yadeWm3Extra.hpp&gt;
++#include &lt;boost/lexical_cast.hpp&gt;
+ 
+ 
+ TriaxialCompressionEngine::TriaxialCompressionEngine() : actionForce(new Force)
+ {
+ 	translationAxis=TriaxialStressController::normal[wall_bottom_id];
+ 	strainRate=0;
++	currentStrainRate=0;
+ 	StabilityCriterion=0.001;
++	Phase1=false;
++	Phase1End = &quot;Phase1End&quot;;
++	FinalIterationPhase1 = 0;
++// 	Phase2End = &quot;Phase2End&quot;;
+ 	compressionActivated=false;
+ 	autoCompressionActivation=true;
+ 	for (int i=0; i&lt;3; ++i) strain[i]=0;
+@@ -42,6 +48,7 @@
+ {
+ 	TriaxialStressController::registerAttributes();
+ 	REGISTER_ATTRIBUTE(strainRate);
++	REGISTER_ATTRIBUTE(currentStrainRate);
+ 	REGISTER_ATTRIBUTE(strain);
+ 	REGISTER_ATTRIBUTE(UnbalancedForce);
+ 	REGISTER_ATTRIBUTE(StabilityCriterion);
+@@ -56,17 +63,50 @@
+ {
+ 	
+ 	UnbalancedForce=ComputeUnbalancedForce(body);
+-	if (Omega::instance().getCurrentIteration() % 50 == 0) cerr &lt;&lt; &quot;UnbalancedForce=&quot; &lt;&lt; UnbalancedForce &lt;&lt; endl;
+-	if (autoCompressionActivation) compressionActivated = (UnbalancedForce&lt;=StabilityCriterion);//Is the assembly compact and stable?
++	if (Omega::instance().getCurrentIteration() % 100 == 0) cerr &lt;&lt; &quot;UnbalancedForce=&quot; &lt;&lt; UnbalancedForce &lt;&lt; endl;
++	
++	// new test
++	//cerr &lt;&lt; &quot;1&quot; &lt;&lt; endl;
++	if (!Phase1 &amp;&amp; autoCompressionActivation &amp;&amp;
++	UnbalancedForce&lt;=StabilityCriterion)		//Start 
++	{	
++// 		// saving snapshot.xml
++// 	string fileName = &quot;../data/&quot; + Phase1End + &quot;_&quot; + 
++// 	lexical_cast&lt;string&gt;(Omega::instance().getCurrentIteration()) + &quot;.xml&quot;;
++// 	cerr &lt;&lt; &quot;saving snapshot: &quot; &lt;&lt; fileName &lt;&lt; &quot; ...&quot;;
++// 	Omega::instance().saveSimulation(fileName);
++		
++		internalCompaction = false;
++		Phase1 = true;
++		FinalIterationPhase1 =
++		Omega::instance().getCurrentIteration();
++	}
++	
++	if (autoCompressionActivation &amp;&amp; Phase1
++	&amp;&amp; ((Omega::instance().getCurrentIteration()) &gt;=
++	(FinalIterationPhase1+1000)))
++	
++	{
++		if (UnbalancedForce&lt;=StabilityCriterion)
++		{
++		// saving snapshot.xml
++	string fileName = &quot;../data/&quot; + Phase1End + &quot;_&quot; + 
++	lexical_cast&lt;string&gt;(Omega::instance().getCurrentIteration()) + &quot;.xml&quot;;
++	cerr &lt;&lt; &quot;saving snapshot: &quot; &lt;&lt; fileName &lt;&lt; &quot; ...&quot;;
++	Omega::instance().saveSimulation(fileName);
++	
++	compressionActivated = true;
++		}
++	
++	}
++
+ 	if (compressionActivated)
+ 	{
+-		wall_bottom_activated=false;//stop stress control on top and bottom wall
++		wall_bottom_activated=false;
+ 		wall_top_activated=false;
+-		autoCompressionActivation = false; //don't stop compression when UnbalancedForce increases due to compression	
+-		internalCompaction = false;	
++		autoCompressionActivation = false;
+ 	}
+-	
+-	
++		
+ }
+ 
+ 
+@@ -77,17 +117,36 @@
+                 updateParameters(body);
+ 
+         TriaxialStressController::applyCondition(body);
++        MetaBody * ncb2 = static_cast&lt;MetaBody*&gt;(body);
++        //cerr &lt;&lt; computeStress(ncb2)  &lt;&lt; endl;
+ 
+         if (compressionActivated)
+         {
+-		if (Omega::instance().getCurrentIteration() % 50 == 0) cerr &lt;&lt; &quot;Compression started!!&quot; &lt;&lt; endl;
++		if (Omega::instance().getCurrentIteration() % 50 == 0) 
++ 		cerr &lt;&lt; &quot;Compression started!!&quot; &lt;&lt; endl;
+         	Real dt = Omega::instance().getTimeStep();
+-                MetaBody * ncb = static_cast&lt;MetaBody*&gt;(body);
+-                shared_ptr&lt;BodyContainer&gt;&amp; bodies = ncb-&gt;bodies;
+-                PhysicalParameters* p = static_cast&lt;PhysicalParameters*&gt;((*bodies)[wall_bottom_id]-&gt;physicalParameters.get());
+-                p-&gt;se3.position += 0.5*strainRate*height*translationAxis*dt;
+-                p = static_cast&lt;PhysicalParameters*&gt;((*bodies)[wall_top_id]-&gt;physicalParameters.get());
+-                p-&gt;se3.position -= 0.5*strainRate*height*translationAxis*dt;
++                  MetaBody * ncb = static_cast&lt;MetaBody*&gt;(body);
++                  shared_ptr&lt;BodyContainer&gt;&amp; bodies = ncb-&gt;bodies;
++                  
++                  if (currentStrainRate &lt; strainRate) currentStrainRate
++			+= strainRate*0.0003;	// !!! si d&#233;charge
++                
++                  PhysicalParameters* p =
++		static_cast&lt;PhysicalParameters*&gt;((*bodies)[wall_bottom_id]-&gt;
++		physicalParameters. get());
++                  p-&gt;se3.position += 0.5*strainRate*height*translationAxis*dt;
++//                 cerr &lt;&lt; &quot;deplacmt = &quot; &lt;&lt;
++// 		0.5*strainRate*height*translationAxis*dt &lt;&lt; endl;
++//                 cerr &lt;&lt; &quot;wall_bottom : p-&gt;se3.position = &quot; &lt;&lt; p-&gt;se3.position
++// 		&lt;&lt; endl;
++		
++		  p =
++		static_cast&lt;PhysicalParameters*&gt;((*bodies)[wall_top_id]-&gt;	
++		physicalParameters.get( ));
++                  p-&gt;se3.position -= 0.5*strainRate*height*translationAxis*dt;
++//                 cerr &lt;&lt; &quot;wall_top : p-&gt;se3.position = &quot; &lt;&lt; p-&gt;se3.position
++// 		&lt;&lt; endl;
++
+         }
+ }
+ 
+
+Modified: trunk/yade-packages/yade-package-dem/src/Engine/DeusExMachina/TriaxialCompressionEngine/TriaxialCompressionEngine.hpp
+===================================================================
+--- trunk/yade-packages/yade-package-dem/src/Engine/DeusExMachina/TriaxialCompressionEngine/TriaxialCompressionEngine.hpp	2007-02-23 16:46:29 UTC (rev 1069)
++++ trunk/yade-packages/yade-package-dem/src/Engine/DeusExMachina/TriaxialCompressionEngine/TriaxialCompressionEngine.hpp	2007-02-23 17:26:24 UTC (rev 1070)
+@@ -13,6 +13,7 @@
+ #include &lt;Wm3Vector3.h&gt;
+ #include &lt;yade/yade-lib-base/yadeWm3.hpp&gt;
+ #include &quot;TriaxialStressController.hpp&quot;
++#include &lt;string&gt;
+ 
+ /*! \brief Isotropic compression + uniaxial compression test
+ 
+@@ -32,12 +33,17 @@
+ 		
+ 		//! Strain velocity (./s)
+ 		Real strainRate;
++		Real currentStrainRate;
+ 		//! Max ratio of resultant forces on mean contact force
+ 		Real UnbalancedForce;
+ 		//! Value of UnbalancedForce for which the system is considered stable
+ 		Real StabilityCriterion;
+ 		Vector3r strain;
+ 		Vector3r translationAxis;
++		//! is isotropicInternalCompactionFinished?
++		bool Phase1;
++		int FinalIterationPhase1;
++		std::string Phase1End; //,Phase2End;
+ 		//! Is uniaxial compression currently activated?
+ 		bool compressionActivated;
+ 		//! Auto-switch between isotropic and uniaxial compression?
+
+Modified: trunk/yade-packages/yade-package-dem/src/Engine/DeusExMachina/TriaxialStressController/TriaxialStressController.cpp
+===================================================================
+--- trunk/yade-packages/yade-package-dem/src/Engine/DeusExMachina/TriaxialStressController/TriaxialStressController.cpp	2007-02-23 16:46:29 UTC (rev 1069)
++++ trunk/yade-packages/yade-package-dem/src/Engine/DeusExMachina/TriaxialStressController/TriaxialStressController.cpp	2007-02-23 17:26:24 UTC (rev 1070)
+@@ -1,6 +1,6 @@
+ /*************************************************************************
+-*  Copyright (C) 2006 by Bruno Chareyre                                   *
+-* <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">bruno.chareyre at hmg.inpg.fr</A>                                                   *
++*  Copyright (C) 2004 by Janek Kozicki                                   *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">cosurgi at berlios.de</A>                                                    *
+ *                                                                        *
+ *  This program is free software; it is licensed under the terms of the  *
+ *  GNU General Public License v2 or later. See file LICENSE for details. *
+@@ -12,10 +12,8 @@
+ #include &quot;SpheresContactGeometry.hpp&quot;
+ #include &quot;ElasticContactInteraction.hpp&quot;
+ #include &quot;yade/yade-package-common/Force.hpp&quot;
+-//#include &quot;GlobalStiffness.hpp&quot;
+-#include &lt;Wm3Math.h&gt;
+-#include &lt;yade/yade-lib-base/yadeWm3.hpp&gt;
+-#include &lt;yade/yade-lib-base/yadeWm3Extra.hpp&gt;
++//#include &quot;StiffnessMatrix.hpp&quot;
++//#include &lt;yade/yade-lib-wm3-math/Math.hpp&gt;
+ 
+ #include &lt;yade/yade-core/MetaBody.hpp&gt;
+ #include &quot;yade/yade-package-common/Sphere.hpp&quot;
+@@ -25,6 +23,7 @@
+ TriaxialStressController::TriaxialStressController() : actionParameterForce(new Force), wall_bottom_id(wall_id[0]), wall_top_id(wall_id[1]), wall_left_id(wall_id[2]), wall_right_id(wall_id[3]), wall_front_id(wall_id[4]), wall_back_id(wall_id[5])
+ {
+ 	//cerr &lt;&lt; &quot;constructor of TriaxialStressController&quot; &lt;&lt; std::endl;
++	//StiffnessMatrixClassIndex = actionParameterStiffnessMatrix-&gt;getClassIndex();
+ 	ForceClassIndex = actionParameterForce-&gt;getClassIndex();
+ 	previousStress = 0;
+ 	previousMultiplier = 1;
+@@ -37,6 +36,7 @@
+ 	
+ 	
+ 	interval =10;
++	radiusControlInterval =10;
+ 	wallDamping = 0.25;
+ 	force = Vector3r::ZERO;
+ 	for (int i=0; i&lt;6; ++i)
+@@ -63,8 +63,10 @@
+ 	//stiffness = Vector3r::ZERO;
+ 	max_vel = 0.001;
+ 	maxMultiplier = 1.001;
+-	internalCompaction = false;
++	finalMaxMultiplier = 1.00001;
++	internalCompaction = true;
+ 	
++	//StiffnessMatrixClassIndex = actionParameterStiffnessMatrix-&gt;getClassIndex();
+ 	ForceClassIndex = actionParameterForce-&gt;getClassIndex();
+ 			
+ 	wall_bottom_activated = true;
+@@ -79,6 +81,8 @@
+ 	depth = 0;
+ 	thickness = 0;
+ 	
++	//UnbalancedForce = 0;
++	
+ 	sigma_iso = 0;
+ 	//cerr &lt;&lt; &quot;end of TriaxialStressController constructor&quot; &lt;&lt; std::endl;
+ }
+@@ -92,11 +96,12 @@
+ 	//cerr &lt;&lt; &quot;TriaxialStressController::registerAttributes()&quot; &lt;&lt; std::endl;
+ 	DeusExMachina::registerAttributes();
+ 	REGISTER_ATTRIBUTE(interval);
++	REGISTER_ATTRIBUTE(radiusControlInterval);
+ 	REGISTER_ATTRIBUTE(wallDamping);
+ 	REGISTER_ATTRIBUTE(force);
+ 	
++	//REGISTER_ATTRIBUTE(UnbalancedForce);
+ 	
+-	
+ 	//REGISTER_ATTRIBUTE(stiffness);
+  	REGISTER_ATTRIBUTE(wall_bottom_id);
+  	REGISTER_ATTRIBUTE(wall_top_id);
+@@ -121,6 +126,7 @@
+ 	
+ 	REGISTER_ATTRIBUTE(sigma_iso);
+ 	REGISTER_ATTRIBUTE(maxMultiplier);
++	REGISTER_ATTRIBUTE(finalMaxMultiplier);
+ 	REGISTER_ATTRIBUTE(max_vel);
+ 	REGISTER_ATTRIBUTE(previousStress);
+ 	REGISTER_ATTRIBUTE(previousMultiplier);
+@@ -130,6 +136,8 @@
+ 
+ void TriaxialStressController::updateStiffness (MetaBody * ncb)
+ {
++	//cerr &lt;&lt; &quot;updateStiffness&quot; &lt;&lt; endl;
++	
+ 	//shared_ptr&lt;BodyContainer&gt;&amp; bodies = ncb-&gt;bodies;
+ 
+ 	//Real dt = Omega::instance().getTimeStep();
+@@ -137,8 +145,9 @@
+ 	for (int i=0; i&lt;6; ++i)
+ 	{		
+ 		stiffness[i] = 0;
+-	}											///
++	}									
+ 
++
+ 	InteractionContainer::iterator ii    = ncb-&gt;transientInteractions-&gt;begin();
+ 	InteractionContainer::iterator iiEnd = ncb-&gt;transientInteractions-&gt;end();
+ 	for(  ; ii!=iiEnd ; ++ii )
+@@ -146,178 +155,233 @@
+ 		if ((*ii)-&gt;isReal)
+ 		{
+ 			const shared_ptr&lt;Interaction&gt;&amp; contact = *ii;
+-			int id1 = contact-&gt;getId1();
+-			int id2 = contact-&gt;getId2();
+ 			
+-			for (int index=0; index&lt;6; ++index)
++			Real fn = (static_cast&lt;ElasticContactInteraction*&gt;	
++	(contact-&gt;interactionPhysics.get()))-&gt;normalForce.Length();
++
++			if (fn!=0)
+ 			{
++				int id1 = contact-&gt;getId1();
++				int id2 = contact-&gt;getId2();
++				
++				for (int index=0; index&lt;6; ++index)
++				{
+ 				if ( wall_id[index]==id1 || wall_id[index]==id2 )
+ 				{
+ 					ElasticContactInteraction* currentContactPhysics =
+ 					static_cast&lt;ElasticContactInteraction*&gt; ( contact-&gt;interactionPhysics.get() );
+ 					stiffness[index]  += currentContactPhysics-&gt;kn;
+-				
+-				}			
+-			}			
++				}
++				}
++			}
+ 		}
+ 	}
+-
++	
++	{		
++		//cerr &lt;&lt; &quot;stiffness 1 = &quot; &lt;&lt; stiffness[1] &lt;&lt; endl;
++	}
++	
++	//cerr &lt;&lt; &quot;fin updateStiffness&quot; &lt;&lt; endl;
++	
+ }
+ 
+ void TriaxialStressController::controlExternalStress(int wall, MetaBody* ncb, int id, Vector3r resultantForce, PhysicalParameters* p, Real wall_max_vel) //FIXME remove parameter &quot;id&quot;
+ {
+-		//Update stiffness only if it has been computed by StiffnessCounter (see &quot;interval&quot;)
+-		//if (Omega::instance().getCurrentIteration() % interval == 0)	stiffness =
+-		//(static_cast&lt;StiffnessMatrix*&gt;( ncb-&gt;physicalActions-&gt;find (id, StiffnessMatrixClassIndex).get()))-&gt;stiffness;		
+-// 		Vector3r effectiveforce =
+-// 		 	static_cast&lt;Force*&gt;( ncb-&gt;physicalActions-&gt;find(wall_id[wall],ForceClassIndex).get() )-&gt;force; 
+-		//Vector3r deltaf (effectiveforce - resultantForce);
+-		Real translation= normal[wall].Dot(static_cast&lt;Force*&gt;( ncb-&gt;physicalActions-&gt;find(wall_id[wall],ForceClassIndex).get() )-&gt;force - resultantForce);
+-		if (translation!=0)
+-		{
+-			if (stiffness[wall]!=0)
+-			{
+-				translation /= stiffness[wall];
+-				translation = std::min( abs(translation), max_vel ) * Mathr::Sign(translation);
+-			}
+-			else  translation = wall_max_vel * Mathr::Sign(translation);
+-		}
+-		
+-		 
++	//cerr &lt;&lt; &quot;controlExternalStress&quot; &lt;&lt; endl;
++    //Update stiffness only if it has been computed by StiffnessCounter (see &quot;interval&quot;)
++    //if (Omega::instance().getCurrentIteration() % interval == 0)	stiffness =
++    //(static_cast&lt;StiffnessMatrix*&gt;( ncb-&gt;physicalActions-&gt;find (id, StiffnessMatrixClassIndex).get()))-&gt;stiffness;
++    // 		Vector3r effectiveforce =
++    // 		 	static_cast&lt;Force*&gt;( ncb-&gt;physicalActions-&gt;find(wall_id[wall],ForceClassIndex).get() )-&gt;force;
++    //Vector3r deltaf (effectiveforce - resultantForce);
++    
++        Real translation= normal[wall].Dot(static_cast&lt;Force*&gt;( ncb-&gt;physicalActions-&gt;find(wall_id[wall],ForceClassIndex).get() )-&gt;force - resultantForce);
++        if (translation!=0)
++        {
++        //cerr &lt;&lt; &quot;translation!=0&quot; &lt;&lt; endl;
++            if (stiffness[wall]!=0)
++            {
++            //cerr &lt;&lt; &quot;stiffness[wall]!=0&quot; &lt;&lt; endl;
++                translation /= stiffness[wall];
++                translation = std::min( abs(translation), max_vel ) * Mathr::Sign(translation);
++            	//cerr &lt;&lt; &quot;translation=&quot; &lt;&lt; translation &lt;&lt; endl;
++            }
++            else
++                translation = wall_max_vel * Mathr::Sign(translation);
++                
++        }
+ 
+-			
+-		previousTranslation[wall] = (1-wallDamping)*translation*normal[wall] + 0.7*previousTranslation[wall];// formula for &quot;steady-flow&quot; evolution with fluctuations
+-		p-&gt;se3.position	+= previousTranslation[wall];
+-		//cerr &lt;&lt; &quot;previoustranslation[wall]=&quot; &lt;&lt; previoustranslation[wall] &lt;&lt; endl;
+-		//p-&gt;velocity		=  previoustranslation/dt;//FIXME : useless???	
+-	//}
+-	
++
++        // 		cerr &lt;&lt; &quot;dint wall = &quot; &lt;&lt;  wall ;
++        // 		cerr &lt;&lt; &quot; deltaf.X() = &quot; &lt;&lt;  deltaf.X() ;
++        // 		if  (deltaf.X()!=0) translation.X() =
++        // 		Mathr::Sign(deltaf.X())*(stiffness.X()==0 ? wall_max_vel : std::min( abs(deltaf.X()/stiffness.X()), wall_max_vel));
++        // 		else translation.X() = 0;
++        // 		cerr &lt;&lt; &quot; deltaf.Y() = &quot; &lt;&lt;  deltaf.Y() ;
++        // 		cerr &lt;&lt; &quot; deltaf.Z() = &quot; &lt;&lt;  deltaf.Z() &lt;&lt; endl;
++        //
++        // 		if  (deltaf.Y()!=0) translation.Y() =
++        // 		Mathr::Sign(deltaf.Y())*(stiffness.Y()==0 ? wall_max_vel : std::min( abs(deltaf.Y()/stiffness.Y()), wall_max_vel));
++        // 		else translation.Y() = 0;
++        // 		if  (deltaf.Z()!=0) translation.Z() =
++        // 		Mathr::Sign(deltaf.Z())*(stiffness.Z()==0 ? wall_max_vel : std::min( abs(deltaf.Z()/stiffness.Z()), wall_max_vel));
++        // 		else translation.Z() = 0;
++
++        // 			(stiffness.X()==0 ? Mathr::Sign(deltaf.X())*wall_max_vel : Mathr::Sign(deltaf.X())*std::min( abs(deltaf.X()/stiffness.X()), wall_max_vel),
++        // 			stiffness.Y()==0 ? Mathr::Sign(deltaf.Y())*wall_max_vel : Mathr::Sign(deltaf.Y())*std::min( abs(deltaf.Y()/stiffness.Y()), wall_max_vel),
++        // 			stiffness.Z()==0 ? Mathr::Sign(deltaf.Z())*wall_max_vel : Mathr::Sign(deltaf.Z())*std::min( abs(deltaf.Z()/stiffness.Z()), wall_max_vel) );
++
++        previousTranslation[wall] = (1-wallDamping)*translation*normal[wall];// + 0.7*previousTranslation[wall];// formula for &quot;steady-flow&quot; evolution with fluctuations
++        p-&gt;se3.position	+= previousTranslation[wall];
++    
++    //if (wall==1) cerr &lt;&lt; &quot;Force=&quot; &lt;&lt; normal[wall].Dot(static_cast&lt;Force*&gt;( ncb-&gt;physicalActions-&gt;find(wall_id[wall],ForceClassIndex).get() )-&gt;force) &lt;&lt; &quot; -&gt; &quot; &lt;&lt; resultantForce &lt;&lt; &quot;Translation[wall]=&quot; &lt;&lt; previousTranslation[wall] &lt;&lt; endl;
++    //p-&gt;velocity		=  previousTranslation/dt;//FIXME : useless???
++    //}
++
+ }
++
++
++
++
+ void TriaxialStressController::applyCondition(Body* body)
+ {
+-	//cerr &lt;&lt; &quot;void TriaxialStressController::applyCondition(Body* body)&quot; &lt;&lt; std::endl;
+-	MetaBody * ncb = dynamic_cast&lt;MetaBody*&gt;(body);
+-	
+-	//Update stiffness only if it has been computed by StiffnessCounter (see &quot;interval&quot;)
+-	if (Omega::instance().getCurrentIteration() % interval == 0) updateStiffness(ncb);
++	//cerr &lt;&lt; &quot;TriaxialStressController::applyCondition&quot; &lt;&lt; endl;
++        MetaBody * ncb = dynamic_cast&lt;MetaBody*&gt;(body);
+ 
+-	
+-	shared_ptr&lt;BodyContainer&gt;&amp; bodies = ncb-&gt;bodies;
+-	
+-	//if(PhysicalParameters* p = dynamic_cast&lt;PhysicalParameters*&gt;((*bodies)[*ii]-&gt;physicalParameters.get()))
+-	
+-// 	if(PhysicalParameters* p_bottom = static_cast&lt;PhysicalParameters*&gt;((*bodies)[wall_bottom_id]-&gt;physicalParameters.get()) &amp;&amp;
+-// 	PhysicalParameters* p_top   =	 static_cast&lt;PhysicalParameters*&gt;((*bodies)[wall_top_id]-&gt;physicalParameters.get()) &amp;&amp;
+-// 	PhysicalParameters* p_left 	= static_cast&lt;PhysicalParameters*&gt;((*bodies)[wall_left_id]-&gt;physicalParameters.get()) &amp;&amp;
+-// 	PhysicalParameters* p_right = static_cast&lt;PhysicalParameters*&gt;((*bodies)[wall_right_id]-&gt;physicalParameters.get()) &amp;&amp;
+-// 	PhysicalParameters* p_front = static_cast&lt;PhysicalParameters*&gt;((*bodies)[wall_front_id]-&gt;physicalParameters.get()) &amp;&amp;
+-// 	PhysicalParameters* p_back 	= static_cast&lt;PhysicalParameters*&gt;((*bodies)[wall_back_id]-&gt;physicalParameters.get()))
+-	
+-	
+-	
+-	PhysicalParameters* p_bottom = static_cast&lt;PhysicalParameters*&gt;((*bodies)[wall_bottom_id]-&gt;physicalParameters.get());
+-	PhysicalParameters* p_top   =	 static_cast&lt;PhysicalParameters*&gt;((*bodies)[wall_top_id]-&gt;physicalParameters.get());
+-	PhysicalParameters* p_left 	= static_cast&lt;PhysicalParameters*&gt;((*bodies)[wall_left_id]-&gt;physicalParameters.get());
+-	PhysicalParameters* p_right = static_cast&lt;PhysicalParameters*&gt;((*bodies)[wall_right_id]-&gt;physicalParameters.get());
+-	PhysicalParameters* p_front = static_cast&lt;PhysicalParameters*&gt;((*bodies)[wall_front_id]-&gt;physicalParameters.get());
+-	PhysicalParameters* p_back 	= static_cast&lt;PhysicalParameters*&gt;((*bodies)[wall_back_id]-&gt;physicalParameters.get());
+-	
+-	
+-	height = p_top-&gt;se3.position.Y() - p_bottom-&gt;se3.position.Y() - thickness;
+-	width = p_right-&gt;se3.position.X() - p_left-&gt;se3.position.X() - thickness;
+-	depth = p_front-&gt;se3.position.Z() - p_back-&gt;se3.position.Z() - thickness;
+-				
+-	if (!internalCompaction)
+-    	{	
+-		Vector3r wallForce (0, sigma_iso*width*depth, 0);
+-		if (wall_bottom_activated)
+-		controlExternalStress(wall_bottom, ncb, wall_bottom_id, -wallForce, p_bottom, max_vel);
+-		if (wall_top_activated)
+-		controlExternalStress(wall_top, ncb, wall_top_id, wallForce, p_top, max_vel);
+-		
+-		wallForce = Vector3r(sigma_iso*height*depth, 0, 0);
+-		if (wall_left_activated)
+-		controlExternalStress(wall_left, ncb, wall_left_id, -wallForce, p_left, max_vel*width/height);
+-		if (wall_right_activated)
+-		controlExternalStress(wall_right, ncb, wall_right_id, wallForce, p_right, max_vel*width/height);
+-		
+-		wallForce = Vector3r(0, 0, sigma_iso*height*depth);
+-		if (wall_back_activated)
+-		controlExternalStress(wall_back, ncb, wall_back_id, -wallForce, p_back, max_vel*depth/height);
+-		if (wall_front_activated)
+-		controlExternalStress(wall_front, ncb, wall_front_id, wallForce, p_front, max_vel*depth/height);
+-					
+-	//}
+-	}
+-	
+-    else //if internal compaction
+-    {	
+-    	if (Omega::instance().getCurrentIteration() % 10 == 0) {
+-    	Real s = computeStress(ncb);
+-    	if (s==0) previousMultiplier = maxMultiplier; 
+-    	else {
+-//     		previousMultiplier = 1+0.7*(sigma_iso-s)*(previousMultiplier-1.f)/(s-previousStress); // = (Dsigma/apparentModulus)*0.7
+-//     		previousMultiplier = std::max(2-maxMultiplier, std::min(previousMultiplier, maxMultiplier));
+-		previousMultiplier = 1+(sigma_iso-s)/sigma_iso*(maxMultiplier-1.f); // = (Dsigma/apparentModulus)*0.7
+-    	     }
+-    	previousStress = s;
+-    	if (Omega::instance().getCurrentIteration() % 50 == 0) cerr &lt;&lt; &quot;s= &quot; &lt;&lt; s &lt;&lt; &quot;; previousMultiplier = &quot; &lt;&lt; previousMultiplier &lt;&lt; endl;
+-    	//Real apparentModulus = (s-previousStress)/(previousMultiplier-1.f);    	
+-    	controlInternalStress(ncb, previousMultiplier);
+-    	}
+-    }
++        //Update stiffness only if it has been computed by StiffnessCounter (see &quot;interval&quot;)
++        if (Omega::instance().getCurrentIteration() % interval == 0 || Omega::instance().getCurrentIteration()&lt;1000)
++                updateStiffness(ncb);
++                
++//                cerr &lt;&lt; &quot;Sm = &quot; &lt;&lt; computeStress(ncb);
++
++
++        shared_ptr&lt;BodyContainer&gt;&amp; bodies = ncb-&gt;bodies;
++
++        //if(PhysicalParameters* p = dynamic_cast&lt;PhysicalParameters*&gt;((*bodies)[*ii]-&gt;physicalParameters.get()))
++
++        // 	if(PhysicalParameters* p_bottom = static_cast&lt;PhysicalParameters*&gt;((*bodies)[wall_bottom_id]-&gt;physicalParameters.get()) &amp;&amp;
++        // 	PhysicalParameters* p_top   =	 static_cast&lt;PhysicalParameters*&gt;((*bodies)[wall_top_id]-&gt;physicalParameters.get()) &amp;&amp;
++        // 	PhysicalParameters* p_left 	= static_cast&lt;PhysicalParameters*&gt;((*bodies)[wall_left_id]-&gt;physicalParameters.get()) &amp;&amp;
++        // 	PhysicalParameters* p_right = static_cast&lt;PhysicalParameters*&gt;((*bodies)[wall_right_id]-&gt;physicalParameters.get()) &amp;&amp;
++        // 	PhysicalParameters* p_front = static_cast&lt;PhysicalParameters*&gt;((*bodies)[wall_front_id]-&gt;physicalParameters.get()) &amp;&amp;
++        // 	PhysicalParameters* p_back 	= static_cast&lt;PhysicalParameters*&gt;((*bodies)[wall_back_id]-&gt;physicalParameters.get()))
++
++
++
++        PhysicalParameters* p_bottom = static_cast&lt;PhysicalParameters*&gt;((*bodies)[wall_bottom_id]-&gt;physicalParameters.get());
++        PhysicalParameters* p_top   =	 static_cast&lt;PhysicalParameters*&gt;((*bodies)[wall_top_id]-&gt;physicalParameters.get());
++        PhysicalParameters* p_left 	= static_cast&lt;PhysicalParameters*&gt;((*bodies)[wall_left_id]-&gt;physicalParameters.get());
++        PhysicalParameters* p_right = static_cast&lt;PhysicalParameters*&gt;((*bodies)[wall_right_id]-&gt;physicalParameters.get());
++        PhysicalParameters* p_front = static_cast&lt;PhysicalParameters*&gt;((*bodies)[wall_front_id]-&gt;physicalParameters.get());
++        PhysicalParameters* p_back 	= static_cast&lt;PhysicalParameters*&gt;((*bodies)[wall_back_id]-&gt;physicalParameters.get());
++
++
++        height = p_top-&gt;se3.position.Y() - p_bottom-&gt;se3.position.Y() - thickness;
++        width = p_right-&gt;se3.position.X() - p_left-&gt;se3.position.X() - thickness;
++        depth = p_front-&gt;se3.position.Z() - p_back-&gt;se3.position.Z() - thickness;
++
++        if (!internalCompaction) {
++                Vector3r wallForce (0, sigma_iso*width*depth, 0);
++                if (wall_bottom_activated)
++                        controlExternalStress(wall_bottom, ncb, wall_bottom_id, -wallForce, p_bottom, max_vel);
++                if (wall_top_activated)
++                        controlExternalStress(wall_top, ncb, wall_top_id, wallForce, p_top, max_vel);
++
++                wallForce = Vector3r(sigma_iso*height*depth, 0, 0);
++                if (wall_left_activated)
++                        controlExternalStress(wall_left, ncb, wall_left_id,
++                                              -wallForce, p_left, max_vel*width/height);
++
++                if (wall_right_activated)
++                        controlExternalStress(wall_right, ncb, wall_right_id,
++                                              wallForce, p_right, max_vel*width/height);
++
++                wallForce = Vector3r(0, 0, sigma_iso*height*depth);
++                if (wall_back_activated)
++                        controlExternalStress(wall_back, ncb, wall_back_id,
++                                              -wallForce, p_back, max_vel*depth/height);
++
++                if (wall_front_activated)
++                        controlExternalStress(wall_front, ncb, wall_front_id,
++                                              wallForce, p_front, max_vel*depth/height);
++
++        }
++        else //if internal compaction
++        {
++                if (Omega::instance().getCurrentIteration() % radiusControlInterval == 0) {
++                        Real s = computeStress(ncb);
++                        if (sigma_iso&lt;=s) maxMultiplier = finalMaxMultiplier;
++                        if (s==0)
++                                previousMultiplier = maxMultiplier;
++                        else {
++                                //     		previousMultiplier = 1+0.7*(sigma_iso-s)*(previousMultiplier-1.f)/(s-previousStress); // = (Dsigma/apparentModulus)*0.7
++                                //     		previousMultiplier = std::max(2-maxMultiplier, std::min(previousMultiplier, maxMultiplier));
++                                previousMultiplier = 1.f+(sigma_iso-s)/sigma_iso*(maxMultiplier-1.f); // = (Dsigma/apparentModulus)*0.7
++                        }
++                        previousStress = s;
++                        //cerr &lt;&lt; &quot; s= &quot; &lt;&lt; s &lt;&lt; &quot; &quot;;
++                        //Real apparentModulus = (s-previousStress)/(previousMultiplier-1.f);
++                        controlInternalStress(ncb, previousMultiplier);
++                }
++        }
+ }
+ 
+ 
+ Real TriaxialStressController::computeStress(MetaBody* ncb)
+ {
+-// 	height = p_top-&gt;se3.position.y() - p_bottom-&gt;se3.position.y() - thickness;
+-// 	width = p_right-&gt;se3.position.x() - p_left-&gt;se3.position.x() - thickness;
+-// 	depth = p_front-&gt;se3.position.z() - p_back-&gt;se3.position.z() - thickness;
+ 	
++// 	height = p_top-&gt;se3.position.Y() - p_bottom-&gt;se3.position.Y() - thickness;
++// 	width = p_right-&gt;se3.position.X() - p_left-&gt;se3.position.X() - thickness;
++// 	depth = p_front-&gt;se3.position.Z() - p_back-&gt;se3.position.Z() - thickness;
++	
+ 	Real meanStress = 0;
+ 	
+-	Real invXSurface = 1/(height*depth);
+-	Real invYSurface = 1/(width*depth);
+-	Real invZSurface = 1/(width*height);
++	Real invXSurface = 1.f/(height*depth);
++	Real invYSurface = 1.f/(width*depth);
++	Real invZSurface = 1.f/(width*height);
+ 		
+-	stress[wall_bottom]=( static_cast&lt;Force*&gt;(ncb-&gt;physicalActions-&gt;find(wall_id[wall_bottom],ForceClassIndex).get())-&gt;force ) * invYSurface;
++	stress[wall_bottom] = ( static_cast&lt;Force*&gt;( ncb-&gt;physicalActions-&gt;find(wall_id[wall_bottom],ForceClassIndex).get() )-&gt;force ) * invYSurface;
+ 	stress[wall_top] = static_cast&lt;Force*&gt;( ncb-&gt;physicalActions-&gt;find(wall_id[wall_top],ForceClassIndex).get() )-&gt;force * invYSurface;
+ 	stress[wall_left] = ( static_cast&lt;Force*&gt;( ncb-&gt;physicalActions-&gt;find(wall_id[wall_left],ForceClassIndex).get() )-&gt;force ) * invXSurface;
+ 	stress[wall_right] = ( static_cast&lt;Force*&gt;( ncb-&gt;physicalActions-&gt;find(wall_id[wall_right],ForceClassIndex).get() )-&gt;force ) * invXSurface;
+ 	stress[wall_front] = ( static_cast&lt;Force*&gt;( ncb-&gt;physicalActions-&gt;find(wall_id[wall_front],ForceClassIndex).get() )-&gt;force ) * invZSurface;
+ 	stress[wall_back] = ( static_cast&lt;Force*&gt;( ncb-&gt;physicalActions-&gt;find(wall_id[wall_back],ForceClassIndex).get() )-&gt;force ) * invZSurface;	
+ 		
+-	if (Omega::instance().getCurrentIteration() % 50 == 0) {
+-	cerr &lt;&lt; &quot;stresses : &quot; &lt;&lt;  -stress[wall_bottom].Y() &lt;&lt; &quot; &quot; &lt;&lt; stress[wall_top].Y() &lt;&lt; &quot; &quot; &lt;&lt; -stress[wall_left].X() &lt;&lt; &quot; &quot; &lt;&lt; stress[wall_right].X() &lt;&lt; &quot; &quot; &lt;&lt; -stress[wall_back].Z() &lt;&lt; &quot; &quot; &lt;&lt; stress[wall_front].Z() &lt;&lt; endl;}
+-	for (int i=0; i&lt;6; i++) {
+-	//Real x= stress[i].dot(normal[i]);
+-	//cerr &lt;&lt; i &lt;&lt; &quot; : &quot; &lt;&lt; x &lt;&lt; endl;
+-	meanStress-= stress[i].Dot(normal[i]);}
++ 	//cerr &lt;&lt; &quot;stresses : &quot; &lt;&lt;  stress[wall_bottom] &lt;&lt; &quot; &quot; &lt;&lt;
++ //stress[wall_top]&lt;&lt; &quot; &quot; &lt;&lt; stress[wall_left]&lt;&lt; &quot; &quot; &lt;&lt; stress[wall_right]&lt;&lt; &quot; &quot;
++ //&lt;&lt; stress[wall_front] &lt;&lt; &quot; &quot; &lt;&lt; stress[wall_back] &lt;&lt; endl;
++
++	for (int i=0; i&lt;6; i++) meanStress-= stress[i].Dot(normal[i]);
+ 	return meanStress*0.16666666666;
++	
+ }
+ 
+ void TriaxialStressController::controlInternalStress(MetaBody* ncb, Real multiplier)
+ {
+-        BodyContainer::iterator bi    = ncb-&gt;bodies-&gt;begin();
++	BodyContainer::iterator bi    = ncb-&gt;bodies-&gt;begin();
+         BodyContainer::iterator biEnd = ncb-&gt;bodies-&gt;end();
+         Real f;
++        //cerr &lt;&lt; &quot;meanstress = &quot;radius = &quot; &lt;&lt; endl;
++        //cerr &lt;&lt; &quot;bouclesurBodies&quot; &lt;&lt; endl;
+         for(  ; bi!=biEnd ; ++bi ) {
+                 if ((*bi)-&gt;isDynamic) {
+                         (static_cast&lt;InteractingSphere*&gt; ((*bi)-&gt;interactingGeometry.get()))-&gt;radius *= multiplier;
+                         (static_cast&lt;Sphere*&gt;((*bi)-&gt;geometricalModel.get()))-&gt;radius *= multiplier;}
+         }
+-
++	//cerr &lt;&lt; &quot;bouclesurInteraction&quot; &lt;&lt; endl;
+         InteractionContainer::iterator ii    = ncb-&gt;transientInteractions-&gt;begin();
+         InteractionContainer::iterator iiEnd = ncb-&gt;transientInteractions-&gt;end();
+-        for(  ; ii!=iiEnd ; ++ii ) {
+-                if ((*ii)-&gt;isReal) {
++        for(  ; ii!=iiEnd ; ++ii ) 
++        {
++                if ((*ii)-&gt;isReal) 
++                
++                {
+                         SpheresContactGeometry* contact = static_cast&lt;SpheresContactGeometry*&gt; ((*ii)-&gt;interactionGeometry.get());
+                         if ((*(ncb-&gt;bodies))[(*ii)-&gt;getId1()]-&gt;isDynamic)
+                                 contact-&gt;radius1 *= multiplier;
+                         if ((*(ncb-&gt;bodies))[(*ii)-&gt;getId2()]-&gt;isDynamic)
+                                 contact-&gt;radius2 *= multiplier;
+-                      
++
+                 }
+         }
+ }
+
+Modified: trunk/yade-packages/yade-package-dem/src/Engine/DeusExMachina/TriaxialStressController/TriaxialStressController.hpp
+===================================================================
+--- trunk/yade-packages/yade-package-dem/src/Engine/DeusExMachina/TriaxialStressController/TriaxialStressController.hpp	2007-02-23 16:46:29 UTC (rev 1069)
++++ trunk/yade-packages/yade-package-dem/src/Engine/DeusExMachina/TriaxialStressController/TriaxialStressController.hpp	2007-02-23 17:26:24 UTC (rev 1070)
+@@ -10,11 +10,10 @@
+ #define TRIAXIAL_STRESS_CONTROLLER_HPP
+ 
+ #include &lt;yade/yade-core/DeusExMachina.hpp&gt;
+-#include &lt;Wm3Math.h&gt;
+-#include &lt;yade/yade-lib-base/yadeWm3.hpp&gt;
+ #include &lt;Wm3Vector3.h&gt;
+ #include &lt;yade/yade-lib-base/yadeWm3.hpp&gt;
+ 
++
+ class PhysicalAction;
+ class MetaBody;
+ class PhysicalParameters;
+@@ -34,7 +33,7 @@
+ 		
+ 			
+ 	public :
+-		unsigned int interval;
++		unsigned int interval, radiusControlInterval;
+ 		//! index values for retrieving walls
+ 		int wall_bottom, wall_top, wall_left, wall_right, wall_front, wall_back;
+ 		//! Defines the prescibed resultant force 
+@@ -47,12 +46,14 @@
+ 		Vector3r	stress [6];
+ 		int 		wall_id [6];
+ 		
++		//Real UnbalancedForce;		
+ 				
+ 		//! wallDamping coefficient - wallDamping=0 implies a &quot;perfect&quot; control of the resultant force, wallDamping=1 means no movement
+ 		Real			wallDamping;
+ 		//! maximum displacement/cycle (usefull to prevent explosions when stiffness is very low...) 
+-		Real			max_vel;
++
+ 		Real			maxMultiplier;
++		Real			finalMaxMultiplier;
+ 		//! switch between &quot;external&quot; (walls) and &quot;internal&quot; (growth of particles) compaction 
+ 		bool internalCompaction; 
+ 		
+@@ -62,7 +63,7 @@
+ 		Real height, width, depth;
+ 		Real thickness; // FIXME should retrieve &quot;extents&quot; of a InteractingBox
+ 		Real sigma_iso;
+-				
++		Real max_vel;
+ 
+ 		TriaxialStressController();
+ 		virtual ~TriaxialStressController();
+
+Modified: trunk/yade-packages/yade-package-dem/src/PreProcessor/TriaxialTest/TriaxialTest.cpp
+===================================================================
+--- trunk/yade-packages/yade-package-dem/src/PreProcessor/TriaxialTest/TriaxialTest.cpp	2007-02-23 16:46:29 UTC (rev 1069)
++++ trunk/yade-packages/yade-package-dem/src/PreProcessor/TriaxialTest/TriaxialTest.cpp	2007-02-23 17:26:24 UTC (rev 1070)
+@@ -3,6 +3,8 @@
+ *  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">olivier.galizzi at imag.fr</A>                                               *
+ *  Copyright (C) 2004 by Janek Kozicki                                   *
+ *  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">cosurgi at berlios.de</A>                                                    *
++*  Copyright (C) 2007 by Bruno Chareyre		                         *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">bruno.chareyre at hmg.inpg.fr</A>                                            *
+ *                                                                        *
+ *  This program is free software; it is licensed under the terms of the  *
+ *  GNU General Public License v2 or later. See file LICENSE for details. *
+@@ -11,7 +13,7 @@
+ #include &quot;TriaxialTest.hpp&quot;
+ 
+ #include &quot;ElasticContactLaw.hpp&quot;
+-#include &quot;MacroMicroElasticRelationships.hpp&quot;
++#include &quot;SimpleElasticRelationships.hpp&quot;
+ #include &quot;BodyMacroParameters.hpp&quot;
+ #include &quot;SDECLinkGeometry.hpp&quot;
+ #include &quot;SDECLinkPhysics.hpp&quot;
+@@ -135,15 +137,17 @@
+ 	
+ 	timeStepUpdateInterval = 50;
+ 	timeStepOutputInterval = 50;
+-	wallStiffnessUpdateInterval = 1;
++	wallStiffnessUpdateInterval = 10;
++	radiusControlInterval = 10;
+ 	numberOfGrains = 400;
+ 	strainRate = 0.1;
+ 	StabilityCriterion = 0.01;
+-	autoCompressionActivation = true;
++	autoCompressionActivation = false;
+ 	maxMultiplier = 1.01;
++	finalMaxMultiplier = 1.001;
+ 	
+ 	sphereYoungModulus  = 15000000.0;
+-	spherePoissonRatio  = 0.2;
++	spherePoissonRatio  = 0.5;
+ 	sphereFrictionDeg   = 18.0;
+ 	density			= 2600;
+ 	
+@@ -180,6 +184,7 @@
+ 	//REGISTER_ATTRIBUTE(boxWalls);
+ 	REGISTER_ATTRIBUTE(internalCompaction);
+ 	REGISTER_ATTRIBUTE(maxMultiplier);
++	REGISTER_ATTRIBUTE(finalMaxMultiplier);
+ 
+ 	REGISTER_ATTRIBUTE(sphereYoungModulus);
+ 	REGISTER_ATTRIBUTE(spherePoissonRatio);
+@@ -197,6 +202,7 @@
+ 	REGISTER_ATTRIBUTE(timeStepUpdateInterval);
+ 	REGISTER_ATTRIBUTE(timeStepOutputInterval);
+ 	REGISTER_ATTRIBUTE(wallStiffnessUpdateInterval);
++	REGISTER_ATTRIBUTE(radiusControlInterval);
+ 	REGISTER_ATTRIBUTE(numberOfGrains);
+ 	REGISTER_ATTRIBUTE(strainRate);
+ 	REGISTER_ATTRIBUTE(StabilityCriterion);
+@@ -566,7 +572,7 @@
+ 	interactionGeometryDispatcher-&gt;add(&quot;InteractingSphere&quot;,&quot;InteractingBox&quot;,&quot;InteractingBox2InteractingSphere4SpheresContactGeometry&quot;);
+ 
+ 	shared_ptr&lt;InteractionPhysicsMetaEngine&gt; interactionPhysicsDispatcher(new InteractionPhysicsMetaEngine);
+-	interactionPhysicsDispatcher-&gt;add(&quot;BodyMacroParameters&quot;,&quot;BodyMacroParameters&quot;,&quot;MacroMicroElasticRelationships&quot;);
++	interactionPhysicsDispatcher-&gt;add(&quot;BodyMacroParameters&quot;,&quot;BodyMacroParameters&quot;,&quot;SimpleElasticRelationships&quot;);
+ 		
+ 	shared_ptr&lt;BoundingVolumeMetaEngine&gt; boundingVolumeDispatcher	= shared_ptr&lt;BoundingVolumeMetaEngine&gt;(new BoundingVolumeMetaEngine);
+ 	boundingVolumeDispatcher-&gt;add(&quot;InteractingSphere&quot;,&quot;AABB&quot;,&quot;InteractingSphere2AABB&quot;);
+@@ -624,6 +630,7 @@
+ 	cerr &lt;&lt; &quot;triaxialcompressionEngine = shared_ptr&lt;TriaxialCompressionEngine&gt; (new TriaxialCompressionEngine);&quot; &lt;&lt; std::endl;
+ 	triaxialcompressionEngine = shared_ptr&lt;TriaxialCompressionEngine&gt; (new TriaxialCompressionEngine);
+ 	triaxialcompressionEngine-&gt; interval = wallStiffnessUpdateInterval;// = stiffness update interval
++	triaxialcompressionEngine-&gt; radiusControlInterval = radiusControlInterval;// = stiffness update interval
+ 	triaxialcompressionEngine-&gt; sigma_iso = sigma_iso;
+ 	triaxialcompressionEngine-&gt; max_vel = 0.0001;
+ 	triaxialcompressionEngine-&gt; thickness = thickness;
+@@ -655,6 +662,7 @@
+ 	rootBody-&gt;engines.push_back(interactionGeometryDispatcher);
+ 	rootBody-&gt;engines.push_back(interactionPhysicsDispatcher);
+ 	rootBody-&gt;engines.push_back(elasticContactLaw);
++	rootBody-&gt;engines.push_back(triaxialcompressionEngine);
+ 	//rootBody-&gt;engines.push_back(stiffnesscounter);
+ 	//rootBody-&gt;engines.push_back(stiffnessMatrixTimeStepper);
+ 	rootBody-&gt;engines.push_back(globalStiffnessCounter);
+@@ -667,7 +675,7 @@
+ 		rootBody-&gt;engines.push_back(orientationIntegrator);
+ 	//rootBody-&gt;engines.push_back(resultantforceEngine);
+ 	//rootBody-&gt;engines.push_back(triaxialstressController);
+-	rootBody-&gt;engines.push_back(triaxialcompressionEngine);
++	
+ 		
+ 	rootBody-&gt;engines.push_back(averagePositionRecorder);
+ 	rootBody-&gt;engines.push_back(velocityRecorder);
+
+Modified: trunk/yade-packages/yade-package-dem/src/PreProcessor/TriaxialTest/TriaxialTest.hpp
+===================================================================
+--- trunk/yade-packages/yade-package-dem/src/PreProcessor/TriaxialTest/TriaxialTest.hpp	2007-02-23 16:46:29 UTC (rev 1069)
++++ trunk/yade-packages/yade-package-dem/src/PreProcessor/TriaxialTest/TriaxialTest.hpp	2007-02-23 17:26:24 UTC (rev 1070)
+@@ -57,7 +57,8 @@
+ 				,strainRate
+ 				,StabilityCriterion
+ 				,autoCompressionActivation
+-				,maxMultiplier; ///max multiplier of diameters during internal compaction
++				,maxMultiplier ///max multiplier of diameters during internal compaction
++				,finalMaxMultiplier;
+ 
+ 		bool		 wall_top
+ 				,wall_bottom
+@@ -83,6 +84,7 @@
+ 				,timeStepUpdateInterval
+ 				,timeStepOutputInterval
+ 				,wallStiffnessUpdateInterval
++				,radiusControlInterval
+ 				,numberOfGrains;
+ 				/*,wall_top_id
+ 				,wall_bottom_id
+
+Modified: trunk/yade-packages/yade-package-dem/src/PreProcessor/TriaxialTest/TriaxialTest.pro
+===================================================================
+--- trunk/yade-packages/yade-package-dem/src/PreProcessor/TriaxialTest/TriaxialTest.pro	2007-02-23 16:46:29 UTC (rev 1069)
++++ trunk/yade-packages/yade-package-dem/src/PreProcessor/TriaxialTest/TriaxialTest.pro	2007-02-23 17:26:24 UTC (rev 1070)
+@@ -8,7 +8,7 @@
+         -lAveragePositionRecorder \
+         -lVelocityRecorder \
+         -lForceRecorder \
+-        -lMacroMicroElasticRelationships \
++        -lSimpleElasticRelationships \
+         -lElasticCriterionTimeStepper \
+         -lPhysicalActionVectorVector \
+         -lInteractionVecSet \
+@@ -49,7 +49,7 @@
+                ../../Engine/StandAloneEngine/AveragePositionRecorder \
+                ../../Engine/StandAloneEngine/ElasticCriterionTimeStepper \
+                ../../Engine/StandAloneEngine/ElasticContactLaw \
+-               ../../Engine/EngineUnit/MacroMicroElasticRelationships \
++               ../../Engine/EngineUnit/SimpleElasticRelationships \
+                ../../DataClass/InteractionPhysics/SDECLinkPhysics \
+                ../../DataClass/InteractionGeometry/SDECLinkGeometry \
+ 	        ../../DataClass/PhysicalAction/GlobalStiffness \
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000034.html">[Yade-commits] r1069 - in	trunk/yade-packages/yade-package-dem/src/Engine/EngineUnit: .	SimpleElasticRelationships
+</A></li>
+	<LI>Next message: <A HREF="000036.html">[Yade-commits] r1071 -	trunk/yade-packages/yade-package-dem/src/Engine/EngineUnit
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#35">[ date ]</a>
+              <a href="thread.html#35">[ thread ]</a>
+              <a href="subject.html#35">[ subject ]</a>
+              <a href="author.html#35">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

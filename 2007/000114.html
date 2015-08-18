@@ -1,0 +1,116 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1149 -	branches/scons-layout/pkg/dem/Engine/EngineUnit
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2007/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1149%20-%0A%09branches/scons-layout/pkg/dem/Engine/EngineUnit&In-Reply-To=%3C200703150937.l2F9bKKb002972%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000113.html">
+   <LINK REL="Next"  HREF="000115.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1149 -	branches/scons-layout/pkg/dem/Engine/EngineUnit</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1149%20-%0A%09branches/scons-layout/pkg/dem/Engine/EngineUnit&In-Reply-To=%3C200703150937.l2F9bKKb002972%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1149 -	branches/scons-layout/pkg/dem/Engine/EngineUnit">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Thu Mar 15 10:37:20 CET 2007</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000113.html">[Yade-commits] r1148 - branches/scons-layout/gui
+</A></li>
+        <LI>Next message: <A HREF="000115.html">[Yade-commits] r1150 - in branches/scons-layout: . debian scripts
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#114">[ date ]</a>
+              <a href="thread.html#114">[ thread ]</a>
+              <a href="subject.html#114">[ subject ]</a>
+              <a href="author.html#114">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2007-03-15 10:37:20 +0100 (Thu, 15 Mar 2007)
+New Revision: 1149
+
+Modified:
+   branches/scons-layout/pkg/dem/Engine/EngineUnit/InteractingBox2InteractingSphere4SpheresContactGeometry.cpp
+Log:
+forgotten changes saved - in box-sphere
+
+Modified: branches/scons-layout/pkg/dem/Engine/EngineUnit/InteractingBox2InteractingSphere4SpheresContactGeometry.cpp
+===================================================================
+--- branches/scons-layout/pkg/dem/Engine/EngineUnit/InteractingBox2InteractingSphere4SpheresContactGeometry.cpp	2007-03-15 09:16:26 UTC (rev 1148)
++++ branches/scons-layout/pkg/dem/Engine/EngineUnit/InteractingBox2InteractingSphere4SpheresContactGeometry.cpp	2007-03-15 09:37:20 UTC (rev 1149)
+@@ -51,16 +51,16 @@
+ 	
+ 	if (inside){
+ 		// sphere center inside box. find largest `cOnBox_boxLocal' value:
+-		// min_i is the coordinate index that minimizes extents[min_i]-abs(cOnBox_boxLocal[min_i] (sphere center closest to box boundary)
++		// minCBoxDist_index is the coordinate index that minimizes extents[minCBoxDist_index]-abs(cOnBox_boxLocal[minCBoxDist_index] (sphere center closest to box boundary)
+ 		// where cOnBox_boxLocal is minimal (i.e. where sphere center is closest perpendicularly to the box)
+-		Real min=extents[0]-fabs(cOnBox_boxLocal[0]); int min_i=0;
+-		for (int i=1; i&lt;3; i++){Real tt=extents[i]-fabs(cOnBox_boxLocal[i]); if (tt&lt;min){min=tt; min_i=i;}}
++		Real minCBoxDist=extents[0]-fabs(cOnBox_boxLocal[0]); int minCBoxDist_index=0;
++		for (int i=1; i&lt;3; i++){Real tt=extents[i]-fabs(cOnBox_boxLocal[i]); if (tt&lt;minCBoxDist){minCBoxDist=tt; minCBoxDist_index=i;}}
+ 		
+ 		// contact normal aligned with box edge along largest `cOnBox_boxLocal' value
+-		Vector3r localNormal = Vector3r(0,0,0);
+-		localNormal[min_i] = (cOnBox_boxLocal[min_i] &gt; 0) ? 1.0 : -1.0;
++		Vector3r normal_boxLocal = Vector3r(0,0,0);
++		normal_boxLocal[minCBoxDist_index]=(cOnBox_boxLocal[minCBoxDist_index]&gt;0)?1.0:-1.0;
+ 		
+-		normal = boxAxisT*localNormal;
++		normal = boxAxisT*normal_boxLocal;
+ 		normal.Normalize();
+ 		
+ 		// se32 is sphere's se3
+@@ -69,7 +69,7 @@
+ 		 *           _--(pt1)-_         BOX
+ 		 *  +------~-----x-----~----------------+
+ 		 *  |    /       ^      \               |
+-		 *  |   /        | (normal)*|min|       |
++		 *  |   /        | (normal)*minCBoxDist |
+ 		 *  |   |        x        |             |
+ 		 *  |   \        | c &#8801; se32-&gt;position   |
+ 		 *  |    \       |       /              |
+@@ -80,7 +80,7 @@
+ 		 *
+ 		 *
+ 		 */
+-		pt1 = se32.position+normal*min;
++		pt1 = se32.position+normal*minCBoxDist;
+ 		pt2 = se32.position-normal*s-&gt;radius;
+ 
+ 		shared_ptr&lt;SpheresContactGeometry&gt; scm;
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000113.html">[Yade-commits] r1148 - branches/scons-layout/gui
+</A></li>
+	<LI>Next message: <A HREF="000115.html">[Yade-commits] r1150 - in branches/scons-layout: . debian scripts
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#114">[ date ]</a>
+              <a href="thread.html#114">[ thread ]</a>
+              <a href="subject.html#114">[ subject ]</a>
+              <a href="author.html#114">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

@@ -1,0 +1,1791 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1419 - in trunk: core gui/qt3 pkg/common	pkg/common/Engine pkg/common/Engine/DeusExMachina	pkg/common/Engine/FiltrEngine
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1419%20-%20in%20trunk%3A%20core%20gui/qt3%20pkg/common%0A%09pkg/common/Engine%20pkg/common/Engine/DeusExMachina%0A%09pkg/common/Engine/FiltrEngine&In-Reply-To=%3C200807101735.m6AHZBcT009418%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000378.html">
+   <LINK REL="Next"  HREF="000380.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1419 - in trunk: core gui/qt3 pkg/common	pkg/common/Engine pkg/common/Engine/DeusExMachina	pkg/common/Engine/FiltrEngine</H1>
+    <B>sega at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1419%20-%20in%20trunk%3A%20core%20gui/qt3%20pkg/common%0A%09pkg/common/Engine%20pkg/common/Engine/DeusExMachina%0A%09pkg/common/Engine/FiltrEngine&In-Reply-To=%3C200807101735.m6AHZBcT009418%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1419 - in trunk: core gui/qt3 pkg/common	pkg/common/Engine pkg/common/Engine/DeusExMachina	pkg/common/Engine/FiltrEngine">sega at mail.berlios.de
+       </A><BR>
+    <I>Thu Jul 10 19:35:11 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000378.html">[Yade-commits] r1418 - in trunk: core extra/clump	pkg/common/Engine/StandAloneEngine	pkg/dem/Engine/StandAloneEngine pkg/dem/PreProcessor
+</A></li>
+        <LI>Next message: <A HREF="000380.html">[Yade-commits] r1420 - trunk/pkg/common
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#379">[ date ]</a>
+              <a href="thread.html#379">[ thread ]</a>
+              <a href="subject.html#379">[ subject ]</a>
+              <a href="author.html#379">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: sega
+Date: 2008-07-10 19:35:09 +0200 (Thu, 10 Jul 2008)
+New Revision: 1419
+
+Added:
+   trunk/core/FiltrEngine.cpp
+   trunk/core/FiltrEngine.hpp
+   trunk/pkg/common/Engine/FiltrEngine/
+   trunk/pkg/common/Engine/FiltrEngine/ColorizedLayerFilter.cpp
+   trunk/pkg/common/Engine/FiltrEngine/ColorizedLayerFilter.hpp
+   trunk/pkg/common/Engine/FiltrEngine/ColorizedVelocityFilter.cpp
+   trunk/pkg/common/Engine/FiltrEngine/ColorizedVelocityFilter.hpp
+Modified:
+   trunk/core/Omega.cpp
+   trunk/core/Omega.hpp
+   trunk/core/SConscript
+   trunk/gui/qt3/GLSimulationPlayerViewer.cpp
+   trunk/gui/qt3/GLSimulationPlayerViewer.hpp
+   trunk/gui/qt3/QtGeneratedSimulationPlayer.ui
+   trunk/gui/qt3/QtSimulationPlayer.cpp
+   trunk/gui/qt3/QtSimulationPlayer.hpp
+   trunk/pkg/common/Engine/DeusExMachina/ResetPositionEngine.cpp
+   trunk/pkg/common/Engine/DeusExMachina/ResetPositionEngine.hpp
+   trunk/pkg/common/SConscript
+Log:
+1. Added new engines: 
+- FiltrEngine is a base engine for a scene filtration before
+visualization (both for a player and for a controller). The filtration is
+activated through GUI (now only for SimulationPlayer).
+- ColorizedLayerFilter  allocates with colour a layer of bodies
+- ColorizedVelocityFilter  allocates with colour a velocity of bodies
+2. Add Omega::setCurrentIteration to allow current simulation time from a player
+3. ResetPositionEngine allows onlyDynamic (without save subscribed bodies ids)
+
+
+Added: trunk/core/FiltrEngine.cpp
+===================================================================
+--- trunk/core/FiltrEngine.cpp	2008-07-09 20:59:35 UTC (rev 1418)
++++ trunk/core/FiltrEngine.cpp	2008-07-10 17:35:09 UTC (rev 1419)
+@@ -0,0 +1,20 @@
++/*************************************************************************
++*  Copyright (C) 2008 by Sergei Dorofeenko                               *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">sega at users.berlios.de</A>                                                 *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#include &quot;FiltrEngine.hpp&quot;
++
++bool FiltrEngine::isFiltrationActivated = false;
++
++FiltrEngine::FiltrEngine() : DeusExMachina(), isFilterActivated(false)
++{
++}
++
++bool FiltrEngine::isActivated() 
++{
++	return FiltrEngine::isFiltrationActivated &amp;&amp; isFilterActivated; 
++}
+
+Added: trunk/core/FiltrEngine.hpp
+===================================================================
+--- trunk/core/FiltrEngine.hpp	2008-07-09 20:59:35 UTC (rev 1418)
++++ trunk/core/FiltrEngine.hpp	2008-07-10 17:35:09 UTC (rev 1419)
+@@ -0,0 +1,40 @@
++/*************************************************************************
++*  Copyright (C) 2008 by Sergei Dorofeenko                               *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">sega at users.berlios.de</A>                                                 *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#ifndef FILTRATIONAL_ENGINE_HPP
++#define FILTRATIONAL_ENGINE_HPP
++
++#include&lt;yade/core/DeusExMachina.hpp&gt;
++
++class FiltrEngine : public DeusExMachina {
++	public:
++		/// Activation of filtration from GUI
++		static bool isFiltrationActivated;
++
++		/// Activation of the filter
++		bool isFilterActivated;
++
++		bool isActivated();
++
++		FiltrEngine();
++	
++		void registerAttributes()
++		{
++//			REGISTER_ATTRIBUTE(isFiltrationActivated);
++			REGISTER_ATTRIBUTE(isFilterActivated);
++		}
++
++	protected :
++	REGISTER_CLASS_NAME(FiltrEngine);
++	REGISTER_BASE_CLASS_NAME(DeusExMachina);
++};
++
++REGISTER_SERIALIZABLE(FiltrEngine,false);
++
++#endif // FILTRATIONAL_ENGINE_HPP
++
+
+Modified: trunk/core/Omega.cpp
+===================================================================
+--- trunk/core/Omega.cpp	2008-07-09 20:59:35 UTC (rev 1418)
++++ trunk/core/Omega.cpp	2008-07-10 17:35:09 UTC (rev 1419)
+@@ -40,6 +40,8 @@
+ 
+ void Omega::incrementCurrentIteration(){ ++currentIteration;}
+ long int Omega::getCurrentIteration(){ return currentIteration; }
++void Omega::setCurrentIteration(long int i) { currentIteration=i; }
++
+ void Omega::setSimulationFileName(const string f){simulationFileName = f;}
+ string Omega::getSimulationFileName(){return simulationFileName;}
+ 
+
+Modified: trunk/core/Omega.hpp
+===================================================================
+--- trunk/core/Omega.hpp	2008-07-09 20:59:35 UTC (rev 1418)
++++ trunk/core/Omega.hpp	2008-07-10 17:35:09 UTC (rev 1419)
+@@ -147,6 +147,7 @@
+ 		void 		loadSimulationFromStream(std::istream&amp;);
+ 
+ 		long int	getCurrentIteration();
++		void		setCurrentIteration(long int i);
+ 		void		incrementCurrentIteration();
+ 		
+ 		Real		getSimulationTime() { return simulationTime;};
+
+Modified: trunk/core/SConscript
+===================================================================
+--- trunk/core/SConscript	2008-07-09 20:59:35 UTC (rev 1418)
++++ trunk/core/SConscript	2008-07-10 17:35:09 UTC (rev 1419)
+@@ -5,6 +5,7 @@
+ 			'BodyContainer.cpp',
+ 			'BoundingVolume.cpp',
+ 			'DeusExMachina.cpp',
++			'FiltrEngine.cpp',
+ 			'FileGenerator.cpp',
+ 			'FrontEnd.cpp',
+ 			'GeometricalModel.cpp',
+
+Modified: trunk/gui/qt3/GLSimulationPlayerViewer.cpp
+===================================================================
+--- trunk/gui/qt3/GLSimulationPlayerViewer.cpp	2008-07-09 20:59:35 UTC (rev 1418)
++++ trunk/gui/qt3/GLSimulationPlayerViewer.cpp	2008-07-10 17:35:09 UTC (rev 1419)
+@@ -80,6 +80,10 @@
+ 	if(fromFile){	
+ 		Omega::instance().setSimulationFileName(fileName);
+ 		Omega::instance().loadSimulation();
++		filters.clear();
++		FOREACH(shared_ptr&lt;Engine&gt; e, Omega::instance().getRootBody()-&gt;engines){
++			if( dynamic_cast&lt;FiltrationalEngine*&gt;(e.get()) ) filters.push_back(e);
++		}
+ 	}
+ 	updateGL();
+ 	frameNumber=0;
+@@ -191,5 +195,8 @@
+ 			rgb&gt;&gt;myColor[0]&gt;&gt;myColor[1]&gt;&gt;myColor[2];
+ 		}
+ 	}
++	Omega::instance().setCurrentIteration(atoi(fileName.substr(fileName.rfind('_')+1).c_str()));
++	FOREACH(const shared_ptr&lt;FiltrationalEngine&gt;&amp; e, filters) 
++		{ if(e-&gt;isActivated()) e-&gt;action(Omega::instance().getRootBody().get()); }
+ 	return true;
+ }
+
+Modified: trunk/gui/qt3/GLSimulationPlayerViewer.hpp
+===================================================================
+--- trunk/gui/qt3/GLSimulationPlayerViewer.hpp	2008-07-09 20:59:35 UTC (rev 1418)
++++ trunk/gui/qt3/GLSimulationPlayerViewer.hpp	2008-07-10 17:35:09 UTC (rev 1419)
+@@ -11,6 +11,7 @@
+ 
+ #include&lt;yade/core/Omega.hpp&gt;
+ #include&lt;yade/core/RenderingEngine.hpp&gt;
++#include&lt;yade/core/FiltrationalEngine.hpp&gt;
+ #include&lt;yade/core/MetaBody.hpp&gt;
+ //#include&lt;yade/lib-QGLViewer/qglviewer.h&gt;
+ #include&lt;yade/gui-qt3/GLViewer.hpp&gt;
+@@ -35,6 +36,7 @@
+ 		bool loadPositionOrientationFile();
+ 		list&lt;string&gt; xyzFiles;
+ 		list&lt;string&gt;::iterator xyzFilesIter;
++		vector&lt; shared_ptr&lt; FiltrationalEngine &gt; &gt;   filters;
+ 	public :
+ 		GLSimulationPlayerViewer(QWidget* parent,char* name);
+ 		virtual ~GLSimulationPlayerViewer(){};
+
+Modified: trunk/gui/qt3/QtGeneratedSimulationPlayer.ui
+===================================================================
+--- trunk/gui/qt3/QtGeneratedSimulationPlayer.ui	2008-07-09 20:59:35 UTC (rev 1418)
++++ trunk/gui/qt3/QtGeneratedSimulationPlayer.ui	2008-07-10 17:35:09 UTC (rev 1419)
+@@ -29,511 +29,538 @@
+         &lt;/property&gt;
+         &lt;widget class=&quot;QSplitter&quot;&gt;
+             &lt;property name=&quot;name&quot;&gt;
+-                &lt;cstring&gt;splitter9&lt;/cstring&gt;
++                &lt;cstring&gt;splitter3&lt;/cstring&gt;
+             &lt;/property&gt;
+             &lt;property name=&quot;orientation&quot;&gt;
+                 &lt;enum&gt;Horizontal&lt;/enum&gt;
+             &lt;/property&gt;
+-            &lt;widget class=&quot;QLayoutWidget&quot;&gt;
++            &lt;widget class=&quot;QSplitter&quot;&gt;
+                 &lt;property name=&quot;name&quot;&gt;
+-                    &lt;cstring&gt;layout29&lt;/cstring&gt;
++                    &lt;cstring&gt;splitter2&lt;/cstring&gt;
+                 &lt;/property&gt;
+-                &lt;vbox&gt;
++                &lt;property name=&quot;orientation&quot;&gt;
++                    &lt;enum&gt;Vertical&lt;/enum&gt;
++                &lt;/property&gt;
++                &lt;widget class=&quot;QGroupBox&quot;&gt;
+                     &lt;property name=&quot;name&quot;&gt;
+-                        &lt;cstring&gt;unnamed&lt;/cstring&gt;
++                        &lt;cstring&gt;gbInput&lt;/cstring&gt;
+                     &lt;/property&gt;
+-                    &lt;widget class=&quot;QGroupBox&quot;&gt;
++                    &lt;property name=&quot;sizePolicy&quot;&gt;
++                        &lt;sizepolicy&gt;
++                            &lt;hsizetype&gt;1&lt;/hsizetype&gt;
++                            &lt;vsizetype&gt;4&lt;/vsizetype&gt;
++                            &lt;horstretch&gt;0&lt;/horstretch&gt;
++                            &lt;verstretch&gt;0&lt;/verstretch&gt;
++                        &lt;/sizepolicy&gt;
++                    &lt;/property&gt;
++                    &lt;property name=&quot;title&quot;&gt;
++                        &lt;string&gt;Input&lt;/string&gt;
++                    &lt;/property&gt;
++                    &lt;hbox&gt;
+                         &lt;property name=&quot;name&quot;&gt;
+-                            &lt;cstring&gt;gbInput&lt;/cstring&gt;
++                            &lt;cstring&gt;unnamed&lt;/cstring&gt;
+                         &lt;/property&gt;
+-                        &lt;property name=&quot;sizePolicy&quot;&gt;
+-                            &lt;sizepolicy&gt;
+-                                &lt;hsizetype&gt;1&lt;/hsizetype&gt;
+-                                &lt;vsizetype&gt;4&lt;/vsizetype&gt;
+-                                &lt;horstretch&gt;0&lt;/horstretch&gt;
+-                                &lt;verstretch&gt;0&lt;/verstretch&gt;
+-                            &lt;/sizepolicy&gt;
+-                        &lt;/property&gt;
+-                        &lt;property name=&quot;title&quot;&gt;
+-                            &lt;string&gt;Input&lt;/string&gt;
+-                        &lt;/property&gt;
+-                        &lt;hbox&gt;
++                        &lt;widget class=&quot;QLayoutWidget&quot;&gt;
+                             &lt;property name=&quot;name&quot;&gt;
+-                                &lt;cstring&gt;unnamed&lt;/cstring&gt;
++                                &lt;cstring&gt;layout28&lt;/cstring&gt;
+                             &lt;/property&gt;
+-                            &lt;widget class=&quot;QLayoutWidget&quot;&gt;
++                            &lt;vbox&gt;
+                                 &lt;property name=&quot;name&quot;&gt;
+-                                    &lt;cstring&gt;layout28&lt;/cstring&gt;
++                                    &lt;cstring&gt;unnamed&lt;/cstring&gt;
+                                 &lt;/property&gt;
+-                                &lt;vbox&gt;
++                                &lt;widget class=&quot;QLabel&quot;&gt;
+                                     &lt;property name=&quot;name&quot;&gt;
+-                                        &lt;cstring&gt;unnamed&lt;/cstring&gt;
++                                        &lt;cstring&gt;tlInputConfigFile&lt;/cstring&gt;
+                                     &lt;/property&gt;
+-                                    &lt;widget class=&quot;QLabel&quot;&gt;
+-                                        &lt;property name=&quot;name&quot;&gt;
+-                                            &lt;cstring&gt;tlInputConfigFile&lt;/cstring&gt;
+-                                        &lt;/property&gt;
+-                                        &lt;property name=&quot;sizePolicy&quot;&gt;
+-                                            &lt;sizepolicy&gt;
+-                                                &lt;hsizetype&gt;0&lt;/hsizetype&gt;
+-                                                &lt;vsizetype&gt;5&lt;/vsizetype&gt;
+-                                                &lt;horstretch&gt;0&lt;/horstretch&gt;
+-                                                &lt;verstretch&gt;0&lt;/verstretch&gt;
+-                                            &lt;/sizepolicy&gt;
+-                                        &lt;/property&gt;
+-                                        &lt;property name=&quot;text&quot;&gt;
+-                                            &lt;string&gt;Simluation file:&lt;/string&gt;
+-                                        &lt;/property&gt;
+-                                    &lt;/widget&gt;
+-                                    &lt;widget class=&quot;QLabel&quot;&gt;
+-                                        &lt;property name=&quot;name&quot;&gt;
+-                                            &lt;cstring&gt;textLabel1&lt;/cstring&gt;
+-                                        &lt;/property&gt;
+-                                        &lt;property name=&quot;sizePolicy&quot;&gt;
+-                                            &lt;sizepolicy&gt;
+-                                                &lt;hsizetype&gt;0&lt;/hsizetype&gt;
+-                                                &lt;vsizetype&gt;5&lt;/vsizetype&gt;
+-                                                &lt;horstretch&gt;0&lt;/horstretch&gt;
+-                                                &lt;verstretch&gt;0&lt;/verstretch&gt;
+-                                            &lt;/sizepolicy&gt;
+-                                        &lt;/property&gt;
+-                                        &lt;property name=&quot;text&quot;&gt;
+-                                            &lt;string&gt;Stride:&lt;/string&gt;
+-                                        &lt;/property&gt;
+-                                    &lt;/widget&gt;
+-                                    &lt;widget class=&quot;QLabel&quot;&gt;
+-                                        &lt;property name=&quot;name&quot;&gt;
+-                                            &lt;cstring&gt;tlInputBaseName&lt;/cstring&gt;
+-                                        &lt;/property&gt;
+-                                        &lt;property name=&quot;sizePolicy&quot;&gt;
+-                                            &lt;sizepolicy&gt;
+-                                                &lt;hsizetype&gt;0&lt;/hsizetype&gt;
+-                                                &lt;vsizetype&gt;5&lt;/vsizetype&gt;
+-                                                &lt;horstretch&gt;0&lt;/horstretch&gt;
+-                                                &lt;verstretch&gt;0&lt;/verstretch&gt;
+-                                            &lt;/sizepolicy&gt;
+-                                        &lt;/property&gt;
+-                                        &lt;property name=&quot;text&quot;&gt;
+-                                            &lt;string&gt;Base name:&lt;/string&gt;
+-                                        &lt;/property&gt;
+-                                    &lt;/widget&gt;
+-                                    &lt;widget class=&quot;QLabel&quot;&gt;
+-                                        &lt;property name=&quot;name&quot;&gt;
+-                                            &lt;cstring&gt;tlInputDirectory&lt;/cstring&gt;
+-                                        &lt;/property&gt;
+-                                        &lt;property name=&quot;sizePolicy&quot;&gt;
+-                                            &lt;sizepolicy&gt;
+-                                                &lt;hsizetype&gt;0&lt;/hsizetype&gt;
+-                                                &lt;vsizetype&gt;5&lt;/vsizetype&gt;
+-                                                &lt;horstretch&gt;0&lt;/horstretch&gt;
+-                                                &lt;verstretch&gt;0&lt;/verstretch&gt;
+-                                            &lt;/sizepolicy&gt;
+-                                        &lt;/property&gt;
+-                                        &lt;property name=&quot;text&quot;&gt;
+-                                            &lt;string&gt;Directory:&lt;/string&gt;
+-                                        &lt;/property&gt;
+-                                    &lt;/widget&gt;
+-                                &lt;/vbox&gt;
+-                            &lt;/widget&gt;
+-                            &lt;widget class=&quot;QLayoutWidget&quot;&gt;
++                                    &lt;property name=&quot;sizePolicy&quot;&gt;
++                                        &lt;sizepolicy&gt;
++                                            &lt;hsizetype&gt;0&lt;/hsizetype&gt;
++                                            &lt;vsizetype&gt;5&lt;/vsizetype&gt;
++                                            &lt;horstretch&gt;0&lt;/horstretch&gt;
++                                            &lt;verstretch&gt;0&lt;/verstretch&gt;
++                                        &lt;/sizepolicy&gt;
++                                    &lt;/property&gt;
++                                    &lt;property name=&quot;text&quot;&gt;
++                                        &lt;string&gt;Simluation file:&lt;/string&gt;
++                                    &lt;/property&gt;
++                                &lt;/widget&gt;
++                                &lt;widget class=&quot;QLabel&quot;&gt;
++                                    &lt;property name=&quot;name&quot;&gt;
++                                        &lt;cstring&gt;textLabel1&lt;/cstring&gt;
++                                    &lt;/property&gt;
++                                    &lt;property name=&quot;sizePolicy&quot;&gt;
++                                        &lt;sizepolicy&gt;
++                                            &lt;hsizetype&gt;0&lt;/hsizetype&gt;
++                                            &lt;vsizetype&gt;5&lt;/vsizetype&gt;
++                                            &lt;horstretch&gt;0&lt;/horstretch&gt;
++                                            &lt;verstretch&gt;0&lt;/verstretch&gt;
++                                        &lt;/sizepolicy&gt;
++                                    &lt;/property&gt;
++                                    &lt;property name=&quot;text&quot;&gt;
++                                        &lt;string&gt;Stride:&lt;/string&gt;
++                                    &lt;/property&gt;
++                                &lt;/widget&gt;
++                                &lt;widget class=&quot;QLabel&quot;&gt;
++                                    &lt;property name=&quot;name&quot;&gt;
++                                        &lt;cstring&gt;tlInputBaseName&lt;/cstring&gt;
++                                    &lt;/property&gt;
++                                    &lt;property name=&quot;sizePolicy&quot;&gt;
++                                        &lt;sizepolicy&gt;
++                                            &lt;hsizetype&gt;0&lt;/hsizetype&gt;
++                                            &lt;vsizetype&gt;5&lt;/vsizetype&gt;
++                                            &lt;horstretch&gt;0&lt;/horstretch&gt;
++                                            &lt;verstretch&gt;0&lt;/verstretch&gt;
++                                        &lt;/sizepolicy&gt;
++                                    &lt;/property&gt;
++                                    &lt;property name=&quot;text&quot;&gt;
++                                        &lt;string&gt;Base name:&lt;/string&gt;
++                                    &lt;/property&gt;
++                                &lt;/widget&gt;
++                                &lt;widget class=&quot;QLabel&quot;&gt;
++                                    &lt;property name=&quot;name&quot;&gt;
++                                        &lt;cstring&gt;tlInputDirectory&lt;/cstring&gt;
++                                    &lt;/property&gt;
++                                    &lt;property name=&quot;sizePolicy&quot;&gt;
++                                        &lt;sizepolicy&gt;
++                                            &lt;hsizetype&gt;0&lt;/hsizetype&gt;
++                                            &lt;vsizetype&gt;5&lt;/vsizetype&gt;
++                                            &lt;horstretch&gt;0&lt;/horstretch&gt;
++                                            &lt;verstretch&gt;0&lt;/verstretch&gt;
++                                        &lt;/sizepolicy&gt;
++                                    &lt;/property&gt;
++                                    &lt;property name=&quot;text&quot;&gt;
++                                        &lt;string&gt;Directory:&lt;/string&gt;
++                                    &lt;/property&gt;
++                                &lt;/widget&gt;
++                            &lt;/vbox&gt;
++                        &lt;/widget&gt;
++                        &lt;widget class=&quot;QLayoutWidget&quot;&gt;
++                            &lt;property name=&quot;name&quot;&gt;
++                                &lt;cstring&gt;layout27&lt;/cstring&gt;
++                            &lt;/property&gt;
++                            &lt;grid&gt;
+                                 &lt;property name=&quot;name&quot;&gt;
+-                                    &lt;cstring&gt;layout27&lt;/cstring&gt;
++                                    &lt;cstring&gt;unnamed&lt;/cstring&gt;
+                                 &lt;/property&gt;
+-                                &lt;grid&gt;
++                                &lt;widget class=&quot;QPushButton&quot; row=&quot;3&quot; column=&quot;2&quot;&gt;
+                                     &lt;property name=&quot;name&quot;&gt;
+-                                        &lt;cstring&gt;unnamed&lt;/cstring&gt;
++                                        &lt;cstring&gt;pbInputDirectory&lt;/cstring&gt;
+                                     &lt;/property&gt;
+-                                    &lt;widget class=&quot;QPushButton&quot; row=&quot;3&quot; column=&quot;2&quot;&gt;
+-                                        &lt;property name=&quot;name&quot;&gt;
+-                                            &lt;cstring&gt;pbInputDirectory&lt;/cstring&gt;
+-                                        &lt;/property&gt;
+-                                        &lt;property name=&quot;enabled&quot;&gt;
+-                                            &lt;bool&gt;false&lt;/bool&gt;
+-                                        &lt;/property&gt;
+-                                        &lt;property name=&quot;sizePolicy&quot;&gt;
+-                                            &lt;sizepolicy&gt;
+-                                                &lt;hsizetype&gt;0&lt;/hsizetype&gt;
+-                                                &lt;vsizetype&gt;0&lt;/vsizetype&gt;
+-                                                &lt;horstretch&gt;0&lt;/horstretch&gt;
+-                                                &lt;verstretch&gt;0&lt;/verstretch&gt;
+-                                            &lt;/sizepolicy&gt;
+-                                        &lt;/property&gt;
+-                                        &lt;property name=&quot;text&quot;&gt;
+-                                            &lt;string&gt;&lt;/string&gt;
+-                                        &lt;/property&gt;
+-                                        &lt;property name=&quot;pixmap&quot;&gt;
+-                                            &lt;pixmap&gt;image0&lt;/pixmap&gt;
+-                                        &lt;/property&gt;
+-                                    &lt;/widget&gt;
+-                                    &lt;widget class=&quot;QLineEdit&quot; row=&quot;0&quot; column=&quot;0&quot; rowspan=&quot;1&quot; colspan=&quot;2&quot;&gt;
+-                                        &lt;property name=&quot;name&quot;&gt;
+-                                            &lt;cstring&gt;leInputConfigFile&lt;/cstring&gt;
+-                                        &lt;/property&gt;
+-                                        &lt;property name=&quot;sizePolicy&quot;&gt;
+-                                            &lt;sizepolicy&gt;
+-                                                &lt;hsizetype&gt;7&lt;/hsizetype&gt;
+-                                                &lt;vsizetype&gt;1&lt;/vsizetype&gt;
+-                                                &lt;horstretch&gt;0&lt;/horstretch&gt;
+-                                                &lt;verstretch&gt;0&lt;/verstretch&gt;
+-                                            &lt;/sizepolicy&gt;
+-                                        &lt;/property&gt;
+-                                    &lt;/widget&gt;
+-                                    &lt;widget class=&quot;QLineEdit&quot; row=&quot;2&quot; column=&quot;0&quot; rowspan=&quot;1&quot; colspan=&quot;3&quot;&gt;
+-                                        &lt;property name=&quot;name&quot;&gt;
+-                                            &lt;cstring&gt;leInputBaseName&lt;/cstring&gt;
+-                                        &lt;/property&gt;
+-                                        &lt;property name=&quot;enabled&quot;&gt;
+-                                            &lt;bool&gt;false&lt;/bool&gt;
+-                                        &lt;/property&gt;
+-                                        &lt;property name=&quot;sizePolicy&quot;&gt;
+-                                            &lt;sizepolicy&gt;
+-                                                &lt;hsizetype&gt;1&lt;/hsizetype&gt;
+-                                                &lt;vsizetype&gt;1&lt;/vsizetype&gt;
+-                                                &lt;horstretch&gt;0&lt;/horstretch&gt;
+-                                                &lt;verstretch&gt;0&lt;/verstretch&gt;
+-                                            &lt;/sizepolicy&gt;
+-                                        &lt;/property&gt;
+-                                        &lt;property name=&quot;paletteBackgroundColor&quot;&gt;
+-                                            &lt;color&gt;
+-                                                &lt;red&gt;170&lt;/red&gt;
+-                                                &lt;green&gt;170&lt;/green&gt;
+-                                                &lt;blue&gt;127&lt;/blue&gt;
+-                                            &lt;/color&gt;
+-                                        &lt;/property&gt;
+-                                        &lt;property name=&quot;text&quot;&gt;
+-                                            &lt;string&gt;&lt;/string&gt;
+-                                        &lt;/property&gt;
+-                                    &lt;/widget&gt;
+-                                    &lt;widget class=&quot;QLineEdit&quot; row=&quot;3&quot; column=&quot;0&quot; rowspan=&quot;1&quot; colspan=&quot;2&quot;&gt;
+-                                        &lt;property name=&quot;name&quot;&gt;
+-                                            &lt;cstring&gt;leInputDirectory&lt;/cstring&gt;
+-                                        &lt;/property&gt;
+-                                        &lt;property name=&quot;enabled&quot;&gt;
+-                                            &lt;bool&gt;false&lt;/bool&gt;
+-                                        &lt;/property&gt;
+-                                        &lt;property name=&quot;sizePolicy&quot;&gt;
+-                                            &lt;sizepolicy&gt;
+-                                                &lt;hsizetype&gt;7&lt;/hsizetype&gt;
+-                                                &lt;vsizetype&gt;1&lt;/vsizetype&gt;
+-                                                &lt;horstretch&gt;0&lt;/horstretch&gt;
+-                                                &lt;verstretch&gt;0&lt;/verstretch&gt;
+-                                            &lt;/sizepolicy&gt;
+-                                        &lt;/property&gt;
+-                                        &lt;property name=&quot;paletteBackgroundColor&quot;&gt;
+-                                            &lt;color&gt;
+-                                                &lt;red&gt;170&lt;/red&gt;
+-                                                &lt;green&gt;170&lt;/green&gt;
+-                                                &lt;blue&gt;127&lt;/blue&gt;
+-                                            &lt;/color&gt;
+-                                        &lt;/property&gt;
+-                                        &lt;property name=&quot;text&quot;&gt;
+-                                            &lt;string&gt;&lt;/string&gt;
+-                                        &lt;/property&gt;
+-                                    &lt;/widget&gt;
+-                                    &lt;widget class=&quot;QSpinBox&quot; row=&quot;1&quot; column=&quot;0&quot;&gt;
+-                                        &lt;property name=&quot;name&quot;&gt;
+-                                            &lt;cstring&gt;sbStride&lt;/cstring&gt;
+-                                        &lt;/property&gt;
+-                                        &lt;property name=&quot;maxValue&quot;&gt;
+-                                            &lt;number&gt;100&lt;/number&gt;
+-                                        &lt;/property&gt;
+-                                        &lt;property name=&quot;minValue&quot;&gt;
+-                                            &lt;number&gt;1&lt;/number&gt;
+-                                        &lt;/property&gt;
+-                                        &lt;property name=&quot;lineStep&quot;&gt;
+-                                            &lt;number&gt;1&lt;/number&gt;
+-                                        &lt;/property&gt;
+-                                        &lt;property name=&quot;value&quot;&gt;
+-                                            &lt;number&gt;1&lt;/number&gt;
+-                                        &lt;/property&gt;
+-                                        &lt;property name=&quot;toolTip&quot; stdset=&quot;0&quot;&gt;
+-                                            &lt;string&gt;take only every i-th file in the sequence found&lt;/string&gt;
+-                                        &lt;/property&gt;
+-                                    &lt;/widget&gt;
+-                                    &lt;widget class=&quot;QPushButton&quot; row=&quot;1&quot; column=&quot;1&quot; rowspan=&quot;1&quot; colspan=&quot;2&quot;&gt;
+-                                        &lt;property name=&quot;name&quot;&gt;
+-                                            &lt;cstring&gt;pbLoad&lt;/cstring&gt;
+-                                        &lt;/property&gt;
+-                                        &lt;property name=&quot;sizePolicy&quot;&gt;
+-                                            &lt;sizepolicy&gt;
+-                                                &lt;hsizetype&gt;1&lt;/hsizetype&gt;
+-                                                &lt;vsizetype&gt;0&lt;/vsizetype&gt;
+-                                                &lt;horstretch&gt;0&lt;/horstretch&gt;
+-                                                &lt;verstretch&gt;0&lt;/verstretch&gt;
+-                                            &lt;/sizepolicy&gt;
+-                                        &lt;/property&gt;
+-                                        &lt;property name=&quot;text&quot;&gt;
+-                                            &lt;string&gt;Load&lt;/string&gt;
+-                                        &lt;/property&gt;
+-                                    &lt;/widget&gt;
+-                                    &lt;widget class=&quot;QPushButton&quot; row=&quot;0&quot; column=&quot;2&quot;&gt;
+-                                        &lt;property name=&quot;name&quot;&gt;
+-                                            &lt;cstring&gt;pbInputConfigFile&lt;/cstring&gt;
+-                                        &lt;/property&gt;
+-                                        &lt;property name=&quot;sizePolicy&quot;&gt;
+-                                            &lt;sizepolicy&gt;
+-                                                &lt;hsizetype&gt;0&lt;/hsizetype&gt;
+-                                                &lt;vsizetype&gt;0&lt;/vsizetype&gt;
+-                                                &lt;horstretch&gt;0&lt;/horstretch&gt;
+-                                                &lt;verstretch&gt;0&lt;/verstretch&gt;
+-                                            &lt;/sizepolicy&gt;
+-                                        &lt;/property&gt;
+-                                        &lt;property name=&quot;text&quot;&gt;
+-                                            &lt;string&gt;&lt;/string&gt;
+-                                        &lt;/property&gt;
+-                                        &lt;property name=&quot;pixmap&quot;&gt;
+-                                            &lt;pixmap&gt;image0&lt;/pixmap&gt;
+-                                        &lt;/property&gt;
+-                                    &lt;/widget&gt;
+-                                &lt;/grid&gt;
+-                            &lt;/widget&gt;
+-                        &lt;/hbox&gt;
+-                    &lt;/widget&gt;
+-                    &lt;widget class=&quot;QGroupBox&quot;&gt;
++                                    &lt;property name=&quot;enabled&quot;&gt;
++                                        &lt;bool&gt;false&lt;/bool&gt;
++                                    &lt;/property&gt;
++                                    &lt;property name=&quot;sizePolicy&quot;&gt;
++                                        &lt;sizepolicy&gt;
++                                            &lt;hsizetype&gt;0&lt;/hsizetype&gt;
++                                            &lt;vsizetype&gt;0&lt;/vsizetype&gt;
++                                            &lt;horstretch&gt;0&lt;/horstretch&gt;
++                                            &lt;verstretch&gt;0&lt;/verstretch&gt;
++                                        &lt;/sizepolicy&gt;
++                                    &lt;/property&gt;
++                                    &lt;property name=&quot;text&quot;&gt;
++                                        &lt;string&gt;&lt;/string&gt;
++                                    &lt;/property&gt;
++                                    &lt;property name=&quot;pixmap&quot;&gt;
++                                        &lt;pixmap&gt;image0&lt;/pixmap&gt;
++                                    &lt;/property&gt;
++                                &lt;/widget&gt;
++                                &lt;widget class=&quot;QLineEdit&quot; row=&quot;0&quot; column=&quot;0&quot; rowspan=&quot;1&quot; colspan=&quot;2&quot;&gt;
++                                    &lt;property name=&quot;name&quot;&gt;
++                                        &lt;cstring&gt;leInputConfigFile&lt;/cstring&gt;
++                                    &lt;/property&gt;
++                                    &lt;property name=&quot;sizePolicy&quot;&gt;
++                                        &lt;sizepolicy&gt;
++                                            &lt;hsizetype&gt;7&lt;/hsizetype&gt;
++                                            &lt;vsizetype&gt;1&lt;/vsizetype&gt;
++                                            &lt;horstretch&gt;0&lt;/horstretch&gt;
++                                            &lt;verstretch&gt;0&lt;/verstretch&gt;
++                                        &lt;/sizepolicy&gt;
++                                    &lt;/property&gt;
++                                &lt;/widget&gt;
++                                &lt;widget class=&quot;QLineEdit&quot; row=&quot;2&quot; column=&quot;0&quot; rowspan=&quot;1&quot; colspan=&quot;3&quot;&gt;
++                                    &lt;property name=&quot;name&quot;&gt;
++                                        &lt;cstring&gt;leInputBaseName&lt;/cstring&gt;
++                                    &lt;/property&gt;
++                                    &lt;property name=&quot;enabled&quot;&gt;
++                                        &lt;bool&gt;false&lt;/bool&gt;
++                                    &lt;/property&gt;
++                                    &lt;property name=&quot;sizePolicy&quot;&gt;
++                                        &lt;sizepolicy&gt;
++                                            &lt;hsizetype&gt;1&lt;/hsizetype&gt;
++                                            &lt;vsizetype&gt;1&lt;/vsizetype&gt;
++                                            &lt;horstretch&gt;0&lt;/horstretch&gt;
++                                            &lt;verstretch&gt;0&lt;/verstretch&gt;
++                                        &lt;/sizepolicy&gt;
++                                    &lt;/property&gt;
++                                    &lt;property name=&quot;paletteBackgroundColor&quot;&gt;
++                                        &lt;color&gt;
++                                            &lt;red&gt;170&lt;/red&gt;
++                                            &lt;green&gt;170&lt;/green&gt;
++                                            &lt;blue&gt;127&lt;/blue&gt;
++                                        &lt;/color&gt;
++                                    &lt;/property&gt;
++                                    &lt;property name=&quot;text&quot;&gt;
++                                        &lt;string&gt;&lt;/string&gt;
++                                    &lt;/property&gt;
++                                &lt;/widget&gt;
++                                &lt;widget class=&quot;QLineEdit&quot; row=&quot;3&quot; column=&quot;0&quot; rowspan=&quot;1&quot; colspan=&quot;2&quot;&gt;
++                                    &lt;property name=&quot;name&quot;&gt;
++                                        &lt;cstring&gt;leInputDirectory&lt;/cstring&gt;
++                                    &lt;/property&gt;
++                                    &lt;property name=&quot;enabled&quot;&gt;
++                                        &lt;bool&gt;false&lt;/bool&gt;
++                                    &lt;/property&gt;
++                                    &lt;property name=&quot;sizePolicy&quot;&gt;
++                                        &lt;sizepolicy&gt;
++                                            &lt;hsizetype&gt;7&lt;/hsizetype&gt;
++                                            &lt;vsizetype&gt;1&lt;/vsizetype&gt;
++                                            &lt;horstretch&gt;0&lt;/horstretch&gt;
++                                            &lt;verstretch&gt;0&lt;/verstretch&gt;
++                                        &lt;/sizepolicy&gt;
++                                    &lt;/property&gt;
++                                    &lt;property name=&quot;paletteBackgroundColor&quot;&gt;
++                                        &lt;color&gt;
++                                            &lt;red&gt;170&lt;/red&gt;
++                                            &lt;green&gt;170&lt;/green&gt;
++                                            &lt;blue&gt;127&lt;/blue&gt;
++                                        &lt;/color&gt;
++                                    &lt;/property&gt;
++                                    &lt;property name=&quot;text&quot;&gt;
++                                        &lt;string&gt;&lt;/string&gt;
++                                    &lt;/property&gt;
++                                &lt;/widget&gt;
++                                &lt;widget class=&quot;QSpinBox&quot; row=&quot;1&quot; column=&quot;0&quot;&gt;
++                                    &lt;property name=&quot;name&quot;&gt;
++                                        &lt;cstring&gt;sbStride&lt;/cstring&gt;
++                                    &lt;/property&gt;
++                                    &lt;property name=&quot;maxValue&quot;&gt;
++                                        &lt;number&gt;100&lt;/number&gt;
++                                    &lt;/property&gt;
++                                    &lt;property name=&quot;minValue&quot;&gt;
++                                        &lt;number&gt;1&lt;/number&gt;
++                                    &lt;/property&gt;
++                                    &lt;property name=&quot;lineStep&quot;&gt;
++                                        &lt;number&gt;1&lt;/number&gt;
++                                    &lt;/property&gt;
++                                    &lt;property name=&quot;value&quot;&gt;
++                                        &lt;number&gt;1&lt;/number&gt;
++                                    &lt;/property&gt;
++                                    &lt;property name=&quot;toolTip&quot; stdset=&quot;0&quot;&gt;
++                                        &lt;string&gt;take only every i-th file in the sequence found&lt;/string&gt;
++                                    &lt;/property&gt;
++                                &lt;/widget&gt;
++                                &lt;widget class=&quot;QPushButton&quot; row=&quot;1&quot; column=&quot;1&quot; rowspan=&quot;1&quot; colspan=&quot;2&quot;&gt;
++                                    &lt;property name=&quot;name&quot;&gt;
++                                        &lt;cstring&gt;pbLoad&lt;/cstring&gt;
++                                    &lt;/property&gt;
++                                    &lt;property name=&quot;sizePolicy&quot;&gt;
++                                        &lt;sizepolicy&gt;
++                                            &lt;hsizetype&gt;1&lt;/hsizetype&gt;
++                                            &lt;vsizetype&gt;0&lt;/vsizetype&gt;
++                                            &lt;horstretch&gt;0&lt;/horstretch&gt;
++                                            &lt;verstretch&gt;0&lt;/verstretch&gt;
++                                        &lt;/sizepolicy&gt;
++                                    &lt;/property&gt;
++                                    &lt;property name=&quot;text&quot;&gt;
++                                        &lt;string&gt;Load&lt;/string&gt;
++                                    &lt;/property&gt;
++                                &lt;/widget&gt;
++                                &lt;widget class=&quot;QPushButton&quot; row=&quot;0&quot; column=&quot;2&quot;&gt;
++                                    &lt;property name=&quot;name&quot;&gt;
++                                        &lt;cstring&gt;pbInputConfigFile&lt;/cstring&gt;
++                                    &lt;/property&gt;
++                                    &lt;property name=&quot;sizePolicy&quot;&gt;
++                                        &lt;sizepolicy&gt;
++                                            &lt;hsizetype&gt;0&lt;/hsizetype&gt;
++                                            &lt;vsizetype&gt;0&lt;/vsizetype&gt;
++                                            &lt;horstretch&gt;0&lt;/horstretch&gt;
++                                            &lt;verstretch&gt;0&lt;/verstretch&gt;
++                                        &lt;/sizepolicy&gt;
++                                    &lt;/property&gt;
++                                    &lt;property name=&quot;text&quot;&gt;
++                                        &lt;string&gt;&lt;/string&gt;
++                                    &lt;/property&gt;
++                                    &lt;property name=&quot;pixmap&quot;&gt;
++                                        &lt;pixmap&gt;image0&lt;/pixmap&gt;
++                                    &lt;/property&gt;
++                                &lt;/widget&gt;
++                            &lt;/grid&gt;
++                        &lt;/widget&gt;
++                    &lt;/hbox&gt;
++                &lt;/widget&gt;
++                &lt;widget class=&quot;QGroupBox&quot;&gt;
++                    &lt;property name=&quot;name&quot;&gt;
++                        &lt;cstring&gt;gbSnapShots&lt;/cstring&gt;
++                    &lt;/property&gt;
++                    &lt;property name=&quot;sizePolicy&quot;&gt;
++                        &lt;sizepolicy&gt;
++                            &lt;hsizetype&gt;1&lt;/hsizetype&gt;
++                            &lt;vsizetype&gt;4&lt;/vsizetype&gt;
++                            &lt;horstretch&gt;0&lt;/horstretch&gt;
++                            &lt;verstretch&gt;0&lt;/verstretch&gt;
++                        &lt;/sizepolicy&gt;
++                    &lt;/property&gt;
++                    &lt;property name=&quot;title&quot;&gt;
++                        &lt;string&gt;Snapshots&lt;/string&gt;
++                    &lt;/property&gt;
++                    &lt;grid&gt;
+                         &lt;property name=&quot;name&quot;&gt;
+-                            &lt;cstring&gt;gbSnapShots&lt;/cstring&gt;
++                            &lt;cstring&gt;unnamed&lt;/cstring&gt;
+                         &lt;/property&gt;
+-                        &lt;property name=&quot;sizePolicy&quot;&gt;
+-                            &lt;sizepolicy&gt;
+-                                &lt;hsizetype&gt;1&lt;/hsizetype&gt;
+-                                &lt;vsizetype&gt;4&lt;/vsizetype&gt;
+-                                &lt;horstretch&gt;0&lt;/horstretch&gt;
+-                                &lt;verstretch&gt;0&lt;/verstretch&gt;
+-                            &lt;/sizepolicy&gt;
++                        &lt;widget class=&quot;QLineEdit&quot; row=&quot;2&quot; column=&quot;1&quot;&gt;
++                            &lt;property name=&quot;name&quot;&gt;
++                                &lt;cstring&gt;leOutputDirectory&lt;/cstring&gt;
++                            &lt;/property&gt;
++                            &lt;property name=&quot;sizePolicy&quot;&gt;
++                                &lt;sizepolicy&gt;
++                                    &lt;hsizetype&gt;1&lt;/hsizetype&gt;
++                                    &lt;vsizetype&gt;1&lt;/vsizetype&gt;
++                                    &lt;horstretch&gt;0&lt;/horstretch&gt;
++                                    &lt;verstretch&gt;0&lt;/verstretch&gt;
++                                &lt;/sizepolicy&gt;
++                            &lt;/property&gt;
++                            &lt;property name=&quot;text&quot;&gt;
++                                &lt;string&gt;/tmp&lt;/string&gt;
++                            &lt;/property&gt;
++                        &lt;/widget&gt;
++                        &lt;widget class=&quot;QLabel&quot; row=&quot;1&quot; column=&quot;0&quot;&gt;
++                            &lt;property name=&quot;name&quot;&gt;
++                                &lt;cstring&gt;tlOuputBaseName&lt;/cstring&gt;
++                            &lt;/property&gt;
++                            &lt;property name=&quot;sizePolicy&quot;&gt;
++                                &lt;sizepolicy&gt;
++                                    &lt;hsizetype&gt;4&lt;/hsizetype&gt;
++                                    &lt;vsizetype&gt;5&lt;/vsizetype&gt;
++                                    &lt;horstretch&gt;0&lt;/horstretch&gt;
++                                    &lt;verstretch&gt;0&lt;/verstretch&gt;
++                                &lt;/sizepolicy&gt;
++                            &lt;/property&gt;
++                            &lt;property name=&quot;text&quot;&gt;
++                                &lt;string&gt;Base Name:&lt;/string&gt;
++                            &lt;/property&gt;
++                        &lt;/widget&gt;
++                        &lt;widget class=&quot;QPushButton&quot; row=&quot;2&quot; column=&quot;2&quot;&gt;
++                            &lt;property name=&quot;name&quot;&gt;
++                                &lt;cstring&gt;pbOutputDirectory&lt;/cstring&gt;
++                            &lt;/property&gt;
++                            &lt;property name=&quot;sizePolicy&quot;&gt;
++                                &lt;sizepolicy&gt;
++                                    &lt;hsizetype&gt;0&lt;/hsizetype&gt;
++                                    &lt;vsizetype&gt;0&lt;/vsizetype&gt;
++                                    &lt;horstretch&gt;0&lt;/horstretch&gt;
++                                    &lt;verstretch&gt;0&lt;/verstretch&gt;
++                                &lt;/sizepolicy&gt;
++                            &lt;/property&gt;
++                            &lt;property name=&quot;text&quot;&gt;
++                                &lt;string&gt;&lt;/string&gt;
++                            &lt;/property&gt;
++                            &lt;property name=&quot;pixmap&quot;&gt;
++                                &lt;pixmap&gt;image0&lt;/pixmap&gt;
++                            &lt;/property&gt;
++                        &lt;/widget&gt;
++                        &lt;widget class=&quot;QLineEdit&quot; row=&quot;1&quot; column=&quot;1&quot; rowspan=&quot;1&quot; colspan=&quot;2&quot;&gt;
++                            &lt;property name=&quot;name&quot;&gt;
++                                &lt;cstring&gt;leOutputBaseName&lt;/cstring&gt;
++                            &lt;/property&gt;
++                            &lt;property name=&quot;sizePolicy&quot;&gt;
++                                &lt;sizepolicy&gt;
++                                    &lt;hsizetype&gt;1&lt;/hsizetype&gt;
++                                    &lt;vsizetype&gt;1&lt;/vsizetype&gt;
++                                    &lt;horstretch&gt;0&lt;/horstretch&gt;
++                                    &lt;verstretch&gt;0&lt;/verstretch&gt;
++                                &lt;/sizepolicy&gt;
++                            &lt;/property&gt;
++                            &lt;property name=&quot;text&quot;&gt;
++                                &lt;string&gt;frame-&lt;/string&gt;
++                            &lt;/property&gt;
++                        &lt;/widget&gt;
++                        &lt;widget class=&quot;QCheckBox&quot; row=&quot;0&quot; column=&quot;0&quot; rowspan=&quot;1&quot; colspan=&quot;3&quot;&gt;
++                            &lt;property name=&quot;name&quot;&gt;
++                                &lt;cstring&gt;cbSaveSnapShots&lt;/cstring&gt;
++                            &lt;/property&gt;
++                            &lt;property name=&quot;enabled&quot;&gt;
++                                &lt;bool&gt;true&lt;/bool&gt;
++                            &lt;/property&gt;
++                            &lt;property name=&quot;text&quot;&gt;
++                                &lt;string&gt;Save snapshots&lt;/string&gt;
++                            &lt;/property&gt;
++                            &lt;property name=&quot;checked&quot;&gt;
++                                &lt;bool&gt;false&lt;/bool&gt;
++                            &lt;/property&gt;
++                            &lt;property name=&quot;tristate&quot;&gt;
++                                &lt;bool&gt;false&lt;/bool&gt;
++                            &lt;/property&gt;
++                        &lt;/widget&gt;
++                        &lt;widget class=&quot;QLabel&quot; row=&quot;2&quot; column=&quot;0&quot;&gt;
++                            &lt;property name=&quot;name&quot;&gt;
++                                &lt;cstring&gt;tlOutputDirectory&lt;/cstring&gt;
++                            &lt;/property&gt;
++                            &lt;property name=&quot;sizePolicy&quot;&gt;
++                                &lt;sizepolicy&gt;
++                                    &lt;hsizetype&gt;4&lt;/hsizetype&gt;
++                                    &lt;vsizetype&gt;5&lt;/vsizetype&gt;
++                                    &lt;horstretch&gt;0&lt;/horstretch&gt;
++                                    &lt;verstretch&gt;0&lt;/verstretch&gt;
++                                &lt;/sizepolicy&gt;
++                            &lt;/property&gt;
++                            &lt;property name=&quot;text&quot;&gt;
++                                &lt;string&gt;Directory:&lt;/string&gt;
++                            &lt;/property&gt;
++                        &lt;/widget&gt;
++                    &lt;/grid&gt;
++                &lt;/widget&gt;
++                &lt;widget class=&quot;QGroupBox&quot;&gt;
++                    &lt;property name=&quot;name&quot;&gt;
++                        &lt;cstring&gt;gbController&lt;/cstring&gt;
++                    &lt;/property&gt;
++                    &lt;property name=&quot;sizePolicy&quot;&gt;
++                        &lt;sizepolicy&gt;
++                            &lt;hsizetype&gt;1&lt;/hsizetype&gt;
++                            &lt;vsizetype&gt;4&lt;/vsizetype&gt;
++                            &lt;horstretch&gt;0&lt;/horstretch&gt;
++                            &lt;verstretch&gt;0&lt;/verstretch&gt;
++                        &lt;/sizepolicy&gt;
++                    &lt;/property&gt;
++                    &lt;property name=&quot;title&quot;&gt;
++                        &lt;string&gt;Controller&lt;/string&gt;
++                    &lt;/property&gt;
++                    &lt;hbox&gt;
++                        &lt;property name=&quot;name&quot;&gt;
++                            &lt;cstring&gt;unnamed&lt;/cstring&gt;
+                         &lt;/property&gt;
+-                        &lt;property name=&quot;title&quot;&gt;
+-                            &lt;string&gt;Snapshots&lt;/string&gt;
+-                        &lt;/property&gt;
+-                        &lt;grid&gt;
++                        &lt;widget class=&quot;QPushButton&quot;&gt;
+                             &lt;property name=&quot;name&quot;&gt;
+-                                &lt;cstring&gt;unnamed&lt;/cstring&gt;
++                                &lt;cstring&gt;pbPlay&lt;/cstring&gt;
+                             &lt;/property&gt;
+-                            &lt;widget class=&quot;QLineEdit&quot; row=&quot;2&quot; column=&quot;1&quot;&gt;
+-                                &lt;property name=&quot;name&quot;&gt;
+-                                    &lt;cstring&gt;leOutputDirectory&lt;/cstring&gt;
+-                                &lt;/property&gt;
+-                                &lt;property name=&quot;sizePolicy&quot;&gt;
+-                                    &lt;sizepolicy&gt;
+-                                        &lt;hsizetype&gt;1&lt;/hsizetype&gt;
+-                                        &lt;vsizetype&gt;1&lt;/vsizetype&gt;
+-                                        &lt;horstretch&gt;0&lt;/horstretch&gt;
+-                                        &lt;verstretch&gt;0&lt;/verstretch&gt;
+-                                    &lt;/sizepolicy&gt;
+-                                &lt;/property&gt;
+-                                &lt;property name=&quot;text&quot;&gt;
+-                                    &lt;string&gt;/tmp&lt;/string&gt;
+-                                &lt;/property&gt;
+-                            &lt;/widget&gt;
+-                            &lt;widget class=&quot;QLabel&quot; row=&quot;1&quot; column=&quot;0&quot;&gt;
+-                                &lt;property name=&quot;name&quot;&gt;
+-                                    &lt;cstring&gt;tlOuputBaseName&lt;/cstring&gt;
+-                                &lt;/property&gt;
+-                                &lt;property name=&quot;sizePolicy&quot;&gt;
+-                                    &lt;sizepolicy&gt;
+-                                        &lt;hsizetype&gt;4&lt;/hsizetype&gt;
+-                                        &lt;vsizetype&gt;5&lt;/vsizetype&gt;
+-                                        &lt;horstretch&gt;0&lt;/horstretch&gt;
+-                                        &lt;verstretch&gt;0&lt;/verstretch&gt;
+-                                    &lt;/sizepolicy&gt;
+-                                &lt;/property&gt;
+-                                &lt;property name=&quot;text&quot;&gt;
+-                                    &lt;string&gt;Base Name:&lt;/string&gt;
+-                                &lt;/property&gt;
+-                            &lt;/widget&gt;
+-                            &lt;widget class=&quot;QPushButton&quot; row=&quot;2&quot; column=&quot;2&quot;&gt;
+-                                &lt;property name=&quot;name&quot;&gt;
+-                                    &lt;cstring&gt;pbOutputDirectory&lt;/cstring&gt;
+-                                &lt;/property&gt;
+-                                &lt;property name=&quot;sizePolicy&quot;&gt;
+-                                    &lt;sizepolicy&gt;
+-                                        &lt;hsizetype&gt;0&lt;/hsizetype&gt;
+-                                        &lt;vsizetype&gt;0&lt;/vsizetype&gt;
+-                                        &lt;horstretch&gt;0&lt;/horstretch&gt;
+-                                        &lt;verstretch&gt;0&lt;/verstretch&gt;
+-                                    &lt;/sizepolicy&gt;
+-                                &lt;/property&gt;
+-                                &lt;property name=&quot;text&quot;&gt;
+-                                    &lt;string&gt;&lt;/string&gt;
+-                                &lt;/property&gt;
+-                                &lt;property name=&quot;pixmap&quot;&gt;
+-                                    &lt;pixmap&gt;image0&lt;/pixmap&gt;
+-                                &lt;/property&gt;
+-                            &lt;/widget&gt;
+-                            &lt;widget class=&quot;QLineEdit&quot; row=&quot;1&quot; column=&quot;1&quot; rowspan=&quot;1&quot; colspan=&quot;2&quot;&gt;
+-                                &lt;property name=&quot;name&quot;&gt;
+-                                    &lt;cstring&gt;leOutputBaseName&lt;/cstring&gt;
+-                                &lt;/property&gt;
+-                                &lt;property name=&quot;sizePolicy&quot;&gt;
+-                                    &lt;sizepolicy&gt;
+-                                        &lt;hsizetype&gt;1&lt;/hsizetype&gt;
+-                                        &lt;vsizetype&gt;1&lt;/vsizetype&gt;
+-                                        &lt;horstretch&gt;0&lt;/horstretch&gt;
+-                                        &lt;verstretch&gt;0&lt;/verstretch&gt;
+-                                    &lt;/sizepolicy&gt;
+-                                &lt;/property&gt;
+-                                &lt;property name=&quot;text&quot;&gt;
+-                                    &lt;string&gt;frame-&lt;/string&gt;
+-                                &lt;/property&gt;
+-                            &lt;/widget&gt;
+-                            &lt;widget class=&quot;QCheckBox&quot; row=&quot;0&quot; column=&quot;0&quot; rowspan=&quot;1&quot; colspan=&quot;3&quot;&gt;
+-                                &lt;property name=&quot;name&quot;&gt;
+-                                    &lt;cstring&gt;cbSaveSnapShots&lt;/cstring&gt;
+-                                &lt;/property&gt;
+-                                &lt;property name=&quot;enabled&quot;&gt;
+-                                    &lt;bool&gt;true&lt;/bool&gt;
+-                                &lt;/property&gt;
+-                                &lt;property name=&quot;text&quot;&gt;
+-                                    &lt;string&gt;Save snapshots&lt;/string&gt;
+-                                &lt;/property&gt;
+-                                &lt;property name=&quot;checked&quot;&gt;
+-                                    &lt;bool&gt;false&lt;/bool&gt;
+-                                &lt;/property&gt;
+-                                &lt;property name=&quot;tristate&quot;&gt;
+-                                    &lt;bool&gt;false&lt;/bool&gt;
+-                                &lt;/property&gt;
+-                            &lt;/widget&gt;
+-                            &lt;widget class=&quot;QLabel&quot; row=&quot;2&quot; column=&quot;0&quot;&gt;
+-                                &lt;property name=&quot;name&quot;&gt;
+-                                    &lt;cstring&gt;tlOutputDirectory&lt;/cstring&gt;
+-                                &lt;/property&gt;
+-                                &lt;property name=&quot;sizePolicy&quot;&gt;
+-                                    &lt;sizepolicy&gt;
+-                                        &lt;hsizetype&gt;4&lt;/hsizetype&gt;
+-                                        &lt;vsizetype&gt;5&lt;/vsizetype&gt;
+-                                        &lt;horstretch&gt;0&lt;/horstretch&gt;
+-                                        &lt;verstretch&gt;0&lt;/verstretch&gt;
+-                                    &lt;/sizepolicy&gt;
+-                                &lt;/property&gt;
+-                                &lt;property name=&quot;text&quot;&gt;
+-                                    &lt;string&gt;Directory:&lt;/string&gt;
+-                                &lt;/property&gt;
+-                            &lt;/widget&gt;
+-                        &lt;/grid&gt;
+-                    &lt;/widget&gt;
+-                    &lt;widget class=&quot;QGroupBox&quot;&gt;
++                            &lt;property name=&quot;text&quot;&gt;
++                                &lt;string&gt;&lt;/string&gt;
++                            &lt;/property&gt;
++                            &lt;property name=&quot;pixmap&quot;&gt;
++                                &lt;pixmap&gt;image1&lt;/pixmap&gt;
++                            &lt;/property&gt;
++                        &lt;/widget&gt;
++                        &lt;widget class=&quot;QPushButton&quot;&gt;
++                            &lt;property name=&quot;name&quot;&gt;
++                                &lt;cstring&gt;pbStep&lt;/cstring&gt;
++                            &lt;/property&gt;
++                            &lt;property name=&quot;text&quot;&gt;
++                                &lt;string&gt;&lt;/string&gt;
++                            &lt;/property&gt;
++                            &lt;property name=&quot;pixmap&quot;&gt;
++                                &lt;pixmap&gt;image2&lt;/pixmap&gt;
++                            &lt;/property&gt;
++                        &lt;/widget&gt;
++                        &lt;widget class=&quot;QPushButton&quot;&gt;
++                            &lt;property name=&quot;name&quot;&gt;
++                                &lt;cstring&gt;pbPause&lt;/cstring&gt;
++                            &lt;/property&gt;
++                            &lt;property name=&quot;text&quot;&gt;
++                                &lt;string&gt;&lt;/string&gt;
++                            &lt;/property&gt;
++                            &lt;property name=&quot;pixmap&quot;&gt;
++                                &lt;pixmap&gt;image3&lt;/pixmap&gt;
++                            &lt;/property&gt;
++                        &lt;/widget&gt;
++                        &lt;widget class=&quot;QPushButton&quot;&gt;
++                            &lt;property name=&quot;name&quot;&gt;
++                                &lt;cstring&gt;pbReset&lt;/cstring&gt;
++                            &lt;/property&gt;
++                            &lt;property name=&quot;text&quot;&gt;
++                                &lt;string&gt;&lt;/string&gt;
++                            &lt;/property&gt;
++                            &lt;property name=&quot;pixmap&quot;&gt;
++                                &lt;pixmap&gt;image4&lt;/pixmap&gt;
++                            &lt;/property&gt;
++                        &lt;/widget&gt;
++                    &lt;/hbox&gt;
++                &lt;/widget&gt;
++                &lt;widget class=&quot;QGroupBox&quot;&gt;
++                    &lt;property name=&quot;name&quot;&gt;
++                        &lt;cstring&gt;gbFilters&lt;/cstring&gt;
++                    &lt;/property&gt;
++                    &lt;property name=&quot;sizePolicy&quot;&gt;
++                        &lt;sizepolicy&gt;
++                            &lt;hsizetype&gt;1&lt;/hsizetype&gt;
++                            &lt;vsizetype&gt;4&lt;/vsizetype&gt;
++                            &lt;horstretch&gt;0&lt;/horstretch&gt;
++                            &lt;verstretch&gt;0&lt;/verstretch&gt;
++                        &lt;/sizepolicy&gt;
++                    &lt;/property&gt;
++                    &lt;property name=&quot;title&quot;&gt;
++                        &lt;string&gt;Filters&lt;/string&gt;
++                    &lt;/property&gt;
++                    &lt;hbox&gt;
+                         &lt;property name=&quot;name&quot;&gt;
+-                            &lt;cstring&gt;gbController&lt;/cstring&gt;
++                            &lt;cstring&gt;unnamed&lt;/cstring&gt;
+                         &lt;/property&gt;
+-                        &lt;property name=&quot;sizePolicy&quot;&gt;
+-                            &lt;sizepolicy&gt;
+-                                &lt;hsizetype&gt;1&lt;/hsizetype&gt;
+-                                &lt;vsizetype&gt;4&lt;/vsizetype&gt;
+-                                &lt;horstretch&gt;0&lt;/horstretch&gt;
+-                                &lt;verstretch&gt;0&lt;/verstretch&gt;
+-                            &lt;/sizepolicy&gt;
+-                        &lt;/property&gt;
+-                        &lt;property name=&quot;title&quot;&gt;
+-                            &lt;string&gt;Controller&lt;/string&gt;
+-                        &lt;/property&gt;
+-                        &lt;hbox&gt;
++                        &lt;widget class=&quot;QCheckBox&quot;&gt;
+                             &lt;property name=&quot;name&quot;&gt;
+-                                &lt;cstring&gt;unnamed&lt;/cstring&gt;
++                                &lt;cstring&gt;cbAllowFiltration&lt;/cstring&gt;
+                             &lt;/property&gt;
+-                            &lt;widget class=&quot;QPushButton&quot;&gt;
+-                                &lt;property name=&quot;name&quot;&gt;
+-                                    &lt;cstring&gt;pbPlay&lt;/cstring&gt;
+-                                &lt;/property&gt;
+-                                &lt;property name=&quot;text&quot;&gt;
+-                                    &lt;string&gt;&lt;/string&gt;
+-                                &lt;/property&gt;
+-                                &lt;property name=&quot;pixmap&quot;&gt;
+-                                    &lt;pixmap&gt;image1&lt;/pixmap&gt;
+-                                &lt;/property&gt;
+-                            &lt;/widget&gt;
+-                            &lt;widget class=&quot;QPushButton&quot;&gt;
+-                                &lt;property name=&quot;name&quot;&gt;
+-                                    &lt;cstring&gt;pbStep&lt;/cstring&gt;
+-                                &lt;/property&gt;
+-                                &lt;property name=&quot;text&quot;&gt;
+-                                    &lt;string&gt;&lt;/string&gt;
+-                                &lt;/property&gt;
+-                                &lt;property name=&quot;pixmap&quot;&gt;
+-                                    &lt;pixmap&gt;image2&lt;/pixmap&gt;
+-                                &lt;/property&gt;
+-                            &lt;/widget&gt;
+-                            &lt;widget class=&quot;QPushButton&quot;&gt;
+-                                &lt;property name=&quot;name&quot;&gt;
+-                                    &lt;cstring&gt;pbPause&lt;/cstring&gt;
+-                                &lt;/property&gt;
+-                                &lt;property name=&quot;text&quot;&gt;
+-                                    &lt;string&gt;&lt;/string&gt;
+-                                &lt;/property&gt;
+-                                &lt;property name=&quot;pixmap&quot;&gt;
+-                                    &lt;pixmap&gt;image3&lt;/pixmap&gt;
+-                                &lt;/property&gt;
+-                            &lt;/widget&gt;
+-                            &lt;widget class=&quot;QPushButton&quot;&gt;
+-                                &lt;property name=&quot;name&quot;&gt;
+-                                    &lt;cstring&gt;pbReset&lt;/cstring&gt;
+-                                &lt;/property&gt;
+-                                &lt;property name=&quot;text&quot;&gt;
+-                                    &lt;string&gt;&lt;/string&gt;
+-                                &lt;/property&gt;
+-                                &lt;property name=&quot;pixmap&quot;&gt;
+-                                    &lt;pixmap&gt;image4&lt;/pixmap&gt;
+-                                &lt;/property&gt;
+-                            &lt;/widget&gt;
+-                        &lt;/hbox&gt;
+-                    &lt;/widget&gt;
+-                    &lt;widget class=&quot;QGroupBox&quot;&gt;
++                            &lt;property name=&quot;text&quot;&gt;
++                                &lt;string&gt;Allow filtration&lt;/string&gt;
++                            &lt;/property&gt;
++                        &lt;/widget&gt;
++                    &lt;/hbox&gt;
++                &lt;/widget&gt;
++                &lt;widget class=&quot;QGroupBox&quot;&gt;
++                    &lt;property name=&quot;name&quot;&gt;
++                        &lt;cstring&gt;gbStatus&lt;/cstring&gt;
++                    &lt;/property&gt;
++                    &lt;property name=&quot;sizePolicy&quot;&gt;
++                        &lt;sizepolicy&gt;
++                            &lt;hsizetype&gt;1&lt;/hsizetype&gt;
++                            &lt;vsizetype&gt;3&lt;/vsizetype&gt;
++                            &lt;horstretch&gt;0&lt;/horstretch&gt;
++                            &lt;verstretch&gt;0&lt;/verstretch&gt;
++                        &lt;/sizepolicy&gt;
++                    &lt;/property&gt;
++                    &lt;property name=&quot;title&quot;&gt;
++                        &lt;string&gt;status&lt;/string&gt;
++                    &lt;/property&gt;
++                    &lt;vbox&gt;
+                         &lt;property name=&quot;name&quot;&gt;
+-                            &lt;cstring&gt;gbStatus&lt;/cstring&gt;
++                            &lt;cstring&gt;unnamed&lt;/cstring&gt;
+                         &lt;/property&gt;
+-                        &lt;property name=&quot;sizePolicy&quot;&gt;
+-                            &lt;sizepolicy&gt;
+-                                &lt;hsizetype&gt;1&lt;/hsizetype&gt;
+-                                &lt;vsizetype&gt;3&lt;/vsizetype&gt;
+-                                &lt;horstretch&gt;0&lt;/horstretch&gt;
+-                                &lt;verstretch&gt;0&lt;/verstretch&gt;
+-                            &lt;/sizepolicy&gt;
+-                        &lt;/property&gt;
+-                        &lt;property name=&quot;title&quot;&gt;
+-                            &lt;string&gt;status&lt;/string&gt;
+-                        &lt;/property&gt;
+-                        &lt;hbox&gt;
++                        &lt;widget class=&quot;QLabel&quot;&gt;
+                             &lt;property name=&quot;name&quot;&gt;
+-                                &lt;cstring&gt;unnamed&lt;/cstring&gt;
++                                &lt;cstring&gt;tlStatus&lt;/cstring&gt;
+                             &lt;/property&gt;
+-                            &lt;widget class=&quot;QLabel&quot;&gt;
+-                                &lt;property name=&quot;name&quot;&gt;
+-                                    &lt;cstring&gt;tlStatus&lt;/cstring&gt;
+-                                &lt;/property&gt;
+-                                &lt;property name=&quot;sizePolicy&quot;&gt;
+-                                    &lt;sizepolicy&gt;
+-                                        &lt;hsizetype&gt;2&lt;/hsizetype&gt;
+-                                        &lt;vsizetype&gt;3&lt;/vsizetype&gt;
+-                                        &lt;horstretch&gt;0&lt;/horstretch&gt;
+-                                        &lt;verstretch&gt;0&lt;/verstretch&gt;
+-                                    &lt;/sizepolicy&gt;
+-                                &lt;/property&gt;
+-                                &lt;property name=&quot;minimumSize&quot;&gt;
+-                                    &lt;size&gt;
+-                                        &lt;width&gt;0&lt;/width&gt;
+-                                        &lt;height&gt;180&lt;/height&gt;
+-                                    &lt;/size&gt;
+-                                &lt;/property&gt;
+-                                &lt;property name=&quot;font&quot;&gt;
+-                                    &lt;font&gt;
+-                                        &lt;family&gt;Monospace&lt;/family&gt;
+-                                        &lt;pointsize&gt;6&lt;/pointsize&gt;
+-                                    &lt;/font&gt;
+-                                &lt;/property&gt;
+-                                &lt;property name=&quot;text&quot;&gt;
+-                                    &lt;string&gt;idleidleidleidleidleidleidleidleidleidleidleidleidleidleidleidleidleidleidleidleidleidleidleidle idle idleidleidleidleidleidleidleidleidleidleidleidleidleidleidleidleidleidleidleidleidleidleidleidle idle idleidleidleidleidleidleidleidleidleidleidleidleidleidleidleidleidleidleidleidleidleidleidleidle idle&lt;/string&gt;
+-                                &lt;/property&gt;
+-                                &lt;property name=&quot;textFormat&quot;&gt;
+-                                    &lt;enum&gt;PlainText&lt;/enum&gt;
+-                                &lt;/property&gt;
+-                                &lt;property name=&quot;scaledContents&quot;&gt;
+-                                    &lt;bool&gt;false&lt;/bool&gt;
+-                                &lt;/property&gt;
+-                                &lt;property name=&quot;alignment&quot;&gt;
+-                                    &lt;set&gt;AlignTop&lt;/set&gt;
+-                                &lt;/property&gt;
+-                            &lt;/widget&gt;
+-                        &lt;/hbox&gt;
+-                    &lt;/widget&gt;
+-                &lt;/vbox&gt;
++                            &lt;property name=&quot;sizePolicy&quot;&gt;
++                                &lt;sizepolicy&gt;
++                                    &lt;hsizetype&gt;2&lt;/hsizetype&gt;
++                                    &lt;vsizetype&gt;1&lt;/vsizetype&gt;
++                                    &lt;horstretch&gt;0&lt;/horstretch&gt;
++                                    &lt;verstretch&gt;0&lt;/verstretch&gt;
++                                &lt;/sizepolicy&gt;
++                            &lt;/property&gt;
++                            &lt;property name=&quot;minimumSize&quot;&gt;
++                                &lt;size&gt;
++                                    &lt;width&gt;0&lt;/width&gt;
++                                    &lt;height&gt;180&lt;/height&gt;
++                                &lt;/size&gt;
++                            &lt;/property&gt;
++                            &lt;property name=&quot;font&quot;&gt;
++                                &lt;font&gt;
++                                    &lt;family&gt;Monospace&lt;/family&gt;
++                                    &lt;pointsize&gt;6&lt;/pointsize&gt;
++                                &lt;/font&gt;
++                            &lt;/property&gt;
++                            &lt;property name=&quot;text&quot;&gt;
++                                &lt;string&gt;idle&lt;/string&gt;
++                            &lt;/property&gt;
++                            &lt;property name=&quot;textFormat&quot;&gt;
++                                &lt;enum&gt;PlainText&lt;/enum&gt;
++                            &lt;/property&gt;
++                            &lt;property name=&quot;scaledContents&quot;&gt;
++                                &lt;bool&gt;false&lt;/bool&gt;
++                            &lt;/property&gt;
++                            &lt;property name=&quot;alignment&quot;&gt;
++                                &lt;set&gt;AlignTop&lt;/set&gt;
++                            &lt;/property&gt;
++                        &lt;/widget&gt;
++                    &lt;/vbox&gt;
++                &lt;/widget&gt;
+             &lt;/widget&gt;
+             &lt;widget class=&quot;GLSimulationPlayerViewer&quot;&gt;
+                 &lt;property name=&quot;name&quot;&gt;
+@@ -644,6 +671,12 @@
+         &lt;receiver&gt;QtGeneratedSimulationPlayer&lt;/receiver&gt;
+         &lt;slot&gt;pbInputDirectoryClicked()&lt;/slot&gt;
+     &lt;/connection&gt;
++    &lt;connection&gt;
++        &lt;sender&gt;cbAllowFiltration&lt;/sender&gt;
++        &lt;signal&gt;toggled(bool)&lt;/signal&gt;
++        &lt;receiver&gt;QtGeneratedSimulationPlayer&lt;/receiver&gt;
++        &lt;slot&gt;cbAllowFiltrationToggled(bool)&lt;/slot&gt;
++    &lt;/connection&gt;
+ &lt;/connections&gt;
+ &lt;slots&gt;
+     &lt;slot&gt;pbLoadClicked()&lt;/slot&gt;
+@@ -655,6 +688,7 @@
+     &lt;slot&gt;pbResetClicked()&lt;/slot&gt;
+     &lt;slot&gt;pbInputConfigFileClicked()&lt;/slot&gt;
+     &lt;slot&gt;cbSaveSnapShotsToggled(bool)&lt;/slot&gt;
++    &lt;slot&gt;cbAllowFiltrationToggled(bool)&lt;/slot&gt;
+ &lt;/slots&gt;
+ &lt;layoutdefaults spacing=&quot;6&quot; margin=&quot;11&quot;/&gt;
+ &lt;includehints&gt;
+
+Modified: trunk/gui/qt3/QtSimulationPlayer.cpp
+===================================================================
+--- trunk/gui/qt3/QtSimulationPlayer.cpp	2008-07-09 20:59:35 UTC (rev 1418)
++++ trunk/gui/qt3/QtSimulationPlayer.cpp	2008-07-10 17:35:09 UTC (rev 1419)
+@@ -10,6 +10,7 @@
+ #include &quot;FileDialog.hpp&quot;
+ #include &quot;GLSimulationPlayerViewer.hpp&quot;
+ #include&lt;yade/core/FileGenerator.hpp&gt;
++#include&lt;yade/core/FiltrationalEngine.hpp&gt;
+ #include &lt;qlineedit.h&gt;
+ #include &lt;qpushbutton.h&gt;
+ #include &lt;qspinbox.h&gt;
+@@ -27,6 +28,7 @@
+ void QtSimulationPlayer::pbStepClicked(){ glSimulationPlayerViewer-&gt;stopAnimation(); glSimulationPlayerViewer-&gt;doOneStep(); }
+ void QtSimulationPlayer::pbResetClicked(){ setParameters();	glSimulationPlayerViewer-&gt;reset();}
+ void QtSimulationPlayer::cbSaveSnapShotsToggled(bool b){	glSimulationPlayerViewer-&gt;saveSnapShots=b;}
++void QtSimulationPlayer::cbAllowFiltrationToggled(bool b){	FiltrationalEngine::isFiltrationActivated=b; }
+ void QtSimulationPlayer::closeEvent(QCloseEvent *e){ QtGeneratedSimulationPlayer::closeEvent(e);}
+ 
+ 
+
+Modified: trunk/gui/qt3/QtSimulationPlayer.hpp
+===================================================================
+--- trunk/gui/qt3/QtSimulationPlayer.hpp	2008-07-09 20:59:35 UTC (rev 1418)
++++ trunk/gui/qt3/QtSimulationPlayer.hpp	2008-07-10 17:35:09 UTC (rev 1419)
+@@ -35,7 +35,9 @@
+ 	public slots : virtual void pbStepClicked();
+ 	public slots : virtual void pbResetClicked();
+ 	
+- 	protected    : void closeEvent(QCloseEvent *);
++	public slots : virtual void cbAllowFiltrationToggled(bool b);
++ 	
++	protected    : void closeEvent(QCloseEvent *);
+ //						void keyPressEvent(QKeyEvent *){};
+ 	public:
+ 	void enableControls(bool);
+
+Modified: trunk/pkg/common/Engine/DeusExMachina/ResetPositionEngine.cpp
+===================================================================
+--- trunk/pkg/common/Engine/DeusExMachina/ResetPositionEngine.cpp	2008-07-09 20:59:35 UTC (rev 1418)
++++ trunk/pkg/common/Engine/DeusExMachina/ResetPositionEngine.cpp	2008-07-10 17:35:09 UTC (rev 1419)
+@@ -18,8 +18,10 @@
+ 		interval=0;
+ 		ini_pos.clear();
+ 		initial_positions.clear();
++		subscrBodies.clear();
+ 		fileName=&quot;&quot;;
+ 		first=true;
++		onlyDynamic=false;
+ }
+ 
+ void ResetPositionEngine::postProcessAttributes(bool deserializing){}
+@@ -27,24 +29,21 @@
+ void ResetPositionEngine::registerAttributes(){
+ 	DeusExMachina::registerAttributes(); // for subscribedBodies
+ 	REGISTER_ATTRIBUTE(interval);
++	REGISTER_ATTRIBUTE(onlyDynamic);
+ 	REGISTER_ATTRIBUTE(Y_min);
+ 	REGISTER_ATTRIBUTE(initial_positions);
+ 	REGISTER_ATTRIBUTE(fileName);
+ }
+ 
+ 
+-void ResetPositionEngine::applyCondition(MetaBody * ncb){
+-		if (first) 
+-		{
+-				first=false;
+-				initialize(ncb);
+-				return;
+-		}
++void ResetPositionEngine::applyCondition(MetaBody * ncb)
++{
++	if (first) { initialize(ncb); return; }
+ 
+ 	shared_ptr&lt;BodyContainer&gt;&amp; bodies = ncb-&gt;bodies;
+-	for(int i=0,e=subscribedBodies.size(); i&lt;e; ++i)
++	for(int i=0,e=subscrBodies.size(); i&lt;e; ++i)
+ 	{
+-			ParticleParameters* pp = YADE_CAST&lt;ParticleParameters*&gt;((*bodies)[subscribedBodies[i]]-&gt;physicalParameters.get());
++			ParticleParameters* pp = YADE_CAST&lt;ParticleParameters*&gt;((*bodies)[subscrBodies[i]]-&gt;physicalParameters.get());
+ 			if (pp-&gt;se3.position[1]&lt;Y_min)
+ 			{
+ 					pp-&gt;se3.position = ini_pos[i];
+@@ -55,14 +54,22 @@
+ 
+ void ResetPositionEngine::initialize(MetaBody * ncb)
+ {
++	first=false;
++	if (onlyDynamic)
++	{
++		FOREACH(shared_ptr&lt;Body&gt; b, *ncb-&gt;bodies) { if(b-&gt;isDynamic) subscrBodies.push_back(b-&gt;getId()); }
++	}
++	else
++		subscrBodies.assign(subscribedBodies.begin(),subscribedBodies.end());
++
+ 	if (fileName==&quot;&quot;)
+ 	{ 
+ 		if (initial_positions.size()==0) 	
+ 		{ // initialize positions from bodies se3
+-			initial_positions.resize(subscribedBodies.size());
++			initial_positions.resize(subscrBodies.size());
+ 			shared_ptr&lt;BodyContainer&gt;&amp; bodies = ncb-&gt;bodies;
+-			for(int i=0,e=subscribedBodies.size(); i&lt;e; ++i)
+-				initial_positions[i]=(*bodies)[subscribedBodies[i]]-&gt;physicalParameters-&gt;se3.position;
++			for(int i=0,e=subscrBodies.size(); i&lt;e; ++i)
++				initial_positions[i]=(*bodies)[subscrBodies[i]]-&gt;physicalParameters-&gt;se3.position;
+ 		}
+ 		ini_pos.assign(initial_positions.begin(),initial_positions.end());
+ 		return;
+@@ -71,8 +78,8 @@
+ 	std::ifstream is(fileName.c_str());
+ 	if (is) 
+ 	{// reading positions from file 
+-		ini_pos.resize(subscribedBodies.size());
+-		for(int i=0,e=subscribedBodies.size(); i&lt;e &amp;&amp; !is.eof(); ++i)
++		ini_pos.resize(subscrBodies.size());
++		for(int i=0,e=subscrBodies.size(); i&lt;e &amp;&amp; !is.eof(); ++i)
+ 			is &gt;&gt; ini_pos[i][0] &gt;&gt; ini_pos[i][1] &gt;&gt; ini_pos[i][2];
+ 		return;
+ 	}
+@@ -80,10 +87,10 @@
+ 	// initialize positions form bodies se3 if need and export to file
+ 	if (initial_positions.size()==0)
+ 	{
+-		ini_pos.resize(subscribedBodies.size());
++		ini_pos.resize(subscrBodies.size());
+ 		shared_ptr&lt;BodyContainer&gt;&amp; bodies = ncb-&gt;bodies;
+-		for(int i=0,e=subscribedBodies.size(); i&lt;e; ++i)
+-			ini_pos[i]=(*bodies)[subscribedBodies[i]]-&gt;physicalParameters-&gt;se3.position;
++		for(int i=0,e=subscrBodies.size(); i&lt;e; ++i)
++			ini_pos[i]=(*bodies)[subscrBodies[i]]-&gt;physicalParameters-&gt;se3.position;
+ 	}
+ 	else ini_pos.swap(initial_positions);
+ 	std::ofstream os(fileName.c_str());
+@@ -91,7 +98,7 @@
+ 		LOG_ERROR(&quot;Can't open file to export positions: &quot;&lt;&lt;fileName&lt;&lt;&quot;!&quot;);
+ 		return;
+ 	}
+-	for(int i=0,e=subscribedBodies.size(); i&lt;e; ++i)
++	for(int i=0,e=subscrBodies.size(); i&lt;e; ++i)
+ 		os &lt;&lt; ini_pos[i][0]&lt;&lt; '\t' &lt;&lt; ini_pos[i][1]&lt;&lt; '\t' &lt;&lt; ini_pos[i][2]&lt;&lt; std::endl;
+ }
+ YADE_PLUGIN();
+
+Modified: trunk/pkg/common/Engine/DeusExMachina/ResetPositionEngine.hpp
+===================================================================
+--- trunk/pkg/common/Engine/DeusExMachina/ResetPositionEngine.hpp	2008-07-09 20:59:35 UTC (rev 1418)
++++ trunk/pkg/common/Engine/DeusExMachina/ResetPositionEngine.hpp	2008-07-10 17:35:09 UTC (rev 1419)
+@@ -26,6 +26,7 @@
+ 		/// import/export initial positions
+ 		std::string fileName; 
+ 		std::vector&lt;Vector3r&gt; initial_positions; // for serialization
++		bool onlyDynamic;
+ 		
+ 		DECLARE_LOGGER;
+ 	protected:
+@@ -35,6 +36,7 @@
+ 	REGISTER_BASE_CLASS_NAME(DeusExMachina);
+ 	private:
+ 		std::vector&lt;Vector3r&gt; ini_pos;
++		std::vector&lt;long int&gt; subscrBodies;
+ 		bool first;
+ 		void initialize(MetaBody * ncb);
+ };
+
+Added: trunk/pkg/common/Engine/FiltrEngine/ColorizedLayerFilter.cpp
+===================================================================
+--- trunk/pkg/common/Engine/FiltrEngine/ColorizedLayerFilter.cpp	2008-07-09 20:59:35 UTC (rev 1418)
++++ trunk/pkg/common/Engine/FiltrEngine/ColorizedLayerFilter.cpp	2008-07-10 17:35:09 UTC (rev 1419)
+@@ -0,0 +1,66 @@
++/*************************************************************************
++*  Copyright (C) 2008 by Sergei Dorofeenko                               *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">sega at users.berlios.de</A>                                                 *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#include&quot;ColorizedLayerFilter.hpp&quot;
++
++ColorizedLayerFilter::ColorizedLayerFilter() : FiltrEngine() 
++{
++	near = Vector3r(0,0,0);
++	normal = Vector3r(0,1,0);
++	thickness = 1;
++	far = near + thickness*normal;
++	diffuseColor = Vector3r(0.5,0.5,0.5);
++	interval = 1;
++}
++
++
++ColorizedLayerFilter::~ColorizedLayerFilter()
++{
++}
++
++bool ColorizedLayerFilter::isActivated()
++{
++	return FiltrEngine::isActivated() 
++		&amp;&amp; ((Omega::instance().getCurrentIteration() % interval == 0));
++}
++
++void ColorizedLayerFilter::registerAttributes()
++{
++	FiltrEngine::registerAttributes();
++	REGISTER_ATTRIBUTE(near);
++	REGISTER_ATTRIBUTE(normal);
++	REGISTER_ATTRIBUTE(thickness);
++	REGISTER_ATTRIBUTE(diffuseColor);
++	REGISTER_ATTRIBUTE(interval);
++}
++
++void ColorizedLayerFilter::postProcessAttributes(bool deserializing)
++{
++	if (deserializing){
++		far = near + thickness*normal;
++		normal.Normalize();
++	}
++}
++
++void ColorizedLayerFilter::applyCondition(MetaBody* ncb)
++{
++	shared_ptr&lt;BodyContainer&gt;&amp; bodies = ncb-&gt;bodies;
++	
++	BodyContainer::iterator bi    = bodies-&gt;begin();
++	BodyContainer::iterator biEnd = bodies-&gt;end();
++	for( ; bi!=biEnd ; ++bi )
++	{
++		shared_ptr&lt;Body&gt; b = *bi;
++		if (!b-&gt;isDynamic || !b-&gt;geometricalModel) continue;
++		const Vector3r&amp; pos = b-&gt;physicalParameters-&gt;se3.position;
++		if ( (pos-near).Dot(normal)&gt;0 &amp;&amp; (pos-far).Dot(normal)&lt;0 )
++			b-&gt;geometricalModel-&gt;diffuseColor = diffuseColor;
++	}
++}
++
++YADE_PLUGIN();
+
+Added: trunk/pkg/common/Engine/FiltrEngine/ColorizedLayerFilter.hpp
+===================================================================
+--- trunk/pkg/common/Engine/FiltrEngine/ColorizedLayerFilter.hpp	2008-07-09 20:59:35 UTC (rev 1418)
++++ trunk/pkg/common/Engine/FiltrEngine/ColorizedLayerFilter.hpp	2008-07-10 17:35:09 UTC (rev 1419)
+@@ -0,0 +1,39 @@
++/*************************************************************************
++*  Copyright (C) 2008 by Sergei Dorofeenko                               *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">sega at users.berlios.de</A>                                                 *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#ifndef COLORIZED_LAYER_FILTER_HPP
++#define COLORIZED_LAYER_FILTER_HPP 
++
++#include&lt;yade/core/FiltrEngine.hpp&gt;
++#include&lt;yade/core/MetaBody.hpp&gt;
++
++class ColorizedLayerFilter : public FiltrEngine {
++	private:
++		Vector3r far;
++	public :
++		Vector3r near;
++		Vector3r normal;
++		Real thickness;
++		Vector3r diffuseColor;
++		int interval;
++		ColorizedLayerFilter();
++		virtual ~ColorizedLayerFilter();
++	
++		virtual bool isActivated();
++		virtual void applyCondition(MetaBody*);
++	
++		virtual void registerAttributes();
++		virtual void postProcessAttributes(bool deserializing);
++	REGISTER_CLASS_NAME(ColorizedLayerFilter);
++	REGISTER_BASE_CLASS_NAME(FiltrEngine);
++};
++
++REGISTER_SERIALIZABLE(ColorizedLayerFilter,false);
++
++#endif // COLORIZED_LAYER_FILTER_HPP 
++
+
+Added: trunk/pkg/common/Engine/FiltrEngine/ColorizedVelocityFilter.cpp
+===================================================================
+--- trunk/pkg/common/Engine/FiltrEngine/ColorizedVelocityFilter.cpp	2008-07-09 20:59:35 UTC (rev 1418)
++++ trunk/pkg/common/Engine/FiltrEngine/ColorizedVelocityFilter.cpp	2008-07-10 17:35:09 UTC (rev 1419)
+@@ -0,0 +1,126 @@
++/*************************************************************************
++*  Copyright (C) 2008 by Sergei Dorofeenko                               *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">sega at users.berlios.de</A>                                                 *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#include&quot;ColorizedVelocityFilter.hpp&quot;
++
++ColorizedVelocityFilter::ColorizedVelocityFilter() : FiltrEngine() 
++{
++	first=true;
++	autoScale=true;
++	minValue=0;
++	maxValue=0;
++	midValue=0;
++	onlyDynamic=true;
++	prevPositions.clear();
++	prevIteration=0;
++	dt=0;
++	subscrBodies.clear();
++}
++
++
++ColorizedVelocityFilter::~ColorizedVelocityFilter()
++{
++}
++
++bool ColorizedVelocityFilter::isActivated()
++{
++	return FiltrEngine::isActivated();
++}
++
++void ColorizedVelocityFilter::registerAttributes()
++{
++	FiltrEngine::registerAttributes();
++	REGISTER_ATTRIBUTE(autoScale);
++	REGISTER_ATTRIBUTE(onlyDynamic);
++	REGISTER_ATTRIBUTE(minValue);
++	REGISTER_ATTRIBUTE(maxValue);
++}
++
++void ColorizedVelocityFilter::applyCondition(MetaBody* ncb)
++{
++
++	if (first) { initialize(ncb); return; }
++	
++	long int currIteration = Omega::instance().getCurrentIteration();
++	shared_ptr&lt;BodyContainer&gt;&amp; bodies = ncb-&gt;bodies;
++	for (int i=0,e=subscrBodies.size(); i&lt;e; ++i)
++	{
++		shared_ptr&lt;Body&gt; b =(*bodies)[subscrBodies[i]]; 
++		Vector3r currPos = b-&gt;physicalParameters-&gt;se3.position;
++		values[i] = (currPos - prevPositions[i]).Length() / (currIteration - prevIteration)/dt;
++		prevPositions[i] = currPos;
++	}
++	prevIteration = currIteration;
++	if (autoScale) makeScale();
++	for (int i=0,e=subscrBodies.size(); i&lt;e; ++i)
++	{
++		shared_ptr&lt;Body&gt; b =(*bodies)[subscrBodies[i]]; 
++		b-&gt;geometricalModel-&gt;diffuseColor = getColor4Value(values[i]);
++	}
++}
++
++Vector3r ColorizedVelocityFilter::getColor4Value(Real v)
++{
++	Vector3r color;
++	if (v&lt;midValue) 
++	{
++		color[0] = 0;
++		color[1] = 1/(midValue-minValue)*(v-minValue);
++		color[2] = -1/(midValue-minValue)*(v-minValue)+1;
++	}
++	else 
++	{
++		color[0] = 1/(maxValue-midValue)*(v-midValue);
++		color[1] = -1/(maxValue-midValue)*(v-midValue)+1;
++		color[2] = 0;
++	}
++	return color;
++}
++
++
++void ColorizedVelocityFilter::makeScale()
++{
++	if (minValue==maxValue) minValue=maxValue=values[0];
++	for(int i=0,e=values.size(); i&lt;e; ++i)
++	{
++		if (values[i]&lt;minValue) minValue = values[i];
++		if (values[i]&gt;maxValue) maxValue = values[i];
++	}
++	midValue = (minValue+maxValue)/2;
++	
++	LOG_INFO(&quot;minValue:&quot; &lt;&lt; minValue &lt;&lt; '\t' &lt;&lt; &quot;maxValue:&quot; &lt;&lt; maxValue &lt;&lt; '\t' &lt;&lt; &quot;midValue:&quot; &lt;&lt; midValue);
++}
++
++void ColorizedVelocityFilter::initialize(MetaBody* ncb)
++{
++	first=false;
++
++
++	if (onlyDynamic)
++	{
++		FOREACH(shared_ptr&lt;Body&gt; b, *ncb-&gt;bodies) { if(b-&gt;isDynamic) subscrBodies.push_back(b-&gt;getId()); }
++	}
++	else
++		subscrBodies.assign(subscribedBodies.begin(),subscribedBodies.end());
++
++	prevPositions.resize(subscrBodies.size());
++	values.resize(subscrBodies.size());
++	shared_ptr&lt;BodyContainer&gt;&amp; bodies = ncb-&gt;bodies;
++	for(int i=0,e=subscrBodies.size(); i&lt;e; ++i)
++		prevPositions[i] = (*bodies)[subscrBodies[i]]-&gt;physicalParameters-&gt;se3.position;
++	
++	midValue = (minValue+maxValue)/2;
++	
++	dt = Omega::instance().getTimeStep();
++	prevIteration = Omega::instance().getCurrentIteration();
++
++	LOG_INFO(&quot;bodies:&quot; &lt;&lt; subscrBodies.size() &lt;&lt; '\t' &lt;&lt; &quot;minValue:&quot; &lt;&lt; minValue &lt;&lt; '\t' &lt;&lt; &quot;maxValue:&quot; &lt;&lt; maxValue &lt;&lt; '\t' &lt;&lt; &quot;midValue:&quot; &lt;&lt; midValue);
++}
++
++
++YADE_PLUGIN();
+
+Added: trunk/pkg/common/Engine/FiltrEngine/ColorizedVelocityFilter.hpp
+===================================================================
+--- trunk/pkg/common/Engine/FiltrEngine/ColorizedVelocityFilter.hpp	2008-07-09 20:59:35 UTC (rev 1418)
++++ trunk/pkg/common/Engine/FiltrEngine/ColorizedVelocityFilter.hpp	2008-07-10 17:35:09 UTC (rev 1419)
+@@ -0,0 +1,48 @@
++/*************************************************************************
++*  Copyright (C) 2008 by Sergei Dorofeenko                               *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">sega at users.berlios.de</A>                                                 *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#ifndef COLORIZED_VELOCITY_FILTER_HPP
++#define COLORIZED_VELOCITY_FILTER_HPP 
++
++#include&lt;yade/core/FiltrEngine.hpp&gt;
++#include&lt;yade/core/MetaBody.hpp&gt;
++
++class ColorizedVelocityFilter : public FiltrEngine {
++	protected:
++		Real midValue;
++		vector&lt;Vector3r&gt; prevPositions;
++		long int prevIteration;
++		Real dt;
++		vector&lt;Real&gt; values;
++		vector&lt;long int&gt; subscrBodies;
++		bool first;
++		void initialize(MetaBody*);
++		void makeScale();
++		Vector3r getColor4Value(Real v);
++	public :
++		bool autoScale;
++		bool onlyDynamic;
++		Real minValue;
++		Real maxValue;
++
++		ColorizedVelocityFilter();
++		virtual ~ColorizedVelocityFilter();
++	
++		virtual bool isActivated();
++		virtual void applyCondition(MetaBody*);
++	
++		virtual void registerAttributes();
++		//virtual void postProcessAttributes(bool deserializing);
++	REGISTER_CLASS_NAME(ColorizedVelocityFilter);
++	REGISTER_BASE_CLASS_NAME(FiltrEngine);
++};
++
++REGISTER_SERIALIZABLE(ColorizedVelocityFilter,false);
++
++#endif // COLORIZED_VELOCITY_FILTER_HPP 
++
+
+Modified: trunk/pkg/common/SConscript
+===================================================================
+--- trunk/pkg/common/SConscript	2008-07-09 20:59:35 UTC (rev 1418)
++++ trunk/pkg/common/SConscript	2008-07-10 17:35:09 UTC (rev 1419)
+@@ -262,6 +262,26 @@
+ 			'ParticleParameters'],
+ 		CPPPATH=env['CPPPATH']+['$PREFIX/include', 'Engine/DeusExMachina']),
+ 	
++	env.SharedLibrary('ColorizedLayerFilter',
++		['Engine/FiltrationalEngine/ColorizedLayerFilter.cpp'],
++		LIBS=env['LIBS']+['yade-base',
++			'yade-factory',
++			'yade-base',
++			'yade-serialization',
++			'yade-loki',
++			'yade-multimethods',],
++		CPPPATH=env['CPPPATH']+['$PREFIX/include', 'Engine/FiltrationalEngine']),
++	
++	env.SharedLibrary('ColorizedVelocityFilter',
++		['Engine/FiltrationalEngine/ColorizedVelocityFilter.cpp'],
++		LIBS=env['LIBS']+['yade-base',
++			'yade-factory',
++			'yade-base',
++			'yade-serialization',
++			'yade-loki',
++			'yade-multimethods',],
++		CPPPATH=env['CPPPATH']+['$PREFIX/include', 'Engine/FiltrationalEngine']),
++	
+ 	env.SharedLibrary('BoundingVolumeMetaEngine',
+ 		['Engine/MetaEngine/BoundingVolumeMetaEngine.cpp'],
+ 		LIBS=env['LIBS']+['yade-base'],
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000378.html">[Yade-commits] r1418 - in trunk: core extra/clump	pkg/common/Engine/StandAloneEngine	pkg/dem/Engine/StandAloneEngine pkg/dem/PreProcessor
+</A></li>
+	<LI>Next message: <A HREF="000380.html">[Yade-commits] r1420 - trunk/pkg/common
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#379">[ date ]</a>
+              <a href="thread.html#379">[ thread ]</a>
+              <a href="subject.html#379">[ subject ]</a>
+              <a href="author.html#379">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

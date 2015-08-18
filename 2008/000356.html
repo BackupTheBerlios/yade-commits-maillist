@@ -1,0 +1,509 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1395 - in trunk: . extra extra/usct gui/py
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1395%20-%20in%20trunk%3A%20.%20extra%20extra/usct%20gui/py&In-Reply-To=%3C200806181501.m5IF1mE1008663%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000355.html">
+   <LINK REL="Next"  HREF="000357.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1395 - in trunk: . extra extra/usct gui/py</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1395%20-%20in%20trunk%3A%20.%20extra%20extra/usct%20gui/py&In-Reply-To=%3C200806181501.m5IF1mE1008663%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1395 - in trunk: . extra extra/usct gui/py">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Wed Jun 18 17:01:48 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000355.html">[Yade-commits] r1394 - in trunk: examples pkg/common	pkg/common/Engine/DeusExMachina
+</A></li>
+        <LI>Next message: <A HREF="000357.html">[Yade-commits] r1396 - in trunk: core gui/py
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#356">[ date ]</a>
+              <a href="thread.html#356">[ thread ]</a>
+              <a href="subject.html#356">[ subject ]</a>
+              <a href="author.html#356">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2008-06-18 17:01:47 +0200 (Wed, 18 Jun 2008)
+New Revision: 1395
+
+Modified:
+   trunk/SConstruct
+   trunk/extra/Brefcom.cpp
+   trunk/extra/Brefcom.hpp
+   trunk/extra/usct/UniaxialStrainControlledTest.cpp
+   trunk/gui/py/PythonUI.cpp
+   trunk/gui/py/PythonUI.hpp
+   trunk/gui/py/PythonUI_rc.py
+   trunk/gui/py/plot.py
+   trunk/gui/py/utils.py
+   trunk/gui/py/yadeControl.cpp
+Log:
+1. Small fixes here and there
+2. In brefcom, make the parameter set richer
+3. PythonUI now may be run in non-interactive mode (batch processing)
+4. new function Omega().interactions.nth(n) for getting random interaction
+
+
+Modified: trunk/SConstruct
+===================================================================
+--- trunk/SConstruct	2008-06-18 13:29:35 UTC (rev 1394)
++++ trunk/SConstruct	2008-06-18 15:01:47 UTC (rev 1395)
+@@ -9,7 +9,7 @@
+ #
+ #	scons -j2 pretty=1 debug=0 optimize=1 profile=1 exclude=extra,fem,lattice,realtime-rigidbody,mass-spring CPPPATH=/usr/local/include/wm3
+ #
+-# Next time, you can simply run &quot;scons&quot; or &quot;scons -j4&quot; (for 4-parallel builds) to rebuild targets that need it. IF YOU NEED TO READ CODE IN THIS FILE, SOMETHING IS BROKEN AND YOU SHOULD REALLY TELL ME (the goal is to replace qmake eventually).
++# Next time, you can simply run &quot;scons&quot; or &quot;scons -j4&quot; (for 4-parallel builds) to rebuild targets that need it. IF YOU NEED TO READ CODE IN THIS FILE, SOMETHING IS BROKEN AND YOU SHOULD REALLY TELL ME.
+ #
+ # Scons will do preparatory steps (generating SConscript files from .pro files, creating local include directory and symlinking all headers from there, ...), compile files and install them.
+ #
+@@ -100,6 +100,7 @@
+ 	BoolOption('gprof','Enable profiling information for gprof',0),
+ 	BoolOption('optimize','Turn on heavy optimizations (generates SSE2 instructions)',defOptions['optimize']),
+ 	ListOption('exclude','Yade components that will not be built','none',names=['qt3','gui','extra','common','dem','fem','lattice','mass-spring','realtime-rigidbody']),
++	EnumOption('arcs','Whether to generate or use branch probabilities','',['','gen','use'],{'no':'','0':'','false':''},1),
+ 	# OK, dummy prevents bug in scons: if one selects all, it says all in scons.config, but without quotes, which generates error.
+ 	ListOption('features','Optional features that are turned on','python,log4cxx',names=['python','log4cxx','binfmt','dummy']),
+ 	('jobs','Number of jobs to run at the same time (same as -j, but saved)',4,None,int),
+@@ -110,7 +111,8 @@
+ 	('LIBPATH','Additional paths for the linker (whitespace separated)',None,None,Split),
+ 	('QTDIR','Directories where to look for qt3',['/usr/share/qt3','/usr/lib/qt','/usr/lib/qt3','/usr/qt/3','/usr/lib/qt-3.3'],None,Split),
+ 	('CXX','The c++ compiler','g++'),
+-	('CXXFLAGS','Additional compiler flags; you can use them for tuning like -march=pentium4.',None,None,Split), # not tested if really propagates
++	('CXXFLAGS','Additional compiler flags; you can use them for tuning like -march=pentium4.',None,None,Split),
++	#('SHLINKFLAGS','Additional linker flags (for shared libs=plugins).',None,None,Split),
+ 	BoolOption('pretty',&quot;Don't show compiler command line (like the Linux kernel)&quot;,1),
+ 	BoolOption('useMiniWm3','use local miniWm3 library instead of Wm3Foundation',1),
+ 	#BoolOption('useLocalQGLViewer','use in-tree QGLViewer library instead of the one installed in system',1),
+@@ -377,6 +379,9 @@
+ if env['gprof']: env.Append(CXXFLAGS=['-pg'],LINKFLAGS=['-pg'],SHLINKFLAGS=['-pg'])
+ env.Append(CXXFLAGS=['-pipe','-Wall'])
+ 
++if env['arcs']=='gen': env.Append(CXXFLAGS=['-fprofile-generate'],LINKFLAGS=['-fprofile-generate'])
++if env['arcs']=='use': env.Append(CXXFLAGS=['-fprofile-use'],LINKFLAGS=['-fprofile-use'])
++
+ ### LINKER
+ #env['NONPLUGIN_LIBS']=env['LIBS']
+ ## libs for all plugins
+@@ -387,7 +392,7 @@
+ 
+ # if this is not present, vtables &amp; typeinfos for classes in yade binary itself are not exported; breaks plugin loading
+ env.Append(LINKFLAGS=['-rdynamic']) 
+-# makes dynamic library loading easied (no LD_LIBRARY_PATH) and perhaps faster
++# makes dynamic library loading easier (no LD_LIBRARY_PATH) and perhaps faster
+ env.Append(RPATH=runtimeLibDirs)
+ # find already compiled but not yet installed libraries for linking
+ #env.Append(LIBPATH=[os.path.join('#',x) for x in libDirs]	# -floop-optimize2 is a gcc-4.x flag, doesn't exist on previous version
+
+Modified: trunk/extra/Brefcom.cpp
+===================================================================
+--- trunk/extra/Brefcom.cpp	2008-06-18 13:29:35 UTC (rev 1394)
++++ trunk/extra/Brefcom.cpp	2008-06-18 15:01:47 UTC (rev 1395)
+@@ -34,26 +34,26 @@
+ 		const shared_ptr&lt;BodyMacroParameters&gt;&amp; elast2=static_pointer_cast&lt;BodyMacroParameters&gt;(pp2);
+ 
+ 		Real E12=2*elast1-&gt;young*elast2-&gt;young/(elast1-&gt;young+elast2-&gt;young); // harmonic Young's modulus average
+-		Real nu12=2*elast1-&gt;poisson*elast2-&gt;poisson/(elast1-&gt;poisson+elast2-&gt;poisson); // dtto for Poisson ratio 
++		//Real nu12=2*elast1-&gt;poisson*elast2-&gt;poisson/(elast1-&gt;poisson+elast2-&gt;poisson); // dtto for Poisson ratio 
+ 		Real S12=Mathr::PI*pow(min(contGeom-&gt;radius1,contGeom-&gt;radius2),2); // &quot;surface&quot; of interaction
+ 		//Real d0=contGeom-&gt;radius1 + contGeom-&gt;radius2; // equilibrium distace is &quot;just touching&quot;
+ 		Real d0=(elast1-&gt;se3.position-elast2-&gt;se3.position).Length(); // equilibrium distance is the initial contact distance
+-		// Real E=(E12 /* was here for Kn:  *S12/d0  */)*((1+alpha)/(beta*(1+nu12)+gamma*(1-alpha*nu12)));
+-		Real E=E12; // apply alpha, beta, gamma: garbage values of E !?
++		//Real E=(E12 /* was here for Kn:  *S12/d0  */)*((1+alpha)/(beta*(1+nu12)+gamma*(1-alpha*nu12)));
++		//Real E=E12; // apply alpha, beta, gamma: garbage values of E !?
+ 
+ 		/* recommend default values for parameters
+ 		 * propose ways to determine them exactly */
+ 		assert(!isnan(expBending)); assert(!isnan(sigmaT)); assert(!isnan(xiShear));
+ 
+ 		shared_ptr&lt;BrefcomContact&gt; contPhys(new BrefcomContact(
+-			/* E */ E,
+-			/* G */ E/2*(1+nu12), //FIXME: apply apha, beta, gamma coefficients here as well?! // !!!*(1-alpha*nu12)/(1+nu12),
++			/* E */ E12,
++			/* G */ E12/G_over_E,   /*/2*(1+nu12)*(1-alpha*nu12)/(1+nu12),*/
+ 			/* tanFrictionAngle */ tan(.5*(elast1-&gt;frictionAngle+elast2-&gt;frictionAngle)),
+ 			/* undamagedCohesion */ S12*sigmaT,
+ 			/* equilibriumDist */ d0,
+ 			/* crossSection */ S12,
+-			/* epsCrackOnset */ sigmaT/E12,
+-			/* epsFracture */ 5*sigmaT/E12,
++			/* epsCrackOnset */ epsCrackOnset,
++			/* epsFracture */ relDuctility*epsCrackOnset,
+ 			/* expBending */ expBending,
+ 			/* xiShear*/ xiShear
+ 			));
+@@ -93,7 +93,7 @@
+ void BrefcomLaw::action(MetaBody* _rootBody){
+ 	rootBody=_rootBody;
+ 	
+-	FOREACH(shared_ptr&lt;Interaction&gt; I, *rootBody-&gt;transientInteractions){
++	FOREACH(const shared_ptr&lt;Interaction&gt;&amp; I, *rootBody-&gt;transientInteractions){
+ 		if(!I-&gt;isReal) continue;
+ 		//TRACE;
+ 		// initialize temporaries
+
+Modified: trunk/extra/Brefcom.hpp
+===================================================================
+--- trunk/extra/Brefcom.hpp	2008-06-18 13:29:35 UTC (rev 1394)
++++ trunk/extra/Brefcom.hpp	2008-06-18 15:01:47 UTC (rev 1395)
+@@ -160,7 +160,7 @@
+ 		expBending is positive if the damage evolution function is concave after fracture onset;
+ 		reasonable value seems like 4.
+ 		*/
+-		Real sigmaT, expBending, xiShear;
++		Real sigmaT, expBending, xiShear, epsCrackOnset, relDuctility, G_over_E;
+ 		//! Should new contacts be cohesive? They will before this iter#, they will not be afterwards. If 0, they will never be. If negative, they will always be created as cohesive.
+ 		long cohesiveThresholdIter;
+ 		//! Create contacts that don't receive any damage (BrefcomContact::neverDamage=true); defaults to false
+@@ -168,7 +168,7 @@
+ 
+ 		BrefcomMakeContact(){
+ 			// init to signaling_NaN to force crash if not initialized (better than unknowingly using garbage values)
+-			sigmaT=expBending=xiShear=std::numeric_limits&lt;Real&gt;::signaling_NaN();
++			sigmaT=expBending=xiShear=epsCrackOnset=relDuctility=G_over_E=std::numeric_limits&lt;Real&gt;::signaling_NaN();
+ 			neverDamage=false;
+ 			alpha=3.7; beta=2.198; gamma=3.79; // Laurent's defaults
+ 			cohesiveThresholdIter=-1;
+@@ -177,16 +177,19 @@
+ 		virtual void go(const shared_ptr&lt;PhysicalParameters&gt;&amp; pp1, const shared_ptr&lt;PhysicalParameters&gt;&amp; pp2, const shared_ptr&lt;Interaction&gt;&amp; interaction);
+ 		virtual void registerAttributes(){
+ 			InteractionPhysicsEngineUnit::registerAttributes();
++			REGISTER_ATTRIBUTE(cohesiveThresholdIter);
+ 			REGISTER_ATTRIBUTE(alpha);
+ 			REGISTER_ATTRIBUTE(beta);
+ 			REGISTER_ATTRIBUTE(gamma);
+-			REGISTER_ATTRIBUTE(cohesiveThresholdIter);
+-			//REGISTER_ATTRIBUTE(calibratedEpsFracture);
++
++			REGISTER_ATTRIBUTE(G_over_E);
+ 			REGISTER_ATTRIBUTE(expBending);
+ 			REGISTER_ATTRIBUTE(xiShear);
+ 			REGISTER_ATTRIBUTE(sigmaT);
+ 			REGISTER_ATTRIBUTE(neverDamage);
+-			// REGISTER_ATTRIBUTE(sigmaC);
++			REGISTER_ATTRIBUTE(epsCrackOnset);
++			REGISTER_ATTRIBUTE(relDuctility);
++			//REGISTER_ATTRIBUTE(calibratedEpsFracture);
+ 			/* REGISTER_ATTRIBUTE(Gf); */
+ 		}
+ 
+
+Modified: trunk/extra/usct/UniaxialStrainControlledTest.cpp
+===================================================================
+--- trunk/extra/usct/UniaxialStrainControlledTest.cpp	2008-06-18 13:29:35 UTC (rev 1394)
++++ trunk/extra/usct/UniaxialStrainControlledTest.cpp	2008-06-18 15:01:47 UTC (rev 1395)
+@@ -162,7 +162,7 @@
+ 	//nothing to do
+ 	if(posIds.size()==0 || negIds.size()==0) return;
+ 	// linearly increase strain to the desired value
+-	if(abs(currentStrainRate)&lt;abs(strainRate))currentStrainRate+=strainRate*.01; else currentStrainRate=strainRate;
++	if(abs(currentStrainRate)&lt;abs(strainRate))currentStrainRate+=strainRate*.005; else currentStrainRate=strainRate;
+ 	// how much do we move; in the symmetric case, half of the strain is applied at each end;
+ 	Real dAX=(asymmetry==0?.5:1)*currentStrainRate*originalLength*Omega::instance().getTimeStep();
+ 	for(size_t i=0; i&lt;negIds.size(); i++){
+
+Modified: trunk/gui/py/PythonUI.cpp
+===================================================================
+--- trunk/gui/py/PythonUI.cpp	2008-06-18 13:29:35 UTC (rev 1394)
++++ trunk/gui/py/PythonUI.cpp	2008-06-18 15:01:47 UTC (rev 1395)
+@@ -14,7 +14,8 @@
+ 
+ struct termios PythonUI::tios, PythonUI::tios_orig;
+ string PythonUI::runScript;
+-bool PythonUI::stopAfter;
++bool PythonUI::stopAfter=false;
++bool PythonUI::nonInteractive=true;
+ vector&lt;string&gt; PythonUI::scriptArgs;
+ 
+ PythonUI* PythonUI::self=NULL;
+@@ -27,9 +28,10 @@
+ 	-h       help\n\
+ 	-s file  run this python script before entering interactive prompt\n\
+ 	-x       quit after running the script\n\
++	-n       non-interactive (no prompt)\n\
+ \nNon-option arguments (after options):\n\
+-	*.py     run this script (shorthand for -s *.py)\n\
+-	*.xml    open and run this simulation\n\
++	*.py                       run this script (shorthand for -s *.py)\n\
++	*.xml *.xml.gz *.xml.bz2   open and run this simulation\n\
+ \n\
+ 	remaining arguments are copied to yade.runtime.args (no escaping done) \n\
+ &quot;;
+@@ -86,6 +88,7 @@
+ 			PYTHON_DEFINE_STRING(&quot;simulation&quot;,Omega::instance().getSimulationFileName());
+ 			PYTHON_DEFINE_STRING(&quot;script&quot;,runScript);
+ 			PYTHON_DEFINE_BOOL(&quot;stopAfter&quot;,stopAfter);
++			PYTHON_DEFINE_BOOL(&quot;nonInteractive&quot;,nonInteractive);
+ 			{ ostringstream oss; oss&lt;&lt;&quot;yade.runtime.args=[&quot;; if(scriptArgs.size()&gt;0){ FOREACH(string s, scriptArgs) oss&lt;&lt;&quot;'&quot;&lt;&lt;s&lt;&lt;&quot;',&quot;; } oss&lt;&lt;&quot;]&quot;; PyRun_SimpleString(oss.str().c_str()); }
+ 		#undef PYTHON_DEFINE_STRING
+ 		#undef PYTHON_DEFINE_BOOL
+@@ -95,11 +98,12 @@
+ 
+ int PythonUI::run(int argc, char *argv[]) {
+ 	int ch;
+-	while((ch=getopt(argc,argv,&quot;hs:x&quot;))!=-1){
++	while((ch=getopt(argc,argv,&quot;hns:x&quot;))!=-1){
+ 		switch(ch){
+ 			case 'h': help(); return 1; break;
+ 			case 's': runScript=string(optarg); break;
+ 			case 'x': stopAfter=true; break;
++			case 'n': nonInteractive=true; break;
+ 			default:
+ 				LOG_WARN(&quot;Unhandled option string: `&quot;&lt;&lt;string(optarg)&lt;&lt;&quot;' (try -h for help on options)&quot;);
+ 				break;
+@@ -107,7 +111,9 @@
+ 	}
+ 	if(optind&lt;argc){ // process non-option arguments
+ 		if(boost::algorithm::ends_with(string(argv[optind]),string(&quot;.py&quot;))) runScript=string(argv[optind]);
+-		else if(boost::algorithm::ends_with(string(argv[optind]),string(&quot;.xml&quot;))) Omega::instance().setSimulationFileName(string(argv[optind]));
++		else if(boost::algorithm::ends_with(string(argv[optind]),string(&quot;.xml&quot;)) ||
++			boost::algorithm::ends_with(string(argv[optind]),string(&quot;.xml.gz&quot;)) ||
++			boost::algorithm::ends_with(string(argv[optind]),string(&quot;.xml.bz2&quot;))) Omega::instance().setSimulationFileName(string(argv[optind]));
+ 		else optind--;
+ 	}
+ 	for (int index = optind+1; index&lt;argc; index++) scriptArgs.push_back(argv[index]);
+
+Modified: trunk/gui/py/PythonUI.hpp
+===================================================================
+--- trunk/gui/py/PythonUI.hpp	2008-06-18 13:29:35 UTC (rev 1394)
++++ trunk/gui/py/PythonUI.hpp	2008-06-18 15:01:47 UTC (rev 1395)
+@@ -13,13 +13,14 @@
+ 		static void termSetup();
+ 		static void termRestore();
+ 	public:
+-		PythonUI(){self=this;};
++		PythonUI(){self=this; nonInteractive=false; stopAfter=false; };
+ 		virtual ~PythonUI(){};
+ 		static void pythonSession();
+ 		static PythonUI *self;
+ 		virtual int run(int argc, char *argv[]);
+ 		static string runScript;
+ 		static bool stopAfter;
++		static bool nonInteractive;
+ 		static vector&lt;string&gt; scriptArgs;
+ 	
+ 	REGISTER_CLASS_NAME(PythonUI);
+
+Modified: trunk/gui/py/PythonUI_rc.py
+===================================================================
+--- trunk/gui/py/PythonUI_rc.py	2008-06-18 13:29:35 UTC (rev 1394)
++++ trunk/gui/py/PythonUI_rc.py	2008-06-18 15:01:47 UTC (rev 1395)
+@@ -38,8 +38,10 @@
+ 
+ # this cannot be run directly, since importing * is allowed only at module level
+ 
+-try:
+-	# prefer ipython, since it is colorful and cool
++if runtime.nonInteractive:
++	import time;
++	while True: time.sleep(1)
++else:
+ 	from IPython.Shell import IPShellEmbed
+ 	sys.argv=['&lt;embedded python interpreter&gt;']
+ 	ipshell = IPShellEmbed(banner=r&quot;&quot;&quot;__   __    ____          ____                      _      
+@@ -51,25 +53,9 @@
+ 	,rc_override={'execfile':[runtime.prefix+'/lib/yade'+runtime.suffix+'/gui/yade/ipython.py']})
+ 
+ 	ipshell()
+-except ImportError:
+-	## no ipython :-(, let's emulate it
+-	# <A HREF="http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/473900">http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/473900</A>
+-	import os, readline, rlcompleter, atexit
+-	history_file = os.path.join(os.environ['HOME']+'/.yade_python_history')
+ 	try:
+-		 readline.read_history_file(history_file)
+-	except IOError:
+-		 pass
+-	readline.parse_and_bind(&quot;tab: complete&quot;)
+-	readline.set_history_length(1000)
+-	atexit.register(readline.write_history_file, history_file) # FIXME: this will probably not work!
+-	#del os, readline, rlcompleter, atexit, history_file, __file__
++		import yade.qt
++		yade.qt.close()
++	except ImportError: pass
+ 
+-	# run interactive loop
+-	import code
+-	code.InteractiveConsole(globals()).interact()
+-try:
+-	import yade.qt
+-	yade.qt.close()
+-except ImportError: pass
+ 
+
+Modified: trunk/gui/py/plot.py
+===================================================================
+--- trunk/gui/py/plot.py	2008-06-18 13:29:35 UTC (rev 1394)
++++ trunk/gui/py/plot.py	2008-06-18 15:01:47 UTC (rev 1395)
+@@ -42,6 +42,8 @@
+ 				val=plotDataCollector[attr]
+ 				plotDataCollector[attr]=[val[0],val[1]*2,val[2]]
+ 
++def reverseData():
++	for k in data: data[k].reverse()
+ 
+ def addData(d):
+ 	&quot;&quot;&quot;Add data from argument {'name':value,...} to yade.plot.data.
+@@ -76,7 +78,7 @@
+ 		pylab.xlabel(p)
+ 	pylab.show()
+ 
+-def saveGnuplot(baseName,term='wxt',extension=None,timestamp=False,comment=None):
++def saveGnuplot(baseName,term='wxt',extension=None,timestamp=False,comment=None,title=None):
+ 	&quot;&quot;&quot;baseName: used for creating baseName.gnuplot (command file for gnuplot),
+ 			associated baseName.data (data) and output files (if applicable) in the form baseName.[plot number].extension
+ 		term: specify the gnuplot terminal;
+@@ -98,7 +100,7 @@
+ 		fData.write(&quot;\t&quot;.join([str(data[key][i]) for key in data.keys()])+&quot;\n&quot;)
+ 	fData.close()
+ 	fPlot=file(baseName+&quot;.gnuplot&quot;,'w')
+-	fPlot.write('#!/usr/bin/env gnuplot\n#\n# created '+time.asctime()+' ('+time.strftime('%Y%m%d_%H:%m')+')\n#\n')
++	fPlot.write('#!/usr/bin/env gnuplot\n#\n# created '+time.asctime()+' ('+time.strftime('%Y%m%d_%H:%M')+')\n#\n')
+ 	if comment: fPlot.write('# '+comment.replace('\n','\n# ')+'#\n')
+ 	fPlot.write('dataFile=&quot;&lt; bzcat %s.data.bz2&quot;\n'%(baseNameNoPath))
+ 	if not extension: extension=term
+@@ -108,7 +110,9 @@
+ 		plots_p=[fillNonSequence(o) for o in plots[p]]
+ 		if term in ['wxt','x11']: fPlot.write(&quot;set term %s %d persist\n&quot;%(term,i))
+ 		else: fPlot.write(&quot;set term %s; set output '%s.%d.%s'\n&quot;%(term,baseNameNoPath,i,extension))
+-		fPlot.write(&quot;plot &quot;+&quot;,&quot;.join([&quot; dataFile using %d:%d title '%s(%s)'&quot;%(vars.index(p)+1,vars.index(pp[0])+1,pp[0],p) for pp in plots_p])+&quot;\n&quot;)
++		fPlot.write(&quot;set xlabel '%s'\n&quot;%p)
++		if title: fPlot.write(&quot;set title '%s'\n&quot;%title)
++		fPlot.write(&quot;plot &quot;+&quot;,&quot;.join([&quot; dataFile using %d:%d title '%s(%s)' with lines&quot;%(vars.index(p)+1,vars.index(pp[0])+1,pp[0],p) for pp in plots_p])+&quot;\n&quot;)
+ 		i+=1
+ 	fPlot.close()
+ 
+
+Modified: trunk/gui/py/utils.py
+===================================================================
+--- trunk/gui/py/utils.py	2008-06-18 13:29:35 UTC (rev 1394)
++++ trunk/gui/py/utils.py	2008-06-18 15:01:47 UTC (rev 1395)
+@@ -13,25 +13,25 @@
+ 	psyco.full()
+ except ImportError: pass
+ 
+-def sphere(center,radius,density=1,young=30e9,poisson=.3,dynamic=True,color=[1,1,1]):
++def sphere(center,radius,density=1,young=30e9,poisson=.3,frictionAngle=0.5236,dynamic=True,color=[1,1,1]):
+ 	&quot;&quot;&quot;Create default sphere, with given parameters. Physical properties such as mass and inertia are calculated automatically.&quot;&quot;&quot;
+ 	s=Body()
+ 	s.shape=GeometricalModel('Sphere',{'radius':radius,'diffuseColor':color})
+ 	s.mold=InteractingGeometry('InteractingSphere',{'radius':radius,'diffuseColor':color})
+ 	V=(4./3)*math.pi*radius**3
+ 	inert=(2./5.)*V*density*radius**2
+-	s.phys=PhysicalParameters('BodyMacroParameters',{'se3':[center[0],center[1],center[2],1,0,0,0],'mass':V*density,'inertia':[inert,inert,inert],'young':young,'poisson':poisson})
++	s.phys=PhysicalParameters('BodyMacroParameters',{'se3':[center[0],center[1],center[2],1,0,0,0],'mass':V*density,'inertia':[inert,inert,inert],'young':young,'poisson':poisson,'frictionAngle':frictionAngle})
+ 	s.bound=BoundingVolume('AABB',{'diffuseColor':[0,1,0]})
+ 	s['isDynamic']=dynamic
+ 	return s
+ 
+-def box(center,extents,orientation=[1,0,0,0],density=1,young=30e9,poisson=.3,dynamic=True,color=[1,1,1]):
++def box(center,extents,orientation=[1,0,0,0],density=1,young=30e9,poisson=.3,frictionAngle=0.5236,dynamic=True,color=[1,1,1]):
+ 	&quot;&quot;&quot;Create default box (cuboid), with given parameters. Physical properties such as mass and inertia are calculated automatically.&quot;&quot;&quot;
+ 	b=Body()
+ 	b.shape=GeometricalModel('Box',{'extents':extents,'diffuseColor':color})
+ 	b.mold=InteractingGeometry('InteractingBox',{'extents':extents,'diffuseColor':color})
+ 	mass=8*extents[0]*extents[1]*extents[2]*density
+-	b.phys=PhysicalParameters('BodyMacroParameters',{'se3':[center[0],center[1],center[2],orientation[0],orientation[1],orientation[2],orientation[3]],'mass':mass,'inertia':[mass*4*(extents[1]**2+extents[2]**2),mass*4*(extents[0]**2+extents[2]**2),mass*4*(extents[0]**2+extents[1]**2)],'young':young,'poisson':poisson})
++	b.phys=PhysicalParameters('BodyMacroParameters',{'se3':[center[0],center[1],center[2],orientation[0],orientation[1],orientation[2],orientation[3]],'mass':mass,'inertia':[mass*4*(extents[1]**2+extents[2]**2),mass*4*(extents[0]**2+extents[2]**2),mass*4*(extents[0]**2+extents[1]**2)],'young':young,'poisson':poisson,'frictionAngle':frictionAngle})
+ 	b.bound=BoundingVolume('AABB',{'diffuseColor':[0,1,0]})
+ 	b['isDynamic']=dynamic
+ 	return b
+@@ -49,7 +49,6 @@
+ 	for b in o.bodies:
+ 		extremes[1]=max(extremes[1],+b.shape['radius']+b.phys['se3'][axis])
+ 		extremes[0]=min(extremes[0],-b.shape['radius']+b.phys['se3'][axis])
+-	#print extremes
+ 	for b in o.bodies:
+ 		if b.phys['se3'][axis]-b.shape['radius']*distFactor&lt;=extremes[0]: ret[0].append(b.id)
+ 		if b.phys['se3'][axis]+b.shape['radius']*distFactor&gt;=extremes[1]: ret[1].append(b.id)
+@@ -85,23 +84,8 @@
+ 		if onMolds  and (b['isDynamic'] or not onlyDynamic): b.mold['diffuseColor']=color
+ 
+ def runInQtGui(background=True):
+-	&quot;&quot;&quot;[OBSOLETE now that python and QtGUI coexist.]
+-	
+-	Run the current simulation with the QtGUI.
+-	
+-	If background is True, the command will be run in background and the saved simulation temporary will not be deleted.
++	raise DeprecationWarning(&quot;This  runInQtGui functions is deprecated, since python now coexists with QtGUI.&quot;)
+ 
+-	Note that it runs in separate process, hence no changes will propagate back to this simulation.&quot;&quot;&quot;
+-	import os,tempfile,yade.runtime
+-	[fileobj,filename]=tempfile.mkstemp('.xml','yade')
+-	Omega().save(filename)
+-	if background: bg=' &amp;'
+-	else: bg=''
+-	cmd=yade.runtime.executable+' -N QtGUI -S &quot;'+filename+'&quot;'+bg
+-	print &quot;Running command: `&quot;+cmd+&quot;'&quot;
+-	os.system(cmd)
+-	if not background: os.remove(filename)
+-
+ def PWaveTimeStep():
+ 	&quot;&quot;&quot;Estimate timestep by the elastic wave propagation speed (p-wave).
+ 	
+
+Modified: trunk/gui/py/yadeControl.cpp
+===================================================================
+--- trunk/gui/py/yadeControl.cpp	2008-06-18 13:29:35 UTC (rev 1394)
++++ trunk/gui/py/yadeControl.cpp	2008-06-18 15:01:47 UTC (rev 1395)
+@@ -260,6 +260,11 @@
+ 			shared_ptr&lt;Interaction&gt; i=proxee-&gt;find(id1_(),id2_());
+ 			if(i) return pyInteraction(i); else throw invalid_argument(&quot;No such interaction.&quot;);
+ 		}
++		/* return nth iteration from the container (0-based index); this is to facilitate picking random interaction */
++		pyInteraction pyNth(long n){
++			long i=0; FOREACH(const shared_ptr&lt;Interaction&gt;&amp; I, *proxee){ if(i++==n) return pyInteraction(I); }
++			throw invalid_argument(string(&quot;Interaction number out of range (&quot;)+lexical_cast&lt;string&gt;(n)+&quot;&gt;&quot;+lexical_cast&lt;string&gt;(i)+&quot;).&quot;);
++		}
+ };
+ 
+ 
+@@ -494,7 +499,8 @@
+ 		.def(&quot;clear&quot;, &amp;pyBodyContainer::clear);
+ 	boost::python::class_&lt;pyInteractionContainer&gt;(&quot;InteractionContainer&quot;,python::init&lt;pyInteractionContainer&amp;&gt;())
+ 		.def(&quot;__iter__&quot;,&amp;pyInteractionContainer::pyIter)
+-		.def(&quot;__getitem__&quot;,&amp;pyInteractionContainer::pyGetitem);
++		.def(&quot;__getitem__&quot;,&amp;pyInteractionContainer::pyGetitem)
++		.def(&quot;nth&quot;,&amp;pyInteractionContainer::pyNth);
+ 	boost::python::class_&lt;pyInteractionIterator&gt;(&quot;InteractionIterator&quot;,python::init&lt;pyInteractionIterator&amp;&gt;())
+ 		.def(&quot;__iter__&quot;,&amp;pyInteractionIterator::pyIter)
+ 		.def(&quot;next&quot;,&amp;pyInteractionIterator::pyNext);
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000355.html">[Yade-commits] r1394 - in trunk: examples pkg/common	pkg/common/Engine/DeusExMachina
+</A></li>
+	<LI>Next message: <A HREF="000357.html">[Yade-commits] r1396 - in trunk: core gui/py
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#356">[ date ]</a>
+              <a href="thread.html#356">[ thread ]</a>
+              <a href="subject.html#356">[ subject ]</a>
+              <a href="author.html#356">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

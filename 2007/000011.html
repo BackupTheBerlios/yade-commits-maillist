@@ -1,0 +1,107 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1046 - in trunk: .	yade-libs/yade-lib-base/src/yade-lib-base
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2007/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1046%20-%20in%20trunk%3A%20.%0A%09yade-libs/yade-lib-base/src/yade-lib-base&In-Reply-To=%3C200701291916.l0TJGUvO032572%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000010.html">
+   <LINK REL="Next"  HREF="000012.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1046 - in trunk: .	yade-libs/yade-lib-base/src/yade-lib-base</H1>
+    <B>chareyre at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1046%20-%20in%20trunk%3A%20.%0A%09yade-libs/yade-lib-base/src/yade-lib-base&In-Reply-To=%3C200701291916.l0TJGUvO032572%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1046 - in trunk: .	yade-libs/yade-lib-base/src/yade-lib-base">chareyre at mail.berlios.de
+       </A><BR>
+    <I>Mon Jan 29 20:16:30 CET 2007</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000010.html">[Yade-commits] r1045 - in trunk: . yade-core/src/yade	yade-libs/yade-lib-base/src/yade-lib-base	yade-libs/yade-lib-computational-geometry/src/yade-lib-computational-geometry	yade-packages/yade-package-dem/src	yade-packages/yade-package-dem/src/DataClass/PhysicalAction	yade-packages/yade-package-dem/src/DataClass/PhysicalAction/GlobalStiffness	yade-packages/yade-package-dem/src/Engine/DeusExMachina/ResultantForceEngine	yade-packages/yade-package-dem/src/Engine/DeusExMachina/TriaxialCompressionEngine	yade-packages/yade-package-dem/src/Engine/DeusExMachina/TriaxialStressController	yade-packages/yade-package-dem/src/Engine/StandAloneEngine	yade-packages/yade-package-dem/src/Engine/StandAloneEngine/GlobalStiffnessCounter	yade-packages/yade-package-dem/src/Engine/StandAloneEngine/GlobalStiffnessTimeStepper	yade-packages/yade-package-dem/src/PreProcessor	yade-packages/yade-package-dem/src/PreProcessor/TriaxialTest
+</A></li>
+        <LI>Next message: <A HREF="000012.html">[Yade-commits] r1047 - in trunk:	yade-packages/yade-package-dem/src/PreProcessor yade-scripts
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#11">[ date ]</a>
+              <a href="thread.html#11">[ thread ]</a>
+              <a href="subject.html#11">[ subject ]</a>
+              <a href="author.html#11">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: chareyre
+Date: 2007-01-29 20:16:28 +0100 (Mon, 29 Jan 2007)
+New Revision: 1046
+
+Modified:
+   trunk/SConstruct
+   trunk/yade-libs/yade-lib-base/src/yade-lib-base/Logging.hpp
+Log:
+
+
+Modified: trunk/SConstruct
+===================================================================
+--- trunk/SConstruct	2007-01-29 18:45:15 UTC (rev 1045)
++++ trunk/SConstruct	2007-01-29 19:16:28 UTC (rev 1046)
+@@ -42,13 +42,13 @@
+ #  2. lowercase options influence the building process, compiler options and the like.
+ #
+ opts.AddOptions(
+-	PathOption('PREFIX', 'Install path prefix', '/home/3S-LAB/bchareyre/Programmation/YADE'),
++	PathOption('PREFIX', 'Install path prefix', '/usr/local'),
+ 	('POSTFIX','Local version appended to binary, library and config directory (beware: if PREFIX is the same, headers of the older version will still be overwritten','',None,lambda x:x),
+ 	BoolOption('debug', 'Enable debugging information and disable optimizations',1),
+ 	BoolOption('profile','Enable profiling information',0),
+ 	BoolOption('optimize','Turn on heavy optimizations (generates SSE2 instructions)',0),
+ 	ListOption('exclude','Components that will not be built','none',names=['extra','common','dem','fem','lattice','mass-spring','realtime-rigidbody']),
+-	('CPPPATH', 'Additional paths for the C preprocessor (whitespace separated)',['/home/3S-LAB/bchareyre/Programmation/YADE/include'],None,Split),
++	('CPPPATH', 'Additional paths for the C preprocessor (whitespace separated)',['/usr/include/wm3'],None,Split),
+ 	('LIBPATH','Additional paths for the linker (whitespace separated)',None,None,Split),
+ 	('QTDIR','Directories where to look for qt3',['/usr/share/qt3','/usr/lib/qt'],None,Split),
+ 	('CXX','The c++ compiler','ccache g++-4.0'),
+
+Modified: trunk/yade-libs/yade-lib-base/src/yade-lib-base/Logging.hpp
+===================================================================
+--- trunk/yade-libs/yade-lib-base/src/yade-lib-base/Logging.hpp	2007-01-29 18:45:15 UTC (rev 1045)
++++ trunk/yade-libs/yade-lib-base/src/yade-lib-base/Logging.hpp	2007-01-29 19:16:28 UTC (rev 1046)
+@@ -25,9 +25,6 @@
+  *
+  */
+ 
+-
+-#define LOG_DEBUG
+-
+ #ifdef LOG4CXX
+ 
+ #	include&lt;log4cxx/logger.h&gt;
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000010.html">[Yade-commits] r1045 - in trunk: . yade-core/src/yade	yade-libs/yade-lib-base/src/yade-lib-base	yade-libs/yade-lib-computational-geometry/src/yade-lib-computational-geometry	yade-packages/yade-package-dem/src	yade-packages/yade-package-dem/src/DataClass/PhysicalAction	yade-packages/yade-package-dem/src/DataClass/PhysicalAction/GlobalStiffness	yade-packages/yade-package-dem/src/Engine/DeusExMachina/ResultantForceEngine	yade-packages/yade-package-dem/src/Engine/DeusExMachina/TriaxialCompressionEngine	yade-packages/yade-package-dem/src/Engine/DeusExMachina/TriaxialStressController	yade-packages/yade-package-dem/src/Engine/StandAloneEngine	yade-packages/yade-package-dem/src/Engine/StandAloneEngine/GlobalStiffnessCounter	yade-packages/yade-package-dem/src/Engine/StandAloneEngine/GlobalStiffnessTimeStepper	yade-packages/yade-package-dem/src/PreProcessor	yade-packages/yade-package-dem/src/PreProcessor/TriaxialTest
+</A></li>
+	<LI>Next message: <A HREF="000012.html">[Yade-commits] r1047 - in trunk:	yade-packages/yade-package-dem/src/PreProcessor yade-scripts
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#11">[ date ]</a>
+              <a href="thread.html#11">[ thread ]</a>
+              <a href="subject.html#11">[ subject ]</a>
+              <a href="author.html#11">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

@@ -1,0 +1,1549 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1404 - in trunk: extra gui/py gui/qt3	pkg/common/Engine/MetaEngine pkg/common/Engine/StandAloneEngine	pkg/common/RenderingEngine/GLDrawGeometricalModel	pkg/dem/Engine/StandAloneEngine
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1404%20-%20in%20trunk%3A%20extra%20gui/py%20gui/qt3%0A%09pkg/common/Engine/MetaEngine%20pkg/common/Engine/StandAloneEngine%0A%09pkg/common/RenderingEngine/GLDrawGeometricalModel%0A%09pkg/dem/Engine/StandAloneEngine&In-Reply-To=%3C200806290733.m5T7XPPp009606%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000364.html">
+   <LINK REL="Next"  HREF="000366.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1404 - in trunk: extra gui/py gui/qt3	pkg/common/Engine/MetaEngine pkg/common/Engine/StandAloneEngine	pkg/common/RenderingEngine/GLDrawGeometricalModel	pkg/dem/Engine/StandAloneEngine</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1404%20-%20in%20trunk%3A%20extra%20gui/py%20gui/qt3%0A%09pkg/common/Engine/MetaEngine%20pkg/common/Engine/StandAloneEngine%0A%09pkg/common/RenderingEngine/GLDrawGeometricalModel%0A%09pkg/dem/Engine/StandAloneEngine&In-Reply-To=%3C200806290733.m5T7XPPp009606%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1404 - in trunk: extra gui/py gui/qt3	pkg/common/Engine/MetaEngine pkg/common/Engine/StandAloneEngine	pkg/common/RenderingEngine/GLDrawGeometricalModel	pkg/dem/Engine/StandAloneEngine">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Sun Jun 29 09:33:25 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000364.html">[Yade-commits] r1403 - in trunk: gui/py pkg/common/Engine	pkg/common/Engine/MetaEngine	pkg/common/Engine/StandAloneEngine scripts
+</A></li>
+        <LI>Next message: <A HREF="000366.html">[Yade-commits] r1405 - in trunk: core gui gui/qt3	pkg/common/DataClass/BoundingVolume	pkg/common/RenderingEngine/OpenGLRenderingEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#365">[ date ]</a>
+              <a href="thread.html#365">[ thread ]</a>
+              <a href="subject.html#365">[ subject ]</a>
+              <a href="author.html#365">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2008-06-29 09:33:23 +0200 (Sun, 29 Jun 2008)
+New Revision: 1404
+
+Modified:
+   trunk/extra/Brefcom.cpp
+   trunk/extra/Brefcom.hpp
+   trunk/gui/py/plot.py
+   trunk/gui/py/yadeControl.cpp
+   trunk/gui/qt3/GLSimulationPlayerViewer.cpp
+   trunk/gui/qt3/GLSimulationPlayerViewer.hpp
+   trunk/gui/qt3/QtGeneratedSimulationPlayer.ui
+   trunk/gui/qt3/QtSimulationPlayer.cpp
+   trunk/gui/qt3/QtSimulationPlayer.hpp
+   trunk/pkg/common/Engine/MetaEngine/BoundingVolumeMetaEngine.cpp
+   trunk/pkg/common/Engine/StandAloneEngine/PersistentSAPCollider.cpp
+   trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawSphere.cpp
+   trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawSphere.hpp
+   trunk/pkg/dem/Engine/StandAloneEngine/PositionOrientationRecorder.cpp
+   trunk/pkg/dem/Engine/StandAloneEngine/PositionOrientationRecorder.hpp
+Log:
+1. PositionOrientationRecorder save to bzip2'ed files now; player is able to read both compressed and uncompressed files for backward compatibility.
+2. Unsucessful try to use glut for drawing spheres; left as an option that is disabled by default, however.
+3. Fixes in brefcom
+4. Simulation player now has progress window and supports strides when loading files.
+5. Fix wrong timestamp format in saveGnuplot in gui/py/plot.py (%m instead of %M)
+
+
+Modified: trunk/extra/Brefcom.cpp
+===================================================================
+--- trunk/extra/Brefcom.cpp	2008-06-26 12:42:04 UTC (rev 1403)
++++ trunk/extra/Brefcom.cpp	2008-06-29 07:33:23 UTC (rev 1404)
+@@ -61,6 +61,8 @@
+ 		if(neverDamage) contPhys-&gt;neverDamage=true;
+ 		if(cohesiveThresholdIter&lt;0 || Omega::instance().getCurrentIteration()&lt;cohesiveThresholdIter) contPhys-&gt;isCohesive=true;
+ 		else contPhys-&gt;isCohesive=false;
++		contPhys-&gt;tau=tau;
++		contPhys-&gt;expDmgRate=expDmgRate;
+ 
+ 		interaction-&gt;interactionPhysics=contPhys;
+ 	}
+
+Modified: trunk/extra/Brefcom.hpp
+===================================================================
+--- trunk/extra/Brefcom.hpp	2008-06-26 12:42:04 UTC (rev 1403)
++++ trunk/extra/Brefcom.hpp	2008-06-29 07:33:23 UTC (rev 1404)
+@@ -162,7 +162,7 @@
+ 		expBending is positive if the damage evolution function is concave after fracture onset;
+ 		reasonable value seems like 4.
+ 		*/
+-		Real sigmaT, expBending, xiShear, epsCrackOnset, relDuctility, G_over_E;
++		Real sigmaT, expBending, xiShear, epsCrackOnset, relDuctility, G_over_E, tau, expDmgRate;
+ 		//! Should new contacts be cohesive? They will before this iter#, they will not be afterwards. If 0, they will never be. If negative, they will always be created as cohesive.
+ 		long cohesiveThresholdIter;
+ 		//! Create contacts that don't receive any damage (BrefcomContact::neverDamage=true); defaults to false
+@@ -174,6 +174,7 @@
+ 			neverDamage=false;
+ 			alpha=3.7; beta=2.198; gamma=3.79; // Laurent's defaults
+ 			cohesiveThresholdIter=-1;
++			tau=-1; expDmgRate=0;
+ 		}
+ 
+ 		virtual void go(const shared_ptr&lt;PhysicalParameters&gt;&amp; pp1, const shared_ptr&lt;PhysicalParameters&gt;&amp; pp2, const shared_ptr&lt;Interaction&gt;&amp; interaction);
+@@ -191,6 +192,8 @@
+ 			REGISTER_ATTRIBUTE(neverDamage);
+ 			REGISTER_ATTRIBUTE(epsCrackOnset);
+ 			REGISTER_ATTRIBUTE(relDuctility);
++			REGISTER_ATTRIBUTE(tau);
++			REGISTER_ATTRIBUTE(expDmgRate);
+ 			//REGISTER_ATTRIBUTE(calibratedEpsFracture);
+ 			/* REGISTER_ATTRIBUTE(Gf); */
+ 		}
+
+Modified: trunk/gui/py/plot.py
+===================================================================
+--- trunk/gui/py/plot.py	2008-06-26 12:42:04 UTC (rev 1403)
++++ trunk/gui/py/plot.py	2008-06-29 07:33:23 UTC (rev 1404)
+@@ -92,7 +92,7 @@
+ 	import time,bz2
+ 	vars=data.keys()
+ 	lData=len(data[vars[0]])
+-	if timestamp: baseName+=time.strftime('_%Y%m%d_%H:%m')
++	if timestamp: baseName+=time.strftime('_%Y%m%d_%H:%M')
+ 	baseNameNoPath=baseName.split('/')[-1]
+ 	fData=bz2.BZ2File(baseName+&quot;.data.bz2&quot;,'w');
+ 	fData.write(&quot;# &quot;+&quot;\t\t&quot;.join(vars)+&quot;\n&quot;)
+
+Modified: trunk/gui/py/yadeControl.cpp
+===================================================================
+--- trunk/gui/py/yadeControl.cpp	2008-06-26 12:42:04 UTC (rev 1403)
++++ trunk/gui/py/yadeControl.cpp	2008-06-29 07:33:23 UTC (rev 1404)
+@@ -456,7 +456,7 @@
+ 	}
+ 
+ 
+-	void wait(){ if(OMEGA.isRunning()){LOG_DEBUG(&quot;WAIT!&quot;);} while(OMEGA.isRunning()) usleep(50000 /*20 ms*/); }
++	void wait(){ if(OMEGA.isRunning()){LOG_DEBUG(&quot;WAIT!&quot;);} else return; timespec t1,t2; t1.tv_sec=0; t1.tv_nsec=40000000; /*40 ms*/ while(OMEGA.isRunning()) nanosleep(&amp;t1,&amp;t2); }
+ 	
+ 	pyBodyContainer bodies_get(void){assertRootBody(); return pyBodyContainer(OMEGA.getRootBody()-&gt;bodies); }
+ 	pyInteractionContainer interactions_get(void){assertRootBody(); return pyInteractionContainer(OMEGA.getRootBody()-&gt;transientInteractions); }
+
+Modified: trunk/gui/qt3/GLSimulationPlayerViewer.cpp
+===================================================================
+--- trunk/gui/qt3/GLSimulationPlayerViewer.cpp	2008-06-26 12:42:04 UTC (rev 1403)
++++ trunk/gui/qt3/GLSimulationPlayerViewer.cpp	2008-06-29 07:33:23 UTC (rev 1404)
+@@ -7,27 +7,30 @@
+ *************************************************************************/
+ 
+ #include &quot;GLSimulationPlayerViewer.hpp&quot;
+-#include &lt;stdlib.h&gt;
++#include&lt;stdlib.h&gt;
++#include&lt;unistd.h&gt;
+ #include &lt;fstream&gt;
+ #include &lt;string&gt;
+ #include &lt;boost/lexical_cast.hpp&gt;
+ #include &lt;boost/filesystem/operations.hpp&gt;
+ #include &lt;boost/filesystem/convenience.hpp&gt;
++#include&lt;boost/iostreams/filtering_stream.hpp&gt;
++#include&lt;boost/iostreams/filter/bzip2.hpp&gt;
++#include&lt;boost/iostreams/device/file.hpp&gt;
++#include&lt;boost/algorithm/string.hpp&gt;
++
+ #include&lt;yade/lib-opengl/OpenGLWrapper.hpp&gt;
++#include&lt;qspinbox.h&gt;
++#include&quot;QtSimulationPlayer.hpp&quot;
+ 
+ 
+ #undef DEBUG /* I HATE&#160;qt3 for this! ::log4cxx::Level::DEBUG becomes ::log4cxx::Level:: becomes syntax error */
+ #include&lt;yade/pkg-dem/PositionOrientationRecorder.hpp&gt;
+-
+-
+-
+-
+ using namespace std;
+ using namespace boost;
+ 
+ CREATE_LOGGER(GLSimulationPlayerViewer);
+ 
+-
+ GLSimulationPlayerViewer::GLSimulationPlayerViewer(QWidget * parent,char* name) : QGLViewer(parent,name)
+ {
+ 	shared_ptr&lt;Factorable&gt; tmpRenderer = ClassFactory::instance().createShared(&quot;OpenGLRenderingEngine&quot;);
+@@ -40,6 +43,7 @@
+ 	saveSnapShots = false;
+ 	frameNumber=0;
+ 	drawGridXYZ[0]=drawGridXYZ[1]=drawGridXYZ[2]=false;
++	lastCheckPointFrame=0;
+ 	
+ 
+ 	// cut&amp;paste from GLViewer::notMoving()
+@@ -84,14 +88,30 @@
+ 
+ void GLSimulationPlayerViewer::animate()
+ {
++	long ETA_TTL_ms=10000;
++	boost::posix_time::ptime now=microsec_clock::local_time();
++	if ((now-lastCheckPointTime).total_milliseconds()&gt;ETA_TTL_ms){
++		long elapsedFrames=frameNumber-lastCheckPointFrame;
++		long framesToGo=xyzFiles.size()-frameNumber;
++		if(elapsedFrames&gt;0 &amp;&amp; framesToGo&gt;0){
++			long ETA_s=((now-lastCheckPointTime).total_milliseconds()/elapsedFrames)*(framesToGo)/1000;
++			simPlayer-&gt;pushMessage(lexical_cast&lt;string&gt;(framesToGo)+&quot; frames to go, ETA &quot;+lexical_cast&lt;string&gt;(ETA_s/3600)+&quot;:&quot;+lexical_cast&lt;string&gt;((ETA_s%3600)/60)+&quot;:&quot;+lexical_cast&lt;string&gt;(ETA_s%60));
++		}
++		lastCheckPointTime=now;
++		lastCheckPointFrame=frameNumber;
++	}
+ 	if (!loadPositionOrientationFile()){
+ 		frameNumber=0;
+ 		stopAnimation();
++		simPlayer-&gt;pushMessage(&quot;FINISHED&quot;);
+ 	} else {
+ 		if (saveSnapShots) {
+ 			setSnapshotFormat(&quot;PNG&quot;);
+ 			setSnapshotFileName(outputBaseDirectory+&quot;/&quot;+outputBaseName+&quot;.png&quot;);
+ 			saveSnapshot(/*automatic*/true,/*overwrite*/ true);
++			// mimick qglviewer's algorithm for making snapshot filename
++			char num[64]; snprintf(num,64,&quot;%04d&quot;,frameNumber);
++			simPlayer-&gt;pushMessage(lexical_cast&lt;string&gt;(frameNumber)+&quot;/&quot;+lexical_cast&lt;string&gt;(xyzFiles.size())+&quot; -&gt; &quot;+outputBaseDirectory+&quot;/&quot;+outputBaseName+&quot;-&quot;+num+&quot;.png&quot;);
+ 		}
+ 		frameNumber++;
+ 	}
+@@ -104,7 +124,7 @@
+ 	updateGL();
+ 	frameNumber=0;
+ 	setSnapshotCounter(0);
+-	// this is to allow manipulation of bodies from python, Omega().bodies etc.
++	// this is to allow manipulation of bodies from python: Omega().bodies etc.
+ 	Omega::instance().setRootBody(rootBody);
+ 
+ 	for(vector&lt;shared_ptr&lt;Engine&gt; &gt;::iterator I=rootBody-&gt;engines.begin(); I!=rootBody-&gt;engines.end(); ++I){
+@@ -122,17 +142,29 @@
+ 			if(inputBaseDirectory.empty()){ inputBaseDirectory=path; } if(inputBaseName.empty()){ inputBaseName=prefix; }
+ 		}
+ 	}
+-	
++	simPlayer-&gt;pushMessage(&quot;Using directory &quot;+inputBaseDirectory+&quot; and basename &quot;+inputBaseName+&quot;.&quot;);
+ 	LOG_DEBUG(&quot;Using directory `&quot;&lt;&lt;inputBaseDirectory&lt;&lt;&quot;' and basename `&quot;&lt;&lt;inputBaseName&lt;&lt;&quot;'.&quot;);
+ 	if(!filesystem::exists(filesystem::path(inputBaseDirectory))){ LOG_FATAL(&quot;Base xyz directory `&quot;&lt;&lt;inputBaseDirectory&lt;&lt;&quot;' doesn't exist!!&quot;); return;}
+ 	filesystem::directory_iterator dEnd;
+ 	xyzFiles.clear();
+ 	for(filesystem::directory_iterator dIter(inputBaseDirectory); dIter!=dEnd; dIter++){
+-		if(dIter-&gt;leaf().find(inputBaseName)!=0 || filesystem::extension(*dIter)==&quot;.rgb&quot; || filesystem::is_directory(*dIter) || !filesystem::exists(*dIter)) continue;
++		if(dIter-&gt;leaf().find(inputBaseName)!=0 || filesystem::extension(*dIter)==&quot;.rgb&quot; || algorithm::ends_with(dIter-&gt;string(),&quot;.rgb.bz2&quot;) || filesystem::is_directory(*dIter) || !filesystem::exists(*dIter)) continue;
+ 		xyzFiles.push_back(dIter-&gt;string());
+ 		//LOG_TRACE(&quot;Added &quot;&lt;&lt;dIter-&gt;string());
+ 	}
++	int stride=simPlayer-&gt;sbStride-&gt;value();
+ 	xyzFiles.sort();
++	if(stride&gt;1){
++		list&lt;string&gt; xyz2;
++		long i=stride-1;
++		FOREACH(string f,xyzFiles){
++			if(i++&lt;stride-1) continue;
++			i=0; xyz2.push_back(f);
++		}
++		simPlayer-&gt;pushMessage(&quot;Using stride of &quot;+lexical_cast&lt;string&gt;(stride)+&quot;, reduced files from &quot;+lexical_cast&lt;string&gt;(xyzFiles.size())+&quot; to &quot;+lexical_cast&lt;string&gt;(xyz2.size()));
++		xyzFiles=xyz2;
++	}
++	simPlayer-&gt;pushMessage(&quot;Found &quot;+lexical_cast&lt;string&gt;(xyzFiles.size())+&quot; files to process.&quot;);
+ 	xyzFilesIter=xyzFiles.begin();
+ 	//for(list&lt;string&gt;::iterator I=xyzFiles.begin(); I!=xyzFiles.end(); I++){LOG_TRACE(*I);}
+ }
+@@ -144,6 +176,7 @@
+ 	{
+ 		frameNumber=0;
+ 		stopAnimation();
++		simPlayer-&gt;pushMessage(&quot;End of files, stopped.&quot;);
+ 	}
+ 	else frameNumber++;
+ 	updateGL();
+@@ -165,9 +198,16 @@
+ {
+ 	if(xyzFilesIter==xyzFiles.end()) return false;
+ 	fileName=*(xyzFilesIter++);
+-	ifstream f(fileName.c_str());
+-	ifstream rgb((fileName+&quot;.rgb&quot;).c_str());
+-	bool doRgb=rgb.good();
++	iostreams::filtering_istream f; if(boost::algorithm::ends_with(fileName,&quot;.bz2&quot;)) f.push(iostreams::bzip2_decompressor()); f.push(iostreams::file_source(fileName));
++	// strip .bz2 from the filename
++	if(boost::algorithm::ends_with(fileName,&quot;.bz2&quot;)) algorithm::replace_last(fileName,&quot;.bz2&quot;,&quot;&quot;);
++	// append .rgb[.bz2]
++	string rgbFileName=fileName+&quot;.rgb&quot;;
++	if(!filesystem::exists(rgbFileName)) rgbFileName+=&quot;.bz2&quot;;
++	iostreams::filtering_istream rgb; if(boost::algorithm::ends_with(rgbFileName,&quot;.bz2&quot;)) rgb.push(iostreams::bzip2_decompressor()); rgb.push(iostreams::file_source(rgbFileName));
++	bool doRgb=rgb.good() &amp;&amp; filesystem::exists(rgbFileName); // doesn't indicate that the file doesn't exist ?!
++	if(doRgb) cerr&lt;&lt;rgbFileName&lt;&lt;endl;
++	simPlayer-&gt;pushMessage(lexical_cast&lt;string&gt;(frameNumber)+&quot;/&quot;+lexical_cast&lt;string&gt;(xyzFiles.size())+&quot; &quot;+fileName+(doRgb?&quot; (+rgb)&quot;:&quot;&quot;));
+ 	if(!f.good()){LOG_FATAL(&quot;Snapshot file &quot;&lt;&lt;fileName&lt;&lt;&quot; could not be opened for reading (fatal, ending sequence)?!&quot;); return false;}
+ 	LOG_TRACE(fileName);
+ 	for(unsigned long id=0; !f.eof() &amp;&amp; !f.fail() &amp;&amp; id&lt;=(rootBody-&gt;bodies-&gt;size()-1); id++){
+@@ -178,10 +218,9 @@
+ 		Vector3r&amp; myColor=b-&gt;geometricalModel-&gt;diffuseColor;
+ 		f&gt;&gt;mySe3.position[0]&gt;&gt;mySe3.position[1]&gt;&gt;mySe3.position[2]&gt;&gt;mySe3.orientation[0]&gt;&gt;mySe3.orientation[1]&gt;&gt;mySe3.orientation[2]&gt;&gt;mySe3.orientation[3];
+ 		/* try loading color as well */
++		//cerr&lt;&lt;&quot;[&quot;&lt;&lt;id&lt;&lt;&quot;]&quot;;
+ 		if(doRgb &amp;&amp; !rgb.eof() &amp;&amp; !rgb.fail()) rgb&gt;&gt;myColor[0]&gt;&gt;myColor[1]&gt;&gt;myColor[2];
+ 	}
+-	f.close();
+-	rgb.close();
+ 	return true;
+ }
+ 
+
+Modified: trunk/gui/qt3/GLSimulationPlayerViewer.hpp
+===================================================================
+--- trunk/gui/qt3/GLSimulationPlayerViewer.hpp	2008-06-26 12:42:04 UTC (rev 1403)
++++ trunk/gui/qt3/GLSimulationPlayerViewer.hpp	2008-06-29 07:33:23 UTC (rev 1404)
+@@ -16,7 +16,9 @@
+ 
+ #include&lt;boost/filesystem/operations.hpp&gt;
+ #include&lt;boost/filesystem/convenience.hpp&gt;
++#include &lt;boost/date_time/posix_time/posix_time.hpp&gt;
+ 
++class QtSimulationPlayer;
+ 
+ class GLSimulationPlayerViewer : public QGLViewer
+ {
+@@ -25,7 +27,10 @@
+ 		shared_ptr&lt;RenderingEngine&gt;	 renderer;
+ 		shared_ptr&lt;MetaBody&gt;		 rootBody;
+ 	public:
+-		
++		QtSimulationPlayer* simPlayer;
++		boost::posix_time::ptime lastCheckPointTime;
++		long lastCheckPointFrame;
++	
+ 		string fileName, inputBaseName, inputBaseDirectory, outputBaseName, outputBaseDirectory;
+ 		bool				 saveSnapShots;
+ 		bool 	drawGridXYZ[3];
+
+Modified: trunk/gui/qt3/QtGeneratedSimulationPlayer.ui
+===================================================================
+--- trunk/gui/qt3/QtGeneratedSimulationPlayer.ui	2008-06-26 12:42:04 UTC (rev 1403)
++++ trunk/gui/qt3/QtGeneratedSimulationPlayer.ui	2008-06-29 07:33:23 UTC (rev 1404)
+@@ -8,8 +8,8 @@
+         &lt;rect&gt;
+             &lt;x&gt;0&lt;/x&gt;
+             &lt;y&gt;0&lt;/y&gt;
+-            &lt;width&gt;984&lt;/width&gt;
+-            &lt;height&gt;652&lt;/height&gt;
++            &lt;width&gt;979&lt;/width&gt;
++            &lt;height&gt;655&lt;/height&gt;
+         &lt;/rect&gt;
+     &lt;/property&gt;
+     &lt;property name=&quot;sizePolicy&quot;&gt;
+@@ -23,359 +23,443 @@
+     &lt;property name=&quot;caption&quot;&gt;
+         &lt;string&gt;Simulation Player&lt;/string&gt;
+     &lt;/property&gt;
+-    &lt;grid&gt;
++    &lt;widget class=&quot;GLSimulationPlayerViewer&quot;&gt;
+         &lt;property name=&quot;name&quot;&gt;
+-            &lt;cstring&gt;unnamed&lt;/cstring&gt;
++            &lt;cstring&gt;glSimulationPlayerViewer&lt;/cstring&gt;
+         &lt;/property&gt;
+-        &lt;spacer row=&quot;0&quot; column=&quot;0&quot;&gt;
++        &lt;property name=&quot;geometry&quot;&gt;
++            &lt;rect&gt;
++                &lt;x&gt;320&lt;/x&gt;
++                &lt;y&gt;10&lt;/y&gt;
++                &lt;width&gt;651&lt;/width&gt;
++                &lt;height&gt;630&lt;/height&gt;
++            &lt;/rect&gt;
++        &lt;/property&gt;
++    &lt;/widget&gt;
++    &lt;widget class=&quot;QLayoutWidget&quot;&gt;
++        &lt;property name=&quot;name&quot;&gt;
++            &lt;cstring&gt;layout3&lt;/cstring&gt;
++        &lt;/property&gt;
++        &lt;property name=&quot;enabled&quot;&gt;
++            &lt;bool&gt;true&lt;/bool&gt;
++        &lt;/property&gt;
++        &lt;property name=&quot;geometry&quot;&gt;
++            &lt;rect&gt;
++                &lt;x&gt;0&lt;/x&gt;
++                &lt;y&gt;10&lt;/y&gt;
++                &lt;width&gt;307&lt;/width&gt;
++                &lt;height&gt;628&lt;/height&gt;
++            &lt;/rect&gt;
++        &lt;/property&gt;
++        &lt;vbox&gt;
+             &lt;property name=&quot;name&quot;&gt;
+-                &lt;cstring&gt;spacer1_2&lt;/cstring&gt;
++                &lt;cstring&gt;unnamed&lt;/cstring&gt;
+             &lt;/property&gt;
+-            &lt;property name=&quot;orientation&quot;&gt;
+-                &lt;enum&gt;Vertical&lt;/enum&gt;
+-            &lt;/property&gt;
+-            &lt;property name=&quot;sizeType&quot;&gt;
+-                &lt;enum&gt;Expanding&lt;/enum&gt;
+-            &lt;/property&gt;
+-            &lt;property name=&quot;sizeHint&quot;&gt;
+-                &lt;size&gt;
+-                    &lt;width&gt;20&lt;/width&gt;
+-                    &lt;height&gt;60&lt;/height&gt;
+-                &lt;/size&gt;
+-            &lt;/property&gt;
+-        &lt;/spacer&gt;
+-        &lt;widget class=&quot;GLSimulationPlayerViewer&quot; row=&quot;0&quot; column=&quot;1&quot; rowspan=&quot;5&quot; colspan=&quot;1&quot;&gt;
+-            &lt;property name=&quot;name&quot;&gt;
+-                &lt;cstring&gt;glSimulationPlayerViewer&lt;/cstring&gt;
+-            &lt;/property&gt;
+-        &lt;/widget&gt;
+-        &lt;widget class=&quot;QGroupBox&quot; row=&quot;3&quot; column=&quot;0&quot;&gt;
+-            &lt;property name=&quot;name&quot;&gt;
+-                &lt;cstring&gt;gbController&lt;/cstring&gt;
+-            &lt;/property&gt;
+-            &lt;property name=&quot;sizePolicy&quot;&gt;
+-                &lt;sizepolicy&gt;
+-                    &lt;hsizetype&gt;1&lt;/hsizetype&gt;
+-                    &lt;vsizetype&gt;4&lt;/vsizetype&gt;
+-                    &lt;horstretch&gt;0&lt;/horstretch&gt;
+-                    &lt;verstretch&gt;0&lt;/verstretch&gt;
+-                &lt;/sizepolicy&gt;
+-            &lt;/property&gt;
+-            &lt;property name=&quot;title&quot;&gt;
+-                &lt;string&gt;Controller&lt;/string&gt;
+-            &lt;/property&gt;
+-            &lt;hbox&gt;
++            &lt;widget class=&quot;QGroupBox&quot;&gt;
+                 &lt;property name=&quot;name&quot;&gt;
+-                    &lt;cstring&gt;unnamed&lt;/cstring&gt;
++                    &lt;cstring&gt;gbInput&lt;/cstring&gt;
+                 &lt;/property&gt;
+-                &lt;widget class=&quot;QPushButton&quot;&gt;
++                &lt;property name=&quot;sizePolicy&quot;&gt;
++                    &lt;sizepolicy&gt;
++                        &lt;hsizetype&gt;4&lt;/hsizetype&gt;
++                        &lt;vsizetype&gt;4&lt;/vsizetype&gt;
++                        &lt;horstretch&gt;0&lt;/horstretch&gt;
++                        &lt;verstretch&gt;0&lt;/verstretch&gt;
++                    &lt;/sizepolicy&gt;
++                &lt;/property&gt;
++                &lt;property name=&quot;title&quot;&gt;
++                    &lt;string&gt;Input&lt;/string&gt;
++                &lt;/property&gt;
++                &lt;widget class=&quot;QLayoutWidget&quot;&gt;
+                     &lt;property name=&quot;name&quot;&gt;
+-                        &lt;cstring&gt;pbPlay&lt;/cstring&gt;
++                        &lt;cstring&gt;layout2&lt;/cstring&gt;
+                     &lt;/property&gt;
+-                    &lt;property name=&quot;text&quot;&gt;
+-                        &lt;string&gt;&lt;/string&gt;
++                    &lt;property name=&quot;geometry&quot;&gt;
++                        &lt;rect&gt;
++                            &lt;x&gt;10&lt;/x&gt;
++                            &lt;y&gt;26&lt;/y&gt;
++                            &lt;width&gt;285&lt;/width&gt;
++                            &lt;height&gt;142&lt;/height&gt;
++                        &lt;/rect&gt;
+                     &lt;/property&gt;
+-                    &lt;property name=&quot;pixmap&quot;&gt;
+-                        &lt;pixmap&gt;image0&lt;/pixmap&gt;
+-                    &lt;/property&gt;
++                    &lt;grid&gt;
++                        &lt;property name=&quot;name&quot;&gt;
++                            &lt;cstring&gt;unnamed&lt;/cstring&gt;
++                        &lt;/property&gt;
++                        &lt;widget class=&quot;QPushButton&quot; row=&quot;3&quot; column=&quot;3&quot;&gt;
++                            &lt;property name=&quot;name&quot;&gt;
++                                &lt;cstring&gt;pbInputDirectory&lt;/cstring&gt;
++                            &lt;/property&gt;
++                            &lt;property name=&quot;text&quot;&gt;
++                                &lt;string&gt;&lt;/string&gt;
++                            &lt;/property&gt;
++                            &lt;property name=&quot;pixmap&quot;&gt;
++                                &lt;pixmap&gt;image0&lt;/pixmap&gt;
++                            &lt;/property&gt;
++                        &lt;/widget&gt;
++                        &lt;widget class=&quot;QLabel&quot; row=&quot;2&quot; column=&quot;0&quot;&gt;
++                            &lt;property name=&quot;name&quot;&gt;
++                                &lt;cstring&gt;tlInputBaseName&lt;/cstring&gt;
++                            &lt;/property&gt;
++                            &lt;property name=&quot;text&quot;&gt;
++                                &lt;string&gt;Base name:&lt;/string&gt;
++                            &lt;/property&gt;
++                        &lt;/widget&gt;
++                        &lt;widget class=&quot;QSpinBox&quot; row=&quot;1&quot; column=&quot;1&quot;&gt;
++                            &lt;property name=&quot;name&quot;&gt;
++                                &lt;cstring&gt;sbStride&lt;/cstring&gt;
++                            &lt;/property&gt;
++                            &lt;property name=&quot;maxValue&quot;&gt;
++                                &lt;number&gt;100&lt;/number&gt;
++                            &lt;/property&gt;
++                            &lt;property name=&quot;minValue&quot;&gt;
++                                &lt;number&gt;1&lt;/number&gt;
++                            &lt;/property&gt;
++                            &lt;property name=&quot;lineStep&quot;&gt;
++                                &lt;number&gt;1&lt;/number&gt;
++                            &lt;/property&gt;
++                            &lt;property name=&quot;value&quot;&gt;
++                                &lt;number&gt;1&lt;/number&gt;
++                            &lt;/property&gt;
++                            &lt;property name=&quot;toolTip&quot; stdset=&quot;0&quot;&gt;
++                                &lt;string&gt;take only every i-th file in the sequence found&lt;/string&gt;
++                            &lt;/property&gt;
++                        &lt;/widget&gt;
++                        &lt;widget class=&quot;QLabel&quot; row=&quot;1&quot; column=&quot;0&quot;&gt;
++                            &lt;property name=&quot;name&quot;&gt;
++                                &lt;cstring&gt;textLabel1&lt;/cstring&gt;
++                            &lt;/property&gt;
++                            &lt;property name=&quot;text&quot;&gt;
++                                &lt;string&gt;Stride&lt;/string&gt;
++                            &lt;/property&gt;
++                        &lt;/widget&gt;
++                        &lt;widget class=&quot;QLabel&quot; row=&quot;0&quot; column=&quot;0&quot;&gt;
++                            &lt;property name=&quot;name&quot;&gt;
++                                &lt;cstring&gt;tlInputConfigFile&lt;/cstring&gt;
++                            &lt;/property&gt;
++                            &lt;property name=&quot;text&quot;&gt;
++                                &lt;string&gt;Simluation file:&lt;/string&gt;
++                            &lt;/property&gt;
++                        &lt;/widget&gt;
++                        &lt;widget class=&quot;QLineEdit&quot; row=&quot;3&quot; column=&quot;1&quot; rowspan=&quot;1&quot; colspan=&quot;2&quot;&gt;
++                            &lt;property name=&quot;name&quot;&gt;
++                                &lt;cstring&gt;leInputDirectory&lt;/cstring&gt;
++                            &lt;/property&gt;
++                            &lt;property name=&quot;sizePolicy&quot;&gt;
++                                &lt;sizepolicy&gt;
++                                    &lt;hsizetype&gt;3&lt;/hsizetype&gt;
++                                    &lt;vsizetype&gt;1&lt;/vsizetype&gt;
++                                    &lt;horstretch&gt;0&lt;/horstretch&gt;
++                                    &lt;verstretch&gt;0&lt;/verstretch&gt;
++                                &lt;/sizepolicy&gt;
++                            &lt;/property&gt;
++                            &lt;property name=&quot;paletteBackgroundColor&quot;&gt;
++                                &lt;color&gt;
++                                    &lt;red&gt;170&lt;/red&gt;
++                                    &lt;green&gt;170&lt;/green&gt;
++                                    &lt;blue&gt;127&lt;/blue&gt;
++                                &lt;/color&gt;
++                            &lt;/property&gt;
++                            &lt;property name=&quot;text&quot;&gt;
++                                &lt;string&gt;[automatic]&lt;/string&gt;
++                            &lt;/property&gt;
++                        &lt;/widget&gt;
++                        &lt;widget class=&quot;QPushButton&quot; row=&quot;1&quot; column=&quot;2&quot; rowspan=&quot;1&quot; colspan=&quot;2&quot;&gt;
++                            &lt;property name=&quot;name&quot;&gt;
++                                &lt;cstring&gt;pbLoad&lt;/cstring&gt;
++                            &lt;/property&gt;
++                            &lt;property name=&quot;sizePolicy&quot;&gt;
++                                &lt;sizepolicy&gt;
++                                    &lt;hsizetype&gt;3&lt;/hsizetype&gt;
++                                    &lt;vsizetype&gt;0&lt;/vsizetype&gt;
++                                    &lt;horstretch&gt;0&lt;/horstretch&gt;
++                                    &lt;verstretch&gt;0&lt;/verstretch&gt;
++                                &lt;/sizepolicy&gt;
++                            &lt;/property&gt;
++                            &lt;property name=&quot;text&quot;&gt;
++                                &lt;string&gt;Load&lt;/string&gt;
++                            &lt;/property&gt;
++                        &lt;/widget&gt;
++                        &lt;widget class=&quot;QPushButton&quot; row=&quot;0&quot; column=&quot;3&quot;&gt;
++                            &lt;property name=&quot;name&quot;&gt;
++                                &lt;cstring&gt;pbInputConfigFile&lt;/cstring&gt;
++                            &lt;/property&gt;
++                            &lt;property name=&quot;text&quot;&gt;
++                                &lt;string&gt;&lt;/string&gt;
++                            &lt;/property&gt;
++                            &lt;property name=&quot;pixmap&quot;&gt;
++                                &lt;pixmap&gt;image0&lt;/pixmap&gt;
++                            &lt;/property&gt;
++                        &lt;/widget&gt;
++                        &lt;widget class=&quot;QLabel&quot; row=&quot;3&quot; column=&quot;0&quot;&gt;
++                            &lt;property name=&quot;name&quot;&gt;
++                                &lt;cstring&gt;tlInputDirectory&lt;/cstring&gt;
++                            &lt;/property&gt;
++                            &lt;property name=&quot;text&quot;&gt;
++                                &lt;string&gt;Directory:&lt;/string&gt;
++                            &lt;/property&gt;
++                        &lt;/widget&gt;
++                        &lt;widget class=&quot;QLineEdit&quot; row=&quot;2&quot; column=&quot;1&quot; rowspan=&quot;1&quot; colspan=&quot;3&quot;&gt;
++                            &lt;property name=&quot;name&quot;&gt;
++                                &lt;cstring&gt;leInputBaseName&lt;/cstring&gt;
++                            &lt;/property&gt;
++                            &lt;property name=&quot;sizePolicy&quot;&gt;
++                                &lt;sizepolicy&gt;
++                                    &lt;hsizetype&gt;3&lt;/hsizetype&gt;
++                                    &lt;vsizetype&gt;1&lt;/vsizetype&gt;
++                                    &lt;horstretch&gt;0&lt;/horstretch&gt;
++                                    &lt;verstretch&gt;0&lt;/verstretch&gt;
++                                &lt;/sizepolicy&gt;
++                            &lt;/property&gt;
++                            &lt;property name=&quot;paletteBackgroundColor&quot;&gt;
++                                &lt;color&gt;
++                                    &lt;red&gt;170&lt;/red&gt;
++                                    &lt;green&gt;170&lt;/green&gt;
++                                    &lt;blue&gt;127&lt;/blue&gt;
++                                &lt;/color&gt;
++                            &lt;/property&gt;
++                            &lt;property name=&quot;text&quot;&gt;
++                                &lt;string&gt;[automatic]&lt;/string&gt;
++                            &lt;/property&gt;
++                        &lt;/widget&gt;
++                        &lt;widget class=&quot;QLineEdit&quot; row=&quot;0&quot; column=&quot;1&quot; rowspan=&quot;1&quot; colspan=&quot;2&quot;&gt;
++                            &lt;property name=&quot;name&quot;&gt;
++                                &lt;cstring&gt;leInputConfigFile&lt;/cstring&gt;
++                            &lt;/property&gt;
++                            &lt;property name=&quot;sizePolicy&quot;&gt;
++                                &lt;sizepolicy&gt;
++                                    &lt;hsizetype&gt;3&lt;/hsizetype&gt;
++                                    &lt;vsizetype&gt;1&lt;/vsizetype&gt;
++                                    &lt;horstretch&gt;0&lt;/horstretch&gt;
++                                    &lt;verstretch&gt;0&lt;/verstretch&gt;
++                                &lt;/sizepolicy&gt;
++                            &lt;/property&gt;
++                        &lt;/widget&gt;
++                    &lt;/grid&gt;
+                 &lt;/widget&gt;
+-                &lt;widget class=&quot;QPushButton&quot;&gt;
++            &lt;/widget&gt;
++            &lt;widget class=&quot;QGroupBox&quot;&gt;
++                &lt;property name=&quot;name&quot;&gt;
++                    &lt;cstring&gt;gbSnapShots&lt;/cstring&gt;
++                &lt;/property&gt;
++                &lt;property name=&quot;sizePolicy&quot;&gt;
++                    &lt;sizepolicy&gt;
++                        &lt;hsizetype&gt;1&lt;/hsizetype&gt;
++                        &lt;vsizetype&gt;4&lt;/vsizetype&gt;
++                        &lt;horstretch&gt;0&lt;/horstretch&gt;
++                        &lt;verstretch&gt;0&lt;/verstretch&gt;
++                    &lt;/sizepolicy&gt;
++                &lt;/property&gt;
++                &lt;property name=&quot;title&quot;&gt;
++                    &lt;string&gt;Snapshots&lt;/string&gt;
++                &lt;/property&gt;
++                &lt;grid&gt;
+                     &lt;property name=&quot;name&quot;&gt;
+-                        &lt;cstring&gt;pbStep&lt;/cstring&gt;
++                        &lt;cstring&gt;unnamed&lt;/cstring&gt;
+                     &lt;/property&gt;
+-                    &lt;property name=&quot;text&quot;&gt;
+-                        &lt;string&gt;&lt;/string&gt;
+-                    &lt;/property&gt;
+-                    &lt;property name=&quot;pixmap&quot;&gt;
+-                        &lt;pixmap&gt;image1&lt;/pixmap&gt;
+-                    &lt;/property&gt;
+-                &lt;/widget&gt;
+-                &lt;widget class=&quot;QPushButton&quot;&gt;
+-                    &lt;property name=&quot;name&quot;&gt;
+-                        &lt;cstring&gt;pbPause&lt;/cstring&gt;
+-                    &lt;/property&gt;
+-                    &lt;property name=&quot;text&quot;&gt;
+-                        &lt;string&gt;&lt;/string&gt;
+-                    &lt;/property&gt;
+-                    &lt;property name=&quot;pixmap&quot;&gt;
+-                        &lt;pixmap&gt;image2&lt;/pixmap&gt;
+-                    &lt;/property&gt;
+-                &lt;/widget&gt;
+-                &lt;widget class=&quot;QPushButton&quot;&gt;
+-                    &lt;property name=&quot;name&quot;&gt;
+-                        &lt;cstring&gt;pbReset&lt;/cstring&gt;
+-                    &lt;/property&gt;
+-                    &lt;property name=&quot;text&quot;&gt;
+-                        &lt;string&gt;&lt;/string&gt;
+-                    &lt;/property&gt;
+-                    &lt;property name=&quot;pixmap&quot;&gt;
+-                        &lt;pixmap&gt;image3&lt;/pixmap&gt;
+-                    &lt;/property&gt;
+-                &lt;/widget&gt;
+-            &lt;/hbox&gt;
+-        &lt;/widget&gt;
+-        &lt;spacer row=&quot;4&quot; column=&quot;0&quot;&gt;
+-            &lt;property name=&quot;name&quot;&gt;
+-                &lt;cstring&gt;spacer1&lt;/cstring&gt;
+-            &lt;/property&gt;
+-            &lt;property name=&quot;orientation&quot;&gt;
+-                &lt;enum&gt;Vertical&lt;/enum&gt;
+-            &lt;/property&gt;
+-            &lt;property name=&quot;sizeType&quot;&gt;
+-                &lt;enum&gt;Expanding&lt;/enum&gt;
+-            &lt;/property&gt;
+-            &lt;property name=&quot;sizeHint&quot;&gt;
+-                &lt;size&gt;
+-                    &lt;width&gt;20&lt;/width&gt;
+-                    &lt;height&gt;60&lt;/height&gt;
+-                &lt;/size&gt;
+-            &lt;/property&gt;
+-        &lt;/spacer&gt;
+-        &lt;widget class=&quot;QGroupBox&quot; row=&quot;1&quot; column=&quot;0&quot;&gt;
+-            &lt;property name=&quot;name&quot;&gt;
+-                &lt;cstring&gt;gbInput&lt;/cstring&gt;
+-            &lt;/property&gt;
+-            &lt;property name=&quot;sizePolicy&quot;&gt;
+-                &lt;sizepolicy&gt;
+-                    &lt;hsizetype&gt;4&lt;/hsizetype&gt;
+-                    &lt;vsizetype&gt;4&lt;/vsizetype&gt;
+-                    &lt;horstretch&gt;0&lt;/horstretch&gt;
+-                    &lt;verstretch&gt;0&lt;/verstretch&gt;
+-                &lt;/sizepolicy&gt;
+-            &lt;/property&gt;
+-            &lt;property name=&quot;title&quot;&gt;
+-                &lt;string&gt;Input&lt;/string&gt;
+-            &lt;/property&gt;
+-            &lt;grid&gt;
++                    &lt;widget class=&quot;QLineEdit&quot; row=&quot;3&quot; column=&quot;1&quot;&gt;
++                        &lt;property name=&quot;name&quot;&gt;
++                            &lt;cstring&gt;leOutputDirectory&lt;/cstring&gt;
++                        &lt;/property&gt;
++                        &lt;property name=&quot;sizePolicy&quot;&gt;
++                            &lt;sizepolicy&gt;
++                                &lt;hsizetype&gt;1&lt;/hsizetype&gt;
++                                &lt;vsizetype&gt;1&lt;/vsizetype&gt;
++                                &lt;horstretch&gt;0&lt;/horstretch&gt;
++                                &lt;verstretch&gt;0&lt;/verstretch&gt;
++                            &lt;/sizepolicy&gt;
++                        &lt;/property&gt;
++                        &lt;property name=&quot;text&quot;&gt;
++                            &lt;string&gt;/tmp&lt;/string&gt;
++                        &lt;/property&gt;
++                    &lt;/widget&gt;
++                    &lt;widget class=&quot;QLabel&quot; row=&quot;1&quot; column=&quot;0&quot;&gt;
++                        &lt;property name=&quot;name&quot;&gt;
++                            &lt;cstring&gt;tlOuputBaseName&lt;/cstring&gt;
++                        &lt;/property&gt;
++                        &lt;property name=&quot;text&quot;&gt;
++                            &lt;string&gt;Base Name:&lt;/string&gt;
++                        &lt;/property&gt;
++                    &lt;/widget&gt;
++                    &lt;widget class=&quot;QPushButton&quot; row=&quot;3&quot; column=&quot;2&quot;&gt;
++                        &lt;property name=&quot;name&quot;&gt;
++                            &lt;cstring&gt;pbOutputDirectory&lt;/cstring&gt;
++                        &lt;/property&gt;
++                        &lt;property name=&quot;sizePolicy&quot;&gt;
++                            &lt;sizepolicy&gt;
++                                &lt;hsizetype&gt;4&lt;/hsizetype&gt;
++                                &lt;vsizetype&gt;4&lt;/vsizetype&gt;
++                                &lt;horstretch&gt;0&lt;/horstretch&gt;
++                                &lt;verstretch&gt;0&lt;/verstretch&gt;
++                            &lt;/sizepolicy&gt;
++                        &lt;/property&gt;
++                        &lt;property name=&quot;text&quot;&gt;
++                            &lt;string&gt;&lt;/string&gt;
++                        &lt;/property&gt;
++                        &lt;property name=&quot;pixmap&quot;&gt;
++                            &lt;pixmap&gt;image0&lt;/pixmap&gt;
++                        &lt;/property&gt;
++                    &lt;/widget&gt;
++                    &lt;widget class=&quot;QLineEdit&quot; row=&quot;1&quot; column=&quot;1&quot; rowspan=&quot;1&quot; colspan=&quot;2&quot;&gt;
++                        &lt;property name=&quot;name&quot;&gt;
++                            &lt;cstring&gt;leOutputBaseName&lt;/cstring&gt;
++                        &lt;/property&gt;
++                        &lt;property name=&quot;sizePolicy&quot;&gt;
++                            &lt;sizepolicy&gt;
++                                &lt;hsizetype&gt;1&lt;/hsizetype&gt;
++                                &lt;vsizetype&gt;1&lt;/vsizetype&gt;
++                                &lt;horstretch&gt;0&lt;/horstretch&gt;
++                                &lt;verstretch&gt;0&lt;/verstretch&gt;
++                            &lt;/sizepolicy&gt;
++                        &lt;/property&gt;
++                        &lt;property name=&quot;text&quot;&gt;
++                            &lt;string&gt;frame-&lt;/string&gt;
++                        &lt;/property&gt;
++                    &lt;/widget&gt;
++                    &lt;widget class=&quot;QCheckBox&quot; row=&quot;0&quot; column=&quot;0&quot; rowspan=&quot;1&quot; colspan=&quot;3&quot;&gt;
++                        &lt;property name=&quot;name&quot;&gt;
++                            &lt;cstring&gt;cbSaveSnapShots&lt;/cstring&gt;
++                        &lt;/property&gt;
++                        &lt;property name=&quot;enabled&quot;&gt;
++                            &lt;bool&gt;true&lt;/bool&gt;
++                        &lt;/property&gt;
++                        &lt;property name=&quot;text&quot;&gt;
++                            &lt;string&gt;Save snapshots&lt;/string&gt;
++                        &lt;/property&gt;
++                        &lt;property name=&quot;checked&quot;&gt;
++                            &lt;bool&gt;false&lt;/bool&gt;
++                        &lt;/property&gt;
++                        &lt;property name=&quot;tristate&quot;&gt;
++                            &lt;bool&gt;false&lt;/bool&gt;
++                        &lt;/property&gt;
++                    &lt;/widget&gt;
++                    &lt;widget class=&quot;QLabel&quot; row=&quot;3&quot; column=&quot;0&quot;&gt;
++                        &lt;property name=&quot;name&quot;&gt;
++                            &lt;cstring&gt;tlOutputDirectory&lt;/cstring&gt;
++                        &lt;/property&gt;
++                        &lt;property name=&quot;text&quot;&gt;
++                            &lt;string&gt;Directory:&lt;/string&gt;
++                        &lt;/property&gt;
++                    &lt;/widget&gt;
++                &lt;/grid&gt;
++            &lt;/widget&gt;
++            &lt;widget class=&quot;QGroupBox&quot;&gt;
+                 &lt;property name=&quot;name&quot;&gt;
+-                    &lt;cstring&gt;unnamed&lt;/cstring&gt;
++                    &lt;cstring&gt;gbController&lt;/cstring&gt;
+                 &lt;/property&gt;
+-                &lt;spacer row=&quot;3&quot; column=&quot;2&quot; rowspan=&quot;1&quot; colspan=&quot;2&quot;&gt;
++                &lt;property name=&quot;sizePolicy&quot;&gt;
++                    &lt;sizepolicy&gt;
++                        &lt;hsizetype&gt;1&lt;/hsizetype&gt;
++                        &lt;vsizetype&gt;4&lt;/vsizetype&gt;
++                        &lt;horstretch&gt;0&lt;/horstretch&gt;
++                        &lt;verstretch&gt;0&lt;/verstretch&gt;
++                    &lt;/sizepolicy&gt;
++                &lt;/property&gt;
++                &lt;property name=&quot;title&quot;&gt;
++                    &lt;string&gt;Controller&lt;/string&gt;
++                &lt;/property&gt;
++                &lt;hbox&gt;
+                     &lt;property name=&quot;name&quot;&gt;
+-                        &lt;cstring&gt;spacer4&lt;/cstring&gt;
++                        &lt;cstring&gt;unnamed&lt;/cstring&gt;
+                     &lt;/property&gt;
+-                    &lt;property name=&quot;orientation&quot;&gt;
+-                        &lt;enum&gt;Horizontal&lt;/enum&gt;
+-                    &lt;/property&gt;
+-                    &lt;property name=&quot;sizeType&quot;&gt;
+-                        &lt;enum&gt;Expanding&lt;/enum&gt;
+-                    &lt;/property&gt;
+-                    &lt;property name=&quot;sizeHint&quot;&gt;
+-                        &lt;size&gt;
+-                            &lt;width&gt;40&lt;/width&gt;
+-                            &lt;height&gt;20&lt;/height&gt;
+-                        &lt;/size&gt;
+-                    &lt;/property&gt;
+-                &lt;/spacer&gt;
+-                &lt;spacer row=&quot;3&quot; column=&quot;0&quot;&gt;
+-                    &lt;property name=&quot;name&quot;&gt;
+-                        &lt;cstring&gt;spacer3&lt;/cstring&gt;
+-                    &lt;/property&gt;
+-                    &lt;property name=&quot;orientation&quot;&gt;
+-                        &lt;enum&gt;Horizontal&lt;/enum&gt;
+-                    &lt;/property&gt;
+-                    &lt;property name=&quot;sizeType&quot;&gt;
+-                        &lt;enum&gt;Expanding&lt;/enum&gt;
+-                    &lt;/property&gt;
+-                    &lt;property name=&quot;sizeHint&quot;&gt;
+-                        &lt;size&gt;
+-                            &lt;width&gt;40&lt;/width&gt;
+-                            &lt;height&gt;20&lt;/height&gt;
+-                        &lt;/size&gt;
+-                    &lt;/property&gt;
+-                &lt;/spacer&gt;
+-                &lt;widget class=&quot;QLabel&quot; row=&quot;2&quot; column=&quot;0&quot;&gt;
+-                    &lt;property name=&quot;name&quot;&gt;
+-                        &lt;cstring&gt;tlInputDirectory&lt;/cstring&gt;
+-                    &lt;/property&gt;
+-                    &lt;property name=&quot;text&quot;&gt;
+-                        &lt;string&gt;Directory:&lt;/string&gt;
+-                    &lt;/property&gt;
+-                &lt;/widget&gt;
+-                &lt;widget class=&quot;QPushButton&quot; row=&quot;3&quot; column=&quot;1&quot;&gt;
+-                    &lt;property name=&quot;name&quot;&gt;
+-                        &lt;cstring&gt;pbLoad&lt;/cstring&gt;
+-                    &lt;/property&gt;
+-                    &lt;property name=&quot;text&quot;&gt;
+-                        &lt;string&gt;Load&lt;/string&gt;
+-                    &lt;/property&gt;
+-                &lt;/widget&gt;
+-                &lt;widget class=&quot;QLineEdit&quot; row=&quot;2&quot; column=&quot;1&quot; rowspan=&quot;1&quot; colspan=&quot;2&quot;&gt;
+-                    &lt;property name=&quot;name&quot;&gt;
+-                        &lt;cstring&gt;leInputDirectory&lt;/cstring&gt;
+-                    &lt;/property&gt;
+-                    &lt;property name=&quot;sizePolicy&quot;&gt;
+-                        &lt;sizepolicy&gt;
+-                            &lt;hsizetype&gt;1&lt;/hsizetype&gt;
+-                            &lt;vsizetype&gt;1&lt;/vsizetype&gt;
+-                            &lt;horstretch&gt;0&lt;/horstretch&gt;
+-                            &lt;verstretch&gt;0&lt;/verstretch&gt;
+-                        &lt;/sizepolicy&gt;
+-                    &lt;/property&gt;
+-                &lt;/widget&gt;
+-                &lt;widget class=&quot;QLineEdit&quot; row=&quot;1&quot; column=&quot;1&quot; rowspan=&quot;1&quot; colspan=&quot;3&quot;&gt;
+-                    &lt;property name=&quot;name&quot;&gt;
+-                        &lt;cstring&gt;leInputBaseName&lt;/cstring&gt;
+-                    &lt;/property&gt;
+-                    &lt;property name=&quot;sizePolicy&quot;&gt;
+-                        &lt;sizepolicy&gt;
+-                            &lt;hsizetype&gt;1&lt;/hsizetype&gt;
+-                            &lt;vsizetype&gt;1&lt;/vsizetype&gt;
+-                            &lt;horstretch&gt;0&lt;/horstretch&gt;
+-                            &lt;verstretch&gt;0&lt;/verstretch&gt;
+-                        &lt;/sizepolicy&gt;
+-                    &lt;/property&gt;
+-                &lt;/widget&gt;
+-                &lt;widget class=&quot;QLabel&quot; row=&quot;1&quot; column=&quot;0&quot;&gt;
+-                    &lt;property name=&quot;name&quot;&gt;
+-                        &lt;cstring&gt;tlInputBaseName&lt;/cstring&gt;
+-                    &lt;/property&gt;
+-                    &lt;property name=&quot;text&quot;&gt;
+-                        &lt;string&gt;Base Name:&lt;/string&gt;
+-                    &lt;/property&gt;
+-                &lt;/widget&gt;
+-                &lt;widget class=&quot;QLabel&quot; row=&quot;0&quot; column=&quot;0&quot;&gt;
+-                    &lt;property name=&quot;name&quot;&gt;
+-                        &lt;cstring&gt;tlInputConfigFile&lt;/cstring&gt;
+-                    &lt;/property&gt;
+-                    &lt;property name=&quot;text&quot;&gt;
+-                        &lt;string&gt;Simluation File:&lt;/string&gt;
+-                    &lt;/property&gt;
+-                &lt;/widget&gt;
+-                &lt;widget class=&quot;QPushButton&quot; row=&quot;2&quot; column=&quot;3&quot;&gt;
+-                    &lt;property name=&quot;name&quot;&gt;
+-                        &lt;cstring&gt;pbInputDirectory&lt;/cstring&gt;
+-                    &lt;/property&gt;
+-                    &lt;property name=&quot;text&quot;&gt;
+-                        &lt;string&gt;&lt;/string&gt;
+-                    &lt;/property&gt;
+-                    &lt;property name=&quot;pixmap&quot;&gt;
+-                        &lt;pixmap&gt;image4&lt;/pixmap&gt;
+-                    &lt;/property&gt;
+-                &lt;/widget&gt;
+-                &lt;widget class=&quot;QLineEdit&quot; row=&quot;0&quot; column=&quot;1&quot; rowspan=&quot;1&quot; colspan=&quot;2&quot;&gt;
+-                    &lt;property name=&quot;name&quot;&gt;
+-                        &lt;cstring&gt;leInputConfigFile&lt;/cstring&gt;
+-                    &lt;/property&gt;
+-                    &lt;property name=&quot;sizePolicy&quot;&gt;
+-                        &lt;sizepolicy&gt;
+-                            &lt;hsizetype&gt;1&lt;/hsizetype&gt;
+-                            &lt;vsizetype&gt;1&lt;/vsizetype&gt;
+-                            &lt;horstretch&gt;0&lt;/horstretch&gt;
+-                            &lt;verstretch&gt;0&lt;/verstretch&gt;
+-                        &lt;/sizepolicy&gt;
+-                    &lt;/property&gt;
+-                &lt;/widget&gt;
+-                &lt;widget class=&quot;QPushButton&quot; row=&quot;0&quot; column=&quot;3&quot;&gt;
+-                    &lt;property name=&quot;name&quot;&gt;
+-                        &lt;cstring&gt;pbInputConfigFile&lt;/cstring&gt;
+-                    &lt;/property&gt;
+-                    &lt;property name=&quot;text&quot;&gt;
+-                        &lt;string&gt;&lt;/string&gt;
+-                    &lt;/property&gt;
+-                    &lt;property name=&quot;pixmap&quot;&gt;
+-                        &lt;pixmap&gt;image4&lt;/pixmap&gt;
+-                    &lt;/property&gt;
+-                &lt;/widget&gt;
+-            &lt;/grid&gt;
+-        &lt;/widget&gt;
+-        &lt;widget class=&quot;QGroupBox&quot; row=&quot;2&quot; column=&quot;0&quot;&gt;
+-            &lt;property name=&quot;name&quot;&gt;
+-                &lt;cstring&gt;gbSnapShots&lt;/cstring&gt;
+-            &lt;/property&gt;
+-            &lt;property name=&quot;sizePolicy&quot;&gt;
+-                &lt;sizepolicy&gt;
+-                    &lt;hsizetype&gt;1&lt;/hsizetype&gt;
+-                    &lt;vsizetype&gt;4&lt;/vsizetype&gt;
+-                    &lt;horstretch&gt;0&lt;/horstretch&gt;
+-                    &lt;verstretch&gt;0&lt;/verstretch&gt;
+-                &lt;/sizepolicy&gt;
+-            &lt;/property&gt;
+-            &lt;property name=&quot;title&quot;&gt;
+-                &lt;string&gt;Snap Shots Directory&lt;/string&gt;
+-            &lt;/property&gt;
+-            &lt;grid&gt;
++                    &lt;widget class=&quot;QPushButton&quot;&gt;
++                        &lt;property name=&quot;name&quot;&gt;
++                            &lt;cstring&gt;pbPlay&lt;/cstring&gt;
++                        &lt;/property&gt;
++                        &lt;property name=&quot;text&quot;&gt;
++                            &lt;string&gt;&lt;/string&gt;
++                        &lt;/property&gt;
++                        &lt;property name=&quot;pixmap&quot;&gt;
++                            &lt;pixmap&gt;image1&lt;/pixmap&gt;
++                        &lt;/property&gt;
++                    &lt;/widget&gt;
++                    &lt;widget class=&quot;QPushButton&quot;&gt;
++                        &lt;property name=&quot;name&quot;&gt;
++                            &lt;cstring&gt;pbStep&lt;/cstring&gt;
++                        &lt;/property&gt;
++                        &lt;property name=&quot;text&quot;&gt;
++                            &lt;string&gt;&lt;/string&gt;
++                        &lt;/property&gt;
++                        &lt;property name=&quot;pixmap&quot;&gt;
++                            &lt;pixmap&gt;image2&lt;/pixmap&gt;
++                        &lt;/property&gt;
++                    &lt;/widget&gt;
++                    &lt;widget class=&quot;QPushButton&quot;&gt;
++                        &lt;property name=&quot;name&quot;&gt;
++                            &lt;cstring&gt;pbPause&lt;/cstring&gt;
++                        &lt;/property&gt;
++                        &lt;property name=&quot;text&quot;&gt;
++                            &lt;string&gt;&lt;/string&gt;
++                        &lt;/property&gt;
++                        &lt;property name=&quot;pixmap&quot;&gt;
++                            &lt;pixmap&gt;image3&lt;/pixmap&gt;
++                        &lt;/property&gt;
++                    &lt;/widget&gt;
++                    &lt;widget class=&quot;QPushButton&quot;&gt;
++                        &lt;property name=&quot;name&quot;&gt;
++                            &lt;cstring&gt;pbReset&lt;/cstring&gt;
++                        &lt;/property&gt;
++                        &lt;property name=&quot;text&quot;&gt;
++                            &lt;string&gt;&lt;/string&gt;
++                        &lt;/property&gt;
++                        &lt;property name=&quot;pixmap&quot;&gt;
++                            &lt;pixmap&gt;image4&lt;/pixmap&gt;
++                        &lt;/property&gt;
++                    &lt;/widget&gt;
++                &lt;/hbox&gt;
++            &lt;/widget&gt;
++            &lt;widget class=&quot;QGroupBox&quot;&gt;
+                 &lt;property name=&quot;name&quot;&gt;
+-                    &lt;cstring&gt;unnamed&lt;/cstring&gt;
++                    &lt;cstring&gt;gbStatus&lt;/cstring&gt;
+                 &lt;/property&gt;
+-                &lt;widget class=&quot;QLineEdit&quot; row=&quot;3&quot; column=&quot;1&quot;&gt;
++                &lt;property name=&quot;sizePolicy&quot;&gt;
++                    &lt;sizepolicy&gt;
++                        &lt;hsizetype&gt;5&lt;/hsizetype&gt;
++                        &lt;vsizetype&gt;3&lt;/vsizetype&gt;
++                        &lt;horstretch&gt;0&lt;/horstretch&gt;
++                        &lt;verstretch&gt;0&lt;/verstretch&gt;
++                    &lt;/sizepolicy&gt;
++                &lt;/property&gt;
++                &lt;property name=&quot;title&quot;&gt;
++                    &lt;string&gt;status&lt;/string&gt;
++                &lt;/property&gt;
++                &lt;grid&gt;
+                     &lt;property name=&quot;name&quot;&gt;
+-                        &lt;cstring&gt;leOutputDirectory&lt;/cstring&gt;
++                        &lt;cstring&gt;unnamed&lt;/cstring&gt;
+                     &lt;/property&gt;
+-                    &lt;property name=&quot;sizePolicy&quot;&gt;
+-                        &lt;sizepolicy&gt;
+-                            &lt;hsizetype&gt;1&lt;/hsizetype&gt;
+-                            &lt;vsizetype&gt;1&lt;/vsizetype&gt;
+-                            &lt;horstretch&gt;0&lt;/horstretch&gt;
+-                            &lt;verstretch&gt;0&lt;/verstretch&gt;
+-                        &lt;/sizepolicy&gt;
+-                    &lt;/property&gt;
+-                    &lt;property name=&quot;text&quot;&gt;
+-                        &lt;string&gt;/tmp&lt;/string&gt;
+-                    &lt;/property&gt;
+-                &lt;/widget&gt;
+-                &lt;widget class=&quot;QLabel&quot; row=&quot;1&quot; column=&quot;0&quot;&gt;
+-                    &lt;property name=&quot;name&quot;&gt;
+-                        &lt;cstring&gt;tlOuputBaseName&lt;/cstring&gt;
+-                    &lt;/property&gt;
+-                    &lt;property name=&quot;text&quot;&gt;
+-                        &lt;string&gt;Base Name:&lt;/string&gt;
+-                    &lt;/property&gt;
+-                &lt;/widget&gt;
+-                &lt;widget class=&quot;QPushButton&quot; row=&quot;3&quot; column=&quot;2&quot;&gt;
+-                    &lt;property name=&quot;name&quot;&gt;
+-                        &lt;cstring&gt;pbOutputDirectory&lt;/cstring&gt;
+-                    &lt;/property&gt;
+-                    &lt;property name=&quot;sizePolicy&quot;&gt;
+-                        &lt;sizepolicy&gt;
+-                            &lt;hsizetype&gt;4&lt;/hsizetype&gt;
+-                            &lt;vsizetype&gt;4&lt;/vsizetype&gt;
+-                            &lt;horstretch&gt;0&lt;/horstretch&gt;
+-                            &lt;verstretch&gt;0&lt;/verstretch&gt;
+-                        &lt;/sizepolicy&gt;
+-                    &lt;/property&gt;
+-                    &lt;property name=&quot;text&quot;&gt;
+-                        &lt;string&gt;&lt;/string&gt;
+-                    &lt;/property&gt;
+-                    &lt;property name=&quot;pixmap&quot;&gt;
+-                        &lt;pixmap&gt;image4&lt;/pixmap&gt;
+-                    &lt;/property&gt;
+-                &lt;/widget&gt;
+-                &lt;widget class=&quot;QLineEdit&quot; row=&quot;1&quot; column=&quot;1&quot; rowspan=&quot;1&quot; colspan=&quot;2&quot;&gt;
+-                    &lt;property name=&quot;name&quot;&gt;
+-                        &lt;cstring&gt;leOutputBaseName&lt;/cstring&gt;
+-                    &lt;/property&gt;
+-                    &lt;property name=&quot;sizePolicy&quot;&gt;
+-                        &lt;sizepolicy&gt;
+-                            &lt;hsizetype&gt;1&lt;/hsizetype&gt;
+-                            &lt;vsizetype&gt;1&lt;/vsizetype&gt;
+-                            &lt;horstretch&gt;0&lt;/horstretch&gt;
+-                            &lt;verstretch&gt;0&lt;/verstretch&gt;
+-                        &lt;/sizepolicy&gt;
+-                    &lt;/property&gt;
+-                    &lt;property name=&quot;text&quot;&gt;
+-                        &lt;string&gt;frame-&lt;/string&gt;
+-                    &lt;/property&gt;
+-                &lt;/widget&gt;
+-                &lt;widget class=&quot;QCheckBox&quot; row=&quot;0&quot; column=&quot;0&quot; rowspan=&quot;1&quot; colspan=&quot;3&quot;&gt;
+-                    &lt;property name=&quot;name&quot;&gt;
+-                        &lt;cstring&gt;cbSaveSnapShots&lt;/cstring&gt;
+-                    &lt;/property&gt;
+-                    &lt;property name=&quot;text&quot;&gt;
+-                        &lt;string&gt;Save Snapshots&lt;/string&gt;
+-                    &lt;/property&gt;
+-                &lt;/widget&gt;
+-                &lt;widget class=&quot;QLabel&quot; row=&quot;3&quot; column=&quot;0&quot;&gt;
+-                    &lt;property name=&quot;name&quot;&gt;
+-                        &lt;cstring&gt;tlOutputDirectory&lt;/cstring&gt;
+-                    &lt;/property&gt;
+-                    &lt;property name=&quot;text&quot;&gt;
+-                        &lt;string&gt;Directory:&lt;/string&gt;
+-                    &lt;/property&gt;
+-                &lt;/widget&gt;
+-            &lt;/grid&gt;
+-        &lt;/widget&gt;
+-    &lt;/grid&gt;
++                    &lt;widget class=&quot;QLabel&quot; row=&quot;0&quot; column=&quot;0&quot;&gt;
++                        &lt;property name=&quot;name&quot;&gt;
++                            &lt;cstring&gt;tlStatus&lt;/cstring&gt;
++                        &lt;/property&gt;
++                        &lt;property name=&quot;minimumSize&quot;&gt;
++                            &lt;size&gt;
++                                &lt;width&gt;0&lt;/width&gt;
++                                &lt;height&gt;180&lt;/height&gt;
++                            &lt;/size&gt;
++                        &lt;/property&gt;
++                        &lt;property name=&quot;font&quot;&gt;
++                            &lt;font&gt;
++                                &lt;family&gt;Monospace&lt;/family&gt;
++                                &lt;pointsize&gt;6&lt;/pointsize&gt;
++                            &lt;/font&gt;
++                        &lt;/property&gt;
++                        &lt;property name=&quot;text&quot;&gt;
++                            &lt;string&gt;idle&lt;/string&gt;
++                        &lt;/property&gt;
++                        &lt;property name=&quot;textFormat&quot;&gt;
++                            &lt;enum&gt;PlainText&lt;/enum&gt;
++                        &lt;/property&gt;
++                        &lt;property name=&quot;scaledContents&quot;&gt;
++                            &lt;bool&gt;false&lt;/bool&gt;
++                        &lt;/property&gt;
++                        &lt;property name=&quot;alignment&quot;&gt;
++                            &lt;set&gt;AlignTop&lt;/set&gt;
++                        &lt;/property&gt;
++                    &lt;/widget&gt;
++                &lt;/grid&gt;
++            &lt;/widget&gt;
++        &lt;/vbox&gt;
++    &lt;/widget&gt;
+ &lt;/widget&gt;
+ &lt;customwidgets&gt;
+     &lt;customwidget&gt;
+@@ -397,19 +481,19 @@
+ &lt;/customwidgets&gt;
+ &lt;images&gt;
+     &lt;image name=&quot;image0&quot;&gt;
+-        &lt;data format=&quot;PNG&quot; length=&quot;160&quot;&gt;89504e470d0a1a0a0000000d4948445200000015000000150806000000a917a5960000006749444154388dadccd10d80300c03d1947118a1fbcb23b00e2c4013dbc9fd9ef4168098eecae6def73b8eba70893a3085aa308d2ab084b2b08c32b08556b08d66700b3dc16d1478d628fa07b6d01368a31968a11528a30c28a12c48a30a48a12a58a20e1811f101d3512a7c38fee1ac0000000049454e44ae426082&lt;/data&gt;
++        &lt;data format=&quot;PNG&quot; length=&quot;892&quot;&gt;89504e470d0a1a0a0000000d4948445200000018000000180806000000e0773df800000343494441544889ed95cf6f146518c73f5d5a8b96a5ab6de84230b6b02858b134023d28743de8414d6a8c7f01ff801aaf24c24d2f0ac6709693f1a0f5e4c5c42e8907f560a736c4d616322dd275b7753bdb617766f6fdf17898e9b26db798102f263ec924cfccfbe4f3fd3ecffb2403ffc743c408f00e3099493fbafefc338704986a53370e7c909c6dd6f46e2fea68c92780cfcf9d3e92397f26c7f8991ce363c748a552bcffe1249f5e2f5c023ce0cdde7d7bf3e74e1fe5a5178ef0daf967393cd0cbb52f7ee0e2d56f2f0197771398aafc319b4ffbdfd3914a01202288152a5e8deb5fff8888f0e2e810c3b92cc65a8cb1186dd0da50a9d6197dfb6307186d15e86c7df1aa1efb3ac03434d65aac8d018fa4e0c25b679b40dfafa38dc1688bd686a8a1d0da72b03f7daab8e64f259dbe0b2cb50a384b6595ef4f871863304630d6a055ecb01d501bc37a790d43378ff53dc5b5cfae706ae444fe9bafbee4bd8b571de072ab80e7380ec363d0084394d2281d0b6c07d6ea0d0e0c8d923994e3f8cbc364d25d1094e347cde3955c0077fb880a9ee761f61cc6f7570942454369362a1eb55a83fd0347c9648f317af669b2d9be045882!
+ fa34d40191982250f8690ea0b0e30e5cd7258a0ee0fb012b772b3c79f2154e8e3d4736fb440c0bca102d4269710b50442059082b961b3fcf7bc0d27601d7755d3a7bdee0aefb1df90b1f9131b720b809c5c4e12633015a2b8858ac3548b214337377009c765bb404201d5d74f6f493e98e60b5747f5d45106b6390c430b1a6b96db1806171b9d81ccf8e1101186bd9d3bd1fa915b15a379dd90420d292b7f9eefcb6bc85b745c07166101106064fa0c27be830481c9b16973be156ee9f19ad77efa05aad22081beb1542df60a260db185af264f69bc2c618b4d6fcba50dcbd03e2dd1ddcdb9326dc28b5779d8063a0a1d1d0440d451429eefc59e5e6ad32c08ddd054406b343c78956969b176713874a1b948a6161a49873d798febd84b350667671955aa80ac0950775c0bd0d9f747f1f4150472b4d4369c22886ce2dad313d5f6266a1cceced55af1628279977a1d5f503051e3f98a3abd3e216ffe297f9620c5c2c737ba5ead502b5092b0033ed80ff149f4c4cbc2eafe6c704580726897f3e230f03db2dc6ff6de07f3bfe067d9f88db21915f870000000049454e44ae426082&lt;/data&gt;
+     &lt;/image&gt;
+     &lt;image name=&quot;image1&quot;&gt;
+-        &lt;data format=&quot;PNG&quot; length=&quot;255&quot;&gt;89504e470d0a1a0a0000000d4948445200000015000000150806000000a917a596000000c649444154388db594d90a83400c458f0bd28542feff9ffa2f81822fadda87d176d4319d14bd20e38470b22a1c2fbd8ce7109e8fbdf050caf9555ad07bc2cf051d9db50679cdb30310176cd298690a98d2e4a37506340b5847bebdd5e7320f0840b778b7a0b99265f02ee9b68e660d4acb34683d4cb3e10b3569b30e7c073e80abfced72819ea86a0fd49014c0754f68153e6f79ec053d8743dad8e818943c41e3fb1e7b3a0b60fe13fe819e4037d62bc8b3a7004d6883adcc4cf516cedf4007942ad3ef38bd01af6e31af98932e9f0000000049454e44ae426082&lt;/data&gt;
++        &lt;data format=&quot;PNG&quot; length=&quot;160&quot;&gt;89504e470d0a1a0a0000000d4948445200000015000000150806000000a917a5960000006749444154388dadccd10d80300c03d1947118a1fbcb23b00e2c4013dbc9fd9ef4168098eecae6def73b8eba70893a3085aa308d2ab084b2b08c32b08556b08d66700b3dc16d1478d628fa07b6d01368a31968a11528a30c28a12c48a30a48a12a58a20e1811f101d3512a7c38fee1ac0000000049454e44ae426082&lt;/data&gt;
+     &lt;/image&gt;
+     &lt;image name=&quot;image2&quot;&gt;
+-        &lt;data format=&quot;PNG&quot; length=&quot;113&quot;&gt;89504e470d0a1a0a0000000d4948445200000015000000150806000000a917a5960000003849444154388d633c76ec1803b50113d54da495a12cd804adacb4fe23f38f1dbbc6488c1c0c0c1def8f1a3a6ae8a8a123d350c6915df203007bf20ccfb0566fcb0000000049454e44ae426082&lt;/data&gt;
++        &lt;data format=&quot;PNG&quot; length=&quot;255&quot;&gt;89504e470d0a1a0a0000000d4948445200000015000000150806000000a917a596000000c649444154388db594d90a83400c458f0bd28542feff9ffa2f81822fadda87d176d4319d14bd20e38470b22a1c2fbd8ce7109e8fbdf050caf9555ad07bc2cf051d9db50679cdb30310176cd298690a98d2e4a37506340b5847bebdd5e7320f0840b778b7a0b99265f02ee9b68e660d4acb34683d4cb3e10b3569b30e7c073e80abfced72819ea86a0fd49014c0754f68153e6f79ec053d8743dad8e818943c41e3fb1e7b3a0b60fe13fe819e4037d62bc8b3a7004d6883adcc4cf516cedf4007942ad3ef38bd01af6e31af98932e9f0000000049454e44ae426082&lt;/data&gt;
+     &lt;/image&gt;
+     &lt;image name=&quot;image3&quot;&gt;
+-        &lt;data format=&quot;PNG&quot; length=&quot;305&quot;&gt;89504e470d0a1a0a0000000d4948445200000015000000150806000000a917a596000000f849444154388db5943b12823010863f1f95158de839b0f5021ec00bd8702b8f2117e0326ab38d54385a844748086c66f49f49917d7c2cc966412501e4a38b85a536b081abc01350c9405e0dc882cd831701600daca6539340ae57a9a44d2533c069b9bf7f77f605706e96ad83922fb5a9b25bb9e5a3b7ab2559183880c6744b7bcbf201b945248eaafdf2c6b25d7f05b555fe03fafc07741b8790fdf092c7a1c7c8c2bcf8165a59b64b24d48eb739737d1a92e44e5ee6064cbc2815b06e3dcea4f19e6181e9db12d3155bcc195e80d330b49f5a2e34c51f2a1aed207904a01d5c314f017843b2768d810191ac31e3ad1af75319bf0f04f8024c83732f0a67978c0000000049454e44ae426082&lt;/data&gt;
++        &lt;data format=&quot;PNG&quot; length=&quot;113&quot;&gt;89504e470d0a1a0a0000000d4948445200000015000000150806000000a917a5960000003849444154388d633c76ec1803b50113d54da495a12cd804adacb4fe23f38f1dbbc6488c1c0c0c1def8f1a3a6ae8a8a123d350c6915df203007bf20ccfb0566fcb0000000049454e44ae426082&lt;/data&gt;
+     &lt;/image&gt;
+     &lt;image name=&quot;image4&quot;&gt;
+-        &lt;data format=&quot;PNG&quot; length=&quot;892&quot;&gt;89504e470d0a1a0a0000000d4948445200000018000000180806000000e0773df800000343494441544889ed95cf6f146518c73f5d5a8b96a5ab6de84230b6b02858b134023d28743de8414d6a8c7f01ff801aaf24c24d2f0ac6709693f1a0f5e4c5c42e8907f560a736c4d616322dd275b7753bdb617766f6fdf17898e9b26db798102f263ec924cfccfbe4f3fd3ecffb2403ffc743c408f00e3099493fbafefc338704986a53370e7c909c6dd6f46e2fea68c92780cfcf9d3e92397f26c7f8991ce363c748a552bcffe1249f5e2f5c023ce0cdde7d7bf3e74e1fe5a5178ef0daf967393cd0cbb52f7ee0e2d56f2f0197771398aafc319b4ffbdfd3914a01202288152a5e8deb5fff8888f0e2e810c3b92cc65a8cb1186dd0da50a9d6197dfb6307186d15e86c7df1aa1efb3ac03434d65aac8d018fa4e0c25b679b40dfafa38dc1688bd686a8a1d0da72b03f7daab8e64f259dbe0b2cb50a384b6595ef4f871863304630d6a055ecb01d501bc37a790d43378ff53dc5b5cfae706ae444fe9bafbee4bd8b571de072ab80e7380ec363d0084394d2281d0b6c07d6ea0d0e0c8d923994e3f8cbc364d25d1094e347cde3955c0077fb880a9ee761f61cc6f7570942454369362a1eb55a83fd0347c9648f317af669b2d9be045882!
+ fa34d40191982250f8690ea0b0e30e5cd7258a0ee0fb012b772b3c79f2154e8e3d4736fb440c0bca102d4269710b50442059082b961b3fcf7bc0d27601d7755d3a7bdee0aefb1df90b1f9131b720b809c5c4e12633015a2b8858ac3548b214337377009c765bb404201d5d74f6f493e98e60b5747f5d45106b6390c430b1a6b96db1806171b9d81ccf8e1101186bd9d3bd1fa915b15a379dd90420d292b7f9eefcb6bc85b745c07166101106064fa0c27be830481c9b16973be156ee9f19ad77efa05aad22081beb1542df60a260db185af264f69bc2c618b4d6fcba50dcbd03e2dd1ddcdb9326dc28b5779d8063a0a1d1d0440d451429eefc59e5e6ad32c08ddd054406b343c78956969b176713874a1b948a6161a49873d798febd84b350667671955aa80ac0950775c0bd0d9f747f1f4150472b4d4369c22886ce2dad313d5f6266a1cceced55af1628279977a1d5f503051e3f98a3abd3e216ffe297f9620c5c2c737ba5ead502b5092b0033ed80ff149f4c4cbc2eafe6c704580726897f3e230f03db2dc6ff6de07f3bfe067d9f88db21915f870000000049454e44ae426082&lt;/data&gt;
++        &lt;data format=&quot;PNG&quot; length=&quot;305&quot;&gt;89504e470d0a1a0a0000000d4948445200000015000000150806000000a917a596000000f849444154388db5943b12823010863f1f95158de839b0f5021ec00bd8702b8f2117e0326ab38d54385a844748086c66f49f49917d7c2cc966412501e4a38b85a536b081abc01350c9405e0dc882cd831701600daca6539340ae57a9a44d2533c069b9bf7f77f605706e96ad83922fb5a9b25bb9e5a3b7ab2559183880c6744b7bcbf201b945248eaafdf2c6b25d7f05b555fe03fafc07741b8790fdf092c7a1c7c8c2bcf8165a59b64b24d48eb739737d1a92e44e5ee6064cbc2815b06e3dcea4f19e6181e9db12d3155bcc195e80d330b49f5a2e34c51f2a1aed207904a01d5c314f017843b2768d810191ac31e3ad1af75319bf0f04f8024c83732f0a67978c0000000049454e44ae426082&lt;/data&gt;
+     &lt;/image&gt;
+     &lt;image name=&quot;image5&quot;&gt;
+         &lt;data format=&quot;PNG&quot; length=&quot;1002&quot;&gt;89504e470d0a1a0a0000000d4948445200000016000000160806000000c4b46c3b000003b149444154388dad945f4c5b551cc73fe7dc4b7b4bcba0762d45c43114323599ee6192609c51d883892ce083f1718b3ebb185f8dc91e972cf39d2d2a2f1af664b6f1e0fe3863a0718969700eb0c52142da0242a1bd6d696f7bcff101585203ceb8fd9ece39f99dcff9fe7edf939f88c562ec465f5f9fe609442c161362173c3e3eae7b7a7ac8e7f36432196cdbfe4f907c3e4f2291201e8fe338cec3737357e9e8e828aded1e229d650e1f2d51754b082110124c13a4dc5ea341eb9dc284c0558a853f3ce8cb0677ef500fde7d39d2596679e326597b8e9abb85d7a770ab16ab6983ec5a05b487a70e36f0f4e10afe408d6a558310980108478dba4a1e8233990c5d474b64ed39aa3a8fe5f3317fbf81dbd70bccfeb205947632fd74f6589c1c6ea2f70d03a58ba0c1f2c9bdc1b66de3b8256a6e11cbe7e3ee1d181b590124fe2693aeee08d223c82c3a2c24b7b874bec8f26288774f7bd054504aef0dde6e99c0eb83f9fb266323cb80a27fb0958141836044605a2ee5523393371cc646fee2da37195aa35d0c0c5b4859ac03d7e91712dcaac5adab3650a3ff9d08ef7dd8404bb48869e5d958b5b87dadc4c9a1464e9f0d0326df7!
+ ebd86bd2e310cb1bf62d384d59441f2d70a070e1c60e09489929b988681bdd9cc97170bcc4c65595f71f8e0e3301337fc24a7732467831875a47f289652b0be5e4151e6d07316c1b0c0340d8ab92023e76d66a6b2840e36d2fb7a13fee632475e6edc367ea98a90fb98b7dd6310ca0328a44761582e1bab41befabcc0ec940d28bc5e93b68e064cab84e1d9beaeb48934eac1f53b01c1b000fca496aa54b61a99fcde61662a4b4b4b23d1680be9d426173e4df3602a48ea411989a4fd590f52a8fd156b05ed9d350e3defe3cfdf4b4c7ce770ea7d3fb9f520afbe1620daeee5c26735d20b9b9cfb6811a754a439e4e5c5639a4caa1e5caf586bfc0197b78702005cb9b4cae4cd3267ce8638fe964bd72b393e39d74928d242617303a756a37f284447770dcdbffc6384a05a85de1306e9a52057c7527c7131c3c42d3f475eb2303c82d4fc3276d6811db37efeb148723082d9b08f79f97c1e5729109a9a28307cc622d2d6cdf52b2b24efe548dedb00142009862cfa879ee1a71f6cec928353511472fbf4389148b0b0e0c108081412458dfe21c9f11351e67e7358595468246d1d1e5e38a6e9e851bc39d84ab502a669331dafec0d8ec7e3e8cb06e1a881d727d1ae40180a434a8c9db129a54126ad48a7358c2b4c5352c8c374bcccdab2bb37d8719cba79fab8211f9df218e05!
+ 82c261e95f8bfc04f1a1e8bc5c4dfe0a190172af6a9690000000049454e44a!
+ e426082&lt;
+/data&gt;
+@@ -417,18 +501,6 @@
+ &lt;/images&gt;
+ &lt;connections&gt;
+     &lt;connection&gt;
+-        &lt;sender&gt;pbInputDirectory&lt;/sender&gt;
+-        &lt;signal&gt;clicked()&lt;/signal&gt;
+-        &lt;receiver&gt;QtGeneratedSimulationPlayer&lt;/receiver&gt;
+-        &lt;slot&gt;pbInputDirectoryClicked()&lt;/slot&gt;
+-    &lt;/connection&gt;
+-    &lt;connection&gt;
+-        &lt;sender&gt;pbLoad&lt;/sender&gt;
+-        &lt;signal&gt;clicked()&lt;/signal&gt;
+-        &lt;receiver&gt;QtGeneratedSimulationPlayer&lt;/receiver&gt;
+-        &lt;slot&gt;pbLoadClicked()&lt;/slot&gt;
+-    &lt;/connection&gt;
+-    &lt;connection&gt;
+         &lt;sender&gt;pbPause&lt;/sender&gt;
+         &lt;signal&gt;clicked()&lt;/signal&gt;
+         &lt;receiver&gt;QtGeneratedSimulationPlayer&lt;/receiver&gt;
+@@ -459,17 +531,29 @@
+         &lt;slot&gt;pbStepClicked()&lt;/slot&gt;
+     &lt;/connection&gt;
+     &lt;connection&gt;
++        &lt;sender&gt;cbSaveSnapShots&lt;/sender&gt;
++        &lt;signal&gt;toggled(bool)&lt;/signal&gt;
++        &lt;receiver&gt;QtGeneratedSimulationPlayer&lt;/receiver&gt;
++        &lt;slot&gt;cbSaveSnapShotsToggled(bool)&lt;/slot&gt;
++    &lt;/connection&gt;
++    &lt;connection&gt;
+         &lt;sender&gt;pbInputConfigFile&lt;/sender&gt;
+         &lt;signal&gt;clicked()&lt;/signal&gt;
+         &lt;receiver&gt;QtGeneratedSimulationPlayer&lt;/receiver&gt;
+         &lt;slot&gt;pbInputConfigFileClicked()&lt;/slot&gt;
+     &lt;/connection&gt;
+     &lt;connection&gt;
+-        &lt;sender&gt;cbSaveSnapShots&lt;/sender&gt;
+-        &lt;signal&gt;toggled(bool)&lt;/signal&gt;
++        &lt;sender&gt;pbInputDirectory&lt;/sender&gt;
++        &lt;signal&gt;clicked()&lt;/signal&gt;
+         &lt;receiver&gt;QtGeneratedSimulationPlayer&lt;/receiver&gt;
+-        &lt;slot&gt;cbSaveSnapShotsToggled(bool)&lt;/slot&gt;
++        &lt;slot&gt;pbInputDirectoryClicked()&lt;/slot&gt;
+     &lt;/connection&gt;
++    &lt;connection&gt;
++        &lt;sender&gt;pbLoad&lt;/sender&gt;
++        &lt;signal&gt;clicked()&lt;/signal&gt;
++        &lt;receiver&gt;QtGeneratedSimulationPlayer&lt;/receiver&gt;
++        &lt;slot&gt;pbLoadClicked()&lt;/slot&gt;
++    &lt;/connection&gt;
+ &lt;/connections&gt;
+ &lt;slots&gt;
+     &lt;slot&gt;pbLoadClicked()&lt;/slot&gt;
+
+Modified: trunk/gui/qt3/QtSimulationPlayer.cpp
+===================================================================
+--- trunk/gui/qt3/QtSimulationPlayer.cpp	2008-06-26 12:42:04 UTC (rev 1403)
++++ trunk/gui/qt3/QtSimulationPlayer.cpp	2008-06-29 07:33:23 UTC (rev 1404)
+@@ -13,18 +13,19 @@
+ #include &lt;qlineedit.h&gt;
+ #include &lt;qpushbutton.h&gt;
+ #include &lt;qspinbox.h&gt;
++#include&lt;qlabel.h&gt;
++#include&lt;qstring.h&gt;
+ 
+-QtSimulationPlayer::QtSimulationPlayer() : QtGeneratedSimulationPlayer()
+-{
+-	
+-}
++QtSimulationPlayer::QtSimulationPlayer() : QtGeneratedSimulationPlayer(){ glSimulationPlayerViewer-&gt;simPlayer=this;}
++QtSimulationPlayer::~QtSimulationPlayer(){}
++void QtSimulationPlayer::pbPlayClicked(){	setParameters(); glSimulationPlayerViewer-&gt;startAnimation();}
++void QtSimulationPlayer::pbPauseClicked(){ glSimulationPlayerViewer-&gt;stopAnimation();}
++void QtSimulationPlayer::pbStepClicked(){ glSimulationPlayerViewer-&gt;stopAnimation(); glSimulationPlayerViewer-&gt;doOneStep(); }
++void QtSimulationPlayer::pbResetClicked(){ setParameters();	glSimulationPlayerViewer-&gt;reset();}
++void QtSimulationPlayer::cbSaveSnapShotsToggled(bool b){	glSimulationPlayerViewer-&gt;saveSnapShots=b;}
++void QtSimulationPlayer::closeEvent(QCloseEvent *e){ QtGeneratedSimulationPlayer::closeEvent(e);}
+ 
+ 
+-QtSimulationPlayer::~QtSimulationPlayer()
+-{
+-}
+-
+-
+ void QtSimulationPlayer::pbInputConfigFileClicked()
+ {
+ 	string selectedFilter;
+@@ -59,52 +60,8 @@
+ 	string directory = FileDialog::getExistingDirectory ( &quot;.&quot;,&quot;Choose the directory where to save the snapshots&quot;, NULL );
+ 	if (!directory.empty())
+ 		leOutputDirectory-&gt;setText(directory.c_str());
+-
+ }
+ 
+-
+-void QtSimulationPlayer::pbPlayClicked()
+-{	
+-	setParameters();
+-
+-	glSimulationPlayerViewer-&gt;startAnimation();
+-
+-}
+-
+-
+-void QtSimulationPlayer::pbPauseClicked()
+-{	
+-	glSimulationPlayerViewer-&gt;stopAnimation();
+-}
+-
+-
+-void QtSimulationPlayer::pbStepClicked()
+-{
+-	glSimulationPlayerViewer-&gt;stopAnimation();
+-	glSimulationPlayerViewer-&gt;doOneStep();
+-}
+-
+-
+-void QtSimulationPlayer::pbResetClicked()
+-{
+-	setParameters();
+-	glSimulationPlayerViewer-&gt;reset();
+-}
+-
+-
+-void QtSimulationPlayer::cbSaveSnapShotsToggled(bool b)
+-{
+-	glSimulationPlayerViewer-&gt;saveSnapShots=b;
+-}
+-
+-
+-void QtSimulationPlayer::closeEvent(QCloseEvent *e)
+-{
+-	QtGeneratedSimulationPlayer::closeEvent(e);
+-	
+-}
+-
+-
+ void QtSimulationPlayer::setParameters()
+ {
+ 	glSimulationPlayerViewer-&gt;inputBaseName=leInputBaseName-&gt;text().ascii();
+@@ -112,3 +69,14 @@
+ 	glSimulationPlayerViewer-&gt;outputBaseName=leOutputBaseName-&gt;text().ascii();
+ 	glSimulationPlayerViewer-&gt;outputBaseDirectory=leOutputDirectory-&gt;text().ascii();
+ }
++
++void QtSimulationPlayer::pushMessage(string msg){
++	messages.push_back(msg);
++	if(messages.size()&gt;15) messages.pop_front();
++	QString disp;
++	FOREACH(string m, messages){
++		disp+=m+&quot;\n&quot;;
++	}
++	tlStatus-&gt;setText(disp);
++	tlStatus-&gt;adjustSize();
++}
+
+Modified: trunk/gui/qt3/QtSimulationPlayer.hpp
+===================================================================
+--- trunk/gui/qt3/QtSimulationPlayer.hpp	2008-06-26 12:42:04 UTC (rev 1403)
++++ trunk/gui/qt3/QtSimulationPlayer.hpp	2008-06-29 07:33:23 UTC (rev 1404)
+@@ -19,7 +19,10 @@
+ 	public : ~QtSimulationPlayer();
+ 
+ 	private : void setParameters();
++		list&lt;string&gt; messages;
++	public: void pushMessage(std::string);
+ 
++
+ 	public slots : virtual void pbInputDirectoryClicked();
+ 	public slots : virtual void pbLoadClicked();
+ 	public slots : virtual void pbInputConfigFileClicked();
+
+Modified: trunk/pkg/common/Engine/MetaEngine/BoundingVolumeMetaEngine.cpp
+===================================================================
+--- trunk/pkg/common/Engine/MetaEngine/BoundingVolumeMetaEngine.cpp	2008-06-26 12:42:04 UTC (rev 1403)
++++ trunk/pkg/common/Engine/MetaEngine/BoundingVolumeMetaEngine.cpp	2008-06-29 07:33:23 UTC (rev 1404)
+@@ -18,7 +18,7 @@
+ {
+ 	shared_ptr&lt;BodyContainer&gt;&amp; bodies = ncb-&gt;bodies;
+ 	const long numBodies=(long)bodies-&gt;size();
+-	// #pragma omp parallel for
++	//#pragma omp parallel for
+ 	for(int id=0; id&lt;numBodies; id++){
+ 		const shared_ptr&lt;Body&gt;&amp; b=(*bodies)[id];
+ 		if(b-&gt;interactingGeometry &amp;&amp; b-&gt;boundingVolume) operator()(b-&gt;interactingGeometry,b-&gt;boundingVolume,b-&gt;physicalParameters-&gt;se3,b.get());
+
+Modified: trunk/pkg/common/Engine/StandAloneEngine/PersistentSAPCollider.cpp
+===================================================================
+--- trunk/pkg/common/Engine/StandAloneEngine/PersistentSAPCollider.cpp	2008-06-26 12:42:04 UTC (rev 1403)
++++ trunk/pkg/common/Engine/StandAloneEngine/PersistentSAPCollider.cpp	2008-06-29 07:33:23 UTC (rev 1404)
+@@ -50,7 +50,7 @@
+ 	Vector3r min,max;
+ 
+ 	const long numBodies=(long)bodies-&gt;size();
+-	// #pragma omp parallel for
++	//#pragma omp parallel for
+ 	for(int id=0; id&lt;numBodies; id++){
+ 		const shared_ptr&lt;Body&gt;&amp; b=(*bodies)[id];
+ 		offset=3*id;
+@@ -81,13 +81,13 @@
+ 	nbObjects=bodies-&gt;size();
+ 
+ 	// permutation sort of the AABBBounds along the 3 axis performed in a independant manner
+-	// #pragma omp parallel sections
++	//#pragma omp parallel sections
+ 	{
+-	//	#pragma omp section
++	//#pragma omp section
+ 		sortBounds(xBounds, nbObjects);
+-	//	#pragma omp section
++	//#pragma omp section
+ 		sortBounds(yBounds, nbObjects);
+-	//	#pragma omp section
++	//#pragma omp section
+ 		sortBounds(zBounds, nbObjects);
+ 	}
+ }
+
+Modified: trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawSphere.cpp
+===================================================================
+--- trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawSphere.cpp	2008-06-26 12:42:04 UTC (rev 1403)
++++ trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawSphere.cpp	2008-06-29 07:33:23 UTC (rev 1404)
+@@ -21,12 +21,26 @@
+ //      glPopMatrix();
+ //}
+ 
+-GLDrawSphere::GLDrawSphere() : first(true), glWiredSphereList(-1), glSphereList(-1)
+-{
+-};
++bool GLDrawSphere::glutUse=false;
++bool GLDrawSphere::glutNormalize=true;
++int  GLDrawSphere::glutSlices=12;
++int  GLDrawSphere::glutStacks=6;
+ 
++GLDrawSphere::GLDrawSphere() : first(true), glWiredSphereList(-1), glSphereList(-1){};
++
+ void GLDrawSphere::go(const shared_ptr&lt;GeometricalModel&gt;&amp; gm, const shared_ptr&lt;PhysicalParameters&gt;&amp; ph,bool wire)
+ {
++	if(glutUse){
++		Real r= (static_cast&lt;Sphere*&gt;(gm.get()))-&gt;radius;
++		glMaterialv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, Vector3f(gm-&gt;diffuseColor[0],gm-&gt;diffuseColor[1],gm-&gt;diffuseColor[2]));
++		glColor3v(gm-&gt;diffuseColor);
++		if(glutNormalize)	glPushAttrib(GL_NORMALIZE); // as per <A HREF="http://lists.apple.com/archives/Mac-opengl/2002/Jul/msg00085.html">http://lists.apple.com/archives/Mac-opengl/2002/Jul/msg00085.html</A>
++		 	if (gm-&gt;wire || wire) glutWireSphere(r,glutSlices,glutStacks);
++			else glutSolidSphere(r,glutSlices,glutStacks);
++		if(glutNormalize) glPopAttrib();
++		return;
++	}
++
+ 	if (first)
+ 	{
+ 		Real X = 0.525731112119133606;
+
+Modified: trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawSphere.hpp
+===================================================================
+--- trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawSphere.hpp	2008-06-26 12:42:04 UTC (rev 1403)
++++ trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawSphere.hpp	2008-06-29 07:33:23 UTC (rev 1404)
+@@ -23,16 +23,18 @@
+ 		void drawSphere(int depth);
+ 		void drawCircle(bool filled);
+ 		void clearGlMatrix();
+-	
++		static bool glutUse, glutNormalize;
++		static int glutSlices, glutStacks;
++		
+ 	public :
+ 		GLDrawSphere();
+ 		virtual void go(const shared_ptr&lt;GeometricalModel&gt;&amp;, const shared_ptr&lt;PhysicalParameters&gt;&amp;,bool);
++		virtual void registerAttributes(){REGISTER_ATTRIBUTE(glutUse); REGISTER_ATTRIBUTE(glutNormalize); REGISTER_ATTRIBUTE(glutSlices); REGISTER_ATTRIBUTE(glutStacks); }
+ 		
+ 	RENDERS(Sphere);
+ 	REGISTER_CLASS_NAME(GLDrawSphere);
+ 	REGISTER_BASE_CLASS_NAME(GLDrawGeometricalModelFunctor);
+ };
+-
+ REGISTER_SERIALIZABLE(GLDrawSphere,false);
+ 
+ #endif // GLDRAWSPHERE_HPP
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/PositionOrientationRecorder.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/PositionOrientationRecorder.cpp	2008-06-26 12:42:04 UTC (rev 1403)
++++ trunk/pkg/dem/Engine/StandAloneEngine/PositionOrientationRecorder.cpp	2008-06-29 07:33:23 UTC (rev 1404)
+@@ -13,49 +13,40 @@
+ #include&lt;yade/core/Omega.hpp&gt;
+ #include&lt;yade/core/MetaBody.hpp&gt;
+ #include &lt;boost/lexical_cast.hpp&gt;
++#include&lt;boost/iostreams/filtering_stream.hpp&gt;
++#include&lt;boost/iostreams/filter/bzip2.hpp&gt;
++#include&lt;boost/iostreams/device/file.hpp&gt;
+ 
++CREATE_LOGGER(PositionOrientationRecorder);
+ 
+-PositionOrientationRecorder::PositionOrientationRecorder () : DataRecorder()
+-{
++PositionOrientationRecorder::PositionOrientationRecorder () : DataRecorder(){
+ 	outputFile = &quot;positionorientation&quot;;
+ 	interval = 50;
+ 	saveRgb=false;
+ }
+-
+-
+-PositionOrientationRecorder::~PositionOrientationRecorder ()
+-{
+-
+-}
+-
+-
+-void PositionOrientationRecorder::postProcessAttributes(bool deserializing)
+-{
+-	if(deserializing) {}
+-}
+-
+-
+-void PositionOrientationRecorder::registerAttributes()
+-{
++PositionOrientationRecorder::~PositionOrientationRecorder (){}
++void PositionOrientationRecorder::postProcessAttributes(bool deserializing){if(deserializing) {}}
++void PositionOrientationRecorder::registerAttributes(){
+ 	DataRecorder::registerAttributes();
+ 	REGISTER_ATTRIBUTE(outputFile);
+ 	REGISTER_ATTRIBUTE(interval);
+ 	REGISTER_ATTRIBUTE(saveRgb);
+ }
+ 
+-
+-void PositionOrientationRecorder::action(MetaBody * ncb)
+-{
++void PositionOrientationRecorder::action(MetaBody * ncb){
+ 	if( Omega::instance().getCurrentIteration() % interval == 0 ){
+ 		ostringstream oss;
+-		oss&lt;&lt;setfill('0')&lt;&lt;outputFile&lt;&lt;&quot;_&quot;&lt;&lt;setw(6)&lt;&lt;Omega::instance().getCurrentIteration();
+-		cerr&lt;&lt;&quot;Snapshot &quot;&lt;&lt;oss.str()&lt;&lt;endl;
+-		std::ofstream ofile,rgbFile;
+-		ofile.open(oss.str().c_str());
+-		if(saveRgb) rgbFile.open((oss.str()+&quot;.rgb&quot;).c_str());
+-		if(!ofile.good()){ cerr&lt;&lt;&quot;Snapshot &quot;&lt;&lt;oss.str()&lt;&lt;&quot; could not be opened for writing (skipping)!&quot;&lt;&lt;endl; return; }
+-		if(saveRgb &amp;&amp; !rgbFile.good()){ cerr&lt;&lt;&quot;Snapshot &quot;&lt;&lt;oss.str()&lt;&lt;&quot; could not be opened for writing (skipping)!&quot;&lt;&lt;endl; return; }
+-	
++		oss&lt;&lt;setfill('0')&lt;&lt;outputFile&lt;&lt;&quot;_&quot;&lt;&lt;setw(7)&lt;&lt;Omega::instance().getCurrentIteration();
++		string fileBase=oss.str();
++		iostreams::filtering_ostream ofile; ofile.push(iostreams::bzip2_compressor()); ofile.push(iostreams::file_sink(fileBase+&quot;.bz2&quot;));
++		iostreams::filtering_ostream rgbFile;
++		if(saveRgb){
++			rgbFile.push(iostreams::bzip2_compressor());
++			rgbFile.push(iostreams::file_sink(fileBase+&quot;.rgb.bz2&quot;));
++		}
++		if(!ofile.good()){ LOG_ERROR(&quot;Snapshot &quot;&lt;&lt;fileBase&lt;&lt;&quot;.bz2 could not be opened for writing (skipping)!&quot;); return; }
++		if(saveRgb &amp;&amp; !rgbFile.good()){ LOG_ERROR(&quot;Snapshot &quot;&lt;&lt;fileBase&lt;&lt;&quot;.rgb.bz2 could not be opened for writing (skipping)!&quot;); return; }
++		LOG_INFO(&quot;Snapshot &quot;&lt;&lt;fileBase&lt;&lt;&quot;.bz2&quot;&lt;&lt;(saveRgb?&quot; (+rgb)&quot;:&quot;&quot;));
+ 		BodyContainer::iterator biEnd = ncb-&gt;bodies-&gt;end();
+ 		for(BodyContainer::iterator bi    = ncb-&gt;bodies-&gt;begin(); bi!=biEnd; ++bi){
+ 			const Se3r&amp; se3=(*bi)-&gt;physicalParameters-&gt;se3;
+@@ -63,8 +54,6 @@
+ 			ofile&lt;&lt;se3.position[0]&lt;&lt;&quot; &quot;&lt;&lt;se3.position[1]&lt;&lt;&quot; &quot;&lt;&lt;se3.position[2]&lt;&lt;&quot; &quot;&lt;&lt;se3.orientation[0]&lt;&lt;&quot; &quot;&lt;&lt;se3.orientation[1]&lt;&lt;&quot; &quot;&lt;&lt;se3.orientation[2]&lt;&lt;&quot; &quot;&lt;&lt;se3.orientation[3]&lt;&lt;endl;
+ 			if(saveRgb) rgbFile&lt;&lt;color[0]&lt;&lt;&quot; &quot;&lt;&lt;color[1]&lt;&lt;&quot; &quot;&lt;&lt;color[2]&lt;&lt;endl;
+ 		}
+-		ofile.close();
+-		if(saveRgb) rgbFile.close();
+ 	}
+ }
+ 
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/PositionOrientationRecorder.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/PositionOrientationRecorder.hpp	2008-06-26 12:42:04 UTC (rev 1403)
++++ trunk/pkg/dem/Engine/StandAloneEngine/PositionOrientationRecorder.hpp	2008-06-29 07:33:23 UTC (rev 1404)
+@@ -34,6 +34,7 @@
+ 	protected :
+ 		virtual void postProcessAttributes(bool deserializing);
+ 		void registerAttributes();
++	DECLARE_LOGGER;
+ 	REGISTER_CLASS_NAME(PositionOrientationRecorder);
+ 	REGISTER_BASE_CLASS_NAME(DataRecorder);
+ };
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000364.html">[Yade-commits] r1403 - in trunk: gui/py pkg/common/Engine	pkg/common/Engine/MetaEngine	pkg/common/Engine/StandAloneEngine scripts
+</A></li>
+	<LI>Next message: <A HREF="000366.html">[Yade-commits] r1405 - in trunk: core gui gui/qt3	pkg/common/DataClass/BoundingVolume	pkg/common/RenderingEngine/OpenGLRenderingEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#365">[ date ]</a>
+              <a href="thread.html#365">[ thread ]</a>
+              <a href="subject.html#365">[ subject ]</a>
+              <a href="author.html#365">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

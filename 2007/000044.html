@@ -1,0 +1,114 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1079 - trunk/yade-extra/clump
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2007/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1079%20-%20trunk/yade-extra/clump&In-Reply-To=%3C200703011303.l21D3waL003654%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000043.html">
+   <LINK REL="Next"  HREF="000045.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1079 - trunk/yade-extra/clump</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1079%20-%20trunk/yade-extra/clump&In-Reply-To=%3C200703011303.l21D3waL003654%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1079 - trunk/yade-extra/clump">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Thu Mar  1 14:03:58 CET 2007</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000043.html">[Yade-commits] r1078 - in trunk: . yade-core/src/yade	yade-libs/yade-lib-factory/src/yade-lib-factory	yade-libs/yade-lib-multimethods/src/yade-lib-multimethods	yade-libs/yade-lib-serialization/src/yade-lib-serialization
+</A></li>
+        <LI>Next message: <A HREF="000045.html">[Yade-commits] r1080 - trunk/yade-extra/clump
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#44">[ date ]</a>
+              <a href="thread.html#44">[ thread ]</a>
+              <a href="subject.html#44">[ subject ]</a>
+              <a href="author.html#44">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2007-03-01 14:03:57 +0100 (Thu, 01 Mar 2007)
+New Revision: 1079
+
+Modified:
+   trunk/yade-extra/clump/PythonRecorder.cpp
+   trunk/yade-extra/clump/pyade.cpp
+Log:
+Python fixes:
+1. load pyade.py from path given by PREFIX and POSTFIX (we really need to define that somewhere in a unified manner: not by using BOOST_PP_STRINGIZE everywhere! - config.hpp...?)
+2. velocity and angularVelocity are vectors now (returned only the x component by mistake)
+
+
+Modified: trunk/yade-extra/clump/PythonRecorder.cpp
+===================================================================
+--- trunk/yade-extra/clump/PythonRecorder.cpp	2007-03-01 12:27:36 UTC (rev 1078)
++++ trunk/yade-extra/clump/PythonRecorder.cpp	2007-03-01 13:03:57 UTC (rev 1079)
+@@ -8,7 +8,9 @@
+ //#include &lt;yade/yade-core/Omega.hpp&gt;
+ #include &lt;yade/yade-core/MetaBody.hpp&gt;
+ //#include &lt;boost/lexical_cast.hpp&gt;
++#include &lt;boost/preprocessor/stringize.hpp&gt;
+ 
++
+ CREATE_LOGGER(PythonRecorder);
+ 
+ /*! Constructor loads the pyade module.
+@@ -20,7 +22,7 @@
+ 
+ PythonRecorder::PythonRecorder():DataRecorder(){
+ 	// FIXME: this will have to be set somehow, hardcode for now...
+-	PyRun_SimpleString(&quot;import sys; sys.path.insert(0,'/usr/local/lib/yade/yade-extra');&quot;);
++	PyRun_SimpleString((string(&quot;import sys; sys.path.insert(0,'&quot;)+BOOST_PP_STRINGIZE(PREFIX)+&quot;/lib/yade&quot;+BOOST_PP_STRINGIZE(POSTFIX)+&quot;/yade-extra');&quot;).c_str());
+ 
+ 	#if 0
+ 	PyObject* pyModuleName=PyString_FromString(&quot;pyade&quot;);
+
+Modified: trunk/yade-extra/clump/pyade.cpp
+===================================================================
+--- trunk/yade-extra/clump/pyade.cpp	2007-03-01 12:27:36 UTC (rev 1078)
++++ trunk/yade-extra/clump/pyade.cpp	2007-03-01 13:03:57 UTC (rev 1079)
+@@ -64,8 +64,8 @@
+ 		case bp_clumpId: return toPython(B-&gt;clumpId);
+ 		case bp_x: return toPython(pp-&gt;se3.position);
+ 		case bp_r: return toPython(pp-&gt;se3.orientation);
+-		case bp_v: return toPython(pap-&gt;velocity[0]);
+-		case bp_w: return toPython(rbp-&gt;angularVelocity[0]);
++		case bp_v: return toPython(pap-&gt;velocity);
++		case bp_w: return toPython(rbp-&gt;angularVelocity);
+ 		case bp_m: return toPython(pap-&gt;mass);
+ 		case bp_I: return toPython(rbp-&gt;inertia);
+ 		case bp_isClump: return toPython(B-&gt;isClump());
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000043.html">[Yade-commits] r1078 - in trunk: . yade-core/src/yade	yade-libs/yade-lib-factory/src/yade-lib-factory	yade-libs/yade-lib-multimethods/src/yade-lib-multimethods	yade-libs/yade-lib-serialization/src/yade-lib-serialization
+</A></li>
+	<LI>Next message: <A HREF="000045.html">[Yade-commits] r1080 - trunk/yade-extra/clump
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#44">[ date ]</a>
+              <a href="thread.html#44">[ thread ]</a>
+              <a href="subject.html#44">[ subject ]</a>
+              <a href="author.html#44">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

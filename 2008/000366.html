@@ -1,0 +1,1048 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1405 - in trunk: core gui gui/qt3	pkg/common/DataClass/BoundingVolume	pkg/common/RenderingEngine/OpenGLRenderingEngine
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1405%20-%20in%20trunk%3A%20core%20gui%20gui/qt3%0A%09pkg/common/DataClass/BoundingVolume%0A%09pkg/common/RenderingEngine/OpenGLRenderingEngine&In-Reply-To=%3C200806291750.m5THotux008950%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000365.html">
+   <LINK REL="Next"  HREF="000367.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1405 - in trunk: core gui gui/qt3	pkg/common/DataClass/BoundingVolume	pkg/common/RenderingEngine/OpenGLRenderingEngine</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1405%20-%20in%20trunk%3A%20core%20gui%20gui/qt3%0A%09pkg/common/DataClass/BoundingVolume%0A%09pkg/common/RenderingEngine/OpenGLRenderingEngine&In-Reply-To=%3C200806291750.m5THotux008950%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1405 - in trunk: core gui gui/qt3	pkg/common/DataClass/BoundingVolume	pkg/common/RenderingEngine/OpenGLRenderingEngine">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Sun Jun 29 19:50:55 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000365.html">[Yade-commits] r1404 - in trunk: extra gui/py gui/qt3	pkg/common/Engine/MetaEngine pkg/common/Engine/StandAloneEngine	pkg/common/RenderingEngine/GLDrawGeometricalModel	pkg/dem/Engine/StandAloneEngine
+</A></li>
+        <LI>Next message: <A HREF="000367.html">[Yade-commits] r1406 - trunk/gui/qt3
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#366">[ date ]</a>
+              <a href="thread.html#366">[ thread ]</a>
+              <a href="subject.html#366">[ subject ]</a>
+              <a href="author.html#366">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2008-06-29 19:50:51 +0200 (Sun, 29 Jun 2008)
+New Revision: 1405
+
+Modified:
+   trunk/core/Body.cpp
+   trunk/core/Body.hpp
+   trunk/gui/SConscript
+   trunk/gui/qt3/GLViewer.cpp
+   trunk/gui/qt3/GLViewer.hpp
+   trunk/gui/qt3/SimulationController.cpp
+   trunk/gui/qt3/YadeQtMainWindow.cpp
+   trunk/gui/qt3/YadeQtMainWindow.hpp
+   trunk/pkg/common/DataClass/BoundingVolume/AABB.cpp
+   trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.cpp
+   trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.hpp
+Log:
+1. Implemented clipping planes in the GL viewer and GL renderer
+2. Moving body is now consistent with mouse bindings for moving scene
+
+
+Modified: trunk/core/Body.cpp
+===================================================================
+--- trunk/core/Body.cpp	2008-06-29 07:33:23 UTC (rev 1404)
++++ trunk/core/Body.cpp	2008-06-29 17:50:51 UTC (rev 1405)
+@@ -18,6 +18,7 @@
+ const body_id_t Body::ID_NONE=body_id_t(-1);
+ 
+ const shared_ptr&lt;Body&gt;&amp; Body::byId(body_id_t _id, MetaBody* rb){return (*((rb?rb:Omega::instance().getRootBody().get())-&gt;bodies))[_id];}
++const shared_ptr&lt;Body&gt;&amp; Body::byId(body_id_t _id, shared_ptr&lt;MetaBody&gt; rb){return (*(rb-&gt;bodies))[_id];}
+ 
+ 
+ // we must initialize id = 0, otherwise BodyContainer will crash.
+
+Modified: trunk/core/Body.hpp
+===================================================================
+--- trunk/core/Body.hpp	2008-06-29 07:33:23 UTC (rev 1404)
++++ trunk/core/Body.hpp	2008-06-29 17:50:51 UTC (rev 1405)
+@@ -48,6 +48,8 @@
+ 		static const body_id_t ID_NONE;
+ 		//! get Body pointer given its id. 
+ 		static const shared_ptr&lt;Body&gt;&amp; byId(body_id_t _id,MetaBody* rb=NULL);
++		static const shared_ptr&lt;Body&gt;&amp; byId(body_id_t _id,shared_ptr&lt;MetaBody&gt; rb);
++
+ 		
+ 		//! Whether this Body is a Clump.
+ 		//! @note The following is always true: \code (Body::isClump() XOR Body::isClumpMember() XOR Body::isStandalone()) \endcode
+
+Modified: trunk/gui/SConscript
+===================================================================
+--- trunk/gui/SConscript	2008-06-29 07:33:23 UTC (rev 1404)
++++ trunk/gui/SConscript	2008-06-29 17:50:51 UTC (rev 1405)
+@@ -33,6 +33,7 @@
+ 				'yade-computational-geometry',
+ 				'XMLFormatManager',
+ 				'yade-serialization-qt',
++				'OpenGLRenderingEngine',
+ 				'PositionOrientationRecorder',
+ 				'$QGLVIEWER_LIB']+linkPythonUI,
+ 			CPPPATH=env['CPPPATH']+['qt3']),
+
+Modified: trunk/gui/qt3/GLViewer.cpp
+===================================================================
+--- trunk/gui/qt3/GLViewer.cpp	2008-06-29 07:33:23 UTC (rev 1404)
++++ trunk/gui/qt3/GLViewer.cpp	2008-06-29 17:50:51 UTC (rev 1405)
+@@ -18,8 +18,9 @@
+ #include&lt;yade/core/Body.hpp&gt;
+ #include&lt;yade/core/Interaction.hpp&gt;
+ 
++CREATE_LOGGER(GLViewer);
+ 
+-GLViewer::GLViewer(int id, shared_ptr&lt;RenderingEngine&gt; rendererInit, const QGLFormat&amp; format, QWidget * parent, QGLWidget * shareWidget) : QGLViewer(format,parent,&quot;glview&quot;,shareWidget)//, qglThread(this,rendererInit)
++GLViewer::GLViewer(int id, shared_ptr&lt;OpenGLRenderingEngine&gt; rendererInit, const QGLFormat&amp; format, QWidget * parent, QGLWidget * shareWidget) : QGLViewer(format,parent,&quot;glview&quot;,shareWidget)//, qglThread(this,rendererInit)
+ {
+ 	isMoving=false;
+ 	renderer=rendererInit;
+@@ -29,97 +30,152 @@
+ 	cut_plane_delta = -2;
+ 	resize(550,550);
+ 
+-	if (id==0)
+-		setCaption(&quot;Primary view&quot;);
+-	else
+-		setCaption(&quot;Secondary view number &quot;+lexical_cast&lt;string&gt;(id));
++	if (id==0) setCaption(&quot;Primary view&quot;);
++	else setCaption(&quot;Secondary view number &quot;+lexical_cast&lt;string&gt;(id));
+ 	show();
+ 	
+-	notMoving();
++	mouseMovesCamera();
++	manipulatedClipPlane=-1;
+ 
+-	if(manipulatedFrame() == 0 )
+-		setManipulatedFrame(new qglviewer::ManipulatedFrame());
++	if(manipulatedFrame()==0) setManipulatedFrame(new qglviewer::ManipulatedFrame());
++
++	xyPlaneConstraint=shared_ptr&lt;qglviewer::LocalConstraint&gt;(new qglviewer::LocalConstraint());
++	//xyPlaneConstraint-&gt;setTranslationConstraint(qglviewer::AxisPlaneConstraint::AXIS,qglviewer::Vec(0,0,1));
++	//xyPlaneConstraint-&gt;setRotationConstraint(qglviewer::AxisPlaneConstraint::FORBIDDEN,qglviewer::Vec(0,0,1));
++	manipulatedFrame()-&gt;setConstraint(NULL);
++
++	setKeyDescription(Qt::Key_C,&quot;Set scene center to the selected body (if any)&quot;);
++	setKeyDescription(Qt::Key_D,&quot;Toggle Body::isDynamic on selection&quot;);
++	setKeyDescription(Qt::Key_G,&quot;Toggle YZ grid&quot;);
++	setKeyDescription(Qt::Key_X,&quot;Toggle YZ grid&quot;);
++	setKeyDescription(Qt::Key_Y,&quot;Toggle XZ grid&quot;);
++	setKeyDescription(Qt::Key_Z,&quot;Toggle XY grid&quot;);
++	setKeyDescription(Qt::Key_Delete,&quot;(lattice) increase isoValue&quot;);
++	setKeyDescription(Qt::Key_Insert,&quot;(lattice) decrease isoValue&quot;);
++	setKeyDescription(Qt::Key_Next,  &quot;(lattice) increase isoThic&quot;);
++	setKeyDescription(Qt::Key_Prior, &quot;(lattice) decrease isoThic&quot;);
++	setKeyDescription(Qt::Key_End,   &quot;(lattice) decrease isoSec&quot;);
++	setKeyDescription(Qt::Key_Home,  &quot;(lattice) increase isoSec&quot;);
++	setKeyDescription(Qt::Key_T,&quot;Switch orthographic / perspective camera&quot;);
++	setKeyDescription(Qt::Key_O,&quot;Set narrower field of view&quot;);
++	setKeyDescription(Qt::Key_P,&quot;Set wider field of view&quot;);
++	setKeyDescription(Qt::Key_R,&quot;Revolve around scene center&quot;);
++	setKeyDescription(Qt::Key_Plus,    &quot;Cut plane increase&quot;);
++	setKeyDescription(Qt::Key_Minus,   &quot;Cut plane decrease&quot;);
++	setKeyDescription(Qt::Key_Slash,   &quot;Cut plane step decrease&quot;);
++	setKeyDescription(Qt::Key_Asterisk,&quot;Cut plane step increase&quot;);
++	// unset default shortcuts
++ 	setPathKey(-Qt::Key_F1);
++ 	setPathKey(-Qt::Key_F2);
++	setKeyDescription(Qt::Key_Escape,&quot;Manipulate scene (default)&quot;);
++	setKeyDescription(Qt::Key_F1,&quot;Manipulate clipping plane #1 (2,...)&quot;);
++	setKeyDescription(Qt::Key_1,&quot;Make the manipulated clipping plane parallel with plane #1 (2,...)&quot;);
++	setKeyDescription(Qt::Key_1 &amp; Qt::ALT,&quot;Add/remove plane #1 (2,...) to/from the bound group&quot;);
++	setKeyDescription(Qt::Key_0,&quot;Clear the bound group&quot;);
++	setKeyDescription(Qt::Key_Space,&quot;Activate/deactivate the manipulated clipping plane&quot;);
+ }
+ 
+-void GLViewer::notMoving()
+-{
++void GLViewer::mouseMovesCamera(){
+ 	camera()-&gt;frame()-&gt;setWheelSensitivity(-1.0f);
+-	setMouseBinding(Qt::LeftButton + Qt::RightButton, CAMERA, ZOOM);
+-	setMouseBinding(Qt::MidButton, CAMERA, ZOOM);
+-	setMouseBinding(Qt::LeftButton, CAMERA, ROTATE);
+-	setMouseBinding(Qt::RightButton, CAMERA, TRANSLATE);
+-	setWheelBinding(Qt::NoButton, CAMERA, ZOOM);
++
+ 	setMouseBinding(Qt::SHIFT + Qt::LeftButton, SELECT);
+ 	//setMouseBinding(Qt::RightButton, NO_CLICK_ACTION);
+-
+ 	setMouseBinding(Qt::SHIFT + Qt::LeftButton + Qt::RightButton, FRAME, ZOOM);
+ 	setMouseBinding(Qt::SHIFT + Qt::MidButton, FRAME, TRANSLATE);
+ 	setMouseBinding(Qt::SHIFT + Qt::RightButton, FRAME, ROTATE);
+ 	setWheelBinding(Qt::ShiftButton , FRAME, ZOOM);
++
++	setMouseBinding(Qt::LeftButton + Qt::RightButton, CAMERA, ZOOM);
++	setMouseBinding(Qt::MidButton, CAMERA, ZOOM);
++	setMouseBinding(Qt::LeftButton, CAMERA, ROTATE);
++	setMouseBinding(Qt::RightButton, CAMERA, TRANSLATE);
++	setWheelBinding(Qt::NoButton, CAMERA, ZOOM);
+ };
+ 
+-GLViewer::~GLViewer()
+-{
+-//	std::cerr &lt;&lt; &quot;GLViewer dtor:&quot; &lt;&lt; viewId &lt;&lt; &quot;\n&quot;;
++void GLViewer::mouseMovesManipulatedFrame(qglviewer::Constraint* c){
++	setMouseBinding(Qt::LeftButton + Qt::RightButton, FRAME, ZOOM);
++	setMouseBinding(Qt::MidButton, FRAME, ZOOM);
++	setMouseBinding(Qt::LeftButton, FRAME, ROTATE);
++	setMouseBinding(Qt::RightButton, FRAME, TRANSLATE);
++	setWheelBinding(Qt::NoButton , FRAME, ZOOM);
++	manipulatedFrame()-&gt;setConstraint(c);
+ }
+ 
++void GLViewer::resetManipulation(){
++	mouseMovesCamera();
++	setSelectedName(-1);
++	isMoving=false;
++	manipulatedClipPlane=-1;
++}
+ 
++void GLViewer::startClipPlaneManipulation(int planeNo){
++	resetManipulation();
++	mouseMovesManipulatedFrame(xyPlaneConstraint.get());
++	manipulatedClipPlane=planeNo;
++	const Se3r se3(renderer-&gt;clipPlaneSe3[planeNo]);
++	manipulatedFrame()-&gt;setPositionAndOrientation(qglviewer::Vec(se3.position[0],se3.position[1],se3.position[2]),qglviewer::Quaternion(se3.orientation[0],se3.orientation[1],se3.orientation[2],se3.orientation[3]));
++	string grp=strBoundGroup();
++	displayMessage(&quot;Manipulating clip plane #&quot;+lexical_cast&lt;string&gt;(planeNo+1)+(grp.empty()?grp:&quot;(bound planes:&quot;+grp+&quot;)&quot;));
++}
++
+ void GLViewer::keyPressEvent(QKeyEvent *e)
+ {
+-	if ( e-&gt;key()==Qt::Key_M )
+-		if( !(isMoving = !isMoving ) )
+-		{
+-			displayMessage(&quot;moving finished&quot;);
+-			notMoving();
++	if (e-&gt;key()==Qt::Key_M &amp;&amp; selectedName() &gt;= 0){
++		if(!(isMoving=!isMoving)){displayMessage(&quot;Moving done.&quot;); mouseMovesCamera();}
++		else{ displayMessage(&quot;Moving selected object&quot;); mouseMovesManipulatedFrame();}
++	}
++	else if(e-&gt;key()==Qt::Key_C &amp;&amp; selectedName() &gt;= 0 &amp;&amp; (*(Omega::instance().getRootBody()-&gt;bodies)).exists(selectedName())) setSceneCenter(manipulatedFrame()-&gt;position()), updateGL();
++
++	else if(e-&gt;key()==Qt::Key_Escape){ resetManipulation();displayMessage(&quot;Manipulating scene.&quot;); }
++	else if(e-&gt;key()==Qt::Key_F1 || e-&gt;key()==Qt::Key_F2 /* || ... */ ){
++		int n=0; if(e-&gt;key()==Qt::Key_F1) n=1; else if(e-&gt;key()==Qt::Key_F2) n=2; /* ... */ assert(n&gt;0); int planeId=n-1;
++		if(planeId!=manipulatedClipPlane) startClipPlaneManipulation(planeId);
++		updateGL();
++	}
++	else if(e-&gt;key()==Qt::Key_R){ // reverse the plane
++		if(manipulatedClipPlane&gt;=0 &amp;&amp; manipulatedClipPlane&lt;renderer-&gt;clipPlaneNum){
++			manipulatedFrame()-&gt;setOrientation(qglviewer::Quaternion(qglviewer::Vec(0,1,0),Mathr::PI)*manipulatedFrame()-&gt;orientation());
++			displayMessage(&quot;Plane #&quot;+lexical_cast&lt;string&gt;(manipulatedClipPlane-1)+&quot; reversed.&quot;);
+ 		}
+-		else
+-		{
+-			displayMessage(&quot;moving selected object&quot;);
+-			setMouseBinding(Qt::LeftButton + Qt::RightButton, FRAME, ZOOM);
+-			setMouseBinding(Qt::LeftButton, FRAME, TRANSLATE);
+-			setMouseBinding(Qt::MidButton, FRAME, TRANSLATE);
+-			setMouseBinding(Qt::RightButton, FRAME, ROTATE);
+-			setWheelBinding(Qt::NoButton , FRAME, ZOOM);
++		updateGL();
++	}
++	else if(e-&gt;key()==Qt::Key_F2){ startClipPlaneManipulation(1); updateGL(); }
++	else if(e-&gt;key()==Qt::Key_Space){
++		if(manipulatedClipPlane&gt;=0) {displayMessage(&quot;Clip plane #&quot;+lexical_cast&lt;string&gt;(manipulatedClipPlane+1)+(renderer-&gt;clipPlaneActive[manipulatedClipPlane]?&quot; de&quot;:&quot; &quot;)+&quot;activated&quot;); renderer-&gt;clipPlaneActive[manipulatedClipPlane]=!renderer-&gt;clipPlaneActive[manipulatedClipPlane]; updateGL(); }
++	}
++	else if(e-&gt;key()==Qt::Key_0 &amp;&amp;(e-&gt;state() &amp; AltButton)) {boundClipPlanes.clear(); displayMessage(&quot;Cleared the bound group.&quot;);}
++	else if(e-&gt;key()==Qt::Key_1 || e-&gt;key()==Qt::Key_2 /* || ... */ ){
++		int n=0; if(e-&gt;key()==Qt::Key_1) n=1; else if(e-&gt;key()==Qt::Key_2) n=2; /* ... */ assert(n&gt;0); int planeId=n-1;
++		if(planeId&gt;=renderer-&gt;clipPlaneNum) return; // no such clipping plane
++		if(e-&gt;state() &amp; AltButton){
++			if(boundClipPlanes.count(planeId)==0) {boundClipPlanes.insert(planeId); displayMessage(&quot;Added plane #&quot;+lexical_cast&lt;string&gt;(planeId+1)+&quot; to the bound group: &quot;+strBoundGroup());}
++			else {boundClipPlanes.erase(planeId); displayMessage(&quot;Removed plane #&quot;+lexical_cast&lt;string&gt;(planeId+1)+&quot; from the bound group: &quot;+strBoundGroup());}
+ 		}
+-	else if( e-&gt;key()==Qt::Key_C &amp;&amp; selectedName() != -1 &amp;&amp; (*(Omega::instance().getRootBody()-&gt;bodies)).exists(selectedName()))
+-		setSceneCenter(manipulatedFrame()-&gt;position()), updateGL();
+-	else if( e-&gt;key()==Qt::Key_D )
+-		wasDynamic = true;
+-	else if(e-&gt;key()==Qt::Key_G) drawGridXYZ[2]=!drawGridXYZ[2], updateGL();
++		else if(manipulatedClipPlane&gt;=0 &amp;&amp; manipulatedClipPlane!=planeId) {
++			const Quaternionr&amp; o=renderer-&gt;clipPlaneSe3[planeId].orientation;
++			manipulatedFrame()-&gt;setOrientation(qglviewer::Quaternion(o[0],o[1],o[2],o[3]));
++			displayMessage(&quot;Copied orientation from plane #1&quot;);
++		}
++		updateGL();
++	}
++	else if(e-&gt;key()==Qt::Key_D) wasDynamic = true;
++	else if(e-&gt;key()==Qt::Key_G) {bool anyDrawn=drawGridXYZ[0]||drawGridXYZ[1]||drawGridXYZ[2]; for(int i=0; i&lt;3; i++)drawGridXYZ[i]=!anyDrawn; updateGL();}
+ 	else if(e-&gt;key()==Qt::Key_X) drawGridXYZ[0]=!drawGridXYZ[0], updateGL();
+ 	else if(e-&gt;key()==Qt::Key_Y) drawGridXYZ[1]=!drawGridXYZ[1], updateGL();
+ 	else if(e-&gt;key()==Qt::Key_Z) drawGridXYZ[2]=!drawGridXYZ[2], updateGL();
+-
+ // FIXME BEGIN - arguments for GLDraw*ers should be from dialog box, not through Omega !!!
+-	else if( e-&gt;key()==Qt::Key_Delete )
+-		Omega::instance().isoValue-=0.05, updateGL();
+-	else if( e-&gt;key()==Qt::Key_Insert )
+-		Omega::instance().isoValue+=0.05, updateGL();
+-
+-	else if( e-&gt;key()==Qt::Key_Next )
+-		Omega::instance().isoThick-=0.05, updateGL();
+-	else if( e-&gt;key()==Qt::Key_Prior )
+-		Omega::instance().isoThick+=0.05, updateGL();
+-
+-	else if( e-&gt;key()==Qt::Key_End )
+-		Omega::instance().isoSec=std::max(1, Omega::instance().isoSec-1), updateGL();
+-	else if( e-&gt;key()==Qt::Key_Home )
+-		Omega::instance().isoSec+=1, updateGL();
++	else if(e-&gt;key()==Qt::Key_Delete) Omega::instance().isoValue-=0.05, updateGL();
++	else if(e-&gt;key()==Qt::Key_Insert) Omega::instance().isoValue+=0.05, updateGL();
++	else if(e-&gt;key()==Qt::Key_Next) Omega::instance().isoThick-=0.05, updateGL();
++	else if(e-&gt;key()==Qt::Key_Prior)	Omega::instance().isoThick+=0.05, updateGL();
++	else if(e-&gt;key()==Qt::Key_End) Omega::instance().isoSec=std::max(1, Omega::instance().isoSec-1), updateGL();
++	else if(e-&gt;key()==Qt::Key_Home) Omega::instance().isoSec+=1, updateGL();
+ // FIXME END
++	else if (e-&gt;key() == Qt::Key_T) camera()-&gt;setType(camera()-&gt;type()==qglviewer::Camera::ORTHOGRAPHIC ? qglviewer::Camera::PERSPECTIVE : qglviewer::Camera::ORTHOGRAPHIC), updateGL();
++	else if(e-&gt;key()==Qt::Key_O) camera()-&gt;setFieldOfView(camera()-&gt;fieldOfView()*0.9), updateGL();
++	else if(e-&gt;key()==Qt::Key_P) camera()-&gt;setFieldOfView(camera()-&gt;fieldOfView()*1.1), updateGL();
++	else if(e-&gt;key()==Qt::Key_R) camera()-&gt;setRevolveAroundPoint(sceneCenter()), updateGL();
+ 
+-	else if (e-&gt;key() == Qt::Key_T)
+-	{ // 'T' changes the projection type : perspective or orthogonal
+-		if (camera()-&gt;type() == qglviewer::Camera::ORTHOGRAPHIC)
+-			camera()-&gt;setType(qglviewer::Camera::PERSPECTIVE);
+-		else
+-			camera()-&gt;setType(qglviewer::Camera::ORTHOGRAPHIC);
+-		updateGL();
+-	}
+-	else if( e-&gt;key()==Qt::Key_O )
+-		camera()-&gt;setFieldOfView(camera()-&gt;fieldOfView()*0.9), updateGL();
+-	else if( e-&gt;key()==Qt::Key_P )
+-		camera()-&gt;setFieldOfView(camera()-&gt;fieldOfView()*1.1), updateGL();
+-
+ //////////////////////////////////////////////
+ // FIXME that all should be in some nice GUI
+ // 
+@@ -142,9 +198,7 @@
+ 
+ // FIXME END
+ //////////////////////////////////////////////
+-
+-
+-
++//
+ 	else if( e-&gt;key()!=Qt::Key_Escape &amp;&amp; e-&gt;key()!=Qt::Key_Space )
+ 		QGLViewer::keyPressEvent(e);
+ }
+@@ -163,53 +217,62 @@
+ 		min=rb-&gt;boundingVolume-&gt;min; max=rb-&gt;boundingVolume-&gt;max;
+ 		if(std::max(max[0]-min[0],std::max(max[1]-min[1],max[2]-min[2]))&lt;=0){
+ 			// AABB is not yet calculated...
++			LOG_DEBUG(&quot;rootBody's AABB not yet calculated or has one dimension zero, attempt get that from bodies' positions.&quot;);
+ 			Real inf=std::numeric_limits&lt;Real&gt;::infinity();
+ 			min=Vector3r(inf,inf,inf); max=Vector3r(-inf,-inf,-inf);
+ 			FOREACH(const shared_ptr&lt;Body&gt;&amp; b, *rb-&gt;bodies){
+ 				max=componentMaxVector(max,b-&gt;physicalParameters-&gt;se3.position);
+ 				min=componentMinVector(min,b-&gt;physicalParameters-&gt;se3.position);
+ 			}
+-		}
++		} else {LOG_DEBUG(&quot;Using rootBody's AABB&quot;);}
+ 	} else {
++		LOG_DEBUG(&quot;No rootBody's AABB; setting scene in cube (-1,-1,-1)x(1,1,1)&quot;);
+ 		min=Vector3r(-1,-1,-1); max=Vector3r(1,1,1);
+ 	}
++	LOG_DEBUG(&quot;Got scene box min=&quot;&lt;&lt;min&lt;&lt;&quot; and max=&quot;&lt;&lt;max);
+ 	Vector3r center = (max+min)*0.5;
+ 	Vector3r halfSize = (max-min)*0.5;
+-	float radius = std::max(halfSize[0] , std::max(halfSize[1] , halfSize[2]) );
++	float radius=std::max(halfSize[0],std::max(halfSize[1],halfSize[2])); if(radius==0) radius=1;
++	LOG_DEBUG(&quot;Scene center=&quot;&lt;&lt;center&lt;&lt;&quot;, halfSize=&quot;&lt;&lt;halfSize&lt;&lt;&quot;, radius=&quot;&lt;&lt;radius);
+ 	setSceneCenter(qglviewer::Vec(center[0],center[1],center[2]));
+ 	setSceneRadius(radius*1.5);
+ 	showEntireScene();
+ }
+ 
+-void GLViewer::draw() // FIXME maybe rename to RendererFlowControl, or something like that?
++void GLViewer::draw()
+ {
+-	if(Omega::instance().getRootBody())
+-	{
++	if(Omega::instance().getRootBody()){
+ 		int selection = selectedName();
+-		if(selection != -1 &amp;&amp; (*(Omega::instance().getRootBody()-&gt;bodies)).exists(selection) )
+-		{
++		if(selection!=-1 &amp;&amp; (*(Omega::instance().getRootBody()-&gt;bodies)).exists(selection)){
+ 			Quaternionr&amp; q = (*(Omega::instance().getRootBody()-&gt;bodies))[selection]-&gt;physicalParameters-&gt;se3.orientation;
+ 			Vector3r&amp;    v = (*(Omega::instance().getRootBody()-&gt;bodies))[selection]-&gt;physicalParameters-&gt;se3.position;
+-			float v0,v1,v2;
+-			manipulatedFrame()-&gt;getPosition(v0,v1,v2);
+-			v[0]=v0;v[1]=v1;v[2]=v2;
+-			double q0,q1,q2,q3;
+-			manipulatedFrame()-&gt;getOrientation(q0,q1,q2,q3);
+-			q[0]=q0;q[1]=q1;q[2]=q2;q[3]=q3;
+-
++			float v0,v1,v2; manipulatedFrame()-&gt;getPosition(v0,v1,v2);v[0]=v0;v[1]=v1;v[2]=v2;
++			double q0,q1,q2,q3; manipulatedFrame()-&gt;getOrientation(q0,q1,q2,q3);	q[0]=q0;q[1]=q1;q[2]=q2;q[3]=q3;
+ 			(*(Omega::instance().getRootBody()-&gt;bodies))[selection]-&gt;userForcedDisplacementRedrawHook();	
+ 		}
+-		
+-	// FIXME - here we want to actually call all responsible GLDraw Actors
++		if(manipulatedClipPlane&gt;=0){
++			assert(manipulatedClipPlane&lt;renderer-&gt;clipPlaneNum);
++			float v0,v1,v2; manipulatedFrame()-&gt;getPosition(v0,v1,v2);
++			double q0,q1,q2,q3; manipulatedFrame()-&gt;getOrientation(q0,q1,q2,q3);
++			Se3r newSe3(Vector3r(v0,v1,v2),Quaternionr(q0,q1,q2,q3)); newSe3.orientation.Normalize();
++			const Se3r&amp; oldSe3=renderer-&gt;clipPlaneSe3[manipulatedClipPlane];
++			FOREACH(int planeId, boundClipPlanes){
++				if(planeId&gt;=renderer-&gt;clipPlaneNum || !renderer-&gt;clipPlaneActive[planeId] || planeId==manipulatedClipPlane) continue;
++				Se3r&amp; boundSe3=renderer-&gt;clipPlaneSe3[planeId];
++				Quaternionr relOrient=oldSe3.orientation.Conjugate()*boundSe3.orientation; relOrient.Normalize();
++				Vector3r relPos=oldSe3.orientation.Conjugate()*(boundSe3.position-oldSe3.position);
++				boundSe3.position=newSe3.position+newSe3.orientation*relPos;
++				boundSe3.orientation=newSe3.orientation*relOrient;
++				boundSe3.orientation.Normalize();
++			}
++			renderer-&gt;clipPlaneSe3[manipulatedClipPlane]=newSe3;
++		}
+ 		renderer-&gt;render(Omega::instance().getRootBody(), selectedName());
+ 	}
+ }
+ 
+-void GLViewer::drawWithNames() // FIXME maybe rename to RendererFlowControl, or something like that?
+-{
+-	if (Omega::instance().getRootBody() &amp;&amp; Omega::instance().getRootBody()-&gt;bodies-&gt;size() &lt; 500 )
+-	// FIXME - here we want to actually call all responsible GLDraw Actors
+-		renderer-&gt;renderWithNames(Omega::instance().getRootBody());
++void GLViewer::drawWithNames(){
++	if(Omega::instance().getRootBody() &amp;&amp; Omega::instance().getRootBody()-&gt;bodies-&gt;size()&lt;500) renderer-&gt;renderWithNames(Omega::instance().getRootBody());
+ }
+ 
+ // new object selected.
+@@ -217,30 +280,25 @@
+ void GLViewer::postSelection(const QPoint&amp; point) 
+ {
+ 	int selection = selectedName();
+-	if(selection == -1)
+-	{
+-		if(isMoving)
+-		{
+-			displayMessage(&quot;moving finished&quot;);
+-			notMoving();
+-			isMoving=false;
++	if(selection&lt;0){
++		if(isMoving){
++			displayMessage(&quot;Moving finished&quot;); mouseMovesCamera(); isMoving=false;
+ 		}
+ 		return;
+ 	}
+-	if( (*(Omega::instance().getRootBody()-&gt;bodies)).exists(selection) )
+-	{
++	if((*(Omega::instance().getRootBody()-&gt;bodies)).exists(selection)){
++		resetManipulation();
+ 		if(Body::byId(body_id_t(selection))-&gt;isClumpMember()){ // select clump (invisible) instead of its member
+-			cerr&lt;&lt;&quot;Clump member #&quot;&lt;&lt;selection&lt;&lt;&quot; selected, selecting clump instead.&quot;&lt;&lt;endl;
++			LOG_DEBUG(&quot;Clump member #&quot;&lt;&lt;selection&lt;&lt;&quot; selected, selecting clump instead.&quot;);
+ 			selection=Body::byId(body_id_t(selection))-&gt;clumpId;
+-			setSelectedName(selection);
+ 		}
+-
+-		std::cerr &lt;&lt; &quot;new selection &quot; &lt;&lt; selection &lt;&lt; &quot;\n&quot;;
+-		wasDynamic = (*(Omega::instance().getRootBody()-&gt;bodies))[selection]-&gt;isDynamic;
+-		(*(Omega::instance().getRootBody()-&gt;bodies))[selection]-&gt;isDynamic = false;
+-
+-		Quaternionr&amp; q = (*(Omega::instance().getRootBody()-&gt;bodies))[selection]-&gt;physicalParameters-&gt;se3.orientation;
+-		Vector3r&amp;    v = (*(Omega::instance().getRootBody()-&gt;bodies))[selection]-&gt;physicalParameters-&gt;se3.position;
++		setSelectedName(selection);
++		//LOG_DEBUG(&quot;New selection &quot;&lt;&lt;selection);
++		displayMessage(&quot;Selected body #&quot;+lexical_cast&lt;string&gt;(selection)+(Body::byId(selection)-&gt;isClump()?&quot;&#160;(clump)&quot;:&quot;&quot;));
++		wasDynamic=Body::byId(selection)-&gt;isDynamic;
++		Body::byId(selection)-&gt;isDynamic = false;
++		Quaternionr&amp; q = Body::byId(selection)-&gt;physicalParameters-&gt;se3.orientation;
++		Vector3r&amp;    v = Body::byId(selection)-&gt;physicalParameters-&gt;se3.position;
+ 		manipulatedFrame()-&gt;setPositionAndOrientation(qglviewer::Vec(v[0],v[1],v[2]),qglviewer::Quaternion(q[0],q[1],q[2],q[3]));
+ 	}
+ 
+@@ -248,52 +306,40 @@
+ 
+ // maybe new object will be selected.
+ // if so, then set isDynamic of previous selection, to old value
+-void GLViewer::endSelection(const QPoint &amp;point)
+-{
++void GLViewer::endSelection(const QPoint &amp;point){
++	manipulatedClipPlane=-1;
+ 	int old = selectedName();
+-
+ 	QGLViewer::endSelection(point);
+-
+-	if(old != -1 &amp;&amp; old!=selectedName() &amp;&amp; (*(Omega::instance().getRootBody()-&gt;bodies)).exists(old) )
+-		(*(Omega::instance().getRootBody()-&gt;bodies))[old]-&gt;isDynamic = wasDynamic;
++	if(old != -1 &amp;&amp; old!=selectedName() &amp;&amp; (*(Omega::instance().getRootBody()-&gt;bodies)).exists(old)) Body::byId(old)-&gt;isDynamic = wasDynamic;
+ }
+ 
+-void GLViewer::postDraw()
+-{
+-	if(drawGridXYZ[0]||drawGridXYZ[1]||drawGridXYZ[2])
+-	{
+-//		glMatrixMode(GL_MODELVIEW);
++void GLViewer::postDraw(){
++	//if(!(drawGridXYZ[0]||drawGridXYZ[1]||drawGridXYZ[2])) return;
++	Real diameter=QGLViewer::camera()-&gt;sceneRadius()*2;
++	//qglviewer::Vec center=QGLViewer::camera()-&gt;sceneCenter();
++	Real gridStep=pow(10,(floor(log10(diameter)-.5)));
++	int nSegments=((int)(diameter/gridStep));
++	Real realSize=nSegments*gridStep;
++	//LOG_DEBUG(&quot;nSegments=&quot;&lt;&lt;nSegments&lt;&lt;&quot;,gridStep=&quot;&lt;&lt;gridStep&lt;&lt;&quot;,realSize=&quot;&lt;&lt;realSize);
++	glPushMatrix();
++
++	if(drawGridXYZ[0]) {glColor3f(0.6,0.3,0.3); glPushMatrix(); glRotated(90.,0.,1.,0.); QGLViewer::drawGrid(realSize,nSegments); glPopMatrix();}
++	if(drawGridXYZ[1]) {glColor3f(0.3,0.6,0.3); glPushMatrix(); glRotated(90.,1.,0.,0.); QGLViewer::drawGrid(realSize,nSegments); glPopMatrix();}
++	if(drawGridXYZ[2]) {glColor3f(0.3,0.3,0.6); glPushMatrix(); /*glRotated(90.,0.,1.,0.);*/ QGLViewer::drawGrid(realSize,nSegments); glPopMatrix();}
++
++	for(int planeId=0; planeId&lt;renderer-&gt;clipPlaneNum; planeId++){
++		if(!renderer-&gt;clipPlaneActive[planeId] &amp;&amp; planeId!=manipulatedClipPlane) continue;
+ 		glPushMatrix();
+-		glPushAttrib(GL_ALL_ATTRIB_BITS);
+-		qglColor(foregroundColor());
+-		glDisable(GL_LIGHTING);
+-		glLineWidth(0.1);
+-		glBegin(GL_LINES);
+-			Real diameter=QGLViewer::camera()-&gt;sceneRadius()*2;
+-			qglviewer::Vec center=QGLViewer::camera()-&gt;sceneCenter();
+-			Real gridStep=pow(10,(floor(log10(diameter)-.5)));
+-			int nLines=2*2*((int)(diameter/gridStep))/2+1; // odd number
+-			int lineNoExt=(nLines-1)/2;
+-			//cerr&lt;&lt;&quot;Diameter &quot;&lt;&lt;diameter&lt;&lt;&quot;, center &quot;&lt;&lt;center[0]&lt;&lt;&quot; &quot;&lt;&lt;center[1]&lt;&lt;&quot; &quot;&lt;&lt;center[2]&lt;&lt;&quot;; step &quot;&lt;&lt;gridStep&lt;&lt;&quot;; nLines &quot;&lt;&lt;nLines&lt;&lt;endl;
+-			for(int planeAxis=0; planeAxis&lt;3; planeAxis++){
+-				if(!drawGridXYZ[planeAxis]) continue;
+-				int otherAxes[2]={(planeAxis+1)%3,(planeAxis+2)%3};
+-				Vector3r color(.3,.3,.3); color[planeAxis]=.6;
+-				glColor3v(color);
+-				for(int lineAxisIdx=0; lineAxisIdx&lt;2; lineAxisIdx++){
+-					int lineAxis=otherAxes[lineAxisIdx];
+-					int linePerp=otherAxes[(lineAxisIdx+1)%2];
+-					for(int lineNo=-lineNoExt; lineNo&lt;=lineNoExt; lineNo++){
+-						Vector3r from,to;
+-						from[planeAxis]=to[planeAxis]=0;
+-						from[linePerp]=to[linePerp]=center[linePerp]+lineNo*gridStep;
+-						from[lineAxis]=center[lineAxis]-lineNoExt*gridStep; to[lineAxis]=center[lineAxis]+lineNoExt*gridStep;
+-						glVertex3v(from); glVertex3v(to);
+-					}
+-				}
+-			}
+-		glEnd();
+-		glPopAttrib();
++			Real angle; Vector3r axis;	
++			const Se3r&amp; se3=renderer-&gt;clipPlaneSe3[planeId];
++			se3.orientation.ToAxisAngle(axis,angle);	
++			glTranslatef(se3.position[0],se3.position[1],se3.position[2]);
++			glRotated(angle*Mathr::RAD_TO_DEG,axis[0],axis[1],axis[2]);
++			Real cff=1;
++			if(!renderer-&gt;clipPlaneActive[planeId]) cff=.4;
++			glColor3f(max(0.,cff*cos(planeId)),max(0.,cff*sin(planeId)),planeId==manipulatedClipPlane); // variable colors
++			QGLViewer::drawGrid(realSize,2*nSegments);
++			drawArrow(diameter/6);
+ 		glPopMatrix();
+ 	}
+ 	QGLViewer::postDraw();
+
+Modified: trunk/gui/qt3/GLViewer.hpp
+===================================================================
+--- trunk/gui/qt3/GLViewer.hpp	2008-06-29 07:33:23 UTC (rev 1404)
++++ trunk/gui/qt3/GLViewer.hpp	2008-06-29 17:50:51 UTC (rev 1405)
+@@ -1,18 +1,27 @@
+ /*************************************************************************
+ *  Copyright (C) 2004 by Olivier Galizzi, Janek Kozicki                  *
+-*                                                                        *
++*  2008 V&#225;clav &#352;milauer
++*  *
+ *  This program is free software; it is licensed under the terms of the  *
+ *  GNU General Public License v2 or later. See file LICENSE for details. *
+ *************************************************************************/
++#pragma once
+ 
+-#ifndef GLVIEWER_HPP
+-#define GLVIEWER_HPP
+-
+ #include&lt;yade/core/Omega.hpp&gt;
+-//#include&lt;yade/lib-opengl/GLWindowsManager.hpp&gt; // remove that...
+-#include&lt;yade/core/RenderingEngine.hpp&gt;
++#include&lt;yade/pkg-common/OpenGLRenderingEngine.hpp&gt;
+ #include&lt;yade/lib-QGLViewer/qglviewer.h&gt;
++#include&lt;yade/lib-QGLViewer/constraint.h&gt;
++#include&lt;set&gt;
+ 
++/* There can be several clipping planes (default is up to 2).
++ * Clipping plane is manipulated after hitting F1, F2, .... To end manipulation, press Escape.
++ * During manipulation, hitting 1,2,... will align the current plane with #1,2,... (same orientation).
++ * Hitting 'R' will reverse the plane (normal*=-1).
++ * Alt-1,Alt-2,... adds/removes the respective plane to boud group: when any of planes in the group is moved,
++ * 	all other planes are moved as well so that their relative positions are the same.
++ *
++ */
++
+ class GLViewer : public QGLViewer
+ {	
+ 	Q_OBJECT 
+@@ -25,18 +34,26 @@
+ 		bool			wasDynamic;
+ 		float			cut_plane;
+ 		int			cut_plane_delta;
+-		shared_ptr&lt;RenderingEngine&gt; renderer;
++		shared_ptr&lt;OpenGLRenderingEngine&gt; renderer;
++		int manipulatedClipPlane;
++		set&lt;int&gt; boundClipPlanes;
++		shared_ptr&lt;qglviewer::LocalConstraint&gt; xyPlaneConstraint;
++		string strBoundGroup(){string ret;FOREACH(int i, boundClipPlanes) ret+=&quot; &quot;+lexical_cast&lt;string&gt;(i+1);return ret;}
+ 
+         public :
+-		GLViewer (int id, shared_ptr&lt;RenderingEngine&gt; renderer, const QGLFormat&amp; format, QWidget * parent=0, QGLWidget * shareWidget=0);
+-		virtual ~GLViewer ();
++		GLViewer (int id, shared_ptr&lt;OpenGLRenderingEngine&gt; renderer, const QGLFormat&amp; format, QWidget * parent=0, QGLWidget * shareWidget=0);
++		virtual ~GLViewer (){};
+ 		virtual void draw();
+ 		virtual void drawWithNames();
+ 		void centerScene();
+-		void notMoving();
+-		int			viewId;
++		void mouseMovesCamera();
++		void mouseMovesManipulatedFrame(qglviewer::Constraint* c=NULL);
++		void resetManipulation();
++		void startClipPlaneManipulation(int planeNo);
++		int viewId;
+ 
+ 
++		DECLARE_LOGGER;
+ 	protected :
+ 		virtual void keyPressEvent(QKeyEvent *e);
+ 		virtual void postDraw();
+@@ -44,6 +61,3 @@
+ 		virtual void postSelection(const QPoint&amp; point);
+ 		virtual void endSelection(const QPoint &amp;point);
+ };
+-
+-#endif // GLVIEWER_HPP
+-
+
+Modified: trunk/gui/qt3/SimulationController.cpp
+===================================================================
+--- trunk/gui/qt3/SimulationController.cpp	2008-06-29 07:33:23 UTC (rev 1404)
++++ trunk/gui/qt3/SimulationController.cpp	2008-06-29 17:50:51 UTC (rev 1405)
+@@ -76,7 +76,7 @@
+ 
+ 	// there is file existence assertion in lodSimulationFromFilename, so yade will abort cleanly...
+ 	LOG_DEBUG(&quot;Omega's simulation filename: `&quot;&lt;&lt;Omega::instance().getSimulationFileName()&lt;&lt;&quot;'&quot;);
+-	if (Omega::instance().getSimulationFileName()!=&quot;&quot;){
++	if (Omega::instance().getSimulationFileName()!=&quot;&quot; &amp;&amp; (!Omega::instance().getRootBody() || (Omega::instance().getRootBody()-&gt;bodies-&gt;size()==0 &amp;&amp; Omega::instance().getRootBody()-&gt;engines.size()==0))){
+ 		loadSimulationFromFileName(Omega::instance().getSimulationFileName());
+ 	}
+ 	// run timer ANY TIME (simulation may be started asynchronously)
+
+Modified: trunk/gui/qt3/YadeQtMainWindow.cpp
+===================================================================
+--- trunk/gui/qt3/YadeQtMainWindow.cpp	2008-06-29 07:33:23 UTC (rev 1404)
++++ trunk/gui/qt3/YadeQtMainWindow.cpp	2008-06-29 17:50:51 UTC (rev 1405)
+@@ -132,7 +132,7 @@
+ 
+ void YadeQtMainWindow::ensureRenderer(){
+ 	shared_ptr&lt;Factorable&gt; tmpRenderer = ClassFactory::instance().createShared(&quot;OpenGLRenderingEngine&quot;);
+-	renderer = static_pointer_cast&lt;RenderingEngine&gt;(tmpRenderer);
++	renderer = static_pointer_cast&lt;OpenGLRenderingEngine&gt;(tmpRenderer);
+ 
+ 	if(!renderer) throw runtime_error(&quot;Renderer could not be created, why?&quot;);
+ 
+
+Modified: trunk/gui/qt3/YadeQtMainWindow.hpp
+===================================================================
+--- trunk/gui/qt3/YadeQtMainWindow.hpp	2008-06-29 07:33:23 UTC (rev 1404)
++++ trunk/gui/qt3/YadeQtMainWindow.hpp	2008-06-29 17:50:51 UTC (rev 1405)
+@@ -19,7 +19,7 @@
+ 	public:
+ 		shared_ptr&lt;SimulationController&gt; simulationController;
+ 		vector&lt;shared_ptr&lt;GLViewer&gt; &gt; glViews;
+-		shared_ptr&lt;RenderingEngine&gt; renderer;
++		shared_ptr&lt;OpenGLRenderingEngine&gt; renderer;
+ 		void ensureRenderer();
+ 		void saveRendererConfig();
+ 		
+
+Modified: trunk/pkg/common/DataClass/BoundingVolume/AABB.cpp
+===================================================================
+--- trunk/pkg/common/DataClass/BoundingVolume/AABB.cpp	2008-06-29 07:33:23 UTC (rev 1404)
++++ trunk/pkg/common/DataClass/BoundingVolume/AABB.cpp	2008-06-29 17:50:51 UTC (rev 1405)
+@@ -8,8 +8,7 @@
+ 
+ #include &quot;AABB.hpp&quot;
+ 
+-AABB::AABB () : BoundingVolume()
+-{
++AABB::AABB(): BoundingVolume(), halfSize(0,0,0), center(0,0,0){
+ 	createIndex();
+ }
+ 
+
+Modified: trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.cpp
+===================================================================
+--- trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.cpp	2008-06-29 07:33:23 UTC (rev 1404)
++++ trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.cpp	2008-06-29 17:50:51 UTC (rev 1405)
+@@ -13,7 +13,7 @@
+ #include &lt;GL/glut.h&gt;
+ 
+ 
+-OpenGLRenderingEngine::OpenGLRenderingEngine() : RenderingEngine()
++OpenGLRenderingEngine::OpenGLRenderingEngine() : RenderingEngine(), clipPlaneNum(2)
+ {
+ 
+ 	Body_state		= false;
+@@ -30,33 +30,22 @@
+ 	Draw_mask		= ~0;
+ 	Light_position		= Vector3r(75.0,130.0,0.0);
+ 	Background_color		= Vector3r(0.2,0.2,0.2);
+-	
+ 	Interaction_geometry	= false;
+ 	Interaction_physics	= false;
++
++	for(int i=0; i&lt;clipPlaneNum; i++){clipPlaneSe3.push_back(Se3r(Vector3r::ZERO,Quaternionr::IDENTITY)); clipPlaneActive.push_back(false); clipPlaneNormals.push_back(Vector3r(1,0,0));}
+ 	
+ 	map&lt;string,DynlibDescriptor&gt;::const_iterator di    = Omega::instance().getDynlibsDescriptor().begin();
+ 	map&lt;string,DynlibDescriptor&gt;::const_iterator diEnd = Omega::instance().getDynlibsDescriptor().end();
+-	for(;di!=diEnd;++di)
+-	{
+-		if (Omega::instance().isInheritingFrom((*di).first,&quot;GLDrawStateFunctor&quot;))
+-			addStateFunctor((*di).first);
+-		if (Omega::instance().isInheritingFrom((*di).first,&quot;GLDrawBoundingVolumeFunctor&quot;))
+-			addBoundingVolumeFunctor((*di).first);
+-		if (Omega::instance().isInheritingFrom((*di).first,&quot;GLDrawInteractingGeometryFunctor&quot;))
+-			addInteractingGeometryFunctor((*di).first);
+-		if (Omega::instance().isInheritingFrom((*di).first,&quot;GLDrawGeometricalModelFunctor&quot;))
+-			addGeometricalModelFunctor((*di).first);
+-		if (Omega::instance().isInheritingFrom((*di).first,&quot;GLDrawShadowVolumeFunctor&quot;))
+-			addShadowVolumeFunctor((*di).first);
+-
+-	//	InteractionGeometry
+-	//	InteractionPhysics
+-		if (Omega::instance().isInheritingFrom((*di).first,&quot;GLDrawInteractionGeometryFunctor&quot;))
+-			addInteractionGeometryFunctor((*di).first);
+-		if (Omega::instance().isInheritingFrom((*di).first,&quot;GLDrawInteractionPhysicsFunctor&quot;))
+-			addInteractionPhysicsFunctor((*di).first);
++	for(;di!=diEnd;++di){
++		if (Omega::instance().isInheritingFrom((*di).first,&quot;GLDrawStateFunctor&quot;)) addStateFunctor((*di).first);
++		if (Omega::instance().isInheritingFrom((*di).first,&quot;GLDrawBoundingVolumeFunctor&quot;)) addBoundingVolumeFunctor((*di).first);
++		if (Omega::instance().isInheritingFrom((*di).first,&quot;GLDrawInteractingGeometryFunctor&quot;)) addInteractingGeometryFunctor((*di).first);
++		if (Omega::instance().isInheritingFrom((*di).first,&quot;GLDrawGeometricalModelFunctor&quot;)) addGeometricalModelFunctor((*di).first);
++		if (Omega::instance().isInheritingFrom((*di).first,&quot;GLDrawShadowVolumeFunctor&quot;))	addShadowVolumeFunctor((*di).first);
++		if (Omega::instance().isInheritingFrom((*di).first,&quot;GLDrawInteractionGeometryFunctor&quot;)) addInteractionGeometryFunctor((*di).first);
++		if (Omega::instance().isInheritingFrom((*di).first,&quot;GLDrawInteractionPhysicsFunctor&quot;))	addInteractionPhysicsFunctor((*di).first);
+ 	}
+-
+ 	postProcessAttributes(true);
+ }
+ 
+@@ -103,6 +92,12 @@
+ 	}
+ };
+ 
++bool OpenGLRenderingEngine::pointClipped(const Vector3r&amp; p){
++	if(clipPlaneNum&lt;1) return false;
++	for(int i=0;i&lt;clipPlaneNum;i++) if(clipPlaneActive[i]&amp;&amp;(p-clipPlaneSe3[i].position).Dot(clipPlaneNormals[i])&lt;0) return true;
++	return false;
++}
++
+ void OpenGLRenderingEngine::render(
+ 		const shared_ptr&lt;MetaBody&gt;&amp; rootBody, 
+ 		body_id_t selection	// FIXME: not sure. maybe a list of selections, 
+@@ -124,7 +119,7 @@
+ 	}
+ #endif
+ 	current_selection = selection;
+-	//
++
+ 	const GLfloat pos[4]	= {Light_position[0],Light_position[1],Light_position[2],1.0};
+ 	const GLfloat ambientColor[4]	= {0.5,0.5,0.5,1.0};	
+ 
+@@ -141,19 +136,14 @@
+ 	glutSolidSphere(3,10,10);
+ 	glPopMatrix();	
+ 
+-	if (Body_geometrical_model)
+-	{
+-		if (Cast_shadows)
+-		{	
+-			
+-			if (Fast_shadow_volume)
+-				renderSceneUsingFastShadowVolumes(rootBody,Light_position);
+-			else
+-				renderSceneUsingShadowVolumes(rootBody,Light_position);
+-				
++	for(int i=0;i&lt;clipPlaneNum; i++){ clipPlaneNormals[i]=clipPlaneSe3[i].orientation*Vector3r(0,0,1); /* glBegin(GL_LINES);glVertex3v(clipPlaneSe3[i].position);glVertex3v(clipPlaneSe3[i].position+clipPlaneNormals[i]);glEnd(); */ }
++
++	if (Body_geometrical_model){
++		if (Cast_shadows){	
++			if (Fast_shadow_volume) renderSceneUsingFastShadowVolumes(rootBody,Light_position);
++			else renderSceneUsingShadowVolumes(rootBody,Light_position);
+ 			// draw transparent shadow volume
+-			if (Shadow_volumes)
+-			{
++			if (Shadow_volumes) {
+ 				glAlphaFunc(GL_GREATER, 1.0f/255.0f);
+ 				glEnable(GL_ALPHA_TEST);
+ 				glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+@@ -166,71 +156,29 @@
+ 			
+ 				glCullFace(GL_FRONT);
+ 				renderShadowVolumes(rootBody,Light_position);
+-				
++
+ 				glCullFace(GL_BACK);
+ 				renderShadowVolumes(rootBody,Light_position);
+-				
++
+ 				glEnable(GL_DEPTH_TEST);
+ 				glDisable(GL_BLEND);
+ 				glDisable(GL_ALPHA_TEST);
+ 			}
+-		}
+-		else
+-		{
++		} else{
+ 			glEnable(GL_CULL_FACE);
+ 			glEnable(GL_NORMALIZE);
+ 			renderGeometricalModel(rootBody);
+ 		}
+ 	}
+-	
+-	if (Body_state)
+-		renderState(rootBody);
+-	
+-	if (Body_bounding_volume)
+-		renderBoundingVolume(rootBody);
+-	
+-	if (Body_interacting_geom)
+-	{
++	if (Body_state) renderState(rootBody);
++	if (Body_bounding_volume) renderBoundingVolume(rootBody);
++	if (Body_interacting_geom){
+ 		glEnable(GL_LIGHTING);
+ 		glEnable(GL_CULL_FACE);
+ 		renderInteractingGeometry(rootBody);
+ 	}
+-
+-	if (Interaction_geometry)
+-		renderInteractionGeometry(rootBody);
+-	
+-	if (Interaction_physics)
+-		renderInteractionPhysics(rootBody);
+-	
+-
+-/*	shared_ptr&lt;BodyContainer&gt; bodies = rootBody-&gt;bodies;
+-	shared_ptr&lt;InteractionContainer&gt;&amp; collisions = rootBody-&gt;transientInteractions;
+-	for( collisions-&gt;gotoFirst() ; collisions-&gt;notAtEnd() ; collisions-&gt;gotoNext())
+-	{
+-		const shared_ptr&lt;Interaction&gt;&amp; col = collisions-&gt;getCurrent();
+-
+-		shared_ptr&lt;Body&gt;&amp; b1 = (*bodies)[col-&gt;getId1()];
+-		shared_ptr&lt;Body&gt;&amp; b2 = (*bodies)[col-&gt;getId2()];
+-
+-		SpheresContactGeometry * mmcg = static_cast&lt;SpheresContactGeometry*&gt;(col-&gt;interactionGeometry.get());
+-
+-		Vector3r v1 = mmcg-&gt;contactPoint+mmcg-&gt;normal*mmcg-&gt;penetrationDepth*0.5;
+-		Vector3r v2 = mmcg-&gt;contactPoint-mmcg-&gt;normal*mmcg-&gt;penetrationDepth*0.5;
+-		glBegin(GL_LINES);
+-			glVertex3v(v1);
+-			glVertex3v(v2);
+-		glEnd();
+-		glPushMatrix();
+-			glColor3v(b1-&gt;geometricalModel-&gt;diffuseColor);
+-			glTranslate(v1[0],v1[1],v1[2]);
+-			glutSolidSphere(1,10,10);
+-		glPopMatrix();
+-		glPushMatrix();
+-			glColor3v(b2-&gt;geometricalModel-&gt;diffuseColor);
+-			glTranslate(v2[0],v2[1],v2[2]);
+-			glutSolidSphere(1,10,10);
+-		glPopMatrix();
+-	}*/
++	if (Interaction_geometry) renderInteractionGeometry(rootBody);
++	if (Interaction_physics) renderInteractionPhysics(rootBody);
+ }
+ 
+ 
+@@ -380,6 +328,7 @@
+ 		BodyContainer::iterator biEnd = rootBody-&gt;bodies-&gt;end();
+ 		for(; bi!=biEnd ; ++bi )
+ 		{
++			if(pointClipped((*bi)-&gt;physicalParameters-&gt;se3.position)) continue;
+ 			if ((*bi)-&gt;geometricalModel-&gt;shadowCaster &amp;&amp; ( ((*bi)-&gt;getGroupMask() &amp; Draw_mask) || (*bi)-&gt;getGroupMask()==0 ))
+ 				shadowVolumeDispatcher((*bi)-&gt;geometricalModel,(*bi)-&gt;physicalParameters,Light_position);
+ 		}
+@@ -402,8 +351,9 @@
+ 		{
+ 			if((*bi)-&gt;geometricalModel &amp;&amp; ( ((*bi)-&gt;getGroupMask() &amp; Draw_mask) || (*bi)-&gt;getGroupMask()==0 ))
+ 			{
+-				glPushMatrix();
+ 				Se3r&amp; se3 = (*bi)-&gt;physicalParameters-&gt;se3;
++				if(pointClipped(se3.position)) continue;
++				glPushMatrix();
+ 				Real angle;
+ 				Vector3r axis;	
+ 				se3.orientation.ToAxisAngle(axis,angle);	
+@@ -442,10 +392,13 @@
+ 		InteractionContainer::iterator biEnd = rootBody-&gt;persistentInteractions-&gt;end();
+ 		for( ; bi!=biEnd ; ++bi)
+ 		{
+-			glPushMatrix();
+-			if((*bi)-&gt;interactionGeometry)
+-				interactionGeometryDispatcher((*bi)-&gt;interactionGeometry,(*bi),(*(rootBody-&gt;bodies))[(*bi)-&gt;getId1()],(*(rootBody-&gt;bodies))[(*bi)-&gt;getId2()],Interaction_wire);
+-			glPopMatrix();
++			if((*bi)-&gt;interactionGeometry){
++				const shared_ptr&lt;Body&gt;&amp; b1=Body::byId((*bi)-&gt;getId1(),rootBody), b2=Body::byId((*bi)-&gt;getId2(),rootBody);
++				if(pointClipped(b1-&gt;physicalParameters-&gt;se3.position)&amp;&amp;pointClipped(b2-&gt;physicalParameters-&gt;se3.position)) continue;
++				glPushMatrix();
++					interactionGeometryDispatcher((*bi)-&gt;interactionGeometry,(*bi),(*(rootBody-&gt;bodies))[(*bi)-&gt;getId1()],(*(rootBody-&gt;bodies))[(*bi)-&gt;getId2()],Interaction_wire);
++				glPopMatrix();
++			}
+ 		}
+ 	}
+ 
+@@ -488,10 +441,13 @@
+ 		InteractionContainer::iterator biEnd = rootBody-&gt;transientInteractions-&gt;end();
+ 		for( ; bi!=biEnd ; ++bi)
+ 		{
+-			glPushMatrix();
+-			if((*bi)-&gt;interactionPhysics)
+-				interactionPhysicsDispatcher((*bi)-&gt;interactionPhysics,(*bi),(*(rootBody-&gt;bodies))[(*bi)-&gt;getId1()],(*(rootBody-&gt;bodies))[(*bi)-&gt;getId2()],Interaction_wire);
+-			glPopMatrix();
++			if((*bi)-&gt;interactionPhysics){
++				const shared_ptr&lt;Body&gt;&amp; b1=Body::byId((*bi)-&gt;getId1(),rootBody), b2=Body::byId((*bi)-&gt;getId2(),rootBody);
++				if(pointClipped(b1-&gt;physicalParameters-&gt;se3.position)&amp;&amp;pointClipped(b2-&gt;physicalParameters-&gt;se3.position)) continue;
++				glPushMatrix();
++					interactionPhysicsDispatcher((*bi)-&gt;interactionPhysics,(*bi),(*(rootBody-&gt;bodies))[(*bi)-&gt;getId1()],(*(rootBody-&gt;bodies))[(*bi)-&gt;getId2()],Interaction_wire);
++				glPopMatrix();
++			}
+ 		}
+ 	}
+ }
+@@ -503,6 +459,7 @@
+ 	BodyContainer::iterator biEnd = rootBody-&gt;bodies-&gt;end();
+ 	for( ; bi!=biEnd ; ++bi)
+ 	{
++		if(pointClipped((*bi)-&gt;physicalParameters-&gt;se3.position)) continue;
+ 		glPushMatrix();
+ 		if((*bi)-&gt;physicalParameters &amp;&amp; ( ((*bi)-&gt;getGroupMask() &amp; Draw_mask ) || (*bi)-&gt;getGroupMask()==0 ))
+ 			stateDispatcher((*bi)-&gt;physicalParameters);
+@@ -521,7 +478,8 @@
+ 	BodyContainer::iterator bi    = rootBody-&gt;bodies-&gt;begin();
+ 	BodyContainer::iterator biEnd = rootBody-&gt;bodies-&gt;end();
+ 	for( ; bi!=biEnd ; ++bi)
+-	{
++	{		
++		if(pointClipped((*bi)-&gt;physicalParameters-&gt;se3.position)) continue;
+ 		glPushMatrix();
+ 		if((*bi)-&gt;boundingVolume &amp;&amp; ( ((*bi)-&gt;getGroupMask() &amp; Draw_mask) || (*bi)-&gt;getGroupMask()==0 ))
+ 			boundingVolumeDispatcher((*bi)-&gt;boundingVolume);
+@@ -549,8 +507,9 @@
+ 	BodyContainer::iterator biEnd = rootBody-&gt;bodies-&gt;end();
+ 	for( ; bi!=biEnd ; ++bi)
+ 	{
+-		glPushMatrix();
+ 		Se3r&amp; se3 = (*bi)-&gt;physicalParameters-&gt;se3;
++		if(pointClipped(se3.position)) continue;
++		glPushMatrix();
+ 		Real angle;
+ 		Vector3r axis;	
+ 		se3.orientation.ToAxisAngle(axis,angle);	
+
+Modified: trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.hpp
+===================================================================
+--- trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.hpp	2008-06-29 07:33:23 UTC (rev 1404)
++++ trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.hpp	2008-06-29 17:50:51 UTC (rev 1405)
+@@ -24,27 +24,19 @@
+ 
+ class OpenGLRenderingEngine : public RenderingEngine
+ {	
+-	public : // FIXME - why public ?
+-		Vector3r	 Light_position
+-				,Background_color;
++	public :
++		Vector3r Light_position,Background_color;
++		bool Body_state,Body_bounding_volume,Body_interacting_geom,Body_geometrical_model,Cast_shadows,Shadow_volumes,Fast_shadow_volume,Body_wire,Interaction_wire,Draw_inside,Interaction_geometry,Interaction_physics,needInit;
++		body_id_t current_selection;
++		int Draw_mask;
+ 
+-		bool		 Body_state
+-				,Body_bounding_volume
+-				,Body_interacting_geom
+-				,Body_geometrical_model
+-				,Cast_shadows
+-				,Shadow_volumes
+-				,Fast_shadow_volume
+-				,Body_wire
+-				,Interaction_wire
+-				,Draw_inside
+-				,Interaction_geometry
+-				,Interaction_physics
+-		
+-				,needInit;
+-		body_id_t 	current_selection;
+-		int		Draw_mask;
++		vector&lt;Se3r&gt; clipPlaneSe3;
++		vector&lt;bool&gt; clipPlaneActive;
++		const int clipPlaneNum;
+ 
++		bool pointClipped(const Vector3r&amp; p);
++		vector&lt;Vector3r&gt; clipPlaneNormals;
++
+ 	private :
+ 		DynLibDispatcher&lt; InteractionGeometry , GLDrawInteractionGeometryFunctor, void , TYPELIST_5(const shared_ptr&lt;InteractionGeometry&gt;&amp;, const shared_ptr&lt;Interaction&gt;&amp; , const shared_ptr&lt;Body&gt;&amp;, const shared_ptr&lt;Body&gt;&amp;, bool) &gt; interactionGeometryDispatcher;
+ 		DynLibDispatcher&lt; InteractionPhysics  , GLDrawInteractionPhysicsFunctor,  void , TYPELIST_5(const shared_ptr&lt;InteractionPhysics&gt;&amp; , const shared_ptr&lt;Interaction&gt;&amp;, const shared_ptr&lt;Body&gt;&amp;, const shared_ptr&lt;Body&gt;&amp;, bool) &gt; interactionPhysicsDispatcher;
+@@ -56,13 +48,14 @@
+ 		DynLibDispatcher&lt; GeometricalModel    , GLDrawGeometricalModelFunctor,    void , TYPELIST_3(const shared_ptr&lt;GeometricalModel&gt;&amp;, const shared_ptr&lt;PhysicalParameters&gt;&amp;, bool) &gt; geometricalModelDispatcher;
+ 		DynLibDispatcher&lt; GeometricalModel    , GLDrawShadowVolumeFunctor,        void , TYPELIST_3(const shared_ptr&lt;GeometricalModel&gt;&amp;, const shared_ptr&lt;PhysicalParameters&gt;&amp;, const Vector3r&amp; ) &gt; shadowVolumeDispatcher;
+ 
+-		vector&lt;vector&lt;string&gt; &gt;  stateFunctorNames;
+-		vector&lt;vector&lt;string&gt; &gt;  boundingVolumeFunctorNames;
+-		vector&lt;vector&lt;string&gt; &gt;  interactingGeometryFunctorNames;
+-		vector&lt;vector&lt;string&gt; &gt;  geometricalModelFunctorNames;
+-		vector&lt;vector&lt;string&gt; &gt;  shadowVolumeFunctorNames;
+-		vector&lt;vector&lt;string&gt; &gt;  interactionGeometryFunctorNames;
+-		vector&lt;vector&lt;string&gt; &gt;  interactionPhysicsFunctorNames;
++		vector&lt;vector&lt;string&gt; &gt;
++			stateFunctorNames,
++			boundingVolumeFunctorNames,
++			interactingGeometryFunctorNames, 
++			geometricalModelFunctorNames,
++			shadowVolumeFunctorNames,
++			interactionGeometryFunctorNames,
++			interactionPhysicsFunctorNames;
+ 
+ 	public :
+ 		void addStateFunctor(const string&amp; str);
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000365.html">[Yade-commits] r1404 - in trunk: extra gui/py gui/qt3	pkg/common/Engine/MetaEngine pkg/common/Engine/StandAloneEngine	pkg/common/RenderingEngine/GLDrawGeometricalModel	pkg/dem/Engine/StandAloneEngine
+</A></li>
+	<LI>Next message: <A HREF="000367.html">[Yade-commits] r1406 - trunk/gui/qt3
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#366">[ date ]</a>
+              <a href="thread.html#366">[ thread ]</a>
+              <a href="subject.html#366">[ subject ]</a>
+              <a href="author.html#366">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

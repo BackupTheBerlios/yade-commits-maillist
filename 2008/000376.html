@@ -1,0 +1,3074 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1416 - in trunk: . core gui/py gui/qt3 lib	lib/factory lib/serialization lib/sqlite3x	pkg/common/Engine/StandAloneEngine	pkg/common/RenderingEngine/OpenGLRenderingEngine pkg/dem	pkg/dem/Engine/StandAloneEngine
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1416%20-%20in%20trunk%3A%20.%20core%20gui/py%20gui/qt3%20lib%0A%09lib/factory%20lib/serialization%20lib/sqlite3x%0A%09pkg/common/Engine/StandAloneEngine%0A%09pkg/common/RenderingEngine/OpenGLRenderingEngine%20pkg/dem%0A%09pkg/dem/Engine/StandAloneEngine&In-Reply-To=%3C200807082112.m68LCFRc012973%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000375.html">
+   <LINK REL="Next"  HREF="000377.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1416 - in trunk: . core gui/py gui/qt3 lib	lib/factory lib/serialization lib/sqlite3x	pkg/common/Engine/StandAloneEngine	pkg/common/RenderingEngine/OpenGLRenderingEngine pkg/dem	pkg/dem/Engine/StandAloneEngine</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1416%20-%20in%20trunk%3A%20.%20core%20gui/py%20gui/qt3%20lib%0A%09lib/factory%20lib/serialization%20lib/sqlite3x%0A%09pkg/common/Engine/StandAloneEngine%0A%09pkg/common/RenderingEngine/OpenGLRenderingEngine%20pkg/dem%0A%09pkg/dem/Engine/StandAloneEngine&In-Reply-To=%3C200807082112.m68LCFRc012973%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1416 - in trunk: . core gui/py gui/qt3 lib	lib/factory lib/serialization lib/sqlite3x	pkg/common/Engine/StandAloneEngine	pkg/common/RenderingEngine/OpenGLRenderingEngine pkg/dem	pkg/dem/Engine/StandAloneEngine">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Tue Jul  8 23:12:15 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000375.html">[Yade-commits] r1415 - in branches/przewdnik: core/visualisation	gui/qt3 pkg/common/Engine/StandAloneEngine/Visualisation	pkg/common/RenderingEngine/OpenGLRenderingEngine
+</A></li>
+        <LI>Next message: <A HREF="000377.html">[Yade-commits] r1417 - trunk/core
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#376">[ date ]</a>
+              <a href="thread.html#376">[ thread ]</a>
+              <a href="subject.html#376">[ subject ]</a>
+              <a href="author.html#376">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2008-07-08 23:12:11 +0200 (Tue, 08 Jul 2008)
+New Revision: 1416
+
+Added:
+   trunk/lib/sqlite3x/
+   trunk/lib/sqlite3x/README
+   trunk/lib/sqlite3x/README.yade
+   trunk/lib/sqlite3x/sqlite3x.hpp
+   trunk/lib/sqlite3x/sqlite3x_command.cpp
+   trunk/lib/sqlite3x/sqlite3x_connection.cpp
+   trunk/lib/sqlite3x/sqlite3x_cursor.cpp
+   trunk/lib/sqlite3x/sqlite3x_exception.cpp
+   trunk/lib/sqlite3x/sqlite3x_settings_db.cpp
+   trunk/lib/sqlite3x/sqlite3x_settings_db.hpp
+   trunk/lib/sqlite3x/sqlite3x_transaction.cpp
+   trunk/pkg/dem/Engine/StandAloneEngine/SQLiteRecorder.cpp
+   trunk/pkg/dem/Engine/StandAloneEngine/SQLiteRecorder.hpp
+Modified:
+   trunk/SConstruct
+   trunk/core/Omega.cpp
+   trunk/core/yade.cpp
+   trunk/gui/py/plot.py
+   trunk/gui/py/pyAttrUtils.hpp
+   trunk/gui/py/yadeControl.cpp
+   trunk/gui/qt3/GLViewer.hpp
+   trunk/gui/qt3/QtGUI-python.cpp
+   trunk/lib/SConscript
+   trunk/lib/factory/ClassFactory.hpp
+   trunk/lib/serialization/SerializableSingleton.cpp
+   trunk/pkg/common/Engine/StandAloneEngine/PeriodicEngines.hpp
+   trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.cpp
+   trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.hpp
+   trunk/pkg/dem/Engine/StandAloneEngine/CapillaryCohesiveLaw.cpp
+   trunk/pkg/dem/Engine/StandAloneEngine/CapillaryCohesiveLaw.hpp
+   trunk/pkg/dem/SConscript
+Log:
+1. sqlite3-dev is now required for yade (checked by scons)
+2. sqlite3x c++ sqlite3 wrapper is in our tree (5 files, about 60kb of code), built by scons
+3. Check for boost::regex
+4. Experimental SQLiteRecorder (the player side is not yet supported at all!)
+5. Remove messages at startup about singletons (define YADE_DEBUG env var to get them again)
+6. StretchPeriodicEngine that will eventually replace the overdesigned RangePeriodicEngine
+
+
+
+Modified: trunk/SConstruct
+===================================================================
+--- trunk/SConstruct	2008-07-08 17:08:58 UTC (rev 1415)
++++ trunk/SConstruct	2008-07-08 21:12:11 UTC (rev 1416)
+@@ -257,15 +257,16 @@
+ 	context.Result(True)
+ 	return True
+ 
+-def CheckScientificPython(context):
+-	context.Message('Checking for scientific python module (debian: python-scientific)... ')
++def CheckPythonModule(context,modulename):
++	context.Message(&quot;Checking for python module `%s' ...&quot;%modulename)
+ 	try:
+-		import Scientific
++		exec(&quot;import %s&quot;%modulename)
+ 		context.Result(True); return True
+ 	except ImportError:
+ 		context.Result(False); return False
+-
+-
++def CheckScientificPython(context): return CheckPythonModule(context,&quot;Scientific&quot;)
++def CheckIPython(context): return CheckPythonModule(context,&quot;IPython&quot;)
++	
+ def CheckCXX(context):
+ 	context.Message('Checking whether c++ compiler &quot;%s&quot; works...'%env['CXX'])
+ 	ret=context.TryLink('#include&lt;iostream&gt;\nint main(int argc, char**argv){std::cerr&lt;&lt;std::endl;return 0;}\n','.cpp')
+@@ -274,7 +275,7 @@
+ 
+ 
+ if not env.GetOption('clean'):
+-	conf=env.Configure(custom_tests={'CheckQt':CheckQt,'CheckCXX':CheckCXX,'CheckPython':CheckPython,'CheckScientificPython':CheckScientificPython},
++	conf=env.Configure(custom_tests={'CheckQt':CheckQt,'CheckCXX':CheckCXX,'CheckPython':CheckPython,'CheckScientificPython':CheckScientificPython,'CheckIPython':CheckIPython},
+ 		conf_dir='$buildDir/.sconf_temp',log_file='$buildDir/config.log')
+ 
+ 	ok=True
+@@ -287,17 +288,16 @@
+ 	ok&amp;=conf.CheckLibWithHeader('glut','GL/glut.h','c','glutGetModifiers();',autoadd=1)
+ 
+ 	# gentoo has threaded flavour named differently and it must have precedence over the non-threaded one
+-	ok&amp;=(conf.CheckLibWithHeader('boost_date_time-mt','boost/date_time/posix_time/posix_time.hpp','c++','boost::posix_time::time_duration::time_duration();',autoadd=1)
+-		or conf.CheckLibWithHeader('boost_date_time','boost/date_time/posix_time/posix_time.hpp','c++','boost::posix_time::time_duration::time_duration();',autoadd=1))
+-	ok&amp;=(conf.CheckLibWithHeader('boost_thread-mt','boost/thread/thread.hpp','c++','boost::thread::thread();',autoadd=1)
+-		or conf.CheckLibWithHeader('boost_thread','boost/thread/thread.hpp','c++','boost::thread::thread();',autoadd=1))
+-	ok&amp;=(conf.CheckLibWithHeader('boost_filesystem-mt','boost/filesystem/path.hpp','c++','boost::filesystem::path();',autoadd=1)
+-		or conf.CheckLibWithHeader('boost_filesystem','boost/filesystem/path.hpp','c++','boost::filesystem::path();',autoadd=1))
+-	ok&amp;=(conf.CheckLibWithHeader('boost_iostreams-mt','boost/iostreams/device/file.hpp','c++','boost::iostreams::file_sink(&quot;&quot;);',autoadd=1)
+-		or conf.CheckLibWithHeader('boost_iostreams','boost/iostreams/device/file.hpp','c++','boost::iostreams::file_sink(&quot;&quot;);',autoadd=1))
++	def CheckLib_maybeMT(conf,lib,header,lang,func): return conf.CheckLibWithHeader(lib+'-mt',['limits.h',header],'c++',func,autoadd=1) or conf.CheckLibWithHeader(lib,['limits.h',header],lang,func,autoadd=1)
++	ok&amp;=CheckLib_maybeMT(conf,'boost_date_time','boost/date_time/posix_time/posix_time.hpp','c++','boost::posix_time::time_duration::time_duration();')
++	ok&amp;=CheckLib_maybeMT(conf,'boost_thread','boost/thread/thread.hpp','c++','boost::thread::thread();')
++	ok&amp;=CheckLib_maybeMT(conf,'boost_filesystem','boost/filesystem/path.hpp','c++','boost::filesystem::path();')
++	ok&amp;=CheckLib_maybeMT(conf,'boost_iostreams','boost/iostreams/device/file.hpp','c++','boost::iostreams::file_sink(&quot;&quot;);')
++	ok&amp;=CheckLib_maybeMT(conf,'boost_regex','boost/regex.hpp','c++','boost::regex(&quot;&quot;);')
+ 	foreach=conf.CheckCXXHeader('boost/foreach.hpp','&lt;&gt;')
+ 	if not foreach: print &quot;(You can get the foreach.hpp header from <A HREF="http://article.gmane.org/gmane.science.physics.yade.devel/367">http://article.gmane.org/gmane.science.physics.yade.devel/367</A> and save it in /usr/include/boost. It will coexist with boost 1.33 without problems.)&quot;
+ 	ok&amp;=foreach
++	ok&amp;=conf.CheckLibWithHeader('sqlite3','sqlite3.h','c++','sqlite3_close(0L);',autoadd=0)
+ 
+ 	if not env['useMiniWm3']: ok&amp;=conf.CheckLibWithHeader('Wm3Foundation','Wm3Math.h','c++','Wm3::Math&lt;double&gt;::PI;',autoadd=1)
+ 
+@@ -309,20 +309,24 @@
+ 	if not ok:
+ 		print &quot;\nOne of the essential libraries above was not found, unable to continue.\n\nCheck `%s' for possible causes, note that there are options that you may need to customize:\n\n&quot;%(buildDir+'/config.log')+opts.GenerateHelpText(env)
+ 		Exit(1)
+-
+-	# check optional libs
+-	if 'log4cxx' in env['features'] and conf.CheckLibWithHeader('log4cxx','log4cxx/logger.h','c++','log4cxx::Logger::getLogger(&quot;&quot;);',autoadd=1):
++	def featureNotOK(featureName):
++		print &quot;\nERROR: Unable to compile with optional feature `%s'.\n\nIf you are sure, remove it from features (scons features=featureOne,featureTwo for example) and build again.&quot;
++		Exit(1)
++	# check &quot;optional&quot; libs
++	if 'log4cxx' in env['features']:
++		ok=conf.CheckLibWithHeader('log4cxx','log4cxx/logger.h','c++','log4cxx::Logger::getLogger(&quot;&quot;);',autoadd=1)
++		if not ok: featureNotOK('log4cxx')
+ 		env.Append(CPPDEFINES=['LOG4CXX'])
+-	if 'python' in env['features'] and conf.CheckPython() and ( ### not needed now: and conf.CheckScientificPython() and (
+-		conf.CheckLibWithHeader('boost_python-mt','boost/python.hpp','c++','boost::python::scope();',autoadd=1)
+-		or conf.CheckLibWithHeader('boost_python','boost/python.hpp','c++','boost::python::scope();',autoadd=1)):
++	if 'python' in env['features']:
++		ok=(conf.CheckPython() and conf.CheckIPython() # not needed now: and conf.CheckScientificPython()
++			and (conf.CheckLibWithHeader('boost_python-mt','boost/python.hpp','c++','boost::python::scope();',autoadd=1)
++				or conf.CheckLibWithHeader('boost_python','boost/python.hpp','c++','boost::python::scope();',autoadd=1)))
++		if not ok: featureNotOK('python')
+ 		env.Append(CPPDEFINES=['EMBED_PYTHON'])
+-
+ 	if env['useMiniWm3']: env.Append(LIBS='miniWm3',CPPDEFINES=['MINIWM3'])
+ 
+ 	env=conf.Finish()
+ 
+-
+ ##########################################################################################
+ ############# BUILDING ###################################################################
+ ##########################################################################################
+
+Modified: trunk/core/Omega.cpp
+===================================================================
+--- trunk/core/Omega.cpp	2008-07-08 17:08:58 UTC (rev 1415)
++++ trunk/core/Omega.cpp	2008-07-08 21:12:11 UTC (rev 1416)
+@@ -31,7 +31,7 @@
+ 
+ Omega::Omega()
+ {
+-	LOG_INFO(&quot;Constructing Omega  (if multiple times - check '-rdynamic' flag!).&quot;);
++	if(getenv(&quot;YADE_DEBUG&quot;)) cerr&lt;&lt;&quot;Constructing Omega; _must_ be only once, otherwise linking is broken (missing -rdynamic?)\n&quot;;
+ 	init();
+ 	timeInit();
+ }
+
+Modified: trunk/core/yade.cpp
+===================================================================
+--- trunk/core/yade.cpp	2008-07-08 17:08:58 UTC (rev 1415)
++++ trunk/core/yade.cpp	2008-07-08 21:12:11 UTC (rev 1416)
+@@ -117,11 +117,11 @@
+ &quot;\n&quot; &lt;&lt; Omega::instance().yadeVersionName &lt;&lt; &quot;\n\
+ \n\
+ 	-h      : print this help.\n\
++	-N name : specify the user interface (NullGUI, PythonUI, QtGUI; not all of them must be compiled)\n\
+ 	-n      : use NullGUI (command line interface) instead of default GUI.\n\
+-	-N name : specify the user interface (available: NullGUI, PythonUI, QtGUI)\n\
+-	-w      : launch the 'first run configuration'\n\
+-	-c      : use local directory ./ as configuration directory\n\
+-	-C path : configuration directory different than default ~/.yade/\n\
++	-w      : write default configuration (automatic at first run)\n\
++	-c      : use the current directory ./ as configuration directory\n\
++	-C path : configuration directory different from the default ~/.yade-something/\n\
+ 	-S file : load simulation from file (works with QtGUI only)\n\
+ 	-v      : be verbose (may be repeated)\n\
+ \n\
+@@ -140,28 +140,9 @@
+ 	// Since it is a static variable, it infulences all boost::filesystem operations in this respect (fortunately).
+ 	filesystem::path::default_name_check(filesystem::native);
+ 
+-	string configPath=string(getenv(&quot;HOME&quot;)) + &quot;/.yade&quot; SUFFIX;
+-
+-	#ifdef LOG4CXX
+-		// read logging configuration from file and watch it (creates a separate thread)a
+-		std::string logConf=configPath+&quot;/logging.conf&quot;;
+-		if(filesystem::exists(logConf)){
+-			log4cxx::PropertyConfigurator::configureAndWatch(logConf);
+-			LOG_INFO(&quot;Logger loaded and watches configuration file: &quot;&lt;&lt;logConf&lt;&lt;&quot;.&quot;);
+-		} else { // otherwise use simple console-directed logging
+-			log4cxx::BasicConfigurator::configure();
+-			logger-&gt;setLevel(log4cxx::Level::WARN);
+-			LOG_INFO(&quot;Logger uses basic (console) configuration since `&quot;&lt;&lt;logConf&lt;&lt;&quot;' was not found. INFO and DEBUG messages will be ommited.&quot;);
+-			LOG_INFO(&quot;Look at the file doc/logging.conf.sample in the source distribution as an example on how to customize logging.&quot;);
+-		}
+-	#endif
++	string configPath=string(getenv(&quot;HOME&quot;)) + &quot;/.yade&quot; SUFFIX; // this is the default, may be overridden by -c / -C
+ 	
+-	int ch;
+-	string gui=&quot;&quot;;
+-	string simulationFileName=&quot;&quot;;
+-	bool setup=false;
+-	int verbose=0;
+-	bool coreOptions=true;
++	int ch; string gui=&quot;&quot;; string simulationFileName=&quot;&quot;; bool setup=false; int verbose=0; bool coreOptions=true;
+ 	while(coreOptions &amp;&amp; (ch=getopt(argc,argv,&quot;hnN:wC:cvS:&quot;))!=-1)
+ 		switch(ch){
+ 			case 'h': printHelp(); return 1;
+@@ -175,21 +156,29 @@
+ 			case '-': coreOptions=false; break;
+ 			default: printHelp(); return 1;
+ 		}
+-	// peek to see the first non-option arg that will be passed to the gui; may affect the gui we will use
+-	// if(optind&lt;argc &amp;&amp; boost::algorithm::ends_with(string(argv[optind]),string(&quot;.py&quot;))){ gui=&quot;PythonUI&quot;; LOG_DEBUG(&quot;Selecting cmdGui for .py&quot;); }
+ 	// save original options
+ 	Omega::instance().origArgv=argv; Omega::instance().origArgc=argc;
+ 	// kill processed options, keep one more which is in fact non-option (normally the binary)
+ 	argv=&amp;(argv[optind-1]); argc-=optind-1;
+-	// reset getopt globals for next processing
++	// reset getopt globals for next processing in frontends
+ 	optind=0; opterr=0;
+ 
+-	
+-	if(configPath[configPath.size()-1] == '/')
+-		configPath = configPath.substr(0,configPath.size()-1); 
+ 
+-	Omega::instance().yadeVersionName = &quot;Yet Another Dynamic Engine 0.11.x, beta, SVN snapshot.&quot;;
++	#ifdef LOG4CXX
++		// read logging configuration from file and watch it (creates a separate thread)
++		std::string logConf=configPath+&quot;/logging.conf&quot;;
++		if(filesystem::exists(logConf)){
++			LOG_INFO(&quot;Loading &quot;&lt;&lt;logConf&lt;&lt;&quot; (monitored)&quot;);
++			log4cxx::PropertyConfigurator::configureAndWatch(logConf);
++		} else { // otherwise use simple console-directed logging
++			log4cxx::BasicConfigurator::configure();
++			logger-&gt;setLevel(log4cxx::Level::WARN);
++			LOG_INFO(&quot;Logger uses basic (console) configuration since `&quot;&lt;&lt;logConf&lt;&lt;&quot;' was not found. INFO and DEBUG messages will be ommited.&quot;);
++			LOG_INFO(&quot;Look at the file doc/logging.conf.sample in the source distribution as an example on how to customize logging.&quot;);
++		}
++	#endif
+ 
++	Omega::instance().yadeVersionName = &quot;Yet Another Dynamic Engine 0.11.x, beta, SVN snapshot.&quot;;
+ 	Omega::instance().preferences    = shared_ptr&lt;Preferences&gt;(new Preferences);
+ 	Omega::instance().yadeConfigPath = configPath; 
+ 	filesystem::path yadeConfigPath  = filesystem::path(Omega::instance().yadeConfigPath, filesystem::native);
+@@ -198,6 +187,10 @@
+ 	#ifdef LOG4CXX
+ 		if(verbose==1) logger-&gt;setLevel(log4cxx::Level::INFO);
+ 		else if (verbose&gt;=2) logger-&gt;setLevel(log4cxx::Level::DEBUG);
++		if(getenv(&quot;YADE_DEBUG&quot;)){
++			LOG_INFO(&quot;YADE_DEBUG environment variable is defined, setting logging level to DEBUG.&quot;);
++			logger-&gt;setLevel(log4cxx::Level::DEBUG);
++		}
+ 	#endif
+ 
+ 
+@@ -226,9 +219,9 @@
+ 		LOG_DEBUG(&quot;ABRT/SEGV signal handlers set, crash batch created as &quot;&lt;&lt;Omega::instance().gdbCrashBatch);
+ 	#endif
+ 
+-	LOG_INFO(&quot;Loading configuration file: &quot;&lt;&lt;yadeConfigFile.string()); IOFormatManager::loadFromFile(&quot;XMLFormatManager&quot;,yadeConfigFile.string(),&quot;preferences&quot;,Omega::instance().preferences);
++	LOG_INFO(&quot;Loading &quot;&lt;&lt;yadeConfigFile.string()); IOFormatManager::loadFromFile(&quot;XMLFormatManager&quot;,yadeConfigFile.string(),&quot;preferences&quot;,Omega::instance().preferences);
+ 
+-	LOG_INFO(&quot;Loading plugins...&quot;); Omega::instance().scanPlugins(); LOG_INFO(&quot;Plugins loaded.&quot;);
++	LOG_INFO(&quot;Loading plugins&quot;); Omega::instance().scanPlugins();
+ 	Omega::instance().init();
+ 
+ 	Omega::instance().setSimulationFileName(simulationFileName); //init() resets to &quot;&quot;;
+
+Modified: trunk/gui/py/plot.py
+===================================================================
+--- trunk/gui/py/plot.py	2008-07-08 17:08:58 UTC (rev 1415)
++++ trunk/gui/py/plot.py	2008-07-08 21:12:11 UTC (rev 1416)
+@@ -17,6 +17,7 @@
+ 
+ data={} # global, common for all plots: {'name':[value,...],...}
+ plots={} # dictionary x-name -&gt; (yspec,...), where yspec is either y-name or (y-name,'line-specification')
++plotsFilled={} # same as plots but with standalone plot specs filled to tuples (used internally only)
+ plotLines={} # dictionary x-name -&gt; Line2d objects (that hopefully still correspond to yspec in plots)
+ needsFullReplot=True
+ 
+@@ -73,11 +74,18 @@
+ 	for p in plots:
+ 		pylab.figure()
+ 		plots_p=[fillNonSequence(o) for o in plots[p]]
+-		pylab.plot(*sum([[data[p],data[d[0]],d[1]] for d in plots_p],[]))
++		plotsFilled[p]=plots_p
++		plotLines[p]=pylab.plot(*sum([[data[p],data[d[0]],d[1]] for d in plots_p],[])V)
+ 		pylab.legend([_p[0] for _p in plots_p])
+ 		pylab.xlabel(p)
+ 	pylab.show()
+ 
++def update():
++	for p in plots:
++
++		pylab.plot(*sum([[data[p],data[d[0]],d[1]] for d in plots_p],[])V)
++
++
+ def saveGnuplot(baseName,term='wxt',extension=None,timestamp=False,comment=None,title=None):
+ 	&quot;&quot;&quot;baseName: used for creating baseName.gnuplot (command file for gnuplot),
+ 			associated baseName.data (data) and output files (if applicable) in the form baseName.[plot number].extension
+
+Modified: trunk/gui/py/pyAttrUtils.hpp
+===================================================================
+--- trunk/gui/py/pyAttrUtils.hpp	2008-07-08 17:08:58 UTC (rev 1415)
++++ trunk/gui/py/pyAttrUtils.hpp	2008-07-08 21:12:11 UTC (rev 1416)
+@@ -1,3 +1,4 @@
++// 2007,2008 &#194;&#169; V&#195;&#161;clav &#197;&#160;milauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">eudoxos at arcig.cz</A>&gt; 
+ #include&lt;sstream&gt;
+ #include&lt;boost/any.hpp&gt;
+ #include&lt;map&gt;
+
+Modified: trunk/gui/py/yadeControl.cpp
+===================================================================
+--- trunk/gui/py/yadeControl.cpp	2008-07-08 17:08:58 UTC (rev 1415)
++++ trunk/gui/py/yadeControl.cpp	2008-07-08 21:12:11 UTC (rev 1416)
+@@ -1,3 +1,5 @@
++// 2007,2008 &#194;&#169; V&#195;&#161;clav &#197;&#160;milauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">eudoxos at arcig.cz</A>&gt; 
++
+ #include&lt;sstream&gt;
+ #include&lt;map&gt;
+ #include&lt;vector&gt;
+
+Modified: trunk/gui/qt3/GLViewer.hpp
+===================================================================
+--- trunk/gui/qt3/GLViewer.hpp	2008-07-08 17:08:58 UTC (rev 1415)
++++ trunk/gui/qt3/GLViewer.hpp	2008-07-08 21:12:11 UTC (rev 1416)
+@@ -43,7 +43,6 @@
+ 	protected:
+ 		shared_ptr&lt;OpenGLRenderingEngine&gt; renderer;
+ 	private :
+-//		GLWindowsManager	wm;
+ 		bool 			drawGridXYZ[3];
+ 		bool			isMoving;
+ 		bool			wasDynamic;
+
+Modified: trunk/gui/qt3/QtGUI-python.cpp
+===================================================================
+--- trunk/gui/qt3/QtGUI-python.cpp	2008-07-08 17:08:58 UTC (rev 1415)
++++ trunk/gui/qt3/QtGUI-python.cpp	2008-07-08 21:12:11 UTC (rev 1416)
+@@ -1,8 +1,14 @@
+ #include&lt;yade/gui-py/pyAttrUtils.hpp&gt;
+ #include&lt;yade/gui-qt3/YadeQtMainWindow.hpp&gt;
+ #include&lt;boost/python.hpp&gt;
++#include&lt;yade/pkg-common/OpenGLRenderingEngine.hpp&gt;
++
+ using namespace boost::python;
+ 
++BASIC_PY_PROXY_HEAD(pyOpenGLRenderingEngine,OpenGLRenderingEngine)
++	void setRefSe3(){ proxee-&gt;setRefSe3(Omega::instance().getRootBody()); }
++BASIC_PY_PROXY_TAIL;
++
+ YadeQtMainWindow* ensuredMainWindow(){if(!YadeQtMainWindow::self) throw runtime_error(&quot;No instance of YadeQtMainWindow&quot;); return YadeQtMainWindow::self; }
+ #define STANDALONE_MAINWINDOW_FUNC(func) void func(void){ensuredMainWindow()-&gt;func();}
+ STANDALONE_MAINWINDOW_FUNC(createView);
+@@ -10,6 +16,7 @@
+ STANDALONE_MAINWINDOW_FUNC(createSimulationController);
+ //STANDALONE_MAINWINDOW_FUNC(Quit);
+ void Quit(void){ if(YadeQtMainWindow::self) YadeQtMainWindow::self-&gt;Quit(); }
++pyOpenGLRenderingEngine getRenderer(){return pyOpenGLRenderingEngine(ensuredMainWindow()-&gt;renderer);}
+ 
+ 
+ BOOST_PYTHON_MODULE(qt){
+@@ -17,4 +24,9 @@
+ 	def(&quot;center&quot;,centerViews);
+ 	def(&quot;Controller&quot;,createSimulationController);
+ 	def(&quot;close&quot;,Quit);
++	def(&quot;Renderer&quot;,getRenderer);
++
++	BASIC_PY_PROXY_WRAPPER(pyOpenGLRenderingEngine,&quot;GLRenderer&quot;)
++		.def(&quot;setRefSe3&quot;,&amp;pyOpenGLRenderingEngine::setRefSe3);
++
+ }
+
+Modified: trunk/lib/SConscript
+===================================================================
+--- trunk/lib/SConscript	2008-07-08 17:08:58 UTC (rev 1415)
++++ trunk/lib/SConscript	2008-07-08 21:12:11 UTC (rev 1416)
+@@ -1,6 +1,8 @@
+ # vim: set filetype=python :
+ Import('*')
+ 
++
++
+ if 'qt3' not in env['exclude']:
+ 	env.Install('$PREFIX/lib/yade$SUFFIX/lib',[
+ 		env.SharedLibrary('yade-serialization-qt',
+@@ -74,6 +76,14 @@
+ 		# miniWm3 will be always optimized and without debugging info, even in debug builds.
+ 		CXXFLAGS=env['CXXFLAGS']+['-O3','-g0']),
+ 
++		env.SharedLibrary('sqlite3x',Split('''
++			sqlite3x/sqlite3x_command.cpp
++			sqlite3x/sqlite3x_connection.cpp
++			sqlite3x/sqlite3x_cursor.cpp
++			sqlite3x/sqlite3x_exception.cpp
++			sqlite3x/sqlite3x_settings_db.cpp
++			sqlite3x/sqlite3x_transaction.cpp'''),LIBS='sqlite3',CXXFLAGS=env['CXXFLAGS']+['-O3','-g0']),
++
+ 	env.SharedLibrary('yade-computational-geometry',
+ 		['computational-geometry/Distances2D.cpp',
+ 			'computational-geometry/Distances3D.cpp',
+
+Modified: trunk/lib/factory/ClassFactory.hpp
+===================================================================
+--- trunk/lib/factory/ClassFactory.hpp	2008-07-08 17:08:58 UTC (rev 1415)
++++ trunk/lib/factory/ClassFactory.hpp	2008-07-08 21:12:11 UTC (rev 1416)
+@@ -99,7 +99,7 @@
+ 		/// Map that contains the name of the registered class and their description
+ 		FactorableCreatorsMap map;
+ 
+-		ClassFactory() { cerr&lt;&lt;&quot;Constructing ClassFactory  (if multiple times - check '-rdynamic' flag!).\n&quot;;};
++		ClassFactory() { if(getenv(&quot;YADE_DEBUG&quot;)) cerr&lt;&lt;&quot;Constructing ClassFactory; _must_ be only once, otherwise linking is broken (missing -rdynamic?)\n&quot;; };
+ 		ClassFactory(const ClassFactory&amp;);
+ 		ClassFactory&amp; operator=(const ClassFactory&amp;);
+ 		virtual ~ClassFactory() {};
+
+Modified: trunk/lib/serialization/SerializableSingleton.cpp
+===================================================================
+--- trunk/lib/serialization/SerializableSingleton.cpp	2008-07-08 17:08:58 UTC (rev 1415)
++++ trunk/lib/serialization/SerializableSingleton.cpp	2008-07-08 21:12:11 UTC (rev 1416)
+@@ -12,8 +12,8 @@
+ CREATE_LOGGER(SerializableSingleton);
+ 
+ SerializableSingleton::SerializableSingleton() 
+-{	
+-	cerr&lt;&lt;&quot;Constructing SerializableSingleton  (if multiple times - check '-rdynamic' flag!).&quot;&lt;&lt;endl;
++{
++	if(getenv(&quot;YADE_DEBUG&quot;)) cerr&lt;&lt;&quot;Constructing SerializableSingleton; _must_ be only once, otherwise linking is broken (missing -rdynamic?)\n&quot;;
+ }
+ 
+ 
+
+Added: trunk/lib/sqlite3x/README
+===================================================================
+--- trunk/lib/sqlite3x/README	2008-07-08 17:08:58 UTC (rev 1415)
++++ trunk/lib/sqlite3x/README	2008-07-08 21:12:11 UTC (rev 1416)
+@@ -0,0 +1,49 @@
++This is the README for the sqlite3x and sq3 C++ wrappers for sqlite3.
++
++sqlite3x: this is an OO C++ wrapper for the sqlite3 API. It makes
++heavy use of exceptions to report any sort of error. It based off code
++written by Cory Nelson. Please see the file sqlite3x.hpp for the
++license.
++
++sq3: this is also an OO C++ wrapper for sqlite3. It is similar in
++design to sqlite3x but does not use exceptions. It is intended for
++platforms, like PocketPC, where exceptions support may not be
++available/desireable. This API is released into the Public Domain.
++
++
++ACHTUNG: the wide-character/string support may or may not work on your
++platform. On my platform (GNU/Linux), std::wstring uses 4-byte wide
++chars, whereas sqlite3 expects 2-byte chars. That means that the code
++is untested on my platform and almost certainly doesn't work. It
++&quot;might&quot; work on Win32 platforms.  The sqlite3x API inherits a
++nearly-complete wide-char implementation from Corey's original
++code. The sq3 API, which was written from scratch, does not have any
++wchar API.
++
++
++Please send questions/concerns/bugs/patches to the maintainer:
++
++	<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">stephan at s11n.net</A>
++
++The latest version of this code can be downloaded from:
++
++	<A HREF="http://s11n.net/download/#sqlite3x">http://s11n.net/download/#sqlite3x</A>
++
++or pulled from CVS as described here:
++
++	<A HREF="http://sourceforge.net/cvs/?group_id=104450">http://sourceforge.net/cvs/?group_id=104450</A>
++
++from the &quot;sqlite3x&quot; repository.
++
++
++========================================================================
++Contributors to this code include:
++
++- Nelis Willers (nwillers at csir.co.za) contributed MSVC patches
++for the sqlite3x API.
++
++- Artem Gr (artem at bizlink.ru) contributed some wide-char fixes
++for the sqlite3x API.
++
++- Xos&#233; Ant&#243;n Otero Ferreira (xoseotero at gmail com) contributed several
++minor features to the sq3 API.
+
+Added: trunk/lib/sqlite3x/README.yade
+===================================================================
+--- trunk/lib/sqlite3x/README.yade	2008-07-08 17:08:58 UTC (rev 1415)
++++ trunk/lib/sqlite3x/README.yade	2008-07-08 21:12:11 UTC (rev 1416)
+@@ -0,0 +1,3 @@
++See README&#194;&#160;for upstream information.
++
++This is only the sqlite3x wrapper (not the sq3 one) picked from the tarball.
+
+Added: trunk/lib/sqlite3x/sqlite3x.hpp
+===================================================================
+--- trunk/lib/sqlite3x/sqlite3x.hpp	2008-07-08 17:08:58 UTC (rev 1415)
++++ trunk/lib/sqlite3x/sqlite3x.hpp	2008-07-08 21:12:11 UTC (rev 1416)
+@@ -0,0 +1,916 @@
++#ifndef s11n_net_SQLITE3X_HPP_INCLUDED
++#define s11n_net_SQLITE3X_HPP_INCLUDED
++/*
++
++	Copyright (C) 2004-2005 Cory Nelson
++	Copyright (C) 2006 stephan beal (stephan s11n net)
++
++	This software is provided 'as-is', without any express or implied
++	warranty.  In no event will the authors be held liable for any damages
++	arising from the use of this software.
++
++	Permission is granted to anyone to use this software for any purpose,
++	including commercial applications, and to alter it and redistribute it
++	freely, subject to the following restrictions:
++
++	1. The origin of this software must not be misrepresented; you must not
++		claim that you wrote the original software. If you use this software
++		in a product, an acknowledgment in the product documentation would be
++		appreciated but is not required.
++	2. Altered source versions must be plainly marked as such, and must not be
++		misrepresented as being the original software.
++	3. This notice may not be removed or altered from any source distribution.
++	
++
++This file has been modified from the original sources by &lt;stephan at
++s11n net&gt;, as described briefly below.
++
++The original code, by Cory Nelson, is available from:
++
++<A HREF="http://dev.int64.org/sqlite.html">http://dev.int64.org/sqlite.html</A>
++
++This hacked copy's home is:
++
++<A HREF="http://wanderinghorse.net/computing/sqlite/">http://wanderinghorse.net/computing/sqlite/</A>
++
++Contributors to the hacked version include:
++
++stephan beal &lt;stephan at s11n net&gt;
++- Maintainer, documentor.
++
++Thomas Sailer &lt;t.sailer at alumni ethz ch&gt;:
++- A fix for wide-char support on 64-bit Linux.
++
++Artem Gr &lt;artem at bizlink ru&gt;
++- Fixes to enable/disable wide-char support with a macro.
++
++- Xose Anton Otero Ferreira submitted patches to remove 'long long'
++decls and replace those with sqlite_int64. He also submitted
++the isnull() functions.
++
++
++Significant changes from the original sqlite3x distribution include:
++
++- Removed dependency on boost library, since it was only a dependency
++on boost::non_copyable (this same effect is easily achieved without
++the dependency on the huge Boost library).
++
++- Reordered some code to get it to compile under gcc.
++
++- Added some missing #includes.
++
++- database_error was reimplemented to allow use of a varargs ctor.
++
++- Added a few helpful functions, like sqlite3_cursor::colcount().
++
++- Removed various (char const * ...) overloads which were inherently
++already covered by implicit conversions via (std::string const &amp;)
++overloads. Re-added them on 2006.09.25 after Artem Gr pointed out that
++those overloads avoid a potential extra copy of the strings, and that
++this could be a significant performance factor for some applications.
++
++- Added lots of API docs.
++
++- Improved some exception messages.
++
++- Added table_generator class.
++
++- Added sqlite3_connection::executecallback().
++
++- sqlite3_cursor renamed to sqlite3_cursor (2007.01.22).
++
++- Added sqlite3_cursor::close()
++
++- sqlite3_cursor::read() renamed to step() (2007.01.22).
++
++*/
++
++#include &lt;string&gt;
++#include &lt;stdexcept&gt;
++#include &lt;sqlite3.h&gt; // only for sqlite3_callback :/
++
++// Enable WCHAR support when it's there. Thanks to Artem Gr &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">artem at bizlink.ru</A>&gt;
++// for this...
++#ifndef SQLITE3X_USE_WCHAR
++#  ifdef _GLIBCXX_USE_WCHAR_T
++#    define SQLITE3X_USE_WCHAR 1
++#  elif defined(UNICODE) // Windows uses this
++#    define SQLITE3X_USE_WCHAR 1
++#  else
++#    define SQLITE3X_USE_WCHAR 0 // default
++#  endif
++#endif
++
++/**
++   This namespace encapsulates a C++ API wrapper for sqlite3
++   databases. It was originally written by Cory Nelson and was hacked
++   slightly by stephan beal.
++
++   The home page for the original sources note that all of the
++   w_char/wstring functions *probably* only work on Windows
++   platforms. Your mileage may vary on other platforms. Users of this
++   API are recommended to NOT use the wchar_t/wstring variants of any
++   functions, as those functions may be removed at some point.
++
++
++   Note that this API does not include support for all sqlite3
++   features. However, the most commonly used features are available.
++
++*/
++namespace sqlite3x {
++
++	/**
++	   64-bit integer type used by this code.
++	*/
++	typedef sqlite_int64 int64_t;
++
++	class sqlite3_command;
++
++	/**
++	   rc_is_okay() is an easy way to check if rc is one of
++	   SQLITE_OK, SQLITE_ROW, or SQLITE_DONE.  This function
++	   returns true if rc is one of those values, else false.
++	   When writing code which accepts arbitrary client-supplied
++	   SQL, any of those three codes can signal success, depending
++	   on the SQL code and the context.
++	*/
++	bool rc_is_okay( int rc );
++
++
++	/**
++	   Represents a connection to an sqlite3 database.
++
++	   About the only reason to subclass this type would be to do
++	   customizations to the underlying sqlite3 db handle upon
++	   construction of each object, e.g.  to add custom sqlite
++	   functions or load custom modules.
++   	*/
++	class sqlite3_connection
++	{
++	private:
++		// copy operations not implemented
++		sqlite3_connection &amp; operator=( sqlite3_connection const &amp; );
++		sqlite3_connection( sqlite3_connection const &amp; );
++
++		friend class sqlite3_command;
++
++		mutable struct sqlite3 *m_db;
++		std::string m_name;
++
++	public:
++		/**
++		   Returns a handle to the underlying sqlite3
++		   database. Friend classes should NEVER call
++		   sqlite3_close() on this handle. Doing so will
++		   result in undefined behaviour later on (when this
++		   class is used or destructs).
++
++		   This function is only public so that clients can
++		   do things like register new sqlite3 functions
++		   with the database.
++		*/
++		sqlite3 * db() const;
++
++		/**
++		   Default ctor. DB is unusable until open() is
++		   called.
++		*/
++		sqlite3_connection();
++
++		/**
++		   Opens a database with the given name. Throws if
++		   this-&gt;open(dbname) fails.
++		*/
++		explicit sqlite3_connection(std::string const &amp; dbname);
++
++		/**
++		   See take(sqlite3*). This ctor is identical except
++		   that it throws if passed a null pointer.
++		*/
++		sqlite3_connection( sqlite3 * dbh );
++
++		/**
++		   Calls this-&gt;close() if close() has not already
++		   been called. If it calls close() then the exception
++		   is silently ignored for the sake of having a no-throw
++		   dtor.
++		*/
++		virtual ~sqlite3_connection();
++
++		/** Returns this object's name. It is only valid if
++		    the (char const *) ctor or open(char const *) was
++		    used with a non-null name, otherwise it is an
++		    empty string.
++		*/
++		std::string name() const;
++
++
++		/**
++		   Creates/opens the given db, throwing on error.
++		   Remember that sqlite3 supports the name &quot;:memory:&quot;
++		   as a pseudo-name for an in-memory database.
++
++		   On success it returns, else it throws.
++		   
++		   Note that sqlite3 supports the special db name
++		   &quot;:memory:&quot; to represent an in-memory database. Such
++		   databases cannot be saved directly to disk and are
++		   lost when this object closes the db.
++
++		   Internal notes:
++
++		   Once an sqlite3_open() succeeds, the protected
++		   member this-&gt;on_open() in called. That member
++		   should throw on error.
++
++		   Subclasses which override this and do not want to
++		   call the base implementation should call on_open()
++		   when done to allow subclasses to initialize the
++		   database if they like.
++		*/
++		virtual void open( char const * );
++
++		/**
++		  Functionally the same as open( char const *).
++		 */
++		void open(std::string const &amp;dbname);
++
++		/**
++
++		   Transfers control of dbh to this object and makes
++		   this object point at dbh. dbh is assumed to be
++		   a valid, opened sqlite3 db handle.
++
++		   If this-&gt;db() == dbh then this function
++		   does nothing.
++
++		   If this object had an opened db handle
++		   then it is closed before dbh is taken.
++		   Closing may throw, but this function takes
++		   ownership of dbh regardless of whether
++		   it throws or not.
++
++		   If dbh is null, the effect is identical
++		   to calling close().
++
++		   This function triggers the protected on_open()
++		   function if dbh is not null.
++		*/
++		void take( sqlite3 * dbh );
++
++		/**
++		   Transfers ownership of the returned handle to the caller.
++		   This object is then considered closed. NULL is returned
++		   if this object is closed.
++		*/
++		sqlite3 * take() throw();
++
++
++		/**
++		   Closes this database. If the db is not opened,
++		   this is a no-op.
++		*/
++		void close();
++
++		/**
++		   Returns the rowid of the most recently inserted row
++		   on this db.
++		*/
++		int64_t insertid();
++
++  		/**
++ 		   Returns the number of database rows that were
++ 		   changed (or inserted or deleted) by the most recently
++ 		   completed INSERT, UPDATE, or DELETE statement.
++ 
++ 		   SQLite implements the command &quot;DELETE FROM table&quot;
++ 		   without a WHERE clause by dropping and recreating
++ 		   the table. To get an accurate count of the number
++ 		   of rows deleted, use &quot;DELETE FROM table WHERE 1&quot;
++		   instead.
++ 		*/
++ 		int changes();
++
++
++		/**
++		   See sqlite3_busy_timeout().
++		*/
++		void setbusytimeout(int ms);
++
++		/**
++		   Executes a command which is assumed to have
++		   a single step and a void result.
++		*/
++		void executenonquery(const std::string &amp;sql);
++		/**
++		   Overloaded to avoid an internal copy of sql.
++		   sql MUST be non-NULL and null-terminated.
++		*/
++		void executenonquery(char const * sql);
++
++		/**
++		   Executes the query, which is expected to have an
++		   integer field as the first result field.
++		*/
++		int executeint(const std::string &amp;sql);
++		/**
++		   Overloaded to avoid an internal copy of sql.
++		   sql MUST be non-NULL and null-terminated.
++		*/
++		int executeint(char const * sql);
++
++		/**
++		   Executes the query, which is expected to have a
++		   (int64_t) field as the first result field.
++		*/
++		int64_t executeint64(const std::string &amp;sql);
++		/**
++		   Overloaded to avoid an internal copy of sql.
++		   sql MUST be non-NULL and null-terminated.
++		*/
++		int64_t executeint64(char const * sql);
++
++		/**
++		   Executes the query, which is expected to have a
++		   double field as the first result field.
++		*/
++		double executedouble(const std::string &amp;sql);
++
++		/**
++		   Overloaded to avoid an internal copy of sql.
++		   sql MUST be non-NULL and null-terminated.
++		*/
++		double executedouble(char const * sql);
++
++		/**
++		   Executes the query, which is expected to have a
++		   string or blob field as the first result field. Note
++		   that numeric results can be returned using this function,
++		   but will come back as a string (lexically cast).
++		*/
++		std::string executestring(const std::string &amp;sql);
++
++		/**
++		   Executes the query, which is expected to have a
++		   string or blob field as the first result field. Note
++		   that numeric results can be returned using this function,
++		   but will come back as a string (lexically cast).
++		*/
++		std::string executeblob(const std::string &amp;sql);
++
++		/**
++		   Executes the given SQL code, calling callback for
++		   each row of the data set. The data pointer is
++		   passed on as-is to the callback, and may be 0.  If
++		   execution generates an error message it is stored
++		   in errmsg.
++
++		   If this function intercepts an exception (thrown
++		   from the callback) then it propagates that
++		   exception back to the caller. If it catches no
++		   exception, it returns the result code, with zero
++		   being success and non-zero being failure.
++
++		   See sqlite3_exec() for more details.
++		*/
++		int executecallback( std::string const &amp; sql, sqlite3_callback callback, void * data, std::string &amp; errmsg );
++
++		/**
++		   Convenience overload which has a default data value
++		   of 0 and ignores any error string passed back by
++		   sqlite3_exec().
++		*/
++		int executecallback( std::string const &amp; sql, sqlite3_callback callback, void * data = 0 );
++
++		/**
++		   Returns the equivalent of sqlite3_errmsg(), or an
++		   empty string if that function returns
++		   null. Reminder: the sqlite3 docs say that
++		   sqlite3_errmsg() always returns a non-empty string,
++		   even if the string is &quot;not an error&quot; (no joke).
++		*/
++		std::string errormsg() const;
++
++#if SQLITE3X_USE_WCHAR
++	public:
++		explicit sqlite3_connection(const wchar_t *dbname);
++		void executenonquery(const std::wstring &amp;sql);
++		int executeint(const std::wstring &amp;sql);
++		int64_t executeint64(const std::wstring &amp;sql);
++		double executedouble(const std::wstring &amp;sql);
++		std::string executestring(const std::wstring &amp;sql);
++		std::wstring executestring16(const std::wstring &amp;sql);
++		std::wstring executestring16(const std::string &amp;sql);
++		std::string executeblob(const std::wstring &amp;sql);
++		void open(const wchar_t *dbname);
++#endif
++
++	protected:
++		/**
++		   This function is called when open() succeeds. Subclasses
++		   which wish to do custom db initialization or sanity checks
++		   may do them here.
++		*/
++		virtual void on_open();
++
++	};
++
++	/**
++	   Manages an sqlite3 transaction. Remember that sqlite3 does not
++	   support nested transactions.
++
++	   All functions of this class throw on error.
++	*/
++	class sqlite3_transaction {
++	private:
++		// copy operations not implemented
++		sqlite3_transaction &amp; operator=( sqlite3_transaction const &amp; );
++		sqlite3_transaction( sqlite3_transaction const &amp; );
++		sqlite3_connection &con;
++		bool intrans;
++
++	public:
++		/**
++		   Opens a transaction for the given connection. If
++		   start==true (the default) then this-&gt;begin() is
++		   called.
++		 */
++		sqlite3_transaction(sqlite3_connection &amp;con, bool start=true);
++
++		/** If destructed before commit() is called,
++		    rollback() is called.
++		*/
++		~sqlite3_transaction();
++
++		/** Starts a transaction. */
++		void begin();
++		/** Commits a transaction. */
++		void commit();
++		/** Rolls back a transaction with a commit. */
++		void rollback();
++	};
++
++	class sqlite3_command;
++
++	/**
++	   A type for reading results from an sqlite3_command.
++	*/
++	class sqlite3_cursor {
++	private:
++		friend class sqlite3_command;
++
++		sqlite3_command *cmd;
++
++
++	public:
++		/**
++		   Creates a cursor by calling cmd-&gt;executecursor().
++		*/
++		sqlite3_cursor(sqlite3_command &amp; cmd);
++		/**
++		   Creates an empty cursor object, suitable only
++		   for use as the target of a copy/assignment.
++		 */
++		sqlite3_cursor();
++		/**
++		   Copies the given cursor object. This is a fairly
++		   efficient operation, using reference counting.
++		*/
++		sqlite3_cursor(const sqlite3_cursor &amp;copy);
++
++		/**
++		   Closes this cursor, freeing up db resources if this
++		   is the last cursor of a copied set.
++		 */
++		~sqlite3_cursor();
++
++		/**
++		   Copies the given cursor object. This is a fairly
++		   efficient operation, using reference counting. This
++		   object points to the same underlying result set as
++		   the original, so both objects should not be used.
++		*/
++		sqlite3_cursor&amp; operator=(const sqlite3_cursor &amp;copy);
++
++		/**
++		   Steps one step through the sql result set and returns
++		   true on SQLITE_ROW, false on SQLITE3_DONE, and throws
++		   on any other result.
++		*/
++		bool step();
++
++		/** Resets the underlying prepared statement of
++		    this cursor. Throws on error.
++		*/
++		void reset();
++
++		/**
++		   Closes this cursor. Calling it multiple times is a
++		   no-op on the second and subsequent calls.
++		*/
++		void close();
++
++		/**
++		   Returns the column count of the result set or
++		   throws on error.
++		*/
++		int colcount();
++
++  		/**
++ 		   Check if the given field number is NULL. This function
++ 		   returns true if is NULL, else false.
++ 		*/
++ 		bool isnull(int index);
++
++
++		/**
++		   Gets the integer value at the given field number.
++		*/
++		int getint(int index);
++
++		/**
++		   Gets the (int64_t) value at the given field number.
++		*/
++		int64_t getint64(int index);
++
++		/**
++		   Gets the double value at the given field number.
++		*/
++		double getdouble(int index);
++
++		/**
++		   Gets the string value at the given field number.
++		*/
++		std::string getstring(int index);
++		/**
++		   Like getstring(index), but returns a C-style
++		   string. We hope it is null-terminated, but the
++		   sqlite3 docs are ambiguous on this point. size
++		   is set to the length of the returned string.
++
++		   The advantage of this over getstring(index) is that
++		   this version avoids a potential extra internal copy
++		   of the string. Note that there is no guaranty how
++		   long this pointer will remain valid - be sure to
++		   copy the string if you need it.
++		*/
++		char const * getstring(int index, int &amp; size);
++
++
++		/**
++		   Gets the blob value at the given field number.
++		*/
++		std::string getblob(int index);
++
++		/**
++		   Overloaded to avoid an internal copy of the blob data.
++
++		   size is set to the number of bytes in the blob and
++		   the returned pointer is the blob.
++		*/
++		void const * getblob(int index, int &amp; size );
++
++		/**
++		   Gets the column name for the given column index.
++		   Throws on error.
++		*/
++		std::string getcolname(int index);
++
++
++
++#if SQLITE3X_USE_WCHAR
++		std::wstring getstring16(int index);
++		std::wstring getcolname16(int index);
++#endif
++
++	};
++
++
++	/**
++	   Encapsulates a command to send to an sqlite3_connection.
++	*/
++	class sqlite3_command {
++	private:
++		// copy operations not implemented
++		sqlite3_command &amp; operator=( sqlite3_command const &amp; );
++		sqlite3_command( sqlite3_command const &amp; );
++ 		friend class sqlite3_cursor;
++
++		sqlite3_connection &con;
++		mutable sqlite3_stmt *stmt;
++		unsigned int refs;
++		int argc;
++
++	public:
++		/**
++		   Creates an unprepared statement. Use prepare()
++		   create the statement.
++		*/
++		explicit sqlite3_command(sqlite3_connection &amp;con);
++
++		/**
++		   Creates an sql statement with the given connection object
++		   and sql code.
++		*/
++		sqlite3_command(sqlite3_connection &amp;con, const std::string &amp;sql);
++
++		/**
++		   An efficiency overload to avoid an extra copy of the sql
++		   code. len must be the length of sql.
++		*/
++		sqlite3_command(sqlite3_connection &amp;con, char const * sql, size_t len);
++
++		/**
++		   Cleans up any resources in use by this object.
++		 */
++		~sqlite3_command();
++
++		/**
++		   Prepares this statement or throws on error.  If len
++		   is -1 then sql is assumed to be null-terminated.
++		*/
++		void prepare( char const * sql, int len = -1 );
++		/**
++		   Convenience overload taking a std::string.
++		*/
++		void prepare( std::string const &amp; sql );
++
++		/**
++		   Binds NULL to the given index.
++		*/
++		void bind(int index);
++		/**
++		   Binds data to the given query index.
++		*/
++		void bind(int index, int data);
++		/**
++		   Binds data to the given query index.
++		*/
++		void bind(int index, int64_t data);
++		/**
++		   Binds data to the given query index.
++		*/
++		void bind(int index, double data);
++		/**
++		   Binds data to the given query index. Data must be
++		   exactly datalen bytes long. If datalen == -1 then
++		   strlen(data) is used to calculate it.
++		*/
++		void bind(int index, const char *data, int datalen = -1);
++
++		/**
++		   Binds data to the given query index. Data must be
++		   exactly datalen bytes long.
++		*/
++		void bind(int index, const void *data, int datalen);
++		/**
++		   Binds data to the given query index.
++		*/
++		void bind(int index, const std::string &amp;data);
++
++		/** Executes the query and returns a cursor object
++		    which can be used to iterate over the results.
++		 */
++		sqlite3_cursor executecursor();
++		/**
++		   Executes the query and provides no way to get
++		   the results. Throws on error.
++		*/
++		void executenonquery();
++		/**
++		   Executes the query, which is expected to have an
++		   integer field as the first result field.
++		*/
++		int executeint();
++		/**
++		   Executes the query, which is expected to have a
++		   (int64_t) field as the first result field.
++		*/
++		int64_t executeint64();
++		/**
++		   Executes the query, which is expected to have a
++		   double field as the first result field.
++		*/
++		double executedouble();
++		/**
++		   Executes the query, which is expected to have a
++		   string or blob field as the first result field. Note
++		   that numeric results can be returned using this function,
++		   but will come back as a string (lexically cast).
++		*/
++		std::string executestring();
++		/**
++		   Like executestring(), but returns a C-style
++		   string. We hope it is null-terminated, but the
++		   sqlite3 docs are ambiguous on this point. size
++		   is set to the length of the returned string.
++
++		   The advantage of this over executestring() is that
++		   this version avoids a potential extra internal copy
++		   of the string. Note that there is no guaranty how
++		   long this pointer will remain valid - be sure to
++		   copy the string if you need it.
++		*/
++		char const * executestring( int &amp; size );
++
++		/**
++		   Executes the query, which is expected to have a
++		   string or blob field as the first result field. Note
++		   that numeric results can be returned using this function,
++		   but will come back as a string (lexically cast).
++		*/
++		std::string executeblob();
++
++		/**
++		   Like executeblob(), but returns a void pointer to
++		   the data. size is set to the length of the returned
++		   data.
++
++		   The advantage of this over executeblob() is that
++		   this version avoids a potential extra internal copy
++		   of the string and &quot;should work&quot; on wide-char
++		   strings. Note that there is no guaranty how long
++		   this pointer will remain valid - be sure to copy it
++		   if you need it for very long.
++		*/
++		void const * executeblob(int &amp; size );
++
++		/**
++		   Returns the column count of this object's query,
++		   or throws on error.
++		*/
++		int colcount();
++
++		/** Resets this statement using sqlite3_reset().
++		    Errors are considered to be minor and only cause false
++		    to be returned.
++		*/
++		bool reset();
++
++
++		/**
++		   Returns the underlying statement handle. It is not legal to
++		   finalize this statement handle, as that will put this object
++		   out of sync with the state of the handle.
++		*/
++		sqlite3_stmt * handle();
++
++		/**
++		   Finalizes this statement. Throws if finalization fails.
++		   Calling finalize() multiple times is a no-op.
++		 */
++		void finalize();
++
++#if SQLITE3X_USE_WCHAR
++		sqlite3_command(sqlite3_connection &amp;con, const std::wstring &amp;sql);
++		void bind(int index, const wchar_t *data, int datalen);
++		void bind(int index, const std::wstring &amp;data);
++		std::wstring executestring16();
++#endif // SQLITE3_USE_WCHAR
++
++	};
++
++
++	/**
++	   Exception type used by the sqlite3x classes.
++	*/
++	class database_error : public std::exception {
++	public:
++		/**
++		   Takes a format specifier compatible with printf.
++
++		   If the message length surpasses a hard-coded limit (2k?)
++		   then it is truncated to fit within that limit.
++		 */
++		explicit database_error(const char *format, ... );
++
++		/**
++		   Creates an exception with con.errormsg()
++		   as the what() text.
++		*/
++		database_error(sqlite3_connection &amp;con);
++
++		virtual ~database_error() throw();
++
++		/**
++		   Returns this object's error string.
++		*/
++		virtual char const * what() const throw();
++	private:
++		std::string m_what;
++	};
++
++
++// 	/**
++// 	   EXPERIMENTAL.
++
++// 	   A helper type for storing information on
++// 	   functions to register with sqlite.
++// 	*/
++// 	struct sqlite3_function_info_base
++// 	{
++// 	public:
++// 		enum {
++// 		TextUTF8 = SQLITE_UTF8,
++// 		TextUTF16 = SQLITE_UTF16,
++// 		TextUTF16BE = SQLITE_UTF16BE,
++// 		TextUTF16LE = SQLITE_UTF16LE,
++// 		TextAny = SQLITE_ANY
++// 		};
++// 		int argc;
++// 		int text_rep; /* 1: UTF-16.  0: UTF-8 */
++// 		void * user_data;
++// 		void (*func)(sqlite3_context*,int,sqlite3_value**);
++// 		void (*step)(sqlite3_context*,int,sqlite3_value**);
++// 		void (*final)(sqlite3_context*);
++// 	protected:
++// 		sqlite3_function_info_base()
++// 			: argc(0),
++// 			  text_rep(TextUTF8),
++// 			  user_data(0),
++// 			  func(0), step(0), final(0)
++// 		{}
++
++// 		virtual ~sqlite3_function_info_base() {}
++
++// 		virtual int create( sqlite3 * db ) = 0;
++// 	};
++
++// 	/**
++// 	   EXPERIMENTAL.
++// 	*/
++// 	struct sqlite3_function_info8 : sqlite3_function_info_base
++// 	{
++// 		const char * name;
++// 		explicit sqlite3_function_info8( char const * n )
++// 			: sqlite3_function_info_base(),
++// 			  name(n)
++// 		{
++// 			this-&gt;text_rep = TextUTF8;
++// 		}
++// 		virtual ~sqlite3_function_info8(){}
++// 		virtual int create( sqlite3 * db );
++// 	};
++
++// 	/**
++// 	   EXPERIMENTAL.
++// 	*/
++// 	struct sqlite3_function_info16 : sqlite3_function_info_base
++// 	{
++// 		void const * name;
++// 		explicit sqlite3_function_info16( void const * n )
++// 			: sqlite3_function_info_base(),
++// 			  name(n)
++// 		{
++// 			this-&gt;text_rep = TextUTF16;
++// 		}
++// 		virtual ~sqlite3_function_info16(){}
++// 		virtual int create( sqlite3 * db );
++// 	};
++
++	/**
++	   A helper class to generate db tables.
++
++	   It is used like so:
++
++	   table_generator( connection, &quot;table_name&quot; )( &quot;field1&quot; )( &quot;field2&quot; )(&quot;field3&quot;).create();
++
++	   That creates the named table with the given fields. It
++	   throws if table_name already exists in the db or if
++	   creation of the table fails.
++
++	   An arbitrary number of fields can be added using
++	   operator()(string), up to the internal limits set by
++	   sqlite3.
++	*/
++	class table_generator
++	{
++	private:
++		class table_generator_impl;
++		table_generator_impl * m_pimpl;
++	public:
++		/**
++		   Initializes the table generation process. Throws if
++		   con contains a table with the same name.
++		*/
++		explicit table_generator( sqlite3_connection &amp; con, std::string const &amp; name );
++
++		/** Frees up internal resources. */
++		~table_generator() throw();
++
++		/**
++		   Adds field_name as a field of this table. Checks
++		   for duplicate field names are deferred until
++		   create() is called.
++		*/
++		table_generator &amp; operator()( std::string const &amp; field_name );
++
++		/**
++		   Executes the 'create table' statements. Throws on error.
++		*/
++		void create();
++	};
++
++}
++
++#endif // s11n_net_SQLITE3X_HPP_INCLUDED
+
+Added: trunk/lib/sqlite3x/sqlite3x_command.cpp
+===================================================================
+--- trunk/lib/sqlite3x/sqlite3x_command.cpp	2008-07-08 17:08:58 UTC (rev 1415)
++++ trunk/lib/sqlite3x/sqlite3x_command.cpp	2008-07-08 21:12:11 UTC (rev 1416)
+@@ -0,0 +1,237 @@
++/*
++  Copyright (C) 2004-2005 Cory Nelson
++  Copyright (C) 2006 stephan beal
++
++  This software is provided 'as-is', without any express or implied
++  warranty.  In no event will the authors be held liable for any damages
++  arising from the use of this software.
++
++  Permission is granted to anyone to use this software for any purpose,
++  including commercial applications, and to alter it and redistribute it
++  freely, subject to the following restrictions:
++
++  1. The origin of this software must not be misrepresented; you must not
++  claim that you wrote the original software. If you use this software
++  in a product, an acknowledgment in the product documentation would be
++  appreciated but is not required.
++  2. Altered source versions must be plainly marked as such, and must not be
++  misrepresented as being the original software.
++  3. This notice may not be removed or altered from any source distribution.
++	
++*/
++
++#include &lt;sqlite3.h&gt;
++#include &quot;sqlite3x.hpp&quot;
++#include &lt;cstring&gt; // strlen()
++#include &lt;iostream&gt; // only for debuggin
++namespace sqlite3x {
++
++	sqlite3_command::sqlite3_command(sqlite3_connection &amp;con)
++		: con(con),stmt(0),refs(0),argc(0)
++	{
++	}
++
++
++	sqlite3_command::sqlite3_command(sqlite3_connection &amp;con, const std::string &amp;sql)
++		: con(con),stmt(0),refs(0),argc(0)
++	{
++		this-&gt;prepare( sql );
++	}
++
++	sqlite3_command::sqlite3_command(sqlite3_connection &amp;con, char const * sql, size_t len )
++		: con(con),stmt(0),refs(0),argc(0)
++	{
++		this-&gt;prepare( sql, static_cast&lt;int&gt;( len ) );
++	}
++
++#if SQLITE3X_USE_WCHAR
++	sqlite3_command::sqlite3_command(sqlite3_connection &amp;con, const std::wstring &amp;sql) : con(con),stmt(0),refs(0),argc(0) {
++		const void *tail=NULL;
++		if(sqlite3_prepare16(con.db(), sql.data(), (int)sql.length()*2, &amp;this-&gt;stmt, &amp;tail)!=SQLITE_OK)
++			throw database_error(con);
++
++		this-&gt;argc=sqlite3_column_count(this-&gt;stmt);
++	}
++#endif
++
++	void sqlite3_command::prepare( char const * sql, int len )
++	{
++		if( this-&gt;stmt ) this-&gt;finalize();
++		const char *tail=NULL;
++		int rc = sqlite3_prepare( this-&gt;con.db(), sql, len, &amp;(this-&gt;stmt), &amp;tail );
++		if( SQLITE_OK != rc )
++		{
++			throw database_error(&quot;sqlite3_command::prepare([%s]) failed. Reason=[%s]&quot;,
++					     sql, sqlite3_errmsg( this-&gt;con.db() ) );
++		}
++		this-&gt;argc=sqlite3_column_count(this-&gt;stmt);
++	}
++
++	void sqlite3_command::prepare( std::string const &amp; sql )
++	{
++		this-&gt;prepare( sql.c_str(),  static_cast&lt;int&gt;(  sql.size()) );
++	}
++
++
++	sqlite3_command::~sqlite3_command() {
++		try
++		{
++			this-&gt;finalize();
++		}
++		catch(...)
++		{
++			// std::cout &lt;&lt; &quot;sqlite3_command::~sqlite3_command() ignoring an exception!\n&quot;;
++			// silently ignore
++		}
++	}
++
++	void sqlite3_command::finalize()
++	{
++		if( this-&gt;stmt )
++		{
++			if(sqlite3_finalize(this-&gt;stmt)!=SQLITE_OK)
++				throw database_error(this-&gt;con);
++			this-&gt;stmt = 0;
++		}
++	}
++
++	void sqlite3_command::bind(int index) {
++		if(sqlite3_bind_null(this-&gt;stmt, index)!=SQLITE_OK)
++			throw database_error(this-&gt;con);
++	}
++
++	void sqlite3_command::bind(int index, int data) {
++		if(sqlite3_bind_int(this-&gt;stmt, index, data)!=SQLITE_OK)
++			throw database_error(this-&gt;con);
++	}
++
++	void sqlite3_command::bind(int index, int64_t data) {
++		if(sqlite3_bind_int64(this-&gt;stmt, index, data)!=SQLITE_OK)
++			throw database_error(this-&gt;con);
++	}
++
++	void sqlite3_command::bind(int index, double data) {
++		if(sqlite3_bind_double(this-&gt;stmt, index, data)!=SQLITE_OK)
++			throw database_error(this-&gt;con);
++	}
++
++	void sqlite3_command::bind(int index, const char *data, int datalen) {
++		if(sqlite3_bind_text(this-&gt;stmt, index, data,
++			static_cast&lt;int&gt;(
++			((-1==datalen)
++			? std::strlen(data)
++			: datalen)
++			),
++			SQLITE_TRANSIENT)!=SQLITE_OK)
++			throw database_error(this-&gt;con);
++	}
++
++#if SQLITE3X_USE_WCHAR
++	void sqlite3_command::bind(int index, const wchar_t *data, int datalen) {
++		if(sqlite3_bind_text16(this-&gt;stmt, index, data, datalen, SQLITE_TRANSIENT)!=SQLITE_OK)
++			throw database_error(this-&gt;con);
++	}
++#endif
++
++	void sqlite3_command::bind(int index, const void *data, int datalen) {
++		if(sqlite3_bind_blob(this-&gt;stmt, index, data, datalen, SQLITE_TRANSIENT)!=SQLITE_OK)
++			throw database_error(this-&gt;con);
++	}
++
++	void sqlite3_command::bind(int index, const std::string &amp;data) {
++		if(sqlite3_bind_text(this-&gt;stmt, index, data.data(), (int)data.length(), SQLITE_TRANSIENT)!=SQLITE_OK)
++			throw database_error(this-&gt;con);
++	}
++
++#if SQLITE3X_USE_WCHAR
++	void sqlite3_command::bind(int index, const std::wstring &amp;data) {
++		if(sqlite3_bind_text16(this-&gt;stmt, index, data.data(), (int)data.length()*2, SQLITE_TRANSIENT)!=SQLITE_OK)
++			throw database_error(this-&gt;con);
++	}
++#endif
++
++	sqlite3_cursor sqlite3_command::executecursor() {
++		return sqlite3_cursor(*this);
++	}
++
++	void sqlite3_command::executenonquery() {
++		this-&gt;executecursor().step();
++	}
++
++	int sqlite3_command::executeint() {
++		sqlite3_cursor reader=this-&gt;executecursor();
++		if(!reader.step()) throw database_error(&quot;nothing to read&quot;);
++		return reader.getint(0);
++	}
++
++	int64_t sqlite3_command::executeint64() {
++		sqlite3_cursor reader=this-&gt;executecursor();
++		if(!reader.step()) throw database_error(&quot;nothing to read&quot;);
++		return reader.getint64(0);
++	}
++
++	double sqlite3_command::executedouble() {
++		sqlite3_cursor reader=this-&gt;executecursor();
++		if(!reader.step()) throw database_error(&quot;nothing to read&quot;);
++		return reader.getdouble(0);
++	}
++
++	char const * sqlite3_command::executestring( int &amp; size ) {
++		sqlite3_cursor reader=this-&gt;executecursor();
++		if(!reader.step()) throw database_error(&quot;nothing to read&quot;);
++	        return reader.getstring( 0, size );
++	}
++
++	std::string sqlite3_command::executestring() {
++		sqlite3_cursor reader=this-&gt;executecursor();
++		if(!reader.step()) throw database_error(&quot;nothing to read&quot;);
++		return reader.getstring(0);
++	}
++
++#if SQLITE3X_USE_WCHAR
++	std::wstring sqlite3_command::executestring16() {
++		sqlite3_cursor reader=this-&gt;executecursor();
++		if(!reader.step()) throw database_error(&quot;nothing to read&quot;);
++		return reader.getstring16(0);
++	}
++#endif
++
++	std::string sqlite3_command::executeblob() {
++		sqlite3_cursor reader=this-&gt;executecursor();
++		if(!reader.step()) throw database_error(&quot;nothing to read&quot;);
++		return reader.getblob(0);
++	}
++
++	void const * sqlite3_command::executeblob( int &amp; size ) {
++		sqlite3_cursor reader=this-&gt;executecursor();
++		if(!reader.step()) throw database_error(&quot;nothing to read&quot;);
++		return reader.getblob(0, size);
++	}
++
++	int sqlite3_command::colcount()
++	{
++		if( ! this-&gt;stmt )
++		{
++			throw database_error(&quot;sqlite3_command::colcount(): statement has not been prepared&quot;);
++		}
++		return sqlite3_column_count( this-&gt;stmt );
++	}
++
++
++	bool sqlite3_command::reset()
++	{
++		int rc = SQLITE_OK;
++		if( this-&gt;stmt )
++		{
++			rc = sqlite3_reset( this-&gt;stmt );
++		}
++		return rc == SQLITE_OK;
++	}
++
++	sqlite3_stmt * sqlite3_command::handle()
++	{
++		return this-&gt;stmt;
++	}
++
++
++}
+
+Added: trunk/lib/sqlite3x/sqlite3x_connection.cpp
+===================================================================
+--- trunk/lib/sqlite3x/sqlite3x_connection.cpp	2008-07-08 17:08:58 UTC (rev 1415)
++++ trunk/lib/sqlite3x/sqlite3x_connection.cpp	2008-07-08 21:12:11 UTC (rev 1416)
+@@ -0,0 +1,414 @@
++/*
++  Copyright (C) 2004-2005 Cory Nelson
++  Copyright (C) 2006 stephan beal
++
++  This software is provided 'as-is', without any express or implied
++  warranty.  In no event will the authors be held liable for any damages
++  arising from the use of this software.
++
++  Permission is granted to anyone to use this software for any purpose,
++  including commercial applications, and to alter it and redistribute it
++  freely, subject to the following restrictions:
++
++  1. The origin of this software must not be misrepresented; you must not
++  claim that you wrote the original software. If you use this software
++  in a product, an acknowledgment in the product documentation would be
++  appreciated but is not required.
++  2. Altered source versions must be plainly marked as such, and must not be
++  misrepresented as being the original software.
++  3. This notice may not be removed or altered from any source distribution.
++	
++  Changes made by <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">stephan at s11n.net</A>:
++
++  - Changed ~sqlite3_connection() to use this-&gt;close() instead of sqlite3_close().
++
++*/
++
++#include &lt;sqlite3.h&gt;
++#include &quot;sqlite3x.hpp&quot;
++
++#include &lt;sstream&gt;
++#include &lt;vector&gt;
++namespace sqlite3x {
++
++	bool rc_is_okay( int rc )
++	{
++		return ((SQLITE_DONE==rc) || (SQLITE_OK==rc) || (SQLITE_ROW==rc));
++	}
++
++	sqlite3_connection::sqlite3_connection() : m_db(NULL), m_name() {}
++
++	sqlite3_connection::sqlite3_connection(std::string const &amp; dbn)
++		: m_db(NULL), m_name(dbn)
++	{
++		this-&gt;open(dbn);
++	}
++
++#if SQLITE3X_USE_WCHAR
++	sqlite3_connection::sqlite3_connection(const wchar_t *dbn) : m_db(NULL), m_name() { this-&gt;open(dbn); }
++#endif
++
++	sqlite3_connection::sqlite3_connection( sqlite3 * dbh )
++		: m_db(0), m_name()
++	{
++		if( ! dbh )
++		{
++			throw database_error( &quot;sqlite3_connection(sqlite3*) ctor was passed a null db handle.&quot; );
++		}
++		this-&gt;take( dbh );
++	}
++
++	sqlite3_connection::~sqlite3_connection()
++	{
++		try
++		{
++			this-&gt;close();
++		}
++		catch(...)
++		{
++			// ignored for the sake of a no-throw dtor.
++		}
++	}
++
++
++	void sqlite3_connection::take( sqlite3 * dbh )
++	{
++
++		if( this-&gt;m_db == dbh ) return;
++		try
++		{
++			if( this-&gt;m_db || (!dbh) )
++			{
++				this-&gt;close();
++			}
++			this-&gt;m_db = dbh;
++			if( dbh )
++			{
++				this-&gt;on_open();
++			}
++		}
++		catch( ... )
++		{
++			this-&gt;m_db = dbh;
++			throw;
++		}
++	}
++
++	sqlite3 * sqlite3_connection::take() throw()
++	{
++		sqlite3 * ret = this-&gt;m_db;
++		this-&gt;m_db = 0;
++		return ret;
++	}
++
++	sqlite3 * sqlite3_connection::db() const
++	{
++		return this-&gt;m_db;
++	}
++
++	std::string sqlite3_connection::name() const
++	{
++		return this-&gt;m_name;
++	}
++
++	std::string sqlite3_connection::errormsg() const
++	{
++		char const * m = this-&gt;m_db ? sqlite3_errmsg(this-&gt;m_db) : &quot;&quot;;
++		return m ? m : &quot;&quot;;
++	}
++
++	void sqlite3_connection::on_open()
++	{
++		return;
++	}
++	void sqlite3_connection::open( char const * db) {
++		this-&gt;close();
++		this-&gt;m_name = db ? db : &quot;&quot;;
++		if(sqlite3_open(db, &amp;this-&gt;m_db)!=SQLITE_OK)
++			throw database_error(&quot;unable to open database %s&quot;, db ? db : &quot;&lt;null&gt;&quot;);
++		try
++		{
++			// Potential bug: when open() is called from
++			// the ctor of subclasses as a result of
++			// calling the parent class ctor, the subclass
++			// part of the subclass may not be complete,
++			// and a less derived on_open() may
++			// potentially be called. ???
++			this-&gt;on_open();
++		}
++		catch(...)
++		{
++			try { this-&gt;close(); }
++			catch(...) { /* ignore */ }
++			throw;
++		}
++	}
++
++	void sqlite3_connection::open(std::string const &amp; db)
++	{
++		return this-&gt;open( db.c_str() );
++	}
++
++#if SQLITE3X_USE_WCHAR
++	void sqlite3_connection::open(const wchar_t *db) {
++		if(sqlite3_open16(db, &amp;this-&gt;m_db)!=SQLITE_OK)
++			throw database_error(&quot;unable to open database&quot;);
++		try
++		{
++			this-&gt;on_open();
++		}
++		catch(...)
++		{
++			try { this-&gt;close(); }
++			catch(...) { /* ignore */ }
++			throw;
++		}
++	}
++#endif
++
++	void sqlite3_connection::close() {
++		if(this-&gt;m_db) {
++			sqlite3 * x = this-&gt;m_db;
++			this-&gt;m_db=NULL;
++			if(sqlite3_close(x)!=SQLITE_OK)
++				throw database_error(*this);
++		}
++	}
++
++	int64_t sqlite3_connection::insertid() {
++		if(!this-&gt;m_db) throw database_error(&quot;database is not open&quot;);
++		return sqlite3_last_insert_rowid(this-&gt;m_db);
++	}
++
++ 	int sqlite3_connection::changes() {
++ 		if(!this-&gt;m_db) throw database_error(&quot;database is not open&quot;);
++ 		return sqlite3_changes(this-&gt;m_db);
++ 	}
++
++
++	void sqlite3_connection::setbusytimeout(int ms) {
++		if(!this-&gt;m_db) throw database_error(&quot;database is not open&quot;);
++
++		if(sqlite3_busy_timeout(this-&gt;m_db, ms)!=SQLITE_OK)
++			throw database_error(*this);
++	}
++
++	void sqlite3_connection::executenonquery(const std::string &amp;sql) {
++		this-&gt;executenonquery( sql.c_str() );
++	}
++
++	void sqlite3_connection::executenonquery(char const * sql) {
++		if(!this-&gt;m_db) throw database_error(&quot;database is not open&quot;);
++		sqlite3_command(*this, sql).executenonquery();
++	}
++
++#if SQLITE3X_USE_WCHAR
++	void sqlite3_connection::executenonquery(const std::wstring &amp;sql) {
++		if(!this-&gt;m_db) throw database_error(&quot;database is not open&quot;);
++		sqlite3_command(*this, sql).executenonquery();
++	}
++#endif
++
++	int sqlite3_connection::executeint(char const * sql) {
++		if(!this-&gt;m_db) throw database_error(&quot;database is not open&quot;);
++		return sqlite3_command(*this, sql).executeint();
++	}
++	int sqlite3_connection::executeint(const std::string &amp;sql) {
++		return this-&gt;executeint( sql.c_str() );
++	}
++
++#if SQLITE3X_USE_WCHAR
++	int sqlite3_connection::executeint(const std::wstring &amp;sql) {
++		if(!this-&gt;m_db) throw database_error(&quot;database is not open&quot;);
++		return sqlite3_command(*this, sql).executeint();
++	}
++#endif
++
++	int64_t sqlite3_connection::executeint64(char const  * sql) {
++		if(!this-&gt;m_db) throw database_error(&quot;database is not open&quot;);
++		return sqlite3_command(*this, sql).executeint64();
++	}
++
++	int64_t sqlite3_connection::executeint64(const std::string &amp;sql) {
++		return this-&gt;executeint64( sql.c_str() );
++	}
++
++#if SQLITE3X_USE_WCHAR
++	int64_t sqlite3_connection::executeint64(const std::wstring &amp;sql) {
++		if(!this-&gt;m_db) throw database_error(&quot;database is not open&quot;);
++		return sqlite3_command(*this, sql).executeint64();
++	}
++#endif
++
++	double sqlite3_connection::executedouble(char const * sql) {
++		if(!this-&gt;m_db) throw database_error(&quot;database is not open&quot;);
++		return sqlite3_command(*this, sql).executedouble();
++	}
++
++	double sqlite3_connection::executedouble(const std::string &amp;sql) {
++		return this-&gt;executedouble( sql.c_str() );
++	}
++
++#if SQLITE3X_USE_WCHAR
++	double sqlite3_connection::executedouble(const std::wstring &amp;sql) {
++		if(!this-&gt;m_db) throw database_error(&quot;database is not open&quot;);
++		return sqlite3_command(*this, sql).executedouble();
++	}
++#endif
++
++	std::string sqlite3_connection::executestring(const std::string &amp;sql) {
++		if(!this-&gt;m_db) throw database_error(&quot;database is not open&quot;);
++		return sqlite3_command(*this, sql).executestring();
++	}
++
++#if SQLITE3X_USE_WCHAR
++	std::string sqlite3_connection::executestring(const std::wstring &amp;sql) {
++		if(!this-&gt;m_db) throw database_error(&quot;database is not open&quot;);
++		return sqlite3_command(*this, sql).executestring();
++	}
++#endif
++
++#if SQLITE3X_USE_WCHAR
++	std::wstring sqlite3_connection::executestring16(const std::string &amp;sql) {
++		if(!this-&gt;m_db) throw database_error(&quot;database is not open&quot;);
++		return sqlite3_command(*this, sql).executestring16();
++	}
++#endif
++
++#if SQLITE3X_USE_WCHAR
++	std::wstring sqlite3_connection::executestring16(const std::wstring &amp;sql) {
++		if(!this-&gt;m_db) throw database_error(&quot;database is not open&quot;);
++		return sqlite3_command(*this, sql).executestring16();
++	}
++#endif
++
++	std::string sqlite3_connection::executeblob(const std::string &amp;sql) {
++		if(!this-&gt;m_db) throw database_error(&quot;database is not open&quot;);
++		return sqlite3_command(*this, sql).executeblob();
++	}
++
++#if SQLITE3X_USE_WCHAR
++	std::string sqlite3_connection::executeblob(const std::wstring &amp;sql) {
++		if(!this-&gt;m_db) throw database_error(&quot;database is not open&quot;);
++		return sqlite3_command(*this, sql).executeblob();
++	}
++#endif
++	
++	int sqlite3_connection::executecallback( std::string const &amp; sql,
++						 sqlite3_callback callback,
++						 void * data,
++						 std::string &amp; errmsg )
++	{
++		char * cerrmsg = 0;
++		int ret = 0;
++		try
++		{
++			// allow callback to safely throw.
++			ret = sqlite3_exec( this-&gt;m_db, sql.c_str(), callback, data, &amp;cerrmsg );
++		}
++		catch( ... )
++		{
++			if( cerrmsg )
++			{
++				errmsg = cerrmsg;
++				sqlite3_free( cerrmsg );
++			}
++			throw;
++		}
++		if( cerrmsg )
++		{
++			errmsg = cerrmsg;
++			sqlite3_free( cerrmsg );
++		}
++		return ret;
++	}
++
++	int sqlite3_connection::executecallback( std::string const &amp; sql,
++						 sqlite3_callback func,
++						 void * data )
++	{
++		std::string ignored;
++		return this-&gt;executecallback( sql, func, data, ignored );
++	}
++
++	/**
++	   An internal implementation detail of table_generator.
++	*/
++	class table_generator::table_generator_impl
++	{
++
++	public:
++		sqlite3_connection * db;
++		std::string name;
++		std::vector&lt;std::string&gt; list;
++	};
++
++// 	int sqlite3_function_info8::create( sqlite3 * db )
++// 	{
++// 		return sqlite3_create_function(
++// 					       db,
++// 					       this-&gt;name,
++// 					       this-&gt;argc,
++// 					       0,
++// 					       this-&gt;user_data,
++// 					       this-&gt;func,
++// 					       this-&gt;step,
++// 					       this-&gt;final );
++// 	}
++
++// 	int sqlite3_function_info16::create( sqlite3 * db )
++// 	{
++// 		return sqlite3_create_function16(
++// 					       db,
++// 					       this-&gt;name,
++// 					       this-&gt;argc,
++// 					       1,
++// 					       this-&gt;user_data,
++// 					       this-&gt;func,
++// 					       this-&gt;step,
++// 					       this-&gt;final );
++// 	}
++
++	table_generator::table_generator( sqlite3_connection &amp; con, std::string const &amp; n )
++		: m_pimpl( new table_generator::table_generator_impl )
++	{
++		int check = con.executeint( &quot;select count(*) from sqlite_master where type like 'table' and name like '&quot;+n+&quot;'&quot; );
++		// ^^^ we use 'like' here because sqlite3 is case-insensitive
++		if( 0 != check )
++		{
++			throw database_error( &quot;table_generator() db table '%s' already exists.&quot;, n.c_str() );
++		}
++		this-&gt;m_pimpl-&gt;db = &con;
++		this-&gt;m_pimpl-&gt;name = n;
++	}
++
++	table_generator::~table_generator() throw()
++	{
++		delete this-&gt;m_pimpl;
++	}
++
++	table_generator &amp; table_generator::operator()( std::string const &amp; fld )
++	{
++		this-&gt;m_pimpl-&gt;list.push_back( fld );
++		return *this;
++	}
++
++	void table_generator::create()
++	{
++		size_t sz = this-&gt;m_pimpl-&gt;list.size();
++		if( ! sz )
++		{
++			throw database_error( &quot;table_generator::operator(): cannot create a table with no fields. Try using operator()(string) to add fields.&quot; );
++		}
++		std::ostringstream os;
++		os &lt;&lt; &quot;create table &quot;&lt;&lt; this-&gt;m_pimpl-&gt;name &lt;&lt; &quot;(&quot;;
++		for( size_t i = 0; i &lt; sz; ++i )
++		{
++			os &lt;&lt; this-&gt;m_pimpl-&gt;list[i];
++			if( i &lt; (sz-1) ) os &lt;&lt; &quot;,&quot;;
++		}
++		os &lt;&lt; &quot;);&quot;;
++		this-&gt;m_pimpl-&gt;db-&gt;executenonquery( os.str() );
++	}
++
++}
+
+Added: trunk/lib/sqlite3x/sqlite3x_cursor.cpp
+===================================================================
+--- trunk/lib/sqlite3x/sqlite3x_cursor.cpp	2008-07-08 17:08:58 UTC (rev 1415)
++++ trunk/lib/sqlite3x/sqlite3x_cursor.cpp	2008-07-08 21:12:11 UTC (rev 1416)
+@@ -0,0 +1,161 @@
++/*
++  Copyright (C) 2004-2005 Cory Nelson
++
++  This software is provided 'as-is', without any express or implied
++  warranty.  In no event will the authors be held liable for any damages
++  arising from the use of this software.
++
++  Permission is granted to anyone to use this software for any purpose,
++  including commercial applications, and to alter it and redistribute it
++  freely, subject to the following restrictions:
++
++  1. The origin of this software must not be misrepresented; you must not
++  claim that you wrote the original software. If you use this software
++  in a product, an acknowledgment in the product documentation would be
++  appreciated but is not required.
++  2. Altered source versions must be plainly marked as such, and must not be
++  misrepresented as being the original software.
++  3. This notice may not be removed or altered from any source distribution.
++	
++*/
++
++#include &lt;sqlite3.h&gt;
++#include &quot;sqlite3x.hpp&quot;
++
++namespace sqlite3x {
++
++	sqlite3_cursor::sqlite3_cursor() : cmd(NULL) {}
++
++	sqlite3_cursor::sqlite3_cursor(const sqlite3_cursor &amp;copy) : cmd(copy.cmd) {
++		if(this-&gt;cmd) ++this-&gt;cmd-&gt;refs;
++	}
++
++	sqlite3_cursor::sqlite3_cursor(sqlite3_command &amp; cmd) : cmd(&amp;cmd) {
++		++this-&gt;cmd-&gt;refs;
++	}
++
++	sqlite3_cursor::~sqlite3_cursor() {
++		this-&gt;close();
++	}
++
++	sqlite3_cursor&amp; sqlite3_cursor::operator=(const sqlite3_cursor &amp;copy) {
++		this-&gt;close();
++
++		this-&gt;cmd=copy.cmd;
++		if(this-&gt;cmd) ++this-&gt;cmd-&gt;refs;
++
++		return *this;
++	}
++
++	int sqlite3_cursor::colcount()
++	{
++		if( ! this-&gt;cmd )
++		{
++			throw database_error(&quot;sqlite3_cursor::colcount(): reader is closed&quot;);
++		}
++		return this-&gt;cmd-&gt;colcount();
++	}
++
++	bool sqlite3_cursor::step() {
++		if(!this-&gt;cmd) throw database_error(&quot;sqlite3_cursor::step(): reader is closed&quot;);
++
++		switch(sqlite3_step(this-&gt;cmd-&gt;stmt)) {
++		  case SQLITE_ROW:
++			  return true;
++		  case SQLITE_DONE:
++			  return false;
++		  default:
++			  throw database_error(this-&gt;cmd-&gt;con);
++		}
++	}
++
++	void sqlite3_cursor::reset() {
++		if(!this-&gt;cmd) throw database_error(&quot;sqlite3_cursor::reset(): reader is closed&quot;);
++
++		if(! this-&gt;cmd-&gt;reset() )
++		{
++			throw database_error(&quot;sqlite3_cursor::reset() db error: %s&quot;, this-&gt;cmd-&gt;con.errormsg().c_str() );
++		}
++	}
++
++	void sqlite3_cursor::close() {
++		if(this-&gt;cmd) {
++			if(--this-&gt;cmd-&gt;refs==0) { sqlite3_reset(this-&gt;cmd-&gt;stmt); }
++			this-&gt;cmd=NULL;
++		}
++	}
++
++#define READER_CHECK(FUNC) \
++	if( ! this-&gt;cmd ) throw database_error( &quot;sqlite3_cursor::%s(%d): reader is closed&quot;, # FUNC, index ); \
++	if( (index)&gt;(this-&gt;cmd-&gt;argc-1)) throw database_error(&quot;sqlite3_cursor::%s(%d): index out of range&quot;, # FUNC, index );
++
++ 	bool sqlite3_cursor::isnull(int index) {
++ 		READER_CHECK(isnull);
++ 		return sqlite3_column_type(this-&gt;cmd-&gt;stmt, index) == SQLITE_NULL;
++ 	}
++
++	int sqlite3_cursor::getint(int index) {
++		READER_CHECK(getint);
++		return sqlite3_column_int(this-&gt;cmd-&gt;stmt, index);
++	}
++
++	int64_t sqlite3_cursor::getint64(int index) {
++		READER_CHECK(getint64);
++		return sqlite3_column_int64(this-&gt;cmd-&gt;stmt, index);
++	}
++
++	double sqlite3_cursor::getdouble(int index) {
++		READER_CHECK(getdouble);
++		return sqlite3_column_double(this-&gt;cmd-&gt;stmt, index);
++	}
++
++	std::string sqlite3_cursor::getstring(int index) {
++		READER_CHECK(string);
++		return std::string((const char*)sqlite3_column_text(this-&gt;cmd-&gt;stmt, index), sqlite3_column_bytes(this-&gt;cmd-&gt;stmt, index));
++	}
++
++	char const * sqlite3_cursor::getstring(int index, int &amp; size) {
++		READER_CHECK(string);
++		size = sqlite3_column_bytes(this-&gt;cmd-&gt;stmt, index);
++		return (char const *)sqlite3_column_text(this-&gt;cmd-&gt;stmt, index);
++	}
++
++#if SQLITE3X_USE_WCHAR
++	std::wstring sqlite3_cursor::getstring16(int index) {
++		READER_CHECK(wstring);
++		return std::wstring((const wchar_t*)sqlite3_column_text16(this-&gt;cmd-&gt;stmt, index), sqlite3_column_bytes16(this-&gt;cmd-&gt;stmt, index)/2);
++	}
++#endif
++
++	std::string sqlite3_cursor::getblob(int index) {
++		READER_CHECK(string);
++		return std::string((const char*)sqlite3_column_blob(this-&gt;cmd-&gt;stmt, index), sqlite3_column_bytes(this-&gt;cmd-&gt;stmt, index));
++	}
++
++	void const * sqlite3_cursor::getblob(int index, int &amp; size ) {
++		READER_CHECK(string);
++		size = sqlite3_column_bytes(this-&gt;cmd-&gt;stmt, index);
++		return sqlite3_column_blob(this-&gt;cmd-&gt;stmt, index);
++	}
++
++	std::string sqlite3_cursor::getcolname(int index) {
++		READER_CHECK(string);
++		char const * cn = sqlite3_column_name(this-&gt;cmd-&gt;stmt, index);
++		return cn ? cn : &quot;&quot;;
++	}
++
++// 	char const * sqlite3_cursor::getcolname(int index) {
++// 		READER_CHECK(string);
++// 		char const * cn = sqlite3_column_name(this-&gt;cmd-&gt;stmt, index);
++// 		return cn ? cn : &quot;&quot;;
++// 	}
++
++#if SQLITE3X_USE_WCHAR
++	std::wstring sqlite3_cursor::getcolname16(int index) {
++		READER_CHECK(wstring);
++		return (const wchar_t*)sqlite3_column_name16(this-&gt;cmd-&gt;stmt, index);
++	}
++#endif
++
++#undef READER_CHECK
++}
+
+Added: trunk/lib/sqlite3x/sqlite3x_exception.cpp
+===================================================================
+--- trunk/lib/sqlite3x/sqlite3x_exception.cpp	2008-07-08 17:08:58 UTC (rev 1415)
++++ trunk/lib/sqlite3x/sqlite3x_exception.cpp	2008-07-08 21:12:11 UTC (rev 1416)
+@@ -0,0 +1,67 @@
++/*
++	Copyright (C) 2004-2005 Cory Nelson
++
++	This software is provided 'as-is', without any express or implied
++	warranty.  In no event will the authors be held liable for any damages
++	arising from the use of this software.
++
++	Permission is granted to anyone to use this software for any purpose,
++	including commercial applications, and to alter it and redistribute it
++	freely, subject to the following restrictions:
++
++	1. The origin of this software must not be misrepresented; you must not
++		claim that you wrote the original software. If you use this software
++		in a product, an acknowledgment in the product documentation would be
++		appreciated but is not required.
++	2. Altered source versions must be plainly marked as such, and must not be
++		misrepresented as being the original software.
++	3. This notice may not be removed or altered from any source distribution.
++	
++	CVS Info :
++		$Author: sgbeal $
++		$Date: 2007/02/26 21:33:39 $
++		$Revision: 1.6 $
++*/
++
++#include &lt;sqlite3.h&gt;
++#include &quot;sqlite3x.hpp&quot;
++#include &lt;cstdarg&gt; // varargs handling
++#include &lt;limits&gt; // std::max()
++#include &lt;cstring&gt; // strlen()
++#include &lt;cstdio&gt; // vsnprintf()
++#include &lt;vector&gt;
++namespace sqlite3x {
++
++	database_error::~database_error() throw() {}
++
++	database_error::database_error(sqlite3_connection &amp;con)
++		: m_what( &quot;sqlite3_connection[&quot;+con.name()+&quot;]: &quot;+con.errormsg() )
++	{
++	}
++
++	char const * database_error::what() const throw()
++	{
++		return this-&gt;m_what.c_str();
++	}
++
++	database_error::database_error(const char *format,...)
++	{
++		const int buffsz = static_cast&lt;int&gt;( std::max( (size_t) 2048, strlen(format) * 2 ) );
++		std::vector&lt;char&gt; buffer( buffsz, '\0' );
++		va_list vargs;
++		va_start ( vargs, format );
++		int size = vsnprintf(&amp;buffer[0], buffsz, format, vargs);
++		va_end( vargs );
++		if (size &gt; (buffsz-1))
++		{
++			// replace tail of msg with &quot;...&quot;
++			size = buffsz-1;
++			for( int i = buffsz-4; i &lt; buffsz-1; ++i )
++			{
++				buffer[i] = '.';
++			}
++		}
++		buffer[size] = '\0';
++		this-&gt;m_what = std::string( &amp;buffer[0], &amp;buffer[0]+size );
++	}
++}
+
+Added: trunk/lib/sqlite3x/sqlite3x_settings_db.cpp
+===================================================================
+--- trunk/lib/sqlite3x/sqlite3x_settings_db.cpp	2008-07-08 17:08:58 UTC (rev 1415)
++++ trunk/lib/sqlite3x/sqlite3x_settings_db.cpp	2008-07-08 21:12:11 UTC (rev 1416)
+@@ -0,0 +1,200 @@
++
++#include &quot;sqlite3x_settings_db.hpp&quot;
++
++namespace sqlite3x
++{
++
++	settings_db::settings_db()
++		: m_db( 0 )
++	{
++	}
++
++	settings_db::settings_db( std::string const &amp; dbname )
++		: m_db( 0 )
++	{
++		this-&gt;open( dbname );
++	}
++
++	settings_db::~settings_db()
++	{
++		try
++		{
++			this-&gt;close();
++		}
++		catch(...)
++		{
++		}
++	}
++
++	bool settings_db::is_open() const
++	{
++		return 0 != this-&gt;m_db;
++	}
++
++	void settings_db::open( std::string const &amp; dbname )
++	{
++		this-&gt;close();
++		this-&gt;m_db = new sqlite3_connection( dbname );
++		this-&gt;init();
++	}
++
++	void settings_db::close()
++	{
++		if( this-&gt;m_db )
++		{
++			this-&gt;m_db-&gt;close();
++			delete this-&gt;m_db;
++		}
++		this-&gt;m_db = 0;
++	}
++
++	void settings_db::clear()
++	{
++		this-&gt;m_db-&gt;executenonquery( &quot;delete from settings&quot; );
++	}
++
++	void settings_db::clear( std::string const &amp; where )
++	{
++		this-&gt;m_db-&gt;executenonquery( &quot;delete from settings &quot; + where );
++	}
++
++
++	sqlite3_connection * settings_db::db()
++	{
++		return this-&gt;m_db;
++	}
++
++	static std::string SettingsDb_Set_SQL = &quot;insert into settings values(?,?)&quot;;
++
++	void settings_db::set( std::string const &amp; key, int val )
++	{
++		sqlite3_command st( *this-&gt;m_db, SettingsDb_Set_SQL );
++		st.bind( 1, key );
++		st.bind( 2, val );
++		st.executenonquery();
++	}
++
++	void settings_db::set( std::string const &amp; key, sqlite_int64 val )
++	{
++		sqlite3_command st( *this-&gt;m_db, SettingsDb_Set_SQL );
++		st.bind( 1, key );
++		st.bind( 2, val );
++		st.executenonquery();
++	}
++
++	void settings_db::set( std::string const &amp; key, bool val )
++	{
++		sqlite3_command st( *this-&gt;m_db, SettingsDb_Set_SQL );
++		st.bind( 1, key );
++		st.bind( 2, val ? 1 : 0 );
++		st.executenonquery();
++	}
++
++	void settings_db::set( std::string const &amp; key, double val )
++	{
++		sqlite3_command st( *this-&gt;m_db, SettingsDb_Set_SQL );
++		st.bind( 1, key );
++		st.bind( 2, val );
++		st.executenonquery();
++	}
++
++	void settings_db::set( std::string const &amp; key, std::string const &amp; val )
++	{
++		sqlite3_command st( *this-&gt;m_db, SettingsDb_Set_SQL );
++		st.bind( 1, key );
++		st.bind( 2, val );
++		st.executenonquery();
++	}
++
++	void settings_db::set( std::string const &amp; key, char const * val )
++	{
++		sqlite3_command st( *this-&gt;m_db, SettingsDb_Set_SQL );
++		st.bind( 1, key );
++		st.bind( 2, val ? val : &quot;&quot; );
++		st.executenonquery();
++	}
++
++	void settings_db::init()
++	{
++		this-&gt;m_db-&gt;executenonquery( &quot;create table if not exists settings(key PRIMARY KEY ON CONFLICT REPLACE,value)&quot; );
++		//this-&gt;m_db-&gt;executenonquery( &quot;PRAGMA temp_store = MEMORY&quot; ); // i don't like this, but want to speed up access
++		//this-&gt;m_db-&gt;executenonquery( &quot;PRAGMA synchronous = OFF&quot; ); // again: i don't like this but want more speed
++	}
++
++	static std::string SettingsDb_Get_SQL = &quot;select value from settings where key = ?&quot;;
++
++	bool settings_db::get( std::string const &amp; key, int &amp; val )
++	{
++		try
++		{
++			sqlite3_command st( *this-&gt;m_db, SettingsDb_Get_SQL );
++			st.bind( 1, key );
++			val = st.executeint();
++		}
++		catch( ... )
++		{
++			return false;
++		}
++		return true;
++	}
++
++	bool settings_db::get( std::string const &amp; key, sqlite_int64 &amp; val )
++	{
++		try
++		{
++			sqlite3_command st( *this-&gt;m_db, SettingsDb_Get_SQL );
++			st.bind( 1, key );
++			val = st.executeint64();
++		}
++		catch( ... )
++		{
++			return false;
++		}
++		return true;
++	}
++	bool settings_db::get( std::string const &amp; key, bool &amp; val )
++	{
++		try
++		{
++			sqlite3_command st( *this-&gt;m_db, SettingsDb_Get_SQL );
++			st.bind( 1, key );
++			val = (st.executeint() ? true : false);
++		}
++		catch( ... )
++		{
++			return false;
++		}
++		return true;
++	}
++	bool settings_db::get( std::string const &amp; key, double &amp; val )
++	{
++		try
++		{
++			sqlite3_command st( *this-&gt;m_db, SettingsDb_Get_SQL );
++			st.bind( 1, key );
++			val = st.executedouble();
++		}
++		catch( ... )
++		{
++			return false;
++		}
++		return true;
++	}
++	bool settings_db::get( std::string const &amp; key, std::string &amp; val )
++	{
++		try
++		{
++			sqlite3_command st( *this-&gt;m_db, SettingsDb_Get_SQL );
++			st.bind( 1, key );
++			val = st.executestring();
++		}
++		catch( ... )
++		{
++			return false;
++		}
++		return true;
++	}
++
++
++
++} // namespace
+
+Added: trunk/lib/sqlite3x/sqlite3x_settings_db.hpp
+===================================================================
+--- trunk/lib/sqlite3x/sqlite3x_settings_db.hpp	2008-07-08 17:08:58 UTC (rev 1415)
++++ trunk/lib/sqlite3x/sqlite3x_settings_db.hpp	2008-07-08 21:12:11 UTC (rev 1416)
+@@ -0,0 +1,128 @@
++#ifndef s11n_net_SQLITE3X_SETTINGS_DB_INCLUDED
++#define s11n_net_SQLITE3X_SETTINGS_DB_INCLUDED 1
++
++#include &quot;sqlite3x.hpp&quot;
++
++namespace sqlite3x {
++
++	/**
++	   settings_db ia a very simplistic settings-data database for
++	   use with the sqlite3x database layer.
++
++	   Usage:
++&lt;pre&gt;
++	   settings_db db(&quot;my.db&quot;);
++	   db.set(&quot;one&quot;, 1 );
++	   db.set(&quot;two&quot;, 2.0 );
++	   db.set(&quot;a_string&quot;, &quot;a string&quot; );
++
++	   std::string sval;
++	   assert( db.get( &quot;a_string&quot;, sval ) );
++&lt;/pre&gt;
++
++	Obviously, an assert may be too harsh for what you're doing.
++
++	*/
++	class settings_db
++	{
++	public:
++		/**
++		   Calls open(dbname). This ctor will throw if dbname
++		   cannot be opened or if it is not a database.
++		*/
++		explicit settings_db( std::string const &amp; dbname );
++		/**
++		   Creates an unopened database. You must call open()
++		   before you can use this object.
++		 */
++		settings_db();
++		/**
++		   Closes this database.
++		*/
++		~settings_db();
++		/**
++		   Returns true if open() has succeeded.
++		*/
++		bool is_open() const;
++		/**
++		   Empties the database. Does not remove the db file.
++		*/
++		void clear();
++		/**
++		   Empties the database items matching the given WHERE
++		   clause. Does not remove the db file.
++
++		   'where' should be a full SQL where statement, e.g.:
++
++		   &quot;WHERE KEY LIKE 'x%'&quot;
++
++		   The field names in this db are KEY and VALUE.
++		*/
++		void clear( std::string const &amp; where );
++
++		/**
++		   Sets the given key/value pair.
++		 */
++		void set( std::string const &amp; key, int val );
++		/**
++		   Sets the given key/value pair.
++		 */
++		void set( std::string const &amp; key, sqlite_int64 val );
++		/**
++		   Sets the given key/value pair.
++		 */
++		void set( std::string const &amp; key, bool val );
++		/**
++		   Sets the given key/value pair.
++		 */
++		void set( std::string const &amp; key, double val );
++		/**
++		   Sets the given key/value pair.
++		 */
++		void set( std::string const &amp; key, std::string const &amp; val );
++		/**
++		   Sets the given key/value pair.
++		 */
++		void set( std::string const &amp; key, char const * val );
++
++		/**
++		   Fetches the given key from the db. If it is found,
++		   it is converted to the data type of val, val is
++		   assigned that value, and true is returned. If false
++		   is returned then val is unchanged.
++		*/
++		bool get( std::string const &amp; key, int &amp; val );
++		/** See get(string,int). */
++		bool get( std::string const &amp; key, sqlite_int64 &amp; val );
++		/** See get(string,int). */
++		bool get( std::string const &amp; key, bool &amp; val );
++		/** See get(string,int). */
++		bool get( std::string const &amp; key, double &amp; val );
++		/** See get(string,int). */
++		bool get( std::string const &amp; key, std::string &amp; val );
++
++		/**
++		   Opens the database dbname or throws on error.
++		*/
++		void open( std::string const &amp; dbname );
++		/**
++		   Closes this database. Not normally necessary, as
++		   this happens during the destruction of this object.
++		*/
++		void close();
++
++		/**
++		   If you want low-level info about the db, here's the
++		   handle to it. This will be null before open() has
++		   succeeded.
++		 */
++		sqlite3_connection * db();
++	private:
++		void init();
++		sqlite3_connection * m_db;
++	};
++
++} // namespace whnet
++
++
++#endif // s11n_net_SQLITE3X_SETTINGS_DB_INCLUDED
+
+Added: trunk/lib/sqlite3x/sqlite3x_transaction.cpp
+===================================================================
+--- trunk/lib/sqlite3x/sqlite3x_transaction.cpp	2008-07-08 17:08:58 UTC (rev 1415)
++++ trunk/lib/sqlite3x/sqlite3x_transaction.cpp	2008-07-08 21:12:11 UTC (rev 1416)
+@@ -0,0 +1,61 @@
++/*
++	Copyright (C) 2004-2005 Cory Nelson
++
++	This software is provided 'as-is', without any express or implied
++	warranty.  In no event will the authors be held liable for any damages
++	arising from the use of this software.
++
++	Permission is granted to anyone to use this software for any purpose,
++	including commercial applications, and to alter it and redistribute it
++	freely, subject to the following restrictions:
++
++	1. The origin of this software must not be misrepresented; you must not
++		claim that you wrote the original software. If you use this software
++		in a product, an acknowledgment in the product documentation would be
++		appreciated but is not required.
++	2. Altered source versions must be plainly marked as such, and must not be
++		misrepresented as being the original software.
++	3. This notice may not be removed or altered from any source distribution.
++	
++	CVS Info :
++		$Author: sgbeal $
++		$Date: 2007/02/25 23:59:06 $
++		$Revision: 1.4 $
++*/
++
++#include &lt;sqlite3.h&gt;
++#include &quot;sqlite3x.hpp&quot;
++
++namespace sqlite3x {
++
++sqlite3_transaction::sqlite3_transaction(sqlite3_connection &amp;con, bool start) : con(con),intrans(false) {
++	if(start) begin();
++}
++
++sqlite3_transaction::~sqlite3_transaction() {
++	if(intrans) {
++		try {
++			rollback();
++		}
++		catch(...) {
++			return;
++		}
++	}
++}
++
++void sqlite3_transaction::begin() {
++	con.executenonquery(&quot;begin&quot;);
++	intrans=true;
++}
++
++void sqlite3_transaction::commit() {
++	con.executenonquery(&quot;commit&quot;);
++	intrans=false;
++}
++
++void sqlite3_transaction::rollback() {
++	con.executenonquery(&quot;rollback&quot;);
++	intrans=false;
++}
++
++}
+
+Modified: trunk/pkg/common/Engine/StandAloneEngine/PeriodicEngines.hpp
+===================================================================
+--- trunk/pkg/common/Engine/StandAloneEngine/PeriodicEngines.hpp	2008-07-08 17:08:58 UTC (rev 1415)
++++ trunk/pkg/common/Engine/StandAloneEngine/PeriodicEngines.hpp	2008-07-08 21:12:11 UTC (rev 1416)
+@@ -9,8 +9,8 @@
+ class PeriodicEngine:  public StandAloneEngine {
+ 	private:
+ 		Real getClock(){ timeval tp; gettimeofday(&amp;tp,NULL); return tp.tv_sec+tp.tv_usec/1e6; }
++	public:
+ 		Real virtPeriod, virtLast, realPeriod, realLast; long iterPeriod,iterLast;
+-	public:
+ 		PeriodicEngine(): virtPeriod(0),virtLast(0),realPeriod(0),realLast(0),iterPeriod(0),iterLast(0) { realLast=getClock(); }
+ 		virtual bool isActivated(){
+ 			Real virtNow=Omega::instance().getSimulationTime();
+@@ -36,6 +36,44 @@
+ };
+ REGISTER_SERIALIZABLE(PeriodicEngine,false);
+ 
++/* PeriodicEngine but with constraint that may be stretched by a given stretchFactor (default 2).
++ * Limits for each periodicity criterion may be set and the mayStretch bool says whether the period
++ * can be stretched (default: doubled) without active criteria getting off limits.
++ *
++ * stretchFactor must be positive; if &gt;1, period is stretched, for &lt;1, it is shrunk.
++ *
++ * Limit consistency (whether actual period is not over/below the limit) is checked: period is set to the 
++ * limit value if we are off.
++ */
++class StretchPeriodicEngine: public PeriodicEngine{
++	public:
++	StretchPeriodicEngine(): PeriodicEngine(), realLim(0.), virtLim(0.), iterLim(0), stretchFactor(2.){}
++	Real realLim, virtLim; long iterLim;
++	Real stretchFactor;
++	bool mayStretch;
++	virtual bool isActivated(){
++		assert(stretchFactor&gt;0);
++		if(stretchFactor&gt;1){iterPeriod=min(iterPeriod,iterLim); realPeriod=min(realPeriod,realLim); virtPeriod=min(virtPeriod,virtLim);}
++		else {iterPeriod=max(iterPeriod,iterLim); realPeriod=max(realPeriod,realLim); virtPeriod=max(virtPeriod,virtLim);}
++		mayStretch=((virtPeriod&lt;0 || (stretchFactor&gt;1 ? stretchFactor*virtPeriod&lt;=virtLim : stretchFactor*virtPeriod&gt;=virtLim))
++		&amp;&amp; (realPeriod&lt;0 || (stretchFactor&gt;1 ? stretchFactor*realPeriod&lt;=realLim : stretchFactor*realPeriod&gt;=realLim))
++		&amp;&amp; (iterPeriod&lt;0 || (stretchFactor&gt;1 ? stretchFactor*iterPeriod&lt;=iterLim : stretchFactor*iterPeriod&gt;=iterLim)));
++		return PeriodicEngine::isActivated();
++	}
++	protected:
++		void registerAttributes(){ PeriodicEngine::registerAttributes();
++			REGISTER_ATTRIBUTE(realLim);
++			REGISTER_ATTRIBUTE(virtLim);
++			REGISTER_ATTRIBUTE(iterLim);
++		}
++	REGISTER_CLASS_NAME(StretchPeriodicEngine);
++	REGISTER_BASE_CLASS_NAME(PeriodicEngine);
++};
++REGISTER_SERIALIZABLE(StretchPeriodicEngine,false);
++
++// obsolete, too complicated etc
++#if 1 
++
+ /* Run an action with adjustable and constrained periodicity (real time, virtual time, iteration)
+  *
+  * 3 criteria can be used: iteration period, realTime (wallclock) period, virtTime (simulation time) period.
+@@ -52,10 +90,8 @@
+  *
+  * This engine may be used only by deriving an engine with something useful in action(MetaBody*);
+  * if used as-is, it will throw when activated.
+- *
+- * @bug we use gettimeofday() to get current time; benchmark it, since it involves a syscall?; better use HPET timer (async?) instead of polling the clock?
+  */
+-class RangePeriodicEngine: public StandAloneEngine {
++class __attribute__((deprecated)) RangePeriodicEngine: public StandAloneEngine {
+ 	private:
+ 		Vector3r virtTimeLim,realTimeLim,iterLim;
+ 		Real lastRealTime,lastVirtTime; long lastIter;
+@@ -107,3 +143,4 @@
+ };
+ REGISTER_SERIALIZABLE(RangePeriodicEngine,false);
+ 
++#endif
+
+Modified: trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.cpp
+===================================================================
+--- trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.cpp	2008-07-08 17:08:58 UTC (rev 1415)
++++ trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.cpp	2008-07-08 21:12:11 UTC (rev 1416)
+@@ -102,6 +102,12 @@
+ 	return false;
+ }
+ 
++void OpenGLRenderingEngine::setRefSe3(const shared_ptr&lt;MetaBody&gt;&amp; rootBody){
++	LOG_DEBUG(&quot;(re)initializing reference positions and orientations.&quot;);
++	refSe3.clear(); refSe3.reserve(rootBody-&gt;bodies-&gt;size());
++	FOREACH(const shared_ptr&lt;Body&gt;&amp; b, *rootBody-&gt;bodies) refSe3.push_back(b-&gt;physicalParameters-&gt;se3);
++}
++
+ Se3r OpenGLRenderingEngine::renderedSe3(const shared_ptr&lt;Body&gt;&amp; b){
+ 	if(!(scaleDisplacements||scaleRotations)) return b-&gt;physicalParameters-&gt;se3;
+ 	const body_id_t&amp; id=b-&gt;getId();
+@@ -158,13 +164,10 @@
+ 
+ 	// if scaling positions or orientations, _and_ if it is for the first time, save current se3 as reference values
+ 	// if # of bodies changes, we have to reset those
+-	if((scaleDisplacements || scaleRotations) &amp;&amp; refSe3.size()!=rootBody-&gt;bodies-&gt;size()){
+-		LOG_DEBUG(&quot;(re)initializing reference positions and orientations.&quot;);
+-		refSe3.clear(); refSe3.reserve(rootBody-&gt;bodies-&gt;size());
+-		FOREACH(const shared_ptr&lt;Body&gt;&amp; b, *rootBody-&gt;bodies) refSe3.push_back(b-&gt;physicalParameters-&gt;se3);
+-	}
+-	// debugging only
+-	#if 1
++	if((scaleDisplacements || scaleRotations) &amp;&amp; refSe3.size()!=rootBody-&gt;bodies-&gt;size()) setRefSe3(rootBody);
++
++	// debugging only: show line between spatial and scaled body position
++	#if 0
+ 		if(scaleDisplacements){
+ 			glColor3d(1,1,0); glBegin(GL_LINES); 
+ 			FOREACH(const shared_ptr&lt;Body&gt;&amp; b, *rootBody-&gt;bodies){
+@@ -550,7 +553,10 @@
+ 
+ 	REGISTER_ATTRIBUTE(Cast_shadows);
+ 	REGISTER_ATTRIBUTE(Shadow_volumes);
+-	REGISTER_ATTRIBUTE(Fast_shadow_volume);	
++	REGISTER_ATTRIBUTE(Fast_shadow_volume);
++
++	//REGISTER_ATTRIBUTE(clipPlaneSe3);
++	//REGISTER_ATTRIBUTE(clipPlaneActive); // oh, serialization chokes on vector&lt;bool&gt; ... :-|
+ }
+ 
+ 
+
+Modified: trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.hpp
+===================================================================
+--- trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.hpp	2008-07-08 17:08:58 UTC (rev 1415)
++++ trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.hpp	2008-07-08 21:12:11 UTC (rev 1416)
+@@ -41,6 +41,7 @@
+ 		bool pointClipped(const Vector3r&amp; p);
+ 		Se3r renderedSe3(const shared_ptr&lt;Body&gt;&amp;);
+ 		vector&lt;Vector3r&gt; clipPlaneNormals;
++		void setRefSe3(const shared_ptr&lt;MetaBody&gt;&amp; rootBody);
+ 
+ 	private :
+ 		DynLibDispatcher&lt; InteractionGeometry , GLDrawInteractionGeometryFunctor, void , TYPELIST_5(const shared_ptr&lt;InteractionGeometry&gt;&amp;, const shared_ptr&lt;Interaction&gt;&amp; , const shared_ptr&lt;Body&gt;&amp;, const shared_ptr&lt;Body&gt;&amp;, bool) &gt; interactionGeometryDispatcher;
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/CapillaryCohesiveLaw.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/CapillaryCohesiveLaw.cpp	2008-07-08 17:08:58 UTC (rev 1415)
++++ trunk/pkg/dem/Engine/StandAloneEngine/CapillaryCohesiveLaw.cpp	2008-07-08 21:12:11 UTC (rev 1416)
+@@ -306,6 +306,8 @@
+         return result;
+ }
+ 
++CREATE_LOGGER(Tableau);
++
+ Tableau::Tableau()
+ {}
+ 
+@@ -323,7 +325,7 @@
+ 		static bool first=true;
+ 		if(first)
+ 		{
+-	                std::cerr &lt;&lt; &quot;WARNING: cannot open file used for capillary law, in TriaxalTestWater&quot; &lt;&lt; endl;
++			LOG_DEBUG(&quot;WARNING: cannot open file used for capillary law, in TriaxalTestWater&quot;);
+ 			first=false;
+ 		}
+ 		return;
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/CapillaryCohesiveLaw.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/CapillaryCohesiveLaw.hpp	2008-07-08 17:08:58 UTC (rev 1415)
++++ trunk/pkg/dem/Engine/StandAloneEngine/CapillaryCohesiveLaw.hpp	2008-07-08 21:12:11 UTC (rev 1416)
+@@ -86,6 +86,7 @@
+ 
+ class Tableau
+ {	
++	DECLARE_LOGGER;
+ 	public: 
+ 		Real R;
+ 		std::vector&lt;TableauD&gt; full_data;
+
+Added: trunk/pkg/dem/Engine/StandAloneEngine/SQLiteRecorder.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/SQLiteRecorder.cpp	2008-07-08 17:08:58 UTC (rev 1415)
++++ trunk/pkg/dem/Engine/StandAloneEngine/SQLiteRecorder.cpp	2008-07-08 21:12:11 UTC (rev 1416)
+@@ -0,0 +1,59 @@
++#include&quot;SQLiteRecorder.hpp&quot;
++#include&lt;boost/algorithm/string.hpp&gt;
++#include&lt;yade/core/MetaBody.hpp&gt;
++using namespace boost;
++CREATE_LOGGER(SQLiteRecorder);
++
++void SQLiteRecorder::init(MetaBody* rootBody){
++	//sqlite3_open(dbFile.c_str(),&amp;db);
++	//LOG_DEBUG(&quot;Created db &quot;&lt;&lt;dbFile);
++	// create supertable: TODO
++}
++
++
++void SQLiteRecorder::action(MetaBody* rootBody){
++	//if(!db) init(rootBody);
++	vector&lt;bool&gt; recActive(REC_SENTINEL,false);
++	FOREACH(string&amp; rec, recorders){
++		if(rec==&quot;se3&quot;) recActive[REC_SE3]=true;
++		else if(rec==&quot;rgb&quot;) recActive[REC_RGB]=true;
++		else LOG_ERROR(&quot;Unknown recorder named `&quot;&lt;&lt;rec&lt;&lt;&quot;' (supported are: se3, rgb). Ignored.&quot;);
++	}
++	// init db
++	sqlite3x::sqlite3_connection con(dbFile);	
++	con.executenonquery(&quot;PRAGMA synchronous = OFF&quot;);
++
++	// create table
++	string perBodyTable=&quot;bodies_iter_&quot;+lexical_cast&lt;string&gt;(Omega::instance().getCurrentIteration());
++	assert(0==con.executeint(&quot;select count(*) from sqlite_master where name='&quot;+perBodyTable+&quot;';&quot;)); // table shouldn't exist yet
++	vector&lt;string&gt; columns; columns.push_back(&quot;id&quot;);
++	if(recActive[REC_SE3]){columns.push_back(&quot;se3_x&quot;); columns.push_back(&quot;se3_y&quot;); columns.push_back(&quot;se3_z&quot;); columns.push_back(&quot;se3_ori0&quot;); columns.push_back(&quot;se3_ori1&quot;); columns.push_back(&quot;se3_ori2&quot;); columns.push_back(&quot;se3_ori3&quot;);}
++	if(recActive[REC_RGB]){	columns.push_back(&quot;rgb_r&quot;); columns.push_back(&quot;rgb_g&quot;); columns.push_back(&quot;rgb_b&quot;);}
++	con.executenonquery(&quot;create table &quot;+perBodyTable+&quot; (&quot;+algorithm::join(columns,&quot;,&quot;)+&quot;);&quot;);
++	LOG_DEBUG(&quot;Created table &quot;&lt;&lt;perBodyTable&lt;&lt;&quot; with columns &quot;&lt;&lt;algorithm::join(columns,&quot;,&quot;));
++	// add table metadata to supertable
++	// TODO
++	// loop over bodies
++	sqlite3x::sqlite3_transaction transaction(con);
++	{
++		sqlite3x::sqlite3_command cmd(con,&quot;insert into &quot;+perBodyTable+&quot; values(&quot;+algorithm::join(vector&lt;string&gt;(columns.size(),&quot;?&quot;),&quot;,&quot;)+&quot;);&quot;);
++		FOREACH(const shared_ptr&lt;Body&gt;&amp; b, *rootBody-&gt;bodies){
++			// placeholders are 1-based (!!!)
++			int field=1; cmd.bind(field++,b-&gt;getId());
++			if(recActive[REC_SE3]){
++				const Se3r&amp; se3=b-&gt;physicalParameters-&gt;se3;
++				cmd.bind(field++,se3.position[0]); cmd.bind(field++,se3.position[1]); cmd.bind(field++,se3.position[2]);
++				cmd.bind(field++,se3.orientation[0]); cmd.bind(field++,se3.orientation[1]); cmd.bind(field++,se3.orientation[2]); cmd.bind(field++,se3.orientation[3]);
++			}
++			if(recActive[REC_RGB]){
++				const Vector3r&amp; color=b-&gt;geometricalModel-&gt;diffuseColor;
++				cmd.bind(field++,color[0]); cmd.bind(field++,color[1]); cmd.bind(field++,color[2]);
++			}
++			assert(field-1==(int)columns.size());
++			cmd.executenonquery();
++		}
++	}
++	transaction.commit();
++	con.close();
++}
++
+
+Added: trunk/pkg/dem/Engine/StandAloneEngine/SQLiteRecorder.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/SQLiteRecorder.hpp	2008-07-08 17:08:58 UTC (rev 1415)
++++ trunk/pkg/dem/Engine/StandAloneEngine/SQLiteRecorder.hpp	2008-07-08 21:12:11 UTC (rev 1416)
+@@ -0,0 +1,26 @@
++// 2008 &#194;&#169; V&#195;&#161;clav &#197;&#160;milauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">eudoxos at arcig.cz</A>&gt; 
++#pragma once
++#include&lt;yade/pkg-common/PeriodicEngines.hpp&gt;
++#include&lt;yade/lib-sqlite3x/sqlite3x.hpp&gt;
++
++class SQLiteRecorder: public PeriodicEngine {
++		sqlite3* db;
++	public:
++		enum {REC_SE3=0,REC_RGB,REC_SENTINEL};
++		vector&lt;string&gt; recorders;
++		string dbFile;
++		SQLiteRecorder(): db(NULL) {};
++		void init(MetaBody*);
++		virtual void registerAttributes(){
++			PeriodicEngine::registerAttributes();
++			REGISTER_ATTRIBUTE(recorders);
++			REGISTER_ATTRIBUTE(dbFile);
++		}
++		virtual void action(MetaBody*);
++	DECLARE_LOGGER;
++	REGISTER_CLASS_NAME(SQLiteRecorder);
++	REGISTER_BASE_CLASS_NAME(PeriodicEngine);
++};
++REGISTER_SERIALIZABLE(SQLiteRecorder,false);
++
++
+
+Modified: trunk/pkg/dem/SConscript
+===================================================================
+--- trunk/pkg/dem/SConscript	2008-07-08 17:08:58 UTC (rev 1415)
++++ trunk/pkg/dem/SConscript	2008-07-08 21:12:11 UTC (rev 1416)
+@@ -2,6 +2,10 @@
+ Import('*')
+ env.Install('$PREFIX/lib/yade$SUFFIX/pkg-dem',[
+ 
++	env.SharedLibrary('SQLiteRecorder',
++		['Engine/StandAloneEngine/SQLiteRecorder.cpp'],
++		LIBS=env['LIBS']+['sqlite3x']),
++
+ 	env.SharedLibrary('InteractingMyTetrahedron',
+ 		['DataClass/InteractingGeometry/InteractingMyTetrahedron.cpp']),
+ 
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000375.html">[Yade-commits] r1415 - in branches/przewdnik: core/visualisation	gui/qt3 pkg/common/Engine/StandAloneEngine/Visualisation	pkg/common/RenderingEngine/OpenGLRenderingEngine
+</A></li>
+	<LI>Next message: <A HREF="000377.html">[Yade-commits] r1417 - trunk/core
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#376">[ date ]</a>
+              <a href="thread.html#376">[ thread ]</a>
+              <a href="subject.html#376">[ subject ]</a>
+              <a href="author.html#376">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

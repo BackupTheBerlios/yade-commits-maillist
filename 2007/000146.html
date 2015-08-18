@@ -1,0 +1,1606 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1181 - in trunk: core extra/clump extra/tetra	gui/qt3 pkg/common/Container pkg/common/Engine/StandAloneEngine	pkg/common/RenderingEngine/OpenGLRenderingEngine	pkg/dem/Engine/StandAloneEngine pkg/dem/PreProcessor	pkg/fem/Engine/EngineUnit pkg/lattice/PreProcessor	pkg/lattice/RenderingEngine/GLDrawLatticeInteractingGeometry	pkg/mass-spring/PreProcessor pkg/realtime-rigidbody/PreProcessor
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2007/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1181%20-%20in%20trunk%3A%20core%20extra/clump%20extra/tetra%0A%09gui/qt3%20pkg/common/Container%20pkg/common/Engine/StandAloneEngine%0A%09pkg/common/RenderingEngine/OpenGLRenderingEngine%0A%09pkg/dem/Engine/StandAloneEngine%20pkg/dem/PreProcessor%0A%09pkg/fem/Engine/EngineUnit%20pkg/lattice/PreProcessor%0A%09pkg/lattice/RenderingEngine/GLDrawLatticeInteractingGeometry%0A%09pkg/mass-spring/PreProcessor%20pkg/realtime-rigidbody/PreProcessor&In-Reply-To=%3C200705302029.l4UKThtt002214%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000145.html">
+   <LINK REL="Next"  HREF="000147.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1181 - in trunk: core extra/clump extra/tetra	gui/qt3 pkg/common/Container pkg/common/Engine/StandAloneEngine	pkg/common/RenderingEngine/OpenGLRenderingEngine	pkg/dem/Engine/StandAloneEngine pkg/dem/PreProcessor	pkg/fem/Engine/EngineUnit pkg/lattice/PreProcessor	pkg/lattice/RenderingEngine/GLDrawLatticeInteractingGeometry	pkg/mass-spring/PreProcessor pkg/realtime-rigidbody/PreProcessor</H1>
+    <B>cosurgi at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1181%20-%20in%20trunk%3A%20core%20extra/clump%20extra/tetra%0A%09gui/qt3%20pkg/common/Container%20pkg/common/Engine/StandAloneEngine%0A%09pkg/common/RenderingEngine/OpenGLRenderingEngine%0A%09pkg/dem/Engine/StandAloneEngine%20pkg/dem/PreProcessor%0A%09pkg/fem/Engine/EngineUnit%20pkg/lattice/PreProcessor%0A%09pkg/lattice/RenderingEngine/GLDrawLatticeInteractingGeometry%0A%09pkg/mass-spring/PreProcessor%20pkg/realtime-rigidbody/PreProcessor&In-Reply-To=%3C200705302029.l4UKThtt002214%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1181 - in trunk: core extra/clump extra/tetra	gui/qt3 pkg/common/Container pkg/common/Engine/StandAloneEngine	pkg/common/RenderingEngine/OpenGLRenderingEngine	pkg/dem/Engine/StandAloneEngine pkg/dem/PreProcessor	pkg/fem/Engine/EngineUnit pkg/lattice/PreProcessor	pkg/lattice/RenderingEngine/GLDrawLatticeInteractingGeometry	pkg/mass-spring/PreProcessor pkg/realtime-rigidbody/PreProcessor">cosurgi at mail.berlios.de
+       </A><BR>
+    <I>Wed May 30 22:29:43 CEST 2007</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000145.html">[Yade-commits] r1180 - trunk
+</A></li>
+        <LI>Next message: <A HREF="000147.html">[Yade-commits] r1182 - in trunk: . core extra/clump lib/base	pkg/dem pkg/dem/DataClass/InteractionGeometry	pkg/dem/DataClass/InteractionPhysics	pkg/dem/DataClass/PhysicalParameters	pkg/dem/Engine/DeusExMachina pkg/dem/Engine/EngineUnit	pkg/dem/Engine/StandAloneEngine pkg/dem/PreProcessor
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#146">[ date ]</a>
+              <a href="thread.html#146">[ thread ]</a>
+              <a href="subject.html#146">[ subject ]</a>
+              <a href="author.html#146">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: cosurgi
+Date: 2007-05-30 22:29:39 +0200 (Wed, 30 May 2007)
+New Revision: 1181
+
+Modified:
+   trunk/core/Body.cpp
+   trunk/core/Body.hpp
+   trunk/core/Interaction.cpp
+   trunk/core/Interaction.hpp
+   trunk/core/InteractionContainer.hpp
+   trunk/core/Omega.hpp
+   trunk/extra/clump/Clump.cpp
+   trunk/extra/clump/Clump.hpp
+   trunk/extra/clump/Shop.cpp
+   trunk/extra/clump/pyade.cpp
+   trunk/extra/tetra/Tetra.cpp
+   trunk/extra/tetra/TetraTestGen.cpp
+   trunk/gui/qt3/GLViewer.cpp
+   trunk/gui/qt3/QtEngineEditor.cpp
+   trunk/gui/qt3/QtGeneratedSimulationController.ui
+   trunk/pkg/common/Container/InteractionHashMap.cpp
+   trunk/pkg/common/Container/InteractionHashMap.hpp
+   trunk/pkg/common/Container/InteractionVecSet.cpp
+   trunk/pkg/common/Container/InteractionVecSet.hpp
+   trunk/pkg/common/Container/InteractionVecSetIterator.hpp
+   trunk/pkg/common/Engine/StandAloneEngine/PersistentSAPCollider.cpp
+   trunk/pkg/common/Engine/StandAloneEngine/SAPCollider.cpp
+   trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.cpp
+   trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.hpp
+   trunk/pkg/dem/Engine/StandAloneEngine/AveragePositionRecorder.cpp
+   trunk/pkg/dem/Engine/StandAloneEngine/AveragePositionRecorder.hpp
+   trunk/pkg/dem/Engine/StandAloneEngine/ForceRecorder.cpp
+   trunk/pkg/dem/Engine/StandAloneEngine/ForceRecorder.hpp
+   trunk/pkg/dem/Engine/StandAloneEngine/VelocityRecorder.cpp
+   trunk/pkg/dem/Engine/StandAloneEngine/VelocityRecorder.hpp
+   trunk/pkg/dem/PreProcessor/Funnel.cpp
+   trunk/pkg/dem/PreProcessor/SDECImpactTest.cpp
+   trunk/pkg/dem/PreProcessor/SDECLinkedSpheres.cpp
+   trunk/pkg/dem/PreProcessor/SDECMovingWall.cpp
+   trunk/pkg/dem/PreProcessor/SDECSpheresPlane.cpp
+   trunk/pkg/dem/PreProcessor/TetrahedronsTest.cpp
+   trunk/pkg/dem/PreProcessor/ThreePointBending.cpp
+   trunk/pkg/dem/PreProcessor/TriaxialTest.cpp
+   trunk/pkg/fem/Engine/EngineUnit/FEMSetTextLoader.cpp
+   trunk/pkg/fem/Engine/EngineUnit/FEMSetTextLoader.hpp
+   trunk/pkg/lattice/PreProcessor/LatticeExample.cpp
+   trunk/pkg/lattice/PreProcessor/LatticeExample.hpp
+   trunk/pkg/lattice/RenderingEngine/GLDrawLatticeInteractingGeometry/GLDrawLatticeInteractingGeometry.cpp
+   trunk/pkg/mass-spring/PreProcessor/HangingCloth.cpp
+   trunk/pkg/realtime-rigidbody/PreProcessor/BoxStack.cpp
+   trunk/pkg/realtime-rigidbody/PreProcessor/RotatingBox.cpp
+Log:
+- introduced body_id_t(ype) so that bodies are not numbered as an int, but as a body_id_t
+- added center 'scene button' on first tab of simulation controller
+
+
+
+
+Modified: trunk/core/Body.cpp
+===================================================================
+--- trunk/core/Body.cpp	2007-05-29 16:47:43 UTC (rev 1180)
++++ trunk/core/Body.cpp	2007-05-30 20:29:39 UTC (rev 1181)
+@@ -15,7 +15,7 @@
+ #include &quot;Omega.hpp&quot;
+ 
+ //! This could be -1 if id_t is re-typedef'ed as `int'
+-const id_t Body::ID_NONE=UINT_MAX;
++const body_id_t Body::ID_NONE=body_id_t(-1);
+ /*! The definition will change once Omega disappears, but the interface should be the same.
+  * \warning This relies on Omega::instance().getRootBody() returning the respective rootBody.
+  * Therefore, if you use this from a FileGenerator, you will need to call something like \code
+@@ -28,7 +28,7 @@
+ 	\endcode
+ 	\warning Make sure that a simulation is not running during generation, otherwise it will most likely crash. It seems that Omega::getRootBodyMutex that could be used for this purpose is just a dummy function.
+  * */
+-shared_ptr&lt;Body&gt; Body::byId(Body::id_t _id){return (*(Omega::instance().getRootBody()-&gt;bodies))[_id];}
++shared_ptr&lt;Body&gt; Body::byId(body_id_t _id){return (*(Omega::instance().getRootBody()-&gt;bodies))[_id];}
+ 
+ // we must initialize id = 0, otherwise BodyContainer will crash.
+ Body::Body () : 
+@@ -39,7 +39,7 @@
+ {
+ }
+ 
+-Body::Body (unsigned int newId, int newGroup) :
++Body::Body (body_id_t newId, int newGroup) :
+ 	  Serializable()
+ 	, id(newId)
+ 	, groupMask(newGroup)
+
+Modified: trunk/core/Body.hpp
+===================================================================
+--- trunk/core/Body.hpp	2007-05-29 16:47:43 UTC (rev 1180)
++++ trunk/core/Body.hpp	2007-05-30 20:29:39 UTC (rev 1181)
+@@ -32,7 +32,7 @@
+ class Body : public Serializable
+ {
+ 	private	:
+-		unsigned int id;
++		body_id_t id;
+ 		/*! group to which body belongs (maybe vector&lt;int&gt; , to allow multiple groups?)
+ 		 * we can use them to make group one yellow, and group two red, or to record data
+ 		 * from some selected bodies */
+@@ -40,13 +40,13 @@
+ 	public	:
+ 		/*! \brief Numerical type for ::Body::id.
+ 		 * \bug  Current code mixes signed and unsigned int, this might be a way to enforce consistence. */
+-		typedef unsigned int id_t;
++		// typedef unsigned int id_t;
+ 		//! Clump of which this body makes part. If it is not part of a clump, set to Body::ID_NONE.
+-		id_t clumpId;
++		body_id_t clumpId;
+ 		//! symbolic constant for body that doesn't exist.
+-		static const id_t ID_NONE;
++		static const body_id_t ID_NONE;
+ 		//! get Body pointer given its id. 
+-		static shared_ptr&lt;Body&gt; byId(id_t _id);
++		static shared_ptr&lt;Body&gt; byId(body_id_t _id);
+ 		//! Whether this Body is a Clump.
+ 		//! @note The following is always true: \code (Body::isClump() XOR Body::isClumpMember() XOR Body::isStandalone()) \endcode
+ 		bool isClump() const {return clumpId!=ID_NONE &amp;&amp; id==clumpId;}
+@@ -59,7 +59,7 @@
+ 		 * (otherwise, GLViewer would depend on Clump and therefore Clump would have to go to yade-core...) */
+ 		virtual void userForcedDisplacementRedrawHook(){return;}
+ 
+-		unsigned int getId() const {return id;};
++		body_id_t getId() const {return id;};
+ 
+ 		// FIXME - but we SHOULDN'T use them in InteractionSolver, because it allows
+ 		//         to have flat simulation. We should make tree simulation and see...
+@@ -87,7 +87,7 @@
+ 	
+ 		// Constructor/Destructor
+ 		Body ();
+-		Body (unsigned int newId, int newGroup);
++		Body (body_id_t newId, int newGroup);
+ 
+ 		// Serialization
+ 	protected:
+
+Modified: trunk/core/Interaction.cpp
+===================================================================
+--- trunk/core/Interaction.cpp	2007-05-29 16:47:43 UTC (rev 1180)
++++ trunk/core/Interaction.cpp	2007-05-30 20:29:39 UTC (rev 1181)
+@@ -20,7 +20,7 @@
+ }
+ 
+ 
+-Interaction::Interaction(unsigned int newId1,unsigned int newId2) : id1(newId1) , id2(newId2)
++Interaction::Interaction(body_id_t newId1,body_id_t newId2) : id1(newId1) , id2(newId2)
+ {	
+ 	isNew = true;
+ 	isReal = false;
+
+Modified: trunk/core/Interaction.hpp
+===================================================================
+--- trunk/core/Interaction.hpp	2007-05-29 16:47:43 UTC (rev 1180)
++++ trunk/core/Interaction.hpp	2007-05-30 20:29:39 UTC (rev 1181)
+@@ -16,10 +16,18 @@
+ #include &quot;InteractionGeometry.hpp&quot;
+ #include &quot;InteractionPhysics.hpp&quot;
+ 
++/////////////////////////////////
++// FIXME - this is in wrong file!
++//#include&lt;boost/strong_typedef.hpp&gt;
++//BOOST_STRONG_TYPEDEF(int, body_id_t)
++typedef int body_id_t;
++// later we will have primitive_id_type and composite_id_type
++/////////////////////////////////
++
+ class Interaction : public Serializable
+ {
+ 	private	:
+-		unsigned int id1,id2;	// FIXME  this should be vector&lt;unsigned int&gt; ids;
++		body_id_t id1,id2;	// FIXME  this should be vector&lt;unsigned int&gt; ids;
+ 
+ 	public :
+ 		bool isNew;		// FIXME : better to test if InteractionPhysics==0 and remove this flag
+@@ -32,10 +40,10 @@
+ 		shared_ptr&lt;InteractionPhysics&gt; interactionPhysics;
+ 
+ 		Interaction ();
+-		Interaction(unsigned int newId1,unsigned int newId2);
++		Interaction(body_id_t newId1,body_id_t newId2);
+ 
+-		unsigned int getId1() {return id1;};
+-		unsigned int getId2() {return id2;};
++		body_id_t getId1() {return id1;};
++		body_id_t getId2() {return id2;};
+ 
+ 	protected :
+ 		void registerAttributes();
+
+Modified: trunk/core/InteractionContainer.hpp
+===================================================================
+--- trunk/core/InteractionContainer.hpp	2007-05-29 16:47:43 UTC (rev 1180)
++++ trunk/core/InteractionContainer.hpp	2007-05-30 20:29:39 UTC (rev 1181)
+@@ -27,12 +27,12 @@
+ 		InteractionContainer() { interaction.clear(); };
+ 		virtual ~InteractionContainer() {};
+ 
+-		virtual bool insert(unsigned int /*id1*/,unsigned int /*id2*/)				{throw;};
++		virtual bool insert(body_id_t /*id1*/,body_id_t /*id2*/)				{throw;};
+ 		virtual bool insert(shared_ptr&lt;Interaction&gt;&amp;)						{throw;};
+ 		virtual void clear() 									{throw;};
+-		virtual bool erase(unsigned int /*id1*/,unsigned int /*id2*/) 				{throw;};
++		virtual bool erase(body_id_t /*id1*/,body_id_t /*id2*/) 				{throw;};
+ 
+-		virtual const shared_ptr&lt;Interaction&gt;&amp; find(unsigned int /*id1*/,unsigned int /*id2*/) 	{throw;};
++		virtual const shared_ptr&lt;Interaction&gt;&amp; find(body_id_t /*id1*/,body_id_t /*id2*/) 	{throw;};
+ 
+ 		typedef InteractionContainerIteratorPointer iterator;
+         	virtual InteractionContainer::iterator begin()						{throw;};
+
+Modified: trunk/core/Omega.hpp
+===================================================================
+--- trunk/core/Omega.hpp	2007-05-29 16:47:43 UTC (rev 1180)
++++ trunk/core/Omega.hpp	2007-05-30 20:29:39 UTC (rev 1181)
+@@ -75,7 +75,7 @@
+ 		shared_ptr&lt;Preferences&gt; preferences;
+ 		string 				 yadeConfigPath;	// FIXME - must be private and more clean
+ 		string 				 yadeVersionName;	// FIXME - public ?
+-		list&lt;Body::id_t&gt; selectedBodies;
++		list&lt;body_id_t&gt; selectedBodies;
+ 	
+ 		void logMessage(const string&amp; str);
+ 		void logError(const string&amp; str);
+
+Modified: trunk/extra/clump/Clump.cpp
+===================================================================
+--- trunk/extra/clump/Clump.cpp	2007-05-29 16:47:43 UTC (rev 1180)
++++ trunk/extra/clump/Clump.cpp	2007-05-30 20:29:39 UTC (rev 1181)
+@@ -68,7 +68,7 @@
+  * @pre Body must have valid (non-NULL) Body::physicalParameters
+  * @todo se3 calculation is not tested yet
+  */
+-void Clump::add(Body::id_t subId){
++void Clump::add(body_id_t subId){
+ 	shared_ptr&lt;Body&gt; subBody=Body::byId(subId);
+ 
+ 	// preconditions
+@@ -89,7 +89,7 @@
+ 
+ /*! @pre Body with given id must be in the clump.
+  */
+-void Clump::del(Body::id_t subId){
++void Clump::del(body_id_t subId){
+ 	// erase the subBody; removing body that is not part of the clump is error
+ 	assert(members.erase(subId)==1);
+ 	// restore body's internal parameters;
+@@ -424,7 +424,7 @@
+ 	
+ 	for(size_t i=0; i&lt;relPos.size(); i++){
+ 		shared_ptr&lt;Body&gt; sphere=Shop::sphere(clumpPos+relPos[i],radii[i]);
+-		Body::id_t lastId=(Body::id_t)rootBody-&gt;bodies-&gt;insert(sphere);
++		body_id_t lastId=(body_id_t)rootBody-&gt;bodies-&gt;insert(sphere);
+ 		clump-&gt;add(lastId);
+ 		LOG_TRACE(&quot;Generated clumped sphere #&quot;&lt;&lt;lastId);
+ 	}
+
+Modified: trunk/extra/clump/Clump.hpp
+===================================================================
+--- trunk/extra/clump/Clump.hpp	2007-05-29 16:47:43 UTC (rev 1180)
++++ trunk/extra/clump/Clump.hpp	2007-05-30 20:29:39 UTC (rev 1181)
+@@ -68,15 +68,15 @@
+ class Clump: public Body {
+ 		//! mapping of body IDs to their relative positions; replaces members and subSe3s;
+ 	public:
+-		typedef std::map&lt;Body::id_t,Se3r&gt; memberMap;
++		typedef std::map&lt;body_id_t,Se3r&gt; memberMap;
+ 		memberMap members;
+ 
+ 		Clump();
+ 		virtual ~Clump(){};
+ 		//! \brief add Body to the Clump
+-		void add(Body::id_t);
++		void add(body_id_t);
+ 		//! \brief remove Body from the Clump
+-		void del(Body::id_t);
++		void del(body_id_t);
+ 		//! Recalculate physical properties of Clump.
+ 		void updateProperties(bool intersecting);
+ 		//! Calculate positions and orientations of members based on my own Se3.
+
+Modified: trunk/extra/clump/Shop.cpp
+===================================================================
+--- trunk/extra/clump/Shop.cpp	2007-05-29 16:47:43 UTC (rev 1180)
++++ trunk/extra/clump/Shop.cpp	2007-05-30 20:29:39 UTC (rev 1181)
+@@ -254,7 +254,7 @@
+ /*! Create body - sphere. */
+ shared_ptr&lt;Body&gt; Shop::sphere(Vector3r center, Real radius){
+ 	// body itself
+-	shared_ptr&lt;Body&gt; body=shared_ptr&lt;Body&gt;(new Body(0,getDefault&lt;int&gt;(&quot;body_sdecGroupMask&quot;)));
++	shared_ptr&lt;Body&gt; body=shared_ptr&lt;Body&gt;(new Body(body_id_t(0),getDefault&lt;int&gt;(&quot;body_sdecGroupMask&quot;)));
+ 	body-&gt;isDynamic=true;
+ 
+ 	// physics
+@@ -295,7 +295,7 @@
+ 
+ /*! Create body - box. */
+ shared_ptr&lt;Body&gt; Shop::box(Vector3r center, Vector3r extents){
+-		shared_ptr&lt;Body&gt; body=shared_ptr&lt;Body&gt;(new Body(0,getDefault&lt;int&gt;(&quot;body_sdecGroupMask&quot;)));
++		shared_ptr&lt;Body&gt; body=shared_ptr&lt;Body&gt;(new Body(body_id_t(0),getDefault&lt;int&gt;(&quot;body_sdecGroupMask&quot;)));
+ 		body-&gt;isDynamic=true;
+ 
+ 		shared_ptr&lt;BodyMacroParameters&gt; physics(new BodyMacroParameters);
+@@ -334,7 +334,7 @@
+ 
+ /*! Create body - tetrahedron. */
+ shared_ptr&lt;Body&gt; Shop::tetra(Vector3r v[4]){
+-		shared_ptr&lt;Body&gt; body=shared_ptr&lt;Body&gt;(new Body(0,getDefault&lt;int&gt;(&quot;body_sdecGroupMask&quot;)));
++		shared_ptr&lt;Body&gt; body=shared_ptr&lt;Body&gt;(new Body(body_id_t(0),getDefault&lt;int&gt;(&quot;body_sdecGroupMask&quot;)));
+ 		body-&gt;isDynamic=true;
+ 
+ 		shared_ptr&lt;BodyMacroParameters&gt; physics(new BodyMacroParameters);
+
+Modified: trunk/extra/clump/pyade.cpp
+===================================================================
+--- trunk/extra/clump/pyade.cpp	2007-05-29 16:47:43 UTC (rev 1180)
++++ trunk/extra/clump/pyade.cpp	2007-05-30 20:29:39 UTC (rev 1181)
+@@ -16,14 +16,15 @@
+ /******************* basic type conversions *********/
+ static PyObject* __main__; // assigned in initializer
+ PyObject* toPython(int arg){return Py_BuildValue(&quot;i&quot;,arg);}
+-PyObject* toPython(Body::id_t arg){return toPython((int)arg);}
++//PyObject* toPython(body_id_t arg){return toPython((int)arg);}
++PyObject* toPython(unsigned int arg){return toPython((int)arg);}
+ PyObject* toPython(long arg){return Py_BuildValue(&quot;l&quot;,arg);}
+ PyObject* toPython(bool arg){return toPython((int)arg);}
+ PyObject* toPython(double arg){return Py_BuildValue(&quot;d&quot;,arg);}
+ PyObject* toPython(std::string arg){return Py_BuildValue(&quot;s&quot;,arg.c_str());}
+ PyObject* toPython(Wm3::Vector3r arg){	return PyObject_Call(PyObject_GetAttrString(__main__,&quot;Vector&quot;),Py_BuildValue(&quot;(ddd)&quot;,arg[0],arg[1],arg[2]),NULL);}
+ PyObject* toPython(Wm3::Quaternionr arg){ return PyObject_Call(PyObject_GetAttrString(__main__,&quot;Quaternion&quot;),Py_BuildValue(&quot;(dddd)&quot;,arg[0],arg[1],arg[2],arg[3]),NULL);}
+-PyObject* toPython(list&lt;Body::id_t&gt; arg){	PyObject* ret=PyList_New(0); for(list&lt;Body::id_t&gt;::iterator I=arg.begin(); I!=arg.end(); I++) PyList_Append(ret,toPython(*I)); return ret;}
++PyObject* toPython(list&lt;body_id_t&gt; arg){	PyObject* ret=PyList_New(0); for(list&lt;body_id_t&gt;::iterator I=arg.begin(); I!=arg.end(); I++) PyList_Append(ret,toPython(*I)); return ret;}
+  
+ /******************* body properties ****************/
+ 
+@@ -52,7 +53,7 @@
+ bodyProp(PyObject *self, PyObject *args){
+ 	long id, prop;
+ 	if(!PyArg_ParseTuple(args, &quot;ll&quot;, &amp;id, &amp;prop)) return NULL;
+-	shared_ptr&lt;Body&gt; B=Body::byId((Body::id_t)id);
++	shared_ptr&lt;Body&gt; B=Body::byId((body_id_t)id);
+ 	shared_ptr&lt;PhysicalParameters&gt; pp=B-&gt;physicalParameters;
+ 	// FIXME: we will crash if user requests rbp for a body that doesn't have it!
+ 	// later, do assert(rbp), raise exception (in a pythonic way - need to see docs on that) and return None
+
+Modified: trunk/extra/tetra/Tetra.cpp
+===================================================================
+--- trunk/extra/tetra/Tetra.cpp	2007-05-29 16:47:43 UTC (rev 1180)
++++ trunk/extra/tetra/Tetra.cpp	2007-05-30 20:29:39 UTC (rev 1181)
+@@ -335,7 +335,7 @@
+ 	for(InteractionContainer::iterator contactI=rootBody-&gt;transientInteractions-&gt;begin(); contactI!=rootBody-&gt;transientInteractions-&gt;end(); ++contactI){
+ 		if (!(*contactI)-&gt;isReal) continue; // Tetra2TetraBang::go returned false for this interaction, skip it
+ 
+-		const Body::id_t idA=(*contactI)-&gt;getId1(), idB=(*contactI)-&gt;getId2();
++		const body_id_t idA=(*contactI)-&gt;getId1(), idB=(*contactI)-&gt;getId2();
+ 		const shared_ptr&lt;Body&gt;&amp; A=Body::byId(idA), B=Body::byId(idB);
+ 			
+ 		if(!(A-&gt;getGroupMask()&amp;B-&gt;getGroupMask()&amp;sdecGroupMask)) continue; // no bits overlap in masks, skip this one
+
+Modified: trunk/extra/tetra/TetraTestGen.cpp
+===================================================================
+--- trunk/extra/tetra/TetraTestGen.cpp	2007-05-29 16:47:43 UTC (rev 1180)
++++ trunk/extra/tetra/TetraTestGen.cpp	2007-05-30 20:29:39 UTC (rev 1181)
+@@ -66,5 +66,5 @@
+ 	Omega::instance().setRootBody(oldRootBody);
+ 	#endif
+ 	
+-	return &quot;OK&quot;;
++	return &quot;ATTN: this example is not working yet!&quot;;
+ }
+
+Modified: trunk/gui/qt3/GLViewer.cpp
+===================================================================
+--- trunk/gui/qt3/GLViewer.cpp	2007-05-29 16:47:43 UTC (rev 1180)
++++ trunk/gui/qt3/GLViewer.cpp	2007-05-30 20:29:39 UTC (rev 1181)
+@@ -185,9 +185,9 @@
+ 	}
+ 	if( (*(Omega::instance().getRootBody()-&gt;bodies)).exists(selection) )
+ 	{
+-		if(Body::byId(selection)-&gt;isClumpMember()){ // select clump (invisible) instead of its member
++		if(Body::byId(body_id_t(selection))-&gt;isClumpMember()){ // select clump (invisible) instead of its member
+ 			cerr&lt;&lt;&quot;Clump member #&quot;&lt;&lt;selection&lt;&lt;&quot; selected, selecting clump instead.&quot;&lt;&lt;endl;
+-			selection=Body::byId(selection)-&gt;clumpId;
++			selection=Body::byId(body_id_t(selection))-&gt;clumpId;
+ 			setSelectedName(selection);
+ 		}
+ 
+
+Modified: trunk/gui/qt3/QtEngineEditor.cpp
+===================================================================
+--- trunk/gui/qt3/QtEngineEditor.cpp	2007-05-29 16:47:43 UTC (rev 1180)
++++ trunk/gui/qt3/QtEngineEditor.cpp	2007-05-30 20:29:39 UTC (rev 1181)
+@@ -65,7 +65,7 @@
+ 
+ void QtEngineEditor::pbAddMetaEngineClicked()
+ {
+-	int id;
++	int id=0;
+ 	EngineDescriptor ed;
+ 
+ 	string engineName = cbMetaEnginesList-&gt;currentText();
+
+Modified: trunk/gui/qt3/QtGeneratedSimulationController.ui
+===================================================================
+--- trunk/gui/qt3/QtGeneratedSimulationController.ui	2007-05-29 16:47:43 UTC (rev 1180)
++++ trunk/gui/qt3/QtGeneratedSimulationController.ui	2007-05-30 20:29:39 UTC (rev 1181)
+@@ -881,90 +881,60 @@
+                             &lt;/sizepolicy&gt;
+                         &lt;/property&gt;
+                         &lt;property name=&quot;title&quot;&gt;
+-                            &lt;string&gt;Simulation Duration&lt;/string&gt;
++                            &lt;string&gt;Other parameters&lt;/string&gt;
+                         &lt;/property&gt;
+-                        &lt;grid&gt;
++                        &lt;hbox&gt;
+                             &lt;property name=&quot;name&quot;&gt;
+                                 &lt;cstring&gt;unnamed&lt;/cstring&gt;
+                             &lt;/property&gt;
+-                            &lt;widget class=&quot;QRadioButton&quot; row=&quot;0&quot; column=&quot;0&quot;&gt;
++                            &lt;widget class=&quot;QPushButton&quot;&gt;
+                                 &lt;property name=&quot;name&quot;&gt;
+-                                    &lt;cstring&gt;rbUnlimited&lt;/cstring&gt;
++                                    &lt;cstring&gt;pbCenterScene_2&lt;/cstring&gt;
+                                 &lt;/property&gt;
+-                                &lt;property name=&quot;enabled&quot;&gt;
+-                                    &lt;bool&gt;false&lt;/bool&gt;
++                                &lt;property name=&quot;sizePolicy&quot;&gt;
++                                    &lt;sizepolicy&gt;
++                                        &lt;hsizetype&gt;0&lt;/hsizetype&gt;
++                                        &lt;vsizetype&gt;0&lt;/vsizetype&gt;
++                                        &lt;horstretch&gt;0&lt;/horstretch&gt;
++                                        &lt;verstretch&gt;0&lt;/verstretch&gt;
++                                    &lt;/sizepolicy&gt;
+                                 &lt;/property&gt;
+-                                &lt;property name=&quot;text&quot;&gt;
+-                                    &lt;string&gt;Unlimited&lt;/string&gt;
++                                &lt;property name=&quot;minimumSize&quot;&gt;
++                                    &lt;size&gt;
++                                        &lt;width&gt;160&lt;/width&gt;
++                                        &lt;height&gt;0&lt;/height&gt;
++                                    &lt;/size&gt;
+                                 &lt;/property&gt;
+-                            &lt;/widget&gt;
+-                            &lt;widget class=&quot;QRadioButton&quot; row=&quot;1&quot; column=&quot;0&quot;&gt;
+-                                &lt;property name=&quot;name&quot;&gt;
+-                                    &lt;cstring&gt;rbFixedIteration&lt;/cstring&gt;
+-                                &lt;/property&gt;
+-                                &lt;property name=&quot;enabled&quot;&gt;
+-                                    &lt;bool&gt;false&lt;/bool&gt;
+-                                &lt;/property&gt;
+                                 &lt;property name=&quot;text&quot;&gt;
+-                                    &lt;string&gt;Fixed Iterations&lt;/string&gt;
++                                    &lt;string&gt;Center Scene&lt;/string&gt;
+                                 &lt;/property&gt;
+                             &lt;/widget&gt;
+-                            &lt;widget class=&quot;QRadioButton&quot; row=&quot;2&quot; column=&quot;0&quot;&gt;
++                            &lt;widget class=&quot;QPushButton&quot;&gt;
+                                 &lt;property name=&quot;name&quot;&gt;
+-                                    &lt;cstring&gt;rbFixedTime&lt;/cstring&gt;
++                                    &lt;cstring&gt;pbNewView_2&lt;/cstring&gt;
+                                 &lt;/property&gt;
+                                 &lt;property name=&quot;enabled&quot;&gt;
+-                                    &lt;bool&gt;false&lt;/bool&gt;
++                                    &lt;bool&gt;true&lt;/bool&gt;
+                                 &lt;/property&gt;
+-                                &lt;property name=&quot;text&quot;&gt;
+-                                    &lt;string&gt;Fixed Time&lt;/string&gt;
++                                &lt;property name=&quot;sizePolicy&quot;&gt;
++                                    &lt;sizepolicy&gt;
++                                        &lt;hsizetype&gt;0&lt;/hsizetype&gt;
++                                        &lt;vsizetype&gt;0&lt;/vsizetype&gt;
++                                        &lt;horstretch&gt;0&lt;/horstretch&gt;
++                                        &lt;verstretch&gt;0&lt;/verstretch&gt;
++                                    &lt;/sizepolicy&gt;
+                                 &lt;/property&gt;
+-                            &lt;/widget&gt;
+-                            &lt;widget class=&quot;QSpinBox&quot; row=&quot;1&quot; column=&quot;1&quot; rowspan=&quot;1&quot; colspan=&quot;3&quot;&gt;
+-                                &lt;property name=&quot;name&quot;&gt;
+-                                    &lt;cstring&gt;sbFixedIteration&lt;/cstring&gt;
++                                &lt;property name=&quot;minimumSize&quot;&gt;
++                                    &lt;size&gt;
++                                        &lt;width&gt;160&lt;/width&gt;
++                                        &lt;height&gt;0&lt;/height&gt;
++                                    &lt;/size&gt;
+                                 &lt;/property&gt;
+-                                &lt;property name=&quot;enabled&quot;&gt;
+-                                    &lt;bool&gt;false&lt;/bool&gt;
+-                                &lt;/property&gt;
+-                                &lt;property name=&quot;maxValue&quot;&gt;
+-                                    &lt;number&gt;1000000000&lt;/number&gt;
+-                                &lt;/property&gt;
+-                                &lt;property name=&quot;value&quot;&gt;
+-                                    &lt;number&gt;1000000000&lt;/number&gt;
+-                                &lt;/property&gt;
+-                            &lt;/widget&gt;
+-                            &lt;widget class=&quot;QSpinBox&quot; row=&quot;2&quot; column=&quot;1&quot;&gt;
+-                                &lt;property name=&quot;name&quot;&gt;
+-                                    &lt;cstring&gt;spinBox1_3&lt;/cstring&gt;
+-                                &lt;/property&gt;
+-                                &lt;property name=&quot;enabled&quot;&gt;
+-                                    &lt;bool&gt;false&lt;/bool&gt;
+-                                &lt;/property&gt;
+-                            &lt;/widget&gt;
+-                            &lt;widget class=&quot;QLabel&quot; row=&quot;2&quot; column=&quot;2&quot;&gt;
+-                                &lt;property name=&quot;name&quot;&gt;
+-                                    &lt;cstring&gt;tl10Power_2&lt;/cstring&gt;
+-                                &lt;/property&gt;
+-                                &lt;property name=&quot;enabled&quot;&gt;
+-                                    &lt;bool&gt;false&lt;/bool&gt;
+-                                &lt;/property&gt;
+                                 &lt;property name=&quot;text&quot;&gt;
+-                                    &lt;string&gt;x10&lt;/string&gt;
++                                    &lt;string&gt;New View ...&lt;/string&gt;
+                                 &lt;/property&gt;
+-                                &lt;property name=&quot;alignment&quot;&gt;
+-                                    &lt;set&gt;AlignCenter&lt;/set&gt;
+-                                &lt;/property&gt;
+                             &lt;/widget&gt;
+-                            &lt;widget class=&quot;QSpinBox&quot; row=&quot;2&quot; column=&quot;3&quot;&gt;
+-                                &lt;property name=&quot;name&quot;&gt;
+-                                    &lt;cstring&gt;spinBox1_2_2&lt;/cstring&gt;
+-                                &lt;/property&gt;
+-                                &lt;property name=&quot;enabled&quot;&gt;
+-                                    &lt;bool&gt;false&lt;/bool&gt;
+-                                &lt;/property&gt;
+-                            &lt;/widget&gt;
+-                        &lt;/grid&gt;
++                        &lt;/hbox&gt;
+                     &lt;/widget&gt;
+                 &lt;/vbox&gt;
+             &lt;/widget&gt;
+@@ -1204,16 +1174,16 @@
+ &lt;/widget&gt;
+ &lt;images&gt;
+     &lt;image name=&quot;image0&quot;&gt;
+-        &lt;data format=&quot;PNG&quot; length=&quot;160&quot;&gt;89504e470d0a1a0a0000000d4948445200000015000000150806000000a917a5960000006749444154388dadccd10d80300c03d1947118a1fbcb23b00e2c4013dbc9fd9ef4168098eecae6def73b8eba70893a3085aa308d2ab084b2b08c32b08556b08d66700b3dc16d1478d628fa07b6d01368a31968a11528a30c28a12c48a30a48a12a58a20e1811f101d3512a7c38fee1ac0000000049454e44ae426082&lt;/data&gt;
++        &lt;data format=&quot;PNG&quot; length=&quot;252&quot;&gt;89504e470d0a1a0a0000000d4948445200000015000000150806000000a917a596000000c349444154388dadd4310e82401046e1b78462e8f61cda6187e7974ebabdc7764e870d2460609d59a5217f80f0e58510d2944001015545447ede4dd60c02593322c276df867e2e5d3fdb214de9f48dd7fe32033cc72978c44d5100c0cb2d0ea5a6ab743dace262d355ea15375122aa4a94080abb0d40b73bdf87613ebd7fd9a6a65e71537ae391d4227635b58add4d2de2aaa6dbf3631cc3e7f36d6d53e896eff68f4d8f84eb6e6b9a9e09ab9b9684554dbf09dd4d2d425753abd0dcd42334fd4f6bf71b0403e127c7dd51090000000049454e44ae426082&lt;/data&gt;
+     &lt;/image&gt;
+     &lt;image name=&quot;image1&quot;&gt;
+-        &lt;data format=&quot;PNG&quot; length=&quot;181&quot;&gt;89504e470d0a1a0a0000000d4948445200000015000000150806000000a917a5960000007c49444154388db5d5c10dc0200805d0da749a8ee0fe6104d7694f4d0851f91f28270de479e2db44e4a8aeeb3bf47e3fba21329aeee9bb57273a681f2d411998425198461138847a7018ddc1297405a7d1195c825ab80cd51b5782da154ea3b34c48a1ab9009a3bbd40aa15e0cd22892ab148a06358c32c9dffef8a35ea81230cf566a45c40000000049454e44ae426082&lt;/data&gt;
++        &lt;data format=&quot;PNG&quot; length=&quot;273&quot;&gt;89504e470d0a1a0a0000000d4948445200000015000000150806000000a917a596000000d849444154388db595310e83300c451f88c16c5c81b56c744bcf5fc66ef41cd9ea2d1d2088221a42d266b1be1dc54f6f49313e46504040551191ec5c5ab520d0f5adbb9ade757deb3a7371562d228255cb362310ca65230daa0ad44c67aa8d34a073056ec6389f55f563becda5df00aff9d1a9ae097c3f96b8f41bf6481782553f867871ba47ba10f0393f228e76ba9d87884f398d253eed348638c9e91171b2d3107196d375bd0f43e1ef57b94ea1661c9e05bf74ba26f4f7ab1ca75bc26ca77b84594ebf11263b0d1126393d223ced3486d0e7e21f7fd41b9f5d95b4bfffbba60000000049454e44ae426082&lt;/data&gt;
+     &lt;/image&gt;
+     &lt;image name=&quot;image2&quot;&gt;
+-        &lt;data format=&quot;PNG&quot; length=&quot;113&quot;&gt;89504e470d0a1a0a0000000d4948445200000015000000150806000000a917a5960000003849444154388d633c76ec1803b50113d54da495a12cd804adacb4fe23f38f1dbbc6488c1c0c0c1def8f1a3a6ae8a8a123d350c6915df203007bf20ccfb0566fcb0000000049454e44ae426082&lt;/data&gt;
++        &lt;data format=&quot;PNG&quot; length=&quot;232&quot;&gt;89504e470d0a1a0a0000000d4948445200000015000000150806000000a917a596000000af49444154388ded95a10ec33010435fa2810bbb5f181e1becbe7f8565c1fd85b01eeb401b2d8dc29ab2869c6ccb8ae5931217a7080608981922721afb640904922544841ed8c529764b98f12359424529e76718565880002cc46976597fbd9f6be621f01d4757fbbd8a82818a6266a828db09ff59e8079e8daffded4e614fb2cf423ff0d0ecd41f12ee37d6494bbd95b4f6fbd616eba4a5de4a5afbef4eef4eef4e7b767ac97bdaecf42c7657fc513f8f2ab9c097ced54c0000000049454e44ae426082&lt;/data&gt;
+     &lt;/image&gt;
+     &lt;image name=&quot;image3&quot;&gt;
+-        &lt;data format=&quot;PNG&quot; length=&quot;119&quot;&gt;89504e470d0a1a0a0000000d4948445200000015000000150806000000a917a5960000003e49444154388d633c76ec1803b50113d54d1c5286b2a00b585969fd27d59063c7ae3122f3878ef7470d1d3574d4506a028c0205bd7020070c1defd3c45000a13508e31a4d23f00000000049454e44ae426082&lt;/data&gt;
++        &lt;data format=&quot;PNG&quot; length=&quot;210&quot;&gt;89504e470d0a1a0a0000000d4948445200000015000000150806000000a917a5960000009949444154388ded94bd0a0231108427e18ab1db67d1cef737e575f139b6733aaff0222182dc4f0a854b330cec928fafd890c70c0800014920b9bb479703045c0e92e8d1431e7337c2d2634fc2d243ebf4723d3fb1f2e5740f5f9d028f79744536c4d1689004a3bd88719a879767bd6fb44fa75b485ba7b1fe41d226d27aff4d7a383d9cfeb8d3c1e5301a4ade520a755f9268fa1fdfd31ec413524e89890537f1ed0000000049454e44ae426082&lt;/data&gt;
+     &lt;/image&gt;
+ &lt;/images&gt;
+ &lt;connections&gt;
+@@ -1307,6 +1277,18 @@
+         &lt;receiver&gt;QtGeneratedSimulationController&lt;/receiver&gt;
+         &lt;slot&gt;pbStart2Clicked()&lt;/slot&gt;
+     &lt;/connection&gt;
++    &lt;connection&gt;
++        &lt;sender&gt;pbCenterScene_2&lt;/sender&gt;
++        &lt;signal&gt;clicked()&lt;/signal&gt;
++        &lt;receiver&gt;QtGeneratedSimulationController&lt;/receiver&gt;
++        &lt;slot&gt;pbCenterSceneClicked()&lt;/slot&gt;
++    &lt;/connection&gt;
++    &lt;connection&gt;
++        &lt;sender&gt;pbNewView_2&lt;/sender&gt;
++        &lt;signal&gt;clicked()&lt;/signal&gt;
++        &lt;receiver&gt;QtGeneratedSimulationController&lt;/receiver&gt;
++        &lt;slot&gt;pbNewViewClicked()&lt;/slot&gt;
++    &lt;/connection&gt;
+ &lt;/connections&gt;
+ &lt;signals&gt;
+     &lt;signal&gt;closeSignal()&lt;/signal&gt;
+
+Modified: trunk/pkg/common/Container/InteractionHashMap.cpp
+===================================================================
+--- trunk/pkg/common/Container/InteractionHashMap.cpp	2007-05-29 16:47:43 UTC (rev 1180)
++++ trunk/pkg/common/Container/InteractionHashMap.cpp	2007-05-30 20:29:39 UTC (rev 1181)
+@@ -25,16 +25,16 @@
+ {
+ 	boost::mutex::scoped_lock lock(drawloopmutex);
+ 
+-	unsigned int id1 = i-&gt;getId1();
+-	unsigned int id2 = i-&gt;getId2();
++	body_id_t id1 = i-&gt;getId1();
++	body_id_t id2 = i-&gt;getId2();
+ 	if (id1&gt;id2)
+ 		swap(id1,id2);
+ 
+-	return interactions.insert( IHashMap::value_type( pair&lt;unsigned int,unsigned int&gt;(id1,id2) , i )).second;
++	return interactions.insert( IHashMap::value_type( pair&lt;body_id_t,body_id_t&gt;(id1,id2) , i )).second;
+ }
+ 
+ 
+-bool InteractionHashMap::insert(unsigned int id1,unsigned int id2)
++bool InteractionHashMap::insert(body_id_t id1,body_id_t id2)
+ {
+ 	shared_ptr&lt;Interaction&gt; i(new Interaction(id1,id2) );
+ 	return insert(i);	
+@@ -49,7 +49,7 @@
+ }
+ 
+ 
+-bool InteractionHashMap::erase(unsigned int id1,unsigned int id2)
++bool InteractionHashMap::erase(body_id_t id1,body_id_t id2)
+ {
+ 	boost::mutex::scoped_lock lock(drawloopmutex);
+ 
+@@ -57,7 +57,7 @@
+ 		swap(id1,id2);
+ 
+ 	unsigned int oldSize = interactions.size();
+-	pair&lt;unsigned int,unsigned int&gt; p(id1,id2);
++	pair&lt;body_id_t,body_id_t&gt; p(id1,id2);
+ 	unsigned int size = interactions.erase(p);
+ 
+ 	return size!=oldSize;
+@@ -65,12 +65,12 @@
+ }
+ 
+ 
+-const shared_ptr&lt;Interaction&gt;&amp; InteractionHashMap::find(unsigned int id1,unsigned int id2)
++const shared_ptr&lt;Interaction&gt;&amp; InteractionHashMap::find(body_id_t id1,body_id_t id2)
+ {
+ 	if (id1&gt;id2)
+ 		swap(id1,id2);
+ 
+-	IHashMap::iterator hmii = interactions.find(pair&lt;unsigned int,unsigned int&gt;(id1,id2));
++	IHashMap::iterator hmii = interactions.find(pair&lt;body_id_t,body_id_t&gt;(id1,id2));
+ 	if (hmii!=interactions.end())
+ 		return (*hmii).second;
+ 	else
+
+Modified: trunk/pkg/common/Container/InteractionHashMap.hpp
+===================================================================
+--- trunk/pkg/common/Container/InteractionHashMap.hpp	2007-05-29 16:47:43 UTC (rev 1180)
++++ trunk/pkg/common/Container/InteractionHashMap.hpp	2007-05-30 20:29:39 UTC (rev 1181)
+@@ -18,7 +18,7 @@
+ 
+ struct eqPair
+ {
+-	bool operator()(const pair&lt;unsigned int,unsigned int&gt;&amp; p1, const pair&lt;unsigned int,unsigned int&gt;&amp; p2) const
++	bool operator()(const pair&lt;body_id_t,body_id_t&gt;&amp; p1, const pair&lt;body_id_t,body_id_t&gt;&amp; p2) const
+ 	{
+ 		return (p1.first==p2.first &amp;&amp; p1.second==p2.second);
+ 	}
+@@ -26,13 +26,13 @@
+ 
+ struct hashPair
+ {
+-	unsigned int operator()(const pair&lt;unsigned int,unsigned int&gt;&amp; p) const
++	unsigned int operator()(const pair&lt;body_id_t,body_id_t&gt;&amp; p) const
+ 	{
+-		return (p.first+p.second)%182501621;
++		return ((unsigned int)p.first+(unsigned int)p.second)%182501621;
+ 	}
+ };
+ 
+-typedef hash_map&lt;pair&lt;unsigned int,unsigned int&gt;, shared_ptr&lt;Interaction&gt;, hashPair, eqPair &gt; IHashMap;
++typedef hash_map&lt;pair&lt;body_id_t,body_id_t&gt;, shared_ptr&lt;Interaction&gt;, hashPair, eqPair &gt; IHashMap;
+ 
+ class InteractionHashMap : public InteractionContainer
+ {
+@@ -44,11 +44,11 @@
+ 		InteractionHashMap();
+ 		virtual ~InteractionHashMap();
+ 
+-		virtual bool insert(unsigned int id1,unsigned int id2);
++		virtual bool insert(body_id_t id1,body_id_t id2);
+ 		virtual bool insert(shared_ptr&lt;Interaction&gt;&amp; i);
+ 		virtual void clear();
+-		virtual bool erase(unsigned int id1,unsigned int id2);
+-		virtual const shared_ptr&lt;Interaction&gt;&amp; find(unsigned int id1,unsigned int id2);
++		virtual bool erase(body_id_t id1,body_id_t id2);
++		virtual const shared_ptr&lt;Interaction&gt;&amp; find(body_id_t id1,body_id_t id2);
+ 	
+ 		virtual InteractionContainer::iterator begin();
+ 	        virtual InteractionContainer::iterator end();
+
+Modified: trunk/pkg/common/Container/InteractionVecSet.cpp
+===================================================================
+--- trunk/pkg/common/Container/InteractionVecSet.cpp	2007-05-29 16:47:43 UTC (rev 1180)
++++ trunk/pkg/common/Container/InteractionVecSet.cpp	2007-05-30 20:29:39 UTC (rev 1181)
+@@ -28,16 +28,16 @@
+ {
+ 	boost::mutex::scoped_lock lock(drawloopmutex);
+ 
+-	unsigned int id1 = i-&gt;getId1();
+-	unsigned int id2 = i-&gt;getId2();
++	body_id_t id1 = i-&gt;getId1();
++	body_id_t id2 = i-&gt;getId2();
+ 
+ 	if (id1&gt;id2)
+ 		swap(id1,id2);
+ 
+-	if ( id1 &gt;=interactions.size())
++	if ( static_cast&lt;unsigned int&gt;(id1) &gt;=interactions.size())
+ 		interactions.resize(id1+1);
+ 
+-	if (interactions[id1].insert(pair&lt;unsigned int,shared_ptr&lt;Interaction&gt; &gt;(id2,i)).second)
++	if (interactions[id1].insert(pair&lt;body_id_t,shared_ptr&lt;Interaction&gt; &gt;(id2,i)).second)
+ 	{
+ 		currentSize++;
+ 		return true;
+@@ -47,7 +47,7 @@
+ }
+ 
+ 
+-bool InteractionVecSet::insert(unsigned int id1,unsigned int id2)
++bool InteractionVecSet::insert(body_id_t id1,body_id_t id2)
+ {
+ 	shared_ptr&lt;Interaction&gt; i(new Interaction(id1,id2) );
+ 	return insert(i);	
+@@ -63,17 +63,17 @@
+ }
+ 
+ 
+-bool InteractionVecSet::erase(unsigned int id1,unsigned int id2)
++bool InteractionVecSet::erase(body_id_t id1,body_id_t id2)
+ {
+ 	boost::mutex::scoped_lock lock(drawloopmutex);
+ 
+ 	if (id1&gt;id2)
+ 		swap(id1,id2);
+ 
+-	if ( id1 &lt; interactions.size())
++	if ( static_cast&lt;unsigned int&gt;(id1) &lt; interactions.size())
+ 	{
+ 		shared_ptr&lt;Interaction&gt; tmpI;
+-		if (interactions[id1].erase(pair&lt;unsigned int,shared_ptr&lt;Interaction&gt; &gt;(id2,tmpI)))
++		if (interactions[id1].erase(pair&lt;body_id_t,shared_ptr&lt;Interaction&gt; &gt;(id2,tmpI)))
+ 		{
+ 			currentSize--;
+ 			return true;
+@@ -87,16 +87,16 @@
+ }
+ 
+ 
+-const shared_ptr&lt;Interaction&gt;&amp; InteractionVecSet::find(unsigned int id1,unsigned int id2)
++const shared_ptr&lt;Interaction&gt;&amp; InteractionVecSet::find(body_id_t id1,body_id_t id2)
+ {
+ 	if (id1&gt;id2)
+ 		swap(id1,id2);
+ 
+ 	if (static_cast&lt;unsigned int&gt;(id1)&lt;interactions.size())
+ 	{
+-		set&lt;pair&lt;unsigned int,shared_ptr&lt;Interaction&gt; &gt;,lessThanPair &gt;::iterator sii;
++		set&lt;pair&lt;body_id_t,shared_ptr&lt;Interaction&gt; &gt;,lessThanPair &gt;::iterator sii;
+ 		shared_ptr&lt;Interaction&gt; tmpI;
+-		sii = interactions[id1].find(pair&lt;unsigned int,shared_ptr&lt;Interaction&gt; &gt;(id2,tmpI));
++		sii = interactions[id1].find(pair&lt;body_id_t,shared_ptr&lt;Interaction&gt; &gt;(id2,tmpI));
+ 		if (sii!=interactions[id1].end())
+ 			return (*sii).second;
+ 		else
+
+Modified: trunk/pkg/common/Container/InteractionVecSet.hpp
+===================================================================
+--- trunk/pkg/common/Container/InteractionVecSet.hpp	2007-05-29 16:47:43 UTC (rev 1180)
++++ trunk/pkg/common/Container/InteractionVecSet.hpp	2007-05-30 20:29:39 UTC (rev 1181)
+@@ -24,7 +24,7 @@
+ class InteractionVecSet : public InteractionContainer
+ {
+ 	private :
+-		vector&lt;set&lt;pair&lt;unsigned int,shared_ptr&lt;Interaction&gt; &gt;,lessThanPair &gt; &gt; interactions;
++		vector&lt;set&lt;pair&lt;body_id_t,shared_ptr&lt;Interaction&gt; &gt;,lessThanPair &gt; &gt; interactions;
+ 		unsigned int currentSize;
+ 		shared_ptr&lt;Interaction&gt; empty;
+ 
+@@ -33,11 +33,11 @@
+ 		InteractionVecSet();
+ 		virtual ~InteractionVecSet();
+ 
+-		virtual bool insert(unsigned int id1,unsigned int id2);
++		virtual bool insert(body_id_t id1,body_id_t id2);
+ 		virtual bool insert(shared_ptr&lt;Interaction&gt;&amp; i);
+ 		virtual void clear();
+-		virtual bool erase(unsigned int id1,unsigned int id2);
+-		virtual const shared_ptr&lt;Interaction&gt;&amp; find(unsigned int id1,unsigned int id2);
++		virtual bool erase(body_id_t id1,body_id_t id2);
++		virtual const shared_ptr&lt;Interaction&gt;&amp; find(body_id_t id1,body_id_t id2);
+ 
+ 		virtual InteractionContainer::iterator begin();
+         	virtual InteractionContainer::iterator end();
+
+Modified: trunk/pkg/common/Container/InteractionVecSetIterator.hpp
+===================================================================
+--- trunk/pkg/common/Container/InteractionVecSetIterator.hpp	2007-05-29 16:47:43 UTC (rev 1180)
++++ trunk/pkg/common/Container/InteractionVecSetIterator.hpp	2007-05-30 20:29:39 UTC (rev 1181)
+@@ -17,7 +17,7 @@
+ 
+ struct lessThanPair
+ {
+-	bool operator()(const pair&lt;unsigned int,shared_ptr&lt;Interaction&gt; &gt;&amp; p1, const pair&lt;unsigned int,shared_ptr&lt;Interaction&gt; &gt;&amp; p2) const
++	bool operator()(const pair&lt;body_id_t,shared_ptr&lt;Interaction&gt; &gt;&amp; p1, const pair&lt;body_id_t,shared_ptr&lt;Interaction&gt; &gt;&amp; p2) const
+ 	{
+ 		return (p1.first&lt;p2.first);
+ 	}
+@@ -26,10 +26,10 @@
+ class InteractionVecSetIterator : public InteractionContainerIterator 
+ {
+ 	public :
+-		vector&lt;set&lt;pair&lt;unsigned int,shared_ptr&lt;Interaction&gt; &gt;,lessThanPair &gt; &gt;::iterator vii;
+-		vector&lt;set&lt;pair&lt;unsigned int,shared_ptr&lt;Interaction&gt; &gt;,lessThanPair &gt; &gt;::iterator viiEnd;
+-		set&lt;pair&lt;unsigned int,shared_ptr&lt;Interaction&gt; &gt;,lessThanPair &gt;::iterator sii;
+-		set&lt;pair&lt;unsigned int,shared_ptr&lt;Interaction&gt; &gt;,lessThanPair &gt;::iterator siiEnd;
++		vector&lt;set&lt;pair&lt;body_id_t,shared_ptr&lt;Interaction&gt; &gt;,lessThanPair &gt; &gt;::iterator vii;
++		vector&lt;set&lt;pair&lt;body_id_t,shared_ptr&lt;Interaction&gt; &gt;,lessThanPair &gt; &gt;::iterator viiEnd;
++		set&lt;pair&lt;body_id_t,shared_ptr&lt;Interaction&gt; &gt;,lessThanPair &gt;::iterator sii;
++		set&lt;pair&lt;body_id_t,shared_ptr&lt;Interaction&gt; &gt;,lessThanPair &gt;::iterator siiEnd;
+ 
+ 		InteractionVecSetIterator();
+ 		~InteractionVecSetIterator();
+
+Modified: trunk/pkg/common/Engine/StandAloneEngine/PersistentSAPCollider.cpp
+===================================================================
+--- trunk/pkg/common/Engine/StandAloneEngine/PersistentSAPCollider.cpp	2007-05-29 16:47:43 UTC (rev 1180)
++++ trunk/pkg/common/Engine/StandAloneEngine/PersistentSAPCollider.cpp	2007-05-30 20:29:39 UTC (rev 1181)
+@@ -184,7 +184,7 @@
+ 	int offset1 = 3*id1;
+ 	int offset2 = 3*id2;
+ 	// FIXME: this is perhaps an expensive operation?!
+-	const shared_ptr&lt;Body&gt;&amp; b1(Body::byId(id1)), b2(Body::byId(id2));
++	const shared_ptr&lt;Body&gt;&amp; b1(Body::byId(body_id_t(id1))), b2(Body::byId(body_id_t(id2)));
+ 	bool overlap =
+ 
+ 		(b1-&gt;isStandalone() || b2-&gt;isStandalone() || b1-&gt;clumpId!=b2-&gt;clumpId ) &amp;&amp; // only collide if at least one particle is standalone or they belong to different clumps
+
+Modified: trunk/pkg/common/Engine/StandAloneEngine/SAPCollider.cpp
+===================================================================
+--- trunk/pkg/common/Engine/StandAloneEngine/SAPCollider.cpp	2007-05-29 16:47:43 UTC (rev 1180)
++++ trunk/pkg/common/Engine/StandAloneEngine/SAPCollider.cpp	2007-05-30 20:29:39 UTC (rev 1181)
+@@ -130,7 +130,7 @@
+ 			if (!((*bodies)[i]-&gt;isDynamic==false &amp;&amp; (*bodies)[*it]-&gt;isDynamic==false))
+ 			{
+ 				nbPotentialInteractions++;
+-				shared_ptr&lt;Interaction&gt; inter(new Interaction(i,*it));
++				shared_ptr&lt;Interaction&gt; inter(new Interaction(body_id_t(i),body_id_t(*it)));
+ 				ncb-&gt;transientInteractions-&gt;insert(inter);
+ 			}
+ 		}
+
+Modified: trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.cpp
+===================================================================
+--- trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.cpp	2007-05-29 16:47:43 UTC (rev 1180)
++++ trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.cpp	2007-05-30 20:29:39 UTC (rev 1181)
+@@ -105,7 +105,7 @@
+ 
+ void OpenGLRenderingEngine::render(
+ 		const shared_ptr&lt;MetaBody&gt;&amp; rootBody, 
+-		int selection	// FIXME: not sure. maybe a list of selections, 
++		body_id_t selection	// FIXME: not sure. maybe a list of selections, 
+ 					// or maybe bodies themselves should remember if they are selected?
+ 		)
+ {	// FIXME - make a compile time flag for that. So yade can compile with different versions.
+
+Modified: trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.hpp
+===================================================================
+--- trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.hpp	2007-05-29 16:47:43 UTC (rev 1180)
++++ trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.hpp	2007-05-30 20:29:39 UTC (rev 1181)
+@@ -42,8 +42,8 @@
+ 				,Interaction_physics
+ 		
+ 				,needInit;
+-		int 	current_selection,
+-				Draw_mask;
++		body_id_t 	current_selection;
++		int		Draw_mask;
+ 
+ 	private :
+ 		DynLibDispatcher&lt; InteractionGeometry , GLDrawInteractionGeometryFunctor, void , TYPELIST_5(const shared_ptr&lt;InteractionGeometry&gt;&amp;, const shared_ptr&lt;Interaction&gt;&amp; , const shared_ptr&lt;Body&gt;&amp;, const shared_ptr&lt;Body&gt;&amp;, bool) &gt; interactionGeometryDispatcher;
+@@ -77,7 +77,7 @@
+ 		virtual ~OpenGLRenderingEngine();
+ 	
+ 		void init();
+-		void render(const shared_ptr&lt;MetaBody&gt;&amp; body, int selection = -1);
++		void render(const shared_ptr&lt;MetaBody&gt;&amp; body, body_id_t selection = body_id_t(-1));
+ 		virtual void renderWithNames(const shared_ptr&lt;MetaBody&gt;&amp; );
+ 	
+ 	private :
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/AveragePositionRecorder.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/AveragePositionRecorder.cpp	2007-05-29 16:47:43 UTC (rev 1180)
++++ trunk/pkg/dem/Engine/StandAloneEngine/AveragePositionRecorder.cpp	2007-05-30 20:29:39 UTC (rev 1181)
+@@ -23,7 +23,6 @@
+ {
+ 	outputFile = &quot;&quot;;
+ 	interval = 50;
+-	bigBallId = 0;
+ }
+ 
+ 
+@@ -41,7 +40,6 @@
+ 	DataRecorder::registerAttributes();
+ 	REGISTER_ATTRIBUTE(outputFile);
+ 	REGISTER_ATTRIBUTE(interval);
+-	REGISTER_ATTRIBUTE(bigBallId);
+ }
+ 
+ 
+@@ -63,7 +61,7 @@
+ 	for(  ; bi!=biEnd ; ++bi )
+ 	{
+ 		shared_ptr&lt;Body&gt; body = *bi;
+-		if( body-&gt;isDynamic &amp;&amp; body-&gt;getId() != bigBallId )
++		if( body-&gt;isDynamic )
+ 		{ 
+ 			size+=1.0;
+ 			x+=body-&gt;physicalParameters-&gt;se3.position[0];
+@@ -79,11 +77,7 @@
+ 	ofile &lt;&lt; lexical_cast&lt;string&gt;(Omega::instance().getSimulationTime()) &lt;&lt; &quot; &quot; 
+ 		&lt;&lt; lexical_cast&lt;string&gt;(x) &lt;&lt; &quot; &quot; 
+ 		&lt;&lt; lexical_cast&lt;string&gt;(y) &lt;&lt; &quot; &quot; 
+-		&lt;&lt; lexical_cast&lt;string&gt;(z) &lt;&lt; &quot; &quot;
+-
+-		&lt;&lt; lexical_cast&lt;string&gt;((*bodies)[bigBallId]-&gt;physicalParameters-&gt;se3.position[0]) &lt;&lt; &quot; &quot; // big ball
+-		&lt;&lt; lexical_cast&lt;string&gt;((*bodies)[bigBallId]-&gt;physicalParameters-&gt;se3.position[1]) &lt;&lt; &quot; &quot; 
+-		&lt;&lt; lexical_cast&lt;string&gt;((*bodies)[bigBallId]-&gt;physicalParameters-&gt;se3.position[2]) &lt;&lt; endl;
++		&lt;&lt; lexical_cast&lt;string&gt;(z) &lt;&lt; endl;
+ }
+ 
+ 
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/AveragePositionRecorder.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/AveragePositionRecorder.hpp	2007-05-29 16:47:43 UTC (rev 1180)
++++ trunk/pkg/dem/Engine/StandAloneEngine/AveragePositionRecorder.hpp	2007-05-30 20:29:39 UTC (rev 1181)
+@@ -31,7 +31,6 @@
+ 	public : 
+ 		std::string outputFile;
+ 		unsigned int interval;
+-		unsigned int bigBallId;
+ 	private : 
+ 		std::ofstream ofile;
+ 	
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/ForceRecorder.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/ForceRecorder.cpp	2007-05-29 16:47:43 UTC (rev 1180)
++++ trunk/pkg/dem/Engine/StandAloneEngine/ForceRecorder.cpp	2007-05-30 20:29:39 UTC (rev 1181)
+@@ -42,8 +42,6 @@
+ 	REGISTER_ATTRIBUTE(interval);
+ 	REGISTER_ATTRIBUTE(startId);
+ 	REGISTER_ATTRIBUTE(endId);
+-	REGISTER_ATTRIBUTE(bigBallId);
+-	REGISTER_ATTRIBUTE(bigBallReleaseTime);
+ }
+ 
+ 
+@@ -58,7 +56,7 @@
+ 	MetaBody * ncb = YADE_CAST&lt;MetaBody*&gt;(body);
+ 	Real x=0, y=0, z=0;
+ 	
+-	for( unsigned int i = startId ; i &lt;= endId ; ++i )
++	for( int i = startId ; i &lt;= endId ; ++i )
+ 	{
+ 		Vector3r force = YADE_CAST&lt;Force*&gt;(ncb-&gt;physicalActions-&gt;find( i , actionForce-&gt;getClassIndex() ) . get() )-&gt;force;
+ 		
+@@ -74,11 +72,5 @@
+ 		
+ 
+ 		
+-// 	// FIXME all that lines do not belong to ForceRecorder
+-// 	if( bigBallReleaseTime &lt; Omega::instance().getSimulationTime() &amp;&amp; (!changed) )
+-// 	{
+-// 		changed = true;
+-// 		(*(ncb-&gt;bodies))[bigBallId]-&gt;isDynamic = true;
+-// 	}
+ }
+ 
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/ForceRecorder.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/ForceRecorder.hpp	2007-05-29 16:47:43 UTC (rev 1180)
++++ trunk/pkg/dem/Engine/StandAloneEngine/ForceRecorder.hpp	2007-05-30 20:29:39 UTC (rev 1181)
+@@ -26,13 +26,10 @@
+ 	
+ 	public :
+ 		std::string	 outputFile;
+-		unsigned int	 interval
++		int		 interval
+ 				,startId
+ 				,endId;
+ 
+-		int		bigBallId; // FIXME !!!!!!!!!!
+-		Real		bigBallReleaseTime; // FIXME !!!!!!!!!!
+-
+ 		ForceRecorder ();
+ 
+ 		virtual void registerAttributes();
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/VelocityRecorder.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/VelocityRecorder.cpp	2007-05-29 16:47:43 UTC (rev 1180)
++++ trunk/pkg/dem/Engine/StandAloneEngine/VelocityRecorder.cpp	2007-05-30 20:29:39 UTC (rev 1181)
+@@ -19,7 +19,6 @@
+ {
+ 	outputFile = &quot;&quot;;
+ 	interval = 50;
+-	bigBallId = 0;
+ }
+ 
+ 
+@@ -37,7 +36,6 @@
+ 	DataRecorder::registerAttributes();
+ 	REGISTER_ATTRIBUTE(outputFile);
+ 	REGISTER_ATTRIBUTE(interval);
+-	REGISTER_ATTRIBUTE(bigBallId);
+ }
+ 
+ 
+@@ -59,7 +57,7 @@
+ 	for(  ; bi!=biEnd ; ++bi )
+ 	{
+ 		shared_ptr&lt;Body&gt; body = *bi;
+-		if( body-&gt;isDynamic &amp;&amp; body-&gt;getId() != bigBallId )
++		if( body-&gt;isDynamic )
+ 		{ 
+ 			size+=1.0;
+ 			ParticleParameters* pp = YADE_CAST&lt;ParticleParameters*&gt;(body-&gt;physicalParameters.get());
+@@ -75,16 +73,11 @@
+ 	y /= size;
+ 	z /= size;
+ //	cerr &lt;&lt; totalMass &lt;&lt; endl;
+-	ParticleParameters* bigBall = YADE_CAST&lt;ParticleParameters*&gt;((*bodies)[bigBallId]-&gt;physicalParameters.get());
+ 	
+ 	ofile &lt;&lt; lexical_cast&lt;string&gt;(Omega::instance().getSimulationTime()) &lt;&lt; &quot; &quot; 
+ 		&lt;&lt; lexical_cast&lt;string&gt;(x) &lt;&lt; &quot; &quot; 
+ 		&lt;&lt; lexical_cast&lt;string&gt;(y) &lt;&lt; &quot; &quot; 
+-		&lt;&lt; lexical_cast&lt;string&gt;(z) &lt;&lt; &quot; &quot;
+-
+-		&lt;&lt; lexical_cast&lt;string&gt;(bigBall-&gt;velocity[0]) &lt;&lt; &quot; &quot; // big ball
+-		&lt;&lt; lexical_cast&lt;string&gt;(bigBall-&gt;velocity[1]) &lt;&lt; &quot; &quot; 
+-		&lt;&lt; lexical_cast&lt;string&gt;(bigBall-&gt;velocity[2]) &lt;&lt; endl;
++		&lt;&lt; lexical_cast&lt;string&gt;(z) &lt;&lt; endl;
+ }
+ 
+ 
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/VelocityRecorder.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/VelocityRecorder.hpp	2007-05-29 16:47:43 UTC (rev 1180)
++++ trunk/pkg/dem/Engine/StandAloneEngine/VelocityRecorder.hpp	2007-05-30 20:29:39 UTC (rev 1181)
+@@ -23,7 +23,6 @@
+ 	public :
+ 		std::string outputFile;
+ 		unsigned int interval;
+-		unsigned int bigBallId;
+ 		VelocityRecorder ();
+ 		virtual void registerAttributes();
+ 		virtual void action(Body* b);
+
+Modified: trunk/pkg/dem/PreProcessor/Funnel.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/Funnel.cpp	2007-05-29 16:47:43 UTC (rev 1180)
++++ trunk/pkg/dem/PreProcessor/Funnel.cpp	2007-05-30 20:29:39 UTC (rev 1181)
+@@ -176,7 +176,7 @@
+ 
+ void Funnel::createSphere(shared_ptr&lt;Body&gt;&amp; body, int i, int j, int k)
+ {
+-	body = shared_ptr&lt;Body&gt;(new Body(0,1));
++	body = shared_ptr&lt;Body&gt;(new Body(body_id_t(0),1));
+ 	shared_ptr&lt;BodyMacroParameters&gt; physics(new BodyMacroParameters);
+ 	shared_ptr&lt;AABB&gt; aabb(new AABB);
+ 	shared_ptr&lt;Sphere&gt; gSphere(new Sphere);
+@@ -222,7 +222,7 @@
+ 
+ void Funnel::createBox(shared_ptr&lt;Body&gt;&amp; body, Vector3r position, Vector3r extents)
+ {
+-	body = shared_ptr&lt;Body&gt;(new Body(0,1));
++	body = shared_ptr&lt;Body&gt;(new Body(body_id_t(0),1));
+ 	shared_ptr&lt;BodyMacroParameters&gt; physics(new BodyMacroParameters);
+ 	shared_ptr&lt;AABB&gt; aabb(new AABB);
+ 	shared_ptr&lt;Box&gt; gBox(new Box);
+
+Modified: trunk/pkg/dem/PreProcessor/SDECImpactTest.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/SDECImpactTest.cpp	2007-05-29 16:47:43 UTC (rev 1180)
++++ trunk/pkg/dem/PreProcessor/SDECImpactTest.cpp	2007-05-30 20:29:39 UTC (rev 1181)
+@@ -189,7 +189,7 @@
+ 
+ string SDECImpactTest::generate()
+ {
+-	unsigned int startId=boost::numeric::bounds&lt;unsigned int&gt;::highest(), endId=0; // record forces from group 2
++	int startId=boost::numeric::bounds&lt;unsigned int&gt;::highest(), endId=0; // record forces from group 2
+ 	
+ 	rootBody = shared_ptr&lt;MetaBody&gt;(new MetaBody);
+ 	createActors(rootBody);
+@@ -237,8 +237,8 @@
+ 			rootBody-&gt;bodies-&gt;insert(body);
+ 			if(f == 2)
+ 			{
+-				startId = std::min(body-&gt;getId() , startId);
+-				endId   = std::max(body-&gt;getId() , endId);
++				startId = std::min((int)body-&gt;getId() , startId);
++				endId   = std::max((int)body-&gt;getId() , endId);
+ 			}
+ 				
+ 		}
+@@ -251,12 +251,8 @@
+ 	if(bigBall)
+ 		rootBody-&gt;bodies-&gt;insert(body);
+ 	bigId = body-&gt;getId();
+-	forcerec-&gt;bigBallId = bigId;
+-	forcerec-&gt;bigBallReleaseTime = bigBallDropTimeSeconds;
+ 	forcerec-&gt;startId = startId;
+ 	forcerec-&gt;endId   = endId;
+-	averagePositionRecorder-&gt;bigBallId = bigId;
+-	velocityRecorder-&gt;bigBallId = bigId;
+ 
+ 	if(boxWalls)
+ 	{
+@@ -355,7 +351,7 @@
+ 
+ void SDECImpactTest::createSphere(shared_ptr&lt;Body&gt;&amp; body, Vector3r position, Real radius, bool big, bool dynamic )
+ {
+-	body = shared_ptr&lt;Body&gt;(new Body(0,2));
++	body = shared_ptr&lt;Body&gt;(new Body(body_id_t(0),2));
+ 	shared_ptr&lt;BodyMacroParameters&gt; physics(new BodyMacroParameters);
+ 	shared_ptr&lt;AABB&gt; aabb(new AABB);
+ 	shared_ptr&lt;Sphere&gt; gSphere(new Sphere);
+@@ -406,7 +402,7 @@
+ 
+ void SDECImpactTest::createBox(shared_ptr&lt;Body&gt;&amp; body, Vector3r position, Vector3r extents, bool wire)
+ {
+-	body = shared_ptr&lt;Body&gt;(new Body(0,2));
++	body = shared_ptr&lt;Body&gt;(new Body(body_id_t(0),2));
+ 	shared_ptr&lt;BodyMacroParameters&gt; physics(new BodyMacroParameters);
+ 	shared_ptr&lt;AABB&gt; aabb(new AABB);
+ 	shared_ptr&lt;Box&gt; gBox(new Box);
+
+Modified: trunk/pkg/dem/PreProcessor/SDECLinkedSpheres.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/SDECLinkedSpheres.cpp	2007-05-29 16:47:43 UTC (rev 1180)
++++ trunk/pkg/dem/PreProcessor/SDECLinkedSpheres.cpp	2007-05-30 20:29:39 UTC (rev 1181)
+@@ -219,7 +219,7 @@
+ 
+ void SDECLinkedSpheres::createSphere(shared_ptr&lt;Body&gt;&amp; body, int i, int j, int k)
+ {
+-	body = shared_ptr&lt;Body&gt;(new Body(0,55));
++	body = shared_ptr&lt;Body&gt;(new Body(body_id_t(0),55));
+ 	shared_ptr&lt;BodyMacroParameters&gt; physics(new BodyMacroParameters);
+ 	shared_ptr&lt;AABB&gt; aabb(new AABB);
+ 	shared_ptr&lt;Sphere&gt; gSphere(new Sphere);
+@@ -267,7 +267,7 @@
+ 
+ void SDECLinkedSpheres::createBox(shared_ptr&lt;Body&gt;&amp; body, Vector3r position, Vector3r extents)
+ {
+-	body = shared_ptr&lt;Body&gt;(new Body(0,55));
++	body = shared_ptr&lt;Body&gt;(new Body(body_id_t(0),55));
+ 	shared_ptr&lt;BodyMacroParameters&gt; physics(new BodyMacroParameters);
+ 	shared_ptr&lt;AABB&gt; aabb(new AABB);
+ 	shared_ptr&lt;Box&gt; gBox(new Box);
+
+Modified: trunk/pkg/dem/PreProcessor/SDECMovingWall.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/SDECMovingWall.cpp	2007-05-29 16:47:43 UTC (rev 1180)
++++ trunk/pkg/dem/PreProcessor/SDECMovingWall.cpp	2007-05-30 20:29:39 UTC (rev 1181)
+@@ -214,7 +214,7 @@
+ 
+ void SDECMovingWall::createGroundSphere(shared_ptr&lt;Body&gt;&amp; body,Real radius, Real i, Real j, Real k)
+ {
+-	body = shared_ptr&lt;Body&gt;(new Body(0,1));
++	body = shared_ptr&lt;Body&gt;(new Body(body_id_t(0),1));
+ 	shared_ptr&lt;BodyMacroParameters&gt; physics(new BodyMacroParameters);
+ 	shared_ptr&lt;AABB&gt; aabb(new AABB);
+ 	shared_ptr&lt;Sphere&gt; gSphere(new Sphere);
+@@ -256,7 +256,7 @@
+ 
+ void SDECMovingWall::createSphere(shared_ptr&lt;Body&gt;&amp; body, int i, int j, int k)
+ {
+-	body = shared_ptr&lt;Body&gt;(new Body(0,1));
++	body = shared_ptr&lt;Body&gt;(new Body(body_id_t(0),1));
+ 	shared_ptr&lt;BodyMacroParameters&gt; physics(new BodyMacroParameters);
+ 	shared_ptr&lt;AABB&gt; aabb(new AABB);
+ 	shared_ptr&lt;Sphere&gt; gSphere(new Sphere);
+@@ -305,7 +305,7 @@
+ 
+ void SDECMovingWall::createBox(shared_ptr&lt;Body&gt;&amp; body, Vector3r position, Vector3r extents, bool wire)
+ {
+-	body = shared_ptr&lt;Body&gt;(new Body(0,1));
++	body = shared_ptr&lt;Body&gt;(new Body(body_id_t(0),1));
+ 	shared_ptr&lt;BodyMacroParameters&gt; physics(new BodyMacroParameters);
+ 	shared_ptr&lt;AABB&gt; aabb(new AABB);
+ 	shared_ptr&lt;Box&gt; gBox(new Box);
+
+Modified: trunk/pkg/dem/PreProcessor/SDECSpheresPlane.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/SDECSpheresPlane.cpp	2007-05-29 16:47:43 UTC (rev 1180)
++++ trunk/pkg/dem/PreProcessor/SDECSpheresPlane.cpp	2007-05-30 20:29:39 UTC (rev 1181)
+@@ -185,7 +185,7 @@
+ 
+ void SDECSpheresPlane::createGroundSphere(shared_ptr&lt;Body&gt;&amp; body,Real radius, Real i, Real j, Real k)
+ {
+-	body = shared_ptr&lt;Body&gt;(new Body(0,1));
++	body = shared_ptr&lt;Body&gt;(new Body(body_id_t(0),1));
+ 	shared_ptr&lt;BodyMacroParameters&gt; physics(new BodyMacroParameters);
+ 	shared_ptr&lt;AABB&gt; aabb(new AABB);
+ 	shared_ptr&lt;Sphere&gt; gSphere(new Sphere);
+@@ -227,7 +227,7 @@
+ 
+ void SDECSpheresPlane::createSphere(shared_ptr&lt;Body&gt;&amp; body, int i, int j, int k)
+ {
+-	body = shared_ptr&lt;Body&gt;(new Body(0,1));
++	body = shared_ptr&lt;Body&gt;(new Body(body_id_t(0),1));
+ 	shared_ptr&lt;BodyMacroParameters&gt; physics(new BodyMacroParameters);
+ 	shared_ptr&lt;AABB&gt; aabb(new AABB);
+ 	shared_ptr&lt;Sphere&gt; gSphere(new Sphere);
+@@ -275,7 +275,7 @@
+ 
+ void SDECSpheresPlane::createBox(shared_ptr&lt;Body&gt;&amp; body, Vector3r position, Vector3r extents)
+ {
+-	body = shared_ptr&lt;Body&gt;(new Body(0,1));
++	body = shared_ptr&lt;Body&gt;(new Body(body_id_t(0),1));
+ 	shared_ptr&lt;BodyMacroParameters&gt; physics(new BodyMacroParameters);
+ 	shared_ptr&lt;AABB&gt; aabb(new AABB);
+ 	shared_ptr&lt;Box&gt; gBox(new Box);
+@@ -380,7 +380,7 @@
+ 		rootBody-&gt;engines.push_back(orientationIntegrator);
+ 
+ 	shared_ptr&lt;PositionOrientationRecorder&gt; positionOrientationRecorder(new PositionOrientationRecorder);
+-	rootBody-&gt;engines.push_back(positionOrientationRecorder);
++	//rootBody-&gt;engines.push_back(positionOrientationRecorder);
+ 
+ 	rootBody-&gt;initializers.clear();
+ 	rootBody-&gt;initializers.push_back(physicalActionInitializer);
+
+Modified: trunk/pkg/dem/PreProcessor/TetrahedronsTest.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/TetrahedronsTest.cpp	2007-05-29 16:47:43 UTC (rev 1180)
++++ trunk/pkg/dem/PreProcessor/TetrahedronsTest.cpp	2007-05-30 20:29:39 UTC (rev 1181)
+@@ -169,7 +169,7 @@
+ 
+ void TetrahedronsTest::createTetrahedron(shared_ptr&lt;Body&gt;&amp; body, int i, int j, int k)
+ {
+-	body = shared_ptr&lt;Body&gt;(new Body(0,1));
++	body = shared_ptr&lt;Body&gt;(new Body(body_id_t(0),1));
+ 	shared_ptr&lt;ElasticBodyParameters&gt; physics(new ElasticBodyParameters);
+ 	shared_ptr&lt;AABB&gt; aabb(new AABB);
+ 	shared_ptr&lt;Tetrahedron&gt; tet(new Tetrahedron);
+@@ -259,7 +259,7 @@
+ 	// we could even make a box (or even RotatingBox) by making several boxes, as
+ 	// in the RotatingBox example FileGenerator
+ 
+-	body = shared_ptr&lt;Body&gt;(new Body(0,1));
++	body = shared_ptr&lt;Body&gt;(new Body(body_id_t(0),1));
+ 	shared_ptr&lt;ElasticBodyParameters&gt; physics(new ElasticBodyParameters);
+ 	shared_ptr&lt;AABB&gt; aabb(new AABB);
+ 	shared_ptr&lt;Box&gt; gBox(new Box);
+
+Modified: trunk/pkg/dem/PreProcessor/ThreePointBending.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/ThreePointBending.cpp	2007-05-29 16:47:43 UTC (rev 1180)
++++ trunk/pkg/dem/PreProcessor/ThreePointBending.cpp	2007-05-30 20:29:39 UTC (rev 1181)
+@@ -286,7 +286,7 @@
+ 
+ void ThreePointBending::createBox(shared_ptr&lt;Body&gt;&amp; body, Vector3r position, Vector3r extents)
+ {
+-	body = shared_ptr&lt;Body&gt;(new Body(0,55));
++	body = shared_ptr&lt;Body&gt;(new Body(body_id_t(0),55));
+ 	shared_ptr&lt;BodyMacroParameters&gt; physics(new BodyMacroParameters);
+ 	shared_ptr&lt;AABB&gt; aabb(new AABB);
+ 	shared_ptr&lt;Box&gt; gBox(new Box);
+
+Modified: trunk/pkg/dem/PreProcessor/TriaxialTest.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/TriaxialTest.cpp	2007-05-29 16:47:43 UTC (rev 1180)
++++ trunk/pkg/dem/PreProcessor/TriaxialTest.cpp	2007-05-30 20:29:39 UTC (rev 1181)
+@@ -329,8 +329,6 @@
+ // 	if(bigBall)
+ // 		rootBody-&gt;bodies-&gt;insert(body);
+ // 	bigId = body-&gt;getId();
+-// 	forcerec-&gt;bigBallId = bigId;
+-	forcerec-&gt;bigBallReleaseTime = 0;
+ 	//forcerec-&gt;startId = startId;
+ 	//forcerec-&gt;endId   = endId;
+ 	//averagePositionRecorder-&gt;bigBallId = bigId;
+@@ -449,7 +447,7 @@
+ 
+ void TriaxialTest::createSphere(shared_ptr&lt;Body&gt;&amp; body, Vector3r position, Real radius, bool big, bool dynamic )
+ {
+-	body = shared_ptr&lt;Body&gt;(new Body(0,2));
++	body = shared_ptr&lt;Body&gt;(new Body(body_id_t(0),2));
+ 	shared_ptr&lt;BodyMacroParameters&gt; physics(new BodyMacroParameters);
+ 	shared_ptr&lt;AABB&gt; aabb(new AABB);
+ 	shared_ptr&lt;Sphere&gt; gSphere(new Sphere);
+@@ -500,7 +498,7 @@
+ 
+ void TriaxialTest::createBox(shared_ptr&lt;Body&gt;&amp; body, Vector3r position, Vector3r extents, bool wire)
+ {
+-	body = shared_ptr&lt;Body&gt;(new Body(0,2));
++	body = shared_ptr&lt;Body&gt;(new Body(body_id_t(0),2));
+ 	shared_ptr&lt;BodyMacroParameters&gt; physics(new BodyMacroParameters);
+ 	shared_ptr&lt;AABB&gt; aabb(new AABB);
+ 	shared_ptr&lt;Box&gt; gBox(new Box);
+
+Modified: trunk/pkg/fem/Engine/EngineUnit/FEMSetTextLoader.cpp
+===================================================================
+--- trunk/pkg/fem/Engine/EngineUnit/FEMSetTextLoader.cpp	2007-05-29 16:47:43 UTC (rev 1180)
++++ trunk/pkg/fem/Engine/EngineUnit/FEMSetTextLoader.cpp	2007-05-30 20:29:39 UTC (rev 1181)
+@@ -62,9 +62,9 @@
+ 
+ void FEMSetTextLoader::createNode( shared_ptr&lt;Body&gt;&amp; body
+ 					, Vector3r position
+-					, unsigned int id)
++					, int id)
+ {
+-	body = shared_ptr&lt;Body&gt;(new Body(id,nodeGroupMask));
++	body = shared_ptr&lt;Body&gt;(new Body(body_id_t(id),nodeGroupMask));
+ 	shared_ptr&lt;FEMNodeData&gt; physics(new FEMNodeData);
+ 	shared_ptr&lt;Sphere&gt; gSphere(new Sphere);
+ 	
+@@ -96,14 +96,14 @@
+ 
+ void FEMSetTextLoader::createTetrahedron(  const MetaBody* rootBody
+ 						, shared_ptr&lt;Body&gt;&amp; body
+-						, unsigned int id
+-						, unsigned int id1
+-						, unsigned int id2
+-						, unsigned int id3
+-						, unsigned int id4)
++						, int id
++						, int id1
++						, int id2
++						, int id3
++						, int id4)
+ {
+ 	
+-	body = shared_ptr&lt;Body&gt;(new Body(id,tetrahedronGroupMask));
++	body = shared_ptr&lt;Body&gt;(new Body(body_id_t(id),tetrahedronGroupMask));
+ 	shared_ptr&lt;FEMTetrahedronData&gt; physics(new FEMTetrahedronData);
+ 	shared_ptr&lt;Tetrahedron&gt; gTet(new Tetrahedron);
+ 	
+
+Modified: trunk/pkg/fem/Engine/EngineUnit/FEMSetTextLoader.hpp
+===================================================================
+--- trunk/pkg/fem/Engine/EngineUnit/FEMSetTextLoader.hpp	2007-05-29 16:47:43 UTC (rev 1180)
++++ trunk/pkg/fem/Engine/EngineUnit/FEMSetTextLoader.hpp	2007-05-30 20:29:39 UTC (rev 1181)
+@@ -28,15 +28,15 @@
+ 	
+ 		void createNode(	  shared_ptr&lt;Body&gt;&amp; body
+ 					, Vector3r position
+-					, unsigned int id);
++					, int id);
+ 					
+ 		void createTetrahedron(   const MetaBody* rootBody
+ 					, shared_ptr&lt;Body&gt;&amp; body
+-					, unsigned int id
+-					, unsigned int id1
+-					, unsigned int id2
+-					, unsigned int id3
+-					, unsigned int id4);
++					, int id
++					, int id1
++					, int id2
++					, int id3
++					, int id4);
+ 
+ 	protected :
+ 		virtual void registerAttributes();	
+
+Modified: trunk/pkg/lattice/PreProcessor/LatticeExample.cpp
+===================================================================
+--- trunk/pkg/lattice/PreProcessor/LatticeExample.cpp	2007-05-29 16:47:43 UTC (rev 1180)
++++ trunk/pkg/lattice/PreProcessor/LatticeExample.cpp	2007-05-30 20:29:39 UTC (rev 1181)
+@@ -791,7 +791,7 @@
+ 
+ bool LatticeExample::createNode(shared_ptr&lt;Body&gt;&amp; body, int i, int j, int k)
+ {
+-	body = shared_ptr&lt;Body&gt;(new Body(0,nodeGroupMask));
++	body = shared_ptr&lt;Body&gt;(new Body(body_id_t(0),nodeGroupMask));
+ 	shared_ptr&lt;LatticeNodeParameters&gt; physics(new LatticeNodeParameters);
+ 	shared_ptr&lt;Sphere&gt; gSphere(new Sphere);
+ 	
+@@ -867,7 +867,7 @@
+ 
+ bool LatticeExample::createQuad(shared_ptr&lt;Body&gt;&amp; quad, int i, int j, Vector3r nbNodes)
+ {
+-	quad = shared_ptr&lt;Body&gt;(new Body(0,quadGroupMask));
++	quad = shared_ptr&lt;Body&gt;(new Body(body_id_t(0),quadGroupMask));
+ 	shared_ptr&lt;Quadrilateral&gt; gQuad(new Quadrilateral( (j-1)*(int)std::floor(nbNodes[0]+1)+i-1 , j*(int)std::floor(nbNodes[0]+1)+i-1 , j*(int)std::floor(nbNodes[0]+1)+i , (j-1)*(int)std::floor(nbNodes[0]+1)+i, rootBody.get()));
+ 	// FIXME FIXME - this is an empty class. not needed at all.
+ 	// all this Quadrilateral stuff in fact does not fit current design at all.
+@@ -891,9 +891,9 @@
+ }
+ 
+ 
+-void LatticeExample::createBeam(shared_ptr&lt;Body&gt;&amp; body, unsigned int i, unsigned int j)
++void LatticeExample::createBeam(shared_ptr&lt;Body&gt;&amp; body, int i, int j)
+ {
+-	body = shared_ptr&lt;Body&gt;(new Body(0,beamGroupMask));
++	body = shared_ptr&lt;Body&gt;(new Body(body_id_t(0),beamGroupMask));
+ 	shared_ptr&lt;LatticeBeamParameters&gt; physics(new LatticeBeamParameters);
+ 	shared_ptr&lt;LineSegment&gt; gBeam(new LineSegment);
+ 	
+@@ -948,7 +948,7 @@
+ 	return length;
+ }
+ 
+-void LatticeExample::calcAxisAngle(LatticeBeamParameters* beam1, BodyContainer* bodies, unsigned int otherId, InteractionContainer* ints, unsigned int thisId)
++void LatticeExample::calcAxisAngle(LatticeBeamParameters* beam1, BodyContainer* bodies, int otherId, InteractionContainer* ints, int thisId)
+ { 
+ 	if( ! ints-&gt;find(otherId,thisId) &amp;&amp; otherId != thisId )
+ 	{
+@@ -957,7 +957,7 @@
+ 		
+ 		angle = unitVectorsAngle(beam1-&gt;direction,beam2-&gt;direction);
+ 
+-                shared_ptr&lt;Interaction&gt;                 interaction(new Interaction( thisId , otherId ));
++                shared_ptr&lt;Interaction&gt;                 interaction(new Interaction( body_id_t(thisId) , body_id_t(otherId) ));
+                 shared_ptr&lt;LatticeBeamAngularSpring&gt;    angularSpring(new LatticeBeamAngularSpring);
+ 		
+ 		angularSpring-&gt;initialPlaneAngle 	= angle;
+
+Modified: trunk/pkg/lattice/PreProcessor/LatticeExample.hpp
+===================================================================
+--- trunk/pkg/lattice/PreProcessor/LatticeExample.hpp	2007-05-29 16:47:43 UTC (rev 1180)
++++ trunk/pkg/lattice/PreProcessor/LatticeExample.hpp	2007-05-30 20:29:39 UTC (rev 1181)
+@@ -227,12 +227,12 @@
+ 		void positionRootBody(shared_ptr&lt;MetaBody&gt;&amp; rootBody);
+ 		bool createNode(shared_ptr&lt;Body&gt;&amp; body, int i, int j, int k);
+ 		bool createQuad(shared_ptr&lt;Body&gt;&amp; body, int i, int j, Vector3r);
+-                void createBeam(shared_ptr&lt;Body&gt;&amp; body, unsigned int i, unsigned int j);
++                void createBeam(shared_ptr&lt;Body&gt;&amp; body, int i, int j);
+                 Real calcBeamPositionOrientationLength(shared_ptr&lt;Body&gt;&amp; body);
+                 bool notDeleted(Vector3r pos);
+ 		bool isDeleted(Vector3r pos, Vector3r min, Vector3r max);
+                 void calcBeamAngles(Body* body, BodyContainer* bodies,InteractionContainer* ints);
+-                void calcAxisAngle(LatticeBeamParameters* beam, BodyContainer* bodies, unsigned int otherId,InteractionContainer* ints,unsigned int thisId);
++                void calcAxisAngle(LatticeBeamParameters* beam, BodyContainer* bodies, int otherId,InteractionContainer* ints, int thisId);
+                 bool checkMinimumAngle(BodyRedirectionVector&amp;,shared_ptr&lt;Body&gt;&amp;);
+                 bool checkAngle( Vector3r , Vector3r&amp; );
+                 void imposeTranslation(shared_ptr&lt;MetaBody&gt;&amp; rootBody, Vector3r min, Vector3r max, Vector3r direction, Real velocity);
+
+Modified: trunk/pkg/lattice/RenderingEngine/GLDrawLatticeInteractingGeometry/GLDrawLatticeInteractingGeometry.cpp
+===================================================================
+--- trunk/pkg/lattice/RenderingEngine/GLDrawLatticeInteractingGeometry/GLDrawLatticeInteractingGeometry.cpp	2007-05-29 16:47:43 UTC (rev 1180)
++++ trunk/pkg/lattice/RenderingEngine/GLDrawLatticeInteractingGeometry/GLDrawLatticeInteractingGeometry.cpp	2007-05-30 20:29:39 UTC (rev 1181)
+@@ -163,7 +163,7 @@
+ 					else if(A==C)	A=D;
+ 					else if(B==C)	B=D;
+ 
+-				if(wire &amp;&amp; (damaged.size()&gt;std::max((*angles)-&gt;getId1(),(*angles)-&gt;getId2())) &amp;&amp; (damaged[(*angles)-&gt;getId1()]&gt;=limit &amp;&amp; damaged[(*angles)-&gt;getId2()]&gt;=limit))
++				if(wire &amp;&amp; (damaged.size()&gt;static_cast&lt;unsigned int&gt;(std::max((*angles)-&gt;getId1(),(*angles)-&gt;getId2()))) &amp;&amp; (damaged[(*angles)-&gt;getId1()]&gt;=limit &amp;&amp; damaged[(*angles)-&gt;getId2()]&gt;=limit))
+ 				{
+ 					glColor3(0.9,0.2,0.2);
+ 					red=true;
+
+Modified: trunk/pkg/mass-spring/PreProcessor/HangingCloth.cpp
+===================================================================
+--- trunk/pkg/mass-spring/PreProcessor/HangingCloth.cpp	2007-05-29 16:47:43 UTC (rev 1180)
++++ trunk/pkg/mass-spring/PreProcessor/HangingCloth.cpp	2007-05-30 20:29:39 UTC (rev 1181)
+@@ -253,7 +253,7 @@
+ 	for(int i=0;i&lt;width;i++)
+ 		for(int j=0;j&lt;height;j++)
+ 		{
+-			shared_ptr&lt;Body&gt; node(new Body(0,1|2));
++			shared_ptr&lt;Body&gt; node(new Body(body_id_t(0),1|2));
+ 
+ 			node-&gt;isDynamic		= true;
+ 			
+@@ -468,7 +468,7 @@
+ 
+ void HangingCloth::createSphere(shared_ptr&lt;Body&gt;&amp; body, int i, int j, int k)
+ {
+-	body = shared_ptr&lt;Body&gt;(new Body(0,2));
++	body = shared_ptr&lt;Body&gt;(new Body(body_id_t(0),2));
+ 	shared_ptr&lt;BodyMacroParameters&gt; physics(new BodyMacroParameters);
+ 	shared_ptr&lt;AABB&gt; aabb(new AABB);
+ 	shared_ptr&lt;Sphere&gt; gSphere(new Sphere);
+@@ -516,7 +516,7 @@
+ 
+ void HangingCloth::createBox(shared_ptr&lt;Body&gt;&amp; body, Vector3r position, Vector3r extents)
+ {
+-	body = shared_ptr&lt;Body&gt;(new Body(0,2));
++	body = shared_ptr&lt;Body&gt;(new Body(body_id_t(0),2));
+ 	shared_ptr&lt;BodyMacroParameters&gt; physics(new BodyMacroParameters);
+ 	shared_ptr&lt;AABB&gt; aabb(new AABB);
+ 	shared_ptr&lt;Box&gt; gBox(new Box);
+
+Modified: trunk/pkg/realtime-rigidbody/PreProcessor/BoxStack.cpp
+===================================================================
+--- trunk/pkg/realtime-rigidbody/PreProcessor/BoxStack.cpp	2007-05-29 16:47:43 UTC (rev 1180)
++++ trunk/pkg/realtime-rigidbody/PreProcessor/BoxStack.cpp	2007-05-30 20:29:39 UTC (rev 1181)
+@@ -122,7 +122,7 @@
+ // FIXME - all the functions below, are a modified copy of functions in RotatingBox.cpp
+ void BoxStack::createBox(shared_ptr&lt;Body&gt;&amp; body, int i, int j, int k)
+ {
+-	body = shared_ptr&lt;Body&gt;(new Body(0,1));
++	body = shared_ptr&lt;Body&gt;(new Body(body_id_t(0),1));
+ 	shared_ptr&lt;RigidBodyParameters&gt; physics(new RigidBodyParameters);
+ 	shared_ptr&lt;AABB&gt; aabb(new AABB);
+ 	shared_ptr&lt;Box&gt; gBox(new Box);
+@@ -164,7 +164,7 @@
+ 
+ void BoxStack::createSphere(shared_ptr&lt;Body&gt;&amp; body)
+ {
+-	body = shared_ptr&lt;Body&gt;(new Body(0,1));
++	body = shared_ptr&lt;Body&gt;(new Body(body_id_t(0),1));
+ 	shared_ptr&lt;RigidBodyParameters&gt; physics(new RigidBodyParameters);
+ 	shared_ptr&lt;AABB&gt; aabb(new AABB);
+ 	shared_ptr&lt;Sphere&gt; gSphere(new Sphere);
+@@ -206,7 +206,7 @@
+ 
+ void BoxStack::createKinematicBox(shared_ptr&lt;Body&gt;&amp; body, Vector3r position, Vector3r extents,bool wire)
+ {
+-	body = shared_ptr&lt;Body&gt;(new Body(0,2));
++	body = shared_ptr&lt;Body&gt;(new Body(body_id_t(0),2));
+ 	shared_ptr&lt;RigidBodyParameters&gt; physics(new RigidBodyParameters);
+ 	shared_ptr&lt;AABB&gt; aabb(new AABB);
+ 	shared_ptr&lt;Box&gt; gBox(new Box);
+
+Modified: trunk/pkg/realtime-rigidbody/PreProcessor/RotatingBox.cpp
+===================================================================
+--- trunk/pkg/realtime-rigidbody/PreProcessor/RotatingBox.cpp	2007-05-29 16:47:43 UTC (rev 1180)
++++ trunk/pkg/realtime-rigidbody/PreProcessor/RotatingBox.cpp	2007-05-30 20:29:39 UTC (rev 1181)
+@@ -133,7 +133,7 @@
+ 
+ void RotatingBox::createBox(shared_ptr&lt;Body&gt;&amp; body, int i, int j, int k)
+ {
+-	body = shared_ptr&lt;Body&gt;(new Body(0,0));
++	body = shared_ptr&lt;Body&gt;(new Body(body_id_t(0),0));
+ 	shared_ptr&lt;RigidBodyParameters&gt; physics(new RigidBodyParameters);
+ 	shared_ptr&lt;AABB&gt; aabb(new AABB);
+ 	shared_ptr&lt;Box&gt; gBox(new Box);
+@@ -182,7 +182,7 @@
+ 
+ void RotatingBox::createSphere(shared_ptr&lt;Body&gt;&amp; body, int i, int j, int k)
+ {
+-	body = shared_ptr&lt;Body&gt;(new Body(0,0));
++	body = shared_ptr&lt;Body&gt;(new Body(body_id_t(0),0));
+ 	shared_ptr&lt;RigidBodyParameters&gt; physics(new RigidBodyParameters);
+ 	shared_ptr&lt;AABB&gt; aabb(new AABB);
+ 	shared_ptr&lt;Sphere&gt; gSphere(new Sphere);
+@@ -225,7 +225,7 @@
+ 
+ void RotatingBox::createKinematicBox(shared_ptr&lt;Body&gt;&amp; body, Vector3r position, Vector3r extents,bool wire)
+ {
+-	body = shared_ptr&lt;Body&gt;(new Body(0,0));
++	body = shared_ptr&lt;Body&gt;(new Body(body_id_t(0),0));
+ 	shared_ptr&lt;RigidBodyParameters&gt; physics(new RigidBodyParameters);
+ 	shared_ptr&lt;AABB&gt; aabb(new AABB);
+ 	shared_ptr&lt;Box&gt; gBox(new Box);
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000145.html">[Yade-commits] r1180 - trunk
+</A></li>
+	<LI>Next message: <A HREF="000147.html">[Yade-commits] r1182 - in trunk: . core extra/clump lib/base	pkg/dem pkg/dem/DataClass/InteractionGeometry	pkg/dem/DataClass/InteractionPhysics	pkg/dem/DataClass/PhysicalParameters	pkg/dem/Engine/DeusExMachina pkg/dem/Engine/EngineUnit	pkg/dem/Engine/StandAloneEngine pkg/dem/PreProcessor
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#146">[ date ]</a>
+              <a href="thread.html#146">[ thread ]</a>
+              <a href="subject.html#146">[ subject ]</a>
+              <a href="author.html#146">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

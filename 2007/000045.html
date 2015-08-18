@@ -1,0 +1,227 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1080 - trunk/yade-extra/clump
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2007/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1080%20-%20trunk/yade-extra/clump&In-Reply-To=%3C200703021159.l22Bxfw8014366%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000044.html">
+   <LINK REL="Next"  HREF="000046.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1080 - trunk/yade-extra/clump</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1080%20-%20trunk/yade-extra/clump&In-Reply-To=%3C200703021159.l22Bxfw8014366%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1080 - trunk/yade-extra/clump">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Fri Mar  2 12:59:41 CET 2007</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000044.html">[Yade-commits] r1079 - trunk/yade-extra/clump
+</A></li>
+        <LI>Next message: <A HREF="000046.html">[Yade-commits] r1081 - in trunk: . yade-extra/clump	yade-libs/yade-lib-serialization/src/yade-lib-serialization
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#45">[ date ]</a>
+              <a href="thread.html#45">[ thread ]</a>
+              <a href="subject.html#45">[ subject ]</a>
+              <a href="author.html#45">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2007-03-02 12:59:40 +0100 (Fri, 02 Mar 2007)
+New Revision: 1080
+
+Modified:
+   trunk/yade-extra/clump/pyade.cpp
+   trunk/yade-extra/clump/pyade.py
+Log:
+Attempt to access interactions from Python, commeted out for the moment. May disappear later. Not used anywhere. Do not use.
+
+
+Modified: trunk/yade-extra/clump/pyade.cpp
+===================================================================
+--- trunk/yade-extra/clump/pyade.cpp	2007-03-01 13:03:57 UTC (rev 1079)
++++ trunk/yade-extra/clump/pyade.cpp	2007-03-02 11:59:40 UTC (rev 1080)
+@@ -125,6 +125,50 @@
+ 	#undef SM
+ }
+ 
++#if 0
++/************************ interaction properties *****************************/
++/*! Interaction parameters that can be accessed through this code.
++ *
++ * @note Other attributes may still be defined in the python interface - see pyade.py for those.
++ */
++enum interPropCodes { /*! id of the first body [long] */ it_id1,
++	/*! id of the second body [long] */ it_id2,
++	/*! contact point [Vector] */ it_cp,
++	/*! normal [Vector] */ it_normal,
++	/*! radius1 [float] */ it_r1,
++	/*! radius2 [float] */ it_r2,
++	/*! peneration depth [float] */ it_penetration }
++
++/* Retrieves interaction property
++ *
++ * @return Python object of which type depends on the property requested; interPropCodes has details.
++ */
++static PyObject*
++interProp(PyObject *self, PyObject *args){
++	long id1,id2,prop; int isTransient;
++	if(!PyArg_ParseTuple(args, &quot;llli&quot;, &amp;id1, &amp;id2, &amp;prop, &amp;isTransient)) return NULL;
++	shared_ptr&lt;InteractionContainer&gt; inters=isTransient?Omega::instance()-&gt;getRootBody()-&gt;transientInteractions:Omega::instance()-&gt;getRootBody()-&gt;persistentInteractions;
++	switch(prop){
++		case it_id1: return toPython(id1); // hmmm, these two are not needed?!
++		case it_id2: return toPython(id2);
++		case it_cp:{
++			const shared_ptr&lt;SpheresContactGeometry&gt;&amp; scg=dynamic_cast&lt;SpheresContactGeometry&gt;(inters-&gt;find(id1,id2));
++			return return toPython(scg-&gt;contactPoint);
++		}
++		case sm_file: return toPython(Omega::instance().getSimulationFileName());
++		case sm_nBodies: return toPython(Omega::instance().getRootBody()-&gt;bodies-&gt;size());
++		case sm_sel: return toPython(Omega::instance().selectedBodies);
++	}
++	return Py_BuildValue(&quot;&quot;);
++}
++
++static PyObject*
++interPropDict(PyObject *self, PyObject *args){
++	#define IT(name) #name,it_##name
++		return Py_BuildValue(&quot;{sisisisisisisi}&quot;,IT(id1),IT(id2),IT(cp),IT(normal),IT(r1),IT(r2),IT(penetration));
++	#undef IT
++}
++#endif
+ /************************ module setup *************************/
+ 
+ static PyMethodDef _pyadeMethods[] = {
+
+Modified: trunk/yade-extra/clump/pyade.py
+===================================================================
+--- trunk/yade-extra/clump/pyade.py	2007-03-01 13:03:57 UTC (rev 1079)
++++ trunk/yade-extra/clump/pyade.py	2007-03-02 11:59:40 UTC (rev 1080)
+@@ -66,62 +66,41 @@
+ 	def __getattr__(self,name):
+ 		return _pyade.simulProp(_pyade.simulPropDict()[name])
+ 
+-#class History:
+-#	&quot;&quot;&quot;
+-#		example:
+-#			hash=&quot;B5I&quot; for B[5].I
+-#			lambda to get value at current time: lambda: B[5].I
+-#		relWanted={hash:(delta_t&gt;0,delta_i&gt;0,lambda to get value),...}; highest delta_t/delta_i gets precedence
+-#		absWanted={hash:([t0,t1,t2,...],[i0,i1,...]),...}
+-#		data={hash:[(iter,time,value),...],hash2:[(,,),...]}
+-#	&quot;&quot;&quot;
+-#	def __init__:
+-#		relWanted={}; absWanted={};
+-#		# time and iteration when called for the last time - used to determine if we know how to calculate an abs value
+-#		prev=(0,0)
+-#		self.ITER,self.TIME=0,1
+-#	def addWanted(hash,coord,what,getFunc=None):
+-#		if coord&lt;0: #relative
+-#			if relWanted.has_key(hash):
+-#				rec=list(relWanted[hash]) # to be mutable
+-#				if rec[what]&gt;-coord: rec[what]=-coord
+-#					relWanted[hash]=tuple(rec)
+-#			else:
+-#				assert(getFunc)
+-#				rec=[0,0,getFunc]
+-#				rec[what]=-coord
+-#				relWanted[hash]=tuple(rec)
+-#		else: # absolute
+-#			if absWanted.has_key[hash]:
+-#				if not coord in absWanted[hash][what]: absWanted[hash][what].append(coord)
+-#			else:
+-#				rec=[][]
+-#				rec[what].append(coord)
+-#				absWanted[hash]=rec
+-#			
+-#	def get(hash,t=None,i=None):
+-#		assert((t or i) and not (t and i)); #args mutually exclusive
+-#		# self.what says whether we need time or iterations
+-#		if t:
+-#			d=t; what=ITER;
+-#		else
+-#			d=i; what=TIME
+-#		dd=d; wanted=absWanted #absolute, from origin
+-#		if d&lt;0: # relative, towards past
+-#			dd=[S.i+d,S.t+d][what];
+-#		if data.has_key[hash]:
+-#			res=[ddh for ddh in data[hash] if ddh[what]==dd];
+-#			assert(len(res) in [0,1]);
+-#			addWanted(hash,dd,what)
+-#			if not d in absWanted[hash][what]: absWanted[hash][what].append(d)
+-#			if len(res)==1: return ret[0][2]
+-#		else: 
+-#			addWanted[hash][what].append(d)
+-#			return None
++class Interactions:
++	&quot;Class accessing individual interactions, either persistent or transient (based on constructor parameter).&quot;
++	def __len__(self): return [S.nPersistent,S.nTransient][isTransient]
++	def __init__(self, _isTransient):
++		self.isTransient=_isTransient
++	class _iterator:
++		def __init__(self,_isTransient): self.index=0
++		def next(self):
++			if self.index&gt;=[S.nPersistent,S.nTransient][_isTransient]: raise StopIteration
++			self.index+=1
++			return self.interNo(self.index)
++			# tricky; need to call that with parameters; like self.interactionNo(n)-&gt;(id1,id2)
++			#return B[self.index].
++	def interNo(n): return self[_pyade.interNo(n,self.isTransient)]
++	def __getitem__(self,id):
++		if type(id)==tuple:
++			#if len(id)==2: return Interactions.Interaction(id[0],id[1],self.isTransient)
++			if len(id)==2: return self.Interaction(id[0],id[1],self.isTransient)
++			else: raise ValueError(&quot;Interaction must be determined by 2 ids&quot;)
++		if type(id)==int:
++			inter=[Ip,It][self.isTransient]
++			return [x for x in inter if x.id1==id or x.id2==id] # th
++	class Interaction:
++		def __init__(self, id1, id2): self._id1,self._id2,self._isTransient=id1,id2,self.isTransient
++		def __getattr__(self,name):
++			if name=='foo': return Vector(1,2,3)
++			#elif ...
++			else: return _pyade.interProp(self._id1,self._id2,_pyade.interPropDict()[name])
+ 
+ 
+ 
+ 
++
++
++
+ # instances
+ B=Bodies()
+ S=Simul()
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000044.html">[Yade-commits] r1079 - trunk/yade-extra/clump
+</A></li>
+	<LI>Next message: <A HREF="000046.html">[Yade-commits] r1081 - in trunk: . yade-extra/clump	yade-libs/yade-lib-serialization/src/yade-lib-serialization
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#45">[ date ]</a>
+              <a href="thread.html#45">[ thread ]</a>
+              <a href="subject.html#45">[ subject ]</a>
+              <a href="author.html#45">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

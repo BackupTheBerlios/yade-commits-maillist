@@ -1,0 +1,181 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1198 - in trunk/pkg/dem: . PreProcessor
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2007/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1198%20-%20in%20trunk/pkg/dem%3A%20.%20PreProcessor&In-Reply-To=%3C200706131613.l5DGDUkK031703%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000162.html">
+   <LINK REL="Next"  HREF="000164.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1198 - in trunk/pkg/dem: . PreProcessor</H1>
+    <B>chareyre at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1198%20-%20in%20trunk/pkg/dem%3A%20.%20PreProcessor&In-Reply-To=%3C200706131613.l5DGDUkK031703%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1198 - in trunk/pkg/dem: . PreProcessor">chareyre at mail.berlios.de
+       </A><BR>
+    <I>Wed Jun 13 18:13:30 CEST 2007</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000162.html">[Yade-commits] r1197 - trunk/pkg/dem/Engine/StandAloneEngine
+</A></li>
+        <LI>Next message: <A HREF="000164.html">[Yade-commits] r1199 - trunk/gui/qt3
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#163">[ date ]</a>
+              <a href="thread.html#163">[ thread ]</a>
+              <a href="subject.html#163">[ subject ]</a>
+              <a href="author.html#163">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: chareyre
+Date: 2007-06-13 18:13:29 +0200 (Wed, 13 Jun 2007)
+New Revision: 1198
+
+Modified:
+   trunk/pkg/dem/PreProcessor/TriaxialTest.cpp
+   trunk/pkg/dem/PreProcessor/TriaxialTest.hpp
+   trunk/pkg/dem/SConscript
+Log:
+Cosmetic changes in TriaxialTest.
+
+
+Modified: trunk/pkg/dem/PreProcessor/TriaxialTest.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/TriaxialTest.cpp	2007-06-13 14:49:30 UTC (rev 1197)
++++ trunk/pkg/dem/PreProcessor/TriaxialTest.cpp	2007-06-13 16:13:29 UTC (rev 1198)
+@@ -19,6 +19,7 @@
+ #include&lt;yade/pkg-dem/SDECLinkPhysics.hpp&gt;
+ #include&lt;yade/pkg-dem/GlobalStiffnessCounter.hpp&gt;
+ #include&lt;yade/pkg-dem/GlobalStiffnessTimeStepper.hpp&gt;
++#include&lt;yade/pkg-dem/PositionOrientationRecorder.hpp&gt;
+ 
+ #include&lt;yade/pkg-dem/AveragePositionRecorder.hpp&gt;
+ #include&lt;yade/pkg-dem/ForceRecorder.hpp&gt;
+@@ -107,12 +108,14 @@
+ 	recordBottomForce	= true;
+ 	forceRecordFile		= &quot;../data/force&quot;;
+ 	recordAveragePositions	= true;
+-	positionRecordFile	= &quot;../data/position&quot;;
++	positionRecordFile	= &quot;../data/positions&quot;;
+ 	recordIntervalIter	= 20;
+ 	velocityRecordFile 	= &quot;../data/velocities&quot;;
++	saveAnimationSnapshots = false;
++	AnimationSnapshotsBaseName = &quot;../data/snapshots/snap&quot;;
++
+ 	rotationBlocked = false;
+-	
+-//	boxWalls 		= false;
++	//	boxWalls 		= false;
+ 	boxWalls 		= true;
+ 	internalCompaction	=false;
+ 
+@@ -128,9 +131,9 @@
+ 	bigBallDropTimeSeconds	= 30;
+ 	bigBallDropHeight 	= 3.04776;
+ 	
+-	dampingForce = 0.5;
+-	dampingMomentum = 0.5;
+-	defaultDt = 0.0001;
++	dampingForce = 0.2;
++	dampingMomentum = 0.2;
++	defaultDt = 1;
+ 	
+ 	timeStepUpdateInterval = 50;
+ 	timeStepOutputInterval = 50;
+@@ -222,8 +225,10 @@
+ 	REGISTER_ATTRIBUTE(forceRecordFile);
+ //	REGISTER_ATTRIBUTE(recordAveragePositions);
+ 	REGISTER_ATTRIBUTE(positionRecordFile);
+-	REGISTER_ATTRIBUTE(velocityRecordFile)
++	REGISTER_ATTRIBUTE(velocityRecordFile);
+ 	REGISTER_ATTRIBUTE(recordIntervalIter);
++	REGISTER_ATTRIBUTE(saveAnimationSnapshots);
++	REGISTER_ATTRIBUTE(AnimationSnapshotsBaseName);
+ 
+ //	REGISTER_ATTRIBUTE(gravity);
+ 	
+@@ -676,6 +681,11 @@
+ 	rootBody-&gt;engines.push_back(velocityRecorder);
+ 	rootBody-&gt;engines.push_back(forcerec);
+ 	
++	if (saveAnimationSnapshots) {
++	shared_ptr&lt;PositionOrientationRecorder&gt; positionOrientationRecorder(new PositionOrientationRecorder);
++	positionOrientationRecorder-&gt;outputFile = AnimationSnapshotsBaseName;
++	rootBody-&gt;engines.push_back(positionOrientationRecorder);}
++	
+ 	rootBody-&gt;initializers.clear();
+ 	rootBody-&gt;initializers.push_back(physicalActionInitializer);
+ 	rootBody-&gt;initializers.push_back(boundingVolumeDispatcher);
+
+Modified: trunk/pkg/dem/PreProcessor/TriaxialTest.hpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/TriaxialTest.hpp	2007-06-13 14:49:30 UTC (rev 1197)
++++ trunk/pkg/dem/PreProcessor/TriaxialTest.hpp	2007-06-13 16:13:29 UTC (rev 1198)
+@@ -82,7 +82,8 @@
+ 				,recordBottomForce
+ 				,recordAveragePositions
+ 				,boxWalls
+-				,internalCompaction;
++				,internalCompaction
++				,saveAnimationSnapshots;
+ 
+ 		int		 recordIntervalIter
+ 				,timeStepUpdateInterval
+@@ -100,7 +101,8 @@
+ 		string		 forceRecordFile
+ 				,positionRecordFile
+ 				,velocityRecordFile
+-				,importFilename;
++				,importFilename
++				,AnimationSnapshotsBaseName;
+ 	
+ 		shared_ptr&lt;ForceRecorder&gt; forcerec;
+ 		shared_ptr&lt;VelocityRecorder&gt; velocityRecorder;
+
+Modified: trunk/pkg/dem/SConscript
+===================================================================
+--- trunk/pkg/dem/SConscript	2007-06-13 14:49:30 UTC (rev 1197)
++++ trunk/pkg/dem/SConscript	2007-06-13 16:13:29 UTC (rev 1198)
+@@ -498,7 +498,8 @@
+ 			'TriaxialStressController',
+ 			'TriaxialCompressionEngine',
+ 			'GlobalStiffnessTimeStepper',
+-			'yade-base']),
++			'yade-base',
++			'PositionOrientationRecorder']),
+ 
+ 	env.SharedLibrary('ThreePointBending',
+ 		['PreProcessor/ThreePointBending.cpp'],
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000162.html">[Yade-commits] r1197 - trunk/pkg/dem/Engine/StandAloneEngine
+</A></li>
+	<LI>Next message: <A HREF="000164.html">[Yade-commits] r1199 - trunk/gui/qt3
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#163">[ date ]</a>
+              <a href="thread.html#163">[ thread ]</a>
+              <a href="subject.html#163">[ subject ]</a>
+              <a href="author.html#163">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

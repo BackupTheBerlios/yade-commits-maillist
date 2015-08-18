@@ -1,0 +1,1217 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1412 - in trunk: gui/py gui/qt3	pkg/common/Engine/DeusExMachina
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1412%20-%20in%20trunk%3A%20gui/py%20gui/qt3%0A%09pkg/common/Engine/DeusExMachina&In-Reply-To=%3C200807031723.m63HND7B018746%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000371.html">
+   <LINK REL="Next"  HREF="000373.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1412 - in trunk: gui/py gui/qt3	pkg/common/Engine/DeusExMachina</H1>
+    <B>sega at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1412%20-%20in%20trunk%3A%20gui/py%20gui/qt3%0A%09pkg/common/Engine/DeusExMachina&In-Reply-To=%3C200807031723.m63HND7B018746%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1412 - in trunk: gui/py gui/qt3	pkg/common/Engine/DeusExMachina">sega at mail.berlios.de
+       </A><BR>
+    <I>Thu Jul  3 19:23:13 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000371.html">[Yade-commits] r1411 - in trunk: core gui/qt3	pkg/common/RenderingEngine/OpenGLRenderingEngine
+</A></li>
+        <LI>Next message: <A HREF="000373.html">[Yade-commits] r1413 - in trunk: core gui/qt3	pkg/common/Engine/DeusExMachina	pkg/common/RenderingEngine/OpenGLRenderingEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#372">[ date ]</a>
+              <a href="thread.html#372">[ thread ]</a>
+              <a href="subject.html#372">[ subject ]</a>
+              <a href="author.html#372">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: sega
+Date: 2008-07-03 19:23:12 +0200 (Thu, 03 Jul 2008)
+New Revision: 1412
+
+Modified:
+   trunk/gui/py/utils.py
+   trunk/gui/qt3/GLSimulationPlayerViewer.cpp
+   trunk/gui/qt3/QtGeneratedSimulationPlayer.ui
+   trunk/pkg/common/Engine/DeusExMachina/ResetPositionEngine.cpp
+   trunk/pkg/common/Engine/DeusExMachina/ResetPositionEngine.hpp
+Log:
+1. ResetPositionEngine: added import/export initial positions from file 
+2. GLSimulationPlayerViewer: skip bodies which does not have a geometrical model 
+3. QtGeneratedSimulationPlayer: small fixes layout and sizePolicy.
+4. utils.py: agreement spheresToFile and spheresFromFile
+
+
+Modified: trunk/gui/py/utils.py
+===================================================================
+--- trunk/gui/py/utils.py	2008-07-02 17:49:27 UTC (rev 1411)
++++ trunk/gui/py/utils.py	2008-07-03 17:23:12 UTC (rev 1412)
+@@ -143,7 +143,7 @@
+ 	for l in open(filename):
+ 		ss=[float(i) for i in l.split()]
+ 		if wenjieFormat and len(ss)==5 and ss[4]==1.0: continue
+-		id=o.bodies.append(sphere([scale*ss[0],scale*ss[2],scale*ss[1]],scale*ss[3],**kw))
++		id=o.bodies.append(sphere([scale*ss[0],scale*ss[1],scale*ss[2]],scale*ss[3],**kw))
+ 		ret.append(id)
+ 	return ret
+ 
+
+Modified: trunk/gui/qt3/GLSimulationPlayerViewer.cpp
+===================================================================
+--- trunk/gui/qt3/GLSimulationPlayerViewer.cpp	2008-07-02 17:49:27 UTC (rev 1411)
++++ trunk/gui/qt3/GLSimulationPlayerViewer.cpp	2008-07-03 17:23:12 UTC (rev 1412)
+@@ -184,8 +184,9 @@
+ 		if(!b){ LOG_ERROR(&quot;Body #&quot;&lt;&lt;id&lt;&lt;&quot; doesn't exist (skipped)!&quot;); continue; }
+ 		if(!b-&gt;physicalParameters) {LOG_ERROR(&quot;Body #&quot;&lt;&lt;id&lt;&lt;&quot; has no physical parameters?! (skipping)&quot;); continue; }
+ 		Se3r&amp; mySe3=b-&gt;physicalParameters-&gt;se3;
++		f&gt;&gt;mySe3.position[0]&gt;&gt;mySe3.position[1]&gt;&gt;mySe3.position[2]&gt;&gt;mySe3.orientation[0]&gt;&gt;mySe3.orientation[1]&gt;&gt;mySe3.orientation[2]&gt;&gt;mySe3.orientation[3];
++		if(!b-&gt;geometricalModel) {LOG_ERROR(&quot;Body #&quot;&lt;&lt;id&lt;&lt;&quot; has no geometrical model?! (skipping)&quot;); continue; }
+ 		Vector3r&amp; myColor=b-&gt;geometricalModel-&gt;diffuseColor;
+-		f&gt;&gt;mySe3.position[0]&gt;&gt;mySe3.position[1]&gt;&gt;mySe3.position[2]&gt;&gt;mySe3.orientation[0]&gt;&gt;mySe3.orientation[1]&gt;&gt;mySe3.orientation[2]&gt;&gt;mySe3.orientation[3];
+ 		if(doRgb &amp;&amp; !rgb.eof() &amp;&amp; !rgb.fail()) rgb&gt;&gt;myColor[0]&gt;&gt;myColor[1]&gt;&gt;myColor[2];
+ 	}
+ 	return true;
+
+Modified: trunk/gui/qt3/QtGeneratedSimulationPlayer.ui
+===================================================================
+--- trunk/gui/qt3/QtGeneratedSimulationPlayer.ui	2008-07-02 17:49:27 UTC (rev 1411)
++++ trunk/gui/qt3/QtGeneratedSimulationPlayer.ui	2008-07-03 17:23:12 UTC (rev 1412)
+@@ -8,8 +8,8 @@
+         &lt;rect&gt;
+             &lt;x&gt;0&lt;/x&gt;
+             &lt;y&gt;0&lt;/y&gt;
+-            &lt;width&gt;979&lt;/width&gt;
+-            &lt;height&gt;655&lt;/height&gt;
++            &lt;width&gt;966&lt;/width&gt;
++            &lt;height&gt;824&lt;/height&gt;
+         &lt;/rect&gt;
+     &lt;/property&gt;
+     &lt;property name=&quot;sizePolicy&quot;&gt;
+@@ -23,489 +23,538 @@
+     &lt;property name=&quot;caption&quot;&gt;
+         &lt;string&gt;Simulation Player&lt;/string&gt;
+     &lt;/property&gt;
+-    &lt;widget class=&quot;GLSimulationPlayerViewer&quot;&gt;
++    &lt;hbox&gt;
+         &lt;property name=&quot;name&quot;&gt;
+-            &lt;cstring&gt;glSimulationPlayerViewer&lt;/cstring&gt;
++            &lt;cstring&gt;unnamed&lt;/cstring&gt;
+         &lt;/property&gt;
+-        &lt;property name=&quot;geometry&quot;&gt;
+-            &lt;rect&gt;
+-                &lt;x&gt;320&lt;/x&gt;
+-                &lt;y&gt;10&lt;/y&gt;
+-                &lt;width&gt;651&lt;/width&gt;
+-                &lt;height&gt;630&lt;/height&gt;
+-            &lt;/rect&gt;
+-        &lt;/property&gt;
+-    &lt;/widget&gt;
+-    &lt;widget class=&quot;QLayoutWidget&quot;&gt;
+-        &lt;property name=&quot;name&quot;&gt;
+-            &lt;cstring&gt;layout3&lt;/cstring&gt;
+-        &lt;/property&gt;
+-        &lt;property name=&quot;enabled&quot;&gt;
+-            &lt;bool&gt;true&lt;/bool&gt;
+-        &lt;/property&gt;
+-        &lt;property name=&quot;geometry&quot;&gt;
+-            &lt;rect&gt;
+-                &lt;x&gt;0&lt;/x&gt;
+-                &lt;y&gt;10&lt;/y&gt;
+-                &lt;width&gt;307&lt;/width&gt;
+-                &lt;height&gt;628&lt;/height&gt;
+-            &lt;/rect&gt;
+-        &lt;/property&gt;
+-        &lt;vbox&gt;
++        &lt;widget class=&quot;QSplitter&quot;&gt;
+             &lt;property name=&quot;name&quot;&gt;
+-                &lt;cstring&gt;unnamed&lt;/cstring&gt;
++                &lt;cstring&gt;splitter9&lt;/cstring&gt;
+             &lt;/property&gt;
+-            &lt;widget class=&quot;QGroupBox&quot;&gt;
++            &lt;property name=&quot;orientation&quot;&gt;
++                &lt;enum&gt;Horizontal&lt;/enum&gt;
++            &lt;/property&gt;
++            &lt;widget class=&quot;QLayoutWidget&quot;&gt;
+                 &lt;property name=&quot;name&quot;&gt;
+-                    &lt;cstring&gt;gbInput&lt;/cstring&gt;
++                    &lt;cstring&gt;layout29&lt;/cstring&gt;
+                 &lt;/property&gt;
+-                &lt;property name=&quot;sizePolicy&quot;&gt;
+-                    &lt;sizepolicy&gt;
+-                        &lt;hsizetype&gt;4&lt;/hsizetype&gt;
+-                        &lt;vsizetype&gt;4&lt;/vsizetype&gt;
+-                        &lt;horstretch&gt;0&lt;/horstretch&gt;
+-                        &lt;verstretch&gt;0&lt;/verstretch&gt;
+-                    &lt;/sizepolicy&gt;
+-                &lt;/property&gt;
+-                &lt;property name=&quot;title&quot;&gt;
+-                    &lt;string&gt;Input&lt;/string&gt;
+-                &lt;/property&gt;
+-                &lt;widget class=&quot;QLayoutWidget&quot;&gt;
++                &lt;vbox&gt;
+                     &lt;property name=&quot;name&quot;&gt;
+-                        &lt;cstring&gt;layout2&lt;/cstring&gt;
+-                    &lt;/property&gt;
+-                    &lt;property name=&quot;geometry&quot;&gt;
+-                        &lt;rect&gt;
+-                            &lt;x&gt;10&lt;/x&gt;
+-                            &lt;y&gt;20&lt;/y&gt;
+-                            &lt;width&gt;285&lt;/width&gt;
+-                            &lt;height&gt;142&lt;/height&gt;
+-                        &lt;/rect&gt;
+-                    &lt;/property&gt;
+-                    &lt;grid&gt;
+-                        &lt;property name=&quot;name&quot;&gt;
+-                            &lt;cstring&gt;unnamed&lt;/cstring&gt;
+-                        &lt;/property&gt;
+-                        &lt;widget class=&quot;QPushButton&quot; row=&quot;3&quot; column=&quot;3&quot;&gt;
+-                            &lt;property name=&quot;name&quot;&gt;
+-                                &lt;cstring&gt;pbInputDirectory&lt;/cstring&gt;
+-                            &lt;/property&gt;
+-                            &lt;property name=&quot;enabled&quot;&gt;
+-                                &lt;bool&gt;false&lt;/bool&gt;
+-                            &lt;/property&gt;
+-                            &lt;property name=&quot;text&quot;&gt;
+-                                &lt;string&gt;&lt;/string&gt;
+-                            &lt;/property&gt;
+-                            &lt;property name=&quot;pixmap&quot;&gt;
+-                                &lt;pixmap&gt;image0&lt;/pixmap&gt;
+-                            &lt;/property&gt;
+-                        &lt;/widget&gt;
+-                        &lt;widget class=&quot;QLabel&quot; row=&quot;2&quot; column=&quot;0&quot;&gt;
+-                            &lt;property name=&quot;name&quot;&gt;
+-                                &lt;cstring&gt;tlInputBaseName&lt;/cstring&gt;
+-                            &lt;/property&gt;
+-                            &lt;property name=&quot;sizePolicy&quot;&gt;
+-                                &lt;sizepolicy&gt;
+-                                    &lt;hsizetype&gt;7&lt;/hsizetype&gt;
+-                                    &lt;vsizetype&gt;5&lt;/vsizetype&gt;
+-                                    &lt;horstretch&gt;0&lt;/horstretch&gt;
+-                                    &lt;verstretch&gt;0&lt;/verstretch&gt;
+-                                &lt;/sizepolicy&gt;
+-                            &lt;/property&gt;
+-                            &lt;property name=&quot;text&quot;&gt;
+-                                &lt;string&gt;Base name:&lt;/string&gt;
+-                            &lt;/property&gt;
+-                        &lt;/widget&gt;
+-                        &lt;widget class=&quot;QSpinBox&quot; row=&quot;1&quot; column=&quot;1&quot;&gt;
+-                            &lt;property name=&quot;name&quot;&gt;
+-                                &lt;cstring&gt;sbStride&lt;/cstring&gt;
+-                            &lt;/property&gt;
+-                            &lt;property name=&quot;maxValue&quot;&gt;
+-                                &lt;number&gt;100&lt;/number&gt;
+-                            &lt;/property&gt;
+-                            &lt;property name=&quot;minValue&quot;&gt;
+-                                &lt;number&gt;1&lt;/number&gt;
+-                            &lt;/property&gt;
+-                            &lt;property name=&quot;lineStep&quot;&gt;
+-                                &lt;number&gt;1&lt;/number&gt;
+-                            &lt;/property&gt;
+-                            &lt;property name=&quot;value&quot;&gt;
+-                                &lt;number&gt;1&lt;/number&gt;
+-                            &lt;/property&gt;
+-                            &lt;property name=&quot;toolTip&quot; stdset=&quot;0&quot;&gt;
+-                                &lt;string&gt;take only every i-th file in the sequence found&lt;/string&gt;
+-                            &lt;/property&gt;
+-                        &lt;/widget&gt;
+-                        &lt;widget class=&quot;QLabel&quot; row=&quot;1&quot; column=&quot;0&quot;&gt;
+-                            &lt;property name=&quot;name&quot;&gt;
+-                                &lt;cstring&gt;textLabel1&lt;/cstring&gt;
+-                            &lt;/property&gt;
+-                            &lt;property name=&quot;sizePolicy&quot;&gt;
+-                                &lt;sizepolicy&gt;
+-                                    &lt;hsizetype&gt;7&lt;/hsizetype&gt;
+-                                    &lt;vsizetype&gt;5&lt;/vsizetype&gt;
+-                                    &lt;horstretch&gt;0&lt;/horstretch&gt;
+-                                    &lt;verstretch&gt;0&lt;/verstretch&gt;
+-                                &lt;/sizepolicy&gt;
+-                            &lt;/property&gt;
+-                            &lt;property name=&quot;text&quot;&gt;
+-                                &lt;string&gt;Stride&lt;/string&gt;
+-                            &lt;/property&gt;
+-                        &lt;/widget&gt;
+-                        &lt;widget class=&quot;QLabel&quot; row=&quot;0&quot; column=&quot;0&quot;&gt;
+-                            &lt;property name=&quot;name&quot;&gt;
+-                                &lt;cstring&gt;tlInputConfigFile&lt;/cstring&gt;
+-                            &lt;/property&gt;
+-                            &lt;property name=&quot;sizePolicy&quot;&gt;
+-                                &lt;sizepolicy&gt;
+-                                    &lt;hsizetype&gt;7&lt;/hsizetype&gt;
+-                                    &lt;vsizetype&gt;5&lt;/vsizetype&gt;
+-                                    &lt;horstretch&gt;0&lt;/horstretch&gt;
+-                                    &lt;verstretch&gt;0&lt;/verstretch&gt;
+-                                &lt;/sizepolicy&gt;
+-                            &lt;/property&gt;
+-                            &lt;property name=&quot;text&quot;&gt;
+-                                &lt;string&gt;Simluation file:&lt;/string&gt;
+-                            &lt;/property&gt;
+-                        &lt;/widget&gt;
+-                        &lt;widget class=&quot;QLineEdit&quot; row=&quot;3&quot; column=&quot;1&quot; rowspan=&quot;1&quot; colspan=&quot;2&quot;&gt;
+-                            &lt;property name=&quot;name&quot;&gt;
+-                                &lt;cstring&gt;leInputDirectory&lt;/cstring&gt;
+-                            &lt;/property&gt;
+-                            &lt;property name=&quot;enabled&quot;&gt;
+-                                &lt;bool&gt;false&lt;/bool&gt;
+-                            &lt;/property&gt;
+-                            &lt;property name=&quot;sizePolicy&quot;&gt;
+-                                &lt;sizepolicy&gt;
+-                                    &lt;hsizetype&gt;7&lt;/hsizetype&gt;
+-                                    &lt;vsizetype&gt;1&lt;/vsizetype&gt;
+-                                    &lt;horstretch&gt;0&lt;/horstretch&gt;
+-                                    &lt;verstretch&gt;0&lt;/verstretch&gt;
+-                                &lt;/sizepolicy&gt;
+-                            &lt;/property&gt;
+-                            &lt;property name=&quot;paletteBackgroundColor&quot;&gt;
+-                                &lt;color&gt;
+-                                    &lt;red&gt;170&lt;/red&gt;
+-                                    &lt;green&gt;170&lt;/green&gt;
+-                                    &lt;blue&gt;127&lt;/blue&gt;
+-                                &lt;/color&gt;
+-                            &lt;/property&gt;
+-                            &lt;property name=&quot;text&quot;&gt;
+-                                &lt;string&gt;&lt;/string&gt;
+-                            &lt;/property&gt;
+-                        &lt;/widget&gt;
+-                        &lt;widget class=&quot;QPushButton&quot; row=&quot;1&quot; column=&quot;2&quot; rowspan=&quot;1&quot; colspan=&quot;2&quot;&gt;
+-                            &lt;property name=&quot;name&quot;&gt;
+-                                &lt;cstring&gt;pbLoad&lt;/cstring&gt;
+-                            &lt;/property&gt;
+-                            &lt;property name=&quot;sizePolicy&quot;&gt;
+-                                &lt;sizepolicy&gt;
+-                                    &lt;hsizetype&gt;3&lt;/hsizetype&gt;
+-                                    &lt;vsizetype&gt;0&lt;/vsizetype&gt;
+-                                    &lt;horstretch&gt;0&lt;/horstretch&gt;
+-                                    &lt;verstretch&gt;0&lt;/verstretch&gt;
+-                                &lt;/sizepolicy&gt;
+-                            &lt;/property&gt;
+-                            &lt;property name=&quot;text&quot;&gt;
+-                                &lt;string&gt;Load&lt;/string&gt;
+-                            &lt;/property&gt;
+-                        &lt;/widget&gt;
+-                        &lt;widget class=&quot;QPushButton&quot; row=&quot;0&quot; column=&quot;3&quot;&gt;
+-                            &lt;property name=&quot;name&quot;&gt;
+-                                &lt;cstring&gt;pbInputConfigFile&lt;/cstring&gt;
+-                            &lt;/property&gt;
+-                            &lt;property name=&quot;text&quot;&gt;
+-                                &lt;string&gt;&lt;/string&gt;
+-                            &lt;/property&gt;
+-                            &lt;property name=&quot;pixmap&quot;&gt;
+-                                &lt;pixmap&gt;image0&lt;/pixmap&gt;
+-                            &lt;/property&gt;
+-                        &lt;/widget&gt;
+-                        &lt;widget class=&quot;QLabel&quot; row=&quot;3&quot; column=&quot;0&quot;&gt;
+-                            &lt;property name=&quot;name&quot;&gt;
+-                                &lt;cstring&gt;tlInputDirectory&lt;/cstring&gt;
+-                            &lt;/property&gt;
+-                            &lt;property name=&quot;sizePolicy&quot;&gt;
+-                                &lt;sizepolicy&gt;
+-                                    &lt;hsizetype&gt;7&lt;/hsizetype&gt;
+-                                    &lt;vsizetype&gt;5&lt;/vsizetype&gt;
+-                                    &lt;horstretch&gt;0&lt;/horstretch&gt;
+-                                    &lt;verstretch&gt;0&lt;/verstretch&gt;
+-                                &lt;/sizepolicy&gt;
+-                            &lt;/property&gt;
+-                            &lt;property name=&quot;text&quot;&gt;
+-                                &lt;string&gt;Directory:&lt;/string&gt;
+-                            &lt;/property&gt;
+-                        &lt;/widget&gt;
+-                        &lt;widget class=&quot;QLineEdit&quot; row=&quot;2&quot; column=&quot;1&quot; rowspan=&quot;1&quot; colspan=&quot;3&quot;&gt;
+-                            &lt;property name=&quot;name&quot;&gt;
+-                                &lt;cstring&gt;leInputBaseName&lt;/cstring&gt;
+-                            &lt;/property&gt;
+-                            &lt;property name=&quot;enabled&quot;&gt;
+-                                &lt;bool&gt;false&lt;/bool&gt;
+-                            &lt;/property&gt;
+-                            &lt;property name=&quot;sizePolicy&quot;&gt;
+-                                &lt;sizepolicy&gt;
+-                                    &lt;hsizetype&gt;7&lt;/hsizetype&gt;
+-                                    &lt;vsizetype&gt;1&lt;/vsizetype&gt;
+-                                    &lt;horstretch&gt;0&lt;/horstretch&gt;
+-                                    &lt;verstretch&gt;0&lt;/verstretch&gt;
+-                                &lt;/sizepolicy&gt;
+-                            &lt;/property&gt;
+-                            &lt;property name=&quot;paletteBackgroundColor&quot;&gt;
+-                                &lt;color&gt;
+-                                    &lt;red&gt;170&lt;/red&gt;
+-                                    &lt;green&gt;170&lt;/green&gt;
+-                                    &lt;blue&gt;127&lt;/blue&gt;
+-                                &lt;/color&gt;
+-                            &lt;/property&gt;
+-                            &lt;property name=&quot;text&quot;&gt;
+-                                &lt;string&gt;&lt;/string&gt;
+-                            &lt;/property&gt;
+-                        &lt;/widget&gt;
+-                        &lt;widget class=&quot;QLineEdit&quot; row=&quot;0&quot; column=&quot;1&quot; rowspan=&quot;1&quot; colspan=&quot;2&quot;&gt;
+-                            &lt;property name=&quot;name&quot;&gt;
+-                                &lt;cstring&gt;leInputConfigFile&lt;/cstring&gt;
+-                            &lt;/property&gt;
+-                            &lt;property name=&quot;sizePolicy&quot;&gt;
+-                                &lt;sizepolicy&gt;
+-                                    &lt;hsizetype&gt;7&lt;/hsizetype&gt;
+-                                    &lt;vsizetype&gt;1&lt;/vsizetype&gt;
+-                                    &lt;horstretch&gt;0&lt;/horstretch&gt;
+-                                    &lt;verstretch&gt;0&lt;/verstretch&gt;
+-                                &lt;/sizepolicy&gt;
+-                            &lt;/property&gt;
+-                        &lt;/widget&gt;
+-                    &lt;/grid&gt;
+-                &lt;/widget&gt;
+-            &lt;/widget&gt;
+-            &lt;widget class=&quot;QGroupBox&quot;&gt;
+-                &lt;property name=&quot;name&quot;&gt;
+-                    &lt;cstring&gt;gbSnapShots&lt;/cstring&gt;
+-                &lt;/property&gt;
+-                &lt;property name=&quot;sizePolicy&quot;&gt;
+-                    &lt;sizepolicy&gt;
+-                        &lt;hsizetype&gt;1&lt;/hsizetype&gt;
+-                        &lt;vsizetype&gt;4&lt;/vsizetype&gt;
+-                        &lt;horstretch&gt;0&lt;/horstretch&gt;
+-                        &lt;verstretch&gt;0&lt;/verstretch&gt;
+-                    &lt;/sizepolicy&gt;
+-                &lt;/property&gt;
+-                &lt;property name=&quot;title&quot;&gt;
+-                    &lt;string&gt;Snapshots&lt;/string&gt;
+-                &lt;/property&gt;
+-                &lt;grid&gt;
+-                    &lt;property name=&quot;name&quot;&gt;
+                         &lt;cstring&gt;unnamed&lt;/cstring&gt;
+                     &lt;/property&gt;
+-                    &lt;widget class=&quot;QLineEdit&quot; row=&quot;3&quot; column=&quot;1&quot;&gt;
++                    &lt;widget class=&quot;QGroupBox&quot;&gt;
+                         &lt;property name=&quot;name&quot;&gt;
+-                            &lt;cstring&gt;leOutputDirectory&lt;/cstring&gt;
++                            &lt;cstring&gt;gbInput&lt;/cstring&gt;
+                         &lt;/property&gt;
+                         &lt;property name=&quot;sizePolicy&quot;&gt;
+                             &lt;sizepolicy&gt;
+                                 &lt;hsizetype&gt;1&lt;/hsizetype&gt;
+-                                &lt;vsizetype&gt;1&lt;/vsizetype&gt;
++                                &lt;vsizetype&gt;4&lt;/vsizetype&gt;
+                                 &lt;horstretch&gt;0&lt;/horstretch&gt;
+                                 &lt;verstretch&gt;0&lt;/verstretch&gt;
+                             &lt;/sizepolicy&gt;
+                         &lt;/property&gt;
+-                        &lt;property name=&quot;text&quot;&gt;
+-                            &lt;string&gt;/tmp&lt;/string&gt;
++                        &lt;property name=&quot;title&quot;&gt;
++                            &lt;string&gt;Input&lt;/string&gt;
+                         &lt;/property&gt;
++                        &lt;hbox&gt;
++                            &lt;property name=&quot;name&quot;&gt;
++                                &lt;cstring&gt;unnamed&lt;/cstring&gt;
++                            &lt;/property&gt;
++                            &lt;widget class=&quot;QLayoutWidget&quot;&gt;
++                                &lt;property name=&quot;name&quot;&gt;
++                                    &lt;cstring&gt;layout28&lt;/cstring&gt;
++                                &lt;/property&gt;
++                                &lt;vbox&gt;
++                                    &lt;property name=&quot;name&quot;&gt;
++                                        &lt;cstring&gt;unnamed&lt;/cstring&gt;
++                                    &lt;/property&gt;
++                                    &lt;widget class=&quot;QLabel&quot;&gt;
++                                        &lt;property name=&quot;name&quot;&gt;
++                                            &lt;cstring&gt;tlInputConfigFile&lt;/cstring&gt;
++                                        &lt;/property&gt;
++                                        &lt;property name=&quot;sizePolicy&quot;&gt;
++                                            &lt;sizepolicy&gt;
++                                                &lt;hsizetype&gt;0&lt;/hsizetype&gt;
++                                                &lt;vsizetype&gt;5&lt;/vsizetype&gt;
++                                                &lt;horstretch&gt;0&lt;/horstretch&gt;
++                                                &lt;verstretch&gt;0&lt;/verstretch&gt;
++                                            &lt;/sizepolicy&gt;
++                                        &lt;/property&gt;
++                                        &lt;property name=&quot;text&quot;&gt;
++                                            &lt;string&gt;Simluation file:&lt;/string&gt;
++                                        &lt;/property&gt;
++                                    &lt;/widget&gt;
++                                    &lt;widget class=&quot;QLabel&quot;&gt;
++                                        &lt;property name=&quot;name&quot;&gt;
++                                            &lt;cstring&gt;textLabel1&lt;/cstring&gt;
++                                        &lt;/property&gt;
++                                        &lt;property name=&quot;sizePolicy&quot;&gt;
++                                            &lt;sizepolicy&gt;
++                                                &lt;hsizetype&gt;0&lt;/hsizetype&gt;
++                                                &lt;vsizetype&gt;5&lt;/vsizetype&gt;
++                                                &lt;horstretch&gt;0&lt;/horstretch&gt;
++                                                &lt;verstretch&gt;0&lt;/verstretch&gt;
++                                            &lt;/sizepolicy&gt;
++                                        &lt;/property&gt;
++                                        &lt;property name=&quot;text&quot;&gt;
++                                            &lt;string&gt;Stride:&lt;/string&gt;
++                                        &lt;/property&gt;
++                                    &lt;/widget&gt;
++                                    &lt;widget class=&quot;QLabel&quot;&gt;
++                                        &lt;property name=&quot;name&quot;&gt;
++                                            &lt;cstring&gt;tlInputBaseName&lt;/cstring&gt;
++                                        &lt;/property&gt;
++                                        &lt;property name=&quot;sizePolicy&quot;&gt;
++                                            &lt;sizepolicy&gt;
++                                                &lt;hsizetype&gt;0&lt;/hsizetype&gt;
++                                                &lt;vsizetype&gt;5&lt;/vsizetype&gt;
++                                                &lt;horstretch&gt;0&lt;/horstretch&gt;
++                                                &lt;verstretch&gt;0&lt;/verstretch&gt;
++                                            &lt;/sizepolicy&gt;
++                                        &lt;/property&gt;
++                                        &lt;property name=&quot;text&quot;&gt;
++                                            &lt;string&gt;Base name:&lt;/string&gt;
++                                        &lt;/property&gt;
++                                    &lt;/widget&gt;
++                                    &lt;widget class=&quot;QLabel&quot;&gt;
++                                        &lt;property name=&quot;name&quot;&gt;
++                                            &lt;cstring&gt;tlInputDirectory&lt;/cstring&gt;
++                                        &lt;/property&gt;
++                                        &lt;property name=&quot;sizePolicy&quot;&gt;
++                                            &lt;sizepolicy&gt;
++                                                &lt;hsizetype&gt;0&lt;/hsizetype&gt;
++                                                &lt;vsizetype&gt;5&lt;/vsizetype&gt;
++                                                &lt;horstretch&gt;0&lt;/horstretch&gt;
++                                                &lt;verstretch&gt;0&lt;/verstretch&gt;
++                                            &lt;/sizepolicy&gt;
++                                        &lt;/property&gt;
++                                        &lt;property name=&quot;text&quot;&gt;
++                                            &lt;string&gt;Directory:&lt;/string&gt;
++                                        &lt;/property&gt;
++                                    &lt;/widget&gt;
++                                &lt;/vbox&gt;
++                            &lt;/widget&gt;
++                            &lt;widget class=&quot;QLayoutWidget&quot;&gt;
++                                &lt;property name=&quot;name&quot;&gt;
++                                    &lt;cstring&gt;layout27&lt;/cstring&gt;
++                                &lt;/property&gt;
++                                &lt;grid&gt;
++                                    &lt;property name=&quot;name&quot;&gt;
++                                        &lt;cstring&gt;unnamed&lt;/cstring&gt;
++                                    &lt;/property&gt;
++                                    &lt;widget class=&quot;QPushButton&quot; row=&quot;3&quot; column=&quot;2&quot;&gt;
++                                        &lt;property name=&quot;name&quot;&gt;
++                                            &lt;cstring&gt;pbInputDirectory&lt;/cstring&gt;
++                                        &lt;/property&gt;
++                                        &lt;property name=&quot;enabled&quot;&gt;
++                                            &lt;bool&gt;false&lt;/bool&gt;
++                                        &lt;/property&gt;
++                                        &lt;property name=&quot;sizePolicy&quot;&gt;
++                                            &lt;sizepolicy&gt;
++                                                &lt;hsizetype&gt;0&lt;/hsizetype&gt;
++                                                &lt;vsizetype&gt;0&lt;/vsizetype&gt;
++                                                &lt;horstretch&gt;0&lt;/horstretch&gt;
++                                                &lt;verstretch&gt;0&lt;/verstretch&gt;
++                                            &lt;/sizepolicy&gt;
++                                        &lt;/property&gt;
++                                        &lt;property name=&quot;text&quot;&gt;
++                                            &lt;string&gt;&lt;/string&gt;
++                                        &lt;/property&gt;
++                                        &lt;property name=&quot;pixmap&quot;&gt;
++                                            &lt;pixmap&gt;image0&lt;/pixmap&gt;
++                                        &lt;/property&gt;
++                                    &lt;/widget&gt;
++                                    &lt;widget class=&quot;QLineEdit&quot; row=&quot;0&quot; column=&quot;0&quot; rowspan=&quot;1&quot; colspan=&quot;2&quot;&gt;
++                                        &lt;property name=&quot;name&quot;&gt;
++                                            &lt;cstring&gt;leInputConfigFile&lt;/cstring&gt;
++                                        &lt;/property&gt;
++                                        &lt;property name=&quot;sizePolicy&quot;&gt;
++                                            &lt;sizepolicy&gt;
++                                                &lt;hsizetype&gt;7&lt;/hsizetype&gt;
++                                                &lt;vsizetype&gt;1&lt;/vsizetype&gt;
++                                                &lt;horstretch&gt;0&lt;/horstretch&gt;
++                                                &lt;verstretch&gt;0&lt;/verstretch&gt;
++                                            &lt;/sizepolicy&gt;
++                                        &lt;/property&gt;
++                                    &lt;/widget&gt;
++                                    &lt;widget class=&quot;QLineEdit&quot; row=&quot;2&quot; column=&quot;0&quot; rowspan=&quot;1&quot; colspan=&quot;3&quot;&gt;
++                                        &lt;property name=&quot;name&quot;&gt;
++                                            &lt;cstring&gt;leInputBaseName&lt;/cstring&gt;
++                                        &lt;/property&gt;
++                                        &lt;property name=&quot;enabled&quot;&gt;
++                                            &lt;bool&gt;false&lt;/bool&gt;
++                                        &lt;/property&gt;
++                                        &lt;property name=&quot;sizePolicy&quot;&gt;
++                                            &lt;sizepolicy&gt;
++                                                &lt;hsizetype&gt;1&lt;/hsizetype&gt;
++                                                &lt;vsizetype&gt;1&lt;/vsizetype&gt;
++                                                &lt;horstretch&gt;0&lt;/horstretch&gt;
++                                                &lt;verstretch&gt;0&lt;/verstretch&gt;
++                                            &lt;/sizepolicy&gt;
++                                        &lt;/property&gt;
++                                        &lt;property name=&quot;paletteBackgroundColor&quot;&gt;
++                                            &lt;color&gt;
++                                                &lt;red&gt;170&lt;/red&gt;
++                                                &lt;green&gt;170&lt;/green&gt;
++                                                &lt;blue&gt;127&lt;/blue&gt;
++                                            &lt;/color&gt;
++                                        &lt;/property&gt;
++                                        &lt;property name=&quot;text&quot;&gt;
++                                            &lt;string&gt;&lt;/string&gt;
++                                        &lt;/property&gt;
++                                    &lt;/widget&gt;
++                                    &lt;widget class=&quot;QLineEdit&quot; row=&quot;3&quot; column=&quot;0&quot; rowspan=&quot;1&quot; colspan=&quot;2&quot;&gt;
++                                        &lt;property name=&quot;name&quot;&gt;
++                                            &lt;cstring&gt;leInputDirectory&lt;/cstring&gt;
++                                        &lt;/property&gt;
++                                        &lt;property name=&quot;enabled&quot;&gt;
++                                            &lt;bool&gt;false&lt;/bool&gt;
++                                        &lt;/property&gt;
++                                        &lt;property name=&quot;sizePolicy&quot;&gt;
++                                            &lt;sizepolicy&gt;
++                                                &lt;hsizetype&gt;7&lt;/hsizetype&gt;
++                                                &lt;vsizetype&gt;1&lt;/vsizetype&gt;
++                                                &lt;horstretch&gt;0&lt;/horstretch&gt;
++                                                &lt;verstretch&gt;0&lt;/verstretch&gt;
++                                            &lt;/sizepolicy&gt;
++                                        &lt;/property&gt;
++                                        &lt;property name=&quot;paletteBackgroundColor&quot;&gt;
++                                            &lt;color&gt;
++                                                &lt;red&gt;170&lt;/red&gt;
++                                                &lt;green&gt;170&lt;/green&gt;
++                                                &lt;blue&gt;127&lt;/blue&gt;
++                                            &lt;/color&gt;
++                                        &lt;/property&gt;
++                                        &lt;property name=&quot;text&quot;&gt;
++                                            &lt;string&gt;&lt;/string&gt;
++                                        &lt;/property&gt;
++                                    &lt;/widget&gt;
++                                    &lt;widget class=&quot;QSpinBox&quot; row=&quot;1&quot; column=&quot;0&quot;&gt;
++                                        &lt;property name=&quot;name&quot;&gt;
++                                            &lt;cstring&gt;sbStride&lt;/cstring&gt;
++                                        &lt;/property&gt;
++                                        &lt;property name=&quot;maxValue&quot;&gt;
++                                            &lt;number&gt;100&lt;/number&gt;
++                                        &lt;/property&gt;
++                                        &lt;property name=&quot;minValue&quot;&gt;
++                                            &lt;number&gt;1&lt;/number&gt;
++                                        &lt;/property&gt;
++                                        &lt;property name=&quot;lineStep&quot;&gt;
++                                            &lt;number&gt;1&lt;/number&gt;
++                                        &lt;/property&gt;
++                                        &lt;property name=&quot;value&quot;&gt;
++                                            &lt;number&gt;1&lt;/number&gt;
++                                        &lt;/property&gt;
++                                        &lt;property name=&quot;toolTip&quot; stdset=&quot;0&quot;&gt;
++                                            &lt;string&gt;take only every i-th file in the sequence found&lt;/string&gt;
++                                        &lt;/property&gt;
++                                    &lt;/widget&gt;
++                                    &lt;widget class=&quot;QPushButton&quot; row=&quot;1&quot; column=&quot;1&quot; rowspan=&quot;1&quot; colspan=&quot;2&quot;&gt;
++                                        &lt;property name=&quot;name&quot;&gt;
++                                            &lt;cstring&gt;pbLoad&lt;/cstring&gt;
++                                        &lt;/property&gt;
++                                        &lt;property name=&quot;sizePolicy&quot;&gt;
++                                            &lt;sizepolicy&gt;
++                                                &lt;hsizetype&gt;1&lt;/hsizetype&gt;
++                                                &lt;vsizetype&gt;0&lt;/vsizetype&gt;
++                                                &lt;horstretch&gt;0&lt;/horstretch&gt;
++                                                &lt;verstretch&gt;0&lt;/verstretch&gt;
++                                            &lt;/sizepolicy&gt;
++                                        &lt;/property&gt;
++                                        &lt;property name=&quot;text&quot;&gt;
++                                            &lt;string&gt;Load&lt;/string&gt;
++                                        &lt;/property&gt;
++                                    &lt;/widget&gt;
++                                    &lt;widget class=&quot;QPushButton&quot; row=&quot;0&quot; column=&quot;2&quot;&gt;
++                                        &lt;property name=&quot;name&quot;&gt;
++                                            &lt;cstring&gt;pbInputConfigFile&lt;/cstring&gt;
++                                        &lt;/property&gt;
++                                        &lt;property name=&quot;sizePolicy&quot;&gt;
++                                            &lt;sizepolicy&gt;
++                                                &lt;hsizetype&gt;0&lt;/hsizetype&gt;
++                                                &lt;vsizetype&gt;0&lt;/vsizetype&gt;
++                                                &lt;horstretch&gt;0&lt;/horstretch&gt;
++                                                &lt;verstretch&gt;0&lt;/verstretch&gt;
++                                            &lt;/sizepolicy&gt;
++                                        &lt;/property&gt;
++                                        &lt;property name=&quot;text&quot;&gt;
++                                            &lt;string&gt;&lt;/string&gt;
++                                        &lt;/property&gt;
++                                        &lt;property name=&quot;pixmap&quot;&gt;
++                                            &lt;pixmap&gt;image0&lt;/pixmap&gt;
++                                        &lt;/property&gt;
++                                    &lt;/widget&gt;
++                                &lt;/grid&gt;
++                            &lt;/widget&gt;
++                        &lt;/hbox&gt;
+                     &lt;/widget&gt;
+-                    &lt;widget class=&quot;QLabel&quot; row=&quot;1&quot; column=&quot;0&quot;&gt;
++                    &lt;widget class=&quot;QGroupBox&quot;&gt;
+                         &lt;property name=&quot;name&quot;&gt;
+-                            &lt;cstring&gt;tlOuputBaseName&lt;/cstring&gt;
++                            &lt;cstring&gt;gbSnapShots&lt;/cstring&gt;
+                         &lt;/property&gt;
+-                        &lt;property name=&quot;text&quot;&gt;
+-                            &lt;string&gt;Base Name:&lt;/string&gt;
+-                        &lt;/property&gt;
+-                    &lt;/widget&gt;
+-                    &lt;widget class=&quot;QPushButton&quot; row=&quot;3&quot; column=&quot;2&quot;&gt;
+-                        &lt;property name=&quot;name&quot;&gt;
+-                            &lt;cstring&gt;pbOutputDirectory&lt;/cstring&gt;
+-                        &lt;/property&gt;
+                         &lt;property name=&quot;sizePolicy&quot;&gt;
+                             &lt;sizepolicy&gt;
+-                                &lt;hsizetype&gt;4&lt;/hsizetype&gt;
++                                &lt;hsizetype&gt;1&lt;/hsizetype&gt;
+                                 &lt;vsizetype&gt;4&lt;/vsizetype&gt;
+                                 &lt;horstretch&gt;0&lt;/horstretch&gt;
+                                 &lt;verstretch&gt;0&lt;/verstretch&gt;
+                             &lt;/sizepolicy&gt;
+                         &lt;/property&gt;
+-                        &lt;property name=&quot;text&quot;&gt;
+-                            &lt;string&gt;&lt;/string&gt;
++                        &lt;property name=&quot;title&quot;&gt;
++                            &lt;string&gt;Snapshots&lt;/string&gt;
+                         &lt;/property&gt;
+-                        &lt;property name=&quot;pixmap&quot;&gt;
+-                            &lt;pixmap&gt;image0&lt;/pixmap&gt;
+-                        &lt;/property&gt;
++                        &lt;grid&gt;
++                            &lt;property name=&quot;name&quot;&gt;
++                                &lt;cstring&gt;unnamed&lt;/cstring&gt;
++                            &lt;/property&gt;
++                            &lt;widget class=&quot;QLineEdit&quot; row=&quot;2&quot; column=&quot;1&quot;&gt;
++                                &lt;property name=&quot;name&quot;&gt;
++                                    &lt;cstring&gt;leOutputDirectory&lt;/cstring&gt;
++                                &lt;/property&gt;
++                                &lt;property name=&quot;sizePolicy&quot;&gt;
++                                    &lt;sizepolicy&gt;
++                                        &lt;hsizetype&gt;1&lt;/hsizetype&gt;
++                                        &lt;vsizetype&gt;1&lt;/vsizetype&gt;
++                                        &lt;horstretch&gt;0&lt;/horstretch&gt;
++                                        &lt;verstretch&gt;0&lt;/verstretch&gt;
++                                    &lt;/sizepolicy&gt;
++                                &lt;/property&gt;
++                                &lt;property name=&quot;text&quot;&gt;
++                                    &lt;string&gt;/tmp&lt;/string&gt;
++                                &lt;/property&gt;
++                            &lt;/widget&gt;
++                            &lt;widget class=&quot;QLabel&quot; row=&quot;1&quot; column=&quot;0&quot;&gt;
++                                &lt;property name=&quot;name&quot;&gt;
++                                    &lt;cstring&gt;tlOuputBaseName&lt;/cstring&gt;
++                                &lt;/property&gt;
++                                &lt;property name=&quot;sizePolicy&quot;&gt;
++                                    &lt;sizepolicy&gt;
++                                        &lt;hsizetype&gt;4&lt;/hsizetype&gt;
++                                        &lt;vsizetype&gt;5&lt;/vsizetype&gt;
++                                        &lt;horstretch&gt;0&lt;/horstretch&gt;
++                                        &lt;verstretch&gt;0&lt;/verstretch&gt;
++                                    &lt;/sizepolicy&gt;
++                                &lt;/property&gt;
++                                &lt;property name=&quot;text&quot;&gt;
++                                    &lt;string&gt;Base Name:&lt;/string&gt;
++                                &lt;/property&gt;
++                            &lt;/widget&gt;
++                            &lt;widget class=&quot;QPushButton&quot; row=&quot;2&quot; column=&quot;2&quot;&gt;
++                                &lt;property name=&quot;name&quot;&gt;
++                                    &lt;cstring&gt;pbOutputDirectory&lt;/cstring&gt;
++                                &lt;/property&gt;
++                                &lt;property name=&quot;sizePolicy&quot;&gt;
++                                    &lt;sizepolicy&gt;
++                                        &lt;hsizetype&gt;0&lt;/hsizetype&gt;
++                                        &lt;vsizetype&gt;0&lt;/vsizetype&gt;
++                                        &lt;horstretch&gt;0&lt;/horstretch&gt;
++                                        &lt;verstretch&gt;0&lt;/verstretch&gt;
++                                    &lt;/sizepolicy&gt;
++                                &lt;/property&gt;
++                                &lt;property name=&quot;text&quot;&gt;
++                                    &lt;string&gt;&lt;/string&gt;
++                                &lt;/property&gt;
++                                &lt;property name=&quot;pixmap&quot;&gt;
++                                    &lt;pixmap&gt;image0&lt;/pixmap&gt;
++                                &lt;/property&gt;
++                            &lt;/widget&gt;
++                            &lt;widget class=&quot;QLineEdit&quot; row=&quot;1&quot; column=&quot;1&quot; rowspan=&quot;1&quot; colspan=&quot;2&quot;&gt;
++                                &lt;property name=&quot;name&quot;&gt;
++                                    &lt;cstring&gt;leOutputBaseName&lt;/cstring&gt;
++                                &lt;/property&gt;
++                                &lt;property name=&quot;sizePolicy&quot;&gt;
++                                    &lt;sizepolicy&gt;
++                                        &lt;hsizetype&gt;1&lt;/hsizetype&gt;
++                                        &lt;vsizetype&gt;1&lt;/vsizetype&gt;
++                                        &lt;horstretch&gt;0&lt;/horstretch&gt;
++                                        &lt;verstretch&gt;0&lt;/verstretch&gt;
++                                    &lt;/sizepolicy&gt;
++                                &lt;/property&gt;
++                                &lt;property name=&quot;text&quot;&gt;
++                                    &lt;string&gt;frame-&lt;/string&gt;
++                                &lt;/property&gt;
++                            &lt;/widget&gt;
++                            &lt;widget class=&quot;QCheckBox&quot; row=&quot;0&quot; column=&quot;0&quot; rowspan=&quot;1&quot; colspan=&quot;3&quot;&gt;
++                                &lt;property name=&quot;name&quot;&gt;
++                                    &lt;cstring&gt;cbSaveSnapShots&lt;/cstring&gt;
++                                &lt;/property&gt;
++                                &lt;property name=&quot;enabled&quot;&gt;
++                                    &lt;bool&gt;true&lt;/bool&gt;
++                                &lt;/property&gt;
++                                &lt;property name=&quot;text&quot;&gt;
++                                    &lt;string&gt;Save snapshots&lt;/string&gt;
++                                &lt;/property&gt;
++                                &lt;property name=&quot;checked&quot;&gt;
++                                    &lt;bool&gt;false&lt;/bool&gt;
++                                &lt;/property&gt;
++                                &lt;property name=&quot;tristate&quot;&gt;
++                                    &lt;bool&gt;false&lt;/bool&gt;
++                                &lt;/property&gt;
++                            &lt;/widget&gt;
++                            &lt;widget class=&quot;QLabel&quot; row=&quot;2&quot; column=&quot;0&quot;&gt;
++                                &lt;property name=&quot;name&quot;&gt;
++                                    &lt;cstring&gt;tlOutputDirectory&lt;/cstring&gt;
++                                &lt;/property&gt;
++                                &lt;property name=&quot;sizePolicy&quot;&gt;
++                                    &lt;sizepolicy&gt;
++                                        &lt;hsizetype&gt;4&lt;/hsizetype&gt;
++                                        &lt;vsizetype&gt;5&lt;/vsizetype&gt;
++                                        &lt;horstretch&gt;0&lt;/horstretch&gt;
++                                        &lt;verstretch&gt;0&lt;/verstretch&gt;
++                                    &lt;/sizepolicy&gt;
++                                &lt;/property&gt;
++                                &lt;property name=&quot;text&quot;&gt;
++                                    &lt;string&gt;Directory:&lt;/string&gt;
++                                &lt;/property&gt;
++                            &lt;/widget&gt;
++                        &lt;/grid&gt;
+                     &lt;/widget&gt;
+-                    &lt;widget class=&quot;QLineEdit&quot; row=&quot;1&quot; column=&quot;1&quot; rowspan=&quot;1&quot; colspan=&quot;2&quot;&gt;
++                    &lt;widget class=&quot;QGroupBox&quot;&gt;
+                         &lt;property name=&quot;name&quot;&gt;
+-                            &lt;cstring&gt;leOutputBaseName&lt;/cstring&gt;
++                            &lt;cstring&gt;gbController&lt;/cstring&gt;
+                         &lt;/property&gt;
+                         &lt;property name=&quot;sizePolicy&quot;&gt;
+                             &lt;sizepolicy&gt;
+                                 &lt;hsizetype&gt;1&lt;/hsizetype&gt;
+-                                &lt;vsizetype&gt;1&lt;/vsizetype&gt;
++                                &lt;vsizetype&gt;4&lt;/vsizetype&gt;
+                                 &lt;horstretch&gt;0&lt;/horstretch&gt;
+                                 &lt;verstretch&gt;0&lt;/verstretch&gt;
+                             &lt;/sizepolicy&gt;
+                         &lt;/property&gt;
+-                        &lt;property name=&quot;text&quot;&gt;
+-                            &lt;string&gt;frame-&lt;/string&gt;
++                        &lt;property name=&quot;title&quot;&gt;
++                            &lt;string&gt;Controller&lt;/string&gt;
+                         &lt;/property&gt;
++                        &lt;hbox&gt;
++                            &lt;property name=&quot;name&quot;&gt;
++                                &lt;cstring&gt;unnamed&lt;/cstring&gt;
++                            &lt;/property&gt;
++                            &lt;widget class=&quot;QPushButton&quot;&gt;
++                                &lt;property name=&quot;name&quot;&gt;
++                                    &lt;cstring&gt;pbPlay&lt;/cstring&gt;
++                                &lt;/property&gt;
++                                &lt;property name=&quot;text&quot;&gt;
++                                    &lt;string&gt;&lt;/string&gt;
++                                &lt;/property&gt;
++                                &lt;property name=&quot;pixmap&quot;&gt;
++                                    &lt;pixmap&gt;image1&lt;/pixmap&gt;
++                                &lt;/property&gt;
++                            &lt;/widget&gt;
++                            &lt;widget class=&quot;QPushButton&quot;&gt;
++                                &lt;property name=&quot;name&quot;&gt;
++                                    &lt;cstring&gt;pbStep&lt;/cstring&gt;
++                                &lt;/property&gt;
++                                &lt;property name=&quot;text&quot;&gt;
++                                    &lt;string&gt;&lt;/string&gt;
++                                &lt;/property&gt;
++                                &lt;property name=&quot;pixmap&quot;&gt;
++                                    &lt;pixmap&gt;image2&lt;/pixmap&gt;
++                                &lt;/property&gt;
++                            &lt;/widget&gt;
++                            &lt;widget class=&quot;QPushButton&quot;&gt;
++                                &lt;property name=&quot;name&quot;&gt;
++                                    &lt;cstring&gt;pbPause&lt;/cstring&gt;
++                                &lt;/property&gt;
++                                &lt;property name=&quot;text&quot;&gt;
++                                    &lt;string&gt;&lt;/string&gt;
++                                &lt;/property&gt;
++                                &lt;property name=&quot;pixmap&quot;&gt;
++                                    &lt;pixmap&gt;image3&lt;/pixmap&gt;
++                                &lt;/property&gt;
++                            &lt;/widget&gt;
++                            &lt;widget class=&quot;QPushButton&quot;&gt;
++                                &lt;property name=&quot;name&quot;&gt;
++                                    &lt;cstring&gt;pbReset&lt;/cstring&gt;
++                                &lt;/property&gt;
++                                &lt;property name=&quot;text&quot;&gt;
++                                    &lt;string&gt;&lt;/string&gt;
++                                &lt;/property&gt;
++                                &lt;property name=&quot;pixmap&quot;&gt;
++                                    &lt;pixmap&gt;image4&lt;/pixmap&gt;
++                                &lt;/property&gt;
++                            &lt;/widget&gt;
++                        &lt;/hbox&gt;
+                     &lt;/widget&gt;
+-                    &lt;widget class=&quot;QCheckBox&quot; row=&quot;0&quot; column=&quot;0&quot; rowspan=&quot;1&quot; colspan=&quot;3&quot;&gt;
++                    &lt;widget class=&quot;QGroupBox&quot;&gt;
+                         &lt;property name=&quot;name&quot;&gt;
+-                            &lt;cstring&gt;cbSaveSnapShots&lt;/cstring&gt;
++                            &lt;cstring&gt;gbStatus&lt;/cstring&gt;
+                         &lt;/property&gt;
+-                        &lt;property name=&quot;enabled&quot;&gt;
+-                            &lt;bool&gt;true&lt;/bool&gt;
++                        &lt;property name=&quot;sizePolicy&quot;&gt;
++                            &lt;sizepolicy&gt;
++                                &lt;hsizetype&gt;1&lt;/hsizetype&gt;
++                                &lt;vsizetype&gt;3&lt;/vsizetype&gt;
++                                &lt;horstretch&gt;0&lt;/horstretch&gt;
++                                &lt;verstretch&gt;0&lt;/verstretch&gt;
++                            &lt;/sizepolicy&gt;
+                         &lt;/property&gt;
+-                        &lt;property name=&quot;text&quot;&gt;
+-                            &lt;string&gt;Save snapshots&lt;/string&gt;
++                        &lt;property name=&quot;title&quot;&gt;
++                            &lt;string&gt;status&lt;/string&gt;
+                         &lt;/property&gt;
+-                        &lt;property name=&quot;checked&quot;&gt;
+-                            &lt;bool&gt;false&lt;/bool&gt;
+-                        &lt;/property&gt;
+-                        &lt;property name=&quot;tristate&quot;&gt;
+-                            &lt;bool&gt;false&lt;/bool&gt;
+-                        &lt;/property&gt;
++                        &lt;hbox&gt;
++                            &lt;property name=&quot;name&quot;&gt;
++                                &lt;cstring&gt;unnamed&lt;/cstring&gt;
++                            &lt;/property&gt;
++                            &lt;widget class=&quot;QLabel&quot;&gt;
++                                &lt;property name=&quot;name&quot;&gt;
++                                    &lt;cstring&gt;tlStatus&lt;/cstring&gt;
++                                &lt;/property&gt;
++                                &lt;property name=&quot;sizePolicy&quot;&gt;
++                                    &lt;sizepolicy&gt;
++                                        &lt;hsizetype&gt;2&lt;/hsizetype&gt;
++                                        &lt;vsizetype&gt;3&lt;/vsizetype&gt;
++                                        &lt;horstretch&gt;0&lt;/horstretch&gt;
++                                        &lt;verstretch&gt;0&lt;/verstretch&gt;
++                                    &lt;/sizepolicy&gt;
++                                &lt;/property&gt;
++                                &lt;property name=&quot;minimumSize&quot;&gt;
++                                    &lt;size&gt;
++                                        &lt;width&gt;0&lt;/width&gt;
++                                        &lt;height&gt;180&lt;/height&gt;
++                                    &lt;/size&gt;
++                                &lt;/property&gt;
++                                &lt;property name=&quot;font&quot;&gt;
++                                    &lt;font&gt;
++                                        &lt;family&gt;Monospace&lt;/family&gt;
++                                        &lt;pointsize&gt;6&lt;/pointsize&gt;
++                                    &lt;/font&gt;
++                                &lt;/property&gt;
++                                &lt;property name=&quot;text&quot;&gt;
++                                    &lt;string&gt;idleidleidleidleidleidleidleidleidleidleidleidleidleidleidleidleidleidleidleidleidleidleidleidle idle idleidleidleidleidleidleidleidleidleidleidleidleidleidleidleidleidleidleidleidleidleidleidleidle idle idleidleidleidleidleidleidleidleidleidleidleidleidleidleidleidleidleidleidleidleidleidleidleidle idle&lt;/string&gt;
++                                &lt;/property&gt;
++                                &lt;property name=&quot;textFormat&quot;&gt;
++                                    &lt;enum&gt;PlainText&lt;/enum&gt;
++                                &lt;/property&gt;
++                                &lt;property name=&quot;scaledContents&quot;&gt;
++                                    &lt;bool&gt;false&lt;/bool&gt;
++                                &lt;/property&gt;
++                                &lt;property name=&quot;alignment&quot;&gt;
++                                    &lt;set&gt;AlignTop&lt;/set&gt;
++                                &lt;/property&gt;
++                            &lt;/widget&gt;
++                        &lt;/hbox&gt;
+                     &lt;/widget&gt;
+-                    &lt;widget class=&quot;QLabel&quot; row=&quot;3&quot; column=&quot;0&quot;&gt;
+-                        &lt;property name=&quot;name&quot;&gt;
+-                            &lt;cstring&gt;tlOutputDirectory&lt;/cstring&gt;
+-                        &lt;/property&gt;
+-                        &lt;property name=&quot;text&quot;&gt;
+-                            &lt;string&gt;Directory:&lt;/string&gt;
+-                        &lt;/property&gt;
+-                    &lt;/widget&gt;
+-                &lt;/grid&gt;
++                &lt;/vbox&gt;
+             &lt;/widget&gt;
+-            &lt;widget class=&quot;QGroupBox&quot;&gt;
++            &lt;widget class=&quot;GLSimulationPlayerViewer&quot;&gt;
+                 &lt;property name=&quot;name&quot;&gt;
+-                    &lt;cstring&gt;gbController&lt;/cstring&gt;
++                    &lt;cstring&gt;glSimulationPlayerViewer&lt;/cstring&gt;
+                 &lt;/property&gt;
+                 &lt;property name=&quot;sizePolicy&quot;&gt;
+                     &lt;sizepolicy&gt;
+-                        &lt;hsizetype&gt;1&lt;/hsizetype&gt;
+-                        &lt;vsizetype&gt;4&lt;/vsizetype&gt;
++                        &lt;hsizetype&gt;7&lt;/hsizetype&gt;
++                        &lt;vsizetype&gt;7&lt;/vsizetype&gt;
+                         &lt;horstretch&gt;0&lt;/horstretch&gt;
+                         &lt;verstretch&gt;0&lt;/verstretch&gt;
+                     &lt;/sizepolicy&gt;
+                 &lt;/property&gt;
+-                &lt;property name=&quot;title&quot;&gt;
+-                    &lt;string&gt;Controller&lt;/string&gt;
+-                &lt;/property&gt;
+-                &lt;hbox&gt;
+-                    &lt;property name=&quot;name&quot;&gt;
+-                        &lt;cstring&gt;unnamed&lt;/cstring&gt;
+-                    &lt;/property&gt;
+-                    &lt;widget class=&quot;QPushButton&quot;&gt;
+-                        &lt;property name=&quot;name&quot;&gt;
+-                            &lt;cstring&gt;pbPlay&lt;/cstring&gt;
+-                        &lt;/property&gt;
+-                        &lt;property name=&quot;text&quot;&gt;
+-                            &lt;string&gt;&lt;/string&gt;
+-                        &lt;/property&gt;
+-                        &lt;property name=&quot;pixmap&quot;&gt;
+-                            &lt;pixmap&gt;image1&lt;/pixmap&gt;
+-                        &lt;/property&gt;
+-                    &lt;/widget&gt;
+-                    &lt;widget class=&quot;QPushButton&quot;&gt;
+-                        &lt;property name=&quot;name&quot;&gt;
+-                            &lt;cstring&gt;pbStep&lt;/cstring&gt;
+-                        &lt;/property&gt;
+-                        &lt;property name=&quot;text&quot;&gt;
+-                            &lt;string&gt;&lt;/string&gt;
+-                        &lt;/property&gt;
+-                        &lt;property name=&quot;pixmap&quot;&gt;
+-                            &lt;pixmap&gt;image2&lt;/pixmap&gt;
+-                        &lt;/property&gt;
+-                    &lt;/widget&gt;
+-                    &lt;widget class=&quot;QPushButton&quot;&gt;
+-                        &lt;property name=&quot;name&quot;&gt;
+-                            &lt;cstring&gt;pbPause&lt;/cstring&gt;
+-                        &lt;/property&gt;
+-                        &lt;property name=&quot;text&quot;&gt;
+-                            &lt;string&gt;&lt;/string&gt;
+-                        &lt;/property&gt;
+-                        &lt;property name=&quot;pixmap&quot;&gt;
+-                            &lt;pixmap&gt;image3&lt;/pixmap&gt;
+-                        &lt;/property&gt;
+-                    &lt;/widget&gt;
+-                    &lt;widget class=&quot;QPushButton&quot;&gt;
+-                        &lt;property name=&quot;name&quot;&gt;
+-                            &lt;cstring&gt;pbReset&lt;/cstring&gt;
+-                        &lt;/property&gt;
+-                        &lt;property name=&quot;text&quot;&gt;
+-                            &lt;string&gt;&lt;/string&gt;
+-                        &lt;/property&gt;
+-                        &lt;property name=&quot;pixmap&quot;&gt;
+-                            &lt;pixmap&gt;image4&lt;/pixmap&gt;
+-                        &lt;/property&gt;
+-                    &lt;/widget&gt;
+-                &lt;/hbox&gt;
+             &lt;/widget&gt;
+-            &lt;widget class=&quot;QGroupBox&quot;&gt;
+-                &lt;property name=&quot;name&quot;&gt;
+-                    &lt;cstring&gt;gbStatus&lt;/cstring&gt;
+-                &lt;/property&gt;
+-                &lt;property name=&quot;sizePolicy&quot;&gt;
+-                    &lt;sizepolicy&gt;
+-                        &lt;hsizetype&gt;5&lt;/hsizetype&gt;
+-                        &lt;vsizetype&gt;3&lt;/vsizetype&gt;
+-                        &lt;horstretch&gt;0&lt;/horstretch&gt;
+-                        &lt;verstretch&gt;0&lt;/verstretch&gt;
+-                    &lt;/sizepolicy&gt;
+-                &lt;/property&gt;
+-                &lt;property name=&quot;title&quot;&gt;
+-                    &lt;string&gt;status&lt;/string&gt;
+-                &lt;/property&gt;
+-                &lt;grid&gt;
+-                    &lt;property name=&quot;name&quot;&gt;
+-                        &lt;cstring&gt;unnamed&lt;/cstring&gt;
+-                    &lt;/property&gt;
+-                    &lt;widget class=&quot;QLabel&quot; row=&quot;0&quot; column=&quot;0&quot;&gt;
+-                        &lt;property name=&quot;name&quot;&gt;
+-                            &lt;cstring&gt;tlStatus&lt;/cstring&gt;
+-                        &lt;/property&gt;
+-                        &lt;property name=&quot;minimumSize&quot;&gt;
+-                            &lt;size&gt;
+-                                &lt;width&gt;0&lt;/width&gt;
+-                                &lt;height&gt;180&lt;/height&gt;
+-                            &lt;/size&gt;
+-                        &lt;/property&gt;
+-                        &lt;property name=&quot;font&quot;&gt;
+-                            &lt;font&gt;
+-                                &lt;family&gt;Monospace&lt;/family&gt;
+-                                &lt;pointsize&gt;6&lt;/pointsize&gt;
+-                            &lt;/font&gt;
+-                        &lt;/property&gt;
+-                        &lt;property name=&quot;text&quot;&gt;
+-                            &lt;string&gt;idle&lt;/string&gt;
+-                        &lt;/property&gt;
+-                        &lt;property name=&quot;textFormat&quot;&gt;
+-                            &lt;enum&gt;PlainText&lt;/enum&gt;
+-                        &lt;/property&gt;
+-                        &lt;property name=&quot;scaledContents&quot;&gt;
+-                            &lt;bool&gt;false&lt;/bool&gt;
+-                        &lt;/property&gt;
+-                        &lt;property name=&quot;alignment&quot;&gt;
+-                            &lt;set&gt;AlignTop&lt;/set&gt;
+-                        &lt;/property&gt;
+-                    &lt;/widget&gt;
+-                &lt;/grid&gt;
+-            &lt;/widget&gt;
+-        &lt;/vbox&gt;
+-    &lt;/widget&gt;
++        &lt;/widget&gt;
++    &lt;/hbox&gt;
+ &lt;/widget&gt;
+ &lt;customwidgets&gt;
+     &lt;customwidget&gt;
+         &lt;class&gt;GLSimulationPlayerViewer&lt;/class&gt;
+-        &lt;header location=&quot;local&quot;&gt;GLSimulationPlayerViewer.hpp&lt;/header&gt;
++        &lt;header location=&quot;global&quot;&gt;GLSimulationPlayerViewer.hpp&lt;/header&gt;
+         &lt;sizehint&gt;
+             &lt;width&gt;-1&lt;/width&gt;
+             &lt;height&gt;-1&lt;/height&gt;
+@@ -584,16 +633,16 @@
+         &lt;slot&gt;pbInputConfigFileClicked()&lt;/slot&gt;
+     &lt;/connection&gt;
+     &lt;connection&gt;
+-        &lt;sender&gt;pbInputDirectory&lt;/sender&gt;
++        &lt;sender&gt;pbLoad&lt;/sender&gt;
+         &lt;signal&gt;clicked()&lt;/signal&gt;
+         &lt;receiver&gt;QtGeneratedSimulationPlayer&lt;/receiver&gt;
+-        &lt;slot&gt;pbInputDirectoryClicked()&lt;/slot&gt;
++        &lt;slot&gt;pbLoadClicked()&lt;/slot&gt;
+     &lt;/connection&gt;
+     &lt;connection&gt;
+-        &lt;sender&gt;pbLoad&lt;/sender&gt;
++        &lt;sender&gt;pbInputDirectory&lt;/sender&gt;
+         &lt;signal&gt;clicked()&lt;/signal&gt;
+         &lt;receiver&gt;QtGeneratedSimulationPlayer&lt;/receiver&gt;
+-        &lt;slot&gt;pbLoadClicked()&lt;/slot&gt;
++        &lt;slot&gt;pbInputDirectoryClicked()&lt;/slot&gt;
+     &lt;/connection&gt;
+ &lt;/connections&gt;
+ &lt;slots&gt;
+
+Modified: trunk/pkg/common/Engine/DeusExMachina/ResetPositionEngine.cpp
+===================================================================
+--- trunk/pkg/common/Engine/DeusExMachina/ResetPositionEngine.cpp	2008-07-02 17:49:27 UTC (rev 1411)
++++ trunk/pkg/common/Engine/DeusExMachina/ResetPositionEngine.cpp	2008-07-03 17:23:12 UTC (rev 1412)
+@@ -14,7 +14,10 @@
+ ResetPositionEngine::ResetPositionEngine(){
+ 		Y_min=-1;
+ 		interval=0;
++		ini_pos.clear();
+ 		initial_positions.clear();
++		fileName=&quot;&quot;;
++		first=true;
+ }
+ 
+ void ResetPositionEngine::postProcessAttributes(bool deserializing){}
+@@ -24,12 +27,14 @@
+ 	REGISTER_ATTRIBUTE(interval);
+ 	REGISTER_ATTRIBUTE(Y_min);
+ 	REGISTER_ATTRIBUTE(initial_positions);
++	REGISTER_ATTRIBUTE(fileName);
+ }
+ 
+ 
+ void ResetPositionEngine::applyCondition(MetaBody * ncb){
+-		if (initial_positions.size()==0) 
++		if (first) 
+ 		{
++				first=false;
+ 				initialize(ncb);
+ 				return;
+ 		}
+@@ -40,16 +45,48 @@
+ 			ParticleParameters* pp = YADE_CAST&lt;ParticleParameters*&gt;((*bodies)[subscribedBodies[i]]-&gt;physicalParameters.get());
+ 			if (pp-&gt;se3.position[1]&lt;Y_min)
+ 			{
+-					pp-&gt;se3.position = initial_positions[i];
++					pp-&gt;se3.position = ini_pos[i];
+ 					pp-&gt;velocity = Vector3r(0,0,0);
+ 			}
+ 	}
+ }
+ 
+-void ResetPositionEngine::initialize(MetaBody * ncb){
+-	initial_positions.resize(subscribedBodies.size());
+-	shared_ptr&lt;BodyContainer&gt;&amp; bodies = ncb-&gt;bodies;
++void ResetPositionEngine::initialize(MetaBody * ncb)
++{
++	if (fileName==&quot;&quot;)
++	{ // initialize positions from bodies se3
++		initial_positions.resize(subscribedBodies.size());
++		shared_ptr&lt;BodyContainer&gt;&amp; bodies = ncb-&gt;bodies;
++		for(int i=0,e=subscribedBodies.size(); i&lt;e; ++i)
++			initial_positions[i]=(*bodies)[subscribedBodies[i]]-&gt;physicalParameters-&gt;se3.position;
++		ini_pos.assign(initial_positions.begin(),initial_positions.end());
++		return;
++	}
++	
++	std::ifstream is(fileName.c_str());
++	if (is) 
++	{// reading positions from file 
++		ini_pos.resize(subscribedBodies.size());
++		for(int i=0,e=subscribedBodies.size(); i&lt;e &amp;&amp; !is.eof(); ++i)
++			is &gt;&gt; ini_pos[i][0] &gt;&gt; ini_pos[i][1] &gt;&gt; ini_pos[i][2];
++		return;
++	}
++	
++	// initialize positions form bodies se3 if need and export to file
++	if (initial_positions.size()==0)
++	{
++		ini_pos.resize(subscribedBodies.size());
++		shared_ptr&lt;BodyContainer&gt;&amp; bodies = ncb-&gt;bodies;
++		for(int i=0,e=subscribedBodies.size(); i&lt;e; ++i)
++			ini_pos[i]=(*bodies)[subscribedBodies[i]]-&gt;physicalParameters-&gt;se3.position;
++	}
++	else ini_pos.swap(initial_positions);
++	std::ofstream os(fileName.c_str());
++	if (!os) {
++		LOG_ERROR(&quot;Can't open file to export positions: &quot;&lt;&lt;fileName&lt;&lt;&quot;!&quot;);
++		return;
++	}
+ 	for(int i=0,e=subscribedBodies.size(); i&lt;e; ++i)
+-		initial_positions[i]=(*bodies)[subscribedBodies[i]]-&gt;physicalParameters-&gt;se3.position;
++		os &lt;&lt; ini_pos[i][0]&lt;&lt; '\t' &lt;&lt; ini_pos[i][1]&lt;&lt; '\t' &lt;&lt; ini_pos[i][2]&lt;&lt; std::endl;
+ }
+ YADE_PLUGIN();
+
+Modified: trunk/pkg/common/Engine/DeusExMachina/ResetPositionEngine.hpp
+===================================================================
+--- trunk/pkg/common/Engine/DeusExMachina/ResetPositionEngine.hpp	2008-07-02 17:49:27 UTC (rev 1411)
++++ trunk/pkg/common/Engine/DeusExMachina/ResetPositionEngine.hpp	2008-07-03 17:23:12 UTC (rev 1412)
+@@ -23,13 +23,18 @@
+ 
+ 		int interval;
+ 		Real Y_min;
+-		std::vector&lt;Vector3r&gt; initial_positions;
++		/// import/export initial positions
++		std::string fileName; 
++		std::vector&lt;Vector3r&gt; initial_positions; // for serialization
++
+ 	protected:
+ 		virtual void postProcessAttributes(bool);
+ 		virtual void registerAttributes();
+ 	REGISTER_CLASS_NAME(ResetPositionEngine);
+ 	REGISTER_BASE_CLASS_NAME(DeusExMachina);
+ 	private:
++		std::vector&lt;Vector3r&gt; ini_pos;
++		bool first;
+ 		void initialize(MetaBody * ncb);
+ };
+ 
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000371.html">[Yade-commits] r1411 - in trunk: core gui/qt3	pkg/common/RenderingEngine/OpenGLRenderingEngine
+</A></li>
+	<LI>Next message: <A HREF="000373.html">[Yade-commits] r1413 - in trunk: core gui/qt3	pkg/common/Engine/DeusExMachina	pkg/common/RenderingEngine/OpenGLRenderingEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#372">[ date ]</a>
+              <a href="thread.html#372">[ thread ]</a>
+              <a href="subject.html#372">[ subject ]</a>
+              <a href="author.html#372">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

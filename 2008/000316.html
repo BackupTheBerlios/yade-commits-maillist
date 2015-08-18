@@ -1,0 +1,460 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1354 - in trunk: examples gui gui/py lib/import	pkg/dem/PreProcessor
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1354%20-%20in%20trunk%3A%20examples%20gui%20gui/py%20lib/import%0A%09pkg/dem/PreProcessor&In-Reply-To=%3C200805151051.m4FApdII018031%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000315.html">
+   <LINK REL="Next"  HREF="000317.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1354 - in trunk: examples gui gui/py lib/import	pkg/dem/PreProcessor</H1>
+    <B>sega at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1354%20-%20in%20trunk%3A%20examples%20gui%20gui/py%20lib/import%0A%09pkg/dem/PreProcessor&In-Reply-To=%3C200805151051.m4FApdII018031%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1354 - in trunk: examples gui gui/py lib/import	pkg/dem/PreProcessor">sega at mail.berlios.de
+       </A><BR>
+    <I>Thu May 15 12:51:39 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000315.html">[Yade-commits] r1353 - in trunk: examples lib/import pkg/dem	pkg/dem/Engine/EngineUnit pkg/dem/PreProcessor
+</A></li>
+        <LI>Next message: <A HREF="000317.html">[Yade-commits] r1355 - in trunk: examples gui gui/py scripts
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#316">[ date ]</a>
+              <a href="thread.html#316">[ thread ]</a>
+              <a href="subject.html#316">[ subject ]</a>
+              <a href="author.html#316">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: sega
+Date: 2008-05-15 12:51:37 +0200 (Thu, 15 May 2008)
+New Revision: 1354
+
+Added:
+   trunk/examples/STLImporterTest.py
+Modified:
+   trunk/gui/SConscript
+   trunk/gui/py/utils.py
+   trunk/gui/py/yadeControl.cpp
+   trunk/lib/import/STLImporter.cpp
+   trunk/lib/import/STLImporter.hpp
+   trunk/pkg/dem/PreProcessor/STLImporterTest.cpp
+Log:
+1. Python wrapper for STLImporter 
+2. Example python preprocessor STLImporterTest.py
+3. Small fixes
+
+
+
+Added: trunk/examples/STLImporterTest.py
+===================================================================
+--- trunk/examples/STLImporterTest.py	2008-05-13 17:48:05 UTC (rev 1353)
++++ trunk/examples/STLImporterTest.py	2008-05-15 10:51:37 UTC (rev 1354)
+@@ -0,0 +1,103 @@
++#!/usr/local/bin/yade-trunk -x
++# -*- encoding=utf-8 -*-
++
++## Open STL file
++imp = STLImporter()
++imp.import_vertices = True
++imp.import_edges = True
++imp.import_facets = True
++imp.facets_wire = True
++imp.open('baraban.stl')
++
++## Omega
++o=Omega() 
++
++## Initializers 
++o.initializers=[
++	## Create and reset to zero container of all PhysicalActions that will be used
++	StandAloneEngine('PhysicalActionContainerInitializer'),
++	## Create bounding boxes. They are needed to zoom the 3d view properly before we start the simulation.
++	MetaEngine('BoundingVolumeMetaEngine',[EngineUnit('InteractingSphere2AABB'),EngineUnit('InteractingEdge2AABB'),EngineUnit('InteractingFacet2AABB'),EngineUnit('MetaInteractingGeometry2AABB')])
++	]
++
++## Engines 
++o.engines=[
++	## Resets forces and momenta the act on bodies
++	StandAloneEngine('PhysicalActionContainerReseter'),
++	## Associates bounding volume to each body.
++	MetaEngine('BoundingVolumeMetaEngine',[
++		EngineUnit('InteractingSphere2AABB'),
++		EngineUnit('InteractingEdge2AABB'),
++		EngineUnit('InteractingFacet2AABB'),
++		EngineUnit('MetaInteractingGeometry2AABB')
++	]),
++	## Using bounding boxes find possible body collisions.
++	StandAloneEngine('SpatialQuickSortCollider'),
++	## Create geometry information about each potential collision.
++	MetaEngine('InteractionGeometryMetaEngine',[
++		EngineUnit('InteractingSphere2InteractingSphere4SpheresContactGeometry'),
++		EngineUnit('InteractingVertex2InteractingSphere4SpheresContactGeometry'),
++		EngineUnit('InteractingEdge2InteractingSphere4SpheresContactGeometry'),
++		EngineUnit('InteractingFacet2InteractingSphere4SpheresContactGeometry')
++	]),
++	## Create physical information about the interaction.
++	MetaEngine('InteractionPhysicsMetaEngine',[EngineUnit('MacroMicroElasticRelationships')]),
++	## &quot;Solver&quot; of the contact
++	StandAloneEngine('ElasticContactLaw'),
++	## Apply gravity
++	DeusExMachina('GravityEngine',{'gravity':[0,-9.81,0]}),
++	## Forces acting on bodies are damped to artificially increase energy dissipation in simulation.
++	MetaEngine('PhysicalActionDamper',[
++		EngineUnit('CundallNonViscousForceDamping',{'damping':0.3}),
++		EngineUnit('CundallNonViscousMomentumDamping',{'damping':0.3})
++	]),
++	## Now we have forces and momenta acting on bodies. Newton's law calculates acceleration that corresponds to them.
++	MetaEngine('PhysicalActionApplier',[
++		EngineUnit('NewtonsForceLaw'),
++		EngineUnit('NewtonsMomentumLaw'),
++	]),
++	## Acceleration results in velocity change. Integrating the velocity over dt, position of the body will change.
++	MetaEngine('PhysicalParametersMetaEngine',[EngineUnit('LeapFrogPositionIntegrator')]),
++	## Angular acceleration changes angular velocity, resulting in position and/or orientation change of the body.
++	MetaEngine('PhysicalParametersMetaEngine',[EngineUnit('LeapFrogOrientationIntegrator')]),
++	## Apply kinematics to walls
++	DeusExMachina('RotationEngine',{'subscribedBodies':range(imp.number_of_all_imported),'rotationAxis':[0,0,1],'rotateAroundZero':True,'angularVelocity':0.5}),
++]
++
++from yade import utils
++
++## PhysicalParameters 
++Young = 15e6
++Poisson = 0.2
++
++## Import walls geometry from STL file
++for i in xrange(imp.number_of_all_imported):
++    b=Body()
++    b['isDynamic']=False
++    b.phys=PhysicalParameters('BodyMacroParameters',{'se3':[0,0,0,1,0,0,0],'mass':0,'inertia':[0,0,0],'young':Young,'poisson':Poisson})
++    if(i&gt;=imp.number_of_imported_vertices):
++	b.bound=BoundingVolume('AABB',{'diffuseColor':[0,1,0]})
++    o.bodies.append(b)
++imp.import_geometry(o.bodies)
++
++## Spheres
++sphereRadius = 0.2
++nbSpheres = (10,10,10)
++for i in xrange(nbSpheres[0]):
++    for j in xrange(nbSpheres[1]):
++	for k in xrange(nbSpheres[2]):
++	    x = (i*2 - nbSpheres[0])*sphereRadius*1.1
++	    y = j*sphereRadius*2.2
++	    z = (k*2 - nbSpheres[2])*sphereRadius*1.1
++	    o.bodies.append(utils.sphere([x,y,z],sphereRadius,young=Young,poisson=Poisson,density=2400))
++utils.randomizeColors(onlyDynamic=True)
++
++## Timestep 
++o.dt=0.001
++
++## Save the scene to file, so that it can be loaded later. Supported extension are: .xml, .xml.gz, .xml.bz2.
++o.save('/tmp/a.xml');
++
++utils.runInQtGui() # will run in background
++quit()
++
+
+Modified: trunk/gui/SConscript
+===================================================================
+--- trunk/gui/SConscript	2008-05-13 17:48:05 UTC (rev 1353)
++++ trunk/gui/SConscript	2008-05-15 10:51:37 UTC (rev 1354)
+@@ -52,6 +52,7 @@
+ 				'InteractionGeometryMetaEngine',
+ 				'InteractionPhysicsMetaEngine',
+ 				'PhysicalParametersMetaEngine',
++				'STLImporter'
+ 			],
+ 			# ,'py/GLViewer4.cpp'
+ 			# '$QGLVIEWER_LIB'
+
+Modified: trunk/gui/py/utils.py
+===================================================================
+--- trunk/gui/py/utils.py	2008-05-13 17:48:05 UTC (rev 1353)
++++ trunk/gui/py/utils.py	2008-05-15 10:51:37 UTC (rev 1354)
+@@ -4,7 +4,7 @@
+ #
+ # 2008 &#169; V&#225;clav &#352;milauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">eudoxos at arcig.cz</A>&gt;
+ 
+-import math
++import math,random
+ 
+ from yade.wrapper import *
+ 
+
+Modified: trunk/gui/py/yadeControl.cpp
+===================================================================
+--- trunk/gui/py/yadeControl.cpp	2008-05-13 17:48:05 UTC (rev 1353)
++++ trunk/gui/py/yadeControl.cpp	2008-05-15 10:51:37 UTC (rev 1354)
+@@ -21,6 +21,7 @@
+ #include&lt;yade/core/Omega.hpp&gt;
+ #include&lt;yade/core/FileGenerator.hpp&gt;
+ 
++#include&lt;yade/lib-import/STLImporter.hpp&gt;
+ 
+ #include&lt;yade/core/MetaEngine.hpp&gt;
+ #include&lt;yade/core/MetaEngine1D.hpp&gt;
+@@ -400,6 +401,11 @@
+ 	#undef OMEGA
+ };
+ 
++class pySTLImporter : public STLImporter {
++    public:
++	void py_import(pyBodyContainer bc) { import(bc.proxee); }
++};
++	
+ BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(omega_overloads,run,0,1);
+ 
+ #ifdef USE_PYGLVIEWER 
+@@ -601,5 +607,28 @@
+ 
+ 	BASIC_PY_PROXY_WRAPPER(pyFileGenerator,&quot;Preprocessor&quot;)
+ 		.def(&quot;generate&quot;,&amp;pyFileGenerator::generate);
++
++	boost::python::class_&lt;pySTLImporter&gt;(&quot;STLImporter&quot;)
++	    .def(&quot;open&quot;,&amp;pySTLImporter::open)
++	    .add_property(&quot;number_of_all_imported&quot;,&amp;pySTLImporter::number_of_all_imported)
++	    .add_property(&quot;number_of_imported_vertices&quot;,&amp;pySTLImporter::number_of_imported_vertices)
++	    .add_property(&quot;number_of_imported_edges&quot;,&amp;pySTLImporter::number_of_imported_edges)
++	    .add_property(&quot;number_of_imported_facets&quot;,&amp;pySTLImporter::number_of_imported_facets)
++	    .add_property(&quot;number_of_vertices&quot;,&amp;pySTLImporter::number_of_vertices)
++	    .add_property(&quot;number_of_corner_vertices&quot;,&amp;pySTLImporter::number_of_corner_vertices)
++	    .add_property(&quot;number_of_flat_vertices&quot;,&amp;pySTLImporter::number_of_flat_vertices)
++	    .add_property(&quot;number_of_facets&quot;,&amp;pySTLImporter::number_of_facets)
++	    .add_property(&quot;number_of_edges&quot;,&amp;pySTLImporter::number_of_edges)
++	    .add_property(&quot;number_of_corner_edges&quot;,&amp;pySTLImporter::number_of_corner_edges)
++	    .add_property(&quot;number_of_flat_edges&quot;,&amp;pySTLImporter::number_of_flat_edges)
++	    .def_readwrite(&quot;max_vertices_in_facet&quot;,&amp;pySTLImporter::max_vertices_in_facet)
++	    .def(&quot;set_imported_stuff&quot;,&amp;pySTLImporter::set_imported_stuff)
++	    .def_readwrite(&quot;import_vertices&quot;,&amp;pySTLImporter::import_vertices)
++	    .def_readwrite(&quot;import_edges&quot;,&amp;pySTLImporter::import_edges)
++	    .def_readwrite(&quot;import_facets&quot;,&amp;pySTLImporter::import_facets)
++	    .def_readwrite(&quot;facets_wire&quot;,&amp;pySTLImporter::facets_wire)
++	    .def_readwrite(&quot;import_flat_edges_flag&quot;,&amp;pySTLImporter::import_flat_edges_flag)
++	    .def_readwrite(&quot;import_flat_vertices_flag&quot;,&amp;pySTLImporter::import_flat_vertices_flag)
++	    .def(&quot;import_geometry&quot;,&amp;pySTLImporter::py_import);
+ }
+ 
+
+Modified: trunk/lib/import/STLImporter.cpp
+===================================================================
+--- trunk/lib/import/STLImporter.cpp	2008-05-13 17:48:05 UTC (rev 1353)
++++ trunk/lib/import/STLImporter.cpp	2008-05-15 10:51:37 UTC (rev 1354)
+@@ -52,30 +52,32 @@
+     return true;
+ }
+ 
+-void STLImporter::import(vector&lt;shared_ptr&lt;Body&gt; &gt; &amp;bds)
++void STLImporter::import(shared_ptr&lt;BodyContainer&gt; bodies)
+ {
+-    int index=0;
++    BodyContainer::iterator b_it = bodies-&gt;begin();
+     if (import_vertices) 
+ 	for(int j=0,e=vts.size(); j&lt;e; ++j)
+ 	{
+ 	    if (!import_flat_vertices_flag &amp;&amp; vts[j].flat) continue;
+ 
+-	    shared_ptr&lt;Vertex&gt; gVertex(new Vertex);
+-	    gVertex-&gt;diffuseColor		= Vector3r(0.7,0.7,0.7);
+-	    gVertex-&gt;wire			= false;
+-	    gVertex-&gt;visible			= true;
+-	    gVertex-&gt;shadowCaster		= true;
++	    if (!import_edges &amp;&amp; !import_facets) {
++		shared_ptr&lt;Vertex&gt; gVertex(new Vertex);
++		gVertex-&gt;diffuseColor		= Vector3r(0.7,0.7,0.7);
++		gVertex-&gt;wire			= false;
++		gVertex-&gt;visible		= true;
++		gVertex-&gt;shadowCaster		= true;
++		(*b_it)-&gt;geometricalModel	= gVertex;
++	    }
+ 
+ 	    shared_ptr&lt;InteractingVertex&gt; iVertex(new InteractingVertex);
+ 	    iVertex-&gt;normals=vts[j].normals;
+ 	    iVertex-&gt;flat=vts[j].flat;
+ 	    iVertex-&gt;diffuseColor		= Vector3r(0.8,0.3,0.3);
+ 
+-	    bds[index]-&gt;physicalParameters-&gt;se3 = Se3r( vts[j].point, Quaternionr( 1,0,0,0 ) );
+-	    bds[index]-&gt;geometricalModel	= gVertex;
+-	    bds[index]-&gt;interactingGeometry	= iVertex;
++	    (*b_it)-&gt;physicalParameters-&gt;se3 = Se3r( vts[j].point, Quaternionr( 1,0,0,0 ) );
++	    (*b_it)-&gt;interactingGeometry= iVertex;
+ 
+-	    ++index;
++	    ++b_it;
+ 	}
+ 
+     if (import_edges) 
+@@ -86,12 +88,15 @@
+ 	    Vector3r p0 = vts[egs[j].first].point
+ 		    ,p1 = vts[egs[j].second].point;
+ 
+-	    shared_ptr&lt;GeometricalEdge&gt; gEdge(new GeometricalEdge);
+-	    gEdge-&gt;edge			= p1-p0;
+-	    gEdge-&gt;diffuseColor		= Vector3r(0.8,0.8,0.8);
+-	    gEdge-&gt;wire			= false;
+-	    gEdge-&gt;visible		= true;
+-	    gEdge-&gt;shadowCaster		= true;
++	    if (!import_facets) {
++		shared_ptr&lt;GeometricalEdge&gt; gEdge(new GeometricalEdge);
++		gEdge-&gt;edge			= p1-p0;
++		gEdge-&gt;diffuseColor		= Vector3r(0.8,0.8,0.8);
++		gEdge-&gt;wire			= false;
++		gEdge-&gt;visible			= true;
++		gEdge-&gt;shadowCaster		= true;
++		(*b_it)-&gt;geometricalModel	= gEdge;
++	    }
+ 
+ 	    shared_ptr&lt;InteractingEdge&gt; iEdge(new InteractingEdge);
+ 	    iEdge-&gt;edge			= p1-p0;
+@@ -101,11 +106,10 @@
+ 	    iEdge-&gt;flat			= egs[j].flat;
+ 	    iEdge-&gt;diffuseColor		= Vector3r(0.8,0.3,0.3);
+ 
+-	    bds[index]-&gt;physicalParameters-&gt;se3 = Se3r(p0 , Quaternionr( 1,0,0,0 ) );
+-	    bds[index]-&gt;geometricalModel	= gEdge;
+-	    bds[index]-&gt;interactingGeometry	= iEdge;
++	    (*b_it)-&gt;physicalParameters-&gt;se3 = Se3r(p0 , Quaternionr( 1,0,0,0 ) );
++	    (*b_it)-&gt;interactingGeometry	= iEdge;
+ 
+-	    ++index;
++	    ++b_it;
+ 	}
+ 
+     if (import_facets) 
+@@ -129,11 +133,11 @@
+ 		gFacet-&gt;vertices.push_back(vts[f[j]].point - p0);
+ 	    }
+ 
+-	    bds[index]-&gt;physicalParameters-&gt;se3 = Se3r( p0, Quaternionr( 1,0,0,0 ) );
+-	    bds[index]-&gt;geometricalModel	= gFacet;
+-	    bds[index]-&gt;interactingGeometry	= iFacet;
++	    (*b_it)-&gt;physicalParameters-&gt;se3 = Se3r( p0, Quaternionr( 1,0,0,0 ) );
++	    (*b_it)-&gt;geometricalModel	= gFacet;
++	    (*b_it)-&gt;interactingGeometry	= iFacet;
+ 
+-	    ++index;
++	    ++b_it;
+ 	}
+ }
+ 
+
+Modified: trunk/lib/import/STLImporter.hpp
+===================================================================
+--- trunk/lib/import/STLImporter.hpp	2008-05-13 17:48:05 UTC (rev 1353)
++++ trunk/lib/import/STLImporter.hpp	2008-05-15 10:51:37 UTC (rev 1354)
+@@ -15,6 +15,7 @@
+ #include &lt;yade/pkg-common/InteractingFacet.hpp&gt;
+ #include &quot;STLReader.hpp&quot;
+ #include&lt;yade/core/Body.hpp&gt;
++#include&lt;yade/core/BodyContainer.hpp&gt;
+ 
+ class STLImporter {
+     public:
+@@ -66,8 +67,8 @@
+ 	/// import vertices on a flats (by default false)
+ 	bool import_flat_vertices_flag; 
+ 
+-	/// import stuffs (sequence vertices, edges, facets)
+-	void import(vector&lt;shared_ptr&lt;Body&gt; &gt;&amp;);
++	/// import geometry (sequence vertices, edges, facets)
++	void import(shared_ptr&lt;BodyContainer&gt; bodies);
+ 
+     protected:
+ 	/// Vertex
+
+Modified: trunk/pkg/dem/PreProcessor/STLImporterTest.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/STLImporterTest.cpp	2008-05-13 17:48:05 UTC (rev 1353)
++++ trunk/pkg/dem/PreProcessor/STLImporterTest.cpp	2008-05-15 10:51:37 UTC (rev 1354)
+@@ -133,13 +133,12 @@
+ 	    &lt;&lt; &quot;, Edges (corner, flat): &quot; &lt;&lt; imp.number_of_edges() 
+ 	    &lt;&lt; &quot; (&quot; &lt;&lt; imp.number_of_corner_edges() &lt;&lt; &quot;, &quot; &lt;&lt; imp.number_of_flat_edges() &lt;&lt; &quot;)&quot;
+ 	    &lt;&lt; &quot;, Facets: &quot; &lt;&lt; imp.number_of_facets() &lt;&lt; endl;
+-	vector&lt;shared_ptr&lt;Body&gt; &gt; bds(imp.number_of_all_imported());
+ 	// create bodies
+-	for(int i=0,e=bds.size();i&lt;e;++i)
++	for(int i=0,e=imp.number_of_all_imported();i&lt;e;++i)
+ 	{
+-	    bds[i] = shared_ptr&lt;Body&gt;(new Body(body_id_t(0),1));
++	    shared_ptr&lt;Body&gt; b(new Body(body_id_t(0),1));
+     
+-	    bds[i]-&gt;isDynamic		= false;
++	    b-&gt;isDynamic		= false;
+ 	    
+ 	    // physical parameters
+ 	    shared_ptr&lt;BodyMacroParameters&gt; physics(new BodyMacroParameters);
+@@ -150,20 +149,20 @@
+ 	    physics-&gt;young			= sphereYoungModulus;
+ 	    physics-&gt;poisson		= spherePoissonRatio;
+ 	    physics-&gt;frictionAngle		= sphereFrictionDeg * Mathr::PI/180.0;
+-	    bds[i]-&gt;physicalParameters	= physics;
++	    b-&gt;physicalParameters	= physics;
+ 
+ 	    // bounding box only for edges and facets (not for vertices)
+ 	    if(i&gt;=imp.number_of_imported_vertices())
+ 	    {
+ 		shared_ptr&lt;AABB&gt; aabb(new AABB);
+ 		aabb-&gt;diffuseColor		= Vector3r(0,1,0);
+-		bds[i]-&gt;boundingVolume	= aabb;
++		b-&gt;boundingVolume	= aabb;
+ 	    }
+ 	    
+-	    rootBody-&gt;bodies-&gt;insert(bds[i]);
++	    rootBody-&gt;bodies-&gt;insert(b);
+ 	}
+ 	// import bodies (create geometry)
+-	imp.import(bds);
++	imp.import(rootBody-&gt;bodies);
+ 	cerr &lt;&lt; &quot;Imported: &quot; 
+ 	    &lt;&lt; imp.number_of_imported_vertices() &lt;&lt; &quot; vertices, &quot; 
+ 	    &lt;&lt; imp.number_of_imported_edges() &lt;&lt; &quot; edges, &quot; 
+@@ -250,7 +249,6 @@
+ 	
+ 	shared_ptr&lt;InteractionGeometryMetaEngine&gt; interactionGeometryDispatcher(new InteractionGeometryMetaEngine);
+ 	interactionGeometryDispatcher-&gt;add(&quot;InteractingSphere2InteractingSphere4SpheresContactGeometry&quot;);
+-	interactionGeometryDispatcher-&gt;add(&quot;InteractingBox2InteractingSphere4SpheresContactGeometry&quot;);
+ 	interactionGeometryDispatcher-&gt;add(&quot;InteractingVertex2InteractingSphere4SpheresContactGeometry&quot;);
+ 	interactionGeometryDispatcher-&gt;add(&quot;InteractingEdge2InteractingSphere4SpheresContactGeometry&quot;);
+ 	interactionGeometryDispatcher-&gt;add(&quot;InteractingFacet2InteractingSphere4SpheresContactGeometry&quot;);
+@@ -262,7 +260,6 @@
+ 	boundingVolumeDispatcher-&gt;add(&quot;InteractingSphere2AABB&quot;);
+ 	boundingVolumeDispatcher-&gt;add(&quot;InteractingEdge2AABB&quot;);
+ 	boundingVolumeDispatcher-&gt;add(&quot;InteractingFacet2AABB&quot;);
+-	boundingVolumeDispatcher-&gt;add(&quot;InteractingBox2AABB&quot;);
+ 	boundingVolumeDispatcher-&gt;add(&quot;MetaInteractingGeometry2AABB&quot;);
+ 	
+ 	shared_ptr&lt;GravityEngine&gt; gravityCondition(new GravityEngine);
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000315.html">[Yade-commits] r1353 - in trunk: examples lib/import pkg/dem	pkg/dem/Engine/EngineUnit pkg/dem/PreProcessor
+</A></li>
+	<LI>Next message: <A HREF="000317.html">[Yade-commits] r1355 - in trunk: examples gui gui/py scripts
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#316">[ date ]</a>
+              <a href="thread.html#316">[ thread ]</a>
+              <a href="subject.html#316">[ subject ]</a>
+              <a href="author.html#316">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

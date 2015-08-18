@@ -1,0 +1,686 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1261 - in trunk: core extra gui/cmd gui/qt3	lib/multimethods lib/serialization	pkg/dem/Engine/DeusExMachina pkg/dem/Engine/StandAloneEngine	pkg/dem/PreProcessor pkg/fem/PreProcessor pkg/lattice/PreProcessor
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1261%20-%20in%20trunk%3A%20core%20extra%20gui/cmd%20gui/qt3%0A%09lib/multimethods%20lib/serialization%0A%09pkg/dem/Engine/DeusExMachina%20pkg/dem/Engine/StandAloneEngine%0A%09pkg/dem/PreProcessor%20pkg/fem/PreProcessor%20pkg/lattice/PreProcessor&In-Reply-To=%3C200802222145.m1MLjee1012037%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000225.html">
+   <LINK REL="Next"  HREF="000227.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1261 - in trunk: core extra gui/cmd gui/qt3	lib/multimethods lib/serialization	pkg/dem/Engine/DeusExMachina pkg/dem/Engine/StandAloneEngine	pkg/dem/PreProcessor pkg/fem/PreProcessor pkg/lattice/PreProcessor</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1261%20-%20in%20trunk%3A%20core%20extra%20gui/cmd%20gui/qt3%0A%09lib/multimethods%20lib/serialization%0A%09pkg/dem/Engine/DeusExMachina%20pkg/dem/Engine/StandAloneEngine%0A%09pkg/dem/PreProcessor%20pkg/fem/PreProcessor%20pkg/lattice/PreProcessor&In-Reply-To=%3C200802222145.m1MLjee1012037%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1261 - in trunk: core extra gui/cmd gui/qt3	lib/multimethods lib/serialization	pkg/dem/Engine/DeusExMachina pkg/dem/Engine/StandAloneEngine	pkg/dem/PreProcessor pkg/fem/PreProcessor pkg/lattice/PreProcessor">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Fri Feb 22 22:45:40 CET 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000225.html">[Yade-commits] r1260 - trunk/extra
+</A></li>
+        <LI>Next message: <A HREF="000227.html">[Yade-commits] r1262 - in trunk: . gui gui/cmd
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#226">[ date ]</a>
+              <a href="thread.html#226">[ thread ]</a>
+              <a href="subject.html#226">[ subject ]</a>
+              <a href="author.html#226">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2008-02-22 22:45:38 +0100 (Fri, 22 Feb 2008)
+New Revision: 1261
+
+Modified:
+   trunk/core/FileGenerator.cpp
+   trunk/core/InteractionContainer.hpp
+   trunk/core/NullGUI.cpp
+   trunk/extra/Brefcom.cpp
+   trunk/extra/Brefcom.hpp
+   trunk/extra/SConscript
+   trunk/gui/cmd/yadeControl.cpp
+   trunk/gui/qt3/QtEngineEditor.cpp
+   trunk/gui/qt3/QtFileGenerator.cpp
+   trunk/gui/qt3/QtSimulationPlayer.cpp
+   trunk/gui/qt3/QtSphericalDEM.cpp
+   trunk/gui/qt3/SimulationController.cpp
+   trunk/lib/multimethods/DynLibDispatcher.hpp
+   trunk/lib/serialization/IOManagerExceptions.cpp
+   trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.cpp
+   trunk/pkg/dem/Engine/StandAloneEngine/CapillaryCohesiveLaw.cpp
+   trunk/pkg/dem/PreProcessor/CohesiveTriaxialTest.cpp
+   trunk/pkg/dem/PreProcessor/HydraulicTest.cpp
+   trunk/pkg/dem/PreProcessor/ModifiedTriaxialTest.cpp
+   trunk/pkg/dem/PreProcessor/SDECImpactTest.cpp
+   trunk/pkg/dem/PreProcessor/ThreePointBending.cpp
+   trunk/pkg/dem/PreProcessor/TriaxialTest.cpp
+   trunk/pkg/dem/PreProcessor/TriaxialTestWater.cpp
+   trunk/pkg/fem/PreProcessor/FEMBeam.cpp
+   trunk/pkg/lattice/PreProcessor/LatticeExample.cpp
+Log:
+1. Remove &quot;../data&quot;, replace by &quot;./&quot; (cwd) or &quot;&quot;.
+2. Some other stuff I don't remember.
+
+
+
+
+Modified: trunk/core/FileGenerator.cpp
+===================================================================
+--- trunk/core/FileGenerator.cpp	2008-02-19 19:08:22 UTC (rev 1260)
++++ trunk/core/FileGenerator.cpp	2008-02-22 21:45:38 UTC (rev 1261)
+@@ -13,7 +13,7 @@
+ 
+ FileGenerator::FileGenerator () : Serializable() 
+ {
+-	outputFileName = &quot;../data/scene.xml&quot;;
++	outputFileName = &quot;./scene.xml&quot;;
+ 	serializationDynlib = &quot;XMLFormatManager&quot;;
+ }
+ 
+
+Modified: trunk/core/InteractionContainer.hpp
+===================================================================
+--- trunk/core/InteractionContainer.hpp	2008-02-19 19:08:22 UTC (rev 1260)
++++ trunk/core/InteractionContainer.hpp	2008-02-22 21:45:38 UTC (rev 1261)
+@@ -37,7 +37,6 @@
+ 		typedef InteractionContainerIteratorPointer iterator;
+       virtual InteractionContainer::iterator begin()						{throw;};
+       virtual InteractionContainer::iterator end()						{throw;};
+-
+ 		virtual unsigned int size() 								{throw;};
+ 
+ 	private :
+
+Modified: trunk/core/NullGUI.cpp
+===================================================================
+--- trunk/core/NullGUI.cpp	2008-02-19 19:08:22 UTC (rev 1260)
++++ trunk/core/NullGUI.cpp	2008-02-22 21:45:38 UTC (rev 1261)
+@@ -163,7 +163,7 @@
+ 			// save snapshot
+ 			if( ( snapshotInterval != -1 ) &amp;&amp; (intervals % snapshotInterval == 0) )
+ 			{
+-				string fileName = &quot;../data/&quot; 
++				string fileName = &quot;./&quot; 
+ 					+ snapshotName 
+ 			//		+ &quot;__dt_&quot; + lexical_cast&lt;string&gt;(Omega::instance().getTimeStep())
+ 			//		+ &quot;__it_&quot; + lexical_cast&lt;string&gt;(Omega::instance().getCurrentIteration()) 
+
+Modified: trunk/extra/Brefcom.cpp
+===================================================================
+--- trunk/extra/Brefcom.cpp	2008-02-19 19:08:22 UTC (rev 1260)
++++ trunk/extra/Brefcom.cpp	2008-02-22 21:45:38 UTC (rev 1261)
+@@ -3,6 +3,20 @@
+ #include&lt;yade/core/MetaBody.hpp&gt;
+ #include&lt;yade/pkg-dem/BodyMacroParameters.hpp&gt;
+ #include&lt;yade/pkg-common/Sphere.hpp&gt;
++/*
++#include&lt;boost/foreach.hpp&gt;
++#include&lt;boost/range.hpp&gt;
++namespace boost {
++	template&lt;&gt; struct range_iterator&lt;InteractionContainer&gt;{typedef shared_ptr&lt;Interaction&gt; type;};
++	template&lt;&gt; struct range_const_iterator&lt;InteractionContainer&gt;{typedef shared_ptr&lt;Interaction&gt; type;};
++	template&lt;&gt; struct range_size&lt;InteractionContainer&gt;{typedef unsigned int type;};
++}
++inline shared_ptr&lt;Interaction&gt; boost_range_begin(InteractionContainer&amp; c){return *(c.begin());}
++//inline shared_ptr&lt;Interaction&gt; boost_range_begin(const InteractionContainer&amp; c){return *(c.begin());}
++inline shared_ptr&lt;Interaction&gt; boost_range_end(InteractionContainer&amp; c){return *(c.end());}
++//inline shared_ptr&lt;Interaction&gt; boost_range_end(const InteractionContainer&amp; c){return *(c.end());}
++inline boost::range_size&lt;InteractionContainer&gt;::type boost_range_size(InteractionContainer&amp; c){return c.size();}
++*/
+ 
+ 
+ YADE_PLUGIN(&quot;BrefcomMakeContact&quot;,&quot;BrefcomContact&quot;,&quot;BrefcomLaw&quot;,&quot;GLDrawBrefcomContact&quot;);
+@@ -121,6 +135,9 @@
+ 
+ void BrefcomLaw::action(Body* body){
+ 	rootBody=YADE_CAST&lt;MetaBody*&gt;(body);
++	
++	//BOOST_FOREACH(shared_ptr&lt;Interaction&gt; II,*(rootBody-&gt;transientInteractions)){}
++
+ 	for(InteractionContainer::iterator I=rootBody-&gt;transientInteractions-&gt;begin(); I!=rootBody-&gt;transientInteractions-&gt;end(); ++I){
+ 		if(!(*I)-&gt;isReal) continue;
+ 		// TRACE;
+
+Modified: trunk/extra/Brefcom.hpp
+===================================================================
+--- trunk/extra/Brefcom.hpp	2008-02-19 19:08:22 UTC (rev 1260)
++++ trunk/extra/Brefcom.hpp	2008-02-22 21:45:38 UTC (rev 1261)
+@@ -163,6 +163,7 @@
+ 
+ class GLDrawBrefcomContact: public GLDrawInteractionPhysicsFunctor {
+ 	public: virtual void go(const shared_ptr&lt;InteractionPhysics&gt;&amp;,const shared_ptr&lt;Interaction&gt;&amp;,const shared_ptr&lt;Body&gt;&amp;,const shared_ptr&lt;Body&gt;&amp;,bool wireFrame);
++	virtual ~GLDrawBrefcomContact() {};
+ 	RENDERS(BrefcomContact);
+ 	REGISTER_CLASS_NAME(GLDrawBrefcomContact);
+ 	REGISTER_BASE_CLASS_NAME(GLDrawInteractionPhysicsFunctor);
+
+Modified: trunk/extra/SConscript
+===================================================================
+--- trunk/extra/SConscript	2008-02-19 19:08:22 UTC (rev 1260)
++++ trunk/extra/SConscript	2008-02-22 21:45:38 UTC (rev 1261)
+@@ -47,7 +47,7 @@
+ 	
+ 	env.SharedLibrary('TetraTestGen',['tetra/TetraTestGen.cpp'],LIBS=env['LIBS']+['Shop','Tetra']),
+ 
+-	env.SharedLibrary('UniaxialStrainControlledTest',['usct/UniaxialStrainControlledTest.cpp'],LIBS=env['LIBS']+['Shop','GlobalStiffnessTimeStepper','GlobalStiffnessCounter']),
++	env.SharedLibrary('UniaxialStrainControlledTest',['usct/UniaxialStrainControlledTest.cpp'],LIBS=env['LIBS']+['Shop','GlobalStiffnessTimeStepper','GlobalStiffnessCounter','Brefcom']),
+ 
+ 	env.SharedLibrary('Brefcom',['Brefcom.cpp'],CXXFLAGS=env['CXXFLAGS']+brefcomInclude,LIBS=env['LIBS']+['Shop','InteractingSphere2InteractingSphere4DistantSpheresContactGeometry']),
+ 
+
+Modified: trunk/gui/cmd/yadeControl.cpp
+===================================================================
+--- trunk/gui/cmd/yadeControl.cpp	2008-02-19 19:08:22 UTC (rev 1260)
++++ trunk/gui/cmd/yadeControl.cpp	2008-02-22 21:45:38 UTC (rev 1261)
+@@ -213,6 +213,7 @@
+ 	}
+ 
+ 	//void join(){cerr&lt;&lt;&quot;JOIN!&quot;&lt;&lt;endl; OMEGA.joinSimulationLoop();}
++	void wait(){ if(OMEGA.isRunning()){cerr&lt;&lt;&quot;WAIT!&quot;&lt;&lt;endl;} while(OMEGA.isRunning()) usleep(20000 /*20 ms*/); }
+ 	#undef OMEGA
+ };
+ 
+@@ -227,7 +228,7 @@
+ 		}
+ 	}
+ 	public:
+-		pyPreprocessor(){serializer=&quot;XMLFormatManager&quot;; output=&quot;../data/scene.xml&quot;;}
++		pyPreprocessor(){serializer=&quot;XMLFormatManager&quot;; output=&quot;./scene.xml&quot;;}
+ 		std::string generator;
+ 		std::string serializer;
+ 		std::string output;
+@@ -352,6 +353,7 @@
+ 		// .def(&quot;join&quot;,&amp;pyOmega::join)
+ 		.def(&quot;pause&quot;,&amp;pyOmega::pause)
+ 		.def(&quot;step&quot;,&amp;pyOmega::step)
++		.def(&quot;wait&quot;,&amp;pyOmega::wait)
+ 		.add_property(&quot;engines&quot;,&amp;pyOmega::engines_get,&amp;pyOmega::engines_set)
+ 		;
+ 
+
+Modified: trunk/gui/qt3/QtEngineEditor.cpp
+===================================================================
+--- trunk/gui/qt3/QtEngineEditor.cpp	2008-02-19 19:08:22 UTC (rev 1260)
++++ trunk/gui/qt3/QtEngineEditor.cpp	2008-02-22 21:45:38 UTC (rev 1261)
+@@ -138,7 +138,7 @@
+ 	string selectedFilter;
+ 	std::vector&lt;string&gt; filters;
+ 	filters.push_back(&quot;XML Yade File (*.xml)&quot;);
+-	string fileName = FileDialog::getSaveFileName(&quot;../data&quot;, filters, &quot;Choose a file to save&quot;, this-&gt;parentWidget()-&gt;parentWidget(),selectedFilter );
++	string fileName = FileDialog::getSaveFileName(&quot;.&quot;, filters, &quot;Choose a file to save&quot;, this-&gt;parentWidget()-&gt;parentWidget(),selectedFilter );
+ 
+ 	if (fileName.size()!=0 &amp;&amp; selectedFilter == &quot;XML Yade File (*.xml)&quot;)
+ 		leFileName-&gt;setText(fileName);
+
+Modified: trunk/gui/qt3/QtFileGenerator.cpp
+===================================================================
+--- trunk/gui/qt3/QtFileGenerator.cpp	2008-02-19 19:08:22 UTC (rev 1260)
++++ trunk/gui/qt3/QtFileGenerator.cpp	2008-02-22 21:45:38 UTC (rev 1261)
+@@ -45,7 +45,7 @@
+ 	}
+ 	setSerializationName(&quot;XMLFormatManager&quot;);
+ 	
+-	leOutputFileName-&gt;setText(&quot;../data/scene.xml&quot;);
++	leOutputFileName-&gt;setText(&quot;./scene.xml&quot;);
+ 
+ 	scrollViewFrame = new QFrame();	
+ 	
+@@ -95,7 +95,7 @@
+ 	std::vector&lt;string&gt; filters;
+ 	filters.push_back(&quot;Yade Binary File (*.yade)&quot;);
+ 	filters.push_back(&quot;XML Yade File (*.xml)&quot;);
+-	string fileName = FileDialog::getSaveFileName(&quot;../data&quot;, filters , &quot;Choose a file to save&quot;, this-&gt;parentWidget()-&gt;parentWidget(),selectedFilter );
++	string fileName = FileDialog::getSaveFileName(&quot;.&quot;, filters , &quot;Choose a file to save&quot;, this-&gt;parentWidget()-&gt;parentWidget(),selectedFilter );
+ 
+ 	if (fileName.size()!=0 &amp;&amp; selectedFilter == &quot;XML Yade File (*.xml)&quot; &amp;&amp; fileName!=&quot;/&quot; )
+ 	{
+@@ -260,7 +260,7 @@
+ 	string selectedFilter;
+ 	std::vector&lt;string&gt; filters;
+ 	filters.push_back(&quot;XML Yade File (*.xml)&quot;);
+-	string fileName = FileDialog::getOpenFileName(&quot;../data&quot;, filters, &quot;Choose a FileGenerator configuration to load&quot;, this-&gt;parentWidget()-&gt;parentWidget(), selectedFilter );
++	string fileName = FileDialog::getOpenFileName(&quot;.&quot;, filters, &quot;Choose a FileGenerator configuration to load&quot;, this-&gt;parentWidget()-&gt;parentWidget(), selectedFilter );
+ 	if ( 	   fileName.size()!=0 
+ 		&amp;&amp; (selectedFilter == &quot;XML Yade File (*.xml)&quot;) 
+ 		&amp;&amp; filesystem::exists(fileName) 
+@@ -273,7 +273,7 @@
+ 			displayFileGeneratorAttributes(fg);
+ 
+ 			std::string tmp=fg-&gt;getFileName();
+-			if(tmp!=&quot;../data/scene.xml&quot;) // this check to avoid resetting data, when loading older file.
++			if(tmp!=&quot;./scene.xml&quot;) // this check to avoid resetting data, when loading older file.
+ 			{
+ 				leOutputFileName-&gt;setText(tmp);
+ 				setSerializationName(fg-&gt;getSerializationLibrary());
+@@ -301,14 +301,14 @@
+ 	std::vector&lt;string&gt; filters;
+ 	filters.push_back(&quot;XML Yade File (*.xml)&quot;);
+ 	string title = &quot;Save FileGenerator \&quot;&quot; + fg-&gt;getClassName() + &quot;\&quot; configuration&quot;;
+-	string fileName = FileDialog::getSaveFileName(&quot;../data&quot;, filters, title, this-&gt;parentWidget()-&gt;parentWidget(), selectedFilter );
++	string fileName = FileDialog::getSaveFileName(&quot;.&quot;, filters, title, this-&gt;parentWidget()-&gt;parentWidget(), selectedFilter );
+ 
+ 	if ( 	   fileName.size()!=0
+ 		&amp;&amp; (selectedFilter == &quot;XML Yade File (*.xml)&quot;) 
+ 		&amp;&amp; (filesystem::extension(fileName)==&quot;.xml&quot; || filesystem::extension(fileName)==&quot;&quot; )
+ 		&amp;&amp; (fileName != &quot;&quot;)
+ 		&amp;&amp; (fileName != &quot;/&quot;)
+-		&amp;&amp; (fileName != &quot;../data&quot;))
++		&amp;&amp; (fileName != &quot;.&quot;))
+ 	{
+ 		if(filesystem::extension(fileName)==&quot;&quot;) // user forgot to specify extension - fix it.
+ 			fileName += &quot;.xml&quot;;
+
+Modified: trunk/gui/qt3/QtSimulationPlayer.cpp
+===================================================================
+--- trunk/gui/qt3/QtSimulationPlayer.cpp	2008-02-19 19:08:22 UTC (rev 1260)
++++ trunk/gui/qt3/QtSimulationPlayer.cpp	2008-02-22 21:45:38 UTC (rev 1261)
+@@ -30,7 +30,7 @@
+ 	string selectedFilter;
+ 	std::vector&lt;string&gt; filters;
+ 	filters.push_back(&quot;XML Yade File (*.xml)&quot;);
+-	string fileName = FileDialog::getOpenFileName(&quot;../data&quot;, filters, &quot;Choose a file to load&quot;, this-&gt;parentWidget()-&gt;parentWidget(),selectedFilter );
++	string fileName = FileDialog::getOpenFileName(&quot;.&quot;, filters, &quot;Choose a file to load&quot;, this-&gt;parentWidget()-&gt;parentWidget(),selectedFilter );
+  
+ 	if (!fileName.empty() &amp;&amp; selectedFilter == &quot;XML Yade File (*.xml)&quot;)
+ 		leInputConfigFile-&gt;setText(fileName);
+@@ -40,7 +40,7 @@
+ 
+ void QtSimulationPlayer::pbInputDirectoryClicked()
+ {
+-	string directory = FileDialog::getExistingDirectory ( &quot;../data&quot;,&quot;Choose the directory where the recorded file are&quot;, this-&gt;parentWidget()-&gt;parentWidget());
++	string directory = FileDialog::getExistingDirectory ( &quot;.&quot;,&quot;Choose the directory where the recorded file are&quot;, this-&gt;parentWidget()-&gt;parentWidget());
+ 	if (!directory.empty())
+ 		leInputDirectory-&gt;setText(directory);
+ }
+@@ -54,7 +54,7 @@
+ 
+ void QtSimulationPlayer::pbOutputDirectoryClicked()
+ {
+-	string directory = FileDialog::getExistingDirectory ( &quot;../data&quot;,&quot;Choose the directory where to save the sna shots&quot;, this-&gt;parentWidget()-&gt;parentWidget());
++	string directory = FileDialog::getExistingDirectory ( &quot;.&quot;,&quot;Choose the directory where to save the sna shots&quot;, this-&gt;parentWidget()-&gt;parentWidget());
+ 	if (!directory.empty())
+ 		leOutputDirectory-&gt;setText(directory.c_str());
+ 
+
+Modified: trunk/gui/qt3/QtSphericalDEM.cpp
+===================================================================
+--- trunk/gui/qt3/QtSphericalDEM.cpp	2008-02-19 19:08:22 UTC (rev 1260)
++++ trunk/gui/qt3/QtSphericalDEM.cpp	2008-02-22 21:45:38 UTC (rev 1261)
+@@ -77,7 +77,7 @@
+ 
+ void QtSphericalDEM::pbOutputDirectoryClicked()
+ {
+-	string directory = FileDialog::getExistingDirectory ( &quot;../data&quot;,&quot;Choose the directory where to save the data&quot;, this-&gt;parentWidget()-&gt;parentWidget());
++	string directory = FileDialog::getExistingDirectory ( &quot;.&quot;,&quot;Choose the directory where to save the data&quot;, this-&gt;parentWidget()-&gt;parentWidget());
+ 	if (!directory.empty())
+ 		leOutputDirectory-&gt;setText(directory.c_str());
+ }
+
+Modified: trunk/gui/qt3/SimulationController.cpp
+===================================================================
+--- trunk/gui/qt3/SimulationController.cpp	2008-02-19 19:08:22 UTC (rev 1260)
++++ trunk/gui/qt3/SimulationController.cpp	2008-02-22 21:45:38 UTC (rev 1261)
+@@ -145,7 +145,7 @@
+ 	std::vector&lt;string&gt; filters;
+ 	filters.push_back(&quot;Yade Binary File (*.yade)&quot;);
+ 	filters.push_back(&quot;XML Yade File (*.xml)&quot;);
+-	string fileName = FileDialog::getOpenFileName(&quot;../data&quot;, filters, &quot;Choose a file to open&quot;, parentWorkspace, selectedFilter );
++	string fileName = FileDialog::getOpenFileName(&quot;.&quot;, filters, &quot;Choose a file to open&quot;, parentWorkspace, selectedFilter );
+ 		
+ 	if ( 	   fileName.size()!=0 
+ 		&amp;&amp; (selectedFilter == &quot;XML Yade File (*.xml)&quot; || selectedFilter == &quot;Yade Binary File (*.yade)&quot;) 
+@@ -227,14 +227,14 @@
+ 	std::vector&lt;string&gt; filters;
+ 	filters.push_back(&quot;Yade Binary File (*.yade)&quot;);
+ 	filters.push_back(&quot;XML Yade File (*.xml)&quot;);
+-	string fileName = FileDialog::getSaveFileName(&quot;../data&quot;, filters, &quot;Specify file name to save&quot;, parentWorkspace, selectedFilter );
++	string fileName = FileDialog::getSaveFileName(&quot;.&quot;, filters, &quot;Specify file name to save&quot;, parentWorkspace, selectedFilter );
+ 
+ 	if ( 	   fileName.size()!=0 
+ 		&amp;&amp; (selectedFilter == &quot;XML Yade File (*.xml)&quot; || selectedFilter == &quot;Yade Binary File (*.yade)&quot; ) 
+ 		&amp;&amp; (filesystem::extension(fileName)==&quot;.xml&quot; || filesystem::extension(fileName)==&quot;.yade&quot; || filesystem::extension(fileName)==&quot;&quot; )
+ 		&amp;&amp; (fileName != &quot;&quot;)
+ 		&amp;&amp; (fileName != &quot;/&quot;)
+-		&amp;&amp; (fileName != &quot;../data&quot;))
++		&amp;&amp; (fileName != &quot;.&quot;))
+ 	{
+ 
+ 		if(filesystem::extension(fileName)==&quot;&quot;) // user forgot to specify extension - fix it.
+
+Modified: trunk/lib/multimethods/DynLibDispatcher.hpp
+===================================================================
+--- trunk/lib/multimethods/DynLibDispatcher.hpp	2008-02-19 19:08:22 UTC (rev 1260)
++++ trunk/lib/multimethods/DynLibDispatcher.hpp	2008-02-22 21:45:38 UTC (rev 1261)
+@@ -230,6 +230,7 @@
+ 					// cerr&lt;&lt;__FILE__&lt;&lt;&quot;:&quot;&lt;&lt;__LINE__&lt;&lt;&quot; ERROR dynamic_casting executor of type &quot;&lt;&lt;libName&lt;&lt;&quot;, using static_cast. WHY?&quot;&lt;&lt;endl;
+ 					executor = static_pointer_cast&lt;Executor&gt;(ClassFactory::instance().createShared(libName));
+ 				}
++				else cerr&lt;&lt;&quot;COOL! Dynamic cast of type &quot;&lt;&lt;libName&lt;&lt;&quot; successful!&quot;&lt;&lt;endl;
+ 			}
+ 			catch (FactoryCantCreate&amp; fe)
+ 			{
+
+Modified: trunk/lib/serialization/IOManagerExceptions.cpp
+===================================================================
+--- trunk/lib/serialization/IOManagerExceptions.cpp	2008-02-19 19:08:22 UTC (rev 1260)
++++ trunk/lib/serialization/IOManagerExceptions.cpp	2008-02-22 21:45:38 UTC (rev 1261)
+@@ -16,5 +16,5 @@
+ const char* IOManagerExceptions::AttributeNotFound 		= &quot;Attribute not found&quot;;
+ const char* IOManagerExceptions::BadAttributeValue 		= &quot;Bad Attribute value&quot;;
+ const char* IOManagerExceptions::WrongFileFooter   		= &quot;Wrong File Footer&quot;;
+-const char* IOManagerExceptions::FileNotGood       		= &quot;This file cannot be opened. Possible reason: DIRECTORY DOES NOT EXIST. Please create directory ../data or change destination file&quot;;
++const char* IOManagerExceptions::FileNotGood       		= &quot;This file cannot be opened. Possible reason: DIRECTORY DOES NOT EXIST. Create the directory specified or change destination file&quot;;
+ 
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.cpp	2008-02-19 19:08:22 UTC (rev 1260)
++++ trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.cpp	2008-02-22 21:45:38 UTC (rev 1261)
+@@ -146,7 +146,7 @@
+ 				// 		}
+             internalCompaction = false;
+             Phase1 = true;
+-            string fileName = &quot;../data/&quot; + Phase1End + &quot;_&quot; +
++            string fileName = &quot;./&quot; + Phase1End + &quot;_&quot; +
+                               lexical_cast&lt;string&gt;(Omega::instance().getCurrentIteration()) + &quot;.xml&quot;;
+             cerr &lt;&lt; &quot;saving snapshot: &quot; &lt;&lt; fileName &lt;&lt; &quot; ...&quot;;
+             Omega::instance().saveSimulation(fileName);
+@@ -175,11 +175,11 @@
+    if (Omega::instance().getCurrentIteration() % testEquilibriumInterval == 0) {
+         updateParameters(body);
+         if (saveSimulation) {
+-            string fileName = &quot;../data/&quot; + Phase1End + &quot;_&quot; +
++            string fileName = &quot;./&quot; + Phase1End + &quot;_&quot; +
+                               lexical_cast&lt;string&gt;(Omega::instance().getCurrentIteration()) + &quot;.xml&quot;;
+             LOG_INFO(&quot;saving snapshot: &quot;&lt;&lt;fileName);
+             Omega::instance().saveSimulation(fileName);
+-				fileName=&quot;../data/&quot;+Phase1End+&quot;_&quot;+lexical_cast&lt;string&gt;(Omega::instance().getCurrentIteration())+&quot;.spheres&quot;;
++				fileName=&quot;./&quot;+Phase1End+&quot;_&quot;+lexical_cast&lt;string&gt;(Omega::instance().getCurrentIteration())+&quot;.spheres&quot;;
+ 				LOG_INFO(&quot;saving spheres: &quot;&lt;&lt;fileName);
+ 				Shop::saveSpheresToFile(fileName);
+             saveSimulation = false;
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/CapillaryCohesiveLaw.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/CapillaryCohesiveLaw.cpp	2008-02-19 19:08:22 UTC (rev 1260)
++++ trunk/pkg/dem/Engine/StandAloneEngine/CapillaryCohesiveLaw.cpp	2008-02-22 21:45:38 UTC (rev 1261)
+@@ -36,7 +36,7 @@
+ 
+         capillary = shared_ptr&lt;capillarylaw&gt;(new capillarylaw); // ????????
+ 
+-        //importFilename 		= &quot;../data&quot;; // chemin vers M(r=...)
++        //importFilename 		= &quot;.&quot;; // chemin vers M(r=...)
+ 
+         capillary-&gt;fill(&quot;M(r=1)&quot;);
+         capillary-&gt;fill(&quot;M(r=1.1)&quot;);
+
+Modified: trunk/pkg/dem/PreProcessor/CohesiveTriaxialTest.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/CohesiveTriaxialTest.cpp	2008-02-19 19:08:22 UTC (rev 1260)
++++ trunk/pkg/dem/PreProcessor/CohesiveTriaxialTest.cpp	2008-02-22 21:45:38 UTC (rev 1261)
+@@ -92,8 +92,8 @@
+ 	lowerCorner 		= Vector3r(0,0,0);
+ 	upperCorner 		= Vector3r(1,1,1);
+ 	thickness 		= 0.001;
+-	importFilename 		= &quot;../data/small.sdec.xyz&quot;;
+-	outputFileName 		= &quot;../data/CohesiveTriaxialTest.xml&quot;;
++	importFilename 		= &quot;./small.sdec.xyz&quot;;
++	outputFileName 		= &quot;./CohesiveTriaxialTest.xml&quot;;
+ 	//nlayers = 1;
+ 	wall_top 		= true;
+ 	wall_bottom 		= true;
+@@ -110,14 +110,14 @@
+ 	spheresColor		= Vector3r(0.8,0.3,0.3);
+ 	spheresRandomColor	= false;
+ 	recordBottomForce	= true;
+-	forceRecordFile		= &quot;../data/force&quot;;
++	forceRecordFile		= &quot;./force&quot;;
+ 	recordAveragePositions	= true;
+-	positionRecordFile	= &quot;../data/positions&quot;;
++	positionRecordFile	= &quot;./positions&quot;;
+ 	recordIntervalIter	= 20;
+-	velocityRecordFile 	= &quot;../data/velocities&quot;;
++	velocityRecordFile 	= &quot;./velocities&quot;;
+ 	saveAnimationSnapshots = false;
+-	AnimationSnapshotsBaseName = &quot;../data/snapshots/snap&quot;;
+-	WallStressRecordFile = &quot;../data/WallStresses&quot;;
++	AnimationSnapshotsBaseName = &quot;./snapshots/snap&quot;;
++	WallStressRecordFile = &quot;./WallStresses&quot;;
+ 
+ 	rotationBlocked = false;
+ 	//	boxWalls 		= false;
+
+Modified: trunk/pkg/dem/PreProcessor/HydraulicTest.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/HydraulicTest.cpp	2008-02-19 19:08:22 UTC (rev 1260)
++++ trunk/pkg/dem/PreProcessor/HydraulicTest.cpp	2008-02-22 21:45:38 UTC (rev 1261)
+@@ -61,8 +61,8 @@
+ 
+ HydraulicTest::HydraulicTest () : FileGenerator()
+ {
+-	yadeFileWithSpheres	=&quot;../data/compression1.xml&quot;;
+-	file 			=&quot;../data/spheres_position.dat&quot;;
++	yadeFileWithSpheres	=&quot;./compression1.xml&quot;;
++	file 			=&quot;./spheres_position.dat&quot;;
+ 	radius 			=0.7;
+ }
+ 
+
+Modified: trunk/pkg/dem/PreProcessor/ModifiedTriaxialTest.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/ModifiedTriaxialTest.cpp	2008-02-19 19:08:22 UTC (rev 1260)
++++ trunk/pkg/dem/PreProcessor/ModifiedTriaxialTest.cpp	2008-02-22 21:45:38 UTC (rev 1261)
+@@ -91,8 +91,8 @@
+ 	lowerCorner 		= Vector3r(-1,-0.1,-1);
+ 	upperCorner 		= Vector3r(1,0.1,1);
+ 	thickness 		= 0.001;
+-	importFilename 		= &quot;../data/inp.dat&quot;;
+-// 	outputFileName 		= &quot;../data/out.xml&quot;;
++	importFilename 		= &quot;./inp.dat&quot;;
++// 	outputFileName 		= &quot;./out.xml&quot;;
+ 	//nlayers = 1;
+ 	want_2d=true;
+ 	wall_top 		= true;
+@@ -110,14 +110,14 @@
+ 	spheresColor		= Vector3r(0.8,0.3,0.3);
+ 	spheresRandomColor	= false;
+ 	recordBottomForce	= true;
+-	forceRecordFile		= &quot;../data/force&quot;;
++	forceRecordFile		= &quot;./force&quot;;
+ 	recordAveragePositions	= true;
+-	positionRecordFile	= &quot;../data/positions&quot;;
++	positionRecordFile	= &quot;./positions&quot;;
+ 	recordIntervalIter	= 20;
+-	velocityRecordFile 	= &quot;../data/velocities&quot;;
++	velocityRecordFile 	= &quot;./velocities&quot;;
+ 	saveAnimationSnapshots = false;
+-	AnimationSnapshotsBaseName = &quot;../data/snapshots/snap&quot;;
+-	WallStressRecordFile = &quot;../data/WallStresses&quot;;
++	AnimationSnapshotsBaseName = &quot;./snapshots/snap&quot;;
++	WallStressRecordFile = &quot;./WallStresses&quot;;
+ 
+ 	rotationBlocked = false;
+ 	//	boxWalls 		= false;
+
+Modified: trunk/pkg/dem/PreProcessor/SDECImpactTest.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/SDECImpactTest.cpp	2008-02-19 19:08:22 UTC (rev 1260)
++++ trunk/pkg/dem/PreProcessor/SDECImpactTest.cpp	2008-02-22 21:45:38 UTC (rev 1261)
+@@ -70,7 +70,7 @@
+ 	lowerCorner 		= Vector3r(1000,1000,1000);
+ 	upperCorner 		= Vector3r(-1000,-1000,-1000);
+ 	thickness 		= 0.01;
+-	importFilename 		= &quot;../data/small.sdec.xyz&quot;;
++	importFilename 		= &quot;./small.sdec.xyz&quot;;
+ 	wall_top 		= true;
+ 	wall_bottom 		= true;
+ 	wall_1			= true;
+@@ -86,11 +86,11 @@
+ 	spheresColor		= Vector3r(0.8,0.3,0.3);
+ 	spheresRandomColor	= false;
+ 	recordBottomForce	= true;
+-	forceRecordFile		= &quot;../data/force&quot;;
++	forceRecordFile		= &quot;./force&quot;;
+ 	recordAveragePositions	= true;
+-	positionRecordFile	= &quot;../data/position&quot;;
++	positionRecordFile	= &quot;./position&quot;;
+ 	recordIntervalIter	= 100;
+-	velocityRecordFile 	= &quot;../data/velocities&quot;;
++	velocityRecordFile 	= &quot;./velocities&quot;;
+ 	rotationBlocked = true;
+ 	
+ //	boxWalls 		= false;
+
+Modified: trunk/pkg/dem/PreProcessor/ThreePointBending.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/ThreePointBending.cpp	2008-02-19 19:08:22 UTC (rev 1260)
++++ trunk/pkg/dem/PreProcessor/ThreePointBending.cpp	2008-02-22 21:45:38 UTC (rev 1261)
+@@ -63,7 +63,7 @@
+ 
+ ThreePointBending::ThreePointBending () : FileGenerator()
+ {
+-	yadeFileWithSpheres	=&quot;../data/someFileFromTriaxial.yade&quot;;
++	yadeFileWithSpheres	=&quot;./someFileFromTriaxial.yade&quot;;
+ 	gravity			= Vector3r(0,-9.81,0);
+ 
+ 	supportDepth		= 10;
+
+Modified: trunk/pkg/dem/PreProcessor/TriaxialTest.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/TriaxialTest.cpp	2008-02-19 19:08:22 UTC (rev 1260)
++++ trunk/pkg/dem/PreProcessor/TriaxialTest.cpp	2008-02-22 21:45:38 UTC (rev 1261)
+@@ -95,8 +95,8 @@
+ 	lowerCorner 		= Vector3r(0,0,0);
+ 	upperCorner 		= Vector3r(1,1,1);
+ 	thickness 		= 0.001;
+-	importFilename 		= &quot;&quot;; // &quot;../data/small.sdec.xyz&quot;;
+-	outputFileName 		= &quot;../data/TriaxialTest.xml&quot;;
++	importFilename 		= &quot;&quot;; // &quot;./small.sdec.xyz&quot;;
++	outputFileName 		= &quot;./TriaxialTest.xml&quot;;
+ 	//nlayers = 1;
+ 	wall_top 		= true;
+ 	wall_bottom 		= true;
+@@ -113,14 +113,14 @@
+ 	spheresColor		= Vector3r(0.8,0.3,0.3);
+ 	spheresRandomColor	= false;
+ 	recordBottomForce	= true;
+-	forceRecordFile		= &quot;../data/force&quot;;
++	forceRecordFile		= &quot;./force&quot;;
+ 	recordAveragePositions	= true;
+-	positionRecordFile	= &quot;../data/positions&quot;;
++	positionRecordFile	= &quot;./positions&quot;;
+ 	recordIntervalIter	= 20;
+-	velocityRecordFile 	= &quot;../data/velocities&quot;;
++	velocityRecordFile 	= &quot;./velocities&quot;;
+ 	saveAnimationSnapshots = false;
+-	AnimationSnapshotsBaseName = &quot;../data/snapshots/snap&quot;;
+-	WallStressRecordFile = &quot;../data/WallStresses&quot;;
++	AnimationSnapshotsBaseName = &quot;./snapshots/snap&quot;;
++	WallStressRecordFile = &quot;./WallStresses&quot;;
+ 
+ 	rotationBlocked = false;
+ 	//	boxWalls 		= false;
+
+Modified: trunk/pkg/dem/PreProcessor/TriaxialTestWater.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/TriaxialTestWater.cpp	2008-02-19 19:08:22 UTC (rev 1260)
++++ trunk/pkg/dem/PreProcessor/TriaxialTestWater.cpp	2008-02-22 21:45:38 UTC (rev 1261)
+@@ -89,8 +89,8 @@
+ 	lowerCorner 		= Vector3r(0,0,0);
+ 	upperCorner 		= Vector3r(0.0065,0.0065,0.0065);
+ 	thickness 		= 0.00001;
+-	importFilename 		= &quot;../data/small.sdec.xyz&quot;;
+-	outputFileName 		= &quot;../data/TriaxialTestWater.xml&quot;;
++	importFilename 		= &quot;./small.sdec.xyz&quot;;
++	outputFileName 		= &quot;./TriaxialTestWater.xml&quot;;
+ 	//nlayers = 1;
+ 	wall_top 		= true;
+ 	wall_bottom 		= true;
+@@ -107,14 +107,14 @@
+ 	spheresColor		= Vector3r(0.8,0.3,0.3);
+ 	spheresRandomColor	= false;
+ 	recordBottomForce	= true;
+-	forceRecordFile		= &quot;../data/force&quot;;
++	forceRecordFile		= &quot;./force&quot;;
+ 	recordAveragePositions	= true;
+-	positionRecordFile	= &quot;../data/position&quot;;
++	positionRecordFile	= &quot;./position&quot;;
+ 	recordIntervalIter	= 100;
+-	velocityRecordFile 	= &quot;../data/velocities&quot;;
+-	wallStressRecordFile	= &quot;../data/wallStress&quot;;
+-	capillaryStressRecordFile	= &quot;../data/capillaryStress&quot;;
+-	contactStressRecordFile	= &quot;../data/contactStress&quot;;
++	velocityRecordFile 	= &quot;./velocities&quot;;
++	wallStressRecordFile	= &quot;./wallStress&quot;;
++	capillaryStressRecordFile	= &quot;./capillaryStress&quot;;
++	contactStressRecordFile	= &quot;./contactStress&quot;;
+ 	rotationBlocked = false;
+ 	
+ //	boxWalls 		= false;
+
+Modified: trunk/pkg/fem/PreProcessor/FEMBeam.cpp
+===================================================================
+--- trunk/pkg/fem/PreProcessor/FEMBeam.cpp	2008-02-19 19:08:22 UTC (rev 1260)
++++ trunk/pkg/fem/PreProcessor/FEMBeam.cpp	2008-02-22 21:45:38 UTC (rev 1261)
+@@ -61,7 +61,7 @@
+ FEMBeam::FEMBeam () : FileGenerator()
+ {
+ 	gravity 		= Vector3r(0,-9.81,0);
+-	femTxtFile 		= &quot;../data/fem.beam&quot;;
++	femTxtFile 		= &quot;./fem.beam&quot;;
+ 	nodeGroupMask 		= 1;
+ 	tetrahedronGroupMask 	= 2;
+ 
+
+Modified: trunk/pkg/lattice/PreProcessor/LatticeExample.cpp
+===================================================================
+--- trunk/pkg/lattice/PreProcessor/LatticeExample.cpp	2008-02-19 19:08:22 UTC (rev 1260)
++++ trunk/pkg/lattice/PreProcessor/LatticeExample.cpp	2008-02-22 21:45:38 UTC (rev 1261)
+@@ -127,10 +127,10 @@
+         strainRecorder_node2     = Vector3r(0,1,0);
+         measurePoisson_node3     = Vector3r(0  ,0.1,0);
+         measurePoisson_node4     = Vector3r(0.2,0.1,0);
+-        outputFile               = &quot;../data/strains&quot;;
+-        poissonFile              = &quot;../data/poisson&quot;;
+-        nodeRecorderFile         = &quot;../data/npos&quot;;
+-        beamRecorderFile         = &quot;../data/bstr&quot;;
++        outputFile               = &quot;./strains&quot;;
++        poissonFile              = &quot;./poisson&quot;;
++        nodeRecorderFile         = &quot;./npos&quot;;
++        beamRecorderFile         = &quot;./bstr&quot;;
+         subscribedBodies.clear();
+                 
+         regionDelete_A_min       = Vector3r(0,0,0);
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000225.html">[Yade-commits] r1260 - trunk/extra
+</A></li>
+	<LI>Next message: <A HREF="000227.html">[Yade-commits] r1262 - in trunk: . gui gui/cmd
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#226">[ date ]</a>
+              <a href="thread.html#226">[ thread ]</a>
+              <a href="subject.html#226">[ subject ]</a>
+              <a href="author.html#226">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

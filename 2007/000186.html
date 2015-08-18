@@ -1,0 +1,1180 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1221 - tags/yade-0.11.1-rc	tags/yade-0.11.1-rc/lib/serialization tags/yade-0.11.1-rc/pkg/dem	tags/yade-0.11.1-rc/pkg/dem/Engine/DeusExMachina	tags/yade-0.11.1-rc/pkg/dem/Engine/StandAloneEngine	tags/yade-0.11.1-rc/pkg/dem/PreProcessor trunk	trunk/pkg/dem/Engine/StandAloneEngine
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2007/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1221%20-%20tags/yade-0.11.1-rc%0A%09tags/yade-0.11.1-rc/lib/serialization%20tags/yade-0.11.1-rc/pkg/dem%0A%09tags/yade-0.11.1-rc/pkg/dem/Engine/DeusExMachina%0A%09tags/yade-0.11.1-rc/pkg/dem/Engine/StandAloneEngine%0A%09tags/yade-0.11.1-rc/pkg/dem/PreProcessor%20trunk%0A%09trunk/pkg/dem/Engine/StandAloneEngine&In-Reply-To=%3C200707041621.l64GL1q0005285%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000185.html">
+   <LINK REL="Next"  HREF="000187.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1221 - tags/yade-0.11.1-rc	tags/yade-0.11.1-rc/lib/serialization tags/yade-0.11.1-rc/pkg/dem	tags/yade-0.11.1-rc/pkg/dem/Engine/DeusExMachina	tags/yade-0.11.1-rc/pkg/dem/Engine/StandAloneEngine	tags/yade-0.11.1-rc/pkg/dem/PreProcessor trunk	trunk/pkg/dem/Engine/StandAloneEngine</H1>
+    <B>cosurgi at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1221%20-%20tags/yade-0.11.1-rc%0A%09tags/yade-0.11.1-rc/lib/serialization%20tags/yade-0.11.1-rc/pkg/dem%0A%09tags/yade-0.11.1-rc/pkg/dem/Engine/DeusExMachina%0A%09tags/yade-0.11.1-rc/pkg/dem/Engine/StandAloneEngine%0A%09tags/yade-0.11.1-rc/pkg/dem/PreProcessor%20trunk%0A%09trunk/pkg/dem/Engine/StandAloneEngine&In-Reply-To=%3C200707041621.l64GL1q0005285%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1221 - tags/yade-0.11.1-rc	tags/yade-0.11.1-rc/lib/serialization tags/yade-0.11.1-rc/pkg/dem	tags/yade-0.11.1-rc/pkg/dem/Engine/DeusExMachina	tags/yade-0.11.1-rc/pkg/dem/Engine/StandAloneEngine	tags/yade-0.11.1-rc/pkg/dem/PreProcessor trunk	trunk/pkg/dem/Engine/StandAloneEngine">cosurgi at mail.berlios.de
+       </A><BR>
+    <I>Wed Jul  4 18:21:01 CEST 2007</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000185.html">[Yade-commits] r1220 - in trunk: core extra extra/clump extra/screw	extra/tetra lib/factory
+</A></li>
+        <LI>Next message: <A HREF="000187.html">[Yade-commits] r1222 - tags/yade-0.11.1-rc	tags/yade-0.11.1-rc/extra/clump tags/yade-0.11.1-rc/extra/tetra	tags/yade-0.11.1-rc/pkg/dem/PreProcessor trunk/extra/clump	trunk/extra/screw trunk/extra/tetra
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#186">[ date ]</a>
+              <a href="thread.html#186">[ thread ]</a>
+              <a href="subject.html#186">[ subject ]</a>
+              <a href="author.html#186">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: cosurgi
+Date: 2007-07-04 18:20:59 +0200 (Wed, 04 Jul 2007)
+New Revision: 1221
+
+Modified:
+   tags/yade-0.11.1-rc/INSTALL
+   tags/yade-0.11.1-rc/lib/serialization/FundamentalHandler.tpp
+   tags/yade-0.11.1-rc/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.cpp
+   tags/yade-0.11.1-rc/pkg/dem/Engine/StandAloneEngine/ForceRecorder.cpp
+   tags/yade-0.11.1-rc/pkg/dem/Engine/StandAloneEngine/GlobalStiffnessTimeStepper.cpp
+   tags/yade-0.11.1-rc/pkg/dem/PreProcessor/TriaxialTest.cpp
+   tags/yade-0.11.1-rc/pkg/dem/PreProcessor/TriaxialTest.hpp
+   tags/yade-0.11.1-rc/pkg/dem/SConscript
+   trunk/INSTALL
+   trunk/pkg/dem/Engine/StandAloneEngine/ForceRecorder.cpp
+Log:
+Preparinf 0.11.1 release. Updated INSTALL file. ForceRecorder now checks if a body exists.
+
+
+
+Modified: tags/yade-0.11.1-rc/INSTALL
+===================================================================
+--- tags/yade-0.11.1-rc/INSTALL	2007-07-01 12:01:21 UTC (rev 1220)
++++ tags/yade-0.11.1-rc/INSTALL	2007-07-04 16:20:59 UTC (rev 1221)
+@@ -1,41 +1,316 @@
+-COMPILATION
+-===========
++This is a copy of pages &quot;Installation&quot; and &quot;Installation details&quot; from <A HREF="http://yade.wikia.com/">http://yade.wikia.com/</A>
++For more complete documentation please visit that website, especially
++instructions about installation for specific linux distribution, like:
+ 
+-This version of yade relies uniquely on the scons build system. You can download if from <A HREF="http://www.scons.org,">http://www.scons.org,</A> but chances are, that scons exists for your distribution (package scons, most likely). Its usage is very simple. Type &quot;scons -h&quot; to see available options for yade. Type &quot;scons -H&quot; to see options for scons proper. You need to set yade options only once, they will be remembered (in the scons.conf file). The ones you may need are:
++<A HREF="http://yade.wikia.com/wiki/Installation_of_yade_on_debian_or_kubuntu">http://yade.wikia.com/wiki/Installation_of_yade_on_debian_or_kubuntu</A>
++<A HREF="http://yade.wikia.com/wiki/Installation_of_yade_on_fedora">http://yade.wikia.com/wiki/Installation_of_yade_on_fedora</A>
++<A HREF="http://yade.wikia.com/wiki/Installation_of_yade_on_gentoo">http://yade.wikia.com/wiki/Installation_of_yade_on_gentoo</A>
+ 
+- 1. CPPPATH: to add some search paths for preprocessor
+- 2. CXX: to change compiler
+- 3. LIBPATH: extra directories for linker
+- 4. PREFIX: where to install: default is /usr/local
+- 5. POSTFIX: distinguishes different installations of yade; it will really be version-POSTFIX; if you don't specify anything, svn version (like r1088) will be used
+- 6. buildPrefix: where to create build directory; default is '..'
++==============================================================
++==                                                          ==
++==         Table of Contents                                ==
++==                                                          ==
++==============================================================
++== 1 Prerequistes                                           ==
++==       1.1 Required packages                              ==
++==       1.2 Optional packages                              ==
++== 2 Recommended installation method                        ==
++== 3 Installation details                                   ==
++==       3.1 Systemwide installation as root                ==
++==       3.2 Installing from debian source packages         ==
++==       3.3 Scons options                                  ==
++==       3.4 Automatic library detection                    ==
++==       3.5 Installing the wildmagic 3 library on debian   ==
++==       3.6 Backward compatibility options                 ==
++==       3.7 Cleaning and uninstalling                      ==
++==       3.8 Install paths                                  ==
++==============================================================
+ 
+-Scons will autodetect libraries as needed, if anything fails, see config.log.
+ 
+-After compilation and installation (which are really not separate), you will be able to run yade - look in $PREFIX/bin directory for the executable.
+ 
+-DEBIAN PACKAGE COMPILATION AND INSTALLATION
+-===========================================
++= Prerequistes =
++================
+ 
+-Make sure you have all packages needed for building:
++All libraries listed below must be installed with development headers. It's
++better to install them using your linux's distribution package management
++system, instead of downloading directly from the website. With the exception of
++QGLViewer ( <A HREF="http://artis.imag.fr/Software/QGLViewer/">http://artis.imag.fr/Software/QGLViewer/</A> ) and
++wildmagic 3.11 ( <A HREF="http://www.geometrictools.com/Downloads/Downloads.html">http://www.geometrictools.com/Downloads/Downloads.html</A> ), which
++may not have a packege in your linux distribution.
+ 
+-	$ sudo apt-get install debhelper scons lib3dviewer-dev libqt3-mt-dev qt3-dev-tools python-dev freeglut3-dev libboost-date-time-dev libboost-filesystem-dev libboost-thread-dev wildmagic-dev liblog4cxx9-dev docbook-to-man
++== Required packages ==
++=======================
+ 
+-Note that lib3dviewer-dev and wildmagic-dev are not in official archives - see <A HREF="http://yade.berlios.de">http://yade.berlios.de</A> or <A HREF="http://beta.arcig.cz/~eudoxos/phd/index.cgi/YaDe/DebianSnapshotInstallHowto">http://beta.arcig.cz/~eudoxos/phd/index.cgi/YaDe/DebianSnapshotInstallHowto</A> on how to get them.
++* ( <A HREF="http://www.boost.org">http://www.boost.org</A> ) 
++  boost library 1.33 or later with components: ''date-time'', ''filesystem'' and ''thread''
+ 
+-Then go ahead:
++* ( <A HREF="http://trolltech.com/products/qt/qt3">http://trolltech.com/products/qt/qt3</A> ) 
++  qt3 library, including ''multithreading'' (&lt;tt&gt;-mt&lt;/tt&gt;) component
+ 
+-	$ svn checkout <A HREF="svn://svn.berlios.de/yade/branches/scons-layout">svn://svn.berlios.de/yade/branches/scons-layout</A> yade-xxx # (change xxx to revision number as appropriate)
+-	$ cd yade-0.0.svn1112
+-	$ scripts/svn-debian-prep # creates files SVNVERSION, _SVNVERSION and appropriate debian/control
+-	$ dpkg-buildpackage -rfakeroot-tcp # compiles and creates source and binary packages in ../
+-	$ sudo dpkg -i ../yade-svn*-0.1.1-1_i386.dpkg
+-    
+-There are some limitations at this moment: version hardcoded in the control file, plain fakeroot will not work with scons (most likely because not all environment variables are propagated by scons - to be investigated).
++* freeglut3 / libglut3 development files
+ 
+-RUNNING
+-=======
++* ( <A HREF="http://artis.imag.fr/Software/QGLViewer/">http://artis.imag.fr/Software/QGLViewer/</A> )
++  QGLViewer
+ 
+-Yade must be able to find its plugins if it is to function correctly - that should happen automatically. ~/.yade-??? will hold file named preferences.xml, which will be created on the first run.
++* make, g++
+ 
+-For the rest, head over to <A HREF="http://yade.berlios.de">http://yade.berlios.de</A> and read documentation.
++* ( <A HREF="http://www.scons.org/">http://www.scons.org/</A> )
++  scons build system
++
++
++== Optional packages ==
++=======================
++
++* ( <A HREF="http://www.geometrictools.com/Downloads/Downloads.html">http://www.geometrictools.com/Downloads/Downloads.html</A> )
++  wildmagic 3.11 - only if you want Delaunay triangulation support in lattice model
++
++* ( <A HREF="http://logging.apache.org/log4cxx/">http://logging.apache.org/log4cxx/</A> )
++  log4cxx - only if you want extensive logging support in debugging
++
++* python-dev, python-scientific - only if you want python scripting interface&lt;/small&gt;
++
++= Recommended installation method =
++===================================
++
++Run this command from inside yade-0.11.1 directory to install yade as a local
++user without root privileages (recommended):
++
++ scons PREFIX=/home/''username''/YADE optimize=1
++
++Replace 'username' with your user name. Also check out =Scons options= below to
++quickly compile not optimized version or systemwide install from debian package
++(as a root user), etc.
++
++
++========================
++=                      =
++= Installation details =
++=                      =
++========================
++
++= Systemwide installation as root =
++===================================
++
++By default yade installs in directory /usr/local, but to install there you need
++a root access. So running just scons some options should be enough. However,
++since you want to install yade systemwide as root, it might be better if you
++built a debian package instead.
++
++
++== Installing from debian source packages ==
++============================================
++
++This_repository ( <A HREF="http://geo.hmg.inpg.fr/~smilauer/yade">http://geo.hmg.inpg.fr/~smilauer/yade</A> ) contains weekly
++snapshots from svn in the form of debian source packages. To compile and
++install these (assuming that you already have required packages installed), you
++need to add repository source do your '/etc/apt/ sources.list':
++
++  deb-src <A HREF="http://geo.hmg.inpg.fr/~smilauer/yade">http://geo.hmg.inpg.fr/~smilauer/yade</A> ./
++
++Pick a revision number you want (eg. 1234), based on the repository contents -
++see <A HREF="http://geo.hmg.inpg.fr/~smilauer/yade,">http://geo.hmg.inpg.fr/~smilauer/yade,</A> then run:
++
++  apt-get source yade-svn1234
++  sudo apt-get build-dep yade-svn1234
++  cd yade-svn1234-1
++  fakeroot-tcp debian/rules binary
++
++Once compiled, you will have optimized (yade-svn1234), debug (yade-svn1234-dbg)
++and development (yade-svn1234-dev) packages in ../, which you can install by:
++
++  sudo dpkg -i ../yade-svn1234*.deb
++
++
++
++== Scons options ==
++===================
++
++Scons is the tool used to build and install yade. Always run it from the top
++directory of yade.
++ ________________________________Scons_options________________________________
++|parameter  |default  value|description                                       |
++|-----------|--------------|--------------------------------------------------|
++|           |              |The directory where yade will be installed.       |
++|           |              |Different yade versions will not overwrite each   |
++|PREFIX     |/usr/local    |other in PREFIX directory. See version and variant|
++|           |              |below. This parameter is passed to the            |
++|           |              |preprocessor as PREFIX macro (expands to quoted   |
++|           |              |string).                                          |
++|-----------|--------------|--------------------------------------------------|
++|           |              |Scons autodetects svn revision or release number, |
++|version    |auto          |so it will be &quot;svn1144&quot; or &quot;0.11.0&quot;, for example. |
++|           |              |If this fails, it will be &quot;unknown&quot;. It is used to|
++|           |              |build `SUFFIX` (see `variant`).                   |
++|-----------|--------------|--------------------------------------------------|
++|           |              |Free-form name that describes variant of this     |
++|           |              |version (usually something like &quot;-debug&quot;, &quot;-      |
++|           |              |optimized&quot; etc. May be empty. SUFFIX is a macro   |
++|variant    |empty         |defined by the preprocessor (as quoted string)    |
++|           |              |that has the form &quot;$version$variant&quot;, i.e.        |
++|           |              |svn1144-debug if version=svn1144 and              |
++|           |              |variant=debug.                                    |
++|-----------|--------------|--------------------------------------------------|
++|           |              |Pass debugging flags to the compiler (generates   |
++|debug      |1             |debugging symbols in binaries), defines YADE_DEBUG|
++|           |              |symbols. Defaults to true.                        |
++|-----------|--------------|--------------------------------------------------|
++|           |              |Defines YADE_CAST (YADE_PTR_CAST) as static_cast  |
++|           |              |(static_pointer_cast) and pass optimization flags |
++|optimize   |0             |to the compiler. Use together with debug to get   |
++|           |              |fast code with debug symbols included. Defaults to|
++|           |              |false.                                            |
++|-----------|--------------|--------------------------------------------------|
++|           |              |Specify where to put the build-0.11.0 directory,  |
++|           |              |which will hold all files created during          |
++|buildPrefix|..            |compilation. This ensures that the source tree    |
++|           |              |remains clean and that different builds (like     |
++|           |              |optimized and debugging) are strictly separated,  |
++|           |              |like build-0.11.0 and build-0.11.0-debug          |
++|-----------|--------------|--------------------------------------------------|
++|           |              |How many compilations should run in parallel.     |
++|jobs       |4             |Defaults to four, if your computer is weak you may|
++|           |              |want a lower number. Equivalent to make -j4       |
++|-----------|--------------|--------------------------------------------------|
++|           |              |C++ compiler you want to use. You can say         |
++|CXX        |g++           |CXX=&quot;distcc g++&quot; to have distributed build, if    |
++|           |              |that is configured.                               |
++|-----------|--------------|--------------------------------------------------|
++|           |              |Additional paths for the c proprocessor           |
++|CPPPATH    |empty         |(whitespace separated). Use it for locally-       |
++|           |              |installed libraries, eg.: CPPPATH=&quot;/usr/local/    |
++|           |              |include /home/fred/build/log4cxx/include&quot;         |
++|-----------|--------------|--------------------------------------------------|
++|LIBPATH    |empty         |Additional paths for linker (whitespace           |
++|           |              |separated).                                       |
++|-----------|--------------|--------------------------------------------------|
++
++To see all the options, along with their default and current values, say `scons -h`.
++As an example, to compile yade I use following command
++
++  scons jobs=10 pretty=0 debug=1 optimize=0 profile=0 CXX=&quot;distcc g++&quot; \
++        PREFIX=/home/janek/YADE useMiniWm3=0 CPPPATH=/usr/include/wm3
++
++The last two options are related to the_wildmagic_3_library. All options are
++stored inside scons.config file, so the next time you compile yade, you can
++really just issue scons command, unless you want to change something.
++
++
++== Automatic library detection ==
++=================================
++
++Scons will attempt detection of necessary libraries on your system at every
++run. If it fails, you can look at the $buildDir/config.log (eg.: ../build-
++0.11.0/config.log) file to see what went wrong. If you have some of the
++dependencies (like lib3dviewer) installed locally in /usr/local, you will have
++to use:
++
++  scons CPPPATH=/usr/local/include/wm3 LIBPATH=/usr/local/lib
++
++so that scons will find it.
++
++
++== Installing the wildmagic 3 library on debian ==
++==================================================
++
++The wildmagic_3.11_library ( <A HREF="http://www.geometrictools.com/Downloads/Downloads.html">http://www.geometrictools.com/Downloads/Downloads.html</A> )
++is used by Lattice Geometrical Model when it's available. It's only to have
++dalaunay triangulation in 2D and 3D during specimen generation.
++Add the following line at the end of your /etc/apt/sources.list:
++
++  deb-src <A HREF="http://geo.hmg.inpg.fr/~smilauer/yade">http://geo.hmg.inpg.fr/~smilauer/yade</A> ./
++
++Then donwload, compile and install wildmagic library:
++
++  sudo apt-get update
++  apt-get source wildmagic
++  sudo apt-get build-dep wildmagic
++  cd wildmagic-3p11/
++  fakeroot debian/rules binary
++  sudo dpkg -i ../wildmagic-dev*.deb
++
++To tell scons that wildmagic is installed you need to add those parameters to
++scons: useMiniWm3=0 CPPPATH=/usr/include/wm3.
++
++
++== Backward compatibility options ==
++====================================
++
++If you have older software installed, you can use:
++
++____________________________Compatibility_options____________________________
++|parameter                     |description                                   |
++|------------------------------|----------------------------------------------|
++|                              |Older versions of libglut do not have function|
++|CXXFLAGS='-DNO_GLUTINIT'      |glutInit(), you should use this compilation   |
++|                              |flag then.                                    |
++|------------------------------|----------------------------------------------|
++|                              |If you are using older QGLViewer (version 2.0)|
++|CXXFLAGS='-DQGLVIEWER20'      |you should use this flag, otherwise you will  |
++|                              |get error about setFileName().                |
++|------------------------------|----------------------------------------------|
++|CXXFLAGS='-pthread&#194; -lpthread'|If you are compiling with gcc3.3 (an older    |
++|                              |compiler).                                    |
++|------------------------------|----------------------------------------------|
++|CXXFLAGS='-fPIC'              |When compiling on AMD64.                      |
++|------------------------------|----------------------------------------------|
++
++You can connect several CXXFLAGS by spaces: CXXFLAGS='-DNO_GLUTINIT -
++DQGLVIEWER20'
++
++
++== Cleaning and uninstalling ==
++===============================
++
++To clean the compilation invoke from yade-0.11.1/:
++
++  scons -c
++
++You can remove the compilation directory of yade, usually located in upper
++directory and starting with name build, like this one:
++
++  rm -rf ../build-0.11.1
++
++If yade was installed manually, the you can delete files from
++
++  /usr/local/lib/yade/
++  /usr/local/include/yade/
++  /usr/local/bin/yade
++
++or from (depending where yade was installed):
++
++  /home/username/YADE/lib/
++  /home/username/YADE/include/
++  /home/username/YADE/bin/yade
++
++If yade was installed from debian package, you can simply remove the package,
++and that's all.
++
++
++==  Install paths ==
++====================
++
++All files installed are versioned so that different versions and variants don't
++clash with each other - you can have as many version as you want installed at
++the same time. Supposing that we have variant=-dbg and version=svn1234 (note
++that $SUFFIX=-$version$variant) and PREFIX=/usr/local, we have
++
++ ____________________________________Paths____________________________________
++|what kind                |path used                |example                  |
++|-------------------------|-------------------------|-------------------------|
++|executable               |$PREFIX/bin/yade$SUFFIX  |/usr/local/bin/yade-     |
++|                         |                         |svn1144-debug            |
++|-------------------------|-------------------------|-------------------------|
++|default plugins          |$PREFIX/lib/yade$SUFFIX/ |/usr/local/lib/yade-     |
++|                         |lib/*/lib*.so            |svn1144-debug/*/lib*.so  |
++|-------------------------|-------------------------|-------------------------|
++|pkg-config script        |$PREFIX/lib/pkgconfig/   |/usr/local/lib/pkgconfig/|
++|                         |yade$SUFFIX              |yade-svn1144-debug.pc    |
++|-------------------------|-------------------------|-------------------------|
++|user configuration       |$HOME/.yade$SUFFIX       |/home/fred/.yade-svn1144-|
++|directory                |                         |debug                    |
++|-------------------------|-------------------------|-------------------------|
++|headers (note: common for|$PREFIX/include/         |/usr/local/include/yade- |
++|a particular version,    |yade$version/yade/*/*.hpp|svn1144/yade/*/*.hpp     |
++|regardless of variant)   |                         |                         |
++|-------------------------|-------------------------|-------------------------|
++
+
+Modified: tags/yade-0.11.1-rc/lib/serialization/FundamentalHandler.tpp
+===================================================================
+--- tags/yade-0.11.1-rc/lib/serialization/FundamentalHandler.tpp	2007-07-01 12:01:21 UTC (rev 1220)
++++ tags/yade-0.11.1-rc/lib/serialization/FundamentalHandler.tpp	2007-07-04 16:20:59 UTC (rev 1221)
+@@ -42,7 +42,7 @@
+ 			string * tmp = any_cast&lt;string*&gt;(ac.getAddress());
+ 			*tmp=*tmpStr;
+ 			#define _RESTORE_SPECIAL(escape,special)pos=0; while((pos=tmp-&gt;find(escape,pos))!=string::npos){tmp-&gt;replace(pos,2,special);}
+-			unsigned int pos;
++			unsigned long pos;
+ 			_RESTORE_SPECIAL(&quot;\\n&quot;,&quot;\n&quot;); _RESTORE_SPECIAL(&quot;\\t&quot;,&quot;\t&quot;); _RESTORE_SPECIAL(&quot;\\'&quot;,&quot;\&quot;&quot;);
+ 			_RESTORE_SPECIAL(&quot;\\[&quot;,&quot;&lt;&quot;); _RESTORE_SPECIAL(&quot;\\]&quot;,&quot;&gt;&quot;); _RESTORE_SPECIAL(&quot;\\\\&quot;,&quot;\\&quot;); // order matters!
+ 			#undef _RESTORE_SPECIAL
+@@ -68,7 +68,7 @@
+ 			string * tmp = any_cast&lt;string*&gt;(ac.getAddress());
+ 			*tmpStr=*tmp;
+ 			#define _ESCAPE_SPECIAL(special,escape) pos=0; while((pos=tmpStr-&gt;find(special,pos))!=string::npos){tmpStr-&gt;replace(pos,1,escape); pos+=2;}
+-			unsigned int pos;
++			unsigned long pos;
+ 			_ESCAPE_SPECIAL(&quot;\\&quot;,&quot;\\\\&quot;); _ESCAPE_SPECIAL('\n',&quot;\\n&quot;); _ESCAPE_SPECIAL('\t',&quot;\\t&quot;); _ESCAPE_SPECIAL('\&quot;',&quot;\\'&quot;);
+ 			_ESCAPE_SPECIAL('&lt;',&quot;\\[&quot;); _ESCAPE_SPECIAL('&gt;',&quot;\\]&quot;);  // order matters!
+ 			#undef _ESCAPE_SPECIAL
+
+Modified: tags/yade-0.11.1-rc/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.cpp
+===================================================================
+--- tags/yade-0.11.1-rc/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.cpp	2007-07-01 12:01:21 UTC (rev 1220)
++++ tags/yade-0.11.1-rc/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.cpp	2007-07-04 16:20:59 UTC (rev 1221)
+@@ -22,11 +22,13 @@
+ 	currentStrainRate=0;
+ 	StabilityCriterion=0.001;
+ 	Phase1=false;
++	UnbalancedForce = 1;
+ 	Phase1End = &quot;Phase1End&quot;;
+ 	FinalIterationPhase1 = 0;
+ 	Iteration = 0;
+ 	compressionActivated=false;
+ 	autoCompressionActivation=true;
++	UnbalancedForce = 1;
+ 	for (int i=0; i&lt;3; ++i) strain[i]=0;
+ 	
+ 	
+
+Modified: tags/yade-0.11.1-rc/pkg/dem/Engine/StandAloneEngine/ForceRecorder.cpp
+===================================================================
+--- tags/yade-0.11.1-rc/pkg/dem/Engine/StandAloneEngine/ForceRecorder.cpp	2007-07-01 12:01:21 UTC (rev 1220)
++++ tags/yade-0.11.1-rc/pkg/dem/Engine/StandAloneEngine/ForceRecorder.cpp	2007-07-04 16:20:59 UTC (rev 1221)
+@@ -58,11 +58,14 @@
+ 	
+ 	for( int i = startId ; i &lt;= endId ; ++i )
+ 	{
+-		Vector3r force = YADE_CAST&lt;Force*&gt;(ncb-&gt;physicalActions-&gt;find( i , actionForce-&gt;getClassIndex() ) . get() )-&gt;force;
++		if(ncb-&gt;bodies-&gt;exists(i))
++		{
++			Vector3r force = YADE_CAST&lt;Force*&gt;(ncb-&gt;physicalActions-&gt;find( i , actionForce-&gt;getClassIndex() ) . get() )-&gt;force;
+ 		
+-		x+=force[0];
+-		y+=force[1];
+-		z+=force[2];
++			x+=force[0];
++			y+=force[1];
++			z+=force[2];
++		}
+ 	}
+ 	//cerr &lt;&lt; &quot;record force&quot; &lt;&lt; endl;
+ 	ofile &lt;&lt; lexical_cast&lt;string&gt;(Omega::instance().getSimulationTime()) &lt;&lt; &quot; &quot; 
+
+Modified: tags/yade-0.11.1-rc/pkg/dem/Engine/StandAloneEngine/GlobalStiffnessTimeStepper.cpp
+===================================================================
+--- tags/yade-0.11.1-rc/pkg/dem/Engine/StandAloneEngine/GlobalStiffnessTimeStepper.cpp	2007-07-01 12:01:21 UTC (rev 1220)
++++ tags/yade-0.11.1-rc/pkg/dem/Engine/StandAloneEngine/GlobalStiffnessTimeStepper.cpp	2007-07-04 16:20:59 UTC (rev 1221)
+@@ -22,7 +22,7 @@
+ //cerr &lt;&lt; &quot;GlobalStiffnessTimeStepper()&quot;  &lt;&lt; endl;
+ 	globalStiffnessClassIndex = actionParameterGlobalStiffness-&gt;getClassIndex();
+ 	sdecGroupMask = 1;
+-	timestepSafetyCoefficient = 0.6;
++	timestepSafetyCoefficient = 0.25;
+ 	computedOnce = false;
+ 	defaultDt = 1;
+ 	
+@@ -40,6 +40,7 @@
+ 	TimeStepper::registerAttributes();
+ 	REGISTER_ATTRIBUTE(sdecGroupMask);
+ 	REGISTER_ATTRIBUTE(defaultDt);
++	REGISTER_ATTRIBUTE(timestepSafetyCoefficient);
+ }
+ 
+ 
+@@ -172,7 +173,7 @@
+ 		//cerr &lt;&lt; &quot;computedOnce=&quot; &lt;&lt; computedOnce &lt;&lt; endl;	
+ 		//cerr &lt;&lt; &quot;GlobalStiffnessTimeStepper, timestep chosen is:&quot; &lt;&lt; Omega::instance().getTimeStep() &lt;&lt; endl;
+ 	}
+-	else Omega::instance().setTimeStep(defaultDt);
++	else if (!computedOnce) Omega::instance().setTimeStep(defaultDt);
+ 	cerr &lt;&lt; &quot;computed timestep = &quot; &lt;&lt; newDt &lt;&lt; &quot;; new timestep is:&quot; &lt;&lt; Omega::instance().getTimeStep() &lt;&lt; endl;
+ }
+ 
+
+Modified: tags/yade-0.11.1-rc/pkg/dem/PreProcessor/TriaxialTest.cpp
+===================================================================
+--- tags/yade-0.11.1-rc/pkg/dem/PreProcessor/TriaxialTest.cpp	2007-07-01 12:01:21 UTC (rev 1220)
++++ tags/yade-0.11.1-rc/pkg/dem/PreProcessor/TriaxialTest.cpp	2007-07-04 16:20:59 UTC (rev 1221)
+@@ -19,12 +19,14 @@
+ #include&lt;yade/pkg-dem/SDECLinkPhysics.hpp&gt;
+ #include&lt;yade/pkg-dem/GlobalStiffnessCounter.hpp&gt;
+ #include&lt;yade/pkg-dem/GlobalStiffnessTimeStepper.hpp&gt;
++#include&lt;yade/pkg-dem/PositionOrientationRecorder.hpp&gt;
+ 
+ #include&lt;yade/pkg-dem/AveragePositionRecorder.hpp&gt;
+ #include&lt;yade/pkg-dem/ForceRecorder.hpp&gt;
+ #include&lt;yade/pkg-dem/VelocityRecorder.hpp&gt;
+ #include&lt;yade/pkg-dem/TriaxialStressController.hpp&gt;
+ #include&lt;yade/pkg-dem/TriaxialCompressionEngine.hpp&gt;
++#include &lt;yade/pkg-dem/WallStressRecorder.hpp&gt;
+ 
+ #include&lt;yade/pkg-common/Box.hpp&gt;
+ #include&lt;yade/pkg-common/AABB.hpp&gt;
+@@ -107,12 +109,15 @@
+ 	recordBottomForce	= true;
+ 	forceRecordFile		= &quot;../data/force&quot;;
+ 	recordAveragePositions	= true;
+-	positionRecordFile	= &quot;../data/position&quot;;
++	positionRecordFile	= &quot;../data/positions&quot;;
+ 	recordIntervalIter	= 20;
+ 	velocityRecordFile 	= &quot;../data/velocities&quot;;
++	saveAnimationSnapshots = false;
++	AnimationSnapshotsBaseName = &quot;../data/snapshots/snap&quot;;
++	WallStressRecordFile = &quot;../data/WallStresses&quot;;
++
+ 	rotationBlocked = false;
+-	
+-//	boxWalls 		= false;
++	//	boxWalls 		= false;
+ 	boxWalls 		= true;
+ 	internalCompaction	=false;
+ 
+@@ -128,9 +133,9 @@
+ 	bigBallDropTimeSeconds	= 30;
+ 	bigBallDropHeight 	= 3.04776;
+ 	
+-	dampingForce = 0.5;
+-	dampingMomentum = 0.5;
+-	defaultDt = 0.0001;
++	dampingForce = 0.2;
++	dampingMomentum = 0.2;
++	defaultDt = 1;
+ 	
+ 	timeStepUpdateInterval = 50;
+ 	timeStepOutputInterval = 50;
+@@ -222,8 +227,11 @@
+ 	REGISTER_ATTRIBUTE(forceRecordFile);
+ //	REGISTER_ATTRIBUTE(recordAveragePositions);
+ 	REGISTER_ATTRIBUTE(positionRecordFile);
+-	REGISTER_ATTRIBUTE(velocityRecordFile)
++	REGISTER_ATTRIBUTE(velocityRecordFile);
+ 	REGISTER_ATTRIBUTE(recordIntervalIter);
++	REGISTER_ATTRIBUTE(saveAnimationSnapshots);
++	REGISTER_ATTRIBUTE(AnimationSnapshotsBaseName);
++	REGISTER_ATTRIBUTE(WallStressRecordFile);
+ 
+ //	REGISTER_ATTRIBUTE(gravity);
+ 	
+@@ -240,7 +248,7 @@
+ }
+ 
+ 
+-string TriaxialTest::generate()
++bool TriaxialTest::generate()
+ {
+ //	unsigned int startId=boost::numeric::bounds&lt;unsigned int&gt;::highest(), endId=0; // record forces from group 2
+ 	
+@@ -258,7 +266,7 @@
+ 	shared_ptr&lt;Body&gt; body;
+ 	
+ 	vector&lt;BasicSphere&gt; sphere_list;
+-	string output = GenerateCloud(sphere_list, lowerCorner, upperCorner, numberOfGrains, 0.3, 0.75);
++	message=GenerateCloud(sphere_list, lowerCorner, upperCorner, numberOfGrains, 0.3, 0.75);
+ 	
+ 	vector&lt;BasicSphere&gt;::iterator it = sphere_list.begin();
+ 	vector&lt;BasicSphere&gt;::iterator it_end = sphere_list.end();
+@@ -348,6 +356,7 @@
+ 			rootBody-&gt;bodies-&gt;insert(body);
+ 			//(resultantforceEngine-&gt;subscribedBodies).push_back(body-&gt;getId());
+ 			triaxialcompressionEngine-&gt;wall_bottom_id = body-&gt;getId();
++			wallStressRecorder-&gt;wall_bottom_id = body-&gt;getId();
+ 			forcerec-&gt;startId = body-&gt;getId();
+ 			forcerec-&gt;endId   = body-&gt;getId();
+ 			}
+@@ -367,6 +376,7 @@
+ 	 	if(wall_top) {
+ 			rootBody-&gt;bodies-&gt;insert(body);
+ 			triaxialcompressionEngine-&gt;wall_top_id = body-&gt;getId();
++			wallStressRecorder-&gt;wall_top_id = body-&gt;getId();
+ 			}
+ 	// box 1
+ 	
+@@ -382,6 +392,7 @@
+ 	 	if(wall_1) {
+ 			rootBody-&gt;bodies-&gt;insert(body);
+ 			triaxialcompressionEngine-&gt;wall_left_id = body-&gt;getId();
++			wallStressRecorder-&gt;wall_left_id = body-&gt;getId();
+ 			}
+ 	// box 2
+ 	 	center			= Vector3r(
+@@ -397,6 +408,7 @@
+ 	 	if(wall_2) {
+ 			rootBody-&gt;bodies-&gt;insert(body);
+ 			triaxialcompressionEngine-&gt;wall_right_id = body-&gt;getId();
++			wallStressRecorder-&gt;wall_right_id = body-&gt;getId();
+ 			}
+ 	// box 3
+ 	 	center			= Vector3r(
+@@ -411,6 +423,7 @@
+ 	 	if(wall_3) {
+ 			rootBody-&gt;bodies-&gt;insert(body);
+ 			triaxialcompressionEngine-&gt;wall_back_id = body-&gt;getId();
++			wallStressRecorder-&gt;wall_back_id = body-&gt;getId();
+ 			}
+ 	
+ 	// box 4
+@@ -426,11 +439,12 @@
+ 	 	if(wall_4) {
+ 			rootBody-&gt;bodies-&gt;insert(body);
+ 			triaxialcompressionEngine-&gt;wall_front_id = body-&gt;getId();
++			wallStressRecorder-&gt;wall_front_id = body-&gt;getId();
+ 			}
+ 			 
+ 	}
+ 	
+-	return output;
++	return true;
+ //  	return &quot;Generated a sample inside box of dimensions: (&quot; 
+ //  		+ lexical_cast&lt;string&gt;(lowerCorner[0]) + &quot;,&quot; 
+ //  		+ lexical_cast&lt;string&gt;(lowerCorner[1]) + &quot;,&quot; 
+@@ -622,7 +636,7 @@
+ 	globalStiffnessCounter-&gt;interval = timeStepUpdateInterval;
+ 	
+ 	// moving walls to regulate the stress applied + compress when the packing is dense an stable
+-	cerr &lt;&lt; &quot;triaxialcompressionEngine = shared_ptr&lt;TriaxialCompressionEngine&gt; (new TriaxialCompressionEngine);&quot; &lt;&lt; std::endl;
++	//cerr &lt;&lt; &quot;triaxialcompressionEngine = shared_ptr&lt;TriaxialCompressionEngine&gt; (new TriaxialCompressionEngine);&quot; &lt;&lt; std::endl;
+ 	triaxialcompressionEngine = shared_ptr&lt;TriaxialCompressionEngine&gt; (new TriaxialCompressionEngine);
+ 	triaxialcompressionEngine-&gt; interval = wallStiffnessUpdateInterval;// = stiffness update interval
+ 	triaxialcompressionEngine-&gt; radiusControlInterval = radiusControlInterval;// = stiffness update interval
+@@ -635,11 +649,18 @@
+ 	triaxialcompressionEngine-&gt;internalCompaction = internalCompaction;
+ 	triaxialcompressionEngine-&gt;maxMultiplier = maxMultiplier;
+ 		
+-	cerr &lt;&lt; &quot;fin de section triaxialcompressionEngine = shared_ptr&lt;TriaxialCompressionEngine&gt; (new TriaxialCompressionEngine);&quot; &lt;&lt; std::endl;
++	//cerr &lt;&lt; &quot;fin de section triaxialcompressionEngine = shared_ptr&lt;TriaxialCompressionEngine&gt; (new TriaxialCompressionEngine);&quot; &lt;&lt; std::endl;
+ 	
++// recording global stress
++	wallStressRecorder = shared_ptr&lt;WallStressRecorder&gt;(new
++	WallStressRecorder);
++	wallStressRecorder-&gt; outputFile 	= WallStressRecordFile;
++	wallStressRecorder-&gt; interval 		= recordIntervalIter;
++	wallStressRecorder-&gt; thickness 		= thickness;
+ 	
++	
+ 	// moving walls to regulate the stress applied
+-	cerr &lt;&lt; &quot;triaxialstressController = shared_ptr&lt;TriaxialStressController&gt; (new TriaxialStressController);&quot; &lt;&lt; std::endl;
++	//cerr &lt;&lt; &quot;triaxialstressController = shared_ptr&lt;TriaxialStressController&gt; (new TriaxialStressController);&quot; &lt;&lt; std::endl;
+ 	triaxialstressController = shared_ptr&lt;TriaxialStressController&gt; (new TriaxialStressController);
+ 	triaxialstressController-&gt; interval = 1;// = recordIntervalIter
+ 	triaxialstressController-&gt; sigma_iso = sigma_iso;
+@@ -647,7 +668,7 @@
+ 	triaxialstressController-&gt; thickness = thickness;
+ 	triaxialstressController-&gt;wall_bottom_activated = false;
+ 	triaxialstressController-&gt;wall_top_activated = false;	
+-		cerr &lt;&lt; &quot;fin de sezction triaxialstressController = shared_ptr&lt;TriaxialStressController&gt; (new TriaxialStressController);&quot; &lt;&lt; std::endl;
++		//cerr &lt;&lt; &quot;fin de sezction triaxialstressController = shared_ptr&lt;TriaxialStressController&gt; (new TriaxialStressController);&quot; &lt;&lt; std::endl;
+ 	
+ 	rootBody-&gt;engines.clear();
+ 	rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new PhysicalActionContainerReseter));
+@@ -662,6 +683,7 @@
+ 	//rootBody-&gt;engines.push_back(stiffnessMatrixTimeStepper);
+ 	rootBody-&gt;engines.push_back(globalStiffnessCounter);
+ 	rootBody-&gt;engines.push_back(globalStiffnessTimeStepper);
++	rootBody-&gt;engines.push_back(wallStressRecorder);
+ 	//rootBody-&gt;engines.push_back(gravityCondition);
+ 	rootBody-&gt;engines.push_back(actionDampingDispatcher);
+ 	rootBody-&gt;engines.push_back(applyActionDispatcher);
+@@ -676,6 +698,11 @@
+ 	rootBody-&gt;engines.push_back(velocityRecorder);
+ 	rootBody-&gt;engines.push_back(forcerec);
+ 	
++	if (saveAnimationSnapshots) {
++	shared_ptr&lt;PositionOrientationRecorder&gt; positionOrientationRecorder(new PositionOrientationRecorder);
++	positionOrientationRecorder-&gt;outputFile = AnimationSnapshotsBaseName;
++	rootBody-&gt;engines.push_back(positionOrientationRecorder);}
++	
+ 	rootBody-&gt;initializers.clear();
+ 	rootBody-&gt;initializers.push_back(physicalActionInitializer);
+ 	rootBody-&gt;initializers.push_back(boundingVolumeDispatcher);
+
+Modified: tags/yade-0.11.1-rc/pkg/dem/PreProcessor/TriaxialTest.hpp
+===================================================================
+--- tags/yade-0.11.1-rc/pkg/dem/PreProcessor/TriaxialTest.hpp	2007-07-01 12:01:21 UTC (rev 1220)
++++ tags/yade-0.11.1-rc/pkg/dem/PreProcessor/TriaxialTest.hpp	2007-07-04 16:20:59 UTC (rev 1221)
+@@ -22,6 +22,7 @@
+ class VelocityRecorder;
+ class TriaxialStressController;
+ class TriaxialCompressionEngine;
++class WallStressRecorder;
+ 
+ /*! \brief Isotropic compression + uniaxial compression test
+ 
+@@ -60,7 +61,6 @@
+ 				,sigma_iso
+ 				,strainRate
+ 				,StabilityCriterion
+-				,autoCompressionActivation
+ 				,maxMultiplier ///max multiplier of diameters during internal compaction
+ 				,finalMaxMultiplier;
+ 
+@@ -76,13 +76,15 @@
+ 				,wall_2_wire
+ 				,wall_3_wire
+ 				,wall_4_wire
++				,autoCompressionActivation
+ 				,bigBall
+ 				,rotationBlocked
+ 				,spheresRandomColor
+ 				,recordBottomForce
+ 				,recordAveragePositions
+ 				,boxWalls
+-				,internalCompaction;
++				,internalCompaction
++				,saveAnimationSnapshots;
+ 
+ 		int		 recordIntervalIter
+ 				,timeStepUpdateInterval
+@@ -100,13 +102,16 @@
+ 		string		 forceRecordFile
+ 				,positionRecordFile
+ 				,velocityRecordFile
+-				,importFilename;
++				,importFilename
++				,AnimationSnapshotsBaseName
++				,WallStressRecordFile;
+ 	
+ 		shared_ptr&lt;ForceRecorder&gt; forcerec;
+ 		shared_ptr&lt;VelocityRecorder&gt; velocityRecorder;
+ 		shared_ptr&lt;AveragePositionRecorder&gt; averagePositionRecorder;
+ 		shared_ptr&lt;TriaxialCompressionEngine&gt; triaxialcompressionEngine;
+ 		shared_ptr&lt;TriaxialStressController&gt; triaxialstressController;
++		shared_ptr&lt;WallStressRecorder&gt; wallStressRecorder;
+ 			
+ 		void createBox(shared_ptr&lt;Body&gt;&amp; body, Vector3r position, Vector3r extents,bool wire);
+ 		void createSphere(shared_ptr&lt;Body&gt;&amp; body, Vector3r position, Real radius,bool big,bool dynamic);
+@@ -116,7 +121,7 @@
+ 	public : 
+ 		TriaxialTest ();
+ 		~TriaxialTest ();
+-		string generate();
++		bool generate();
+ 	
+ 	protected :
+ 		void registerAttributes();
+
+Modified: tags/yade-0.11.1-rc/pkg/dem/SConscript
+===================================================================
+--- tags/yade-0.11.1-rc/pkg/dem/SConscript	2007-07-01 12:01:21 UTC (rev 1220)
++++ tags/yade-0.11.1-rc/pkg/dem/SConscript	2007-07-04 16:20:59 UTC (rev 1221)
+@@ -498,7 +498,9 @@
+ 			'TriaxialStressController',
+ 			'TriaxialCompressionEngine',
+ 			'GlobalStiffnessTimeStepper',
+-			'yade-base']),
++			'yade-base',
++			'WallStressRecorder',
++			'PositionOrientationRecorder']),
+ 
+ 	env.SharedLibrary('ThreePointBending',
+ 		['PreProcessor/ThreePointBending.cpp'],
+
+Modified: trunk/INSTALL
+===================================================================
+--- trunk/INSTALL	2007-07-01 12:01:21 UTC (rev 1220)
++++ trunk/INSTALL	2007-07-04 16:20:59 UTC (rev 1221)
+@@ -1,41 +1,317 @@
+-COMPILATION
+-===========
++This is a copy of pages &quot;Installation&quot; and &quot;Installation details&quot; from <A HREF="http://yade.wikia.com/">http://yade.wikia.com/</A>
++For more complete documentation please visit that website, especially
++instructions about installation for specific linux distribution, like:
+ 
+-This version of yade relies uniquely on the scons build system. You can download if from <A HREF="http://www.scons.org,">http://www.scons.org,</A> but chances are, that scons exists for your distribution (package scons, most likely). Its usage is very simple. Type &quot;scons -h&quot; to see available options for yade. Type &quot;scons -H&quot; to see options for scons proper. You need to set yade options only once, they will be remembered (in the scons.conf file). The ones you may need are:
++<A HREF="http://yade.wikia.com/wiki/Installation_of_yade_on_debian_or_kubuntu">http://yade.wikia.com/wiki/Installation_of_yade_on_debian_or_kubuntu</A>
++<A HREF="http://yade.wikia.com/wiki/Installation_of_yade_on_fedora">http://yade.wikia.com/wiki/Installation_of_yade_on_fedora</A>
++<A HREF="http://yade.wikia.com/wiki/Installation_of_yade_on_gentoo">http://yade.wikia.com/wiki/Installation_of_yade_on_gentoo</A>
+ 
+- 1. CPPPATH: to add some search paths for preprocessor
+- 2. CXX: to change compiler
+- 3. LIBPATH: extra directories for linker
+- 4. PREFIX: where to install: default is /usr/local
+- 5. POSTFIX: distinguishes different installations of yade; it will really be version-POSTFIX; if you don't specify anything, svn version (like r1088) will be used
+- 6. buildPrefix: where to create build directory; default is '..'
++==============================================================
++==                                                          ==
++==         Table of Contents                                ==
++==                                                          ==
++==============================================================
++== 1 Prerequistes                                           ==
++==       1.1 Required packages                              ==
++==       1.2 Optional packages                              ==
++== 2 Recommended installation method                        ==
++== 3 Installation details                                   ==
++==       3.1 Systemwide installation as root                ==
++==       3.2 Installing from debian source packages         ==
++==       3.3 Scons options                                  ==
++==       3.4 Automatic library detection                    ==
++==       3.5 Installing the wildmagic 3 library on debian   ==
++==       3.6 Backward compatibility options                 ==
++==       3.7 Cleaning and uninstalling                      ==
++==       3.8 Install paths                                  ==
++==============================================================
+ 
+-Scons will autodetect libraries as needed, if anything fails, see config.log.
+ 
+-After compilation and installation (which are really not separate), you will be able to run yade - look in $PREFIX/bin directory for the executable.
+ 
+-DEBIAN PACKAGE COMPILATION AND INSTALLATION
+-===========================================
++= Prerequistes =
++================
+ 
+-Make sure you have all packages needed for building:
++All libraries listed below must be installed with development headers. It's
++better to install them using your linux's distribution package management
++system, instead of downloading directly from the website. With the exception of
++QGLViewer ( <A HREF="http://artis.imag.fr/Software/QGLViewer/">http://artis.imag.fr/Software/QGLViewer/</A> ) and
++wildmagic 3.11 ( <A HREF="http://www.geometrictools.com/Downloads/Downloads.html">http://www.geometrictools.com/Downloads/Downloads.html</A> ), which
++may not have a packege in your linux distribution.
+ 
+-	$ sudo apt-get install debhelper scons lib3dviewer-dev libqt3-mt-dev qt3-dev-tools python-dev freeglut3-dev libboost-date-time-dev libboost-filesystem-dev libboost-thread-dev wildmagic-dev liblog4cxx9-dev docbook-to-man
++== Required packages ==
++=======================
+ 
+-Note that lib3dviewer-dev and wildmagic-dev are not in official archives - see <A HREF="http://yade.berlios.de">http://yade.berlios.de</A> or <A HREF="http://beta.arcig.cz/~eudoxos/phd/index.cgi/YaDe/DebianSnapshotInstallHowto">http://beta.arcig.cz/~eudoxos/phd/index.cgi/YaDe/DebianSnapshotInstallHowto</A> on how to get them.
++* ( <A HREF="http://www.boost.org">http://www.boost.org</A> ) 
++  boost library 1.33 or later with components: ''date-time'', ''filesystem'' and ''thread''
+ 
+-Then go ahead:
++* ( <A HREF="http://trolltech.com/products/qt/qt3">http://trolltech.com/products/qt/qt3</A> ) 
++  qt3 library, including ''multithreading'' (&lt;tt&gt;-mt&lt;/tt&gt;) component
+ 
+-	$ svn checkout <A HREF="svn://svn.berlios.de/yade/branches/scons-layout">svn://svn.berlios.de/yade/branches/scons-layout</A> yade-xxx # (change xxx to revision number as appropriate)
+-	$ cd yade-0.0.svn1112
+-	$ scripts/svn-debian-prep # creates files SVNVERSION, _SVNVERSION and appropriate debian/control
+-	$ dpkg-buildpackage -rfakeroot-tcp # compiles and creates source and binary packages in ../
+-	$ sudo dpkg -i ../yade-svn*-0.1.1-1_i386.dpkg
+-    
+-There are some limitations at this moment: version hardcoded in the control file, plain fakeroot will not work with scons (most likely because not all environment variables are propagated by scons - to be investigated).
++* freeglut3 / libglut3 development files
+ 
+-RUNNING
+-=======
++* ( <A HREF="http://artis.imag.fr/Software/QGLViewer/">http://artis.imag.fr/Software/QGLViewer/</A> )
++  QGLViewer
+ 
+-Yade must be able to find its plugins if it is to function correctly - that should happen automatically. ~/.yade-??? will hold file named preferences.xml, which will be created on the first run.
++* make, g++
+ 
+-For the rest, head over to <A HREF="http://yade.berlios.de">http://yade.berlios.de</A> and read documentation.
++* ( <A HREF="http://www.scons.org/">http://www.scons.org/</A> )
++  scons build system
++
++
++== Optional packages ==
++=======================
++
++* ( <A HREF="http://www.geometrictools.com/Downloads/Downloads.html">http://www.geometrictools.com/Downloads/Downloads.html</A> )
++  wildmagic 3.11 - only if you want Delaunay triangulation support in lattice model
++
++* ( <A HREF="http://logging.apache.org/log4cxx/">http://logging.apache.org/log4cxx/</A> )
++  log4cxx - only if you want extensive logging support in debugging
++
++* python-dev, python-scientific - only if you want python scripting interface&lt;/small&gt;
++
++= Recommended installation method =
++===================================
++
++Run this command from inside yade-0.11.1 directory to install yade as a local
++user without root privileages (recommended):
++
++ scons PREFIX=/home/''username''/YADE optimize=1
++
++Replace 'username' with your user name. Also check out =Scons options= below to
++quickly compile not optimized version or systemwide install from debian package
++(as a root user), etc.
++
++
++========================
++=                      =
++= Installation details =
++=                      =
++========================
++
++= Systemwide installation as root =
++===================================
++
++By default yade installs in directory /usr/local, but to install there you need
++a root access. So running just scons some options should be enough. However,
++since you want to install yade systemwide as root, it might be better if you
++built a debian package instead.
++
++
++== Installing from debian source packages ==
++============================================
++
++This_repository ( <A HREF="http://geo.hmg.inpg.fr/~smilauer/yade">http://geo.hmg.inpg.fr/~smilauer/yade</A> ) contains weekly
++snapshots from svn in the form of debian source packages. To compile and
++install these (assuming that you already have required packages installed), you
++need to add repository source do your '/etc/apt/ sources.list':
++
++  deb-src <A HREF="http://geo.hmg.inpg.fr/~smilauer/yade">http://geo.hmg.inpg.fr/~smilauer/yade</A> ./
++
++Pick a revision number you want (eg. 1234), based on the repository contents -
++see <A HREF="http://geo.hmg.inpg.fr/~smilauer/yade,">http://geo.hmg.inpg.fr/~smilauer/yade,</A> then run:
++
++  apt-get source yade-svn1234
++  sudo apt-get build-dep yade-svn1234
++  cd yade-svn1234-1
++  fakeroot-tcp debian/rules binary
++
++Once compiled, you will have optimized (yade-svn1234), debug (yade-svn1234-dbg)
++and development (yade-svn1234-dev) packages in ../, which you can install by:
++
++  sudo dpkg -i ../yade-svn1234*.deb
++
++
++
++== Scons options ==
++===================
++
++Scons is the tool used to build and install yade. Always run it from the top
++directory of yade.
++ ________________________________Scons_options________________________________
++|parameter  |default  value|description                                       |
++|-----------|--------------|--------------------------------------------------|
++|           |              |The directory where yade will be installed.       |
++|           |              |Different yade versions will not overwrite each   |
++|PREFIX     |/usr/local    |other in PREFIX directory. See version and variant|
++|           |              |below. This parameter is passed to the            |
++|           |              |preprocessor as PREFIX macro (expands to quoted   |
++|           |              |string).                                          |
++|-----------|--------------|--------------------------------------------------|
++|           |              |Scons autodetects svn revision or release number, |
++|version    |auto          |so it will be &quot;svn1144&quot; or &quot;0.11.0&quot;, for example. |
++|           |              |If this fails, it will be &quot;unknown&quot;. It is used to|
++|           |              |build `SUFFIX` (see `variant`).                   |
++|-----------|--------------|--------------------------------------------------|
++|           |              |Free-form name that describes variant of this     |
++|           |              |version (usually something like &quot;-debug&quot;, &quot;-      |
++|           |              |optimized&quot; etc. May be empty. SUFFIX is a macro   |
++|variant    |empty         |defined by the preprocessor (as quoted string)    |
++|           |              |that has the form &quot;$version$variant&quot;, i.e.        |
++|           |              |svn1144-debug if version=svn1144 and              |
++|           |              |variant=debug.                                    |
++|-----------|--------------|--------------------------------------------------|
++|           |              |Pass debugging flags to the compiler (generates   |
++|debug      |1             |debugging symbols in binaries), defines YADE_DEBUG|
++|           |              |symbols. Defaults to true.                        |
++|-----------|--------------|--------------------------------------------------|
++|           |              |Defines YADE_CAST (YADE_PTR_CAST) as static_cast  |
++|           |              |(static_pointer_cast) and pass optimization flags |
++|optimize   |0             |to the compiler. Use together with debug to get   |
++|           |              |fast code with debug symbols included. Defaults to|
++|           |              |false.                                            |
++|-----------|--------------|--------------------------------------------------|
++|           |              |Specify where to put the build-0.11.0 directory,  |
++|           |              |which will hold all files created during          |
++|buildPrefix|..            |compilation. This ensures that the source tree    |
++|           |              |remains clean and that different builds (like     |
++|           |              |optimized and debugging) are strictly separated,  |
++|           |              |like build-0.11.0 and build-0.11.0-debug          |
++|-----------|--------------|--------------------------------------------------|
++|           |              |How many compilations should run in parallel.     |
++|jobs       |4             |Defaults to four, if your computer is weak you may|
++|           |              |want a lower number. Equivalent to make -j4       |
++|-----------|--------------|--------------------------------------------------|
++|           |              |C++ compiler you want to use. You can say         |
++|CXX        |g++           |CXX=&quot;distcc g++&quot; to have distributed build, if    |
++|           |              |that is configured.                               |
++|-----------|--------------|--------------------------------------------------|
++|           |              |Additional paths for the c proprocessor           |
++|CPPPATH    |empty         |(whitespace separated). Use it for locally-       |
++|           |              |installed libraries, eg.: CPPPATH=&quot;/usr/local/    |
++|           |              |include /home/fred/build/log4cxx/include&quot;         |
++|-----------|--------------|--------------------------------------------------|
++|LIBPATH    |empty         |Additional paths for linker (whitespace           |
++|           |              |separated).                                       |
++|-----------|--------------|--------------------------------------------------|
++
++To see all the options, along with their default and current values, say `scons -h`.
++As an example, to compile yade I use following command
++
++  scons jobs=10 pretty=0 debug=1 optimize=0 profile=0 CXX=&quot;distcc g++&quot; \
++        PREFIX=/home/janek/YADE useMiniWm3=0 CPPPATH=/usr/include/wm3
++
++The last two options are related to the_wildmagic_3_library. All options are
++stored inside scons.config file, so the next time you compile yade, you can
++really just issue scons command, unless you want to change something.
++
++
++== Automatic library detection ==
++=================================
++
++Scons will attempt detection of necessary libraries on your system at every
++run. If it fails, you can look at the $buildDir/config.log (eg.: ../build-
++0.11.0/config.log) file to see what went wrong. If you have some of the
++dependencies (like lib3dviewer) installed locally in /usr/local, you will have
++to use:
++
++  scons CPPPATH=/usr/local/include/wm3 LIBPATH=/usr/local/lib
++
++so that scons will find it.
++
++
++== Installing the wildmagic 3 library on debian ==
++==================================================
++
++The wildmagic_3.11_library ( <A HREF="http://www.geometrictools.com/Downloads/Downloads.html">http://www.geometrictools.com/Downloads/Downloads.html</A> )
++is used by Lattice Geometrical Model when it's available. It's only to have
++dalaunay triangulation in 2D and 3D during specimen generation.
++Add the following line at the end of your /etc/apt/sources.list:
++
++  deb-src <A HREF="http://geo.hmg.inpg.fr/~smilauer/yade">http://geo.hmg.inpg.fr/~smilauer/yade</A> ./
++
++Then donwload, compile and install wildmagic library:
++
++  sudo apt-get update
++  apt-get source wildmagic
++  sudo apt-get build-dep wildmagic
++  cd wildmagic-3p11/
++  fakeroot debian/rules binary
++  sudo dpkg -i ../wildmagic-dev*.deb
++
++To tell scons that wildmagic is installed you need to add those parameters to
++scons: useMiniWm3=0 CPPPATH=/usr/include/wm3.
++
++
++== Backward compatibility options ==
++====================================
++
++If you have older software installed, you can use:
++
++____________________________Compatibility_options____________________________
++|parameter                     |description                                   |
++|------------------------------|----------------------------------------------|
++|                              |Older versions of libglut do not have function|
++|CXXFLAGS='-DNO_GLUTINIT'      |glutInit(), you should use this compilation   |
++|                              |flag then.                                    |
++|------------------------------|----------------------------------------------|
++|                              |If you are using older QGLViewer (version 2.0)|
++|CXXFLAGS='-DQGLVIEWER20'      |you should use this flag, otherwise you will  |
++|                              |get error about setFileName().                |
++|------------------------------|----------------------------------------------|
++|CXXFLAGS='-pthread&#194; -lpthread'|If you are compiling with gcc3.3 (an older    |
++|                              |compiler).                                    |
++|------------------------------|----------------------------------------------|
++|CXXFLAGS='-fPIC'              |When compiling on AMD64.                      |
++|------------------------------|----------------------------------------------|
++
++You can connect several CXXFLAGS by spaces: CXXFLAGS='-DNO_GLUTINIT -
++DQGLVIEWER20'
++
++
++== Cleaning and uninstalling ==
++===============================
++
++To clean the compilation invoke from yade-0.11.1/:
++
++  scons -c
++
++You can remove the compilation directory of yade, usually located in upper
++directory and starting with name build, like this one:
++
++  rm -rf ../build-0.11.1
++
++If yade was installed manually, the you can delete files from
++
++  /usr/local/lib/yade/
++  /usr/local/include/yade/
++  /usr/local/bin/yade
++
++or from (depending where yade was installed):
++
++  /home/username/YADE/lib/
++  /home/username/YADE/include/
++  /home/username/YADE/bin/yade
++
++If yade was installed from debian package, you can simply remove the package,
++and that's all.
++
++
++==  Install paths ==
++====================
++
++All files installed are versioned so that different versions and variants don't
++clash with each other - you can have as many version as you want installed at
++the same time. Supposing that we have variant=-dbg and version=svn1234 (note
++that $SUFFIX=-$version$variant) and PREFIX=/usr/local, we have
++
++ ____________________________________Paths____________________________________
++|what kind                |path used                |example                  |
++|-------------------------|-------------------------|-------------------------|
++|executable               |$PREFIX/bin/yade$SUFFIX  |/usr/local/bin/yade-     |
++|                         |                         |svn1144-debug            |
++|-------------------------|-------------------------|-------------------------|
++|default plugins          |$PREFIX/lib/yade$SUFFIX/ |/usr/local/lib/yade-     |
++|                         |lib/*/lib*.so            |svn1144-debug/*/lib*.so  |
++|-------------------------|-------------------------|-------------------------|
++|pkg-config script        |$PREFIX/lib/pkgconfig/   |/usr/local/lib/pkgconfig/|
++|                         |yade$SUFFIX              |yade-svn1144-debug.pc    |
++|-------------------------|-------------------------|-------------------------|
++|user configuration       |$HOME/.yade$SUFFIX       |/home/fred/.yade-svn1144-|
++|directory                |                         |debug                    |
++|-------------------------|-------------------------|-------------------------|
++|headers (note: common for|$PREFIX/include/         |/usr/local/include/yade- |
++|a particular version,    |yade$version/yade/*/*.hpp|svn1144/yade/*/*.hpp     |
++|regardless of variant)   |                         |                         |
++|-------------------------|-------------------------|-------------------------|
++
++
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/ForceRecorder.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/ForceRecorder.cpp	2007-07-01 12:01:21 UTC (rev 1220)
++++ trunk/pkg/dem/Engine/StandAloneEngine/ForceRecorder.cpp	2007-07-04 16:20:59 UTC (rev 1221)
+@@ -58,11 +58,14 @@
+ 	
+ 	for( int i = startId ; i &lt;= endId ; ++i )
+ 	{
+-		Vector3r force = YADE_CAST&lt;Force*&gt;(ncb-&gt;physicalActions-&gt;find( i , actionForce-&gt;getClassIndex() ) . get() )-&gt;force;
++		if(ncb-&gt;bodies-&gt;exists(i))
++		{
++			Vector3r force = YADE_CAST&lt;Force*&gt;(ncb-&gt;physicalActions-&gt;find( i , actionForce-&gt;getClassIndex() ) . get() )-&gt;force;
+ 		
+-		x+=force[0];
+-		y+=force[1];
+-		z+=force[2];
++			x+=force[0];
++			y+=force[1];
++			z+=force[2];
++		}
+ 	}
+ 	//cerr &lt;&lt; &quot;record force&quot; &lt;&lt; endl;
+ 	ofile &lt;&lt; lexical_cast&lt;string&gt;(Omega::instance().getSimulationTime()) &lt;&lt; &quot; &quot; 
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000185.html">[Yade-commits] r1220 - in trunk: core extra extra/clump extra/screw	extra/tetra lib/factory
+</A></li>
+	<LI>Next message: <A HREF="000187.html">[Yade-commits] r1222 - tags/yade-0.11.1-rc	tags/yade-0.11.1-rc/extra/clump tags/yade-0.11.1-rc/extra/tetra	tags/yade-0.11.1-rc/pkg/dem/PreProcessor trunk/extra/clump	trunk/extra/screw trunk/extra/tetra
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#186">[ date ]</a>
+              <a href="thread.html#186">[ thread ]</a>
+              <a href="subject.html#186">[ subject ]</a>
+              <a href="author.html#186">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

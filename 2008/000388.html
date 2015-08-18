@@ -1,0 +1,323 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1428 - in trunk: gui/py gui/qt3 scripts
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1428%20-%20in%20trunk%3A%20gui/py%20gui/qt3%20scripts&In-Reply-To=%3C200807142010.m6EKAF5H019837%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000387.html">
+   <LINK REL="Next"  HREF="000389.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1428 - in trunk: gui/py gui/qt3 scripts</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1428%20-%20in%20trunk%3A%20gui/py%20gui/qt3%20scripts&In-Reply-To=%3C200807142010.m6EKAF5H019837%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1428 - in trunk: gui/py gui/qt3 scripts">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Mon Jul 14 22:10:15 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000387.html">[Yade-commits] r1427 - trunk/gui/qt3
+</A></li>
+        <LI>Next message: <A HREF="000389.html">[Yade-commits] r1429 - trunk/pkg/dem
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#388">[ date ]</a>
+              <a href="thread.html#388">[ thread ]</a>
+              <a href="subject.html#388">[ subject ]</a>
+              <a href="author.html#388">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2008-07-14 22:10:14 +0200 (Mon, 14 Jul 2008)
+New Revision: 1428
+
+Modified:
+   trunk/gui/py/utils.py
+   trunk/gui/qt3/GLSimulationPlayerViewer.cpp
+   trunk/gui/qt3/GLSimulationPlayerViewer.hpp
+   trunk/gui/qt3/QtGUI-python.cpp
+   trunk/gui/qt3/YadeQtMainWindow.hpp
+   trunk/scripts/simple-scene-player.py
+Log:
+1. qtCreateVideo creates video from the replay snapshots directly (using gstreamer)
+2. qt.{Player,Generator,Controller} now take an optional bool; if true (_not_ default), they will not return until the requested window will have been created and ready.
+3. runPlayer return wildcard and list of snapshot files now
+4. Adapted simple-scene-player.py to reflect that.
+
+
+Modified: trunk/gui/py/utils.py
+===================================================================
+--- trunk/gui/py/utils.py	2008-07-12 20:17:55 UTC (rev 1427)
++++ trunk/gui/py/utils.py	2008-07-14 20:10:14 UTC (rev 1428)
+@@ -5,9 +5,7 @@
+ # 2008 &#169; V&#225;clav &#352;milauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">eudoxos at arcig.cz</A>&gt;
+ 
+ import math,random
+-
+ from yade.wrapper import *
+-
+ try: # use psyco if available
+ 	import psyco
+ 	psyco.full()
+@@ -157,5 +155,39 @@
+ 		out.write('%g\t%g\t%g\t%g\n'%(b.phys['se3'][0],b.phys['se3'][1],b.phys['se3'][2],b.shape['radius']))
+ 	out.close()
+ 
++def qtCreateVideo(playerDb,out,viewerState,stride,fps=24):
++	&quot;&quot;&quot;Create video by replaying a simulation. Snapshots are taken to temporary files,
++	encoded to a .ogg stream (theora codec); temps are deleted at the end.
+ 
++	If the output file exists already, a ~[number] is appended and the old file is renamed.
+ 
++	playerDb is the database with saved simulation states,
++	out is the output file (like a.ogg), fps is frames-per-second for the video that is created,
++	viewerState and stride are passed to qt.runPlayer (docs in gui/qt3/QtGUI-Python.cpp).
++	
++	You need a display to run this (either virtual, like xvfb, or physical).
++
++	Necessary packages: python-gst0.10 gstreamer0.10-plugins-good python-gobject
++	&quot;&quot;&quot;
++	import pygst,sys,gobject,os
++	pygst.require(&quot;0.10&quot;)
++	import gst
++	from yade import qt
++	qt.Player(True)
++	wildcard,snaps=qt.runPlayer(playerDb,'',viewerState,stride=stride)
++	if(os.path.exists(out)):
++		i=0
++		while(os.path.exists(out+&quot;~%d&quot;%i)): i+=1
++		os.rename(out,out+&quot;~%d&quot;%i); print &quot;Output file `%s' already existed, old file renamed to `%s'&quot;%(out,out+&quot;~%d&quot;%i)
++	print &quot;Encoding video from %s (%d files total) to %s&quot;%(wildcard,len(snaps),out)
++	pipeline=gst.parse_launch('multifilesrc location=&quot;%s&quot; index=0 caps=&quot;image/png,framerate=\(fraction\)%d/1&quot; ! pngdec ! ffmpegcolorspace ! theoraenc sharpness=2 quality=32 ! oggmux ! filesink location=&quot;%s&quot;'%(wildcard,fps,out))
++	bus=pipeline.get_bus()
++	bus.add_signal_watch()
++	mainloop=gobject.MainLoop();
++	bus.connect(&quot;message::eos&quot;,lambda bus,msg: mainloop.quit())
++	pipeline.set_state(gst.STATE_PLAYING)
++	mainloop.run()
++	pipeline.set_state(gst.STATE_NULL); pipeline.get_state()
++	print &quot;Cleaning snapshot files.&quot;
++	for f in snaps: os.remove(f)
++
+
+Modified: trunk/gui/qt3/GLSimulationPlayerViewer.cpp
+===================================================================
+--- trunk/gui/qt3/GLSimulationPlayerViewer.cpp	2008-07-12 20:17:55 UTC (rev 1427)
++++ trunk/gui/qt3/GLSimulationPlayerViewer.cpp	2008-07-14 20:10:14 UTC (rev 1428)
+@@ -71,8 +71,10 @@
+ 			setSnapshotFileName(snapshotsBase+&quot;.png&quot;);
+ 			saveSnapshot(/*automatic*/true,/*overwrite*/ true);
+ 			// mimick qglviewer's algorithm for making snapshot filename
+-			char num[64]; snprintf(num,64,&quot;%04d&quot;,frameNumber);
+-			simPlayer-&gt;pushMessage(lexical_cast&lt;string&gt;(frameNumber)+&quot;/&quot;+lexical_cast&lt;string&gt;(xyzNames.size())+&quot; -&gt; &quot;+snapshotsBase+&quot;-&quot;+num+&quot;.png&quot;);
++			char num[64]; snprintf(num,64,&quot;%.04d&quot;,frameNumber);
++			snapshots.push_back(snapshotsBase+&quot;-&quot;+num+&quot;.png&quot;);
++			simPlayer-&gt;pushMessage(lexical_cast&lt;string&gt;(frameNumber)+&quot;/&quot;+lexical_cast&lt;string&gt;(xyzNames.size())+&quot; -&gt; &quot;+*snapshots.rbegin());
++			//+snapshotsBase+&quot;-&quot;+num+&quot;.png&quot;);
+ 		}
+ 		frameNumber++;
+ 	}
+@@ -153,10 +155,10 @@
+ 		}
+ 	}
+ 	/* Filters */
+-	#warning the following dynamic_cast is not accepted by g++&gt;=4.3&#160;!!
+ 	FOREACH(shared_ptr&lt;Engine&gt; e, Omega::instance().getRootBody()-&gt;engines){
+-		if(dynamic_cast&lt;FilterEngine*&gt;(e.get())) {
+-			filters.push_back(e);
++		shared_ptr&lt;FilterEngine&gt; fe=dynamic_pointer_cast&lt;FilterEngine&gt;(e);
++		if(fe){
++			filters.push_back(fe);
+ 			simPlayer-&gt;pushMessage(&quot;Find filter: &quot;+e-&gt;getClassName());
+ 		}
+ 	}
+
+Modified: trunk/gui/qt3/GLSimulationPlayerViewer.hpp
+===================================================================
+--- trunk/gui/qt3/GLSimulationPlayerViewer.hpp	2008-07-12 20:17:55 UTC (rev 1427)
++++ trunk/gui/qt3/GLSimulationPlayerViewer.hpp	2008-07-14 20:10:14 UTC (rev 1428)
+@@ -29,6 +29,7 @@
+ 		bool useSQLite;
+ 		shared_ptr&lt;sqlite3x::sqlite3_connection&gt; con;
+ 	public:
++		list&lt;string&gt; snapshots;
+ 		QtSimulationPlayer* simPlayer;
+ 		boost::posix_time::ptime lastCheckPointTime;
+ 		long lastCheckPointFrame;
+
+Modified: trunk/gui/qt3/QtGUI-python.cpp
+===================================================================
+--- trunk/gui/qt3/QtGUI-python.cpp	2008-07-12 20:17:55 UTC (rev 1427)
++++ trunk/gui/qt3/QtGUI-python.cpp	2008-07-14 20:10:14 UTC (rev 1428)
+@@ -8,6 +8,13 @@
+ 
+ #include&lt;qapplication.h&gt;
+ 
++#include&lt;cstdio&gt;
++
++#ifdef LOG4CXX
++log4cxx::LoggerPtr logger=log4cxx::Logger::getLogger(&quot;yade.QtGUI-python&quot;);
++#endif
++
++
+ using namespace boost::python;
+ 
+ BASIC_PY_PROXY_HEAD(pyOpenGLRenderingEngine,OpenGLRenderingEngine)
+@@ -20,25 +27,26 @@
+ void Quit(void){ if(YadeQtMainWindow::self) YadeQtMainWindow::self-&gt;Quit(); }
+ pyOpenGLRenderingEngine getRenderer(){return pyOpenGLRenderingEngine(ensuredMainWindow()-&gt;renderer);}
+ 
+-#define POST_SYNTH_EVENT(EVT) void evt##EVT(){QApplication::postEvent(ensuredMainWindow(),new QCustomEvent(YadeQtMainWindow::EVENT_##EVT));}
+-POST_SYNTH_EVENT(PLAYER);
+-POST_SYNTH_EVENT(CONTROLLER);
+-POST_SYNTH_EVENT(VIEW);
+-POST_SYNTH_EVENT(GENERATOR);
++#define POST_SYNTH_EVENT(EVT,checker) void evt##EVT(bool wait=false){QApplication::postEvent(ensuredMainWindow(),new QCustomEvent(YadeQtMainWindow::EVENT_##EVT)); if(wait){while(!(bool)(ensuredMainWindow()-&gt;checker)) usleep(50000);} }
++POST_SYNTH_EVENT(PLAYER,player); BOOST_PYTHON_FUNCTION_OVERLOADS(evtPLAYER_overloads,evtPLAYER,0,1);
++POST_SYNTH_EVENT(CONTROLLER,controller); BOOST_PYTHON_FUNCTION_OVERLOADS(evtCONTROLLER_overloads,evtCONTROLLER,0,1);
++POST_SYNTH_EVENT(GENERATOR,generator); BOOST_PYTHON_FUNCTION_OVERLOADS(evtGENERATOR_overloads,evtGENERATOR,0,1);
++void evtVIEW(){QApplication::postEvent(ensuredMainWindow(),new QCustomEvent(YadeQtMainWindow::EVENT_VIEW)); }
+ 
++
+ /* This function adds the ability to non-interactively run the player. 
++ *
+  * @param savedSim is simulation saved by either SQLiteRecorder (preferrably) or 
+  * is a simulation XML if using PositionOrientationRecorder (beware: must be run from the
+  * same dir if the base xyz snapshot dir is relative.
+  *
+- * @param snapBase is basename for snapshots saved as .png images. It contains both path
+- * and first part of filename, e.g. /tmp/abc will create /tmp/abc-0001.png and so on.
+- *
+  * @param savedQGLState is file with QGLViewer state (camera position, orientation, display 
+  * dimensions etc) saved when running the GLViewer (either in player or during simulation) and
+  * pressing Alt-S; this saves state to /tmp/qglviewerState.xml.
+  *
+  * @param stride is that every stride-th simulation state will be taken
++
++ * @param snapBase is basename for .png snapshots. If ommited, tmpnam generates unique basename.
+  *
+  * This function may be especially useful for offsreen rendering using Xvfb
+  * (install the xvfb package first). Then run
+@@ -55,34 +63,35 @@
+  *  qt.runPlayer('/tmp/aa.sqlite','/tmp/__g','/tmp/qglviewerState.xml',20)
+  *  quit()
+  *
+- *
++ * @returns tuple of (wildcard,[snap0,snap1,snap2,...]), where the list contains filename of snapshots.
+  */
+-void runPlayer(string savedSim,string snapBase,string savedQGLState=&quot;&quot;,int stride=1){
+-	evtPLAYER();
+-	usleep(1000000); // ugly: sleep 1 secs to get the window hopefully ready
+-	cerr&lt;&lt;&quot;.&quot;;
++python::tuple runPlayer(string savedSim,string snapBase=&quot;&quot;,string savedQGLState=&quot;&quot;,int stride=1){
++	evtPLAYER(true); // wait for the window to become ready
+ 	shared_ptr&lt;QtSimulationPlayer&gt; player=ensuredMainWindow()-&gt;player;
+ 	GLSimulationPlayerViewer* glv=player-&gt;glSimulationPlayerViewer;
++	string snapBase2(snapBase);
++	if(snapBase2.empty()){ char tmpnam_str [L_tmpnam]; tmpnam(tmpnam_str); snapBase2=tmpnam_str; }
+ 	glv-&gt;stride=stride;
+ 	glv-&gt;load(savedSim);
+-	cerr&lt;&lt;&quot;:&quot;;
+ 	glv-&gt;saveSnapShots=true;
+-	glv-&gt;snapshotsBase=snapBase;
++	glv-&gt;snapshotsBase=snapBase2;
+ 	if(!savedQGLState.empty()){
+ 		glv-&gt;setStateFileName(savedQGLState);
+ 		glv-&gt;restoreStateFromFile();
+ 		glv-&gt;setStateFileName(QString::null);
+ 	}
+-	cerr&lt;&lt;&quot;!&quot;;
+ 	glv-&gt;startAnimation();
+-	cerr&lt;&lt;&quot;@&quot;;
+-	while(glv-&gt;animationIsStarted()) { usleep(2000000); /*cerr&lt;&lt;&quot;Last msg: &quot;&lt;&lt;*player-&gt;messages.rbegin()&lt;&lt;endl;*/ }
++	while(glv-&gt;animationIsStarted()) { usleep(2000000); LOG_DEBUG(&quot;Last msg: &quot;&lt;&lt;*player-&gt;messages.rbegin()); }
++	python::list snaps; FOREACH(string s, glv-&gt;snapshots){snaps.append(s);}
++	return python::make_tuple(snapBase2+&quot;-%.04d.png&quot;,snaps);
+ }
++
+ BOOST_PYTHON_FUNCTION_OVERLOADS(runPlayer_overloads,runPlayer,2,4);
+ 
+ BOOST_PYTHON_MODULE(qt){
+-	def(&quot;Controller&quot;,evtCONTROLLER);
+-	def(&quot;Player&quot;,evtPLAYER);
++	def(&quot;Generator&quot;,evtGENERATOR,evtGENERATOR_overloads(args(&quot;wait&quot;)));
++	def(&quot;Controller&quot;,evtCONTROLLER,evtCONTROLLER_overloads(args(&quot;wait&quot;)));
++	def(&quot;Player&quot;,evtPLAYER,evtPLAYER_overloads(args(&quot;wait&quot;)));
+ 	def(&quot;View&quot;,evtVIEW);
+ 	def(&quot;center&quot;,centerViews);
+ 	def(&quot;Renderer&quot;,getRenderer);
+
+Modified: trunk/gui/qt3/YadeQtMainWindow.hpp
+===================================================================
+--- trunk/gui/qt3/YadeQtMainWindow.hpp	2008-07-12 20:17:55 UTC (rev 1427)
++++ trunk/gui/qt3/YadeQtMainWindow.hpp	2008-07-14 20:10:14 UTC (rev 1428)
+@@ -38,7 +38,6 @@
+ 		void loadSimulation(string file);
+ 		void redrawAll(bool force=false);
+ 
+-
+ 	protected :
+ 		shared_ptr&lt;QtGUIPreferences&gt; preferences;
+ 		vector&lt;shared_ptr&lt;Factorable&gt; &gt; qtWidgets;
+
+Modified: trunk/scripts/simple-scene-player.py
+===================================================================
+--- trunk/scripts/simple-scene-player.py	2008-07-12 20:17:55 UTC (rev 1427)
++++ trunk/scripts/simple-scene-player.py	2008-07-14 20:10:14 UTC (rev 1428)
+@@ -34,16 +34,17 @@
+ 	###
+ 	### NOTE&#160;these extra engines.
+ 	###
+-	StandAloneEngine('PositionOrientationRecorder',{'interval':100,'saveRgb':True,'outputFile':'/tmp/_simple-scene'}),
+-	StandAloneEngine('SQLiteRecorder',{'recorders':['se3','rgb'],'dbFile':'/tmp/player.sqlite','iterPeriod':100})
++	StandAloneEngine('SQLiteRecorder',{'recorders':['se3','rgb'],'dbFile':'/tmp/player.sqlite','iterPeriod':50})
+ ]
+ from yade import utils
+ o.bodies.append(utils.box(center=[0,0,0],extents=[.5,.5,.5],dynamic=False,color=[1,0,0],young=30e9,poisson=.3,density=2400))
+ o.bodies.append(utils.sphere([0,0,2],1,color=[0,1,0],young=30e9,poisson=.3,density=2400))
+-o.dt=.2*utils.PWaveTimeStep()
++o.dt=.4*utils.PWaveTimeStep()
+ 
+-## load this file with player afterwards!
+-o.save('/tmp/player.xml.bz2')
+-o.run(5000)
++o.run(15000)
+ o.wait()
++
++# you must have saved the viewer state by using Alt-S in the view...
++utils.qtCreateVideo('/tmp/player.sqlite','/tmp/player.ogg','/tmp/qglviewerState.xml',stride=10,fps=12)
++
+ quit()
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000387.html">[Yade-commits] r1427 - trunk/gui/qt3
+</A></li>
+	<LI>Next message: <A HREF="000389.html">[Yade-commits] r1429 - trunk/pkg/dem
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#388">[ date ]</a>
+              <a href="thread.html#388">[ thread ]</a>
+              <a href="subject.html#388">[ subject ]</a>
+              <a href="author.html#388">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

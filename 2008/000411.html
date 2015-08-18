@@ -1,0 +1,1364 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1451 - in trunk: core extra extra/clump	extra/spherical-dem-simulator extra/usct pkg/common	pkg/common/Engine/EngineUnit pkg/dem	pkg/dem/Engine/DeusExMachina pkg/dem/PreProcessor pkg/fem	pkg/fem/PreProcessor pkg/mass-spring	pkg/mass-spring/PreProcessor pkg/realtime-rigidbody	pkg/realtime-rigidbody/PreProcessor
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1451%20-%20in%20trunk%3A%20core%20extra%20extra/clump%0A%09extra/spherical-dem-simulator%20extra/usct%20pkg/common%0A%09pkg/common/Engine/EngineUnit%20pkg/dem%0A%09pkg/dem/Engine/DeusExMachina%20pkg/dem/PreProcessor%20pkg/fem%0A%09pkg/fem/PreProcessor%20pkg/mass-spring%0A%09pkg/mass-spring/PreProcessor%20pkg/realtime-rigidbody%0A%09pkg/realtime-rigidbody/PreProcessor&In-Reply-To=%3C200807271055.m6RAtQD7024830%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000410.html">
+   <LINK REL="Next"  HREF="000412.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1451 - in trunk: core extra extra/clump	extra/spherical-dem-simulator extra/usct pkg/common	pkg/common/Engine/EngineUnit pkg/dem	pkg/dem/Engine/DeusExMachina pkg/dem/PreProcessor pkg/fem	pkg/fem/PreProcessor pkg/mass-spring	pkg/mass-spring/PreProcessor pkg/realtime-rigidbody	pkg/realtime-rigidbody/PreProcessor</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1451%20-%20in%20trunk%3A%20core%20extra%20extra/clump%0A%09extra/spherical-dem-simulator%20extra/usct%20pkg/common%0A%09pkg/common/Engine/EngineUnit%20pkg/dem%0A%09pkg/dem/Engine/DeusExMachina%20pkg/dem/PreProcessor%20pkg/fem%0A%09pkg/fem/PreProcessor%20pkg/mass-spring%0A%09pkg/mass-spring/PreProcessor%20pkg/realtime-rigidbody%0A%09pkg/realtime-rigidbody/PreProcessor&In-Reply-To=%3C200807271055.m6RAtQD7024830%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1451 - in trunk: core extra extra/clump	extra/spherical-dem-simulator extra/usct pkg/common	pkg/common/Engine/EngineUnit pkg/dem	pkg/dem/Engine/DeusExMachina pkg/dem/PreProcessor pkg/fem	pkg/fem/PreProcessor pkg/mass-spring	pkg/mass-spring/PreProcessor pkg/realtime-rigidbody	pkg/realtime-rigidbody/PreProcessor">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Sun Jul 27 12:55:26 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000410.html">[Yade-commits] r1450 - trunk/scripts
+</A></li>
+        <LI>Next message: <A HREF="000412.html">[Yade-commits] r1452 - trunk/gui/py
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#411">[ date ]</a>
+              <a href="thread.html#411">[ thread ]</a>
+              <a href="subject.html#411">[ subject ]</a>
+              <a href="author.html#411">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2008-07-27 12:55:15 +0200 (Sun, 27 Jul 2008)
+New Revision: 1451
+
+Added:
+   trunk/pkg/common/Engine/EngineUnit/CundallNonViscousDamping.cpp
+   trunk/pkg/common/Engine/EngineUnit/CundallNonViscousDamping.hpp
+Removed:
+   trunk/pkg/common/Engine/EngineUnit/CundallNonViscousForceDamping.cpp
+   trunk/pkg/common/Engine/EngineUnit/CundallNonViscousForceDamping.hpp
+   trunk/pkg/common/Engine/EngineUnit/CundallNonViscousMomentumDamping.cpp
+   trunk/pkg/common/Engine/EngineUnit/CundallNonViscousMomentumDamping.hpp
+Modified:
+   trunk/core/Body.hpp
+   trunk/core/PhysicalParameters.hpp
+   trunk/extra/BrefcomTestGen.cpp
+   trunk/extra/SConscript
+   trunk/extra/SimpleScene.cpp
+   trunk/extra/clump/Shop.cpp
+   trunk/extra/spherical-dem-simulator/SphericalDEMSimulator.cpp
+   trunk/extra/usct/UniaxialStrainControlledTest.cpp
+   trunk/extra/usct/UniaxialStrainControlledTest.hpp
+   trunk/pkg/common/Engine/EngineUnit/LeapFrogOrientationIntegrator.cpp
+   trunk/pkg/common/Engine/EngineUnit/LeapFrogPositionIntegrator.cpp
+   trunk/pkg/common/SConscript
+   trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.cpp
+   trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.hpp
+   trunk/pkg/dem/PreProcessor/CohesiveTriaxialTest.cpp
+   trunk/pkg/dem/PreProcessor/DirectShearCis.cpp
+   trunk/pkg/dem/PreProcessor/Funnel.cpp
+   trunk/pkg/dem/PreProcessor/HydraulicTest.cpp
+   trunk/pkg/dem/PreProcessor/ModifiedTriaxialTest.cpp
+   trunk/pkg/dem/PreProcessor/SDECImpactTest.cpp
+   trunk/pkg/dem/PreProcessor/SDECLinkedSpheres.cpp
+   trunk/pkg/dem/PreProcessor/SDECMovingWall.cpp
+   trunk/pkg/dem/PreProcessor/SDECSpheresPlane.cpp
+   trunk/pkg/dem/PreProcessor/STLImporterTest.cpp
+   trunk/pkg/dem/PreProcessor/SnowCreepTest.cpp
+   trunk/pkg/dem/PreProcessor/TetrahedronsTest.cpp
+   trunk/pkg/dem/PreProcessor/ThreePointBending.cpp
+   trunk/pkg/dem/PreProcessor/TriaxialTest.cpp
+   trunk/pkg/dem/PreProcessor/TriaxialTestWater.cpp
+   trunk/pkg/dem/SConscript
+   trunk/pkg/fem/PreProcessor/FEMBeam.cpp
+   trunk/pkg/fem/SConscript
+   trunk/pkg/mass-spring/PreProcessor/HangingCloth.cpp
+   trunk/pkg/mass-spring/SConscript
+   trunk/pkg/realtime-rigidbody/PreProcessor/BoxStack.cpp
+   trunk/pkg/realtime-rigidbody/PreProcessor/RotatingBox.cpp
+   trunk/pkg/realtime-rigidbody/SConscript
+Log:
+1. Add the ability to block individual DOFs on every body in PhysicalParameters and implement relevant code in both NewtonsDampedLaw and LeapFrog integrators
+2. Add that to UniaxialStrainer
+3. Put both CundallNonViscous damping classes in one file (cleanup), adapt all files to that
+
+
+Modified: trunk/core/Body.hpp
+===================================================================
+--- trunk/core/Body.hpp	2008-07-25 11:02:04 UTC (rev 1450)
++++ trunk/core/Body.hpp	2008-07-27 10:55:15 UTC (rev 1451)
+@@ -7,21 +7,17 @@
+ *  This program is free software; it is licensed under the terms of the  *
+ *  GNU General Public License v2 or later. See file LICENSE for details. *
+ *************************************************************************/
++#pragma once
+ 
+-#ifndef BODY_HPP
+-#define BODY_HPP
++#include&lt;iostream&gt;
++#include&quot;GeometricalModel.hpp&quot;
++#include&quot;InteractingGeometry.hpp&quot;
++#include&quot;BoundingVolume.hpp&quot;
++#include&quot;PhysicalParameters.hpp&quot;
++#include&quot;InteractionContainer.hpp&quot;
++#include&quot;Interaction.hpp&quot;
++#include&quot;PhysicalActionContainer.hpp&quot;
+ 
+-#include &lt;iostream&gt;
+-
+-#include &quot;GeometricalModel.hpp&quot;
+-#include &quot;InteractingGeometry.hpp&quot;
+-#include &quot;BoundingVolume.hpp&quot;
+-#include &quot;PhysicalParameters.hpp&quot;
+-#include &quot;InteractionContainer.hpp&quot;
+-#include &quot;Interaction.hpp&quot;
+-#include &quot;PhysicalActionContainer.hpp&quot;
+-
+-
+ #include&lt;yade/lib-base/yadeWm3Extra.hpp&gt;
+ #include&lt;yade/lib-serialization/Serializable.hpp&gt;
+ #include&lt;yade/lib-multimethods/Indexable.hpp&gt;
+@@ -72,7 +68,6 @@
+ 		// only BodyContainer can set the id of a body
+ 		friend class BodyContainer;
+ 
+-		// FIXME - should be private ...
+ 		/// here are stored physical things that describe the Body: mass, stiffness
+ 		shared_ptr&lt;PhysicalParameters&gt;	physicalParameters;
+ 		/// the 'perfect' representation of body's geometry: Polyhedron, Box
+@@ -99,8 +94,4 @@
+ 	REGISTER_CLASS_NAME(Body);
+ 	REGISTER_BASE_CLASS_NAME(Serializable);
+ };
+-
+ REGISTER_SERIALIZABLE(Body,false);
+-
+-#endif // BODY_HPP
+-
+
+Modified: trunk/core/PhysicalParameters.hpp
+===================================================================
+--- trunk/core/PhysicalParameters.hpp	2008-07-25 11:02:04 UTC (rev 1450)
++++ trunk/core/PhysicalParameters.hpp	2008-07-27 10:55:15 UTC (rev 1451)
+@@ -7,20 +7,28 @@
+ #include&lt;yade/lib-multimethods/Indexable.hpp&gt;
+ #include&lt;yade/lib-base/yadeWm3Extra.hpp&gt;
+ 
+-class PhysicalParameters : public Serializable, public Indexable
++class PhysicalParameters: public Serializable, public Indexable
+ {
+ 	public:
+-			PhysicalParameters(): se3(Vector3r(0,0,0),Quaternionr(1,0,0,0)), refSe3(Vector3r(0,0,0),Quaternionr(1,0,0,0)), isDisplayed(true) {}
++			PhysicalParameters(): se3(Vector3r(0,0,0),Quaternionr(1,0,0,0)), refSe3(Vector3r(0,0,0),Quaternionr(1,0,0,0)), isDisplayed(true), blockedDOFs(0) {}
+ 		Se3r se3; //! Se3 of the body in simulation space
+ 
+ 		Se3r refSe3; //! Reference Se3 of body in display space
+ 		// the following two are recomputed at every renderering cycle, no need to save/load them via registerAttributes
+ 		Se3r dispSe3; //! Se3 of body in display space (!=se3 if scaling positions/orientations)
+ 		bool isDisplayed; //! False if the body is not displayed in this cycle (clipped, for instance)
++
++		unsigned blockedDOFs; //! Bitmask for degrees of freedom where velocity will be always zero, regardless of applied forces
++		enum {DOF_NONE=0,DOF_X=1,DOF_Y=2,DOF_Z=4,DOF_RX=8,DOF_RY=16,DOF_RZ=32};
++		static const unsigned DOF_ALL=DOF_X|DOF_Y|DOF_Z|DOF_RX|DOF_RY|DOF_RZ; //! shorthand for all DOFs blocked
++		static const unsigned DOF_XYZ=DOF_X|DOF_Y|DOF_Z; //! shorthand for all displacements blocked
++		static const unsigned DOF_RXRYRZ=DOF_RX|DOF_RY|DOF_RZ; //! shorthand for all rotations blocked
++		static unsigned axisDOF(int axis, bool rotationalDOF=false){return 1&lt;&lt;(axis+(rotationalDOF?3:0));} //! Return DOF_* constant for given axis&#8712;{0,1,2} and rotationalDOF&#8712;{false(default),true}; e.g. axisDOF(0,true)==DOF_RX
+ 	protected :
+ 		void registerAttributes(){
+ 			REGISTER_ATTRIBUTE(se3);
+ 			REGISTER_ATTRIBUTE(refSe3);
++			REGISTER_ATTRIBUTE(blockedDOFs);
+ 		}
+ 	REGISTER_CLASS_NAME(PhysicalParameters);
+ 	REGISTER_BASE_CLASS_NAME(Serializable Indexable);
+
+Modified: trunk/extra/BrefcomTestGen.cpp
+===================================================================
+--- trunk/extra/BrefcomTestGen.cpp	2008-07-25 11:02:04 UTC (rev 1450)
++++ trunk/extra/BrefcomTestGen.cpp	2008-07-27 10:55:15 UTC (rev 1451)
+@@ -51,8 +51,8 @@
+ /*
+ 
+ #include&lt;yade/pkg-common/PhysicalActionDamper.hpp&gt;
+-#include&lt;yade/pkg-common/CundallNonViscousForceDamping.hpp&gt;
+-#include&lt;yade/pkg-common/CundallNonViscousMomentumDamping.hpp&gt;
++#include&lt;yade/pkg-common/CundallNonViscousDamping.hpp&gt;
++#include&lt;yade/pkg-common/CundallNonViscousDamping.hpp&gt;
+ #include&lt;yade/pkg-common/GravityEngines.hpp&gt;
+ 
+ #include&lt;yade/pkg-dem/BodyMacroParameters.hpp&gt;
+
+Modified: trunk/extra/SConscript
+===================================================================
+--- trunk/extra/SConscript	2008-07-25 11:02:04 UTC (rev 1450)
++++ trunk/extra/SConscript	2008-07-27 10:55:15 UTC (rev 1451)
+@@ -15,8 +15,8 @@
+ 		LIBS=env['LIBS']+['yade-base',
+ 			'MacroMicroElasticRelationships',
+ 			'BodyMacroParameters',
+-			'CundallNonViscousMomentumDamping',
+-			'CundallNonViscousForceDamping',
++			'CundallNonViscousDamping',
++			'CundallNonViscousDamping',
+ 			'PhysicalActionDamper',
+ 			'InteractionPhysicsMetaEngine',
+ 			'GravityEngines',
+@@ -63,8 +63,8 @@
+ 			'BodyRedirectionVector',
+ 			'InteractingSphere',
+ 			'InteractingBox',
+-			'CundallNonViscousMomentumDamping',
+-			'CundallNonViscousForceDamping',
++			'CundallNonViscousDamping',
++			'CundallNonViscousDamping',
+ 			'MetaInteractingGeometry',
+ 			'GravityEngines',
+ 			'yade-serialization',
+
+Modified: trunk/extra/SimpleScene.cpp
+===================================================================
+--- trunk/extra/SimpleScene.cpp	2008-07-25 11:02:04 UTC (rev 1450)
++++ trunk/extra/SimpleScene.cpp	2008-07-27 10:55:15 UTC (rev 1451)
+@@ -27,8 +27,8 @@
+ #include&lt;yade/pkg-common/BoundingVolumeMetaEngine.hpp&gt;
+ #include&lt;yade/pkg-common/PhysicalActionDamper.hpp&gt;
+ #include&lt;yade/pkg-common/PhysicalActionApplier.hpp&gt;
+-#include&lt;yade/pkg-common/CundallNonViscousForceDamping.hpp&gt;
+-#include&lt;yade/pkg-common/CundallNonViscousMomentumDamping.hpp&gt;
++#include&lt;yade/pkg-common/CundallNonViscousDamping.hpp&gt;
++#include&lt;yade/pkg-common/CundallNonViscousDamping.hpp&gt;
+ #include&lt;yade/pkg-common/GravityEngines.hpp&gt;
+ #include&lt;yade/pkg-dem/ElasticContactLaw.hpp&gt;
+ #include&lt;yade/pkg-dem/SpheresContactGeometry.hpp&gt;
+
+Modified: trunk/extra/clump/Shop.cpp
+===================================================================
+--- trunk/extra/clump/Shop.cpp	2008-07-25 11:02:04 UTC (rev 1450)
++++ trunk/extra/clump/Shop.cpp	2008-07-27 10:55:15 UTC (rev 1451)
+@@ -54,8 +54,8 @@
+ #include&lt;yade/pkg-common/BoundingVolumeMetaEngine.hpp&gt;
+ #include&lt;yade/pkg-common/PhysicalActionDamper.hpp&gt;
+ #include&lt;yade/pkg-common/PhysicalActionApplier.hpp&gt;
+-#include&lt;yade/pkg-common/CundallNonViscousForceDamping.hpp&gt;
+-#include&lt;yade/pkg-common/CundallNonViscousMomentumDamping.hpp&gt;
++#include&lt;yade/pkg-common/CundallNonViscousDamping.hpp&gt;
++#include&lt;yade/pkg-common/CundallNonViscousDamping.hpp&gt;
+ #include&lt;yade/pkg-common/GravityEngines.hpp&gt;
+ 
+ #include&lt;yade/pkg-dem/BodyMacroParameters.hpp&gt;
+
+Modified: trunk/extra/spherical-dem-simulator/SphericalDEMSimulator.cpp
+===================================================================
+--- trunk/extra/spherical-dem-simulator/SphericalDEMSimulator.cpp	2008-07-25 11:02:04 UTC (rev 1450)
++++ trunk/extra/spherical-dem-simulator/SphericalDEMSimulator.cpp	2008-07-27 10:55:15 UTC (rev 1451)
+@@ -17,8 +17,8 @@
+ #include&lt;yade/pkg-common/GravityEngines.hpp&gt;
+ #include&lt;yade/pkg-common/InteractionPhysicsMetaEngine.hpp&gt;
+ #include&lt;yade/pkg-common/PhysicalActionDamper.hpp&gt;
+-#include&lt;yade/pkg-common/CundallNonViscousForceDamping.hpp&gt;
+-#include&lt;yade/pkg-common/CundallNonViscousMomentumDamping.hpp&gt;
++#include&lt;yade/pkg-common/CundallNonViscousDamping.hpp&gt;
++#include&lt;yade/pkg-common/CundallNonViscousDamping.hpp&gt;
+ 
+ #include&lt;yade/pkg-dem/BodyMacroParameters.hpp&gt;
+ #include&lt;yade/pkg-dem/MacroMicroElasticRelationships.hpp&gt;
+
+Modified: trunk/extra/usct/UniaxialStrainControlledTest.cpp
+===================================================================
+--- trunk/extra/usct/UniaxialStrainControlledTest.cpp	2008-07-25 11:02:04 UTC (rev 1450)
++++ trunk/extra/usct/UniaxialStrainControlledTest.cpp	2008-07-27 10:55:15 UTC (rev 1451)
+@@ -23,8 +23,23 @@
+ 	assert(posIds.size()&gt;0);
+ 	assert(negIds.size()&gt;0);
+ 	posCoords.clear(); negCoords.clear();
+-	FOREACH(body_id_t id,posIds){ const shared_ptr&lt;Body&gt;&amp; b=Body::byId(id); posCoords.push_back(b-&gt;physicalParameters-&gt;se3.position[axis]); b-&gt;isDynamic=false;}
+-	FOREACH(body_id_t id,negIds){ const shared_ptr&lt;Body&gt;&amp; b=Body::byId(id); negCoords.push_back(b-&gt;physicalParameters-&gt;se3.position[axis]); b-&gt;isDynamic=false;}
++	FOREACH(body_id_t id,posIds){ const shared_ptr&lt;Body&gt;&amp; b=Body::byId(id); posCoords.push_back(b-&gt;physicalParameters-&gt;se3.position[axis]);
++		if(blockDisplacements &amp;&amp; blockRotations) b-&gt;isDynamic=false;
++		else{
++			shared_ptr&lt;PhysicalParameters&gt; &amp;pp=b-&gt;physicalParameters;
++			if(!blockDisplacements)pp-&gt;blockedDOFs=PhysicalParameters::axisDOF(axis); else pp-&gt;blockedDOFs=PhysicalParameters::DOF_XYZ;
++			if(blockRotations) pp-&gt;blockedDOFs|=PhysicalParameters::DOF_RXRYRZ;
++		}
++	}
++	FOREACH(body_id_t id,negIds){ const shared_ptr&lt;Body&gt;&amp; b=Body::byId(id); negCoords.push_back(b-&gt;physicalParameters-&gt;se3.position[axis]);
++		if(blockDisplacements &amp;&amp; blockRotations) b-&gt;isDynamic=false;
++		else{
++			shared_ptr&lt;PhysicalParameters&gt; &amp;pp=b-&gt;physicalParameters;
++			if(!blockDisplacements)pp-&gt;blockedDOFs=PhysicalParameters::axisDOF(axis); else pp-&gt;blockedDOFs=PhysicalParameters::DOF_XYZ;
++			if(blockRotations) pp-&gt;blockedDOFs|=PhysicalParameters::DOF_RXRYRZ;
++		}
++	}
++
+ 	assert(posIds.size()==posCoords.size() &amp;&amp; negIds.size()==negCoords.size());
+ 
+ 	originalLength=axisCoord(posIds[0])-axisCoord(negIds[0]);
+@@ -244,13 +259,6 @@
+ 		}
+ 	}
+ 
+-#if 0
+-	/* clump spheres together if requested */
+-	if(clumped){
+-		shared_ptr&lt;Clump&gt; clump=shared_ptr&lt;Clump&gt;(new Clump());
+-		shared_ptr&lt;Body&gt; clumpAsBody(static_pointer_cast&lt;Body&gt;(clump));
+-	}
+-#endif
+ 	return true;
+ }
+ 
+@@ -285,8 +293,8 @@
+ #include&lt;yade/pkg-dem/PositionOrientationRecorder.hpp&gt;
+ #include&lt;yade/pkg-dem/GlobalStiffnessTimeStepper.hpp&gt;
+ #include&lt;yade/pkg-common/PhysicalActionDamper.hpp&gt;
+-#include&lt;yade/pkg-common/CundallNonViscousForceDamping.hpp&gt;
+-#include&lt;yade/pkg-common/CundallNonViscousMomentumDamping.hpp&gt;
++#include&lt;yade/pkg-common/CundallNonViscousDamping.hpp&gt;
++#include&lt;yade/pkg-common/CundallNonViscousDamping.hpp&gt;
+ 
+ 
+ 
+
+Modified: trunk/extra/usct/UniaxialStrainControlledTest.hpp
+===================================================================
+--- trunk/extra/usct/UniaxialStrainControlledTest.hpp	2008-07-25 11:02:04 UTC (rev 1450)
++++ trunk/extra/usct/UniaxialStrainControlledTest.hpp	2008-07-27 10:55:15 UTC (rev 1451)
+@@ -96,11 +96,11 @@
+ 		int axis;
+ 		//! If 0, straining is symmetric for negIds and posIds; for 1 (or -1), only posIds are strained and negIds don't move (or vice versa)
+ 		int asymmetry;
++		//! Whether displacement of boundary bodies perpendicular to the strained axis are blocked of are free
++		bool blockDisplacements;
++		//! Whether rotations of boundary bodies are blocked.
++		bool blockRotations;
+ 
+-		/** currently unused: would make posIds and negIds as clumps, which would then be moved as rigid whole;
+-		 * that is practically the case now, since transversal displacemenets do not happen
+-		 * since posIds and negIds are not dynamic */
+-		bool clumped;
+ 		/** bodies on which straining will be applied (on the positive and negative side of axis) */
+ 		vector&lt;body_id_t&gt; posIds, negIds;
+ 		/** coordinates of pos/neg bodies in the direction of axis */
+@@ -118,7 +118,7 @@
+ 		Real strain, avgStress, avgTransStrain;
+ 
+ 		virtual void applyCondition(MetaBody* rootBody);
+-		UniaxialStrainer(){axis=2; asymmetry=0; currentStrainRate=0; originalLength=-1; limitStrain=0; notYetReversed=true; crossSectionArea=-1; needsInit=true; clumped=false; sensorsPusher=shared_ptr&lt;UniaxialStrainSensorPusher&gt;(); recordFile=&quot;/tmp/usct.data&quot;; strain=avgStress=avgTransStrain=0; };
++		UniaxialStrainer(){axis=2; asymmetry=0; currentStrainRate=0; originalLength=-1; limitStrain=0; notYetReversed=true; crossSectionArea=-1; needsInit=true; sensorsPusher=shared_ptr&lt;UniaxialStrainSensorPusher&gt;(); recordFile=&quot;/tmp/usct.data&quot;; strain=avgStress=avgTransStrain=0; blockRotations=false; blockDisplacements=false;};
+ 		virtual ~UniaxialStrainer(){};
+ 		void registerAttributes(){
+ 			DeusExMachina::registerAttributes();
+@@ -139,6 +139,8 @@
+ 			REGISTER_ATTRIBUTE(strain);
+ 			REGISTER_ATTRIBUTE(avgStress);
+ 			REGISTER_ATTRIBUTE(avgTransStrain);
++			REGISTER_ATTRIBUTE(blockDisplacements);
++			REGISTER_ATTRIBUTE(blockRotations);
+ 		}
+ 		void prepareRecStream(void){ if(recordFile!=&quot;&quot;) recStream.open(recordFile.c_str()); }
+ 		void postProcessAttributes(bool deserializing){ if(deserializing) prepareRecStream(); } 	
+
+Added: trunk/pkg/common/Engine/EngineUnit/CundallNonViscousDamping.cpp
+===================================================================
+--- trunk/pkg/common/Engine/EngineUnit/CundallNonViscousDamping.cpp	2008-07-25 11:02:04 UTC (rev 1450)
++++ trunk/pkg/common/Engine/EngineUnit/CundallNonViscousDamping.cpp	2008-07-27 10:55:15 UTC (rev 1451)
+@@ -0,0 +1,45 @@
++// &#169; 2004 Janek Kozicki &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">cosurgi at berlios.de</A>&gt;
++
++#include&lt;yade/pkg-common/ParticleParameters.hpp&gt;
++#include&lt;yade/pkg-common/RigidBodyParameters.hpp&gt;
++#include&lt;yade/pkg-common/Force.hpp&gt;
++#include&lt;yade/pkg-common/Momentum.hpp&gt;
++#include&quot;CundallNonViscousDamping.hpp&quot;
++
++YADE_PLUGIN(&quot;CundallNonViscousForceDamping&quot;,&quot;CundallNonViscousMomentumDamping&quot;);
++
++// this is Cundall non-viscous local damping, applied to force (Force)
++void CundallNonViscousForceDamping::go(    const shared_ptr&lt;PhysicalAction&gt;&amp; a
++						, const shared_ptr&lt;PhysicalParameters&gt;&amp; b
++						, const Body* body)
++{
++	if(body-&gt;isClump()) return;
++	Force * af = static_cast&lt;Force*&gt;(a.get());
++	ParticleParameters * p = static_cast&lt;ParticleParameters*&gt;(b.get());
++	
++	for (int i=0; i&lt;3; ++i)
++	{
++		af-&gt;force[i] *= 1 - damping*Mathr::Sign(af-&gt;force[i]*p-&gt;velocity[i]);	
++	}
++}
++
++// this is Cundall non-viscous local damping, applied to momentum (Momentum)
++void CundallNonViscousMomentumDamping::go( 	  const shared_ptr&lt;PhysicalAction&gt;&amp; a
++						, const shared_ptr&lt;PhysicalParameters&gt;&amp; b
++						, const Body* body)
++{
++	if(body-&gt;isClump()) return;
++	Momentum * am = static_cast&lt;Momentum*&gt;(a.get());
++	RigidBodyParameters * rb = static_cast&lt;RigidBodyParameters*&gt;(b.get());
++	
++	Vector3r&amp; m  = am-&gt;momentum;
++	
++	for (int i=0; i&lt;3; ++i){
++		m[i] *= 1 - damping*Mathr::Sign(m[i]*rb-&gt;angularVelocity[i]);	
++	}
++}
++
++
++
++
++
+
+Added: trunk/pkg/common/Engine/EngineUnit/CundallNonViscousDamping.hpp
+===================================================================
+--- trunk/pkg/common/Engine/EngineUnit/CundallNonViscousDamping.hpp	2008-07-25 11:02:04 UTC (rev 1450)
++++ trunk/pkg/common/Engine/EngineUnit/CundallNonViscousDamping.hpp	2008-07-27 10:55:15 UTC (rev 1451)
+@@ -0,0 +1,39 @@
++// &#169; 2004 Janek Kozicki &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">cosurgi at berlios.de</A>&gt;
++#pragma once
++#include&lt;yade/pkg-common/PhysicalActionDamperUnit.hpp&gt;
++
++class CundallNonViscousForceDamping : public PhysicalActionDamperUnit{
++	public:
++		Real damping;
++		CundallNonViscousForceDamping(): damping(0){};
++		virtual void go(const shared_ptr&lt;PhysicalAction&gt;&amp;, const shared_ptr&lt;PhysicalParameters&gt;&amp; , const Body*);
++	protected:
++		virtual void registerAttributes(){
++			PhysicalActionDamperUnit::registerAttributes();
++			REGISTER_ATTRIBUTE(damping);
++		}
++	NEEDS_BEX(&quot;Force&quot;);
++	FUNCTOR2D(Force,ParticleParameters);
++	REGISTER_CLASS_NAME(CundallNonViscousForceDamping);
++	REGISTER_BASE_CLASS_NAME(PhysicalActionDamperUnit);
++};
++REGISTER_SERIALIZABLE(CundallNonViscousForceDamping,false);
++
++class CundallNonViscousMomentumDamping : public PhysicalActionDamperUnit{
++	public:
++		Real damping;
++		CundallNonViscousMomentumDamping(): damping(0){};
++		virtual void go(const shared_ptr&lt;PhysicalAction&gt;&amp;, const shared_ptr&lt;PhysicalParameters&gt;&amp;, const Body*);
++	protected:
++		 virtual void registerAttributes(){
++			PhysicalActionDamperUnit::registerAttributes();
++			REGISTER_ATTRIBUTE(damping);
++		 }
++	NEEDS_BEX(&quot;Momentum&quot;);
++	FUNCTOR2D(Momentum,RigidBodyParameters);
++	REGISTER_CLASS_NAME(CundallNonViscousMomentumDamping);
++	REGISTER_BASE_CLASS_NAME(PhysicalActionDamperUnit);
++};
++REGISTER_SERIALIZABLE(CundallNonViscousMomentumDamping,false);
++
++
+
+Deleted: trunk/pkg/common/Engine/EngineUnit/CundallNonViscousForceDamping.cpp
+===================================================================
+--- trunk/pkg/common/Engine/EngineUnit/CundallNonViscousForceDamping.cpp	2008-07-25 11:02:04 UTC (rev 1450)
++++ trunk/pkg/common/Engine/EngineUnit/CundallNonViscousForceDamping.cpp	2008-07-27 10:55:15 UTC (rev 1451)
+@@ -1,44 +0,0 @@
+-/*************************************************************************
+-*  Copyright (C) 2004 by Janek Kozicki                                   *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">cosurgi at berlios.de</A>                                                    *
+-*                                                                        *
+-*  This program is free software; it is licensed under the terms of the  *
+-*  GNU General Public License v2 or later. See file LICENSE for details. *
+-*************************************************************************/
+-
+-#include&lt;yade/pkg-common/ParticleParameters.hpp&gt;
+-#include&lt;yade/pkg-common/Force.hpp&gt;
+-#include&quot;CundallNonViscousForceDamping.hpp&quot;
+-
+-
+-CundallNonViscousForceDamping::CundallNonViscousForceDamping() : damping(0)
+-{
+-}
+-
+-
+-void CundallNonViscousForceDamping::registerAttributes()
+-{
+-	PhysicalActionDamperUnit::registerAttributes();
+-	REGISTER_ATTRIBUTE(damping);
+-}
+-
+-
+-// this is Cundall non-viscous local damping, applied to force (Force)
+-
+-void CundallNonViscousForceDamping::go(    const shared_ptr&lt;PhysicalAction&gt;&amp; a
+-						, const shared_ptr&lt;PhysicalParameters&gt;&amp; b
+-						, const Body* body)
+-{
+-	if(body-&gt;isClump()) return;
+-	Force * af = static_cast&lt;Force*&gt;(a.get());
+-	ParticleParameters * p = static_cast&lt;ParticleParameters*&gt;(b.get());
+-	
+-	for (int i=0; i&lt;3; ++i)
+-	{
+-		af-&gt;force[i] *= 1 - damping*Mathr::Sign(af-&gt;force[i]*p-&gt;velocity[i]);	
+-	}
+-	
+-}
+-
+-
+-YADE_PLUGIN();
+
+Deleted: trunk/pkg/common/Engine/EngineUnit/CundallNonViscousForceDamping.hpp
+===================================================================
+--- trunk/pkg/common/Engine/EngineUnit/CundallNonViscousForceDamping.hpp	2008-07-25 11:02:04 UTC (rev 1450)
++++ trunk/pkg/common/Engine/EngineUnit/CundallNonViscousForceDamping.hpp	2008-07-27 10:55:15 UTC (rev 1451)
+@@ -1,36 +0,0 @@
+-/*************************************************************************
+-*  Copyright (C) 2004 by Janek Kozicki                                   *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">cosurgi at berlios.de</A>                                                    *
+-*                                                                        *
+-*  This program is free software; it is licensed under the terms of the  *
+-*  GNU General Public License v2 or later. See file LICENSE for details. *
+-*************************************************************************/
+-
+-#ifndef ACTION_FORCE_DAMPING_HPP
+-#define ACTION_FORCE_DAMPING_HPP
+-
+-#include&lt;yade/pkg-common/PhysicalActionDamperUnit.hpp&gt;
+-
+-class CundallNonViscousForceDamping : public PhysicalActionDamperUnit
+-{
+-	public :
+-		Real	damping;
+-
+-		CundallNonViscousForceDamping();
+-	
+-		virtual void go( 	  const shared_ptr&lt;PhysicalAction&gt;&amp;
+-					, const shared_ptr&lt;PhysicalParameters&gt;&amp;
+-					, const Body*);
+-	
+-	protected :
+-		virtual void registerAttributes();
+-
+-	NEEDS_BEX(&quot;Force&quot;);
+-	FUNCTOR2D(Force,ParticleParameters);
+-	REGISTER_CLASS_NAME(CundallNonViscousForceDamping);
+-	REGISTER_BASE_CLASS_NAME(PhysicalActionDamperUnit);
+-};
+-
+-REGISTER_SERIALIZABLE(CundallNonViscousForceDamping,false);
+-
+-#endif // ACTION_FORCE_DAMPING_HPP
+
+Deleted: trunk/pkg/common/Engine/EngineUnit/CundallNonViscousMomentumDamping.cpp
+===================================================================
+--- trunk/pkg/common/Engine/EngineUnit/CundallNonViscousMomentumDamping.cpp	2008-07-25 11:02:04 UTC (rev 1450)
++++ trunk/pkg/common/Engine/EngineUnit/CundallNonViscousMomentumDamping.cpp	2008-07-27 10:55:15 UTC (rev 1451)
+@@ -1,49 +0,0 @@
+-/*************************************************************************
+-*  Copyright (C) 2004 by Janek Kozicki                                   *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">cosurgi at berlios.de</A>                                                    *
+-*                                                                        *
+-*  This program is free software; it is licensed under the terms of the  *
+-*  GNU General Public License v2 or later. See file LICENSE for details. *
+-*************************************************************************/
+-
+-#include&quot;CundallNonViscousMomentumDamping.hpp&quot;
+-#include&lt;yade/pkg-common/RigidBodyParameters.hpp&gt;
+-#include&lt;yade/pkg-common/Momentum.hpp&gt;
+-
+-
+-CundallNonViscousMomentumDamping::CundallNonViscousMomentumDamping() : damping(0)
+-{
+-}
+-
+-
+-void CundallNonViscousMomentumDamping::registerAttributes()
+-{
+-	PhysicalActionDamperUnit::registerAttributes();
+-	REGISTER_ATTRIBUTE(damping);
+-}
+-
+-
+-// this is Cundall non-viscous local damping, applied to momentum (Momentum)
+-
+-void CundallNonViscousMomentumDamping::go( 	  const shared_ptr&lt;PhysicalAction&gt;&amp; a
+-						, const shared_ptr&lt;PhysicalParameters&gt;&amp; b
+-						, const Body* body)
+-{
+-	if(body-&gt;isClump()) return;
+-	Momentum * am = static_cast&lt;Momentum*&gt;(a.get());
+-	RigidBodyParameters * rb = static_cast&lt;RigidBodyParameters*&gt;(b.get());
+-	
+-	Vector3r&amp; m  = am-&gt;momentum;
+-	
+-	
+-	for (int i=0; i&lt;3; ++i)
+-	{
+-		m[i] *= 1 - damping*Mathr::Sign(m[i]*rb-&gt;angularVelocity[i]);	
+-	}
+-	
+-		
+-
+-}
+-
+-
+-YADE_PLUGIN();
+
+Deleted: trunk/pkg/common/Engine/EngineUnit/CundallNonViscousMomentumDamping.hpp
+===================================================================
+--- trunk/pkg/common/Engine/EngineUnit/CundallNonViscousMomentumDamping.hpp	2008-07-25 11:02:04 UTC (rev 1450)
++++ trunk/pkg/common/Engine/EngineUnit/CundallNonViscousMomentumDamping.hpp	2008-07-27 10:55:15 UTC (rev 1451)
+@@ -1,36 +0,0 @@
+-/*************************************************************************
+-*  Copyright (C) 2004 by Janek Kozicki                                   *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">cosurgi at berlios.de</A>                                                    *
+-*                                                                        *
+-*  This program is free software; it is licensed under the terms of the  *
+-*  GNU General Public License v2 or later. See file LICENSE for details. *
+-*************************************************************************/
+-
+-#ifndef ACTION_MOMENTUM_DAMPING_HPP
+-#define ACTION_MOMENTUM_DAMPING_HPP
+-
+-#include&lt;yade/pkg-common/PhysicalActionDamperUnit.hpp&gt;
+-
+-class CundallNonViscousMomentumDamping : public PhysicalActionDamperUnit
+-{
+-	public :
+-		Real	damping;
+-
+-		CundallNonViscousMomentumDamping();
+-	
+-		virtual void go( 	  const shared_ptr&lt;PhysicalAction&gt;&amp;
+-					, const shared_ptr&lt;PhysicalParameters&gt;&amp;
+-					, const Body*);
+-	
+-	protected :
+-		 virtual void registerAttributes();
+-
+-	NEEDS_BEX(&quot;Momentum&quot;);
+-	FUNCTOR2D(Momentum,RigidBodyParameters);
+-	REGISTER_CLASS_NAME(CundallNonViscousMomentumDamping);
+-	REGISTER_BASE_CLASS_NAME(PhysicalActionDamperUnit);
+-};
+-
+-REGISTER_SERIALIZABLE(CundallNonViscousMomentumDamping,false);
+-
+-#endif // ACTION_MOMENTUM_DAMPING_HPP
+
+Modified: trunk/pkg/common/Engine/EngineUnit/LeapFrogOrientationIntegrator.cpp
+===================================================================
+--- trunk/pkg/common/Engine/EngineUnit/LeapFrogOrientationIntegrator.cpp	2008-07-25 11:02:04 UTC (rev 1450)
++++ trunk/pkg/common/Engine/EngineUnit/LeapFrogOrientationIntegrator.cpp	2008-07-27 10:55:15 UTC (rev 1451)
+@@ -37,7 +37,12 @@
+ 	Real angle = axis.Normalize();
+ 	Quaternionr q;
+ 	q.FromAxisAngle(axis,angle*dt);
+-	rb-&gt;se3.orientation = q*rb-&gt;se3.orientation;
++	if(rb-&gt;blockedDOFs==0) rb-&gt;se3.orientation = q*rb-&gt;se3.orientation;
++	else{
++		if((rb-&gt;blockedDOFs &amp; PhysicalParameters::DOF_RX)==0) rb-&gt;angularVelocity[0]+=dt*rb-&gt;angularAcceleration[0];
++		if((rb-&gt;blockedDOFs &amp; PhysicalParameters::DOF_RY)==0) rb-&gt;angularVelocity[1]+=dt*rb-&gt;angularAcceleration[1];
++		if((rb-&gt;blockedDOFs &amp; PhysicalParameters::DOF_RZ)==0) rb-&gt;angularVelocity[2]+=dt*rb-&gt;angularAcceleration[2];
++	}
+ 	rb-&gt;se3.orientation.Normalize();
+ 
+ // 	firsts[id] = false;
+
+Modified: trunk/pkg/common/Engine/EngineUnit/LeapFrogPositionIntegrator.cpp
+===================================================================
+--- trunk/pkg/common/Engine/EngineUnit/LeapFrogPositionIntegrator.cpp	2008-07-25 11:02:04 UTC (rev 1450)
++++ trunk/pkg/common/Engine/EngineUnit/LeapFrogPositionIntegrator.cpp	2008-07-27 10:55:15 UTC (rev 1451)
+@@ -33,7 +33,12 @@
+ // 	if (!firsts[id])
+ // 		p-&gt;velocity = prevVelocities[id]+((Real)0.5)*dt*p-&gt;acceleration;
+ 
+-	p-&gt;velocity = p-&gt;velocity+dt*p-&gt;acceleration;
++	if(p-&gt;blockedDOFs==0) p-&gt;velocity = p-&gt;velocity+dt*p-&gt;acceleration;
++	else{
++		if((p-&gt;blockedDOFs &amp; PhysicalParameters::DOF_X)==0) p-&gt;velocity[0]+=dt*p-&gt;acceleration[0];
++		if((p-&gt;blockedDOFs &amp; PhysicalParameters::DOF_Y)==0) p-&gt;velocity[1]+=dt*p-&gt;acceleration[1];
++		if((p-&gt;blockedDOFs &amp; PhysicalParameters::DOF_Z)==0) p-&gt;velocity[2]+=dt*p-&gt;acceleration[2];
++	}
+ 	p-&gt;se3.position += p-&gt;velocity*dt;
+ 
+ 	//cerr&lt;&lt;&quot;#&quot;&lt;&lt;body-&gt;getId()&lt;&lt;&quot;dx=&quot;&lt;&lt;prevVelocities[id]*dt&lt;&lt;endl;
+
+Modified: trunk/pkg/common/SConscript
+===================================================================
+--- trunk/pkg/common/SConscript	2008-07-25 11:02:04 UTC (rev 1450)
++++ trunk/pkg/common/SConscript	2008-07-27 10:55:15 UTC (rev 1451)
+@@ -101,11 +101,9 @@
+ 		LIBS=env['LIBS']+['PhysicalActionApplier','Momentum','RigidBodyParameters',]),
+ 	env.SharedLibrary('InteractingSphere2AABB',['Engine/EngineUnit/InteractingSphere2AABB.cpp'],
+ 		LIBS=env['LIBS']+['BoundingVolumeMetaEngine','InteractingSphere','AABB']),
+-	env.SharedLibrary('CundallNonViscousForceDamping',
+-		['Engine/EngineUnit/CundallNonViscousForceDamping.cpp'],
+-		LIBS=env['LIBS']+['PhysicalActionDamper','Force','ParticleParameters']),
+-	env.SharedLibrary('CundallNonViscousMomentumDamping',['Engine/EngineUnit/CundallNonViscousMomentumDamping.cpp'],
+-		LIBS=env['LIBS']+['PhysicalActionDamper','Momentum','RigidBodyParameters']),
++	env.SharedLibrary('CundallNonViscousDamping',
++		['Engine/EngineUnit/CundallNonViscousDamping.cpp'],
++		LIBS=env['LIBS']+['PhysicalActionDamper','Force','Momentum','ParticleParameters','RigidBodyParameters']),
+ 	env.SharedLibrary('ElasticBodySimpleRelationship',['Engine/EngineUnit/ElasticBodySimpleRelationship.cpp'],
+ 		LIBS=env['LIBS']+['ElasticBodyParameters','SimpleElasticInteraction','RigidBodyParameters','ParticleParameters','InteractionPhysicsMetaEngine']),
+ 
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.cpp	2008-07-25 11:02:04 UTC (rev 1450)
++++ trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.cpp	2008-07-27 10:55:15 UTC (rev 1451)
+@@ -6,13 +6,14 @@
+ *  GNU General Public License v2 or later. See file LICENSE for details. *
+ *************************************************************************/
+ 
+-#include &quot;NewtonsDampedLaw.hpp&quot;
++#include&quot;NewtonsDampedLaw.hpp&quot;
+ #include&lt;yade/core/MetaBody.hpp&gt;
+-#include &lt;yade/pkg-common/RigidBodyParameters.hpp&gt;
+-#include &lt;yade/pkg-common/Momentum.hpp&gt;
+-#include &lt;yade/pkg-common/Force.hpp&gt;
++#include&lt;yade/pkg-common/RigidBodyParameters.hpp&gt;
++#include&lt;yade/pkg-common/Momentum.hpp&gt;
++#include&lt;yade/pkg-common/Force.hpp&gt;
+ #include&lt;yade/lib-base/yadeWm3Extra.hpp&gt;
+ 
++YADE_PLUGIN(&quot;NewtonsDampedLaw&quot;);
+ 
+ void NewtonsDampedLaw::registerAttributes()
+ {
+@@ -30,27 +31,16 @@
+ 
+ void NewtonsDampedLaw::applyCondition ( MetaBody * ncb )
+ {
+-	shared_ptr&lt;BodyContainer&gt;&amp; bodies = ncb-&gt;bodies;
+-	BodyContainer::iterator bi    = bodies-&gt;begin();
+-	BodyContainer::iterator biEnd = bodies-&gt;end();
+-	for ( ; bi!=biEnd ; ++bi )
+-	{
+-
+-		const shared_ptr&lt;Body&gt;&amp; b = *bi;
+-
++	FOREACH(const shared_ptr&lt;Body&gt;&amp; b, *ncb-&gt;bodies){
+ 		if (!b-&gt;isDynamic) continue;
+ 		
+-		RigidBodyParameters * rb = YADE_CAST&lt;RigidBodyParameters*&gt; ( b-&gt;physicalParameters.get() );
++		RigidBodyParameters* rb = YADE_CAST&lt;RigidBodyParameters*&gt;(b-&gt;physicalParameters.get());
+ 		unsigned int id = b-&gt;getId();
+ 		Vector3r&amp; m = ( static_cast&lt;Momentum*&gt; ( ncb-&gt;physicalActions-&gt;find ( id, momentumClassIndex ).get() ) )-&gt;momentum;
+ 		Vector3r&amp; f = ( static_cast&lt;Force*&gt; ( ncb-&gt;physicalActions-&gt;find ( id, forceClassIndex ).get() ) )-&gt;force;
+ 
+ 		Real dt = Omega::instance().getTimeStep();
+ 
+-		
+-
+-
+-
+ 		//Newtons mometum law :
+ 		if ( b-&gt;isStandalone() ) rb-&gt;angularAcceleration=diagDiv ( m,rb-&gt;inertia );
+ 		else if ( b-&gt;isClump() ) rb-&gt;angularAcceleration+=diagDiv ( m,rb-&gt;inertia );
+@@ -91,10 +81,18 @@
+ 				rb-&gt;acceleration[i] *= 1 - damping*Mathr::Sign ( f[i]*(rb-&gt;velocity[i] + (Real) 0.5 *dt*rb-&gt;acceleration[i]) );
+ 			}
+ 		}
++		if(rb-&gt;blockedDOFs==0){ /* same as: rb-&gt;blockedDOFs==PhysicalParameters::DOF_NONE */
++			rb-&gt;angularVelocity=rb-&gt;angularVelocity+dt*rb-&gt;angularAcceleration;
++			rb-&gt;velocity=rb-&gt;velocity+dt*rb-&gt;acceleration;
++		} else {
++			if((rb-&gt;blockedDOFs &amp; PhysicalParameters::DOF_X)==0) rb-&gt;velocity[0]+=dt*rb-&gt;acceleration[0];
++			if((rb-&gt;blockedDOFs &amp; PhysicalParameters::DOF_Y)==0) rb-&gt;velocity[1]+=dt*rb-&gt;acceleration[1];
++			if((rb-&gt;blockedDOFs &amp; PhysicalParameters::DOF_Z)==0) rb-&gt;velocity[2]+=dt*rb-&gt;acceleration[2];
++			if((rb-&gt;blockedDOFs &amp; PhysicalParameters::DOF_RX)==0) rb-&gt;angularVelocity[0]+=dt*rb-&gt;angularAcceleration[0];
++			if((rb-&gt;blockedDOFs &amp; PhysicalParameters::DOF_RY)==0) rb-&gt;angularVelocity[1]+=dt*rb-&gt;angularAcceleration[1];
++			if((rb-&gt;blockedDOFs &amp; PhysicalParameters::DOF_RZ)==0) rb-&gt;angularVelocity[2]+=dt*rb-&gt;angularAcceleration[2];
++		}
+ 
+-		rb-&gt;angularVelocity = rb-&gt;angularVelocity+ dt*rb-&gt;angularAcceleration;
+-		rb-&gt;velocity = rb-&gt;velocity+ dt*rb-&gt;acceleration;
+-
+ 		Vector3r axis = rb-&gt;angularVelocity;
+ 		Real angle = axis.Normalize();
+ 		Quaternionr q;
+@@ -102,7 +100,6 @@
+ 		rb-&gt;se3.orientation = q*rb-&gt;se3.orientation;
+ 		rb-&gt;se3.orientation.Normalize();
+ 
+-
+ 		rb-&gt;se3.position += rb-&gt;velocity*dt;
+ 	}
+ }
+@@ -119,4 +116,3 @@
+ [16:09:44] eudoxos2: }*/
+ 
+ 
+-YADE_PLUGIN();
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.hpp	2008-07-25 11:02:04 UTC (rev 1450)
++++ trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.hpp	2008-07-27 10:55:15 UTC (rev 1451)
+@@ -5,14 +5,11 @@
+ *  This program is free software; it is licensed under the terms of the  *
+ *  GNU General Public License v2 or later. See file LICENSE for details. *
+ *************************************************************************/
++#pragma once
+ 
+-#ifndef NEWTONSDAMPEDLAW_HPP
+-#define NEWTONSDAMPEDLAW_HPP
++#include&lt;yade/core/DeusExMachina.hpp&gt;
++#include&lt;Wm3Vector3.h&gt;
+ 
+-#include &lt;yade/core/DeusExMachina.hpp&gt;
+-#include &lt;Wm3Vector3.h&gt;
+-
+-
+ /*! An engine that can replace the usual series of engines used for integrating the laws of motion.
+ 
+ This engine is faster because it uses less loops and less dispatching 
+@@ -58,5 +55,3 @@
+ 
+ REGISTER_SERIALIZABLE(NewtonsDampedLaw,false);
+ 
+-#endif // NEWTONSFORCELAW_HPP
+-
+
+Modified: trunk/pkg/dem/PreProcessor/CohesiveTriaxialTest.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/CohesiveTriaxialTest.cpp	2008-07-25 11:02:04 UTC (rev 1450)
++++ trunk/pkg/dem/PreProcessor/CohesiveTriaxialTest.cpp	2008-07-27 10:55:15 UTC (rev 1451)
+@@ -46,8 +46,8 @@
+ #include&lt;yade/pkg-dem/InteractingBox2InteractingSphere4SpheresContactGeometry.hpp&gt;
+ #include&lt;yade/pkg-common/PhysicalActionApplier.hpp&gt;
+ #include&lt;yade/pkg-common/PhysicalActionDamper.hpp&gt;
+-#include&lt;yade/pkg-common/CundallNonViscousForceDamping.hpp&gt;
+-#include&lt;yade/pkg-common/CundallNonViscousMomentumDamping.hpp&gt;
++#include&lt;yade/pkg-common/CundallNonViscousDamping.hpp&gt;
++#include&lt;yade/pkg-common/CundallNonViscousDamping.hpp&gt;
+ 
+ #include&lt;yade/pkg-common/InteractionGeometryMetaEngine.hpp&gt;
+ #include&lt;yade/pkg-common/InteractionPhysicsMetaEngine.hpp&gt;
+
+Modified: trunk/pkg/dem/PreProcessor/DirectShearCis.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/DirectShearCis.cpp	2008-07-25 11:02:04 UTC (rev 1450)
++++ trunk/pkg/dem/PreProcessor/DirectShearCis.cpp	2008-07-27 10:55:15 UTC (rev 1451)
+@@ -46,8 +46,8 @@
+ #include&lt;yade/pkg-common/PhysicalActionDamper.hpp&gt;
+ #include&lt;yade/pkg-common/PhysicalActionApplier.hpp&gt;
+ 
+-#include&lt;yade/pkg-common/CundallNonViscousForceDamping.hpp&gt;
+-#include&lt;yade/pkg-common/CundallNonViscousMomentumDamping.hpp&gt;
++#include&lt;yade/pkg-common/CundallNonViscousDamping.hpp&gt;
++#include&lt;yade/pkg-common/CundallNonViscousDamping.hpp&gt;
+ #include&lt;yade/pkg-common/GravityEngines.hpp&gt;
+ #include&lt;yade/pkg-common/CinemCisEngine.hpp&gt;
+ 
+
+Modified: trunk/pkg/dem/PreProcessor/Funnel.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/Funnel.cpp	2008-07-25 11:02:04 UTC (rev 1450)
++++ trunk/pkg/dem/PreProcessor/Funnel.cpp	2008-07-27 10:55:15 UTC (rev 1451)
+@@ -33,8 +33,8 @@
+ #include&lt;yade/pkg-common/PhysicalActionDamper.hpp&gt;
+ #include&lt;yade/pkg-common/PhysicalActionApplier.hpp&gt;
+ 
+-#include&lt;yade/pkg-common/CundallNonViscousForceDamping.hpp&gt;
+-#include&lt;yade/pkg-common/CundallNonViscousMomentumDamping.hpp&gt;
++#include&lt;yade/pkg-common/CundallNonViscousDamping.hpp&gt;
++#include&lt;yade/pkg-common/CundallNonViscousDamping.hpp&gt;
+ #include&lt;yade/pkg-common/GravityEngines.hpp&gt;
+ 
+ #include&lt;yade/pkg-common/InteractionGeometryMetaEngine.hpp&gt;
+
+Modified: trunk/pkg/dem/PreProcessor/HydraulicTest.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/HydraulicTest.cpp	2008-07-25 11:02:04 UTC (rev 1450)
++++ trunk/pkg/dem/PreProcessor/HydraulicTest.cpp	2008-07-27 10:55:15 UTC (rev 1451)
+@@ -35,8 +35,8 @@
+ 
+ #include&lt;yade/pkg-common/PhysicalActionDamper.hpp&gt;
+ #include&lt;yade/pkg-common/PhysicalActionApplier.hpp&gt;
+-#include&lt;yade/pkg-common/CundallNonViscousForceDamping.hpp&gt;
+-#include&lt;yade/pkg-common/CundallNonViscousMomentumDamping.hpp&gt;
++#include&lt;yade/pkg-common/CundallNonViscousDamping.hpp&gt;
++#include&lt;yade/pkg-common/CundallNonViscousDamping.hpp&gt;
+ #include&lt;yade/pkg-common/GravityEngines.hpp&gt;
+ 
+ #include&lt;yade/pkg-common/InteractionGeometryMetaEngine.hpp&gt;
+
+Modified: trunk/pkg/dem/PreProcessor/ModifiedTriaxialTest.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/ModifiedTriaxialTest.cpp	2008-07-25 11:02:04 UTC (rev 1450)
++++ trunk/pkg/dem/PreProcessor/ModifiedTriaxialTest.cpp	2008-07-27 10:55:15 UTC (rev 1451)
+@@ -45,8 +45,8 @@
+ #include&lt;yade/pkg-common/MakeItFlat.hpp&gt;
+ #include&lt;yade/pkg-common/PhysicalActionApplier.hpp&gt;
+ #include&lt;yade/pkg-common/PhysicalActionDamper.hpp&gt;
+-#include&lt;yade/pkg-common/CundallNonViscousForceDamping.hpp&gt;
+-#include&lt;yade/pkg-common/CundallNonViscousMomentumDamping.hpp&gt;
++#include&lt;yade/pkg-common/CundallNonViscousDamping.hpp&gt;
++#include&lt;yade/pkg-common/CundallNonViscousDamping.hpp&gt;
+ 
+ #include&lt;yade/pkg-common/InteractionGeometryMetaEngine.hpp&gt;
+ #include&lt;yade/pkg-common/InteractionPhysicsMetaEngine.hpp&gt;
+
+Modified: trunk/pkg/dem/PreProcessor/SDECImpactTest.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/SDECImpactTest.cpp	2008-07-25 11:02:04 UTC (rev 1450)
++++ trunk/pkg/dem/PreProcessor/SDECImpactTest.cpp	2008-07-27 10:55:15 UTC (rev 1451)
+@@ -36,8 +36,8 @@
+ #include&lt;yade/pkg-common/GravityEngines.hpp&gt;
+ #include&lt;yade/pkg-common/PhysicalActionApplier.hpp&gt;
+ #include&lt;yade/pkg-common/PhysicalActionDamper.hpp&gt;
+-#include&lt;yade/pkg-common/CundallNonViscousForceDamping.hpp&gt;
+-#include&lt;yade/pkg-common/CundallNonViscousMomentumDamping.hpp&gt;
++#include&lt;yade/pkg-common/CundallNonViscousDamping.hpp&gt;
++#include&lt;yade/pkg-common/CundallNonViscousDamping.hpp&gt;
+ 
+ #include&lt;yade/pkg-common/InteractionGeometryMetaEngine.hpp&gt;
+ #include&lt;yade/pkg-common/InteractionPhysicsMetaEngine.hpp&gt;
+
+Modified: trunk/pkg/dem/PreProcessor/SDECLinkedSpheres.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/SDECLinkedSpheres.cpp	2008-07-25 11:02:04 UTC (rev 1450)
++++ trunk/pkg/dem/PreProcessor/SDECLinkedSpheres.cpp	2008-07-27 10:55:15 UTC (rev 1451)
+@@ -38,8 +38,8 @@
+ 
+ #include&lt;yade/pkg-common/PhysicalActionDamper.hpp&gt;
+ #include&lt;yade/pkg-common/PhysicalActionApplier.hpp&gt;
+-#include&lt;yade/pkg-common/CundallNonViscousForceDamping.hpp&gt;
+-#include&lt;yade/pkg-common/CundallNonViscousMomentumDamping.hpp&gt;
++#include&lt;yade/pkg-common/CundallNonViscousDamping.hpp&gt;
++#include&lt;yade/pkg-common/CundallNonViscousDamping.hpp&gt;
+ #include&lt;yade/pkg-common/GravityEngines.hpp&gt;
+ 
+ #include&lt;yade/pkg-common/InteractionGeometryMetaEngine.hpp&gt;
+
+Modified: trunk/pkg/dem/PreProcessor/SDECMovingWall.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/SDECMovingWall.cpp	2008-07-25 11:02:04 UTC (rev 1450)
++++ trunk/pkg/dem/PreProcessor/SDECMovingWall.cpp	2008-07-27 10:55:15 UTC (rev 1451)
+@@ -36,8 +36,8 @@
+ #include&lt;yade/pkg-common/PhysicalActionDamper.hpp&gt;
+ #include&lt;yade/pkg-common/PhysicalActionApplier.hpp&gt;
+ 
+-#include&lt;yade/pkg-common/CundallNonViscousForceDamping.hpp&gt;
+-#include&lt;yade/pkg-common/CundallNonViscousMomentumDamping.hpp&gt;
++#include&lt;yade/pkg-common/CundallNonViscousDamping.hpp&gt;
++#include&lt;yade/pkg-common/CundallNonViscousDamping.hpp&gt;
+ #include&lt;yade/pkg-common/GravityEngines.hpp&gt;
+ 
+ #include&lt;yade/pkg-common/TranslationEngine.hpp&gt;
+
+Modified: trunk/pkg/dem/PreProcessor/SDECSpheresPlane.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/SDECSpheresPlane.cpp	2008-07-25 11:02:04 UTC (rev 1450)
++++ trunk/pkg/dem/PreProcessor/SDECSpheresPlane.cpp	2008-07-27 10:55:15 UTC (rev 1451)
+@@ -37,8 +37,8 @@
+ #include&lt;yade/pkg-common/PhysicalActionDamper.hpp&gt;
+ #include&lt;yade/pkg-common/PhysicalActionApplier.hpp&gt;
+ 
+-#include&lt;yade/pkg-common/CundallNonViscousForceDamping.hpp&gt;
+-#include&lt;yade/pkg-common/CundallNonViscousMomentumDamping.hpp&gt;
++#include&lt;yade/pkg-common/CundallNonViscousDamping.hpp&gt;
++#include&lt;yade/pkg-common/CundallNonViscousDamping.hpp&gt;
+ #include&lt;yade/pkg-common/GravityEngines.hpp&gt;
+ 
+ #include&lt;yade/pkg-common/InteractionGeometryMetaEngine.hpp&gt;
+
+Modified: trunk/pkg/dem/PreProcessor/STLImporterTest.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/STLImporterTest.cpp	2008-07-25 11:02:04 UTC (rev 1450)
++++ trunk/pkg/dem/PreProcessor/STLImporterTest.cpp	2008-07-27 10:55:15 UTC (rev 1451)
+@@ -16,8 +16,8 @@
+ #include&lt;yade/pkg-common/AABB.hpp&gt;
+ #include&lt;yade/pkg-common/BodyRedirectionVector.hpp&gt;
+ #include&lt;yade/pkg-common/BoundingVolumeMetaEngine.hpp&gt;
+-#include&lt;yade/pkg-common/CundallNonViscousForceDamping.hpp&gt;
+-#include&lt;yade/pkg-common/CundallNonViscousMomentumDamping.hpp&gt;
++#include&lt;yade/pkg-common/CundallNonViscousDamping.hpp&gt;
++#include&lt;yade/pkg-common/CundallNonViscousDamping.hpp&gt;
+ #include&lt;yade/pkg-common/GravityEngines.hpp&gt;
+ #include&lt;yade/pkg-common/InteractingSphere.hpp&gt;
+ #include&lt;yade/pkg-common/InteractionGeometryMetaEngine.hpp&gt;
+
+Modified: trunk/pkg/dem/PreProcessor/SnowCreepTest.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/SnowCreepTest.cpp	2008-07-25 11:02:04 UTC (rev 1450)
++++ trunk/pkg/dem/PreProcessor/SnowCreepTest.cpp	2008-07-27 10:55:15 UTC (rev 1451)
+@@ -46,8 +46,8 @@
+ #include&lt;yade/pkg-dem/InteractingBox2InteractingSphere4SpheresContactGeometry.hpp&gt;
+ #include&lt;yade/pkg-common/PhysicalActionApplier.hpp&gt;
+ #include&lt;yade/pkg-common/PhysicalActionDamper.hpp&gt;
+-#include&lt;yade/pkg-common/CundallNonViscousForceDamping.hpp&gt;
+-#include&lt;yade/pkg-common/CundallNonViscousMomentumDamping.hpp&gt;
++#include&lt;yade/pkg-common/CundallNonViscousDamping.hpp&gt;
++#include&lt;yade/pkg-common/CundallNonViscousDamping.hpp&gt;
+ 
+ #include&lt;yade/pkg-common/InteractionGeometryMetaEngine.hpp&gt;
+ #include&lt;yade/pkg-common/InteractionPhysicsMetaEngine.hpp&gt;
+
+Modified: trunk/pkg/dem/PreProcessor/TetrahedronsTest.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/TetrahedronsTest.cpp	2008-07-25 11:02:04 UTC (rev 1450)
++++ trunk/pkg/dem/PreProcessor/TetrahedronsTest.cpp	2008-07-27 10:55:15 UTC (rev 1451)
+@@ -35,8 +35,8 @@
+ #include&lt;yade/pkg-common/PhysicalActionDamper.hpp&gt;
+ #include&lt;yade/pkg-common/PhysicalActionApplier.hpp&gt;
+ 
+-#include&lt;yade/pkg-common/CundallNonViscousForceDamping.hpp&gt;
+-#include&lt;yade/pkg-common/CundallNonViscousMomentumDamping.hpp&gt;
++#include&lt;yade/pkg-common/CundallNonViscousDamping.hpp&gt;
++#include&lt;yade/pkg-common/CundallNonViscousDamping.hpp&gt;
+ #include&lt;yade/pkg-common/GravityEngines.hpp&gt;
+ 
+ #include&lt;yade/pkg-common/InteractingGeometryMetaEngine.hpp&gt;
+
+Modified: trunk/pkg/dem/PreProcessor/ThreePointBending.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/ThreePointBending.cpp	2008-07-25 11:02:04 UTC (rev 1450)
++++ trunk/pkg/dem/PreProcessor/ThreePointBending.cpp	2008-07-27 10:55:15 UTC (rev 1451)
+@@ -37,8 +37,8 @@
+ 
+ #include&lt;yade/pkg-common/PhysicalActionDamper.hpp&gt;
+ #include&lt;yade/pkg-common/PhysicalActionApplier.hpp&gt;
+-#include&lt;yade/pkg-common/CundallNonViscousForceDamping.hpp&gt;
+-#include&lt;yade/pkg-common/CundallNonViscousMomentumDamping.hpp&gt;
++#include&lt;yade/pkg-common/CundallNonViscousDamping.hpp&gt;
++#include&lt;yade/pkg-common/CundallNonViscousDamping.hpp&gt;
+ #include&lt;yade/pkg-common/GravityEngines.hpp&gt;
+ 
+ #include&lt;yade/pkg-common/InteractionGeometryMetaEngine.hpp&gt;
+
+Modified: trunk/pkg/dem/PreProcessor/TriaxialTest.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/TriaxialTest.cpp	2008-07-25 11:02:04 UTC (rev 1450)
++++ trunk/pkg/dem/PreProcessor/TriaxialTest.cpp	2008-07-27 10:55:15 UTC (rev 1451)
+@@ -47,8 +47,8 @@
+ #include&lt;yade/pkg-common/GravityEngines.hpp&gt;
+ #include&lt;yade/pkg-common/PhysicalActionApplier.hpp&gt;
+ #include&lt;yade/pkg-common/PhysicalActionDamper.hpp&gt;
+-#include&lt;yade/pkg-common/CundallNonViscousForceDamping.hpp&gt;
+-#include&lt;yade/pkg-common/CundallNonViscousMomentumDamping.hpp&gt;
++#include&lt;yade/pkg-common/CundallNonViscousDamping.hpp&gt;
++#include&lt;yade/pkg-common/CundallNonViscousDamping.hpp&gt;
+ #include&lt;yade/pkg-dem/NewtonsDampedLaw.hpp&gt;
+ 
+ #include&lt;yade/pkg-common/InteractionGeometryMetaEngine.hpp&gt;
+
+Modified: trunk/pkg/dem/PreProcessor/TriaxialTestWater.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/TriaxialTestWater.cpp	2008-07-25 11:02:04 UTC (rev 1450)
++++ trunk/pkg/dem/PreProcessor/TriaxialTestWater.cpp	2008-07-27 10:55:15 UTC (rev 1451)
+@@ -44,8 +44,8 @@
+ #include &lt;yade/pkg-common/GravityEngines.hpp&gt;
+ #include &lt;yade/pkg-common/PhysicalActionApplier.hpp&gt;
+ #include &lt;yade/pkg-common/PhysicalActionDamper.hpp&gt;
+-#include &lt;yade/pkg-common/CundallNonViscousForceDamping.hpp&gt;
+-#include &lt;yade/pkg-common/CundallNonViscousMomentumDamping.hpp&gt;
++#include &lt;yade/pkg-common/CundallNonViscousDamping.hpp&gt;
++#include &lt;yade/pkg-common/CundallNonViscousDamping.hpp&gt;
+ 
+ #include &lt;yade/pkg-common/InteractionGeometryMetaEngine.hpp&gt;
+ #include &lt;yade/pkg-common/InteractionPhysicsMetaEngine.hpp&gt;
+
+Modified: trunk/pkg/dem/SConscript
+===================================================================
+--- trunk/pkg/dem/SConscript	2008-07-25 11:02:04 UTC (rev 1450)
++++ trunk/pkg/dem/SConscript	2008-07-27 10:55:15 UTC (rev 1451)
+@@ -392,8 +392,8 @@
+ 			'BodyRedirectionVector',
+ 			'InteractingSphere',
+ 			'InteractingBox',
+-			'CundallNonViscousMomentumDamping',
+-			'CundallNonViscousForceDamping',
++			'CundallNonViscousDamping',
++			'CundallNonViscousDamping',
+ 			'MetaInteractingGeometry',
+ 			'GravityEngines',
+ 			'yade-serialization',
+@@ -430,8 +430,8 @@
+ 			'yade-base',
+ 			'InteractingSphere',
+ 			'InteractingBox',
+-			'CundallNonViscousMomentumDamping',
+-			'CundallNonViscousForceDamping',
++			'CundallNonViscousDamping',
++			'CundallNonViscousDamping',
+ 			'MetaInteractingGeometry',
+ 			'GravityEngines',
+ 			'yade-serialization',
+@@ -468,8 +468,8 @@
+ 			'BodyRedirectionVector',
+ 			'InteractingSphere',
+ 			'InteractingBox',
+-			'CundallNonViscousMomentumDamping',
+-			'CundallNonViscousForceDamping',
++			'CundallNonViscousDamping',
++			'CundallNonViscousDamping',
+ 			'MetaInteractingGeometry',
+ 			'GravityEngines',
+ 			'CinemCisEngine',
+@@ -504,8 +504,8 @@
+ 			'BodyRedirectionVector',
+ 			'InteractingSphere',
+ 			'InteractingBox',
+-			'CundallNonViscousMomentumDamping',
+-			'CundallNonViscousForceDamping',
++			'CundallNonViscousDamping',
++			'CundallNonViscousDamping',
+ 			'MetaInteractingGeometry',
+ 			'GravityEngines',
+ 			'yade-serialization',
+@@ -539,8 +539,8 @@
+ 			'BodyRedirectionVector',
+ 			'InteractingSphere',
+ 			'InteractingBox',
+-			'CundallNonViscousMomentumDamping',
+-			'CundallNonViscousForceDamping',
++			'CundallNonViscousDamping',
++			'CundallNonViscousDamping',
+ 			'MetaInteractingGeometry',
+ 			'GravityEngines',
+ 			'yade-serialization',
+@@ -573,8 +573,8 @@
+ 			'BodyRedirectionVector',
+ 			'InteractingSphere',
+ 			'InteractingBox',
+-			'CundallNonViscousMomentumDamping',
+-			'CundallNonViscousForceDamping',
++			'CundallNonViscousDamping',
++			'CundallNonViscousDamping',
+ 			'MetaInteractingGeometry',
+ 			'GravityEngines',
+ 			'TranslationEngine',
+@@ -607,8 +607,8 @@
+ 			'InteractingMyTetrahedron',
+ 			'InteractingSphere',
+ 			'InteractingBox',
+-			'CundallNonViscousMomentumDamping',
+-			'CundallNonViscousForceDamping',
++			'CundallNonViscousDamping',
++			'CundallNonViscousDamping',
+ 			'MetaInteractingGeometry',
+ 			'GravityEngines',
+ 			'PhysicalActionContainerInitializer',
+@@ -693,8 +693,8 @@
+ 			'InteractingBox',
+ 			'InteractingSphere2InteractingSphere4DistantSpheresContactGeometry',
+ 			'InteractingBox2InteractingSphere4SpheresContactGeometry',
+-			'CundallNonViscousMomentumDamping',
+-			'CundallNonViscousForceDamping',
++			'CundallNonViscousDamping',
++			'CundallNonViscousDamping',
+ 			'MetaInteractingGeometry',
+ 			'GravityEngines',
+ 			'yade-serialization',
+@@ -741,8 +741,8 @@
+ 			'InteractingBox',
+ 			'InteractingSphere2InteractingSphere4DistantSpheresContactGeometry',
+ 			'InteractingBox2InteractingSphere4SpheresContactGeometry',
+-			'CundallNonViscousMomentumDamping',
+-			'CundallNonViscousForceDamping',
++			'CundallNonViscousDamping',
++			'CundallNonViscousDamping',
+ 			'MetaInteractingGeometry',
+ 			'GravityEngines',
+ 			'yade-serialization',
+@@ -784,8 +784,8 @@
+ 			'BodyRedirectionVector',
+ 			'InteractingSphere',
+ 			'InteractingBox',
+-			'CundallNonViscousMomentumDamping',
+-			'CundallNonViscousForceDamping',
++			'CundallNonViscousDamping',
++			'CundallNonViscousDamping',
+ 			'MetaInteractingGeometry',
+ 			'GravityEngines',
+ 			'yade-serialization',
+@@ -857,8 +857,8 @@
+         BodyRedirectionVector
+         InteractingSphere
+         InteractingBox
+-        CundallNonViscousMomentumDamping
+-        CundallNonViscousForceDamping
++        CundallNonViscousDamping
++        CundallNonViscousDamping
+         MetaInteractingGeometry
+         GravityEngines
+         yade-serialization
+@@ -980,8 +980,8 @@
+ 			'BodyRedirectionVector',
+ 			'InteractingSphere',
+ 			'InteractingBox',
+-			'CundallNonViscousMomentumDamping',
+-			'CundallNonViscousForceDamping',
++			'CundallNonViscousDamping',
++			'CundallNonViscousDamping',
+ 			'MetaInteractingGeometry',
+ 			'GravityEngines',
+ 			'yade-serialization',
+@@ -1094,8 +1094,8 @@
+ 				,'STLImporter'
+ 				,'BodyRedirectionVector'
+ 				,'BoundingVolumeMetaEngine'
+-				,'CundallNonViscousForceDamping'
+-				,'CundallNonViscousMomentumDamping'
++				,'CundallNonViscousDamping'
++				,'CundallNonViscousDamping'
+ 				,'ElasticContactLaw'
+ 				,'ElasticCriterionTimeStepper'
+ 				,'Facet'
+
+Modified: trunk/pkg/fem/PreProcessor/FEMBeam.cpp
+===================================================================
+--- trunk/pkg/fem/PreProcessor/FEMBeam.cpp	2008-07-25 11:02:04 UTC (rev 1450)
++++ trunk/pkg/fem/PreProcessor/FEMBeam.cpp	2008-07-27 10:55:15 UTC (rev 1451)
+@@ -24,8 +24,8 @@
+ #include&lt;yade/pkg-common/MetaInteractingGeometry.hpp&gt;
+ 
+ // engines
+-#include&lt;yade/pkg-common/CundallNonViscousMomentumDamping.hpp&gt;
+-#include&lt;yade/pkg-common/CundallNonViscousForceDamping.hpp&gt;
++#include&lt;yade/pkg-common/CundallNonViscousDamping.hpp&gt;
++#include&lt;yade/pkg-common/CundallNonViscousDamping.hpp&gt;
+ #include&lt;yade/pkg-common/PhysicalActionContainerInitializer.hpp&gt;
+ #include&lt;yade/pkg-common/PhysicalActionContainerReseter.hpp&gt;
+ #include&lt;yade/pkg-common/GravityEngines.hpp&gt;
+
+Modified: trunk/pkg/fem/SConscript
+===================================================================
+--- trunk/pkg/fem/SConscript	2008-07-25 11:02:04 UTC (rev 1450)
++++ trunk/pkg/fem/SConscript	2008-07-27 10:55:15 UTC (rev 1451)
+@@ -112,8 +112,8 @@
+ 			'PhysicalActionVectorVector',
+ 			'InteractionVecSet',
+ 			'BodyRedirectionVector',
+-			'CundallNonViscousMomentumDamping',
+-			'CundallNonViscousForceDamping',
++			'CundallNonViscousDamping',
++			'CundallNonViscousDamping',
+ 			'MetaInteractingGeometry',
+ 			'GravityEngines',
+ 			'yade-serialization',
+
+Modified: trunk/pkg/mass-spring/PreProcessor/HangingCloth.cpp
+===================================================================
+--- trunk/pkg/mass-spring/PreProcessor/HangingCloth.cpp	2008-07-25 11:02:04 UTC (rev 1450)
++++ trunk/pkg/mass-spring/PreProcessor/HangingCloth.cpp	2008-07-27 10:55:15 UTC (rev 1451)
+@@ -33,8 +33,8 @@
+ #include&lt;yade/pkg-common/PhysicalActionApplier.hpp&gt;
+ #include&lt;yade/pkg-common/PhysicalActionDamper.hpp&gt;
+ 
+-#include&lt;yade/pkg-common/CundallNonViscousForceDamping.hpp&gt;
+-#include&lt;yade/pkg-common/CundallNonViscousMomentumDamping.hpp&gt;
++#include&lt;yade/pkg-common/CundallNonViscousDamping.hpp&gt;
++#include&lt;yade/pkg-common/CundallNonViscousDamping.hpp&gt;
+ 
+ #include&lt;yade/pkg-common/BoundingVolumeMetaEngine.hpp&gt;
+ #include&lt;yade/pkg-common/GeometricalModelMetaEngine.hpp&gt;
+
+Modified: trunk/pkg/mass-spring/SConscript
+===================================================================
+--- trunk/pkg/mass-spring/SConscript	2008-07-25 11:02:04 UTC (rev 1450)
++++ trunk/pkg/mass-spring/SConscript	2008-07-27 10:55:15 UTC (rev 1451)
+@@ -47,8 +47,8 @@
+ 			'InteractingSphere',
+ 			'InteractingBox',
+ 			'SDECLinkPhysics',
+-			'CundallNonViscousMomentumDamping',
+-			'CundallNonViscousForceDamping',
++			'CundallNonViscousDamping',
++			'CundallNonViscousDamping',
+ 			'MacroMicroElasticRelationships',
+ 			'yade-serialization',
+ 			'yade-base',
+
+Modified: trunk/pkg/realtime-rigidbody/PreProcessor/BoxStack.cpp
+===================================================================
+--- trunk/pkg/realtime-rigidbody/PreProcessor/BoxStack.cpp	2008-07-25 11:02:04 UTC (rev 1450)
++++ trunk/pkg/realtime-rigidbody/PreProcessor/BoxStack.cpp	2008-07-27 10:55:15 UTC (rev 1451)
+@@ -28,8 +28,8 @@
+ #include&lt;yade/pkg-common/PhysicalActionApplier.hpp&gt;
+ 
+ #include&lt;yade/pkg-common/PhysicalActionContainerReseter.hpp&gt;
+-#include&lt;yade/pkg-common/CundallNonViscousForceDamping.hpp&gt;
+-#include&lt;yade/pkg-common/CundallNonViscousMomentumDamping.hpp&gt;
++#include&lt;yade/pkg-common/CundallNonViscousDamping.hpp&gt;
++#include&lt;yade/pkg-common/CundallNonViscousDamping.hpp&gt;
+ 
+ #include&lt;yade/pkg-common/BoundingVolumeMetaEngine.hpp&gt;
+ #include&lt;yade/pkg-common/MetaInteractingGeometry2AABB.hpp&gt;
+
+Modified: trunk/pkg/realtime-rigidbody/PreProcessor/RotatingBox.cpp
+===================================================================
+--- trunk/pkg/realtime-rigidbody/PreProcessor/RotatingBox.cpp	2008-07-25 11:02:04 UTC (rev 1450)
++++ trunk/pkg/realtime-rigidbody/PreProcessor/RotatingBox.cpp	2008-07-27 10:55:15 UTC (rev 1451)
+@@ -22,8 +22,8 @@
+ #include&lt;yade/pkg-common/InteractingBox.hpp&gt;
+ #include&lt;yade/pkg-common/InteractingSphere.hpp&gt;
+ #include&lt;yade/pkg-common/InteractionGeometryMetaEngine.hpp&gt;
+-#include&lt;yade/pkg-common/CundallNonViscousForceDamping.hpp&gt;
+-#include&lt;yade/pkg-common/CundallNonViscousMomentumDamping.hpp&gt;
++#include&lt;yade/pkg-common/CundallNonViscousDamping.hpp&gt;
++#include&lt;yade/pkg-common/CundallNonViscousDamping.hpp&gt;
+ #include&lt;yade/pkg-common/PhysicalActionContainerReseter.hpp&gt;
+ #include&lt;yade/pkg-common/PhysicalActionContainerInitializer.hpp&gt;
+ 
+
+Modified: trunk/pkg/realtime-rigidbody/SConscript
+===================================================================
+--- trunk/pkg/realtime-rigidbody/SConscript	2008-07-25 11:02:04 UTC (rev 1450)
++++ trunk/pkg/realtime-rigidbody/SConscript	2008-07-27 10:55:15 UTC (rev 1451)
+@@ -51,8 +51,8 @@
+ 			'BodyRedirectionVector',
+ 			'InteractingSphere',
+ 			'InteractingBox',
+-			'CundallNonViscousMomentumDamping',
+-			'CundallNonViscousForceDamping',
++			'CundallNonViscousDamping',
++			'CundallNonViscousDamping',
+ 			'GravityEngines',
+ 			'yade-serialization',
+ 			'PhysicalActionContainerInitializer',
+@@ -80,8 +80,8 @@
+ 			'PhysicalActionVectorVector',
+ 			'InteractingSphere',
+ 			'InteractingBox',
+-			'CundallNonViscousForceDamping',
+-			'CundallNonViscousMomentumDamping',
++			'CundallNonViscousDamping',
++			'CundallNonViscousDamping',
+ 			'MetaInteractingGeometry',
+ 			'yade-serialization',
+ 			'PhysicalActionContainerInitializer',
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000410.html">[Yade-commits] r1450 - trunk/scripts
+</A></li>
+	<LI>Next message: <A HREF="000412.html">[Yade-commits] r1452 - trunk/gui/py
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#411">[ date ]</a>
+              <a href="thread.html#411">[ thread ]</a>
+              <a href="subject.html#411">[ subject ]</a>
+              <a href="author.html#411">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

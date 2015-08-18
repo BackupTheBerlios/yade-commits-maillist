@@ -1,0 +1,687 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1377 - in trunk: core gui gui/py	pkg/common/Engine/StandAloneEngine
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1377%20-%20in%20trunk%3A%20core%20gui%20gui/py%0A%09pkg/common/Engine/StandAloneEngine&In-Reply-To=%3C200806061144.m56BioIO002921%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000337.html">
+   <LINK REL="Next"  HREF="000339.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1377 - in trunk: core gui gui/py	pkg/common/Engine/StandAloneEngine</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1377%20-%20in%20trunk%3A%20core%20gui%20gui/py%0A%09pkg/common/Engine/StandAloneEngine&In-Reply-To=%3C200806061144.m56BioIO002921%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1377 - in trunk: core gui gui/py	pkg/common/Engine/StandAloneEngine">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Fri Jun  6 13:44:50 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000337.html">[Yade-commits] r1376 - branches/przewdnik/core/concurrent
+</A></li>
+        <LI>Next message: <A HREF="000339.html">[Yade-commits] r1378 - in branches/dorofeenko: . core doc gui/py	lib/import pkg/common pkg/common/DataClass/PhysicalParameters	pkg/common/Engine/DeusExMachina pkg/common/Engine/StandAloneEngine	pkg/dem/Engine/DeusExMachina pkg/dem/Engine/EngineUnit	pkg/dem/Engine/StandAloneEngine	pkg/dem/RenderingEngine/GLDrawElasticContactInteraction
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#338">[ date ]</a>
+              <a href="thread.html#338">[ thread ]</a>
+              <a href="subject.html#338">[ subject ]</a>
+              <a href="author.html#338">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2008-06-06 13:44:47 +0200 (Fri, 06 Jun 2008)
+New Revision: 1377
+
+Added:
+   trunk/gui/py/PeriodicPythonRunner.hpp
+   trunk/pkg/common/Engine/StandAloneEngine/PeriodicEngine.hpp
+Removed:
+   trunk/gui/py/PlotDataGetter.cpp
+   trunk/gui/py/PlotDataGetter.hpp
+Modified:
+   trunk/core/Engine.hpp
+   trunk/core/MetaBody.cpp
+   trunk/gui/SConscript
+   trunk/gui/py/plot.py
+   trunk/gui/py/yadeControl.cpp
+   trunk/pkg/common/Engine/StandAloneEngine/SpatialQuickSortCollider.cpp
+Log:
+1. Add std::string Engine::label, which user can set to identify an engine by arbitrary label
+2. Fix warnings in SpatialQuickSortCollider
+3. Set isDynamic in rootBody by default
+4. Remove PlotDataGetter, superseded by PeriodicPythonRunner
+5. New abstract class for running things in predefined periods PeriodicEngine
+
+Hope it works and compiles.
+
+
+
+Modified: trunk/core/Engine.hpp
+===================================================================
+--- trunk/core/Engine.hpp	2008-06-05 15:58:18 UTC (rev 1376)
++++ trunk/core/Engine.hpp	2008-06-06 11:44:47 UTC (rev 1377)
+@@ -19,6 +19,7 @@
+ class Engine : public Serializable
+ {
+ 	public :
++		string label; /* user-definable label, to convenienty retrieve this particular engine instance even if multiple engines of the same type exist */
+ 		Engine() {};
+ 		virtual ~Engine() {};
+ 	
+@@ -26,6 +27,7 @@
+ 		virtual void action(MetaBody*) { throw; };
+ 		/* returns all BodyExternalVariable's (Bex; formerly PhysicalActions) that this engine needs */
+ 		virtual list&lt;string&gt; getNeededBex(){return list&lt;string&gt;();}
++		virtual void registerAttributes(){REGISTER_ATTRIBUTE(label);}
+ 
+ 	REGISTER_CLASS_NAME(Engine);
+ 	REGISTER_BASE_CLASS_NAME(Serializable);
+
+Modified: trunk/core/MetaBody.cpp
+===================================================================
+--- trunk/core/MetaBody.cpp	2008-06-05 15:58:18 UTC (rev 1376)
++++ trunk/core/MetaBody.cpp	2008-06-06 11:44:47 UTC (rev 1377)
+@@ -34,6 +34,8 @@
+ 	recoverStopAtIteration=1;
+ 	recoverSimulationTime=1;
+ 
++	isDynamic=false;
++
+ 	dt=1e-8;
+ }
+ 
+
+Modified: trunk/gui/SConscript
+===================================================================
+--- trunk/gui/SConscript	2008-06-05 15:58:18 UTC (rev 1376)
++++ trunk/gui/SConscript	2008-06-06 11:44:47 UTC (rev 1377)
+@@ -42,7 +42,7 @@
+ 	env.Install('$PREFIX/lib/yade$SUFFIX/gui',[
+ 		env.SharedLibrary('PythonUI',['py/PythonUI.cpp']),
+ 		env.File('PythonUI_rc.py','py'),
+-		env.SharedLibrary('PlotDataGetter',['py/PlotDataGetter.cpp']),
++		# env.SharedLibrary('PlotDataGetter',['py/PlotDataGetter.cpp']),
+ 	])
+ 	# one level deeper so that you can say: from yade.wrapper import *
+ 	# (more submodules to come)
+@@ -58,11 +58,8 @@
+ 				'PhysicalParametersMetaEngine',
+ 				'STLImporter'
+ 			],
+-			# ,'py/GLViewer4.cpp'
+-			# '$QGLVIEWER_LIB'
+-			#CPPPATH=env['CPPPATH']+['/usr/include/qt4','/usr/include/qt4/Qt','/usr/include/qt4/QtXml','/usr/include/qt4/QtOpenGL','/usr/include/qt4/QtCore','/usr/include/qt4/QtGui'],
+-			CPPDEFINES=env['CPPDEFINES']+['NO_PYGLVIEWER'],
+ 			),
++		env.SharedLibrary('PeriodicPythonRunner',['py/PeriodicPythonRunner.cpp']),
+ 		env.File('__init__.py','py'),
+ 		env.File('utils.py','py'),
+ 		env.File('runtime.py','py'),
+
+Copied: trunk/gui/py/PeriodicPythonRunner.hpp (from rev 1371, trunk/gui/py/PlotDataGetter.hpp)
+===================================================================
+--- trunk/gui/py/PlotDataGetter.hpp	2008-05-27 13:10:25 UTC (rev 1371)
++++ trunk/gui/py/PeriodicPythonRunner.hpp	2008-06-06 11:44:47 UTC (rev 1377)
+@@ -0,0 +1,32 @@
++// 2008 &#169; V&#225;clav &#352;milauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">eudoxos at arcig.cz</A>&gt;
++#pragma once
++#include&lt;yade/core/StandAloneEngine.hpp&gt;
++#include&lt;yade/core/MetaBody.hpp&gt;
++#include&lt;yade/pkg-common/PeriodicEngine.hpp&gt;
++/* Execute a python command (in addPlotDataCall) periodically, with defined (and adjustable) periodicity.
++ *
++ * Period constraints are iterInterval and timeInterval. When either of them is exceeded, the addPlotDataCall is run.
++ *
++ * Thie engine is primarily conceived for collecting data for yade.plot plots during simulations, hence the name.
++ */
++class PeriodicPythonRunner: public PeriodicEngine {
++	private:
++		string command;
++	public :
++		PeriodicPythonRunner(): command(&quot;pass&quot;){};
++		/* virtual bool isActivated: not overridden, PeriodicEngine handles that */
++		virtual void action(MetaBody* b){
++			PyGILState_STATE gstate;
++				gstate = PyGILState_Ensure();
++				PyRun_SimpleString(command.c_str()); // this is suboptimal, since it has to be parsed at every execution; critical?
++			PyGILState_Release(gstate);
++		}
++		virtual void registerAttributes(){ REGISTER_ATTRIBUTE(command); }
++	protected :
++		virtual void postProcessAttributes(bool deserializing){}
++	REGISTER_CLASS_NAME(PeriodicPythonRunner);
++	REGISTER_BASE_CLASS_NAME(PeriodicEngine);
++};
++
++REGISTER_SERIALIZABLE(PeriodicPythonRunner,false);
++
+
+Deleted: trunk/gui/py/PlotDataGetter.cpp
+===================================================================
+--- trunk/gui/py/PlotDataGetter.cpp	2008-06-05 15:58:18 UTC (rev 1376)
++++ trunk/gui/py/PlotDataGetter.cpp	2008-06-06 11:44:47 UTC (rev 1377)
+@@ -1,19 +0,0 @@
+-// 2008 &#169; V&#225;clav &#352;milauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">eudoxos at arcig.cz</A>&gt;
+-#include&quot;PlotDataGetter.hpp&quot;
+-#include&lt;Python.h&gt;
+-YADE_PLUGIN(&quot;PlotDataGetter&quot;);
+-CREATE_LOGGER(PlotDataGetter);
+-void PlotDataGetter::action(MetaBody* rb){
+-	long iter=Omega::instance().getCurrentIteration();
+-	Real time=Omega::instance().getSimulationTime();
+-	if((iterInterval&gt;0 &amp;&amp; (iter-lastRecIter&gt;=iterInterval)) || (timeInterval&gt;0 &amp;&amp; (time-lastRecTime&gt;=timeInterval))){
+-		LOG_DEBUG(&quot;#&quot;&lt;&lt;iter&lt;&lt;&quot; &quot;&lt;&lt;time&lt;&lt;&quot;s (#&quot;&lt;&lt;iter-lastRecIter&lt;&lt;&quot; &quot;&lt;&lt;time-lastRecTime&lt;&lt;&quot; since last run), running `&quot;&lt;&lt;addPlotDataCall&lt;&lt;&quot;'&quot;);
+-		lastRecIter=iter; lastRecTime=time;
+-		// here, we use python API, but there already is an interpreter (MainLoop) running
+-		// if no GIL (GlobalInterpreterLock) &#8594; segfault!
+-		PyGILState_STATE gstate;
+-			gstate = PyGILState_Ensure();
+-			PyRun_SimpleString(addPlotDataCall.c_str()); // OK, this is suboptimal, since it has to be parsed at every execution; critical?
+-		PyGILState_Release(gstate);
+-	}
+-}
+
+Deleted: trunk/gui/py/PlotDataGetter.hpp
+===================================================================
+--- trunk/gui/py/PlotDataGetter.hpp	2008-06-05 15:58:18 UTC (rev 1376)
++++ trunk/gui/py/PlotDataGetter.hpp	2008-06-06 11:44:47 UTC (rev 1377)
+@@ -1,37 +0,0 @@
+-// 2008 &#169; V&#225;clav &#352;milauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">eudoxos at arcig.cz</A>&gt;
+-#pragma once
+-#include&lt;yade/core/StandAloneEngine.hpp&gt;
+-#include&lt;yade/core/MetaBody.hpp&gt;
+-/* Execute a python command (in addPlotDataCall) periodically, with defined (and adjustable) periodicity.
+- *
+- * Period constraints are iterInterval and timeInterval. When either of them is exceeded, the addPlotDataCall is run.
+- *
+- * Thie engine is primarily conceived for collecting data for yade.plot plots during simulations, hence the name.
+- */
+-class PlotDataGetter: public StandAloneEngine {
+-	private:
+-		long iterInterval;
+-		Real timeInterval;
+-		Real lastRecTime;
+-		long lastRecIter;
+-		string addPlotDataCall;
+-	public :
+-		PlotDataGetter(): iterInterval(0),timeInterval(0),lastRecTime(0),lastRecIter(0),addPlotDataCall(&quot;addPlotDataCall&quot;){};
+-		virtual void action(MetaBody* b);
+-		virtual bool isActivated(){return true;}
+-		virtual void registerAttributes(){
+-			REGISTER_ATTRIBUTE(iterInterval);
+-			REGISTER_ATTRIBUTE(timeInterval);
+-			REGISTER_ATTRIBUTE(lastRecTime);
+-			REGISTER_ATTRIBUTE(lastRecIter);
+-			REGISTER_ATTRIBUTE(addPlotDataCall);
+-		}
+-	protected :
+-		virtual void postProcessAttributes(bool deserializing){}
+-	DECLARE_LOGGER;
+-	REGISTER_CLASS_NAME(PlotDataGetter);
+-	REGISTER_BASE_CLASS_NAME(StandAloneEngine);
+-};
+-
+-REGISTER_SERIALIZABLE(PlotDataGetter,false);
+-
+
+Modified: trunk/gui/py/plot.py
+===================================================================
+--- trunk/gui/py/plot.py	2008-06-05 15:58:18 UTC (rev 1376)
++++ trunk/gui/py/plot.py	2008-06-06 11:44:47 UTC (rev 1377)
+@@ -7,8 +7,9 @@
+ 
+ &quot;&quot;&quot;
+ import matplotlib
+-matplotlib.use('TkAgg') #GtkCairo
+-#matplotlib.use('QtAgg') #GtkCairo
++matplotlib.use('TkAgg')
++#matplotlib.use('GTKCairo')
++#matplotlib.use('QtAgg')
+ matplotlib.rc('axes',grid=True) # put grid in all figures
+ import pylab
+ 
+@@ -22,7 +23,7 @@
+ # we could have a yplot class, that would hold: (yspec,...), (Line2d,Line2d,...) ?
+ 
+ 
+-plotDataGetterEngine=None
++plotDataCollector=None
+ import yade.wrapper
+ o=yade.wrapper.Omega()
+ 
+@@ -32,15 +33,15 @@
+ 	&quot;&quot;&quot;If we have too much data, take every second value and double the step for DateGetterEngine. This will keep the samples equidistant.
+ 	&quot;&quot;&quot;
+ 	if l&gt;maxDataLen:
+-		print &quot;Reducing: %d&gt;%d&quot;%(l,maxDataLen)
+-		for d in data: data[d]=data[d][::2]
+-		global plotDataGetterEngine
+-		if not plotDataGetterEngine:
+-			plotDataGetterEngine=[e for e in o.engines if e.name=='PlotDataGetter'][0]
+-		if plotDataGetterEngine:
+-			plotDataGetterEngine['iterInterval']=2*plotDataGetterEngine['iterInterval']
+-			plotDataGetterEngine['timeInterval']=2*plotDataGetterEngine['timeInterval']
+-		else: raise RuntimeError(&quot;Interval for getting data couldn't be adjusted. (yade.plot.plotDataGetterEngine should be proxy to DataGetterEngine in yade, but is None. &quot;)
++		global plotDataCollector
++		pdc=PlotDataCollector;
++		if not pdc: pdc=o.labeledEngine('plotDataCollector') # will raise RuntimeError if not found
++		if pdc['mayDouble']: # may we double the period without getting over limits?
++			print &quot;Reducing data: %d &gt; %d&quot;%(l,maxDataLen)
++			for d in data: data[d]=data[d][::2]
++			for attr in ['virtTimeLim','realTimeLim','iterLim']:
++				val=pdc[attr]
++				pdc[attr]=[val[0],val[1]*2,val[2]]
+ 
+ 
+ def addData(d):
+@@ -49,7 +50,7 @@
+ 	New data will be left-padded with nan's, unspecified data will be nan.
+ 	This way, equal length of all data is assured so that they can be plotted one against any other.
+ 
+-	Nan's don't appear in graphs and are skipped. &quot;&quot;&quot;
++	Nan's don't appear in graphs.&quot;&quot;&quot;
+ 	if len(data)&gt;0: numSamples=len(data[data.keys()[0]])
+ 	else: numSamples=0
+ 	reduceData(numSamples)
+@@ -65,85 +66,18 @@
+ 	if o.__class__==tuple().__class__ or o.__class__==list().__class__: return o
+ 	else: return (o,'')
+ 
+-#def updatePlots():
+-#	fignum=0
+-#	for p in plots:
+-#		pylab.figure(fignum)
+-#		plots_p=[fillNonSequence(o) for o in plots[p]]
+-#		for d in plots_p:
+-#			pylab.axi
+-#		fignum+=1
+-
+-useGtkThread=False
+-
+-if useGtkThread:
+-	import threading,gtk
+-
+-def killPlots():
+-	print &quot;Clear figures&quot;
+-	pylab.clf() # clear figures
+-	needsFullReplot=True
+-	return
+-	for t in [t for t in threading.enumerate() if t.getName()=='Thread-plots']:
+-		print &quot;GTK&#160;quit&quot;
+-		gtk.main_quit()
+-
+-def plot(): fullPlot()
+-def show(): fullPlot()
+-def fullPlot(): makePlot(update=False)
+-def updatePlot():
+-	raise RuntimeError(&quot;Updating plot not supported in non-interactive mode!&quot;)
+-	if needsFullReplot:
+-		print &quot;updatePlot called, doing FULL replot&quot;
+-		makePlot(update=False)
+-	else:
+-		print &quot;updatePlot called, updating plot&quot;
+-		makePlot(update=True)
+-
+-def minMax(l): return [min(l),max(l)]
+-
+-def makePlot(update=False):
+-	fignum=0 #figure counter
+-	pylab.clf()
++def show(): plot()
++def plot():
++	pylab.ioff() # no interactive mode (hmmm, I don't know why actually...)
+ 	for p in plots:
+-		#print p,fignum,plots[p]
+-		pylab.figure(fignum)
+-		#print &quot;2&quot;; pylab.ioff() # turn off interactive mode
++		pylab.figure()
+ 		plots_p=[fillNonSequence(o) for o in plots[p]]
+ 		pylab.plot(*sum([[data[p],data[d[0]],d[1]] for d in plots_p],[]))
+ 		pylab.legend([_p[0] for _p in plots_p])
+ 		pylab.xlabel(p)
+-		fignum+=1
+-	#print &quot;4&quot;
+-	pylab.show()
+-	#print &quot;5&quot;
++		pylab.show()
+ 	return
+ 
+-	if not update:
+-		print &quot;KILLING plots&quot;
+-		killPlots()
+-	for p in plots:
+-		print p,fignum,plots[p]
+-		pylab.figure(fignum)
+-		pylab.ioff() # turn off interactive mode
+-		plots_p=[fillNonSequence(o) for o in plots[p]]
+-		if update:
+-			for i in range(len(plots_p)): plotLines[p][i].set_data(data[p],data[plots_p[i][0]])
+-			pylab.axis(minMax(data[p])+minMax(sum([data[d[0]] for d in plots_p],[])))
+-		else:
+-			#for d in plots_p:
+-			#	print d
+-			#	print data[p]
+-			#	print data[d[0]]
+-			#	print d[1]
+-			plotLines[p]=pylab.plot(*sum([[data[p],data[d[0]],d[1]] for d in plots_p],[]))
+-		pylab.legend([_p[0] for _p in plots_p])
+-		pylab.xlabel(p)
+-		#pylab.draw()
+-		fignum+=1
+-	if not update:
+-		pylab.show()
+-		#threading.Thread(target=pylab.show,name='Thread-plots').start() # works with GTK, cool! (will it work inside yade, though?!)
+ 	
+ import random
+ if __name__ == &quot;__main__&quot;:
+
+Modified: trunk/gui/py/yadeControl.cpp
+===================================================================
+--- trunk/gui/py/yadeControl.cpp	2008-06-05 15:58:18 UTC (rev 1376)
++++ trunk/gui/py/yadeControl.cpp	2008-06-06 11:44:47 UTC (rev 1377)
+@@ -55,12 +55,6 @@
+ 
+ #include&lt;yade/extra/Shop.hpp&gt;
+ 
+-#ifdef USE_PYGLVIEWER
+-	#include&quot;GLViewer4.hpp&quot;
+-	#include&lt;Qt/qapplication.h&gt;
+-	#include&lt;Qt/qthread.h&gt;
+-#endif
+-
+ using namespace boost;
+ using namespace std;
+ 
+@@ -383,7 +377,20 @@
+ 	python::list initializers_get(void){assertRootBody(); return anyEngines_get(OMEGA.getRootBody()-&gt;initializers);}
+ 	void initializers_set(python::object egs){assertRootBody(); anyEngines_set(OMEGA.getRootBody()-&gt;initializers,egs);}
+ 
++	python::object labeled_engine_get(string label){
++		FOREACH(const shared_ptr&lt;Engine&gt;&amp; eng, OMEGA.getRootBody()-&gt;engines){
++			if(eng-&gt;label==label){
++				#define RETURN_ENGINE_IF_POSSIBLE(engineType,pyEngineType) { shared_ptr&lt;engineType&gt; e=dynamic_pointer_cast&lt;engineType&gt;(eng); if(e) return python::object(pyEngineType(e)); }
++				RETURN_ENGINE_IF_POSSIBLE(MetaEngine,pyMetaEngine);
++				RETURN_ENGINE_IF_POSSIBLE(StandAloneEngine,pyStandAloneEngine);
++				RETURN_ENGINE_IF_POSSIBLE(DeusExMachina,pyDeusExMachina);
++				throw std::runtime_error(&quot;Unable to cast engine to MetaEngine, StandAloneEngine or DeusExMachina? ??&quot;);
++			}
++		}
++		throw std::invalid_argument(string(&quot;No engine labeled `&quot;)+label+&quot;'&quot;);
++	}
+ 
++
+ 	void wait(){ if(OMEGA.isRunning()){LOG_DEBUG(&quot;WAIT!&quot;);} while(OMEGA.isRunning()) usleep(50000 /*20 ms*/); }
+ 	
+ 	pyBodyContainer bodies_get(void){assertRootBody(); return pyBodyContainer(OMEGA.getRootBody()-&gt;bodies); }
+@@ -409,101 +416,6 @@
+ 
+ BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(STLImporter_import_overloads,py_import,1,2);
+ 
+-#ifdef USE_PYGLVIEWER 
+-/*! GL viewer wrapper, with full attribute access. CURRENTLY&#160;DOESN'T EVEN&#160;COMPILE!!!
+- *
+- * Creates the 3D view on instantiation. Currently displays nothing (why???), although it redraws just fine.
+- * Has many bugs: multiple views will lead to crash, explicit delete crashes (somewhere in qt) as well.
+- */
+-class pyGLViewer{
+-	//DECLARE_LOGGER;
+-	shared_ptr&lt;RenderingEngine&gt; renderer;
+-	shared_ptr&lt;GLViewer4&gt; viewer;
+-#if 0
+-	shared_ptr&lt;boost::thread&gt; redrawThread,appThread;
+-	QApplication* app;
+-	void redrawAlarm(void){
+-		while(true){
+-			//Omega::instance().stopSimulationLoop();
+-			viewer-&gt;updateGL();
+-			//Omega::instance().startSimulationLoop();
+-			usleep(10000000);
+-		}
+-	}
+-#endif 
+-	class DrawThread: public QThread{
+-		//Q_OBJECT;
+-		const shared_ptr&lt;GLViewer4&gt; vw;
+-		shared_ptr&lt;QTimer&gt; timer;
+-		public:
+-			DrawThread(shared_ptr&lt;GLViewer4&gt; _viewer): vw(_viewer){}
+-			virtual void run(){
+-				LOG_WARN(&quot;drawThread::run() with viewer &quot;&lt;&lt;vw);
+-				timer=shared_ptr&lt;QTimer&gt;(new QTimer());
+-				connect(timer.get(),SIGNAL(timeout()),vw.get(),SLOT(callUpdateGL()));
+-				timer-&gt;start(100);
+-				//while(true){ cerr&lt;&lt;&quot;@&quot;; vw-&gt;updateGL(); usleep(50000);}
+-				exec();
+-			};
+-		//public slots:
+-		//	void updateGL(){cerr&lt;&lt;&quot;@&quot;;}
+-	};
+-	shared_ptr&lt;AttrAccess&gt; accessor;
+-	void ensureAcc(){if(!accessor)accessor=shared_ptr&lt;AttrAccess&gt;(new AttrAccess(renderer));}
+-	shared_ptr&lt;DrawThread&gt; drawThread;
+-public:
+-	DECLARE_LOGGER;
+-	ATTR_ACCESS_CXX(accessor,ensureAcc);	
+-	pyGLViewer(){
+-		//throw std::runtime_error(&quot;Programming error: Threading in pyGLViewer is broken and crashes; ignored.&quot;);
+-		// LOG_WARN(&quot;Thread locking not correctly implemented, will pause Omega for redraw every 10s instead!&quot;);
+-		shared_ptr&lt;Factorable&gt; _renderer=ClassFactory::instance().createShared(&quot;OpenGLRenderingEngine&quot;);
+-		renderer=static_pointer_cast&lt;RenderingEngine&gt;(_renderer);
+-
+-		/* this is broken:
+-			Type of instance is: 15RenderingEngine
+-			RuntimeError: Cannot determine type with findType()
+-		*/
+-		#if 0
+-		if(renderer){// TODO: handle exceptions
+-			filesystem::path rendererConfig=filesystem::path(Omega::instance().yadeConfigPath+&quot;/OpenGLRendererPref.xml&quot;);
+-			if(filesystem::exists(rendererConfig)){
+-				try{IOFormatManager::loadFromFile(&quot;XMLFormatManager&quot;,rendererConfig.string(),&quot;renderer&quot;,renderer);}
+-				catch(SerializableError&amp; e){LOG_WARN(&quot;Unable to load renderer preferences from `&quot;&lt;&lt;rendererConfig.string()&lt;&lt;&quot;': &quot;&lt;&lt;e.what());}
+-			}
+-		} else throw runtime_error(&quot;Unable to create renderer!&quot;);
+-		#endif
+-		if(!renderer) throw runtime_error(&quot;Unable to create renderer!&quot;);
+-
+-		int viewId=0;
+-		//if(viewId==0){	int _argc=0; char _argvv[]=&quot;foo&quot;; app=new QApplication(_argc,(char**) &amp;_argvv);}
+-		//app-&gt;setMainWidget(viewer.get());
+-		int _argc=0; char _argvv[]=&quot;foo&quot;; //QApplication* app=new 
+-		QApplication* app=new QApplication(_argc,(char**) &amp;_argvv);
+-
+-		QGLFormat format;	QGLFormat::setDefaultFormat(format); format.setStencil(TRUE); format.setAlpha(TRUE);
+-		viewer=shared_ptr&lt;GLViewer4&gt;(new GLViewer4(viewId,renderer,format,/*parent*/0,0/* non-primary views will have to share widgets, though */)); //
+-		viewer-&gt;setWindowTitle(&quot;GL Viewer&quot;);
+-		viewer-&gt;centerScene();
+-		viewer-&gt;show();
+-		drawThread=shared_ptr&lt;DrawThread&gt;(new DrawThread(viewer));
+-		drawThread-&gt;start(); // is the same as DrawThread-&gt;run() except for check that it isn't running already?!
+-
+-		/*if(viewId==0){
+-			app-&gt;setMainWidget(viewer.get());
+-			redrawThread=shared_ptr&lt;boost::thread&gt;(new boost::thread(boost::bind(&amp;pyGLViewer::redrawAlarm,this)));
+-		}
+-		appThread=shared_ptr&lt;boost::thread&gt;(new boost::thread(boost::bind(&amp;QApplication::exec,app))); */
+-	}
+-	~pyGLViewer(){// redrawThread and appThread deleted by the descructor
+-		//viewer-&gt;close();
+-		//app-&gt;quit();
+-	}
+-};
+-CREATE_LOGGER(pyGLViewer);
+-#endif /* USE_PYGLVIEWER&#160;*/
+-
+-
+ BOOST_PYTHON_MODULE(wrapper)
+ {
+ 	/* <A HREF="http://mail.python.org/pipermail/c++-sig/2004-March/007025.html">http://mail.python.org/pipermail/c++-sig/2004-March/007025.html</A>
+@@ -529,6 +441,7 @@
+ 		.def(&quot;step&quot;,&amp;pyOmega::step)
+ 		.def(&quot;wait&quot;,&amp;pyOmega::wait)
+ 		.def(&quot;reset&quot;,&amp;pyOmega::reset)
++		.def(&quot;labeledEngine&quot;,&amp;pyOmega::labeled_engine_get)
+ 		.add_property(&quot;engines&quot;,&amp;pyOmega::engines_get,&amp;pyOmega::engines_set)
+ 		.add_property(&quot;miscParams&quot;,&amp;pyOmega::miscParams_get,&amp;pyOmega::miscParams_set)
+ 		.add_property(&quot;initializers&quot;,&amp;pyOmega::initializers_get,&amp;pyOmega::initializers_set)
+@@ -553,19 +466,6 @@
+ 		.def(&quot;__getitem__&quot;,&amp;pyPhysicalActionContainer::pyGetitem);
+ 	
+ 
+-//	boost::python::class_&lt;pyBodyContainer&gt;(&quot;BodyContainer&quot;,python::init&lt;pyBodyContainer&amp;&gt;())
+-//		.def(&quot;__getitem__&quot;,&amp;pyBodyContainer::pyGetitem);
+-
+-		#if 0
+-			.def(&quot;oneStep&quot;,&amp;oneStep)
+-			.def(&quot;newView&quot;, &amp;newView)
+-			.def(&quot;centerScene&quot;, &amp;centerScene)
+-		#endif
+-#ifdef USE_PYGLVIEWER
+-	boost::python::class_&lt;pyGLViewer&gt;(&quot;View&quot;)
+-		.ATTR_ACCESS_PY(pyGLViewer);
+-#endif
+-
+ 	BASIC_PY_PROXY_WRAPPER(pyStandAloneEngine,&quot;StandAloneEngine&quot;);
+ 	BASIC_PY_PROXY_WRAPPER(pyMetaEngine,&quot;MetaEngine&quot;)
+ 		.add_property(&quot;functors&quot;,&amp;pyMetaEngine::functors_get,&amp;pyMetaEngine::functors_set)
+
+Added: trunk/pkg/common/Engine/StandAloneEngine/PeriodicEngine.hpp
+===================================================================
+--- trunk/pkg/common/Engine/StandAloneEngine/PeriodicEngine.hpp	2008-06-05 15:58:18 UTC (rev 1376)
++++ trunk/pkg/common/Engine/StandAloneEngine/PeriodicEngine.hpp	2008-06-06 11:44:47 UTC (rev 1377)
+@@ -0,0 +1,77 @@
++// 2008 &#169; V&#225;clav &#352;milauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">eudoxos at arcig.cz</A>&gt;
++#pragma once
++
++#include&lt;time.h&gt;
++#include&lt;yade/core/StandAloneEngine.hpp&gt;
++#include&lt;yade/core/Omega.hpp&gt;
++
++/* Run an action with adjustable and constrained periodicity (real time, virtual time, iteration)
++ *
++ * 3 criteria can be used: iteration period, realTime (wallclock) period, virtTime (simulation time) period.
++ * Each of them is composed of a Vector3r with the meaning [lower limit, actual period value, upper limit].
++ * The criterion is disabled if the lower limit is &lt; 0, which is the default.
++ * If _any_ criterion from the enabled ones is satisfied (elapsed iteration period etc.), the engine becomes active.
++ *
++ * At the first run after construction, the engine will ensure period consistency,
++ * i.e. that on enabled periods, limits are properly ordered (swapped otherwise)
++ * and that the actual value is not over the upper limit (will be made equal to it otherwise) ot under the lower limit.
++ *
++ * If it is useful to make the actual periods smaller/larger, mayDouble and mayHalve signify whether actual periods
++ * (considering only enabled criteria) may be halved/doubled without getting off limits.
++ *
++ * This engine may be used only by deriving an engine with something useful in action(MetaBody*);
++ * if used as-is, it will throw when activated.
++ *
++ * @bug we use gettimeofday() to get current time; benchmark it, since it involves a syscall?; better use HPET timer (async?) instead of polling the clock?
++ */
++class PeriodicEngine: public StandAloneEngine {
++	private:
++		Vector3r virtTimeLim,realTimeLim,iterLim;
++		Real lastRealTime,lastVirtTime; long lastIter;
++		bool mayDouble,mayHalve;
++		bool perhapsInconsistent;
++	public :
++		PeriodicEngine(): virtTimeLim(-1,0,0),realTimeLim(-1,0,0),iterLim(-1,0,0), lastRealTime(0.),lastVirtTime(0.),lastIter(0),mayDouble(false),mayHalve(false),perhapsInconsistent(true){};
++		void ensureConsistency(Vector3r&amp; v){
++			if(v[0]&lt;0) return; // not active
++			if(v[2]&lt;v[0]){Real lo=v[2]; v[2]=v[0]; v[0]=lo;} // swap limits if necessary
++			if(v[1]&lt;v[0]) v[1]=v[0]; // put actual value below the lower limit to the lower limit
++			if(v[1]&gt;v[2]) v[2]=v[1]; // put actual value above the upper limit to the upper limit
++		}
++		virtual void action(MetaBody* b) { throw; }
++		virtual bool isActivated(){
++			if(perhapsInconsistent){ ensureConsistency(virtTimeLim); ensureConsistency(realTimeLim); ensureConsistency(iterLim); perhapsInconsistent=false; }
++
++			mayDouble=((virtTimeLim[0]&lt;0 || 2*virtTimeLim[1]&lt;=virtTimeLim[2]) &amp;&amp; (realTimeLim[0]&lt;0 || 2*realTimeLim[1]&lt;=realTimeLim[2]) &amp;&amp; (iterLim[0]&lt;0 || 2*iterLim[1]&lt;=iterLim[2]));
++			mayHalve=((virtTimeLim[0]&lt;0 || .5*virtTimeLim[1]&gt;=virtTimeLim[0]) &amp;&amp; (realTimeLim[0]&lt;0 &amp;&amp; .5*realTimeLim[1]&gt;=realTimeLim[0]) &amp;&amp; (iterLim[0]&lt;0 || .5*iterLim[1]&gt;=iterLim[0]));
++			
++			long nowIter=Omega::instance().getCurrentIteration();
++			Real nowVirtTime=Omega::instance().getSimulationTime();
++			timeval tp; gettimeofday(&amp;tp,NULL); Real nowRealTime=tp.tv_sec+tp.tv_usec/1e6;
++
++			if (  (virtTimeLim[0]&gt;=0 &amp;&amp; lastVirtTime-nowVirtTime&gt;virtTimeLim[1])
++			 || (realTimeLim[0]&gt;=0 &amp;&amp; lastRealTime-nowRealTime&gt;realTimeLim[1])
++			 || (iterLim[0]&gt;=0     &amp;&amp; lastIter    -nowIter    &gt;iterLim[1])){
++				lastVirtTime=nowVirtTime; lastRealTime=nowRealTime; lastIter=nowIter;
++				return true;
++			} else return false;
++		}
++		virtual void registerAttributes(){
++			StandAloneEngine::registerAttributes();
++			REGISTER_ATTRIBUTE(virtTimeLim);
++			REGISTER_ATTRIBUTE(realTimeLim);
++			REGISTER_ATTRIBUTE(iterLim);
++			REGISTER_ATTRIBUTE(lastRealTime);
++			REGISTER_ATTRIBUTE(lastVirtTime);
++			REGISTER_ATTRIBUTE(lastIter);
++			REGISTER_ATTRIBUTE(mayDouble);
++			REGISTER_ATTRIBUTE(mayHalve);
++		}
++	protected :
++		virtual void postProcessAttributes(bool deserializing){}
++	DECLARE_LOGGER;
++	REGISTER_CLASS_NAME(PeriodicEngine);
++	REGISTER_BASE_CLASS_NAME(StandAloneEngine);
++};
++REGISTER_SERIALIZABLE(PeriodicEngine,false);
++
+
+Modified: trunk/pkg/common/Engine/StandAloneEngine/SpatialQuickSortCollider.cpp
+===================================================================
+--- trunk/pkg/common/Engine/StandAloneEngine/SpatialQuickSortCollider.cpp	2008-06-05 15:58:18 UTC (rev 1376)
++++ trunk/pkg/common/Engine/StandAloneEngine/SpatialQuickSortCollider.cpp	2008-06-06 11:44:47 UTC (rev 1377)
+@@ -30,10 +30,10 @@
+ {
+      shared_ptr&lt;BodyContainer&gt; bodies = ncb-&gt;bodies;
+ 
+-	int nbElements=bodies-&gt;size();
++	size_t nbElements=bodies-&gt;size();
+        if (nbElements!=rank.size())
+        {
+-	   int n = rank.size();
++	   size_t n = rank.size();
+ 	   rank.resize(nbElements);
+ 	   for (; n&lt;nbElements; ++n)
+ 	       rank[n] = shared_ptr&lt;AABBBound&gt;(new AABBBound);
+@@ -70,7 +70,7 @@
+ 
+ 	sort(rank.begin(), rank.end(), xBoundComparator()); // sotring along X
+ 
+-	int id,id2,i,j;
++	int id,id2; size_t j;
+ 	shared_ptr&lt;Interaction&gt; interaction;
+ 	for(int i=0,e=nbElements-1; i&lt;e; ++i)
+ 	{
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000337.html">[Yade-commits] r1376 - branches/przewdnik/core/concurrent
+</A></li>
+	<LI>Next message: <A HREF="000339.html">[Yade-commits] r1378 - in branches/dorofeenko: . core doc gui/py	lib/import pkg/common pkg/common/DataClass/PhysicalParameters	pkg/common/Engine/DeusExMachina pkg/common/Engine/StandAloneEngine	pkg/dem/Engine/DeusExMachina pkg/dem/Engine/EngineUnit	pkg/dem/Engine/StandAloneEngine	pkg/dem/RenderingEngine/GLDrawElasticContactInteraction
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#338">[ date ]</a>
+              <a href="thread.html#338">[ thread ]</a>
+              <a href="subject.html#338">[ subject ]</a>
+              <a href="author.html#338">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

@@ -1,0 +1,358 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1253 - in trunk/pkg: common	common/Engine/DeusExMachina dem dem/Engine/DeusExMachina
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1253%20-%20in%20trunk/pkg%3A%20common%0A%09common/Engine/DeusExMachina%20dem%20dem/Engine/DeusExMachina&In-Reply-To=%3C200802160144.m1G1i8Vl012895%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000217.html">
+   <LINK REL="Next"  HREF="000219.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1253 - in trunk/pkg: common	common/Engine/DeusExMachina dem dem/Engine/DeusExMachina</H1>
+    <B>cosurgi at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1253%20-%20in%20trunk/pkg%3A%20common%0A%09common/Engine/DeusExMachina%20dem%20dem/Engine/DeusExMachina&In-Reply-To=%3C200802160144.m1G1i8Vl012895%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1253 - in trunk/pkg: common	common/Engine/DeusExMachina dem dem/Engine/DeusExMachina">cosurgi at mail.berlios.de
+       </A><BR>
+    <I>Sat Feb 16 02:44:08 CET 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000217.html">[Yade-commits] r1252 - in trunk/pkg/dem: PreProcessor	RenderingEngine/GLDrawSpheresContactGeometry
+</A></li>
+        <LI>Next message: <A HREF="000219.html">[Yade-commits] r1254 - in trunk: core lib/multimethods	pkg/dem/Engine/DeusExMachina pkg/dem/Engine/StandAloneEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#218">[ date ]</a>
+              <a href="thread.html#218">[ thread ]</a>
+              <a href="subject.html#218">[ subject ]</a>
+              <a href="author.html#218">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: cosurgi
+Date: 2008-02-16 02:44:07 +0100 (Sat, 16 Feb 2008)
+New Revision: 1253
+
+Added:
+   trunk/pkg/common/Engine/DeusExMachina/StaticAttractionEngine.cpp
+   trunk/pkg/common/Engine/DeusExMachina/StaticAttractionEngine.hpp
+   trunk/pkg/dem/Engine/DeusExMachina/StaticSpheresAttractionEngine.cpp
+   trunk/pkg/dem/Engine/DeusExMachina/StaticSpheresAttractionEngine.hpp
+Modified:
+   trunk/pkg/common/SConscript
+   trunk/pkg/dem/SConscript
+Log:
+Added StaticAttractionEngine, which help to fasten a little the initial stage
+of compression - removing the central void. But it is in fact too slow, for
+bigger usage. That's because everything is attracted to everything.
+
+
+
+Added: trunk/pkg/common/Engine/DeusExMachina/StaticAttractionEngine.cpp
+===================================================================
+--- trunk/pkg/common/Engine/DeusExMachina/StaticAttractionEngine.cpp	2008-02-15 22:38:12 UTC (rev 1252)
++++ trunk/pkg/common/Engine/DeusExMachina/StaticAttractionEngine.cpp	2008-02-16 01:44:07 UTC (rev 1253)
+@@ -0,0 +1,85 @@
++/*************************************************************************
++*  Copyright (C) 2008 by Janek Kozicki                                   *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">cosurgi at berlios.de</A>                                                    *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#include &quot;StaticAttractionEngine.hpp&quot;
++#include&lt;yade/core/MetaBody.hpp&gt;
++
++void StaticAttractionEngine::registerAttributes()
++{
++	DeusExMachina::registerAttributes();
++	REGISTER_ATTRIBUTE(active);
++}
++
++/*! \brief Compress stuff faster and better!
++ *
++ *   Faster compression is done by attracting everything to everything using
++ *   classical gravitational equation, related to distance. And assuming that 
++ *   everything has equal mass: 
++ *                
++ *                 D = 1/r^2,
++ *
++ *   where D is displacement delta, and r is radius. (Units intentionally do
++ *   not add: [meter] = [1/m^2]. For unit correctness just multiply by [m^3] )
++ *
++ *   Forces are NOT used here. Only displacement value, which is normalized
++ *   afterwards, which means that ALL values of D (for each body) are &lt;= 1.
++ *   Then all D (for all bodies) are multiplied by whatever returns the virtual
++ *   function getMaxDisplacement(MetaBody*). Function doesItApplyToThisBody(Body*)
++ *   is used to check if Body should be considered for displacement. This
++ *   function can for example check if isDynamic.
++ *
++ *   This engine should be used at the end of the loop, because it directly
++ *   changes position of bodies.
++ *
++ *   After the compression stage is over, engine should be disabled by 
++ *   setting active=false;
++ */
++void StaticAttractionEngine::applyCondition(Body * body)
++{
++
++	MetaBody * ncb = static_cast&lt;MetaBody*&gt;(body);
++	BodyContainer::iterator bi    = ncb-&gt;bodies-&gt;begin();
++	BodyContainer::iterator biEnd = ncb-&gt;bodies-&gt;end();
++	BodyContainer::iterator bi2;
++
++	std::vector&lt;Vector3r &gt; moves;
++	moves.clear();
++	for( ; bi!=biEnd ; ++bi )
++		if(doesItApplyToThisBody((*bi).get()))
++		{
++			Vector3r delta(0,0,0);
++			Vector3r center_1 = (*bi)-&gt;physicalParameters-&gt;se3.position;
++		
++			bi2    = ncb-&gt;bodies-&gt;begin();
++			for( ; bi2!=biEnd ; ++bi2 )
++				if((*bi)-&gt;getId() != (*bi2)-&gt;getId() &amp;&amp; doesItApplyToThisBody((*bi2).get()) ) // different bodies
++				{
++					Vector3r center_2 = (*bi2)-&gt;physicalParameters-&gt;se3.position;
++					Vector3r dir=center_2-center_1;
++					Real r = dir.Normalize(); // dir is unit vector, r is a distance
++					delta += dir * 1/(r*r);
++				}
++			moves.push_back(delta);
++		}
++
++	Real maxl=0; // find maximum displacement
++	for(unsigned int i = 0 ; i &lt; moves.size() ; ++i )
++		maxl = std::max(moves[i].Length(),maxl);
++
++//	std::cerr &lt;&lt; &quot;maxl= &quot; &lt;&lt; maxl &lt;&lt; &quot;\n&quot;;
++	for(unsigned int i = 0 ; i &lt; moves.size() ; ++i ) // normalize, and multiply by planned maxium displacement
++		moves[i] = getMaxDisplacement(ncb)*moves[i]/maxl;
++
++	bi    = ncb-&gt;bodies-&gt;begin();
++	for(unsigned int i = 0 ; bi!=biEnd ; ++bi )
++		if(doesItApplyToThisBody((*bi).get()))
++			(*bi)-&gt;physicalParameters-&gt;se3.position+=moves[i++];
++}
++
++YADE_PLUGIN();
++
+
+Added: trunk/pkg/common/Engine/DeusExMachina/StaticAttractionEngine.hpp
+===================================================================
+--- trunk/pkg/common/Engine/DeusExMachina/StaticAttractionEngine.hpp	2008-02-15 22:38:12 UTC (rev 1252)
++++ trunk/pkg/common/Engine/DeusExMachina/StaticAttractionEngine.hpp	2008-02-16 01:44:07 UTC (rev 1253)
+@@ -0,0 +1,36 @@
++/*************************************************************************
++*  Copyright (C) 2008 by Janek Kozicki                                   *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">cosurgi at berlios.de</A>                                                    *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#ifndef STATICATTRACTIONENGINE_HPP
++#define STATICATTRACTIONENGINE_HPP
++
++#include&lt;yade/core/DeusExMachina.hpp&gt;
++#include &lt;Wm3Vector3.h&gt;
++#include&lt;yade/lib-base/yadeWm3.hpp&gt;
++
++class StaticAttractionEngine : public DeusExMachina
++{
++	public :
++		void applyCondition(Body * body);
++		bool active;
++		StaticAttractionEngine() : active(true) {};
++		virtual bool isActivated() { return active; };
++
++	protected :
++		virtual Real getMaxDisplacement(MetaBody*) {throw &quot;do not use StaticAttractionEngine directly, use derived classes instead.&quot;;};
++		virtual bool doesItApplyToThisBody(Body*) {throw &quot;do not use StaticAttractionEngine directly, use derived classes instead.&quot;;};
++
++		virtual void registerAttributes();
++	REGISTER_CLASS_NAME(StaticAttractionEngine);
++	REGISTER_BASE_CLASS_NAME(DeusExMachina);
++};
++
++REGISTER_SERIALIZABLE(StaticAttractionEngine,false);
++
++#endif //  DISPLACEMENTENGINE_HPP
++
+
+Modified: trunk/pkg/common/SConscript
+===================================================================
+--- trunk/pkg/common/SConscript	2008-02-15 22:38:12 UTC (rev 1252)
++++ trunk/pkg/common/SConscript	2008-02-16 01:44:07 UTC (rev 1253)
+@@ -152,6 +152,13 @@
+ 			'$PREFIX/include',
+ 			'Engine/DeusExMachina']),
+ 
++	env.SharedLibrary('StaticAttractionEngine',
++		['Engine/DeusExMachina/StaticAttractionEngine.cpp'],
++		LIBS=env['LIBS']+['yade-base',
++			'yade-serialization',
++			'yade-multimethods'],
++		CPPPATH=env['CPPPATH']+['$PREFIX/include', 'Engine/DeusExMachina']),
++
+ 	env.SharedLibrary('DisplacementEngine',
+ 		['Engine/DeusExMachina/DisplacementEngine.cpp'],
+ 		LIBS=env['LIBS']+['yade-base',
+
+Added: trunk/pkg/dem/Engine/DeusExMachina/StaticSpheresAttractionEngine.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/StaticSpheresAttractionEngine.cpp	2008-02-15 22:38:12 UTC (rev 1252)
++++ trunk/pkg/dem/Engine/DeusExMachina/StaticSpheresAttractionEngine.cpp	2008-02-16 01:44:07 UTC (rev 1253)
+@@ -0,0 +1,63 @@
++/*************************************************************************
++*  Copyright (C) 2008 by Janek Kozicki                                   *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">cosurgi at berlios.de</A>                                                    *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#include &lt;yade/pkg-dem/StaticSpheresAttractionEngine.hpp&gt;
++#include &lt;yade/pkg-dem/ElasticContactInteraction.hpp&gt;
++#include &lt;yade/pkg-common/Sphere.hpp&gt;
++#include &lt;yade/core/MetaBody.hpp&gt;
++
++void StaticSpheresAttractionEngine::registerAttributes()
++{
++	StaticAttractionEngine::registerAttributes();
++	// REGISTER_ATTRIBUTE(applies_to_what);
++	// REGISTER_ATTRIBUTE(divide_radius);
++	REGISTER_ATTRIBUTE(max_displacement);
++}
++
++Real StaticSpheresAttractionEngine::getMaxDisplacement(MetaBody* ncb)
++{
++	// calculation based on max normal force - FIXME not working satifactionary, currently
++	/*
++	Real penetration=0;
++	InteractionContainer::iterator in     = ncb-&gt;transientInteractions-&gt;begin();
++	InteractionContainer::iterator in_end = ncb-&gt;transientInteractions-&gt;end();
++	for( ; in!=in_end ; ++in )
++		if(	   doesItApplyToThisBody((*(ncb-&gt;bodies))[ (*in)-&gt;getId1() ].get()) 
++			&amp;&amp; doesItApplyToThisBody((*(ncb-&gt;bodies))[ (*in)-&gt;getId2() ].get()))
++		{ // FIXME - it should work with more than ElasticContactInteraction
++			ElasticContactInteraction* el = dynamic_cast&lt;ElasticContactInteraction*&gt;((*in)-&gt;interactionPhysics.get());
++			if(el)
++				penetration = std::max(el-&gt;normalForce.Length() / el-&gt;initialKn , penetration);
++		}
++
++	max_displacement = penetration / 10.0;
++	*/
++
++	if(max_displacement == 0) // OK, so try radius based approach
++	{
++		// simple calculation based on max radius
++		Real max_radius=0;
++		BodyContainer::iterator bi    = ncb-&gt;bodies-&gt;begin();
++		BodyContainer::iterator biEnd = ncb-&gt;bodies-&gt;end();
++		for( ; bi!=biEnd ; ++bi )
++			if(doesItApplyToThisBody((*bi).get()))
++				max_radius = std::max(static_cast&lt;Sphere*&gt;((*bi)-&gt;geometricalModel.get())-&gt;radius , max_radius);
++		max_displacement = max_radius / 50;
++	}
++	return max_displacement;
++};
++
++bool StaticSpheresAttractionEngine::doesItApplyToThisBody(Body* b)
++{
++	if(b-&gt;isDynamic &amp;&amp; b-&gt;geometricalModel-&gt;getClassName()==&quot;Sphere&quot;)
++		return true; 
++	return false;
++};
++
++
++YADE_PLUGIN();
+
+Added: trunk/pkg/dem/Engine/DeusExMachina/StaticSpheresAttractionEngine.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/StaticSpheresAttractionEngine.hpp	2008-02-15 22:38:12 UTC (rev 1252)
++++ trunk/pkg/dem/Engine/DeusExMachina/StaticSpheresAttractionEngine.hpp	2008-02-16 01:44:07 UTC (rev 1253)
+@@ -0,0 +1,32 @@
++/*************************************************************************
++*  Copyright (C) 2008 by Janek Kozicki                                   *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">cosurgi at berlios.de</A>                                                    *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#ifndef STATICSPHERESATTRACTIONENGINE_HPP
++#define STATICSPHERESATTRACTIONENGINE_HPP 
++
++#include&lt;yade/core/DeusExMachina.hpp&gt;
++#include&lt;yade/pkg-common/StaticAttractionEngine.hpp&gt;
++
++class StaticSpheresAttractionEngine : public StaticAttractionEngine
++{
++	public:
++		StaticSpheresAttractionEngine() : max_displacement(0) {};
++		Real max_displacement;
++	protected :
++		virtual Real getMaxDisplacement(MetaBody*);
++		virtual bool doesItApplyToThisBody(Body*);
++	
++		virtual void registerAttributes();
++	REGISTER_CLASS_NAME(StaticSpheresAttractionEngine);
++	REGISTER_BASE_CLASS_NAME(StaticAttractionEngine);
++};
++
++REGISTER_SERIALIZABLE(StaticSpheresAttractionEngine,false);
++
++#endif 
++
+
+Modified: trunk/pkg/dem/SConscript
+===================================================================
+--- trunk/pkg/dem/SConscript	2008-02-15 22:38:12 UTC (rev 1252)
++++ trunk/pkg/dem/SConscript	2008-02-16 01:44:07 UTC (rev 1253)
+@@ -789,6 +789,13 @@
+ 			'$PREFIX/include',
+ 			'DataClass/PhysicalParameters']),
+ 			
++env.SharedLibrary('StaticSpheresAttractionEngine',
++		['Engine/DeusExMachina/StaticSpheresAttractionEngine.cpp'],
++		LIBS=env['LIBS']+['yade-base',  'Sphere', 'StaticAttractionEngine', 'ElasticContactInteraction'],
++		CPPPATH=env['CPPPATH']+['Engine/DeusExMachina',
++			'DataClass/GeometricalModel',
++			'$PREFIX/include']),
++			
+ env.SharedLibrary('HydraulicTest',
+ 		['PreProcessor/HydraulicTest.cpp'],
+ 		LIBS=env['LIBS']+['SDECLinkGeometry',
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000217.html">[Yade-commits] r1252 - in trunk/pkg/dem: PreProcessor	RenderingEngine/GLDrawSpheresContactGeometry
+</A></li>
+	<LI>Next message: <A HREF="000219.html">[Yade-commits] r1254 - in trunk: core lib/multimethods	pkg/dem/Engine/DeusExMachina pkg/dem/Engine/StandAloneEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#218">[ date ]</a>
+              <a href="thread.html#218">[ thread ]</a>
+              <a href="subject.html#218">[ subject ]</a>
+              <a href="author.html#218">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

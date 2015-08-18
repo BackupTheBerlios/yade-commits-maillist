@@ -1,0 +1,414 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1222 - tags/yade-0.11.1-rc	tags/yade-0.11.1-rc/extra/clump tags/yade-0.11.1-rc/extra/tetra	tags/yade-0.11.1-rc/pkg/dem/PreProcessor trunk/extra/clump	trunk/extra/screw trunk/extra/tetra
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2007/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1222%20-%20tags/yade-0.11.1-rc%0A%09tags/yade-0.11.1-rc/extra/clump%20tags/yade-0.11.1-rc/extra/tetra%0A%09tags/yade-0.11.1-rc/pkg/dem/PreProcessor%20trunk/extra/clump%0A%09trunk/extra/screw%20trunk/extra/tetra&In-Reply-To=%3C200707041817.l64IHvLX026625%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000186.html">
+   <LINK REL="Next"  HREF="000188.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1222 - tags/yade-0.11.1-rc	tags/yade-0.11.1-rc/extra/clump tags/yade-0.11.1-rc/extra/tetra	tags/yade-0.11.1-rc/pkg/dem/PreProcessor trunk/extra/clump	trunk/extra/screw trunk/extra/tetra</H1>
+    <B>cosurgi at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1222%20-%20tags/yade-0.11.1-rc%0A%09tags/yade-0.11.1-rc/extra/clump%20tags/yade-0.11.1-rc/extra/tetra%0A%09tags/yade-0.11.1-rc/pkg/dem/PreProcessor%20trunk/extra/clump%0A%09trunk/extra/screw%20trunk/extra/tetra&In-Reply-To=%3C200707041817.l64IHvLX026625%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1222 - tags/yade-0.11.1-rc	tags/yade-0.11.1-rc/extra/clump tags/yade-0.11.1-rc/extra/tetra	tags/yade-0.11.1-rc/pkg/dem/PreProcessor trunk/extra/clump	trunk/extra/screw trunk/extra/tetra">cosurgi at mail.berlios.de
+       </A><BR>
+    <I>Wed Jul  4 20:17:57 CEST 2007</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000186.html">[Yade-commits] r1221 - tags/yade-0.11.1-rc	tags/yade-0.11.1-rc/lib/serialization tags/yade-0.11.1-rc/pkg/dem	tags/yade-0.11.1-rc/pkg/dem/Engine/DeusExMachina	tags/yade-0.11.1-rc/pkg/dem/Engine/StandAloneEngine	tags/yade-0.11.1-rc/pkg/dem/PreProcessor trunk	trunk/pkg/dem/Engine/StandAloneEngine
+</A></li>
+        <LI>Next message: <A HREF="000188.html">[Yade-commits] r1223 - tags
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#187">[ date ]</a>
+              <a href="thread.html#187">[ thread ]</a>
+              <a href="subject.html#187">[ subject ]</a>
+              <a href="author.html#187">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: cosurgi
+Date: 2007-07-04 20:17:54 +0200 (Wed, 04 Jul 2007)
+New Revision: 1222
+
+Added:
+   tags/yade-0.11.1-rc/yade.spec
+Modified:
+   tags/yade-0.11.1-rc/ChangeLog
+   tags/yade-0.11.1-rc/RELEASE
+   tags/yade-0.11.1-rc/extra/clump/Clump.cpp
+   tags/yade-0.11.1-rc/extra/tetra/Tetra.cpp
+   tags/yade-0.11.1-rc/extra/tetra/TetraTestGen.cpp
+   tags/yade-0.11.1-rc/pkg/dem/PreProcessor/TriaxialTest.cpp
+   tags/yade-0.11.1-rc/pkg/dem/PreProcessor/TriaxialTest.hpp
+   trunk/extra/clump/Clump.cpp
+   trunk/extra/screw/ScrewGen.cpp
+   trunk/extra/tetra/Tetra.cpp
+   trunk/extra/tetra/TetraTestGen.cpp
+Log:
+changed char* yadePluginClasses[]= to const char* yadePluginClasses[]= to eliminate possible misuse
+updated release 0.11.1 looks like ready to ship
+
+
+
+Modified: tags/yade-0.11.1-rc/ChangeLog
+===================================================================
+--- tags/yade-0.11.1-rc/ChangeLog	2007-07-04 16:20:59 UTC (rev 1221)
++++ tags/yade-0.11.1-rc/ChangeLog	2007-07-04 18:17:54 UTC (rev 1222)
+@@ -1,4 +1,75 @@
+-r.1165
++r.1209 (Vaclav)
++  1. SCons will download new version of itself if older thatn 0.96.93 and will proxy all calls to it transparently (hopefully)
++  1a. Fix argv[0] for scons proxy.
++  2. Revamped python wrappers, now all attributes are settable as dicionary entries in respective instances from python
++  3. added example of python script that generates and runs BoxStack
++  4. Do not #define DEBUG, since it is used in log4cxx (as log4cxx::Levels::DEBUG). YADE_DEBUG is used everywhere. If you ever get weird errors about that, #undef DEBUG after including qt3 headers.
++  5. Some code cleanups.
++
++r.1206 (Vaclav)
++  1. rename ThreadWorker::message() to ThreadWorker::getStatus, ThreadWorker::setMessage() to ThreadWorker::setStatus (and private ThreadWorker::m_message to m_status)
++  2. add public: std::string FileGenerator::message that holds exit value description
++  3. FileGenerator::generate returns now bool (if the generation was successful); description in ::message
++  4. Adapted all generators and UIs for the above changes (except NullGUI - is that needed?)
++  5. Adjust other components for FileGenerator changes. Add wrapper for preprocessor in python.
++
++r.1204 (Vaclav)
++  - frontend cleanups, eperimental python console ui.
++  - Convenience functions for serialization - experimental.
++  - fix qualifiers in constructor of AttrAccess
++
++r.1200 (Janek)
++  - update yade icon, by Vaclav's suggestion (the red spheres are not so vividly red, so looks a bit better)
++  - scons will create the installation directory if it doesn't exist
++  - incorporated Bruno's fixes into 0.11 release
++
++r.1199 (Bruno)
++  - Modified definition of the interpenetration for box-spheres interractions. The previous definition was inconsistent.
++  - Some changes in the computation of critical timestep so that the triaxial samples do not explode when dt is set to the automatic value. The change mostly affects the first steps of a simulation. Now, dt is computed at each timestep during the first steps, whatever the value of the user-defined variable &quot;timeStepUpdateInterval&quot;, until a relevant value is found.
++  - Cosmetic changes in TriaxialTest.
++  - Initial zoom in the simulation player is set to 2. 
++
++r.1192 (Janek)
++  - FileGenerators try to set the timestep when TimeStepper is not used. But it
++    is still not working when simulation is running during the generation. This
++    means, that 'dt' should not be in Omega, but inside a simulation itself. At
++    last there is a clear answer for this dilemma.
++  - fixed some crashing of HangingCloth
++  - fixed warnings in capillary law.
++
++r.1186 (Vaclav)
++  - Fix scons to handle boost.*-mt well, some other cleanups.
++  - remove hardcoded linkage with boost libs from SConscript files
++  - Modify debian builds so that making source packages for release versions work as well.
++
++r.1182 (Bruno)
++  - Add files related to capillary law.
++
++r.1181 (Janek)
++  - introduced body_id_t(ype) so that bodies are not numbered as an int, but as a body_id_t
++  - added center 'scene button' on first tab of simulation controller
++
++r.1180 (Vaclav)
++  - Correct 'all' value for features
++  - Clump improvements
++  - If RELEASE file exists, get yade version from there, instead of from svn.
++  - Remove wildmagic-dev from debian deps.
++  - fixed qt3 detection (used deprecated qapp.h header instead of qapplication.h).
++
++r.1174 (Janek)
++  - timestepper is set correctly when loading file in GUI (I hope!) - no need to reload second time
++  - FileGenerator does not open SimulationController if it already exists
++
++r.1174 (mixed)
++  - don't exclude lattice with miniWm3 
++  - merge lattice from Janek's PhD
++  - SConscript uses md5sum instead of timestamp.
++  - fixed crash in SDECLinkedSpheres example
++  - fixed RotatingBox and BoxStack examples - and accidental mistake in SAPCollider
++  - Add 'features' option to scons, which can enable/disable python and log4cxx at compile-time (extensible)
++
++
++r.1165 (Janek)
+   - updated Icon
+   - updated ChangeLog
+   - moved some obsolete scripts to doc/removed
+
+Modified: tags/yade-0.11.1-rc/RELEASE
+===================================================================
+--- tags/yade-0.11.1-rc/RELEASE	2007-07-04 16:20:59 UTC (rev 1221)
++++ tags/yade-0.11.1-rc/RELEASE	2007-07-04 18:17:54 UTC (rev 1222)
+@@ -1 +1 @@
+-0.11.0
++0.11.1
+
+Modified: tags/yade-0.11.1-rc/extra/clump/Clump.cpp
+===================================================================
+--- tags/yade-0.11.1-rc/extra/clump/Clump.cpp	2007-07-04 16:20:59 UTC (rev 1221)
++++ tags/yade-0.11.1-rc/extra/clump/Clump.cpp	2007-07-04 18:17:54 UTC (rev 1222)
+@@ -3,7 +3,7 @@
+ #include&quot;Clump.hpp&quot;
+ #include&lt;algorithm&gt;
+ 
+-char* yadePluginClasses[]={
++const char* yadePluginClasses[]={
+ 	&quot;Clump&quot;,
+ 	&quot;ClumpMemberMover&quot;,
+ 	&quot;ClumpTestGen&quot;,
+
+Modified: tags/yade-0.11.1-rc/extra/tetra/Tetra.cpp
+===================================================================
+--- tags/yade-0.11.1-rc/extra/tetra/Tetra.cpp	2007-07-04 16:20:59 UTC (rev 1221)
++++ tags/yade-0.11.1-rc/extra/tetra/Tetra.cpp	2007-07-04 18:17:54 UTC (rev 1222)
+@@ -2,7 +2,7 @@
+ 
+ #include&quot;Tetra.hpp&quot;
+ 
+-char* yadePluginClasses[]={
++const char* yadePluginClasses[]={
+ 	// self-contained in hpp:
+ 	&quot;TetraMold&quot;,
+ 	&quot;TetraBang&quot;, 
+
+Modified: tags/yade-0.11.1-rc/extra/tetra/TetraTestGen.cpp
+===================================================================
+--- tags/yade-0.11.1-rc/extra/tetra/TetraTestGen.cpp	2007-07-04 16:20:59 UTC (rev 1221)
++++ tags/yade-0.11.1-rc/extra/tetra/TetraTestGen.cpp	2007-07-04 18:17:54 UTC (rev 1222)
+@@ -6,7 +6,7 @@
+ 
+ #include&quot;Tetra.hpp&quot;
+ 
+-char* yadePluginClasses[]={
++const char* yadePluginClasses[]={
+         &quot;TetraTestGen&quot;,
+         NULL /*sentinel*/
+ };
+
+Modified: tags/yade-0.11.1-rc/pkg/dem/PreProcessor/TriaxialTest.cpp
+===================================================================
+--- tags/yade-0.11.1-rc/pkg/dem/PreProcessor/TriaxialTest.cpp	2007-07-04 16:20:59 UTC (rev 1221)
++++ tags/yade-0.11.1-rc/pkg/dem/PreProcessor/TriaxialTest.cpp	2007-07-04 18:17:54 UTC (rev 1222)
+@@ -248,7 +248,7 @@
+ }
+ 
+ 
+-bool TriaxialTest::generate()
++string TriaxialTest::generate()
+ {
+ //	unsigned int startId=boost::numeric::bounds&lt;unsigned int&gt;::highest(), endId=0; // record forces from group 2
+ 	
+@@ -266,7 +266,7 @@
+ 	shared_ptr&lt;Body&gt; body;
+ 	
+ 	vector&lt;BasicSphere&gt; sphere_list;
+-	message=GenerateCloud(sphere_list, lowerCorner, upperCorner, numberOfGrains, 0.3, 0.75);
++	setMessage(GenerateCloud(sphere_list, lowerCorner, upperCorner, numberOfGrains, 0.3, 0.75));
+ 	
+ 	vector&lt;BasicSphere&gt;::iterator it = sphere_list.begin();
+ 	vector&lt;BasicSphere&gt;::iterator it_end = sphere_list.end();
+@@ -444,14 +444,14 @@
+ 			 
+ 	}
+ 	
+-	return true;
+-//  	return &quot;Generated a sample inside box of dimensions: (&quot; 
+-//  		+ lexical_cast&lt;string&gt;(lowerCorner[0]) + &quot;,&quot; 
+-//  		+ lexical_cast&lt;string&gt;(lowerCorner[1]) + &quot;,&quot; 
+-//  		+ lexical_cast&lt;string&gt;(lowerCorner[2]) + &quot;) and (&quot; 
+-//  		+ lexical_cast&lt;string&gt;(upperCorner[0]) + &quot;,&quot; 
+-//  		+ lexical_cast&lt;string&gt;(upperCorner[1]) + &quot;,&quot; 
+-//  		+ lexical_cast&lt;string&gt;(upperCorner[2]) + &quot;).&quot;;
++//	return true;
++  	return &quot;Generated a sample inside box of dimensions: (&quot; 
++  		+ lexical_cast&lt;string&gt;(lowerCorner[0]) + &quot;,&quot; 
++  		+ lexical_cast&lt;string&gt;(lowerCorner[1]) + &quot;,&quot; 
++  		+ lexical_cast&lt;string&gt;(lowerCorner[2]) + &quot;) and (&quot; 
++  		+ lexical_cast&lt;string&gt;(upperCorner[0]) + &quot;,&quot; 
++  		+ lexical_cast&lt;string&gt;(upperCorner[1]) + &quot;,&quot; 
++  		+ lexical_cast&lt;string&gt;(upperCorner[2]) + &quot;).&quot;;
+ 
+ }
+ 
+
+Modified: tags/yade-0.11.1-rc/pkg/dem/PreProcessor/TriaxialTest.hpp
+===================================================================
+--- tags/yade-0.11.1-rc/pkg/dem/PreProcessor/TriaxialTest.hpp	2007-07-04 16:20:59 UTC (rev 1221)
++++ tags/yade-0.11.1-rc/pkg/dem/PreProcessor/TriaxialTest.hpp	2007-07-04 18:17:54 UTC (rev 1222)
+@@ -121,7 +121,7 @@
+ 	public : 
+ 		TriaxialTest ();
+ 		~TriaxialTest ();
+-		bool generate();
++		string generate();
+ 	
+ 	protected :
+ 		void registerAttributes();
+
+Added: tags/yade-0.11.1-rc/yade.spec
+===================================================================
+--- tags/yade-0.11.1-rc/yade.spec	2007-07-04 16:20:59 UTC (rev 1221)
++++ tags/yade-0.11.1-rc/yade.spec	2007-07-04 18:17:54 UTC (rev 1222)
+@@ -0,0 +1,75 @@
++#
++# This needs to be tuned by hand
++#
++%define REVISION 0.11.1
++%define _REVISION -0.11.1
++%define SNAPSHOT -stable
++
++# do not strip files after compilation
++%define __spec_install_post /usr/lib/rpm/brp-compress
++
++# do not generate debug package
++%define debug_package %{nil}
++
++Name: yade%{_REVISION}
++Provides: yade%{SNAPSHOT}
++Version: 1
++Release: a
++Summary: Platform for discrete numerical modeling
++License: GPL
++Requires: boost python libQGLViewer
++BuildRequires: qt-devel boost-devel scons libXmu libXmu-devel glut-devel ScientificPython python-devel
++Url: <A HREF="http://yade.wikia.com">http://yade.wikia.com</A>
++Source: <A HREF="http://download.berlios.de/yade/yade-0.11.1.tar.gz">http://download.berlios.de/yade/yade-0.11.1.tar.gz</A>
++Group: Applications/Engineering
++BuildRoot: %{_tmppath}/%{name}-buildroot
++
++%package dbg
++Summary: Platform for discrete numerical modeling, debugging version.
++Group: Applications/Engineering
++Provides: yade%{SNAPSHOT}-dbg
++
++%package devel
++Summary: Platform for discrete numerical modeling, development files.
++Group: Applications/Engineering
++Provides: yade%{SNAPSHOT}-devel
++Requires: boost-devel python-devel qt-devel libQGLViewer-devel glut-devel
++
++%description
++YADE is an Open Source GNU/GPL Software framework designed with dynamic libraries in a way that it is easy to add new numerical models for simulation. It aims to provide versatile means to perform discrete modelling.
++
++%description dbg
++YADE is an Open Source GNU/GPL Software framework designed with dynamic libraries in a way that it is easy to add new numerical models for simulation. It aims to provide versatile means to perform discrete modelling. This packages is built with debugging support.
++
++%description devel
++YADE is an Open Source GNU/GPL Software framework designed with dynamic libraries in a way that it is easy to add new numerical models for simulation. It aims to provide versatile means to perform discrete modelling. This package contains development files.
++
++%prep
++%setup -n yade-0.11.1
++
++%build
++
++%install
++#optimized build (main package)
++scons buildPrefix=${RPM_BUILD_DIR} PREFIX=%{RPM_BUILD_ROOT}/usr runtimePREFIX=/usr version=%{REVISION} useMiniWm3=1 exclude=realtime-rigidbody variant='' optimize=1 debug=0
++#debug build (-dbg)
++scons variant=-dbg optimize=0 debug=1
++# install headers (-devel)
++scons %{RPM_BUILD_ROOT}/usr/include %{RPM_BUILD_ROOT}/usr/lib/pkgconfig
++
++
++%files
++%defattr(-,root,root)
++/usr/lib/%name
++/usr/bin/%name
++
++%files dbg
++%defattr(-,root,root)
++/usr/lib/%name-dbg
++/usr/bin/%name-dbg
++
++%files devel
++%defattr(-,root,root)
++/usr/include/%name
++/usr/lib/pkgconfig/%{name}*.pc
++
+
+Modified: trunk/extra/clump/Clump.cpp
+===================================================================
+--- trunk/extra/clump/Clump.cpp	2007-07-04 16:20:59 UTC (rev 1221)
++++ trunk/extra/clump/Clump.cpp	2007-07-04 18:17:54 UTC (rev 1222)
+@@ -3,7 +3,7 @@
+ #include&quot;Clump.hpp&quot;
+ #include&lt;algorithm&gt;
+ 
+-char* yadePluginClasses[]={
++const char* yadePluginClasses[]={
+ 	&quot;Clump&quot;,
+ 	&quot;ClumpMemberMover&quot;,
+ 	&quot;ClumpTestGen&quot;,
+
+Modified: trunk/extra/screw/ScrewGen.cpp
+===================================================================
+--- trunk/extra/screw/ScrewGen.cpp	2007-07-04 16:20:59 UTC (rev 1221)
++++ trunk/extra/screw/ScrewGen.cpp	2007-07-04 18:17:54 UTC (rev 1222)
+@@ -2,7 +2,7 @@
+ #include&lt;yade/extra/Clump.hpp&gt;
+ #include&lt;yade/extra/Shop.hpp&gt;
+ 
+-char* yadePluginClasses[]={
++const char* yadePluginClasses[]={
+ 	&quot;ScrewGen&quot;,
+ 	NULL /*sentinel*/
+ };
+
+Modified: trunk/extra/tetra/Tetra.cpp
+===================================================================
+--- trunk/extra/tetra/Tetra.cpp	2007-07-04 16:20:59 UTC (rev 1221)
++++ trunk/extra/tetra/Tetra.cpp	2007-07-04 18:17:54 UTC (rev 1222)
+@@ -2,7 +2,7 @@
+ 
+ #include&quot;Tetra.hpp&quot;
+ 
+-char* yadePluginClasses[]={
++const char* yadePluginClasses[]={
+ 	// self-contained in hpp:
+ 	&quot;TetraMold&quot;,
+ 	&quot;TetraBang&quot;, 
+
+Modified: trunk/extra/tetra/TetraTestGen.cpp
+===================================================================
+--- trunk/extra/tetra/TetraTestGen.cpp	2007-07-04 16:20:59 UTC (rev 1221)
++++ trunk/extra/tetra/TetraTestGen.cpp	2007-07-04 18:17:54 UTC (rev 1222)
+@@ -6,7 +6,7 @@
+ 
+ #include&quot;Tetra.hpp&quot;
+ 
+-char* yadePluginClasses[]={
++const char* yadePluginClasses[]={
+         &quot;TetraTestGen&quot;,
+         NULL /*sentinel*/
+ };
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000186.html">[Yade-commits] r1221 - tags/yade-0.11.1-rc	tags/yade-0.11.1-rc/lib/serialization tags/yade-0.11.1-rc/pkg/dem	tags/yade-0.11.1-rc/pkg/dem/Engine/DeusExMachina	tags/yade-0.11.1-rc/pkg/dem/Engine/StandAloneEngine	tags/yade-0.11.1-rc/pkg/dem/PreProcessor trunk	trunk/pkg/dem/Engine/StandAloneEngine
+</A></li>
+	<LI>Next message: <A HREF="000188.html">[Yade-commits] r1223 - tags
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#187">[ date ]</a>
+              <a href="thread.html#187">[ thread ]</a>
+              <a href="subject.html#187">[ subject ]</a>
+              <a href="author.html#187">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

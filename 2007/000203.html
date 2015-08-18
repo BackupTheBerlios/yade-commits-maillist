@@ -1,0 +1,519 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1238 - in trunk: . core doc	pkg/dem/Engine/DeusExMachina pkg/dem/PreProcessor
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2007/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1238%20-%20in%20trunk%3A%20.%20core%20doc%0A%09pkg/dem/Engine/DeusExMachina%20pkg/dem/PreProcessor&In-Reply-To=%3C200712191126.lBJBQUFD018133%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000202.html">
+   
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1238 - in trunk: . core doc	pkg/dem/Engine/DeusExMachina pkg/dem/PreProcessor</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1238%20-%20in%20trunk%3A%20.%20core%20doc%0A%09pkg/dem/Engine/DeusExMachina%20pkg/dem/PreProcessor&In-Reply-To=%3C200712191126.lBJBQUFD018133%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1238 - in trunk: . core doc	pkg/dem/Engine/DeusExMachina pkg/dem/PreProcessor">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Wed Dec 19 12:26:30 CET 2007</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000202.html">[Yade-commits] r1237 - in trunk: core gui/cmd gui/qt3	pkg/common/RenderingEngine/OpenGLRenderingEngine	pkg/dem/Engine/DeusExMachina pkg/dem/Engine/StandAloneEngine	pkg/dem/PreProcessor
+</A></li>
+        
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#203">[ date ]</a>
+              <a href="thread.html#203">[ thread ]</a>
+              <a href="subject.html#203">[ subject ]</a>
+              <a href="author.html#203">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2007-12-19 12:26:29 +0100 (Wed, 19 Dec 2007)
+New Revision: 1238
+
+Modified:
+   trunk/SConstruct
+   trunk/core/yade.cpp
+   trunk/doc/Doxyfile
+   trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.cpp
+   trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.hpp
+   trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.cpp
+   trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.hpp
+   trunk/pkg/dem/PreProcessor/TriaxialTest.cpp
+   trunk/pkg/dem/PreProcessor/TriaxialTest.hpp
+Log:
+1. Default scons to latest snapshot (should be a bit faster)
+2. Don't autocreate plugin path entries for paths that are not installed
+3. Turn TriaxialStressEngine into state machine, while preserving the possibility of changing some values by hand in .xml. (should be tested).
+4. Exclude Loki:: from doxygen docs.
+
+
+
+Modified: trunk/SConstruct
+===================================================================
+--- trunk/SConstruct	2007-12-14 11:29:16 UTC (rev 1237)
++++ trunk/SConstruct	2007-12-19 11:26:29 UTC (rev 1238)
+@@ -35,9 +35,11 @@
+ ##########################################################################################
+ ########## PROXY TO NEWER SCONS (DOWNLOADED IF NEEDED) ###################################
+ ##########################################################################################
+-if sconsVersion&lt;9700:  ##&lt;9693: 
+-	tgzParams=(&quot;<A HREF="http://ovh.dl.sourceforge.net/sourceforge/scons/scons-local-0.97.0d20070918.tar.gz">http://ovh.dl.sourceforge.net/sourceforge/scons/scons-local-0.97.0d20070918.tar.gz</A>&quot;,&quot;/scons-local-0.97.0d20070918&quot;) ## sconsVersion&lt;=9700
++#print sconsVersion
++if sconsVersion&lt;9700.20071212:  ##&lt;9700 ##&lt;9693: 
+ 	#tgzParams=(&quot;<A HREF="http://dfn.dl.sourceforge.net/sourceforge/scons/scons-local-0.97.tar.gz">http://dfn.dl.sourceforge.net/sourceforge/scons/scons-local-0.97.tar.gz</A>&quot;,&quot;scons-local-0.97&quot;)
++	#tgzParams=(&quot;<A HREF="http://ovh.dl.sourceforge.net/sourceforge/scons/scons-local-0.97.0d20070918.tar.gz">http://ovh.dl.sourceforge.net/sourceforge/scons/scons-local-0.97.0d20070918.tar.gz</A>&quot;,&quot;/scons-local-0.97.0d20070918&quot;) ## sconsVersion&lt;=9700
++	tgzParams=(&quot;<A HREF="http://switch.dl.sourceforge.net/sourceforge/scons/scons-local-0.97.0d20071212.tar.gz">http://switch.dl.sourceforge.net/sourceforge/scons/scons-local-0.97.0d20071212.tar.gz</A>&quot;,&quot;/scons-local-0.97.0d20071212&quot;)
+ 	newPrefix=&quot;./scons-local&quot;;
+ 	newUrl,newDir=tgzParams[0],newPrefix+&quot;/&quot;+tgzParams[1]
+ 	if not os.path.exists(newDir):
+@@ -48,6 +50,7 @@
+ 		tar=tarfile.open(filename, &quot;r:gz&quot;)
+ 		for tarinfo in tar: tar.extract(tarinfo,newPrefix)
+ 		print &quot;Done extracting scons to&quot;,newDir
++		assert(os.path.exists(newDir))
+ 	if os.path.exists(newDir):
+ 		Exit(os.execv(newPrefix+&quot;/scons.py&quot;,[newPrefix+'/scons.py']+sys.argv[1:]))
+ 
+
+Modified: trunk/core/yade.cpp
+===================================================================
+--- trunk/core/yade.cpp	2007-12-14 11:29:16 UTC (rev 1237)
++++ trunk/core/yade.cpp	2007-12-19 11:26:29 UTC (rev 1238)
+@@ -64,7 +64,7 @@
+ 	string expLibDir;
+ 	for(int i=0; libDirs[i]!=NULL; i++) {
+ 		expLibDir=string(PREFIX &quot;/lib/yade&quot; SUFFIX &quot;/&quot;) + libDirs[i];
+-		// FIXME: only add if really exists (module may not be built)
++		if(!filesystem::exists(expLibDir)) continue; // skip modules that were not built/installed
+ 		LOG_INFO(&quot;Adding plugin directory &quot;&lt;&lt;expLibDir&lt;&lt;&quot;.&quot;);
+ 		pref-&gt;dynlibDirectories.push_back(expLibDir);
+ 	}
+
+Modified: trunk/doc/Doxyfile
+===================================================================
+--- trunk/doc/Doxyfile	2007-12-14 11:29:16 UTC (rev 1237)
++++ trunk/doc/Doxyfile	2007-12-19 11:26:29 UTC (rev 1238)
+@@ -409,7 +409,7 @@
+ # The QUIET tag can be used to turn on/off the messages that are generated 
+ # by doxygen. Possible values are YES and NO. If left blank NO is used.
+ 
+-QUIET                  = NO
++QUIET                  = YES
+ 
+ # The WARNINGS tag can be used to turn on/off the warning messages that are 
+ # generated by doxygen. Possible values are YES and NO. If left blank 
+@@ -538,7 +538,8 @@
+ EXCLUDE_PATTERNS       = */yade-flat/* \
+ 									*/include/* \
+ 									*/.* \
+-									*/yade-lib-loki/*
++									*/loki/* \
++									*/miniWm3/* 
+ 
+ # The EXAMPLE_PATH tag can be used to specify one or more files or 
+ # directories that contain example code fragments that are included (see 
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.cpp	2007-12-14 11:29:16 UTC (rev 1237)
++++ trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.cpp	2007-12-19 11:26:29 UTC (rev 1238)
+@@ -24,21 +24,18 @@
+ 	strainRate=0;
+ 	currentStrainRate=0;
+ 	StabilityCriterion=0.001;
+-	Phase1=false;
++	//Phase1=false;
++	currentState=STATE_ISO_COMPACTION;
+ 	UnbalancedForce = 1;
+ 	Phase1End = &quot;Compacted&quot;;
+ 	FinalIterationPhase1 = 0;
+ 	Iteration = 0;
+ 	testEquilibriumInterval = 20;
+-	compressionActivated=false;
++	//compressionActivated=false;
+ 	autoCompressionActivation=true;
+-	noLateralConfinement=false;
+ 	UnbalancedForce = 1;
+-	previousSigmaIso = 0;
+-	//for (int i=0; i&lt;3; ++i) strain[i]=0;
+ 	saveSimulation = false;
+-	
+-	
++	firstRun=true;
+ }
+ 
+ TriaxialCompressionEngine::~TriaxialCompressionEngine()
+@@ -48,8 +45,7 @@
+ 
+ void TriaxialCompressionEngine::postProcessAttributes(bool deserializing)
+ {
+-	if(deserializing)
+-        translationAxis.Normalize();
++	if(deserializing) translationAxis.Normalize();
+ }
+ 
+ 
+@@ -58,54 +54,62 @@
+ 	TriaxialStressController::registerAttributes();
+ 	REGISTER_ATTRIBUTE(strainRate);
+ 	REGISTER_ATTRIBUTE(currentStrainRate);
+-	REGISTER_ATTRIBUTE(Phase1);
+-	//REGISTER_ATTRIBUTE(strain);
++	//REGISTER_ATTRIBUTE(Phase1);
+ 	REGISTER_ATTRIBUTE(UnbalancedForce);
+ 	REGISTER_ATTRIBUTE(StabilityCriterion);
+ 	REGISTER_ATTRIBUTE(translationAxis);
+-	REGISTER_ATTRIBUTE(compressionActivated);
++	//REGISTER_ATTRIBUTE(compressionActivated);
+ 	REGISTER_ATTRIBUTE(autoCompressionActivation);
+ 	REGISTER_ATTRIBUTE(testEquilibriumInterval);
+-	REGISTER_ATTRIBUTE(previousSigmaIso);
+-	REGISTER_ATTRIBUTE(noLateralConfinement);
++	REGISTER_ATTRIBUTE(currentState);
++	REGISTER_ATTRIBUTE(previousState);
+ }
+ 
++void TriaxialCompressionEngine::doStateTransition(stateNum nextState){
++	if (nextState==STATE_ISO_COMPACTION){
++		currentState=nextState;
++		LOG_INFO(&quot;State transition to STATE_ISO_COMPACTION done.&quot;);
++	}
++	if(nextState==STATE_TRIAX_LOADING){
++		assert(currentState==STATE_ISO_COMPACTION || currentState==STATE_LIMBO);
++		internalCompaction = false;
++		height0 = height; depth0 = depth; width0 = width;
++		//compressionActivated = true;
++		wall_bottom_activated=false;
++		wall_top_activated=false;
++		autoCompressionActivation = false; // FIXME: this can be removed, since it will not be used anymore
++		if(!firstRun) saveSimulation=true; // saving snapshot .xml will actually be done in ::applyCondition
++		currentState=nextState;
++		LOG_INFO(&quot;State transition from STATE_ISO_COMPACTION to STATE_TRIAX_LOADING done.&quot;);
++	}
++	if(nextState==STATE_LIMBO){
++		assert(currentState==STATE_ISO_COMPACTION);
++		internalCompaction = false;
++		height0 = height; depth0 = depth; width0 = width;
++		saveSimulation=true; // saving snapshot .xml will actually be done in ::applyCondition
++		currentState=nextState;
++		LOG_INFO(&quot;State transition from STATE_ISO_COMPACTION to STATE_LIMBO done.&quot;);
++		// stop simulation here, since nothing will happen from now on
++		// Omega::instance().stopSimulationLoop();
++	}
++	previousState=currentState; // should be always kept in sync, used to track manual changes to the .xml
++}
++
+ void TriaxialCompressionEngine::updateParameters(Body * body)
+-{ TR;
++{
+ 
+-    UnbalancedForce=ComputeUnbalancedForce(body);
+-    MetaBody * ncb = static_cast&lt;MetaBody*&gt;(body);
+-    if (Omega::instance().getCurrentIteration() % 100 == 0) LOG_DEBUG(&quot;UnbalancedForce=&quot;&lt;&lt;UnbalancedForce);
+-    //Real S = computeStressStrain(ncb);
+-    if (sigma_iso != previousSigmaIso) {
+-    	previousSigmaIso = sigma_iso;
+-    	Phase1 = false;
+-    }
++	UnbalancedForce=ComputeUnbalancedForce(body);
++	MetaBody * ncb = static_cast&lt;MetaBody*&gt;(body);
++	if (Omega::instance().getCurrentIteration() % 100 == 0) LOG_DEBUG(&quot;UnbalancedForce=&quot;&lt;&lt;UnbalancedForce);
+ 
+-	/* Zero-th phase, isotropic compression */
+-    if ((!Phase1) || (autoCompressionActivation)) {
+-    	if (!(Omega::instance().getCurrentIteration() % computeStressStrainInterval == 0)) computeStressStrain(ncb);
+-		  TRVAR5(UnbalancedForce,StabilityCriterion,meanStress,sigma_iso,abs((meanStress-sigma_iso)/sigma_iso));
+-        if (UnbalancedForce&lt;=StabilityCriterion &amp;&amp; abs((meanStress-sigma_iso)/sigma_iso) &lt; 1.0 )//FIXME: revert to 0.02)
+-        {
+-				LOG_DEBUG(&quot;Isotropic compression DONE, entering Phase1 (uniaxial test with confinement).&quot;);
+-            Phase1 = true; 
+-				if(noLateralConfinement) deactivateLateralWalls();
+-            internalCompaction = false;
+-            height0 = height;
+-            depth0 = depth;
+-            width0 = width;
++	if(currentState==STATE_ISO_COMPACTION){ // FIXME: do we need this?? it makes sense to activate compression only during compaction!: || autoCompressionActivation){
++		if ((Omega::instance().getCurrentIteration() % computeStressStrainInterval) == 0) computeStressStrain(ncb);
++		TRVAR5(UnbalancedForce,StabilityCriterion,meanStress,sigma_iso,abs((meanStress-sigma_iso)/sigma_iso));
+ 
+-            Iteration = Omega::instance().getCurrentIteration();
+-
+-            saveSimulation = true; // saving snapshot .xml will actually be done in ::applyCondition
+-            if (autoCompressionActivation) {
+-                compressionActivated = true;
+-                wall_bottom_activated=false;
+-                wall_top_activated=false;
+-                autoCompressionActivation = false;
+-            } else { LOG_WARN(&quot;Compression would be activated now, but is not --- limbo...&quot;); } // else Omega::instance().stopSimulationLoop();//FIXME : will not stop the nullgui runs
+-        }
++		if ( UnbalancedForce&lt;=StabilityCriterion &amp;&amp; abs((meanStress-sigma_iso)/sigma_iso)&lt;0.02 ) {
++			if(autoCompressionActivation) doStateTransition(STATE_TRIAX_LOADING);
++			else doStateTransition(STATE_LIMBO);
++		}
+ #if 0
+         //This is a hack in order to allow subsequent run without activating compression - like for the YADE-COMSOL coupling
+         if (!compressionActivated)
+@@ -126,30 +130,26 @@
+         }
+ #endif
+     }
+-    if (compressionActivated &amp;&amp; !Phase1)
+-    {
+-        wall_bottom_activated=false;
+-        wall_top_activated=false;
+-        internalCompaction = false;
+-        Phase1 = true;
+-		  if(noLateralConfinement) deactivateLateralWalls();
+-        autoCompressionActivation = false;
+-        height0 = height;
+-        depth0 = depth;
+-        width0 = width;
+-    }
+ }
+ 
+ 
+ void TriaxialCompressionEngine::applyCondition(Body * body)
+-{ TR;
+-    //cerr &lt;&lt; &quot;TriaxialCompressionEngine::applyCondition(Body * body)&quot; &lt;&lt; endl;
++{
++	// here, we make sure to get consistent parameters, in case someone fiddled with the scene .xml manually
++	if(firstRun){
++		//sigma_iso was changed, we need to rerun compaction
++		if(sigma_iso!=previousSigmaIso) doStateTransition(STATE_ISO_COMPACTION);
++		if(previousState==STATE_LIMBO &amp;&amp; currentState==STATE_TRIAX_LOADING) doStateTransition(STATE_TRIAX_LOADING);
++		previousState=currentState;
++		previousSigmaIso=sigma_iso;
++		firstRun=false; // change this only _after_ state transitions
++	}
++	if(currentState==STATE_LIMBO) return;
++
+     TriaxialStressController::applyCondition(body);
+-    if (Omega::instance().getCurrentIteration() % testEquilibriumInterval == 0)
+-    {
++    if (Omega::instance().getCurrentIteration() % testEquilibriumInterval == 0) {
+         updateParameters(body);
+-        if (saveSimulation)
+-        {
++        if (saveSimulation) {
+             string fileName = &quot;../data/&quot; + Phase1End + &quot;_&quot; +
+                               lexical_cast&lt;string&gt;(Omega::instance().getCurrentIteration()) + &quot;.xml&quot;;
+             LOG_INFO(&quot;saving snapshot: &quot;&lt;&lt;fileName);
+@@ -157,27 +157,18 @@
+             saveSimulation = false;
+         }
+     }
+-
+-
+-//        MetaBody * ncb2 = static_cast&lt;MetaBody*&gt;(body);
+-    //cerr &lt;&lt; computeStress(ncb2)  &lt;&lt; endl;
+-
+-    /* phase 1: uniaxial compression with confinement */
+-	 if (compressionActivated)
+-    {
++	 if (currentState==STATE_TRIAX_LOADING) {
+         if (Omega::instance().getCurrentIteration() % 100 == 0) LOG_DEBUG(&quot;Compression active.&quot;);
+         Real dt = Omega::instance().getTimeStep();
+         MetaBody * ncb = static_cast&lt;MetaBody*&gt;(body);
+         shared_ptr&lt;BodyContainer&gt;&amp; bodies = ncb-&gt;bodies;
+ 
+-        if (currentStrainRate &lt; strainRate) currentStrainRate += strainRate*0.0003;	// !!! si decharge
++        if (currentStrainRate &lt; strainRate) currentStrainRate += strainRate*0.0003;	// !!! if unloading (?)
+         else currentStrainRate = strainRate;
+ 
+ 		  /* Move top and bottom wall according to strain rate */
+-
+         PhysicalParameters* p = static_cast&lt;PhysicalParameters*&gt;((*bodies)[wall_bottom_id]-&gt;physicalParameters. get());
+         p-&gt;se3.position += 0.5*strainRate*height*translationAxis*dt;
+-
+         p = static_cast&lt;PhysicalParameters*&gt;((*bodies)[wall_top_id]-&gt;physicalParameters.get( ));
+         p-&gt;se3.position -= 0.5*strainRate*height*translationAxis*dt;
+     }
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.hpp	2007-12-14 11:29:16 UTC (rev 1237)
++++ trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.hpp	2007-12-19 11:26:29 UTC (rev 1238)
+@@ -16,6 +16,9 @@
+ #include &quot;TriaxialStressController.hpp&quot;
+ #include &lt;string&gt;
+ 
++// FIXME: current serializer doesn't handle named enum types, this is workaround.
++#define stateNum int
++
+ /*! \brief Isotropic compression + uniaxial compression test
+ 
+ 	detailed description...
+@@ -36,6 +39,11 @@
+ 	public :
+ 		TriaxialCompressionEngine();
+ 		virtual ~TriaxialCompressionEngine();
++
++		enum {STATE_ISO_COMPACTION, STATE_ISO_UNLOADING, STATE_TRIAX_LOADING, STATE_LIMBO}; 
++		stateNum currentState;
++		//const char* stateNames[]={&quot;istropic_compression&quot;,&quot;isotropic_unloading&quot;,&quot;triaxial_loading&quot;};
++		void doStateTransition(stateNum nextState);
+ 		
+ 		//! Strain velocity (./s)
+ 		Real strainRate;
+@@ -44,24 +52,27 @@
+ 		Real UnbalancedForce;
+ 		//! Value of UnbalancedForce for which the system is considered stable
+ 		Real StabilityCriterion;
+-		//! Previous value of inherited sigma_iso (used to detect changes of the confining pressure)
++		//! Previous value of inherited sigma_iso (used to detect manual changes of the confining pressure)
+ 		Real previousSigmaIso;
++		//! Previous state (used to detect manual changes of the state in .xml)
++		stateNum previousState;
+ 		//Vector3r strain;
+ 		Vector3r translationAxis;
+ 		//! is isotropicInternalCompactionFinished?
+ 		bool Phase1, saveSimulation;
++		//! is this the beginning of the simulation, after reading the scene?
++		bool firstRun;
+ 		int FinalIterationPhase1, Iteration, testEquilibriumInterval;
+ 		std::string Phase1End; //,Phase2End;
+-		//! Is uniaxial compression currently activated?
+-		bool compressionActivated;
++		// //! Is uniaxial compression currently activated?
++		// bool compressionActivated;
+ 		//! Auto-switch between isotropic and uniaxial compression?
+ 		bool autoCompressionActivation;
+-		//! Do not apply lateral confinement during uniaxial compression? (default off, i.e. lateral confinement activated)
+-		bool noLateralConfinement;
+ 				
+ 		virtual void applyCondition(Body * body);
+ 		void updateParameters(Body * body);
+ 
++
+ 		DECLARE_LOGGER;
+ 		
+ 
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.cpp	2007-12-14 11:29:16 UTC (rev 1237)
++++ trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.cpp	2007-12-19 11:26:29 UTC (rev 1238)
+@@ -219,7 +219,7 @@
+ 
+ 
+ void TriaxialStressController::applyCondition(Body* body)
+-{ TR;
++{
+ 	//cerr &lt;&lt; &quot;TriaxialStressController::applyCondition&quot; &lt;&lt; endl;
+         MetaBody * ncb = YADE_CAST&lt;MetaBody*&gt;(body);
+ 
+@@ -276,13 +276,6 @@
+         }
+ }
+ 
+-void TriaxialStressController::deactivateLateralWalls()
+-{
+-	LOG_WARN(&quot;NOT&#160;IMPLEMENTED: would deactivate lateral walls now.&quot;);
+-	cerr&lt;&lt;&quot;!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!&quot;&lt;&lt;endl;
+-}
+-
+-
+ Real TriaxialStressController::computeStressStrain(MetaBody* ncb)
+ {
+ 	
+@@ -314,8 +307,9 @@
+  //&lt;&lt; stress[wall_front] &lt;&lt; &quot; &quot; &lt;&lt; stress[wall_back] &lt;&lt; endl;
+ 
+ 	for (int i=0; i&lt;6; i++) meanStress-= stress[i].Dot(normal[i]);
+-	return meanStress/6.;
+-	
++	meanStress/=6.;
++	// FIXME: meanStress is both returned as function value and stored in meanStress member. Confusing, change prototype to void, since return value isn't used anywhere.
++	return meanStress;
+ }
+ 
+ void TriaxialStressController::controlInternalStress(MetaBody* ncb, Real multiplier)
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.hpp	2007-12-14 11:29:16 UTC (rev 1237)
++++ trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.hpp	2007-12-19 11:26:29 UTC (rev 1238)
+@@ -81,7 +81,6 @@
+ 		Real computeStressStrain(MetaBody* ncb); //Compute stresses on walls and store the values in &quot;Vector3r stress[6]&quot;, return mean stress
+ 		//! Compute the mean/max unbalanced force in the assembly (normalized by mean contact force)
+     		Real ComputeUnbalancedForce(Body * body, bool maxUnbalanced=false);
+-		void deactivateLateralWalls();
+ 
+ 		DECLARE_LOGGER;
+ 		
+
+Modified: trunk/pkg/dem/PreProcessor/TriaxialTest.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/TriaxialTest.cpp	2007-12-14 11:29:16 UTC (rev 1237)
++++ trunk/pkg/dem/PreProcessor/TriaxialTest.cpp	2007-12-19 11:26:29 UTC (rev 1238)
+@@ -148,7 +148,6 @@
+ 	strainRate = 0.1;
+ 	StabilityCriterion = 0.01;
+ 	autoCompressionActivation = false;
+-	noLateralConfinement=false;
+ 	maxMultiplier = 1.01;
+ 	finalMaxMultiplier = 1.001;
+ 	
+@@ -213,7 +212,6 @@
+ 	REGISTER_ATTRIBUTE(strainRate);
+ 	REGISTER_ATTRIBUTE(StabilityCriterion);
+ 	REGISTER_ATTRIBUTE(autoCompressionActivation);
+-	REGISTER_ATTRIBUTE(noLateralConfinement);
+ //	REGISTER_ATTRIBUTE(wall_top);
+ //	REGISTER_ATTRIBUTE(wall_bottom);
+ //	REGISTER_ATTRIBUTE(wall_1);
+@@ -651,7 +649,6 @@
+ 	triaxialcompressionEngine-&gt;strainRate = strainRate;
+ 	triaxialcompressionEngine-&gt;StabilityCriterion = StabilityCriterion;
+ 	triaxialcompressionEngine-&gt;autoCompressionActivation = autoCompressionActivation;
+-	triaxialcompressionEngine-&gt;noLateralConfinement = noLateralConfinement;
+ 	triaxialcompressionEngine-&gt;internalCompaction = internalCompaction;
+ 	triaxialcompressionEngine-&gt;maxMultiplier = maxMultiplier;
+ 		
+
+Modified: trunk/pkg/dem/PreProcessor/TriaxialTest.hpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/TriaxialTest.hpp	2007-12-14 11:29:16 UTC (rev 1237)
++++ trunk/pkg/dem/PreProcessor/TriaxialTest.hpp	2007-12-19 11:26:29 UTC (rev 1238)
+@@ -100,8 +100,7 @@
+ 				,boxWalls
+ 				//! flag for choosing between moving boundaries or increasing particles sizes during the compaction stage.
+ 				,internalCompaction
+-				,saveAnimationSnapshots
+-				,noLateralConfinement;
++				,saveAnimationSnapshots;
+ 
+ 		int		 recordIntervalIter
+ 				,timeStepUpdateInterval
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000202.html">[Yade-commits] r1237 - in trunk: core gui/cmd gui/qt3	pkg/common/RenderingEngine/OpenGLRenderingEngine	pkg/dem/Engine/DeusExMachina pkg/dem/Engine/StandAloneEngine	pkg/dem/PreProcessor
+</A></li>
+	
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#203">[ date ]</a>
+              <a href="thread.html#203">[ thread ]</a>
+              <a href="subject.html#203">[ subject ]</a>
+              <a href="author.html#203">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

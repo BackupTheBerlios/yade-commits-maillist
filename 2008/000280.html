@@ -1,0 +1,173 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1317 - trunk/pkg/dem/Engine/DeusExMachina
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1317%20-%20trunk/pkg/dem/Engine/DeusExMachina&In-Reply-To=%3C200804140734.m3E7YjqJ006403%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000279.html">
+   <LINK REL="Next"  HREF="000281.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1317 - trunk/pkg/dem/Engine/DeusExMachina</H1>
+    <B>chareyre at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1317%20-%20trunk/pkg/dem/Engine/DeusExMachina&In-Reply-To=%3C200804140734.m3E7YjqJ006403%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1317 - trunk/pkg/dem/Engine/DeusExMachina">chareyre at mail.berlios.de
+       </A><BR>
+    <I>Mon Apr 14 09:34:45 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000279.html">[Yade-commits] r1316 - trunk/pkg/dem/Engine/DeusExMachina
+</A></li>
+        <LI>Next message: <A HREF="000281.html">[Yade-commits] r1318 - trunk/pkg/dem/Engine/EngineUnit
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#280">[ date ]</a>
+              <a href="thread.html#280">[ thread ]</a>
+              <a href="subject.html#280">[ subject ]</a>
+              <a href="author.html#280">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: chareyre
+Date: 2008-04-14 09:34:45 +0200 (Mon, 14 Apr 2008)
+New Revision: 1317
+
+Modified:
+   trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.cpp
+   trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.hpp
+   trunk/pkg/dem/Engine/DeusExMachina/TriaxialStateRecorder.hpp
+Log:
+1+2 : added &quot;Key&quot; string in filenames.
+3 : missed that hpp in previous commit.
+
+
+
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.cpp	2008-04-14 07:00:21 UTC (rev 1316)
++++ trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.cpp	2008-04-14 07:34:45 UTC (rev 1317)
+@@ -31,6 +31,7 @@
+ 	currentState=STATE_UNINITIALIZED;
+ 	previousState=currentState;
+ 	UnbalancedForce = 1;
++	Key = &quot;&quot;;
+ 	Phase1End = &quot;Compacted&quot;;
+ 	FinalIterationPhase1 = 0;
+ 	Iteration = 0;
+@@ -71,6 +72,7 @@
+ 	REGISTER_ATTRIBUTE(sigmaIsoCompaction);
+ 	REGISTER_ATTRIBUTE(previousSigmaIso);
+ 	REGISTER_ATTRIBUTE(sigmaLateralConfinement);
++	REGISTER_ATTRIBUTE(Key);
+ }
+ 
+ void TriaxialCompressionEngine::doStateTransition(stateNum nextState){
+@@ -88,18 +90,22 @@
+ 		wall_top_activated=false;
+ 		if(currentState==STATE_ISO_UNLOADING){ LOG_INFO(&quot;Speres -&gt; /tmp/unloaded.spheres&quot;); Shop::saveSpheresToFile(&quot;/tmp/unloaded.spheres&quot;); }
+ 		if(!firstRun) saveSimulation=true; // saving snapshot .xml will actually be done in ::applyCondition
++		Phase1End = &quot;Unloaded&quot;;
+ 	}
+ 	else if(currentState==STATE_ISO_COMPACTION &amp;&amp; nextState==STATE_ISO_UNLOADING){
+ 		sigma_iso=sigmaLateralConfinement;
+ 		sigmaIsoCompaction = sigmaLateralConfinement;
+ 		previousSigmaIso=sigma_iso;
+ 		internalCompaction=false; // unloading will not change grain sizes
+-	}
+-	else if(currentState==STATE_ISO_COMPACTION &amp;&amp; nextState==STATE_LIMBO){
++		if(!firstRun) saveSimulation=true;
++		Phase1End = &quot;Compacted&quot;;
++	}	
++	else if ((currentState==STATE_ISO_COMPACTION || currentState==STATE_ISO_UNLOADING) &amp;&amp; nextState==STATE_LIMBO) {
+ 		internalCompaction = false;
+ 		height0 = height; depth0 = depth; width0 = width;
+ 		saveSimulation=true; // saving snapshot .xml will actually be done in ::applyCondition
+ 		// stop simulation here, since nothing will happen from now on
++		Phase1End = (currentState==STATE_ISO_COMPACTION ? &quot;compacted&quot; : &quot;unloaded&quot;);
+ 		Shop::saveSpheresToFile(&quot;/tmp/limbo.spheres&quot;);
+ 		
+ 	}	
+@@ -182,12 +188,12 @@
+ 	}
+ 	if ( saveSimulation )
+ 	{
+-		string fileName = &quot;./&quot; + Phase1End + &quot;_&quot; +
++		string fileName = &quot;./&quot;+ Key + &quot;_&quot; + Phase1End + &quot;_&quot; +
+ 						  lexical_cast&lt;string&gt; ( Omega::instance().getCurrentIteration() ) + &quot;_&quot; +
+ 						  lexical_cast&lt;string&gt; ( currentState ) + &quot;.xml&quot;;
+ 		LOG_INFO ( &quot;saving snapshot: &quot;&lt;&lt;fileName );
+ 		Omega::instance().saveSimulation ( fileName );
+-		fileName=&quot;./&quot;+Phase1End+&quot;_&quot;+lexical_cast&lt;string&gt; ( Omega::instance().getCurrentIteration() ) + &quot;_&quot; +
++		fileName=&quot;./&quot;+ Key + &quot;_&quot;+Phase1End+&quot;_&quot;+lexical_cast&lt;string&gt; ( Omega::instance().getCurrentIteration() ) + &quot;_&quot; +
+ 				 lexical_cast&lt;string&gt; ( currentState ) +&quot;.spheres&quot;;
+ 		LOG_INFO ( &quot;saving spheres: &quot;&lt;&lt;fileName );
+ 		Shop::saveSpheresToFile ( fileName );
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.hpp	2008-04-14 07:00:21 UTC (rev 1316)
++++ trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.hpp	2008-04-14 07:34:45 UTC (rev 1317)
+@@ -33,6 +33,7 @@
+ {
+ 	private :
+ 		shared_ptr&lt;PhysicalAction&gt; actionForce;
++		std::string Phase1End;//used to name output files based on current state
+ 				
+ 	public :
+ 		TriaxialCompressionEngine();
+@@ -70,7 +71,8 @@
+ 		//! is this the beginning of the simulation, after reading the scene?
+ 		bool firstRun;
+ 		int FinalIterationPhase1, Iteration, testEquilibriumInterval;
+-		std::string Phase1End; //,Phase2End;
++		
++		std::string Key;//A code that is appended to file names to help distinguish between different simulations
+ 		// //! Is uniaxial compression currently activated?
+ 		// bool compressionActivated;
+ 		//! Auto-switch between isotropic and uniaxial compression?
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/TriaxialStateRecorder.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/TriaxialStateRecorder.hpp	2008-04-14 07:00:21 UTC (rev 1316)
++++ trunk/pkg/dem/Engine/DeusExMachina/TriaxialStateRecorder.hpp	2008-04-14 07:34:45 UTC (rev 1317)
+@@ -37,6 +37,7 @@
+ 	public :
+ 		std::string	 outputFile;
+ 		unsigned int	 interval;
++		Real 		porosity;
+ 		
+ 		//Real height, width, depth;
+ 		//Real thickness; // FIXME should retrieve &quot;extents&quot; of a InteractingBox
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000279.html">[Yade-commits] r1316 - trunk/pkg/dem/Engine/DeusExMachina
+</A></li>
+	<LI>Next message: <A HREF="000281.html">[Yade-commits] r1318 - trunk/pkg/dem/Engine/EngineUnit
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#280">[ date ]</a>
+              <a href="thread.html#280">[ thread ]</a>
+              <a href="subject.html#280">[ subject ]</a>
+              <a href="author.html#280">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

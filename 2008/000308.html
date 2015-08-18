@@ -1,0 +1,292 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1346 - in trunk: core extra extra/tetra extra/usct
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1346%20-%20in%20trunk%3A%20core%20extra%20extra/tetra%20extra/usct&In-Reply-To=%3C200805072148.m47LmxQt026422%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000307.html">
+   <LINK REL="Next"  HREF="000309.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1346 - in trunk: core extra extra/tetra extra/usct</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1346%20-%20in%20trunk%3A%20core%20extra%20extra/tetra%20extra/usct&In-Reply-To=%3C200805072148.m47LmxQt026422%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1346 - in trunk: core extra extra/tetra extra/usct">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Wed May  7 23:48:59 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000307.html">[Yade-commits] r1345 - in trunk: extra extra/tetra gui/py	lib/serialization
+</A></li>
+        <LI>Next message: <A HREF="000309.html">[Yade-commits] r1347 - in trunk: . examples lib lib/import	pkg/common pkg/common/DataClass/GeometricalModel	pkg/common/DataClass/InteractingGeometry	pkg/common/Engine/EngineUnit pkg/common/Engine/StandAloneEngine	pkg/common/RenderingEngine/GLDrawGeometricalModel	pkg/common/RenderingEngine/GLDrawInteractingGeometry pkg/dem	pkg/dem/Engine/EngineUnit pkg/dem/PreProcessor
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#308">[ date ]</a>
+              <a href="thread.html#308">[ thread ]</a>
+              <a href="subject.html#308">[ subject ]</a>
+              <a href="author.html#308">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2008-05-07 23:48:59 +0200 (Wed, 07 May 2008)
+New Revision: 1346
+
+Modified:
+   trunk/core/BodyContainer.hpp
+   trunk/core/BodyContainerIteratorPointer.hpp
+   trunk/core/InteractionContainer.hpp
+   trunk/core/InteractionContainerIteratorPointer.hpp
+   trunk/extra/SimpleScene.hpp
+   trunk/extra/tetra/Tetra.cpp
+   trunk/extra/usct/UniaxialStrainControlledTest.cpp
+Log:
+1. BOOST_FOREACH now works with InteractionContainer and BodyContainer and is #defined as foreach.
+
+example:
+
+	foreach(shared_ptr&lt;Body&gt; b, *rootBody-&gt;bodies) cerr&lt;&lt;&quot;Body id: &quot;&lt;&lt;b-&gt;getId()&lt;&lt;endl;
+
+	foreach(shared_ptr&lt;Interaction&gt; i,*rootBody-&gt;transientInteractions){
+		if(!i-&gt;isReal) continue;
+		/* the rest of constitutive law goes here */
+	}
+
+2. Minor fixes.
+
+
+
+Modified: trunk/core/BodyContainer.hpp
+===================================================================
+--- trunk/core/BodyContainer.hpp	2008-05-07 17:05:06 UTC (rev 1345)
++++ trunk/core/BodyContainer.hpp	2008-05-07 21:48:59 UTC (rev 1346)
+@@ -9,22 +9,16 @@
+ *************************************************************************/
+ 
+ 
+-#ifndef BODYCONTAINER_HPP
+-#define BODYCONTAINER_HPP
++#pragma once
+ 
+-
+ #include&lt;yade/lib-serialization/Serializable.hpp&gt;
++#include&quot;BodyContainerIteratorPointer.hpp&quot;
++#include&lt;boost/range.hpp&gt;
+ 
+-
+-#include &quot;BodyContainerIteratorPointer.hpp&quot;
+-
+-
+ class Body;
+ 
+-
+ using namespace boost;
+ 
+-
+ class BodyContainer : public Serializable
+ {
+ 	public :
+@@ -65,5 +59,26 @@
+ 
+ REGISTER_SERIALIZABLE(BodyContainer,false);
+ 
+-#endif // __BODYCONTAINER_HPP__
++/* for BOOST_FOREACH compatibility */
++#ifndef foreach
++#	define foreach BOOST_FOREACH
++#endif
+ 
++namespace boost{
++	template&lt;&gt; struct range_iterator&lt;BodyContainer&gt;{ typedef BodyContainer::iterator type; };  
++	template&lt;&gt; struct range_const_iterator&lt;BodyContainer&gt;{ typedef BodyContainer::iterator type; }; 
++}
++
++inline BodyContainer::iterator boost_range_begin(BodyContainer&amp; bc){ return bc.begin(); }
++inline BodyContainer::iterator boost_range_end(BodyContainer&amp; bc){ return bc.end(); }
++/* //not needed (and const iterator is not supported by BodyContainer either)
++inline BodyContainer::iterator boost_range_begin(BodyContainer const &amp; bc){ return bc.begin(); }
++inline BodyContainer::iterator boost_range_end(BodyContainer const &amp; bc){ return bc.end(); }
++*/
++namespace std{
++	template&lt;&gt; struct iterator_traits&lt;BodyContainer::iterator&gt;{
++		typedef forward_iterator_tag iterator_category;
++		typedef shared_ptr&lt;Body&gt; reference;
++	};
++}
++
+
+Modified: trunk/core/BodyContainerIteratorPointer.hpp
+===================================================================
+--- trunk/core/BodyContainerIteratorPointer.hpp	2008-05-07 17:05:06 UTC (rev 1345)
++++ trunk/core/BodyContainerIteratorPointer.hpp	2008-05-07 21:48:59 UTC (rev 1346)
+@@ -38,6 +38,7 @@
+ 		};
+ 
+ 		bool operator!=(const BodyContainerIteratorPointer&amp; bi)	{ return ptr-&gt;isDifferent(bi.getRef());	};
++		bool operator==(const BodyContainerIteratorPointer&amp; bi)	{ return !ptr-&gt;isDifferent(bi.getRef());	};
+ 		shared_ptr&lt;Body&gt;			operator*()	{ return ptr-&gt;getValue(); };	
+ 		BodyContainerIteratorPointer&amp;		operator++()	{ ptr-&gt;increment(); return *this; };
+ 		BodyContainerIteratorPointer&amp;		operator++(int); // disabled 
+
+Modified: trunk/core/InteractionContainer.hpp
+===================================================================
+--- trunk/core/InteractionContainer.hpp	2008-05-07 17:05:06 UTC (rev 1345)
++++ trunk/core/InteractionContainer.hpp	2008-05-07 21:48:59 UTC (rev 1346)
+@@ -8,12 +8,12 @@
+ *  GNU General Public License v2 or later. See file LICENSE for details. *
+ *************************************************************************/
+ 
+-#ifndef INTERACTIONCONTAINER_HPP
+-#define INTERACTIONCONTAINER_HPP
++#pragma once
+ 
++#include&quot;InteractionContainerIteratorPointer.hpp&quot;
+ #include&lt;yade/lib-serialization/Serializable.hpp&gt;
+-#include &quot;InteractionContainerIteratorPointer.hpp&quot;
+-#include &lt;boost/thread/mutex.hpp&gt;
++#include&lt;boost/thread/mutex.hpp&gt;
++#include&lt;boost/range.hpp&gt;
+ 
+ class Interaction;
+ 
+@@ -52,5 +52,21 @@
+ 
+ REGISTER_SERIALIZABLE(InteractionContainer,false);
+ 
+-#endif // INTERACTIONCONTAINER_HPP
++// BOOST_FOREACH compatibility
++#ifndef foreach
++#  define foreach BOOST_FOREACH
++#endif
+ 
++namespace boost{
++   template&lt;&gt; struct range_iterator&lt;InteractionContainer&gt;{ typedef InteractionContainer::iterator type; };
++   template&lt;&gt; struct range_const_iterator&lt;InteractionContainer&gt;{ typedef InteractionContainer::iterator type; };
++}
++inline InteractionContainer::iterator boost_range_begin(InteractionContainer&amp; ic){ return ic.begin(); }
++inline InteractionContainer::iterator boost_range_end(InteractionContainer&amp; ic){ return ic.end(); }
++namespace std{
++   template&lt;&gt; struct iterator_traits&lt;InteractionContainer::iterator&gt;{
++      typedef forward_iterator_tag iterator_category;
++      typedef shared_ptr&lt;Interaction&gt; reference;
++   };
++}
++
+
+Modified: trunk/core/InteractionContainerIteratorPointer.hpp
+===================================================================
+--- trunk/core/InteractionContainerIteratorPointer.hpp	2008-05-07 17:05:06 UTC (rev 1345)
++++ trunk/core/InteractionContainerIteratorPointer.hpp	2008-05-07 21:48:59 UTC (rev 1346)
+@@ -38,6 +38,7 @@
+ 		InteractionContainerIteratorPointer()  { ptr = shared_ptr&lt;InteractionContainerIterator&gt;(); };
+ 
+ 		bool operator!=(const InteractionContainerIteratorPointer&amp; bi) { return ptr-&gt;isDifferent(bi.getRef()); };
++		bool operator==(const InteractionContainerIteratorPointer&amp; bi) { return !ptr-&gt;isDifferent(bi.getRef()); };
+ 		shared_ptr&lt;Interaction&gt;			operator*() { return ptr-&gt;getValue(); };	
+ 		InteractionContainerIteratorPointer&amp;	operator++() { ptr-&gt;increment(); return *this; };
+ 		InteractionContainerIteratorPointer&amp;	operator++(int); // disabled
+
+Modified: trunk/extra/SimpleScene.hpp
+===================================================================
+--- trunk/extra/SimpleScene.hpp	2008-05-07 17:05:06 UTC (rev 1345)
++++ trunk/extra/SimpleScene.hpp	2008-05-07 21:48:59 UTC (rev 1346)
+@@ -7,8 +7,8 @@
+ 
+ class SimpleScene: public FileGenerator {
+ 	public:
+-		USCTGen(){};
+-		~USCTGen (){};
++		SimpleScene(){};
++		~SimpleScene (){};
+ 		virtual bool generate();
+ 	protected :
+ 		void registerAttributes(){ FileGenerator::registerAttributes(); }
+
+Modified: trunk/extra/tetra/Tetra.cpp
+===================================================================
+--- trunk/extra/tetra/Tetra.cpp	2008-05-07 17:05:06 UTC (rev 1345)
++++ trunk/extra/tetra/Tetra.cpp	2008-05-07 21:48:59 UTC (rev 1346)
+@@ -366,6 +366,7 @@
+ 	#undef ZER
+ 	// unreachable
+ 	assert(false);
++	return(ret); // prevent warning
+ }
+ 
+ CREATE_LOGGER(TetraLaw);
+
+Modified: trunk/extra/usct/UniaxialStrainControlledTest.cpp
+===================================================================
+--- trunk/extra/usct/UniaxialStrainControlledTest.cpp	2008-05-07 17:05:06 UTC (rev 1345)
++++ trunk/extra/usct/UniaxialStrainControlledTest.cpp	2008-05-07 21:48:59 UTC (rev 1346)
+@@ -6,6 +6,10 @@
+ #include&lt;yade/pkg-dem/SDECLinkGeometry.hpp&gt;
+ #include&lt;yade/pkg-dem/SDECLinkPhysics.hpp&gt;
+ #include&lt;yade/extra/Brefcom.hpp&gt;
++#include&lt;boost/foreach.hpp&gt;
++
++#include&lt;yade/core/InteractionContainer.hpp&gt;
++
+ YADE_PLUGIN(&quot;USCTGen&quot;,&quot;UniaxialStrainer&quot;);
+ 
+ 
+@@ -77,6 +81,11 @@
+ }
+ 
+ void UniaxialStrainer::computeAxialForce(MetaBody* rootBody){
++	#if 0
++		// for testing only
++		foreach(shared_ptr&lt;Interaction&gt; i, *rootBody-&gt;transientInteractions){ cerr&lt;&lt;&quot;Testing foreach for interactions: &quot;&lt;&lt;i-&gt;getId1()&lt;&lt;&quot; &quot;&lt;&lt;i-&gt;getId2()&lt;&lt;endl; }
++		foreach(shared_ptr&lt;Body&gt; b, *rootBody-&gt;bodies){ cerr&lt;&lt;&quot;Testing foreach for bodies: &quot;&lt;&lt;b-&gt;getId()&lt;&lt;endl; }
++	#endif
+ 	sumPosForces=0; sumNegForces=0;
+ 		shared_ptr&lt;Force&gt; f(new Force);
+ 		for(size_t i=0; i&lt;negIds.size(); i++){
+@@ -91,6 +100,7 @@
+ /***************************************** USCTGen **************************/
+ CREATE_LOGGER(USCTGen);
+ 
++
+ bool USCTGen::generate(){
+ 	message=&quot;&quot;;
+ 	rootBody=Shop::rootBody();
+@@ -132,6 +142,7 @@
+ 			LOG_DEBUG(&quot;POS inserted #&quot;&lt;&lt;sId&lt;&lt;&quot; with C[axis]=&quot;&lt;&lt;C[axis]);
+ 		}
+ 	}
++
+ #if 0
+ 	/* clump spheres together if requested */
+ 	if(clumped){
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000307.html">[Yade-commits] r1345 - in trunk: extra extra/tetra gui/py	lib/serialization
+</A></li>
+	<LI>Next message: <A HREF="000309.html">[Yade-commits] r1347 - in trunk: . examples lib lib/import	pkg/common pkg/common/DataClass/GeometricalModel	pkg/common/DataClass/InteractingGeometry	pkg/common/Engine/EngineUnit pkg/common/Engine/StandAloneEngine	pkg/common/RenderingEngine/GLDrawGeometricalModel	pkg/common/RenderingEngine/GLDrawInteractingGeometry pkg/dem	pkg/dem/Engine/EngineUnit pkg/dem/PreProcessor
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#308">[ date ]</a>
+              <a href="thread.html#308">[ thread ]</a>
+              <a href="subject.html#308">[ subject ]</a>
+              <a href="author.html#308">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

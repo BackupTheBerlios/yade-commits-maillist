@@ -1,0 +1,375 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1435 - in trunk: core gui/py gui/qt3	pkg/common/Engine/StandAloneEngine
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1435%20-%20in%20trunk%3A%20core%20gui/py%20gui/qt3%0A%09pkg/common/Engine/StandAloneEngine&In-Reply-To=%3C200807181810.m6IIAVml002221%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000394.html">
+   <LINK REL="Next"  HREF="000396.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1435 - in trunk: core gui/py gui/qt3	pkg/common/Engine/StandAloneEngine</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1435%20-%20in%20trunk%3A%20core%20gui/py%20gui/qt3%0A%09pkg/common/Engine/StandAloneEngine&In-Reply-To=%3C200807181810.m6IIAVml002221%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1435 - in trunk: core gui/py gui/qt3	pkg/common/Engine/StandAloneEngine">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Fri Jul 18 20:10:31 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000394.html">[Yade-commits] r1434 - in trunk: extra/clump lib/QGLViewer	lib/QGLViewer/VRender
+</A></li>
+        <LI>Next message: <A HREF="000396.html">[Yade-commits] r1436 - in trunk: core extra extra/clump	extra/spherical-dem-simulator gui/py gui/qt3 pkg/common	pkg/common/Engine/DeusExMachina pkg/dem	pkg/dem/DataClass/InteractionGeometry pkg/dem/PreProcessor	pkg/fem pkg/fem/PreProcessor pkg/mass-spring	pkg/mass-spring/PreProcessor pkg/realtime-rigidbody	pkg/realtime-rigidbody/PreProcessor scripts
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#395">[ date ]</a>
+              <a href="thread.html#395">[ thread ]</a>
+              <a href="subject.html#395">[ subject ]</a>
+              <a href="author.html#395">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2008-07-18 20:10:30 +0200 (Fri, 18 Jul 2008)
+New Revision: 1435
+
+Modified:
+   trunk/core/Omega.cpp
+   trunk/core/ThreadRunner.cpp
+   trunk/gui/py/plot.py
+   trunk/gui/py/yadeControl.cpp
+   trunk/gui/qt3/GLViewer.cpp
+   trunk/gui/qt3/GLViewer.hpp
+   trunk/gui/qt3/YadeQtMainWindow.cpp
+   trunk/pkg/common/Engine/StandAloneEngine/PeriodicEngines.hpp
+Log:
+1. Experimental scale drawing in GLViewer (disabled by default)
+2. Fix (?) race conditions (?) in Omega and python
+3. Other fixes in plotting, works now again (remove numpy.array, not needed)
+
+
+Modified: trunk/core/Omega.cpp
+===================================================================
+--- trunk/core/Omega.cpp	2008-07-18 06:54:48 UTC (rev 1434)
++++ trunk/core/Omega.cpp	2008-07-18 18:10:30 UTC (rev 1435)
+@@ -59,7 +59,7 @@
+ 
+ 
+ void Omega::reset(){
+-	finishSimulationLoop();
++	//finishSimulationLoop();
+ 	joinSimulationLoop();
+ 	init();
+ }
+@@ -75,11 +75,9 @@
+ 	msStartingPauseTime=msStartingSimulationTime;
+ }
+ 
+-void Omega::createSimulationLoop(){	simulationLoop   = shared_ptr&lt;ThreadRunner&gt;(new ThreadRunner(&amp;simulationFlow_));}
+-void Omega::finishSimulationLoop(){ if (simulationLoop) simulationLoop-&gt;stop();}
+-void Omega::joinSimulationLoop(){
+-	if (simulationLoop){ simulationLoop-&gt;stop(); simulationLoop = shared_ptr&lt;ThreadRunner&gt;(); }
+-}
++void Omega::createSimulationLoop(){	simulationLoop=shared_ptr&lt;ThreadRunner&gt;(new ThreadRunner(&amp;simulationFlow_));}
++void Omega::finishSimulationLoop(){ LOG_DEBUG(&quot;&quot;); if (simulationLoop&amp;&amp;simulationLoop-&gt;looping())simulationLoop-&gt;stop();}
++void Omega::joinSimulationLoop(){ LOG_DEBUG(&quot;&quot;); finishSimulationLoop(); if (simulationLoop) simulationLoop=shared_ptr&lt;ThreadRunner&gt;(); }
+ 
+ void Omega::spawnSingleSimulationLoop(){
+ 	if (simulationLoop){
+
+Modified: trunk/core/ThreadRunner.cpp
+===================================================================
+--- trunk/core/ThreadRunner.cpp	2008-07-18 06:54:48 UTC (rev 1434)
++++ trunk/core/ThreadRunner.cpp	2008-07-18 18:10:30 UTC (rev 1435)
+@@ -13,6 +13,8 @@
+ #include &lt;boost/function.hpp&gt;
+ #include &lt;boost/bind.hpp&gt;
+ 
++#include&lt;iostream&gt;
++
+ void ThreadRunner::run()
+ {
+ 	// this is the body of execution of separate thread
+@@ -68,7 +70,11 @@
+ 
+ void ThreadRunner::stop()
+ {
++	std::cerr&lt;&lt;__FILE__&lt;&lt;&quot;:&quot;&lt;&lt;__LINE__&lt;&lt;&quot;:&quot;&lt;&lt;__FUNCTION__&lt;&lt;std::endl;
++	if(!m_looping) return;
++	std::cerr&lt;&lt;__FILE__&lt;&lt;&quot;:&quot;&lt;&lt;__LINE__&lt;&lt;&quot;:&quot;&lt;&lt;__FUNCTION__&lt;&lt;std::endl;
+ 	boost::mutex::scoped_lock lock(m_boolmutex);
++	std::cerr&lt;&lt;__FILE__&lt;&lt;&quot;:&quot;&lt;&lt;__LINE__&lt;&lt;&quot;:&quot;&lt;&lt;__FUNCTION__&lt;&lt;std::endl;
+ 	m_looping=false;
+ }
+ 
+
+Modified: trunk/gui/py/plot.py
+===================================================================
+--- trunk/gui/py/plot.py	2008-07-18 06:54:48 UTC (rev 1434)
++++ trunk/gui/py/plot.py	2008-07-18 18:10:30 UTC (rev 1435)
+@@ -60,9 +60,9 @@
+ 	nan=float('nan')
+ 	for name in d:
+ 		if not name in data.keys():
+-			data[name]=numpy.array([nan for i in range(numSamples)])
++			data[name]=[nan for i in range(numSamples)] #numpy.array([nan for i in range(numSamples)])
+ 	for name in data:
+-		if name in d: data[name].append(d[name])
++		if name in d: data[name].append(d[name]) #numpy.append(data[name],[d[name]],1)
+ 		else: data[name].append(nan)
+ 
+ def fillNonSequence(o):
+
+Modified: trunk/gui/py/yadeControl.cpp
+===================================================================
+--- trunk/gui/py/yadeControl.cpp	2008-07-18 06:54:48 UTC (rev 1434)
++++ trunk/gui/py/yadeControl.cpp	2008-07-18 18:10:30 UTC (rev 1435)
+@@ -399,7 +399,7 @@
+ 	void step() {OMEGA.spawnSingleSimulationLoop(); LOG_DEBUG(&quot;STEP!&quot;);}
+ 
+ 	void load(std::string fileName) {
+-		OMEGA.finishSimulationLoop();
++		//OMEGA.finishSimulationLoop();
+ 		OMEGA.joinSimulationLoop();
+ 		OMEGA.setSimulationFileName(fileName);
+ 		OMEGA.loadSimulation();
+
+Modified: trunk/gui/qt3/GLViewer.cpp
+===================================================================
+--- trunk/gui/qt3/GLViewer.cpp	2008-07-18 06:54:48 UTC (rev 1434)
++++ trunk/gui/qt3/GLViewer.cpp	2008-07-18 18:10:30 UTC (rev 1435)
+@@ -26,6 +26,7 @@
+ 	isMoving=false;
+ 	renderer=_renderer;
+ 	drawGridXYZ[0]=drawGridXYZ[1]=drawGridXYZ[2]=false;
++	drawScale=fals;
+ 	viewId = id;
+ 	cut_plane = 0;
+ 	cut_plane_delta = -2;
+@@ -375,6 +376,7 @@
+ // set frame coordinates, and isDynamic=false;
+ void GLViewer::postSelection(const QPoint&amp; point) 
+ {
++	LOG_DEBUG(&quot;Selection is &quot;&lt;&lt;selectedName());
+ 	int selection = selectedName();
+ 	if(selection&lt;0){
+ 		if(isMoving){
+@@ -382,14 +384,14 @@
+ 		}
+ 		return;
+ 	}
+-	if((*(Omega::instance().getRootBody()-&gt;bodies)).exists(selection)){
++	if(selection&gt;=0 &amp;&amp; (*(Omega::instance().getRootBody()-&gt;bodies)).exists(selection)){
+ 		resetManipulation();
+ 		if(Body::byId(body_id_t(selection))-&gt;isClumpMember()){ // select clump (invisible) instead of its member
+ 			LOG_DEBUG(&quot;Clump member #&quot;&lt;&lt;selection&lt;&lt;&quot; selected, selecting clump instead.&quot;);
+ 			selection=Body::byId(body_id_t(selection))-&gt;clumpId;
+ 		}
+ 		setSelectedName(selection);
+-		//LOG_DEBUG(&quot;New selection &quot;&lt;&lt;selection);
++		LOG_DEBUG(&quot;New selection &quot;&lt;&lt;selection);
+ 		displayMessage(&quot;Selected body #&quot;+lexical_cast&lt;string&gt;(selection)+(Body::byId(selection)-&gt;isClump()?&quot;&#160;(clump)&quot;:&quot;&quot;));
+ 		wasDynamic=Body::byId(selection)-&gt;isDynamic;
+ 		Body::byId(selection)-&gt;isDynamic = false;
+@@ -397,7 +399,6 @@
+ 		Vector3r&amp;    v = Body::byId(selection)-&gt;physicalParameters-&gt;se3.position;
+ 		manipulatedFrame()-&gt;setPositionAndOrientation(qglviewer::Vec(v[0],v[1],v[2]),qglviewer::Quaternion(q[0],q[1],q[2],q[3]));
+ 	}
+-
+ }
+ 
+ // maybe new object will be selected.
+@@ -409,20 +410,66 @@
+ 	if(old != -1 &amp;&amp; old!=selectedName() &amp;&amp; (*(Omega::instance().getRootBody()-&gt;bodies)).exists(old)) Body::byId(old)-&gt;isDynamic = wasDynamic;
+ }
+ 
++qglviewer::Vec GLViewer::displayedSceneCenter(){
++	return camera()-&gt;unprojectedCoordinatesOf(qglviewer::Vec(width()/2 /* pixels */ ,height()/2 /* pixels */, /*middle between near plane and far plane*/ .5));
++}
++
++float GLViewer::displayedSceneRadius(){
++	return (camera()-&gt;unprojectedCoordinatesOf(qglviewer::Vec(width(),height(),.5))-camera()-&gt;unprojectedCoordinatesOf(qglviewer::Vec(0,0,.5))).norm();
++}
++
+ void GLViewer::postDraw(){
+-	//if(!(drawGridXYZ[0]||drawGridXYZ[1]||drawGridXYZ[2])) return;
+-	Real diameter=QGLViewer::camera()-&gt;sceneRadius()*2;
++	Real wholeDiameter=QGLViewer::camera()-&gt;sceneRadius()*2;
++	Real dispDiameter=min(wholeDiameter,max((Real)displayedSceneRadius()*2,wholeDiameter/1e3)); // limit to avoid drawing 1e5 lines with big zoom level
+ 	//qglviewer::Vec center=QGLViewer::camera()-&gt;sceneCenter();
+-	Real gridStep=pow(10,(floor(log10(diameter)-.5)));
+-	int nSegments=((int)(diameter/gridStep));
++	Real gridStep=pow(10,(floor(log10(dispDiameter)-.7)));
++	Real scaleStep=pow(10,(floor(log10(displayedSceneRadius()*2)-.7))); // unsconstrained
++	int nSegments=((int)(wholeDiameter/gridStep))+1;
+ 	Real realSize=nSegments*gridStep;
+ 	//LOG_DEBUG(&quot;nSegments=&quot;&lt;&lt;nSegments&lt;&lt;&quot;,gridStep=&quot;&lt;&lt;gridStep&lt;&lt;&quot;,realSize=&quot;&lt;&lt;realSize);
+ 	glPushMatrix();
+ 
++	// XYZ grids
++	glLineWidth(.5);
+ 	if(drawGridXYZ[0]) {glColor3f(0.6,0.3,0.3); glPushMatrix(); glRotated(90.,0.,1.,0.); QGLViewer::drawGrid(realSize,nSegments); glPopMatrix();}
+ 	if(drawGridXYZ[1]) {glColor3f(0.3,0.6,0.3); glPushMatrix(); glRotated(90.,1.,0.,0.); QGLViewer::drawGrid(realSize,nSegments); glPopMatrix();}
+ 	if(drawGridXYZ[2]) {glColor3f(0.3,0.3,0.6); glPushMatrix(); /*glRotated(90.,0.,1.,0.);*/ QGLViewer::drawGrid(realSize,nSegments); glPopMatrix();}
++	
++	// scale
++	if(drawScale){
++		Real segmentSize=scaleStep;
++		qglviewer::Vec screenDxDy[3]; // dx,dy for x,y,z scale segments
++		int extremalDxDy[2];
++		for(int axis=0; axis&lt;3; axis++){
++			qglviewer::Vec delta(0,0,0); delta[axis]=segmentSize;
++			qglviewer::Vec center=displayedSceneCenter();
++			screenDxDy[axis]=camera()-&gt;projectedCoordinatesOf(center+delta)-camera()-&gt;projectedCoordinatesOf(center);
++			for(int xy=0;xy&lt;2;xy++)extremalDxDy[xy]=(axis&gt;0 ? min(extremalDxDy[xy],(int)screenDxDy[axis][xy]) : screenDxDy[axis][xy]);
++		}
++		//LOG_DEBUG(&quot;Screen offsets for axes: &quot;&lt;&lt;&quot; x(&quot;&lt;&lt;screenDxDy[0][0]&lt;&lt;&quot;,&quot;&lt;&lt;screenDxDy[0][1]&lt;&lt;&quot;) y(&quot;&lt;&lt;screenDxDy[1][0]&lt;&lt;&quot;,&quot;&lt;&lt;screenDxDy[1][1]&lt;&lt;&quot;) z(&quot;&lt;&lt;screenDxDy[2][0]&lt;&lt;&quot;,&quot;&lt;&lt;screenDxDy[2][1]&lt;&lt;&quot;)&quot;);
++		int margin=20; // screen pixels
++		int scaleCenter[2]; scaleCenter[0]=abs(extremalDxDy[0])+margin; scaleCenter[1]=abs(extremalDxDy[1])+margin;
++		//LOG_DEBUG(&quot;Center of scale &quot;&lt;&lt;scaleCenter[0]&lt;&lt;&quot;,&quot;&lt;&lt;scaleCenter[1]);
++		startScreenCoordinatesSystem();
++			glDisable(GL_LIGHTING);
++			glDisable(GL_DEPTH_TEST);
++			glLineWidth(3.0);
++			for(int axis=0; axis&lt;3; axis++){
++				Vector3r color(.4,.4,.4); color[axis]=.9;
++				glColor3v(color);
++				glBegin(GL_LINES);
++				glVertex2f(scaleCenter[0],scaleCenter[1]);
++				glVertex2f(scaleCenter[0]+screenDxDy[axis][0],scaleCenter[1]+screenDxDy[axis][1]);
++				glEnd();
++			}
++			glLineWidth(1.);
++			glEnable(GL_DEPTH_TEST);
++		stopScreenCoordinatesSystem();
++		QGLViewer::drawText(scaleCenter[0],scaleCenter[1],QString().sprintf(&quot;%.3g&quot;,scaleStep));
++	}
+ 
++	// cutting planes (should be moved to OpenGLRenderingEngine perhaps?)
++	// TODO: transparent planes
+ 	for(int planeId=0; planeId&lt;renderer-&gt;clipPlaneNum; planeId++){
+ 		if(!renderer-&gt;clipPlaneActive[planeId] &amp;&amp; planeId!=manipulatedClipPlane) continue;
+ 		glPushMatrix();
+@@ -435,9 +482,10 @@
+ 			if(!renderer-&gt;clipPlaneActive[planeId]) cff=.4;
+ 			glColor3f(max(0.,cff*cos(planeId)),max(0.,cff*sin(planeId)),planeId==manipulatedClipPlane); // variable colors
+ 			QGLViewer::drawGrid(realSize,2*nSegments);
+-			drawArrow(diameter/6);
++			drawArrow(wholeDiameter/6);
+ 		glPopMatrix();
+ 	}
++
+ 	QGLViewer::postDraw();
+ }
+ 
+@@ -465,6 +513,19 @@
+ 	}
+ }
+ 
++void GLViewer::wheelEvent(QWheelEvent* event){
++	if(manipulatedClipPlane&lt;0){ QGLViewer::wheelEvent(event); return; }
++	assert(manipulatedClipPlane&lt;renderer-&gt;clipPlaneNum);
++	float distStep=1e-3*sceneRadius();
++	//const float wheelSensitivityCoef = 8E-4f;
++	//Vec trans(0.0, 0.0, -event-&gt;delta()*wheelSensitivity()*wheelSensitivityCoef*(camera-&gt;position()-position()).norm());
++	float dist=-event-&gt;delta()*manipulatedFrame()-&gt;wheelSensitivity()*distStep;
++	Vector3r normal=renderer-&gt;clipPlaneSe3[manipulatedClipPlane].orientation*Vector3r(0,0,1);
++	qglviewer::Vec nnormal(normal[0],normal[1],normal[2]);
++	manipulatedFrame()-&gt;setPosition(manipulatedFrame()-&gt;position()+nnormal*dist);
++	/* in draw, bound cutting planes will be moved as well */
++}
++
+ // cut&amp;paste from QGLViewer::domElement documentation
+ QDomElement GLViewer::domElement(const QString&amp; name, QDomDocument&amp; document) const{
+ 	QDomElement de=document.createElement(&quot;gridXYZ&quot;);
+
+Modified: trunk/gui/qt3/GLViewer.hpp
+===================================================================
+--- trunk/gui/qt3/GLViewer.hpp	2008-07-18 06:54:48 UTC (rev 1434)
++++ trunk/gui/qt3/GLViewer.hpp	2008-07-18 18:10:30 UTC (rev 1435)
+@@ -44,6 +44,7 @@
+ 		shared_ptr&lt;OpenGLRenderingEngine&gt; renderer;
+ 	private :
+ 		bool 			drawGridXYZ[3];
++		bool 			drawScale;
+ 		bool			isMoving;
+ 		bool			wasDynamic;
+ 		float			cut_plane;
+@@ -72,6 +73,10 @@
+ 		void useDisplayParameters(size_t n);
+ 		//! Save display parameters (QGOViewer and OpenGLRenderingEngine) to MetaBody::dispParams[n]
+ 		void saveDisplayParameters(size_t n);
++		//! Get radius of the part of scene that fits the current view
++		float displayedSceneRadius();
++		//! Get center of the part of scene that fits the current view
++		qglviewer::Vec displayedSceneCenter();
+ 
+ 		//! Adds our attributes to the QGLViewer state that can be saved
+ 		QDomElement domElement(const QString&amp; name, QDomDocument&amp; document) const;
+@@ -87,5 +92,6 @@
+ 		virtual void closeEvent(QCloseEvent *e);
+ 		virtual void postSelection(const QPoint&amp; point);
+ 		virtual void endSelection(const QPoint &amp;point);
+-		virtual void mouseDoubleClickEvent (QMouseEvent *e);
++		virtual void mouseDoubleClickEvent(QMouseEvent *e);
++		virtual void wheelEvent(QWheelEvent* e);
+ };
+
+Modified: trunk/gui/qt3/YadeQtMainWindow.cpp
+===================================================================
+--- trunk/gui/qt3/YadeQtMainWindow.cpp	2008-07-18 06:54:48 UTC (rev 1434)
++++ trunk/gui/qt3/YadeQtMainWindow.cpp	2008-07-18 18:10:30 UTC (rev 1435)
+@@ -184,7 +184,7 @@
+ }
+ 
+ void YadeQtMainWindow::closeAllChilds(){
+-	while(glViews.size()&gt;0 &amp;&amp; glViews[0]!=NULL) { LOG_INFO(&quot;glViews.size()=&quot;&lt;&lt;glViews.size()&lt;&lt;&quot;, glViews[0]=&quot;&lt;&lt;glViews[0]); closeView(-1);}
++	while(glViews.size()&gt;0 &amp;&amp; glViews[0]!=NULL) { LOG_DEBUG(&quot;glViews.size()=&quot;&lt;&lt;glViews.size()&lt;&lt;&quot;, glViews[0]=&quot;&lt;&lt;glViews[0]); closeView(-1);}
+ 	if(player) player=shared_ptr&lt;QtSimulationPlayer&gt;();
+ 	if(controller) controller=shared_ptr&lt;SimulationController&gt;();
+ 	if(generator) generator=shared_ptr&lt;QtFileGenerator&gt;();
+
+Modified: trunk/pkg/common/Engine/StandAloneEngine/PeriodicEngines.hpp
+===================================================================
+--- trunk/pkg/common/Engine/StandAloneEngine/PeriodicEngines.hpp	2008-07-18 06:54:48 UTC (rev 1434)
++++ trunk/pkg/common/Engine/StandAloneEngine/PeriodicEngines.hpp	2008-07-18 18:10:30 UTC (rev 1435)
+@@ -52,7 +52,7 @@
+ 	StretchPeriodicEngine(): PeriodicEngine(), realLim(0.), virtLim(0.), iterLim(0), stretchFactor(2.){}
+ 	Real realLim, virtLim; long iterLim;
+ 	Real stretchFactor;
+-	bool mayStretch;
++	int mayStretch;
+ 	virtual bool isActivated(){
+ 		assert(stretchFactor&gt;0);
+ 		if(iterLim==0 &amp;&amp; iterPeriod!=0){iterLim=iterPeriod;} else if(iterLim!=0 &amp;&amp; iterPeriod==0){iterPeriod=iterLim;}
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000394.html">[Yade-commits] r1434 - in trunk: extra/clump lib/QGLViewer	lib/QGLViewer/VRender
+</A></li>
+	<LI>Next message: <A HREF="000396.html">[Yade-commits] r1436 - in trunk: core extra extra/clump	extra/spherical-dem-simulator gui/py gui/qt3 pkg/common	pkg/common/Engine/DeusExMachina pkg/dem	pkg/dem/DataClass/InteractionGeometry pkg/dem/PreProcessor	pkg/fem pkg/fem/PreProcessor pkg/mass-spring	pkg/mass-spring/PreProcessor pkg/realtime-rigidbody	pkg/realtime-rigidbody/PreProcessor scripts
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#395">[ date ]</a>
+              <a href="thread.html#395">[ thread ]</a>
+              <a href="subject.html#395">[ subject ]</a>
+              <a href="author.html#395">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

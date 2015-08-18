@@ -1,0 +1,245 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1232 - in trunk: . pkg/dem/Engine/StandAloneEngine	pkg/dem/PreProcessor
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2007/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1232%20-%20in%20trunk%3A%20.%20pkg/dem/Engine/StandAloneEngine%0A%09pkg/dem/PreProcessor&In-Reply-To=%3C200709271510.l8RFA8kp030338%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000196.html">
+   <LINK REL="Next"  HREF="000198.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1232 - in trunk: . pkg/dem/Engine/StandAloneEngine	pkg/dem/PreProcessor</H1>
+    <B>chareyre at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1232%20-%20in%20trunk%3A%20.%20pkg/dem/Engine/StandAloneEngine%0A%09pkg/dem/PreProcessor&In-Reply-To=%3C200709271510.l8RFA8kp030338%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1232 - in trunk: . pkg/dem/Engine/StandAloneEngine	pkg/dem/PreProcessor">chareyre at mail.berlios.de
+       </A><BR>
+    <I>Thu Sep 27 17:10:08 CEST 2007</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000196.html">[Yade-commits] r1231 - trunk
+</A></li>
+        <LI>Next message: <A HREF="000198.html">[Yade-commits] r1233 - in trunk: . extra/tetra	pkg/common/DataClass/GeometricalModel
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#197">[ date ]</a>
+              <a href="thread.html#197">[ thread ]</a>
+              <a href="subject.html#197">[ subject ]</a>
+              <a href="author.html#197">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: chareyre
+Date: 2007-09-27 17:10:07 +0200 (Thu, 27 Sep 2007)
+New Revision: 1232
+
+Modified:
+   trunk/Yade.kdevelop
+   trunk/pkg/dem/Engine/StandAloneEngine/GlobalStiffnessTimeStepper.cpp
+   trunk/pkg/dem/PreProcessor/TriaxialTest.cpp
+   trunk/pkg/dem/PreProcessor/TriaxialTestWater.cpp
+Log:
+Modification in the usage of default values in 
+GlobalStiffnessTimestepper.
+Change in dt default values in the preprocessors.
+
+Huh?! I don't want to commit Yade.kdevelop! How to avoid that?
+
+
+
+Modified: trunk/Yade.kdevelop
+===================================================================
+--- trunk/Yade.kdevelop	2007-09-17 13:06:42 UTC (rev 1231)
++++ trunk/Yade.kdevelop	2007-09-27 15:10:07 UTC (rev 1232)
+@@ -10,16 +10,16 @@
+     &lt;projectname&gt;Yade&lt;/projectname&gt;
+     &lt;projectdirectory&gt;.&lt;/projectdirectory&gt;
+     &lt;absoluteprojectpath&gt;false&lt;/absoluteprojectpath&gt;
+-    &lt;description&gt;&lt;/description&gt;
+-    &lt;defaultencoding&gt;&lt;/defaultencoding&gt;
+-    &lt;versioncontrol&gt;&lt;/versioncontrol&gt;
++    &lt;description/&gt;
++    &lt;defaultencoding/&gt;
++    &lt;versioncontrol/&gt;
+   &lt;/general&gt;
+   &lt;kdevcustomproject&gt;
+     &lt;run&gt;
+       &lt;mainprogram&gt;/usr/local/bin/yade-svn1148&lt;/mainprogram&gt;
+       &lt;directoryradio&gt;executable&lt;/directoryradio&gt;
+-      &lt;programargs&gt;&lt;/programargs&gt;
+-      &lt;globaldebugarguments&gt;&lt;/globaldebugarguments&gt;
++      &lt;programargs/&gt;
++      &lt;globaldebugarguments/&gt;
+       &lt;globalcwd&gt;/tmp&lt;/globalcwd&gt;
+       &lt;useglobalprogram&gt;false&lt;/useglobalprogram&gt;
+       &lt;terminal&gt;false&lt;/terminal&gt;
+@@ -30,7 +30,7 @@
+     &lt;/run&gt;
+     &lt;build&gt;
+       &lt;buildtool&gt;make&lt;/buildtool&gt;
+-      &lt;builddir&gt;&lt;/builddir&gt;
++      &lt;builddir/&gt;
+     &lt;/build&gt;
+     &lt;make&gt;
+       &lt;abortonerror&gt;false&lt;/abortonerror&gt;
+@@ -38,8 +38,8 @@
+       &lt;prio&gt;0&lt;/prio&gt;
+       &lt;dontact&gt;false&lt;/dontact&gt;
+       &lt;makebin&gt;scons&lt;/makebin&gt;
+-      &lt;defaulttarget&gt;&lt;/defaulttarget&gt;
+-      &lt;makeoptions&gt;&lt;/makeoptions&gt;
++      &lt;defaulttarget/&gt;
++      &lt;makeoptions/&gt;
+       &lt;selectedenvironment&gt;default&lt;/selectedenvironment&gt;
+       &lt;environments&gt;
+         &lt;default/&gt;
+@@ -48,11 +48,11 @@
+   &lt;/kdevcustomproject&gt;
+   &lt;kdevdebugger&gt;
+     &lt;general&gt;
+-      &lt;dbgshell&gt;&lt;/dbgshell&gt;
+-      &lt;gdbpath&gt;&lt;/gdbpath&gt;
+-      &lt;configGdbScript&gt;&lt;/configGdbScript&gt;
+-      &lt;runShellScript&gt;&lt;/runShellScript&gt;
+-      &lt;runGdbScript&gt;&lt;/runGdbScript&gt;
++      &lt;dbgshell/&gt;
++      &lt;gdbpath/&gt;
++      &lt;configGdbScript/&gt;
++      &lt;runShellScript/&gt;
++      &lt;runGdbScript/&gt;
+       &lt;breakonloadinglibs&gt;true&lt;/breakonloadinglibs&gt;
+       &lt;separatetty&gt;false&lt;/separatetty&gt;
+       &lt;floatingtoolbar&gt;false&lt;/floatingtoolbar&gt;
+@@ -151,7 +151,7 @@
+       &lt;includePaths&gt;.;&lt;/includePaths&gt;
+     &lt;/codecompletion&gt;
+     &lt;creategettersetter&gt;
+-      &lt;prefixGet&gt;&lt;/prefixGet&gt;
++      &lt;prefixGet/&gt;
+       &lt;prefixSet&gt;set&lt;/prefixSet&gt;
+       &lt;prefixVariable&gt;m_,_&lt;/prefixVariable&gt;
+       &lt;parameterName&gt;theValue&lt;/parameterName&gt;
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/GlobalStiffnessTimeStepper.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/GlobalStiffnessTimeStepper.cpp	2007-09-17 13:06:42 UTC (rev 1231)
++++ trunk/pkg/dem/Engine/StandAloneEngine/GlobalStiffnessTimeStepper.cpp	2007-09-27 15:10:07 UTC (rev 1232)
+@@ -25,7 +25,7 @@
+ 	timestepSafetyCoefficient = 0.25;
+ 	computedOnce = false;
+ 	defaultDt = 1;
+-	previousDt = defaultDt;
++	//previousDt = defaultDt;
+ 	
+ }
+ 
+@@ -41,7 +41,7 @@
+ 	TimeStepper::registerAttributes();
+ 	REGISTER_ATTRIBUTE(sdecGroupMask);
+ 	REGISTER_ATTRIBUTE(defaultDt);
+-	REGISTER_ATTRIBUTE(previousDt);
++	//REGISTER_ATTRIBUTE(previousDt);
+ 	REGISTER_ATTRIBUTE(timestepSafetyCoefficient);
+ }
+ 
+@@ -139,7 +139,7 @@
+ 	newDt = Mathr::MAX_REAL;
+ 	//Real defaultDt = 0.0003;
+ 	
+-	computedSomething = false; // this flag is to avoid setting timestep to MAX_REAL :)
++	//computedSomething = false; // this flag is to avoid setting timestep to MAX_REAL :)
+ /*
+ 	InteractionContainer::iterator ii    = persistentInteractions-&gt;begin();
+ 	InteractionContainer::iterator iiEnd = persistentInteractions-&gt;end();
+@@ -151,8 +151,8 @@
+ 	for(  ; ii!=iiEnd ; ++ii )
+ 		findTimeStepFromInteraction(*ii , bodies);*/
+ 
+-	if(!computedSomething)
+-	{
++	//if(!computedSomething)
++	//{
+ 		BodyContainer::iterator bi    = bodies-&gt;begin();
+ 		BodyContainer::iterator biEnd = bodies-&gt;end();
+ 		for(  ; bi!=biEnd ; ++bi )
+@@ -165,18 +165,18 @@
+ 			//cerr &lt;&lt; &quot;if( b-&gt;getGroupMask() &amp; sdecGroupMask)&quot; &lt;&lt; computedSomething &lt;&lt; endl;
+ 				findTimeStepFromBody(b, ncb); }
+ 		}
+-	}	
++	//}	
+ 		
+ 	if(computedSomething)
+ 	{
+ 		Omega::instance().setTimeStep(min(newDt , defaultDt));
+-		previousDt = newDt;
++		//previousDt = Omega::instance().getTimeStep();
+ 		//Omega::instance().setTimeStep(newDt);
+ 		computedOnce = true;	
+ 		//cerr &lt;&lt; &quot;computedOnce=&quot; &lt;&lt; computedOnce &lt;&lt; endl;	
+ 		//cerr &lt;&lt; &quot;GlobalStiffnessTimeStepper, timestep chosen is:&quot; &lt;&lt; Omega::instance().getTimeStep() &lt;&lt; endl;
+ 	}
+-	else if (!computedOnce) Omega::instance().setTimeStep(previousDt);
++	else if (!computedOnce) Omega::instance().setTimeStep(defaultDt);
+ 	if (Omega::instance().getCurrentIteration() % 100 == 0)
+ 	cerr &lt;&lt; &quot;computed timestep = &quot; &lt;&lt; newDt &lt;&lt; &quot;; new timestep is:&quot; &lt;&lt; Omega::instance().getTimeStep() &lt;&lt; endl;
+ }
+
+Modified: trunk/pkg/dem/PreProcessor/TriaxialTest.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/TriaxialTest.cpp	2007-09-17 13:06:42 UTC (rev 1231)
++++ trunk/pkg/dem/PreProcessor/TriaxialTest.cpp	2007-09-27 15:10:07 UTC (rev 1232)
+@@ -641,7 +641,7 @@
+ 	triaxialcompressionEngine-&gt; stiffnessUpdateInterval = wallStiffnessUpdateInterval;// = stiffness update interval
+ 	triaxialcompressionEngine-&gt; radiusControlInterval = radiusControlInterval;// = stiffness update interval
+ 	triaxialcompressionEngine-&gt; sigma_iso = sigma_iso;
+-	triaxialcompressionEngine-&gt; max_vel = 1;
++	triaxialcompressionEngine-&gt; max_vel = 0.01;
+ 	triaxialcompressionEngine-&gt; thickness = thickness;
+ 	triaxialcompressionEngine-&gt;strainRate = strainRate;
+ 	triaxialcompressionEngine-&gt;StabilityCriterion = StabilityCriterion;
+
+Modified: trunk/pkg/dem/PreProcessor/TriaxialTestWater.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/TriaxialTestWater.cpp	2007-09-17 13:06:42 UTC (rev 1231)
++++ trunk/pkg/dem/PreProcessor/TriaxialTestWater.cpp	2007-09-27 15:10:07 UTC (rev 1232)
+@@ -139,7 +139,7 @@
+ 	timeStepOutputInterval = 50;
+ 	wallStiffnessUpdateInterval = 1;
+ 	numberOfGrains = 1000;
+-	max_vel = 1;
++	max_vel = 0.001;
+ 	strainRate = 0.1;
+ 	StabilityCriterion = 0.01;
+ 	autoCompressionActivation = true;
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000196.html">[Yade-commits] r1231 - trunk
+</A></li>
+	<LI>Next message: <A HREF="000198.html">[Yade-commits] r1233 - in trunk: . extra/tetra	pkg/common/DataClass/GeometricalModel
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#197">[ date ]</a>
+              <a href="thread.html#197">[ thread ]</a>
+              <a href="subject.html#197">[ subject ]</a>
+              <a href="author.html#197">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

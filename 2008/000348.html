@@ -1,0 +1,420 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1387 - in trunk/pkg: common/Engine/EngineUnit	dem/Engine/DeusExMachina dem/Engine/StandAloneEngine
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1387%20-%20in%20trunk/pkg%3A%20common/Engine/EngineUnit%0A%09dem/Engine/DeusExMachina%20dem/Engine/StandAloneEngine&In-Reply-To=%3C200806121401.m5CE1Zlq024894%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000347.html">
+   <LINK REL="Next"  HREF="000349.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1387 - in trunk/pkg: common/Engine/EngineUnit	dem/Engine/DeusExMachina dem/Engine/StandAloneEngine</H1>
+    <B>chareyre at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1387%20-%20in%20trunk/pkg%3A%20common/Engine/EngineUnit%0A%09dem/Engine/DeusExMachina%20dem/Engine/StandAloneEngine&In-Reply-To=%3C200806121401.m5CE1Zlq024894%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1387 - in trunk/pkg: common/Engine/EngineUnit	dem/Engine/DeusExMachina dem/Engine/StandAloneEngine">chareyre at mail.berlios.de
+       </A><BR>
+    <I>Thu Jun 12 16:01:35 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000347.html">[Yade-commits] r1386 - trunk/gui/qt3
+</A></li>
+        <LI>Next message: <A HREF="000349.html">[Yade-commits] r1388 -	branches/przewdnik/pkg/common/Engine/StandAloneEngine/Visualisation
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#348">[ date ]</a>
+              <a href="thread.html#348">[ thread ]</a>
+              <a href="subject.html#348">[ subject ]</a>
+              <a href="author.html#348">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: chareyre
+Date: 2008-06-12 16:01:34 +0200 (Thu, 12 Jun 2008)
+New Revision: 1387
+
+Modified:
+   trunk/pkg/common/Engine/EngineUnit/LeapFrogOrientationIntegrator.cpp
+   trunk/pkg/common/Engine/EngineUnit/LeapFrogOrientationIntegrator.hpp
+   trunk/pkg/common/Engine/EngineUnit/LeapFrogPositionIntegrator.cpp
+   trunk/pkg/common/Engine/EngineUnit/LeapFrogPositionIntegrator.hpp
+   trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.cpp
+   trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.hpp
+   trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.cpp
+   trunk/pkg/dem/Engine/StandAloneEngine/GlobalStiffnessTimeStepper.cpp
+Log:
+NewtonsDampedLaw : fixing a small mistake and cleaning the code. 
+IMPORTANT NOTE : Forces/Moments are not affected by damping now, only 
+accelerations are modified. The result is the same in terms of damping, but users can now 
+get the exact values of forces/moments on bodies at any point during a 
+timestep. 
+
+TriaxialCompressionEngine : compute unbalanced force even in LIMBO state
+
+GlobalStiffnessTimeStepper : default safety coefficient is 1
+
+LeapFrogIntegrators : remove previous velocities and  make this 2nd
+order scheme.
+
+IMPORTANT NOTE (2) : the damping obtained with 
+NewtonsDampedLaw is not 
+exactly the
+same as the one in CundallNonViscous_X_Damping. Just because it is 
+too much work to implement the same algorithm in splitted classes 
+(it needs 
+new includes and libs for some classes, and it also needs reordering 
+integrating engines in all existing preprocessors).
+I will no longer maintain those 6 integrating classes, as it seems 
+useless and painfull to me.
+
+
+
+
+
+
+
+Modified: trunk/pkg/common/Engine/EngineUnit/LeapFrogOrientationIntegrator.cpp
+===================================================================
+--- trunk/pkg/common/Engine/EngineUnit/LeapFrogOrientationIntegrator.cpp	2008-06-12 12:27:44 UTC (rev 1386)
++++ trunk/pkg/common/Engine/EngineUnit/LeapFrogOrientationIntegrator.cpp	2008-06-12 14:01:34 UTC (rev 1387)
+@@ -17,22 +17,22 @@
+ {
+ 	if(!body-&gt;isDynamic) return;
+ 		
+-	unsigned int id = body-&gt;getId();
++// 	unsigned int id = body-&gt;getId();
+ 	
+-	if (prevAngularVelocities.size()&lt;=id)
+-	{
+-		prevAngularVelocities.resize(id+1);
+-		firsts.resize(id+1,true);
+-	}
++// 	if (prevAngularVelocities.size()&lt;=id)
++// 	{
++// 		prevAngularVelocities.resize(id+1);
++// 		firsts.resize(id+1,true);
++// 	}
+ 
+ 	RigidBodyParameters * rb = YADE_CAST&lt;RigidBodyParameters*&gt;(b.get());
+ 	
+ 	Real dt = Omega::instance().getTimeStep();
+ 		
+-	if (!firsts[id])
+-		rb-&gt;angularVelocity = prevAngularVelocities[id]+rb-&gt;angularAcceleration*0.5*dt;
++// 	if (!firsts[id])
++// 		rb-&gt;angularVelocity = prevAngularVelocities[id]+rb-&gt;angularAcceleration*0.5*dt;
+ 		
+-	prevAngularVelocities[id] = rb-&gt;angularVelocity+((Real)(0.5*dt))*rb-&gt;angularAcceleration;
++	rb-&gt;angularVelocity = rb-&gt;angularVelocity+ dt*rb-&gt;angularAcceleration;
+ 	Vector3r axis = rb-&gt;angularVelocity;
+ 	Real angle = axis.Normalize();
+ 	Quaternionr q;
+@@ -40,7 +40,7 @@
+ 	rb-&gt;se3.orientation = q*rb-&gt;se3.orientation;
+ 	rb-&gt;se3.orientation.Normalize();
+ 
+-	firsts[id] = false;
++// 	firsts[id] = false;
+ }
+ 
+ YADE_PLUGIN();
+
+Modified: trunk/pkg/common/Engine/EngineUnit/LeapFrogOrientationIntegrator.hpp
+===================================================================
+--- trunk/pkg/common/Engine/EngineUnit/LeapFrogOrientationIntegrator.hpp	2008-06-12 12:27:44 UTC (rev 1386)
++++ trunk/pkg/common/Engine/EngineUnit/LeapFrogOrientationIntegrator.hpp	2008-06-12 14:01:34 UTC (rev 1387)
+@@ -14,8 +14,8 @@
+ class LeapFrogOrientationIntegrator : public PhysicalParametersEngineUnit 
+ {
+ 	private :
+-		vector&lt;Vector3r&gt; prevAngularVelocities;
+-		vector&lt;bool&gt; firsts;
++// 		vector&lt;Vector3r&gt; prevAngularVelocities;
++// 		vector&lt;bool&gt; firsts;
+ 	
+ 	public :
+ 		virtual void go( 	  const shared_ptr&lt;PhysicalParameters&gt;&amp;
+
+Modified: trunk/pkg/common/Engine/EngineUnit/LeapFrogPositionIntegrator.cpp
+===================================================================
+--- trunk/pkg/common/Engine/EngineUnit/LeapFrogPositionIntegrator.cpp	2008-06-12 12:27:44 UTC (rev 1386)
++++ trunk/pkg/common/Engine/EngineUnit/LeapFrogPositionIntegrator.cpp	2008-06-12 14:01:34 UTC (rev 1387)
+@@ -10,6 +10,7 @@
+ #include &quot;ParticleParameters.hpp&quot;
+ #include&lt;yade/core/Omega.hpp&gt;
+ 
++
+ // FIXME : should we pass timestep as parameter of functor
+ // FIXME : what's with timestepper
+ void LeapFrogPositionIntegrator::go(       const shared_ptr&lt;PhysicalParameters&gt;&amp; b
+@@ -17,27 +18,27 @@
+ {
+ 	if(!body-&gt;isDynamic) return;
+ 
+-	unsigned int id = body-&gt;getId();
++// 	unsigned int id = body-&gt;getId();
+ 	
+-	if (prevVelocities.size()&lt;=id)
+-	{
+-		prevVelocities.resize(id+1);
+-		firsts.resize(id+1,true);
+-	}
++// 	if (prevVelocities.size()&lt;=id)
++// 	{
++// 		prevVelocities.resize(id+1);
++// 		firsts.resize(id+1,true);
++// 	}
+ 
+ 	ParticleParameters * p = YADE_CAST&lt;ParticleParameters*&gt;(b.get());
+ 
+ 	Real dt = Omega::instance().getTimeStep();
+ 
+-	if (!firsts[id])
+-		p-&gt;velocity = prevVelocities[id]+((Real)0.5)*dt*p-&gt;acceleration;
++// 	if (!firsts[id])
++// 		p-&gt;velocity = prevVelocities[id]+((Real)0.5)*dt*p-&gt;acceleration;
+ 
+-	prevVelocities[id] = p-&gt;velocity+((Real)0.5)*dt*p-&gt;acceleration;
+-	p-&gt;se3.position += prevVelocities[id]*dt;
++	p-&gt;velocity = p-&gt;velocity+dt*p-&gt;acceleration;
++	p-&gt;se3.position += p-&gt;velocity*dt;
+ 
+ 	//cerr&lt;&lt;&quot;#&quot;&lt;&lt;body-&gt;getId()&lt;&lt;&quot;dx=&quot;&lt;&lt;prevVelocities[id]*dt&lt;&lt;endl;
+ 
+-	firsts[id] = false;
++	//firsts[id] = false;
+ }
+ 
+ 
+
+Modified: trunk/pkg/common/Engine/EngineUnit/LeapFrogPositionIntegrator.hpp
+===================================================================
+--- trunk/pkg/common/Engine/EngineUnit/LeapFrogPositionIntegrator.hpp	2008-06-12 12:27:44 UTC (rev 1386)
++++ trunk/pkg/common/Engine/EngineUnit/LeapFrogPositionIntegrator.hpp	2008-06-12 14:01:34 UTC (rev 1387)
+@@ -14,8 +14,8 @@
+ class LeapFrogPositionIntegrator : public PhysicalParametersEngineUnit
+ {
+ 	private :
+-		vector&lt;Vector3r&gt; prevVelocities;
+-		vector&lt;bool&gt; firsts;
++//		vector&lt;Vector3r&gt; prevVelocities;
++//		vector&lt;bool&gt; firsts;
+ 	
+ 	public :
+ 		virtual void go(	  const shared_ptr&lt;PhysicalParameters&gt;&amp;
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.cpp	2008-06-12 12:27:44 UTC (rev 1386)
++++ trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.cpp	2008-06-12 14:01:34 UTC (rev 1387)
+@@ -26,8 +26,6 @@
+ 	damping = 0.2;
+ 	forceClassIndex = (new Force)-&gt;getClassIndex();
+ 	momentumClassIndex = (new Momentum)-&gt;getClassIndex();
+-	prevSize = 0;
+-	
+ }
+ 
+ void NewtonsDampedLaw::applyCondition ( MetaBody * ncb )
+@@ -49,18 +47,7 @@
+ 
+ 		Real dt = Omega::instance().getTimeStep();
+ 
+-		if (!b-&gt;isClump()) {
+-			//Damping moments
+-			for ( int i=0; i&lt;3; ++i )
+-			{
+-				m[i] *= 1 - damping*Mathr::Sign ( m[i]*rb-&gt;angularVelocity[i] + (Real) 0.5 *dt*rb-&gt;angularAcceleration[i] );
+-			}
+-			//Damping force :
+-			for ( int i=0; i&lt;3; ++i )
+-			{
+-				f[i] *= 1 - damping*Mathr::Sign ( f[i]*rb-&gt;velocity[i] + (Real) 0.5 *dt*rb-&gt;acceleration[i] );
+-			}
+-		}
++		
+ 
+ 
+ 
+@@ -91,29 +78,23 @@
+ 			clumpRBP-&gt;angularAcceleration+=diagDiv ( ( rb-&gt;se3.position-clumpRBP-&gt;se3.position ).Cross ( f ),clumpRBP-&gt;inertia ); //acceleration from torque generated by the force WRT particle centroid on the clump centroid
+ 		}
+ 
+-		//Orientation and Position Integrators :
+-// 		if ( prevSize &lt;=id )
+-// 		{
+-// 			prevSize = id+1;
+-// 			prevAngularVelocities.resize ( prevSize );
+-// 			prevVelocities.resize ( prevSize );
+-// 			firsts.resize ( prevSize,true );
+-// 		}
+ 
+-		
+-// 		if ( !firsts[id] )
+-// 		{
+-// 			rb-&gt;angularVelocity = rb-&gt;angularVelocity+rb-&gt;angularAcceleration*0.5*dt;
+-// 			rb-&gt;velocity = rb-&gt;velocity+ ( ( Real ) 0.5 ) *dt*rb-&gt;acceleration;
+-// 		}
++		if (!b-&gt;isClump()) {
++			//Damping moments
++			for ( int i=0; i&lt;3; ++i )
++			{
++				rb-&gt;angularAcceleration[i] *= 1 - damping*Mathr::Sign ( m[i]*(rb-&gt;angularVelocity[i] + (Real) 0.5 *dt*rb-&gt;angularAcceleration[i]) );
++			}
++			//Damping force :
++			for ( int i=0; i&lt;3; ++i )
++			{
++				rb-&gt;acceleration[i] *= 1 - damping*Mathr::Sign ( f[i]*(rb-&gt;velocity[i] + (Real) 0.5 *dt*rb-&gt;acceleration[i]) );
++			}
++		}
+ 
+-
+ 		rb-&gt;angularVelocity = rb-&gt;angularVelocity+ dt*rb-&gt;angularAcceleration;
+ 		rb-&gt;velocity = rb-&gt;velocity+ dt*rb-&gt;acceleration;
+ 
+-// 		prevAngularVelocities[id] = rb-&gt;angularVelocity;
+-// 		prevVelocities[id] = rb-&gt;velocity;
+-
+ 		Vector3r axis = rb-&gt;angularVelocity;
+ 		Real angle = axis.Normalize();
+ 		Quaternionr q;
+@@ -123,10 +104,6 @@
+ 
+ 
+ 		rb-&gt;se3.position += rb-&gt;velocity*dt;
+-
+-// 		firsts[id] = false;
+-
+-
+ 	}
+ }
+ 
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.hpp	2008-06-12 12:27:44 UTC (rev 1386)
++++ trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.hpp	2008-06-12 14:01:34 UTC (rev 1387)
+@@ -15,15 +15,17 @@
+ 
+ /*! An engine that can replace the usual series of engines used for integrating the laws of motion.
+ 
++This engine is faster because it uses less loops and less dispatching 
++
+ The result is exactly the same as with :
+--CundallNonViscousForceDamping
+--CundallNonViscousMomentumDamping
+ -NewtonsForceLaw
+ -NewtonsMomentumLaw
+ -LeapFrogPositionIntegrator
+ -LeapFrogOrientationIntegrator
++-CundallNonViscousForceDamping
++-CundallNonViscousMomentumDamping
+ 
+-But this engine is faster because it uses less loops and less dispatching 
++Except that damping is slightly different compared to CundallNonViscousForceDamping+CundallNonViscousMomentumDamping. Here, damping is dependent on predicted (undamped) velocity at t+dt/2, while the other engines use velocity at time t.
+  
+ Requirements :
+ -All dynamic bodies must have physical parameters of type (or inheriting from) BodyMacroParameters
+@@ -41,14 +43,7 @@
+ 		
+ 	private :
+ 		int forceClassIndex, momentumClassIndex;
+-		//vector&lt;Vector3r&gt; prevVelocities, prevAngularVelocities;
+-		//vector&lt;bool&gt; firsts;
+-		unsigned int prevSize;
+-		//virtual void go( 	  const shared_ptr&lt;PhysicalAction&gt;&amp;
+-		//			, const shared_ptr&lt;PhysicalParameters&gt;&amp;
+-		//			, const Body*);
+-		
+-		
++				
+ 	public :
+ 		virtual	void applyCondition(MetaBody *);		
+ 		NewtonsDampedLaw();
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.cpp	2008-06-12 12:27:44 UTC (rev 1386)
++++ trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.cpp	2008-06-12 14:01:34 UTC (rev 1387)
+@@ -131,7 +131,7 @@
+ void TriaxialCompressionEngine::updateParameters ( MetaBody * ncb )
+ {
+ 
+-	UnbalancedForce=ComputeUnbalancedForce ( ncb ); // calculated at every iteration
++	UnbalancedForce=ComputeUnbalancedForce ( ncb );
+ 
+ 
+ 	if ( currentState==STATE_ISO_COMPACTION || currentState==STATE_ISO_UNLOADING )
+@@ -206,6 +206,13 @@
+ 		Shop::saveSpheresToFile ( fileName );
+ 		saveSimulation = false;
+ 	}
++	
++	if ( Omega::instance().getCurrentIteration() % testEquilibriumInterval == 0 )
++	{
++		updateParameters ( ncb );
++		LOG_INFO(&quot;UnbalancedForce=&quot;&lt;&lt; UnbalancedForce);
++	}
++	
+ 	if ( currentState==STATE_LIMBO )
+ 	{		
+ 		return;
+@@ -213,12 +220,8 @@
+ 
+ 	TriaxialStressController::applyCondition ( ncb );
+ 
+-	if ( Omega::instance().getCurrentIteration() % testEquilibriumInterval == 0 )
+-	{
+-		updateParameters ( ncb );
+-		LOG_INFO(&quot;UnbalancedForce=&quot;&lt;&lt; UnbalancedForce);
+-	}
+ 	
++	
+ 	if ( currentState==STATE_TRIAX_LOADING )
+ 	{
+ 		if ( Omega::instance().getCurrentIteration() % 100 == 0 )
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/GlobalStiffnessTimeStepper.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/GlobalStiffnessTimeStepper.cpp	2008-06-12 12:27:44 UTC (rev 1386)
++++ trunk/pkg/dem/Engine/StandAloneEngine/GlobalStiffnessTimeStepper.cpp	2008-06-12 14:01:34 UTC (rev 1387)
+@@ -23,7 +23,7 @@
+ //cerr &lt;&lt; &quot;GlobalStiffnessTimeStepper()&quot;  &lt;&lt; endl;
+ 	globalStiffnessClassIndex = actionParameterGlobalStiffness-&gt;getClassIndex();
+ 	sdecGroupMask = 1;
+-	timestepSafetyCoefficient = 0.25;
++	timestepSafetyCoefficient = 1;
+ 	computedOnce = false;
+ 	defaultDt = 1;
+ 	previousDt = defaultDt;
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000347.html">[Yade-commits] r1386 - trunk/gui/qt3
+</A></li>
+	<LI>Next message: <A HREF="000349.html">[Yade-commits] r1388 -	branches/przewdnik/pkg/common/Engine/StandAloneEngine/Visualisation
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#348">[ date ]</a>
+              <a href="thread.html#348">[ thread ]</a>
+              <a href="subject.html#348">[ subject ]</a>
+              <a href="author.html#348">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

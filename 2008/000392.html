@@ -1,0 +1,1237 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1432 - in trunk: core extra gui/py gui/qt3	lib/serialization lib/serialization-qt pkg/common/Engine	pkg/common/Engine/StandAloneEngine	pkg/common/RenderingEngine/OpenGLRenderingEngine	pkg/dem/PreProcessor pkg/fem/PreProcessor	pkg/lattice/PreProcessor scripts
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1432%20-%20in%20trunk%3A%20core%20extra%20gui/py%20gui/qt3%0A%09lib/serialization%20lib/serialization-qt%20pkg/common/Engine%0A%09pkg/common/Engine/StandAloneEngine%0A%09pkg/common/RenderingEngine/OpenGLRenderingEngine%0A%09pkg/dem/PreProcessor%20pkg/fem/PreProcessor%0A%09pkg/lattice/PreProcessor%20scripts&In-Reply-To=%3C200807170909.m6H99k2n014423%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000391.html">
+   <LINK REL="Next"  HREF="000393.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1432 - in trunk: core extra gui/py gui/qt3	lib/serialization lib/serialization-qt pkg/common/Engine	pkg/common/Engine/StandAloneEngine	pkg/common/RenderingEngine/OpenGLRenderingEngine	pkg/dem/PreProcessor pkg/fem/PreProcessor	pkg/lattice/PreProcessor scripts</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1432%20-%20in%20trunk%3A%20core%20extra%20gui/py%20gui/qt3%0A%09lib/serialization%20lib/serialization-qt%20pkg/common/Engine%0A%09pkg/common/Engine/StandAloneEngine%0A%09pkg/common/RenderingEngine/OpenGLRenderingEngine%0A%09pkg/dem/PreProcessor%20pkg/fem/PreProcessor%0A%09pkg/lattice/PreProcessor%20scripts&In-Reply-To=%3C200807170909.m6H99k2n014423%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1432 - in trunk: core extra gui/py gui/qt3	lib/serialization lib/serialization-qt pkg/common/Engine	pkg/common/Engine/StandAloneEngine	pkg/common/RenderingEngine/OpenGLRenderingEngine	pkg/dem/PreProcessor pkg/fem/PreProcessor	pkg/lattice/PreProcessor scripts">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Thu Jul 17 11:09:46 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000391.html">[Yade-commits] r1431 - trunk/pkg/dem/DataClass/InteractionPhysics
+</A></li>
+        <LI>Next message: <A HREF="000393.html">[Yade-commits] r1433 - in trunk: extra gui/py gui/qt3	pkg/common/Engine/StandAloneEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#392">[ date ]</a>
+              <a href="thread.html#392">[ thread ]</a>
+              <a href="subject.html#392">[ subject ]</a>
+              <a href="author.html#392">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2008-07-17 11:09:42 +0200 (Thu, 17 Jul 2008)
+New Revision: 1432
+
+Added:
+   trunk/core/DisplayParameters.hpp
+Modified:
+   trunk/core/MetaBody.cpp
+   trunk/core/MetaBody.hpp
+   trunk/core/Omega.cpp
+   trunk/core/Omega.hpp
+   trunk/core/SimulationFlow.cpp
+   trunk/extra/Brefcom.cpp
+   trunk/gui/py/PeriodicPythonRunner.hpp
+   trunk/gui/py/plot.py
+   trunk/gui/py/utils.py
+   trunk/gui/py/yadeControl.cpp
+   trunk/gui/qt3/GLViewer.cpp
+   trunk/gui/qt3/GLViewer.hpp
+   trunk/gui/qt3/QtGUI-python.cpp
+   trunk/lib/serialization-qt/QtGUIGenerator.cpp
+   trunk/lib/serialization/FundamentalHandler.tpp
+   trunk/lib/serialization/IOFormatManager.hpp
+   trunk/lib/serialization/IOFormatManager.tpp
+   trunk/lib/serialization/Serializable.hpp
+   trunk/pkg/common/Engine/ParallelEngine.cpp
+   trunk/pkg/common/Engine/StandAloneEngine/PeriodicEngines.hpp
+   trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.cpp
+   trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.hpp
+   trunk/pkg/dem/PreProcessor/SnowCreepTest.cpp
+   trunk/pkg/dem/PreProcessor/TestSimpleViscoelastic.cpp
+   trunk/pkg/dem/PreProcessor/TetrahedronsTest.cpp
+   trunk/pkg/dem/PreProcessor/ThreePointBending.cpp
+   trunk/pkg/fem/PreProcessor/FEMBeam.cpp
+   trunk/pkg/lattice/PreProcessor/LatticeExample.cpp
+   trunk/scripts/simple-scene-player.py
+Log:
+1. new class DisplayParameters is a string-&gt;string &quot;hash map&quot; for holding various configurations.
+2. Multiple display parameters (i.e. QGLViewer config and OpenGLRenderingEngine config) are stored in Metabody.
+4. stopAtIteration moved to MetaBody so that it is saved and reloaded (MetaBody::recover hack is gone)
+5. Remove unnecessary persistentInteraction initializers so that we have less warnings
+6. Remove deprecated RangePeriodicEngine, plotting uses StretchPeriodicEngine instead.
+7. Add the ability to load from stream and save to stream to IOFormatManager (afterwards, I discovered there were actually_identical_ functions loadArchive and saveArchive; those were deleted since unused elsewhere)
+8. GLViewer can now load and save state from/to string
+9. in GLViewer, keys 7,8,9 load display config #0,1,2 and Alt-{7,8,9} saves current view to #0,1,2. Those are saved in MetaBody. BUG: after loading such config, the QtGUI-generated OpenGLRenderingEngine config dialog doesn't work anymore (probably some issue with archives, not sure).
+9. Hopefully all xml-parser-offensive characters are escaped at string serialization (and unescaped at deserialization). We use standard SGML escapes (newline=&br; tab=&tab; &lt;=&lt; and so on) now. This allows to save XML-as-string in the xml itself (used for DisplayParameters).
+10. GLViewer now properly saves what XYZ planes are displayed (using custom DOM element)
+11. Some fixes in Brefcom, more to come.
+
+
+
+Added: trunk/core/DisplayParameters.hpp
+===================================================================
+--- trunk/core/DisplayParameters.hpp	2008-07-16 14:03:20 UTC (rev 1431)
++++ trunk/core/DisplayParameters.hpp	2008-07-17 09:09:42 UTC (rev 1432)
+@@ -0,0 +1,28 @@
++#pragma once
++ 
++/* Class for storing set of display parameters.
++ *
++ * The interface sort of emulates map string-&gt;string (which is not handled by yade-serialization).
++ *
++ * The &quot;keys&quot; (called displayTypes) are intended to be &quot;OpenGLRenderingEngine&quot; or &quot;GLViewer&quot; (and perhaps other).
++ * The &quot;values&quot; are intended to be XML representation of display parameters, obtained either by yade-serialization
++ * with OpenGLRenderingEngine and saveStateToStream with QGLViewer (and GLViewer).
++ *
++ */
++
++class DisplayParameters: public Serializable{
++	private:
++		vector&lt;string&gt; values;
++		vector&lt;string&gt; displayTypes;
++	public:
++		//! Get value of given display type and put it in string&amp; value and return true; if there is no such display type, return false.
++		bool getValue(string displayType, string&amp; value){assert(values.size()==displayTypes.size()); vector&lt;string&gt;::iterator I=std::find(displayTypes.begin(),displayTypes.end(),displayType); if(I==displayTypes.end()) return false; value=values[std::distance(displayTypes.begin(),I)]; return true;}
++		//! Set value of given display type; if such display type exists, it is overwritten, otherwise a new one is created.
++		void setValue(string displayType, string value){assert(values.size()==displayTypes.size()); vector&lt;string&gt;::iterator I=std::find(displayTypes.begin(),displayTypes.end(),displayType); if(I==displayTypes.end()){displayTypes.push_back(displayType); values.push_back(value);} else {values[std::distance(displayTypes.begin(),I)]=value;};}
++	DisplayParameters(){}
++	virtual ~DisplayParameters(){}
++	virtual void registerAttributes(){ REGISTER_ATTRIBUTE(displayTypes); REGISTER_ATTRIBUTE(values); }
++	REGISTER_CLASS_NAME(DisplayParameters);
++	REGISTER_BASE_CLASS_NAME(Serializable);
++};
++REGISTER_SERIALIZABLE(DisplayParameters,false);
+
+Modified: trunk/core/MetaBody.cpp
+===================================================================
+--- trunk/core/MetaBody.cpp	2008-07-16 14:03:20 UTC (rev 1431)
++++ trunk/core/MetaBody.cpp	2008-07-17 09:09:42 UTC (rev 1432)
+@@ -35,11 +35,9 @@
+ 	engines.clear();
+ 	initializers.clear();
+ 	needsInitializers=true;
+-	recover=false;
+-	// I must assign something to avoid &quot;nan&quot; when loading. When recover=false, those can be &quot;nan&quot; and lead to crash.
+ 	currentIteration=0;
+ 	simulationTime=0;
+-	recoverStopAtIteration=1;
++	stopAtIteration=0;
+ 	isDynamic=false;
+ 	dt=1e-8;
+ 
+@@ -80,12 +78,11 @@
+ 	REGISTER_ATTRIBUTE(persistentInteractions);
+ 	REGISTER_ATTRIBUTE(physicalActions); // FIXME - needed or not ? - Olivier : yes it is needed if there is no default initialization into constructor
+ 	REGISTER_ATTRIBUTE(miscParams);
++	REGISTER_ATTRIBUTE(dispParams);
+ 	REGISTER_ATTRIBUTE(dt);
+ 	REGISTER_ATTRIBUTE(currentIteration);
+ 	REGISTER_ATTRIBUTE(simulationTime);
+-
+-	REGISTER_ATTRIBUTE(recover);
+-	REGISTER_ATTRIBUTE(recoverStopAtIteration);
++	REGISTER_ATTRIBUTE(stopAtIteration);
+ }
+ 
+ 
+
+Modified: trunk/core/MetaBody.hpp
+===================================================================
+--- trunk/core/MetaBody.hpp	2008-07-16 14:03:20 UTC (rev 1431)
++++ trunk/core/MetaBody.hpp	2008-07-17 09:09:42 UTC (rev 1432)
+@@ -11,9 +11,10 @@
+ #ifndef METABODY_HPP
+ #define METABODY_HPP
+ 
+-#include &quot;Body.hpp&quot;
+-#include &quot;BodyContainer.hpp&quot;
+-#include &quot;Engine.hpp&quot;
++#include&quot;Body.hpp&quot;
++#include&quot;BodyContainer.hpp&quot;
++#include&quot;Engine.hpp&quot;
++#include&quot;DisplayParameters.hpp&quot;
+ 
+ class MetaBody : public Body
+ {
+@@ -27,23 +28,20 @@
+ 		vector&lt;shared_ptr&lt;Serializable&gt; &gt; miscParams; // will set static parameters during deserialization (primarily for GLDraw functors which otherwise have no attribute access)
+ 		//! tags like mp3 tags: author, date, version, description etc.
+ 		list&lt;string&gt; tags;
++		//! &quot;hash maps&quot; of display parameters
++		vector&lt;shared_ptr&lt;DisplayParameters&gt; &gt; dispParams;
+ 
+ 		MetaBody ();
+ 
+ 		void moveToNextTimeStep();
+ 
+-		void setTimeSteppersActive(bool a); // FIXME - wtf ?
++		void setTimeSteppersActive(bool a);
+ 		shared_ptr&lt;Engine&gt; engineByName(string s);
+ 
+-		/* Recovery stuff: copy of state variables from Omega that should be copied back over. 	
+-		 *	Copying is being done ine Omega::loadSimulation and Omega::saveSimulation -- keep vars in sync.
+-		 * */
+-		bool recover;
+-		long recoverStopAtIteration;
+-
+ 		Real dt;
+ 		long currentIteration;
+ 		Real simulationTime;
++		long stopAtIteration;
+ 
+ 		bool needsInitializers;
+ /// Serialization
+
+Modified: trunk/core/Omega.cpp
+===================================================================
+--- trunk/core/Omega.cpp	2008-07-16 14:03:20 UTC (rev 1431)
++++ trunk/core/Omega.cpp	2008-07-17 09:09:42 UTC (rev 1432)
+@@ -66,7 +66,6 @@
+ 
+ void Omega::init(){
+ 	simulationFileName=&quot;&quot;;
+-	stopAtIteration = 0;
+ 	resetRootBody();
+ }
+ 
+@@ -145,49 +144,35 @@
+ }
+ 
+ 
+-bool Omega::isInheritingFrom(const string&amp; className, const string&amp; baseClassName )
+-{
++bool Omega::isInheritingFrom(const string&amp; className, const string&amp; baseClassName){
+ 	return (dynlibs[className].baseClasses.find(baseClassName)!=dynlibs[className].baseClasses.end());
+ }
+ 
+-
+ void Omega::scanPlugins()
+ {
+ 	FOREACH(string dld,preferences-&gt;dynlibDirectories) ClassFactory::instance().addBaseDirectory(dld);
+-			
+ 	vector&lt;string&gt; dynlibsList;
+-	FOREACH(string si, preferences-&gt;dynlibDirectories)	{
++	FOREACH(string si, preferences-&gt;dynlibDirectories){
+ 		filesystem::path directory(si);
+-		if ( filesystem::exists( directory ) )	{
+-			filesystem::directory_iterator di( directory );
+-			filesystem::directory_iterator diEnd;
+-			for ( ; di != diEnd; ++di )
+-			{
+-				// node is not a directory and is either regular file or non-dangling symlink; and extension is not &quot;.a&quot;; AND moreover transforming it to library name and back to filename is identity; otherwise the file wouldn't be loaded by the DynLibManager anyway
+-				if (!filesystem::is_directory(*di) &amp;&amp; filesystem::exists(*di) &amp;&amp; filesystem::extension(*di)!=&quot;.a&quot; &amp;&amp;
+-					ClassFactory::instance().libNameToSystemName(ClassFactory::instance().systemNameToLibName(filesystem::basename(*di)))==(di-&gt;leaf())){
+-					filesystem::path name(filesystem::basename((*di)));
+-					int prevLength = (*di).leaf().size();
+-					int length = name.leaf().size();
+-					// warning: this can produce invalid name (too short).
+-					// 0-length names are dumped directly
+-					// names 0&lt;length&lt;4 should fail assertion in DynLibManager::systemNameToLibName
+-					// the whole loading &quot;logic&quot; should be rewritten from scratch...
+-					//
+-					// my reading of what it is supposed to do: returns the part of filename before the first dot... !!??
+-					// humm, perhaps it is a result of obfuscative c++ contest (obfuscative c++ = oxymoron, anyway)
+-					while (length!=prevLength) { prevLength=length;	name=filesystem::path(filesystem::basename(name)); length = name.leaf().size();
+-					}
+-					if(name.leaf().length()&lt;1) continue; // filter out 0-length filenames
+-					if(dynlibsList.size()==0 || ClassFactory::instance().systemNameToLibName(name.leaf())!=dynlibsList.back()) {
+-						LOG_DEBUG(&quot;Added plugin: &quot;&lt;&lt;si&lt;&lt;&quot;/&quot;&lt;&lt;di-&gt;leaf()&lt;&lt;&quot;.&quot;);
+-						dynlibsList.push_back(ClassFactory::instance().systemNameToLibName(name.leaf()));
+-					}
+-					else LOG_DEBUG(&quot;Possible plugin discarded: &quot;&lt;&lt;si&lt;&lt;&quot;/&quot;&lt;&lt;name.leaf()&lt;&lt;&quot;.&quot;);
+-				} else LOG_DEBUG(&quot;File not considered a plugin: &quot;&lt;&lt;di-&gt;leaf()&lt;&lt;&quot;.&quot;);
+-			}
++		if(!filesystem::exists(directory)){LOG_ERROR(&quot;Nonexistent plugin directory: &quot;&lt;&lt;directory.native_directory_string()&lt;&lt;&quot;.&quot;);continue; }
++		filesystem::directory_iterator di(directory),diEnd;
++		FOREACH(filesystem::path pth,std::make_pair(di,diEnd)){
++			// node is not a directory and is either regular file or non-dangling symlink; and extension is not &quot;.a&quot;; AND moreover transforming it to library name and back to filename is identity; otherwise the file wouldn't be loaded by the DynLibManager anyway
++			if (!filesystem::is_directory(*di) &amp;&amp; filesystem::exists(*di) &amp;&amp; filesystem::extension(*di)!=&quot;.a&quot; &amp;&amp;
++				ClassFactory::instance().libNameToSystemName(ClassFactory::instance().systemNameToLibName(filesystem::basename(pth)))==(pth.leaf())){
++				filesystem::path name(filesystem::basename(pth));
++				// warning: this can produce invalid name (too short).
++				// 0-length names are dumped directly
++				// names 0&lt;length&lt;4 should fail assertion in DynLibManager::systemNameToLibName
++				// the whole loading &quot;logic&quot; should be rewritten from scratch...
++				if(name.leaf().length()&lt;1) continue; // filter out 0-length filenames
++				if(dynlibsList.size()==0 || ClassFactory::instance().systemNameToLibName(name.leaf())!=dynlibsList.back()) {
++					LOG_DEBUG(&quot;Added plugin: &quot;&lt;&lt;si&lt;&lt;&quot;/&quot;&lt;&lt;pth.leaf()&lt;&lt;&quot;.&quot;);
++					dynlibsList.push_back(ClassFactory::instance().systemNameToLibName(name.leaf()));
++				}
++				else LOG_DEBUG(&quot;Possible plugin discarded: &quot;&lt;&lt;si&lt;&lt;&quot;/&quot;&lt;&lt;name.leaf()&lt;&lt;&quot;.&quot;);
++			} else LOG_DEBUG(&quot;File not considered a plugin: &quot;&lt;&lt;pth.leaf()&lt;&lt;&quot;.&quot;);
+ 		}
+-		else LOG_ERROR(&quot;Nonexistent plugin directory: &quot;&lt;&lt;directory.native_directory_string()&lt;&lt;&quot;.&quot;);
+ 	}
+ 
+ 	bool allLoaded = true;
+@@ -230,19 +215,11 @@
+ 	LOG_DEBUG(&quot;Loading simulation from stream.&quot;);
+ 	resetRootBody();
+ 	timeInit();
+-	shared_ptr&lt;IOFormatManager&gt; ioManager(YADE_PTR_CAST&lt;IOFormatManager&gt;(ClassFactory::instance().createShared(&quot;XMLFormatManager&quot;)));
+-	shared_ptr&lt;Archive&gt; ac=Archive::create(&quot;rootBody&quot;,rootBody);
+-	string tmp=ioManager-&gt;beginDeserialization(stream,*ac);
+-	ac-&gt;deserialize(stream,*ac,tmp);
+-	ioManager-&gt;finalizeDeserialization(stream,*ac);
++	IOFormatManager::loadFromStream(&quot;XMLFormatManager&quot;,stream,&quot;rootBody&quot;,rootBody);
+ }
+ void Omega::saveSimulationToStream(std::ostream&amp; stream){
+ 	LOG_DEBUG(&quot;Saving simulation to stream.&quot;);
+-	shared_ptr&lt;IOFormatManager&gt; ioManager(YADE_PTR_CAST&lt;IOFormatManager&gt;(ClassFactory::instance().createShared(&quot;XMLFormatManager&quot;)));
+-	shared_ptr&lt;Archive&gt; ac=Archive::create(&quot;rootBody&quot;,rootBody);
+-	ioManager-&gt;beginSerialization(stream, *ac);
+-	ac-&gt;serialize(stream, *ac, 1);
+-	ioManager-&gt;finalizeSerialization(stream, *ac);
++	IOFormatManager::saveToStream(&quot;XMLFormatManager&quot;,stream,&quot;rootBody&quot;,rootBody);
+ }
+ 
+ void Omega::loadSimulation()
+@@ -268,25 +245,14 @@
+ 	timeInit();
+ 
+ 	LOG_DEBUG(&quot;Simulation loaded&quot;);
+-
+-	if(rootBody-&gt;recover){
+-		LOG_INFO(&quot;Simulation recovery effective.&quot;);
+-		stopAtIteration=rootBody-&gt;recoverStopAtIteration;
+-		rootBody-&gt;recover=false;
+-	}
+ }
+ 
+ 
+ 
+-void Omega::saveSimulation(const string name, bool recover)
++void Omega::saveSimulation(const string name)
+ {
+ 	if(name.size()==0) throw yadeBadFile(&quot;Filename with zero length.&quot;);
+ 	LOG_INFO(&quot;Saving file &quot; &lt;&lt; name);
+-	if(recover){
+-		LOG_INFO(&quot;Simulation recovery enabled.&quot;);
+-		rootBody-&gt;recover=true;
+-		rootBody-&gt;recoverStopAtIteration=stopAtIteration;
+-	}
+ 
+ 	if(algorithm::ends_with(name,&quot;.xml&quot;) || algorithm::ends_with(name,&quot;.xml.gz&quot;) || algorithm::ends_with(name,&quot;.xml.bz2&quot;)){
+ 		FormatChecker::format=FormatChecker::XML;
+@@ -297,10 +263,8 @@
+ 		IOFormatManager::saveToFile(&quot;BINFormatManager&quot;,name,&quot;rootBody&quot;,rootBody);
+ 	}
+ 	else {
+-		rootBody-&gt;recover=false;
+ 		throw(yadeBadFile((&quot;Filename extension not recognized in `&quot;+name+&quot;'&quot;).c_str()));
+ 	}
+-	rootBody-&gt;recover=false;
+ }
+ 
+ 
+
+Modified: trunk/core/Omega.hpp
+===================================================================
+--- trunk/core/Omega.hpp	2008-07-16 14:03:20 UTC (rev 1431)
++++ trunk/core/Omega.hpp	2008-07-17 09:09:42 UTC (rev 1432)
+@@ -87,8 +87,6 @@
+ 		string				 simulationFileName;
+ 		void buildDynlibDatabase(const vector&lt;string&gt;&amp; dynlibsList); // FIXME - maybe in ClassFactory ?
+ 
+-		public: long int stopAtIteration;
+-
+ 	public :
+ 		shared_ptr&lt;Preferences&gt; preferences;
+ 		string 				 yadeConfigPath;	// FIXME - must be private and more clean
+@@ -140,7 +138,7 @@
+ 		void		setSimulationFileName(const string);
+ 		string	getSimulationFileName();
+ 		void		loadSimulation();
+-		void		saveSimulation(const string name, bool recover=false);
++		void		saveSimulation(const string name);
+ 		void 		saveSimulationToStream(std::ostream&amp;);
+ 		void 		loadSimulationFromStream(std::istream&amp;);
+ 
+
+Modified: trunk/core/SimulationFlow.cpp
+===================================================================
+--- trunk/core/SimulationFlow.cpp	2008-07-16 14:03:20 UTC (rev 1431)
++++ trunk/core/SimulationFlow.cpp	2008-07-17 09:09:42 UTC (rev 1432)
+@@ -18,7 +18,7 @@
+ 		OO.getRootBody()-&gt;moveToNextTimeStep();
+ 		OO.incrementCurrentIteration();
+ 		OO.incrementSimulationTime();
+-		if(OO.stopAtIteration&gt;0 &amp;&amp; OO.getCurrentIteration()==OO.stopAtIteration){
++		if(OO.getRootBody()-&gt;stopAtIteration&gt;0 &amp;&amp; OO.getCurrentIteration()==OO.getRootBody()-&gt;stopAtIteration){
+ 			setTerminate(true);
+ 			return;
+ 		}
+
+Modified: trunk/extra/Brefcom.cpp
+===================================================================
+--- trunk/extra/Brefcom.cpp	2008-07-16 14:03:20 UTC (rev 1431)
++++ trunk/extra/Brefcom.cpp	2008-07-17 09:09:42 UTC (rev 1432)
+@@ -47,9 +47,9 @@
+ 
+ 		shared_ptr&lt;BrefcomContact&gt; contPhys(new BrefcomContact(
+ 			/* E */ E12,
+-			/* G */ E12/G_over_E,   /*/2*(1+nu12)*(1-alpha*nu12)/(1+nu12),*/
++			/* G */ E12/G_over_E, /*/2*(1+nu12)*(1-alpha*nu12)/(1+nu12),*/ /* FIXME&#160;FIXME&#160;FIXME ???? */
+ 			/* tanFrictionAngle */ tan(.5*(elast1-&gt;frictionAngle+elast2-&gt;frictionAngle)),
+-			/* undamagedCohesion */ S12*sigmaT,
++			/* undamagedCohesion */ S12*sigmaT, /* FIXME&#160;FIXME&#160;FIXME&#160;??? should be sigmaT??? */
+ 			/* equilibriumDist */ d0,
+ 			/* crossSection */ S12,
+ 			/* epsCrackOnset */ epsCrackOnset,
+
+Modified: trunk/gui/py/PeriodicPythonRunner.hpp
+===================================================================
+--- trunk/gui/py/PeriodicPythonRunner.hpp	2008-07-16 14:03:20 UTC (rev 1431)
++++ trunk/gui/py/PeriodicPythonRunner.hpp	2008-07-17 09:09:42 UTC (rev 1432)
+@@ -9,7 +9,7 @@
+  *
+  * Thie engine is primarily conceived for collecting data for yade.plot plots during simulations, hence the name.
+  */
+-class PeriodicPythonRunner: public RangePeriodicEngine {
++class PeriodicPythonRunner: public StretchPeriodicEngine {
+ 	private:
+ 		string command;
+ 	public :
+@@ -22,11 +22,11 @@
+ 				PyRun_SimpleString(command.c_str()); // this is suboptimal, since it has to be parsed at every execution; critical?
+ 			PyGILState_Release(gstate);
+ 		}
+-		virtual void registerAttributes(){ RangePeriodicEngine::registerAttributes(); REGISTER_ATTRIBUTE(command); }
++		virtual void registerAttributes(){ StretchPeriodicEngine::registerAttributes(); REGISTER_ATTRIBUTE(command); }
+ 	protected :
+ 		virtual void postProcessAttributes(bool deserializing){}
+ 	REGISTER_CLASS_NAME(PeriodicPythonRunner);
+-	REGISTER_BASE_CLASS_NAME(RangePeriodicEngine);
++	REGISTER_BASE_CLASS_NAME(StretchPeriodicEngine);
+ };
+ 
+ REGISTER_SERIALIZABLE(PeriodicPythonRunner,false);
+
+Modified: trunk/gui/py/plot.py
+===================================================================
+--- trunk/gui/py/plot.py	2008-07-16 14:03:20 UTC (rev 1431)
++++ trunk/gui/py/plot.py	2008-07-17 09:09:42 UTC (rev 1432)
+@@ -36,12 +36,12 @@
+ 	if l&gt;maxDataLen:
+ 		global plotDataCollector
+ 		if not plotDataCollector: plotDataCollector=o.labeledEngine('plotDataCollector') # will raise RuntimeError if not found
+-		if plotDataCollector['mayDouble']: # may we double the period without getting over limits?
++		if plotDataCollector['mayStretch']: # may we double the period without getting over limits?
++			plotDataCollector['stretchFactor']=2. # just to make sure
+ 			print &quot;Reducing data: %d &gt; %d&quot;%(l,maxDataLen)
+ 			for d in data: data[d]=data[d][::2]
+-			for attr in ['virtTimeLim','realTimeLim','iterLim']:
+-				val=plotDataCollector[attr]
+-				plotDataCollector[attr]=[val[0],val[1]*2,val[2]]
++			for attr in ['virtPeriod','realPeriod','iterPeriod']:
++				if(plotDataCollector[attr]&gt;0) plotDataCollector[attr]=2*plotDataCollector[attr]
+ 
+ def reverseData():
+ 	for k in data: data[k].reverse()
+
+Modified: trunk/gui/py/utils.py
+===================================================================
+--- trunk/gui/py/utils.py	2008-07-16 14:03:20 UTC (rev 1431)
++++ trunk/gui/py/utils.py	2008-07-17 09:09:42 UTC (rev 1432)
+@@ -155,7 +155,7 @@
+ 		out.write('%g\t%g\t%g\t%g\n'%(b.phys['se3'][0],b.phys['se3'][1],b.phys['se3'][2],b.shape['radius']))
+ 	out.close()
+ 
+-def qtCreateVideo(playerDb,out,viewerState,stride,fps=24):
++def qtCreateVideo(playerDb,out,viewerState,stride,fps=24,postLoadHook=None):
+ 	&quot;&quot;&quot;Create video by replaying a simulation. Snapshots are taken to temporary files,
+ 	encoded to a .ogg stream (theora codec); temps are deleted at the end.
+ 
+@@ -163,7 +163,7 @@
+ 
+ 	playerDb is the database with saved simulation states,
+ 	out is the output file (like a.ogg), fps is frames-per-second for the video that is created,
+-	viewerState and stride are passed to qt.runPlayer (docs in gui/qt3/QtGUI-Python.cpp).
++	viewerState, stride and postLoadHook are passed to qt.runPlayer (docs in gui/qt3/QtGUI-Python.cpp).
+ 	
+ 	You need a display to run this (either virtual, like xvfb, or physical).
+ 
+@@ -174,7 +174,8 @@
+ 	import gst
+ 	from yade import qt
+ 	qt.Player(True)
+-	wildcard,snaps=qt.runPlayer(playerDb,'',viewerState,stride=stride)
++	# postLoadHook has &quot;&quot; instead of None in the c++ interface
++	wildcard,snaps=qt.runPlayer(playerDb,'',viewerState,stride=stride,postLoadHook=(postLoadHook if postLoadHook else ''))
+ 	if(os.path.exists(out)):
+ 		i=0
+ 		while(os.path.exists(out+&quot;~%d&quot;%i)): i+=1
+
+Modified: trunk/gui/py/yadeControl.cpp
+===================================================================
+--- trunk/gui/py/yadeControl.cpp	2008-07-16 14:03:20 UTC (rev 1431)
++++ trunk/gui/py/yadeControl.cpp	2008-07-17 09:09:42 UTC (rev 1432)
+@@ -382,17 +382,17 @@
+ 	double dt_get(){return OMEGA.getTimeStep();}
+ 	void dt_set(double dt){OMEGA.skipTimeStepper(true); OMEGA.setTimeStep(dt);}
+ 
+-	long stopAtIter_get(){return OMEGA.stopAtIteration; }
+-	void stopAtIter_set(long s){OMEGA.stopAtIteration=s; }
++	long stopAtIter_get(){return OMEGA.getRootBody()-&gt;stopAtIteration; }
++	void stopAtIter_set(long s){OMEGA.getRootBody()-&gt;stopAtIteration=s; }
+ 
+ 	bool usesTimeStepper_get(){return OMEGA.timeStepperActive();}
+ 	void usesTimeStepper_set(bool use){OMEGA.skipTimeStepper(!use);}
+ 
+ 	void run(long int numIter=-1){
+-		if(numIter&gt;0) OMEGA.stopAtIteration=OMEGA.getCurrentIteration()+numIter;
++		if(numIter&gt;0) OMEGA.getRootBody()-&gt;stopAtIteration=OMEGA.getCurrentIteration()+numIter;
+ 		//else OMEGA.stopAtIteration=-1;
+ 		OMEGA.startSimulationLoop();
+-		long toGo=OMEGA.stopAtIteration-OMEGA.getCurrentIteration();
++		long toGo=OMEGA.getRootBody()-&gt;stopAtIteration-OMEGA.getCurrentIteration();
+ 		LOG_DEBUG(&quot;RUN&quot;&lt;&lt;(toGo&gt;0?string(&quot; (&quot;+lexical_cast&lt;string&gt;(toGo)+&quot; to go)&quot;):string(&quot;&quot;))&lt;&lt;&quot;!&quot;);
+ 	}
+ 	void pause(){OMEGA.stopSimulationLoop(); LOG_DEBUG(&quot;PAUSE!&quot;);}
+@@ -411,9 +411,9 @@
+ 		OMEGA.reset();
+ 	}
+ 
+-	void save(std::string fileName, bool recover=false){
++	void save(std::string fileName){
+ 		assertRootBody();
+-		OMEGA.saveSimulation(fileName,recover);
++		OMEGA.saveSimulation(fileName);
+ 		OMEGA.setSimulationFileName(fileName);
+ 		LOG_DEBUG(&quot;SAVE!&quot;);
+ 	}
+@@ -475,7 +475,6 @@
+ };
+ 	
+ BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(omega_run_overloads,run,0,1);
+-BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(omega_save_overloads,save,1,2);
+ 
+ class pySTLImporter : public STLImporter {
+     public:
+@@ -502,7 +501,7 @@
+ 		.add_property(&quot;dt&quot;,&amp;pyOmega::dt_get,&amp;pyOmega::dt_set)
+ 		.add_property(&quot;usesTimeStepper&quot;,&amp;pyOmega::usesTimeStepper_get,&amp;pyOmega::usesTimeStepper_set)
+ 		.def(&quot;load&quot;,&amp;pyOmega::load)
+-		.def(&quot;save&quot;,&amp;pyOmega::save,omega_save_overloads())
++		.def(&quot;save&quot;,&amp;pyOmega::save)
+ 		.def(&quot;saveSpheres&quot;,&amp;pyOmega::saveSpheres)
+ 		.def(&quot;run&quot;,&amp;pyOmega::run,omega_run_overloads())
+ 		.def(&quot;pause&quot;,&amp;pyOmega::pause)
+
+Modified: trunk/gui/qt3/GLViewer.cpp
+===================================================================
+--- trunk/gui/qt3/GLViewer.cpp	2008-07-16 14:03:20 UTC (rev 1431)
++++ trunk/gui/qt3/GLViewer.cpp	2008-07-17 09:09:42 UTC (rev 1432)
+@@ -17,6 +17,7 @@
+ #include&lt;yade/lib-opengl/OpenGLWrapper.hpp&gt;
+ #include&lt;yade/core/Body.hpp&gt;
+ #include&lt;yade/core/Interaction.hpp&gt;
++#include&lt;boost/filesystem/operations.hpp&gt;
+ 
+ CREATE_LOGGER(GLViewer);
+ 
+@@ -121,34 +122,44 @@
+ 	displayMessage(&quot;Manipulating clip plane #&quot;+lexical_cast&lt;string&gt;(planeNo+1)+(grp.empty()?grp:&quot;(bound planes:&quot;+grp+&quot;)&quot;));
+ }
+ 
++string GLViewer::getState(){
++	QString origStateFileName=stateFileName();
++	char tmpnam_str [L_tmpnam]; tmpnam(tmpnam_str);
++	setStateFileName(tmpnam_str); saveStateToFile(); setStateFileName(origStateFileName);
++	LOG_DEBUG(&quot;State saved to temp file &quot;&lt;&lt;tmpnam_str);
++	// read tmp file contents and return it as string
++	// this will replace all whitespace by space (nowlines will disappear, which is what we want)
++	ifstream in(tmpnam_str); string ret; while(!in.eof()){string ss; in&gt;&gt;ss; ret+=&quot; &quot;+ss;}; in.close();
++	boost::filesystem::remove(boost::filesystem::path(tmpnam_str));
++	return ret;
++}
++
++void GLViewer::setState(string state){
++	char tmpnam_str [L_tmpnam]; tmpnam(tmpnam_str);
++	std::ofstream out(tmpnam_str);
++	if(!out.good()){ LOG_ERROR(&quot;Error opening temp file `&quot;&lt;&lt;tmpnam_str&lt;&lt;&quot;', loading aborted.&quot;); return; }
++	out&lt;&lt;state; out.close();
++	LOG_DEBUG(&quot;Will load state from temp file &quot;&lt;&lt;tmpnam_str);
++	QString origStateFileName=stateFileName(); setStateFileName(tmpnam_str); restoreStateFromFile(); setStateFileName(origStateFileName);
++	boost::filesystem::remove(boost::filesystem::path(tmpnam_str));
++}
++
+ void GLViewer::keyPressEvent(QKeyEvent *e)
+ {
+-	if (e-&gt;key()==Qt::Key_M &amp;&amp; selectedName() &gt;= 0){
+-		if(!(isMoving=!isMoving)){displayMessage(&quot;Moving done.&quot;); mouseMovesCamera();}
+-		else{ displayMessage(&quot;Moving selected object&quot;); mouseMovesManipulatedFrame();}
++	if(false){}
++	/* special keys: Escape and Space */
++	else if(e-&gt;key()==Qt::Key_Escape){ resetManipulation(); displayMessage(&quot;Manipulating scene.&quot;); }
++	else if(e-&gt;key()==Qt::Key_Space){
++		if(manipulatedClipPlane&gt;=0) {displayMessage(&quot;Clip plane #&quot;+lexical_cast&lt;string&gt;(manipulatedClipPlane+1)+(renderer-&gt;clipPlaneActive[manipulatedClipPlane]?&quot; de&quot;:&quot; &quot;)+&quot;activated&quot;); renderer-&gt;clipPlaneActive[manipulatedClipPlane]=!renderer-&gt;clipPlaneActive[manipulatedClipPlane]; }
+ 	}
+-	else if(e-&gt;key()==Qt::Key_C &amp;&amp; selectedName() &gt;= 0 &amp;&amp; (*(Omega::instance().getRootBody()-&gt;bodies)).exists(selectedName())) setSceneCenter(manipulatedFrame()-&gt;position()), updateGL();
+-	else if(e-&gt;key()==Qt::Key_C &amp;&amp; (e-&gt;state() &amp; AltButton)){ displayMessage(&quot;Median centering&quot;); centerMedianQuartile(); updateGL(); }
+-
+-	else if(e-&gt;key()==Qt::Key_Escape){ resetManipulation();displayMessage(&quot;Manipulating scene.&quot;); }
++	/* function keys */
+ 	else if(e-&gt;key()==Qt::Key_F1 || e-&gt;key()==Qt::Key_F2 || e-&gt;key()==Qt::Key_F3 /* || ... */ ){
+ 		int n=0; if(e-&gt;key()==Qt::Key_F1) n=1; else if(e-&gt;key()==Qt::Key_F2) n=2; else if(e-&gt;key()==Qt::Key_F3) n=3; assert(n&gt;0); int planeId=n-1;
+ 		if(planeId&gt;=renderer-&gt;clipPlaneNum) return;
+ 		if(planeId!=manipulatedClipPlane) startClipPlaneManipulation(planeId);
+-		updateGL();
+ 	}
+-	else if(e-&gt;key()==Qt::Key_R){ // reverse the plane
+-		if(manipulatedClipPlane&gt;=0 &amp;&amp; manipulatedClipPlane&lt;renderer-&gt;clipPlaneNum){
+-			manipulatedFrame()-&gt;setOrientation(qglviewer::Quaternion(qglviewer::Vec(0,1,0),Mathr::PI)*manipulatedFrame()-&gt;orientation());
+-			displayMessage(&quot;Plane #&quot;+lexical_cast&lt;string&gt;(manipulatedClipPlane-1)+&quot; reversed.&quot;);
+-		}
+-		updateGL();
+-	}
+-	else if(e-&gt;key()==Qt::Key_F2){ startClipPlaneManipulation(1); updateGL(); }
+-	else if(e-&gt;key()==Qt::Key_Space){
+-		if(manipulatedClipPlane&gt;=0) {displayMessage(&quot;Clip plane #&quot;+lexical_cast&lt;string&gt;(manipulatedClipPlane+1)+(renderer-&gt;clipPlaneActive[manipulatedClipPlane]?&quot; de&quot;:&quot; &quot;)+&quot;activated&quot;); renderer-&gt;clipPlaneActive[manipulatedClipPlane]=!renderer-&gt;clipPlaneActive[manipulatedClipPlane]; updateGL(); }
+-	}
+-	else if(e-&gt;key()==Qt::Key_0 &amp;&amp;(e-&gt;state() &amp; AltButton)) {boundClipPlanes.clear(); displayMessage(&quot;Cleared the bound group.&quot;);}
++	/* numbers */
++	else if(e-&gt;key()==Qt::Key_0 &amp;&amp;(e-&gt;state() &amp; AltButton)) { boundClipPlanes.clear(); displayMessage(&quot;Cleared bound planes group.&quot;);}
+ 	else if(e-&gt;key()==Qt::Key_1 || e-&gt;key()==Qt::Key_2 || e-&gt;key()==Qt::Key_3 /* || ... */ ){
+ 		int n=0; if(e-&gt;key()==Qt::Key_1) n=1; else if(e-&gt;key()==Qt::Key_2) n=2; else if(e-&gt;key()==Qt::Key_3) n=3; assert(n&gt;0); int planeId=n-1;
+ 		if(planeId&gt;=renderer-&gt;clipPlaneNum) return; // no such clipping plane
+@@ -161,42 +172,73 @@
+ 			manipulatedFrame()-&gt;setOrientation(qglviewer::Quaternion(o[0],o[1],o[2],o[3]));
+ 			displayMessage(&quot;Copied orientation from plane #1&quot;);
+ 		}
+-		updateGL();
+ 	}
+-	else if(e-&gt;key()==Qt::Key_S &amp;&amp; (e-&gt;state()&amp;AltButton)){
+-		setStateFileName(&quot;/tmp/qglviewerState.xml&quot;);
+-		saveStateToFile();
+-		setStateFileName(QString::null);
++	else if(e-&gt;key()==Qt::Key_7 || e-&gt;key()==Qt::Key_8 || e-&gt;key()==Qt::Key_9){
++		int nn=-1; if(e-&gt;key()==Qt::Key_7)nn=0; else if(e-&gt;key()==Qt::Key_8)nn=1; else if(e-&gt;key()==Qt::Key_9)nn=2; assert(nn&gt;=0); size_t n=(size_t)nn;
++		vector&lt;shared_ptr&lt;DisplayParameters&gt; &gt;&amp; dispParams=Omega::instance().getRootBody()-&gt;dispParams;
++		if(e-&gt;state() &amp; AltButton){// save display parameters
++			LOG_DEBUG(&quot;Saving display parameters to #&quot;&lt;&lt;n);
++			if(dispParams.size()&lt;=n){while(dispParams.size()&lt;=n) dispParams.push_back(shared_ptr&lt;DisplayParameters&gt;(new DisplayParameters));} assert(n&lt;dispParams.size());
++			shared_ptr&lt;DisplayParameters&gt;&amp; dp=dispParams[n];
++			ostringstream oglre; IOFormatManager::saveToStream(&quot;XMLFormatManager&quot;,oglre,&quot;renderer&quot;,renderer);
++			IOFormatManager::saveToFile(&quot;XMLFormatManager&quot;,&quot;/tmp/rendererConfig.xml&quot;,&quot;renderer&quot;,renderer);
++			dp-&gt;setValue(&quot;OpenGLRenderingEngine&quot;,oglre.str());
++			dp-&gt;setValue(&quot;GLViewer&quot;,GLViewer::getState());
++		} else { // load display parameters
++			LOG_DEBUG(&quot;Loading display parameters from #&quot;&lt;&lt;n);
++			if(dispParams.size()&lt;=(size_t)n){LOG_ERROR(&quot;Display parameters #&quot;&lt;&lt;n&lt;&lt;&quot; don't exist (number of entries &quot;&lt;&lt;dispParams.size()&lt;&lt;&quot;)&quot;); return;}
++			const shared_ptr&lt;DisplayParameters&gt;&amp; dp=dispParams[n];
++			string val;
++			if(dp-&gt;getValue(&quot;OpenGLRenderingEngine&quot;,val)){ istringstream oglre(val); IOFormatManager::loadFromStream(&quot;XMLFormatManager&quot;,oglre,&quot;renderer&quot;,renderer);}
++			else { LOG_WARN(&quot;OpenGLRenderingEngine configuration not found in display parameters, skipped.&quot;);}
++			if(dp-&gt;getValue(&quot;GLViewer&quot;,val)){ GLViewer::setState(val);}
++			else { LOG_WARN(&quot;GLViewer configuration not found in display parameters, skipped.&quot;); }
++		}
+ 	}
+-
+-	else if(e-&gt;key()==Qt::Key_D) wasDynamic = true;
+-	else if(e-&gt;key()==Qt::Key_G) {bool anyDrawn=drawGridXYZ[0]||drawGridXYZ[1]||drawGridXYZ[2]; for(int i=0; i&lt;3; i++)drawGridXYZ[i]=!anyDrawn; updateGL();}
++	/* letters alphabetically */
++	else if(e-&gt;key()==Qt::Key_C &amp;&amp; selectedName() &gt;= 0 &amp;&amp; (*(Omega::instance().getRootBody()-&gt;bodies)).exists(selectedName())) setSceneCenter(manipulatedFrame()-&gt;position());
++	else if(e-&gt;key()==Qt::Key_C &amp;&amp; (e-&gt;state() &amp; AltButton)){ displayMessage(&quot;Median centering&quot;); centerMedianQuartile(); }
++	else if(e-&gt;key()==Qt::Key_D) wasDynamic=true;
++	else if(e-&gt;key()==Qt::Key_G) {bool anyDrawn=drawGridXYZ[0]||drawGridXYZ[1]||drawGridXYZ[2]; for(int i=0; i&lt;3; i++)drawGridXYZ[i]=!anyDrawn; }
++	else if (e-&gt;key()==Qt::Key_M &amp;&amp; selectedName() &gt;= 0){
++		if(!(isMoving=!isMoving)){displayMessage(&quot;Moving done.&quot;); mouseMovesCamera();}
++		else{ displayMessage(&quot;Moving selected object&quot;); mouseMovesManipulatedFrame();}
++	}
++	else if (e-&gt;key() == Qt::Key_T) camera()-&gt;setType(camera()-&gt;type()==qglviewer::Camera::ORTHOGRAPHIC ? qglviewer::Camera::PERSPECTIVE : qglviewer::Camera::ORTHOGRAPHIC);
++	else if(e-&gt;key()==Qt::Key_O) camera()-&gt;setFieldOfView(camera()-&gt;fieldOfView()*0.9);
++	else if(e-&gt;key()==Qt::Key_P) camera()-&gt;setFieldOfView(camera()-&gt;fieldOfView()*1.1);
++	else if(e-&gt;key()==Qt::Key_R){ // reverse the clipping plane; revolve around scene center if no clipping plane selected
++		if(manipulatedClipPlane&gt;=0 &amp;&amp; manipulatedClipPlane&lt;renderer-&gt;clipPlaneNum){
++			manipulatedFrame()-&gt;setOrientation(qglviewer::Quaternion(qglviewer::Vec(0,1,0),Mathr::PI)*manipulatedFrame()-&gt;orientation());
++			displayMessage(&quot;Plane #&quot;+lexical_cast&lt;string&gt;(manipulatedClipPlane-1)+&quot; reversed.&quot;);
++		}
++		else {
++			camera()-&gt;setRevolveAroundPoint(sceneCenter());
++		}
++	}
++	else if(e-&gt;key()==Qt::Key_S){
++		LOG_DEBUG(&quot;Saving QGLViewer state to /tmp/qglviewerState.xml&quot;);
++		setStateFileName(&quot;/tmp/qglviewerState.xml&quot;); saveStateToFile(); setStateFileName(QString::null);
++	}
+ 	else if(e-&gt;key()==Qt::Key_X || e-&gt;key()==Qt::Key_Y || e-&gt;key()==Qt::Key_Z){
+ 		int axisIdx=(e-&gt;key()==Qt::Key_X?0:(e-&gt;key()==Qt::Key_Y?1:2));
+ 		if(manipulatedClipPlane&lt;0){ drawGridXYZ[axisIdx]=!drawGridXYZ[axisIdx]; }
+ 		else{ // align clipping plane with world axis
+-			// x: (0,1,0),pi/2
+-			// y: (0,0,1),pi/2
+-			// z: (1,0,0),0
++			// x: (0,1,0),pi/2; y: (0,0,1),pi/2; z: (1,0,0),0
+ 			qglviewer::Vec axis(0,0,0); axis[(axisIdx+1)%3]=1;
+ 			manipulatedFrame()-&gt;setOrientation(qglviewer::Quaternion(axis,axisIdx==2?0:Mathr::PI/2));
+ 		}
+-		updateGL();
+ 	}
+-	else if(e-&gt;key()==Qt::Key_Y) drawGridXYZ[1]=!drawGridXYZ[1], updateGL();
+-	else if(e-&gt;key()==Qt::Key_Z) drawGridXYZ[2]=!drawGridXYZ[2], updateGL();
++
++
+ // FIXME BEGIN - arguments for GLDraw*ers should be from dialog box, not through Omega !!!
+-	else if(e-&gt;key()==Qt::Key_Delete) Omega::instance().isoValue-=0.05, updateGL();
+-	else if(e-&gt;key()==Qt::Key_Insert) Omega::instance().isoValue+=0.05, updateGL();
+-	else if(e-&gt;key()==Qt::Key_Next) Omega::instance().isoThick-=0.05, updateGL();
+-	else if(e-&gt;key()==Qt::Key_Prior)	Omega::instance().isoThick+=0.05, updateGL();
+-	else if(e-&gt;key()==Qt::Key_End) Omega::instance().isoSec=std::max(1, Omega::instance().isoSec-1), updateGL();
+-	else if(e-&gt;key()==Qt::Key_Home) Omega::instance().isoSec+=1, updateGL();
++	else if(e-&gt;key()==Qt::Key_Delete) Omega::instance().isoValue-=0.05;
++	else if(e-&gt;key()==Qt::Key_Insert) Omega::instance().isoValue+=0.05;
++	else if(e-&gt;key()==Qt::Key_Next) Omega::instance().isoThick-=0.05;
++	else if(e-&gt;key()==Qt::Key_Prior)	Omega::instance().isoThick+=0.05;
++	else if(e-&gt;key()==Qt::Key_End) Omega::instance().isoSec=std::max(1, Omega::instance().isoSec-1);
++	else if(e-&gt;key()==Qt::Key_Home) Omega::instance().isoSec+=1;
+ // FIXME END
+-	else if (e-&gt;key() == Qt::Key_T) camera()-&gt;setType(camera()-&gt;type()==qglviewer::Camera::ORTHOGRAPHIC ? qglviewer::Camera::PERSPECTIVE : qglviewer::Camera::ORTHOGRAPHIC), updateGL();
+-	else if(e-&gt;key()==Qt::Key_O) camera()-&gt;setFieldOfView(camera()-&gt;fieldOfView()*0.9), updateGL();
+-	else if(e-&gt;key()==Qt::Key_P) camera()-&gt;setFieldOfView(camera()-&gt;fieldOfView()*1.1), updateGL();
+-	else if(e-&gt;key()==Qt::Key_R) camera()-&gt;setRevolveAroundPoint(sceneCenter()), updateGL();
+ 
+ //////////////////////////////////////////////
+ // FIXME that all should be in some nice GUI
+@@ -221,9 +263,10 @@
+ // FIXME END
+ //////////////////////////////////////////////
+ //
+-	else if( e-&gt;key()!=Qt::Key_Escape &amp;&amp; e-&gt;key()!=Qt::Key_Space )
+-		QGLViewer::keyPressEvent(e);
++	else if(e-&gt;key()!=Qt::Key_Escape &amp;&amp; e-&gt;key()!=Qt::Key_Space) QGLViewer::keyPressEvent(e);
++	updateGL();
+ }
++
+ /* Calculate medians for x, y and z coordinates of all bodies;
+  *then set scene center to median position and scene radius to 2*inter-quartile distance.
+  *
+@@ -254,15 +297,12 @@
+ 	showEntireScene();
+ }
+ 
+-void GLViewer::centerScene()
+-{
++void GLViewer::centerScene(){
+ 	MetaBody* rb=Omega::instance().getRootBody().get();
+ 	if (!rb) return;
+ 
+-	if(rb-&gt;bodies-&gt;size() &lt; 500)
+-		displayMessage(&quot;Less than 500 bodies, moving possible. Select with shift, press 'm' to move. Use / * - + for cutting plane.&quot;, 6000);
+-	else
+-		displayMessage(&quot;More than 500 bodies. Moving not possible. Use / * - + for cutting plane.&quot;, 6000);
++	if(rb-&gt;bodies-&gt;size() &lt; 500) displayMessage(&quot;Less than 500 bodies, moving possible. Select with shift, press 'm' to move. Use / * - + for cutting plane.&quot;, 6000);
++	else displayMessage(&quot;More than 500 bodies. Moving not possible. Use / * - + for cutting plane.&quot;, 6000);
+ 	Vector3r min,max;	
+ 	if(rb-&gt;boundingVolume){
+ 		min=rb-&gt;boundingVolume-&gt;min; max=rb-&gt;boundingVolume-&gt;max;
+@@ -419,3 +459,30 @@
+ 		default: break; // avoid warning
+ 	}
+ }
++
++// cut&amp;paste from QGLViewer::domElement documentation
++QDomElement GLViewer::domElement(const QString&amp; name, QDomDocument&amp; document) const{
++	QDomElement de=document.createElement(&quot;gridXYZ&quot;);
++	string val; if(drawGridXYZ[0])val+=&quot;x&quot;; if(drawGridXYZ[1])val+=&quot;y&quot;; if(drawGridXYZ[2])val+=&quot;z&quot;;
++	de.setAttribute(&quot;normals&quot;,val);
++	QDomElement res=QGLViewer::domElement(name,document);
++	res.appendChild(de);
++	return res;
++}
++
++// cut&amp;paste from QGLViewer::initFromDomElement documentation
++void GLViewer::initFromDOMElement(const QDomElement&amp; element){
++	QGLViewer::initFromDOMElement(element);
++	QDomElement child=element.firstChild().toElement();
++	while (!child.isNull()){
++		if (child.tagName()==&quot;gridXYZ&quot;){
++			if (child.hasAttribute(&quot;normals&quot;)){
++				string val=child.attribute(&quot;normals&quot;).lower();
++				drawGridXYZ[0]=false; drawGridXYZ[1]=false; drawGridXYZ[2]=false;
++				if(val.find(&quot;x&quot;)!=string::npos)drawGridXYZ[0]=true; if(val.find(&quot;y&quot;)!=string::npos)drawGridXYZ[1]=true; if(val.find(&quot;z&quot;)!=string::npos)drawGridXYZ[2]=true;
++			}
++		}
++		child = child.nextSibling().toElement();
++	}
++}
++
+
+Modified: trunk/gui/qt3/GLViewer.hpp
+===================================================================
+--- trunk/gui/qt3/GLViewer.hpp	2008-07-16 14:03:20 UTC (rev 1431)
++++ trunk/gui/qt3/GLViewer.hpp	2008-07-17 09:09:42 UTC (rev 1432)
+@@ -64,6 +64,15 @@
+ 		void mouseMovesManipulatedFrame(qglviewer::Constraint* c=NULL);
+ 		void resetManipulation();
+ 		void startClipPlaneManipulation(int planeNo);
++		//! get QGLViewer state as string (XML); QGLViewer normally only supports saving state to file.
++		string getState();
++		//! set QGLViewer state from string (XML); QGLVIewer normally only supports loading state from file.
++		void setState(string);
++
++		//! Adds our attributes to the QGLViewer state that can be saved
++		QDomElement domElement(const QString&amp; name, QDomDocument&amp; document) const;
++		//! Adds our attributes to the QGLViewer state that can be restored
++		void initFromDOMElement(const QDomElement&amp; element);
+ 		int viewId;
+ 
+ 
+
+Modified: trunk/gui/qt3/QtGUI-python.cpp
+===================================================================
+--- trunk/gui/qt3/QtGUI-python.cpp	2008-07-16 14:03:20 UTC (rev 1431)
++++ trunk/gui/qt3/QtGUI-python.cpp	2008-07-17 09:09:42 UTC (rev 1432)
+@@ -48,6 +48,9 @@
+ 
+  * @param snapBase is basename for .png snapshots. If ommited, tmpnam generates unique basename.
+  *
++ * @param postLoadHook is string with python command(s) that will be interpreted after loading if non-empty.
++ * 	Can be used e.g. for adjusting wire display of bodies after loading the simulation.
++ *
+  * This function may be especially useful for offsreen rendering using Xvfb
+  * (install the xvfb package first). Then run
+  *
+@@ -65,7 +68,7 @@
+  *
+  * @returns tuple of (wildcard,[snap0,snap1,snap2,...]), where the list contains filename of snapshots.
+  */
+-python::tuple runPlayer(string savedSim,string snapBase=&quot;&quot;,string savedQGLState=&quot;&quot;,int stride=1){
++python::tuple runPlayer(string savedSim,string snapBase=&quot;&quot;,string savedQGLState=&quot;&quot;,int stride=1,string postLoadHook=&quot;&quot;){
+ 	evtPLAYER(true); // wait for the window to become ready
+ 	shared_ptr&lt;QtSimulationPlayer&gt; player=ensuredMainWindow()-&gt;player;
+ 	GLSimulationPlayerViewer* glv=player-&gt;glSimulationPlayerViewer;
+@@ -73,6 +76,7 @@
+ 	if(snapBase2.empty()){ char tmpnam_str [L_tmpnam]; tmpnam(tmpnam_str); snapBase2=tmpnam_str; }
+ 	glv-&gt;stride=stride;
+ 	glv-&gt;load(savedSim);
++	if(!postLoadHook.empty()){ PyGILState_STATE gstate; gstate = PyGILState_Ensure(); PyRun_SimpleString(postLoadHook.c_str()); PyGILState_Release(gstate); }
+ 	glv-&gt;saveSnapShots=true;
+ 	glv-&gt;snapshotsBase=snapBase2;
+ 	if(!savedQGLState.empty()){
+@@ -86,7 +90,7 @@
+ 	return python::make_tuple(snapBase2+&quot;-%.04d.png&quot;,snaps);
+ }
+ 
+-BOOST_PYTHON_FUNCTION_OVERLOADS(runPlayer_overloads,runPlayer,2,4);
++BOOST_PYTHON_FUNCTION_OVERLOADS(runPlayer_overloads,runPlayer,2,5);
+ 
+ BOOST_PYTHON_MODULE(qt){
+ 	def(&quot;Generator&quot;,evtGENERATOR,evtGENERATOR_overloads(args(&quot;wait&quot;)));
+@@ -96,7 +100,7 @@
+ 	def(&quot;center&quot;,centerViews);
+ 	def(&quot;Renderer&quot;,getRenderer);
+ 	def(&quot;close&quot;,Quit);
+-	def(&quot;runPlayer&quot;,runPlayer,runPlayer_overloads(args(&quot;viewStateFile&quot;,&quot;stride&quot;)));
++	def(&quot;runPlayer&quot;,runPlayer,runPlayer_overloads(args(&quot;viewStateFile&quot;,&quot;stride&quot;,&quot;postLoadHook&quot;)));
+ 
+ 	BASIC_PY_PROXY_WRAPPER(pyOpenGLRenderingEngine,&quot;GLRenderer&quot;)
+ 		.def(&quot;setRefSe3&quot;,&amp;pyOpenGLRenderingEngine::setRefSe3);
+
+Modified: trunk/lib/serialization/FundamentalHandler.tpp
+===================================================================
+--- trunk/lib/serialization/FundamentalHandler.tpp	2008-07-16 14:03:20 UTC (rev 1431)
++++ trunk/lib/serialization/FundamentalHandler.tpp	2008-07-17 09:09:42 UTC (rev 1432)
+@@ -15,6 +15,7 @@
+ #include &quot;Archive.hpp&quot;
+ #include &lt;boost/lexical_cast.hpp&gt;
+ #include &lt;boost/type_traits.hpp&gt;
++#include&lt;boost/algorithm/string.hpp&gt;
+ 
+ using namespace boost; 
+ 
+@@ -41,11 +42,10 @@
+ 			const string * tmpStr = any_cast&lt;const string*&gt;(a);
+ 			string * tmp = any_cast&lt;string*&gt;(ac.getAddress());
+ 			*tmp=*tmpStr;
+-			#define _RESTORE_SPECIAL(escape,special)pos=0; while((pos=tmp-&gt;find(escape,pos))!=string::npos){tmp-&gt;replace(pos,2,special);}
+-			unsigned long pos;
+-			_RESTORE_SPECIAL(&quot;\\n&quot;,&quot;\n&quot;); _RESTORE_SPECIAL(&quot;\\t&quot;,&quot;\t&quot;); _RESTORE_SPECIAL(&quot;\\'&quot;,&quot;\&quot;&quot;);
+-			_RESTORE_SPECIAL(&quot;\\[&quot;,&quot;&lt;&quot;); _RESTORE_SPECIAL(&quot;\\]&quot;,&quot;&gt;&quot;); _RESTORE_SPECIAL(&quot;\\\\&quot;,&quot;\\&quot;); // order matters!
+-			#undef _RESTORE_SPECIAL
++			#define _HANDLE_SPECIAL(special,escape) boost::algorithm::replace_all(*tmp,escape,special);
++			_HANDLE_SPECIAL(&quot;\n&quot;,&quot;&br;&quot;); _HANDLE_SPECIAL(&quot;\t&quot;,&quot;&tab;&quot;); _HANDLE_SPECIAL(&quot;&lt;&quot;,&quot;&lt;&quot;); _HANDLE_SPECIAL(&quot;&gt;&quot;,&quot;&gt;&quot;); _HANDLE_SPECIAL(&quot;\&quot;&quot;,&quot;&quot;&quot;); _HANDLE_SPECIAL(&quot;'&quot;,&quot;&apos;&quot;); _HANDLE_SPECIAL(&quot; &quot;,&quot;&nbsp;&quot;); _HANDLE_SPECIAL(&quot;[&quot;,&quot;&lsquare;&quot;); _HANDLE_SPECIAL(&quot;]&quot;,&quot;&rsquare;&quot;); _HANDLE_SPECIAL(&quot;{&quot;,&quot;&lcurly;&quot;); _HANDLE_SPECIAL(&quot;}&quot;,&quot;&rcurly;&quot;);
++			_HANDLE_SPECIAL(&quot;&amp;&quot;,&quot;&amp;&quot;);
++			#undef _HANDLE_SPECIAL
+ 			
+ 		}
+ 		else if (a.type()==typeid(const vector&lt;unsigned char&gt;*)) // from binary stream to Type
+@@ -67,10 +67,9 @@
+ 			string * tmpStr = any_cast&lt;string*&gt;(a);
+ 			string * tmp = any_cast&lt;string*&gt;(ac.getAddress());
+ 			*tmpStr=*tmp;
+-			#define _ESCAPE_SPECIAL(special,escape) pos=0; while((pos=tmpStr-&gt;find(special,pos))!=string::npos){tmpStr-&gt;replace(pos,1,escape); pos+=2;}
+-			unsigned long pos;
+-			_ESCAPE_SPECIAL(&quot;\\&quot;,&quot;\\\\&quot;); _ESCAPE_SPECIAL('\n',&quot;\\n&quot;); _ESCAPE_SPECIAL('\t',&quot;\\t&quot;); _ESCAPE_SPECIAL('\&quot;',&quot;\\'&quot;);
+-			_ESCAPE_SPECIAL('&lt;',&quot;\\[&quot;); _ESCAPE_SPECIAL('&gt;',&quot;\\]&quot;);  // order matters!
++			#define _HANDLE_SPECIAL(special,escape) boost::algorithm::replace_all(*tmpStr,special,escape);
++			_HANDLE_SPECIAL(&quot;&amp;&quot;,&quot;&amp;&quot;);
++			_HANDLE_SPECIAL(&quot;\n&quot;,&quot;&br;&quot;); _HANDLE_SPECIAL(&quot;\t&quot;,&quot;&tab;&quot;); _HANDLE_SPECIAL(&quot;&lt;&quot;,&quot;&lt;&quot;); _HANDLE_SPECIAL(&quot;&gt;&quot;,&quot;&gt;&quot;); _HANDLE_SPECIAL(&quot;\&quot;&quot;,&quot;&quot;&quot;); _HANDLE_SPECIAL(&quot;'&quot;,&quot;&apos;&quot;); _HANDLE_SPECIAL(&quot; &quot;,&quot;&nbsp;&quot;); _HANDLE_SPECIAL(&quot;[&quot;,&quot;&lsquare;&quot;); _HANDLE_SPECIAL(&quot;]&quot;,&quot;&rsquare;&quot;); _HANDLE_SPECIAL(&quot;{&quot;,&quot;&lcurly;&quot;); _HANDLE_SPECIAL(&quot;}&quot;,&quot;&rcurly;&quot;);
+ 			#undef _ESCAPE_SPECIAL
+ 		}
+ 		else if (a.type()==typeid(vector&lt;unsigned char&gt;*)) // from string to binary stream
+
+Modified: trunk/lib/serialization/IOFormatManager.hpp
+===================================================================
+--- trunk/lib/serialization/IOFormatManager.hpp	2008-07-16 14:03:20 UTC (rev 1431)
++++ trunk/lib/serialization/IOFormatManager.hpp	2008-07-17 09:09:42 UTC (rev 1432)
+@@ -81,18 +81,14 @@
+ 		static void deserializeFundamentalSerializable(istream&amp; stream, Archive&amp; ac, const string&amp; str);
+ 
+ 		template&lt;typename Type&gt;
++		static void loadFromStream(const string&amp; libName, istream&amp; in,const string&amp; name, Type&amp; t);
++		template&lt;typename Type&gt;
++		static void saveToStream(const string&amp; libName, ostream&amp; out,const string&amp; name, Type&amp; t);
++		template&lt;typename Type&gt;
+ 		static void loadFromFile(const string&amp; libName, const string&amp; fileName,const string&amp; name, Type&amp; t);
+-		
+ 		template&lt;typename Type&gt;
+ 		static void saveToFile(const string&amp; libName, const string&amp; fileName,const string&amp; name, Type&amp; t);
+ 		
+-		
+-		template&lt;typename Type&gt;
+-		void loadArchive(const string&amp; libName, istream&amp; stream, Type&amp; t, const string&amp; name);
+-		
+-		template&lt;typename Type&gt;
+-		void saveArchive(const string&amp; libName, ostream&amp; stream, Type&amp; t, const string&amp; name);
+-
+ 	REGISTER_CLASS_NAME(IOFormatManager);
+ 	REGISTER_BASE_CLASS_NAME(Serializable);
+ 
+
+Modified: trunk/lib/serialization/IOFormatManager.tpp
+===================================================================
+--- trunk/lib/serialization/IOFormatManager.tpp	2008-07-16 14:03:20 UTC (rev 1431)
++++ trunk/lib/serialization/IOFormatManager.tpp	2008-07-17 09:09:42 UTC (rev 1432)
+@@ -23,67 +23,45 @@
+ #include&lt;boost/algorithm/string.hpp&gt;
+ 
+ template&lt;typename Type&gt;
+-void IOFormatManager::loadFromFile(const string&amp; libName, const string&amp; fileName,const string&amp; name, Type&amp; t)
+-{
+-	iostreams::filtering_istream in;
+-	if(boost::algorithm::ends_with(fileName,&quot;.xml.gz&quot;)) in.push(iostreams::gzip_decompressor());
+-	else if(boost::algorithm::ends_with(fileName,&quot;.xml.bz2&quot;)) in.push(iostreams::bzip2_decompressor());
+-	in.push(iostreams::file_source(fileName));
+-	
+-	if(!in.good()) throw SerializableError(IOManagerExceptions::FileNotGood);
+-
++void IOFormatManager::loadFromStream(const string&amp; libName, istream&amp; in,const string&amp; name, Type&amp; t){
+ 	shared_ptr&lt;IOFormatManager&gt; ioManager;
+-	ioManager = YADE_PTR_CAST&lt;IOFormatManager&gt;(ClassFactory::instance().createShared(libName));
+-
+-	shared_ptr&lt;Archive&gt; ac = Archive::create(name,t);
+-	string str = ioManager-&gt;beginDeserialization(in,*ac);
+-	ac-&gt;deserialize(in, *ac, str);
++	ioManager=YADE_PTR_CAST&lt;IOFormatManager&gt;(ClassFactory::instance().createShared(libName));
++	shared_ptr&lt;Archive&gt; ac=Archive::create(name,t);
++	string str=ioManager-&gt;beginDeserialization(in,*ac);
++	ac-&gt;deserialize(in,*ac,str);
+ 	ioManager-&gt;finalizeDeserialization(in,*ac);
+ }
+ 
+-
+ template&lt;typename Type&gt;
+-void IOFormatManager::saveToFile(const string&amp; libName, const string&amp; fileName,const string&amp; name, Type&amp; t)
+-{
+-	iostreams::filtering_ostream out;
+-	if(boost::algorithm::ends_with(fileName,&quot;.xml.gz&quot;)) out.push(iostreams::gzip_compressor());
+-	else if(boost::algorithm::ends_with(fileName,&quot;.xml.bz2&quot;)) out.push(iostreams::bzip2_compressor());
+-	out.push(iostreams::file_sink(fileName));
+-	if(!out.good()) throw SerializableError(IOManagerExceptions::FileNotGood);
+-	
++void IOFormatManager::saveToStream(const string&amp; libName, ostream&amp; out,const string&amp; name, Type&amp; t){
+ 	shared_ptr&lt;IOFormatManager&gt; ioManager;
+-	ioManager = static_pointer_cast&lt;IOFormatManager&gt;(ClassFactory::instance().createShared(libName));
+-
+-	shared_ptr&lt;Archive&gt; ac = Archive::create(name,t);
+-	ioManager-&gt;beginSerialization(out, *ac);
+-	ac-&gt;serialize(out, *ac, 1);
+-	ioManager-&gt;finalizeSerialization(out, *ac);
++	ioManager=static_pointer_cast&lt;IOFormatManager&gt;(ClassFactory::instance().createShared(libName));
++	shared_ptr&lt;Archive&gt; ac=Archive::create(name,t);
++	ioManager-&gt;beginSerialization(out,*ac);
++	ac-&gt;serialize(out,*ac,1);
++	ioManager-&gt;finalizeSerialization(out,*ac);
+ }
+ 
+-
+ template&lt;typename Type&gt;
+-void IOFormatManager::loadArchive(const string&amp; libName, istream&amp; stream, Type&amp; t, const string&amp; name)
+-{
+-	shared_ptr&lt;IOFormatManager&gt; ioManager;
+-	ioManager = YADE_PTR_CAST&lt;IOFormatManager&gt;(ClassFactory::instance().createShared(libName));
++void IOFormatManager::loadFromFile(const string&amp; libName, const string&amp; fileName,const string&amp; name, Type&amp; t){
++	iostreams::filtering_istream in;
++	if(boost::algorithm::ends_with(fileName,&quot;.gz&quot;)) in.push(iostreams::gzip_decompressor());
++	else if(boost::algorithm::ends_with(fileName,&quot;.bz2&quot;)) in.push(iostreams::bzip2_decompressor());
++	in.push(iostreams::file_source(fileName));
++	if(!in.good()) throw SerializableError(IOManagerExceptions::FileNotGood);
+ 
+-	shared_ptr&lt;Archive&gt; ac = Archive::create(name,t);
+-	string str = ioManager-&gt;beginDeserialization(stream,*ac);
+-	ac-&gt;deserialize(stream, *ac, str);
+-	ioManager-&gt;finalizeDeserialization(stream,*ac);
++	loadFromStream(libName,in,name,t);
+ }
+ 
+ 
+ template&lt;typename Type&gt;
+-void IOFormatManager::saveArchive(const string&amp; libName, ostream&amp; stream, Type&amp; t, const string&amp; name)
+-{
+-	shared_ptr&lt;IOFormatManager&gt; ioManager;
+-	ioManager = YADE_PTR_CAST&lt;IOFormatManager&gt;(ClassFactory::instance().createShared(libName));
+-
+-	shared_ptr&lt;Archive&gt; ac = Archive::create(name,t);
+-	ioManager-&gt;beginSerialization(stream, *ac);
+-	ac-&gt;serialize(stream, *ac, 1);
+-	ioManager-&gt;finalizeSerialization(stream, *ac);
++void IOFormatManager::saveToFile(const string&amp; libName, const string&amp; fileName,const string&amp; name, Type&amp; t){
++	iostreams::filtering_ostream out;
++	if(boost::algorithm::ends_with(fileName,&quot;.gz&quot;)) out.push(iostreams::gzip_compressor());
++	else if(boost::algorithm::ends_with(fileName,&quot;.bz2&quot;)) out.push(iostreams::bzip2_compressor());
++	out.push(iostreams::file_sink(fileName));
++	if(!out.good()) throw SerializableError(IOManagerExceptions::FileNotGood);
++	saveToStream(libName,out,name,t);
+ }
+ 
+ 
+
+Modified: trunk/lib/serialization/Serializable.hpp
+===================================================================
+--- trunk/lib/serialization/Serializable.hpp	2008-07-16 14:03:20 UTC (rev 1431)
++++ trunk/lib/serialization/Serializable.hpp	2008-07-17 09:09:42 UTC (rev 1432)
+@@ -60,7 +60,6 @@
+ 		virtual void serialize(any&amp; )	{ throw SerializableError(SerializationExceptions::SetFunctionNotDeclared); };
+ 		virtual void deserialize(any&amp; ) { throw SerializableError(SerializationExceptions::GetFunctionNotDeclared); };
+ 
+-		//virtual void <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">__HACK__D at _N</A>@T_ABUSE_postProcessAttributes(bool deserializating){postProcessAttributes;} /* public access to protected postProcessAttributes, from python */
+ 		virtual void postProcessAttributes(bool /*deserializing*/) {};
+ 
+ 	private :
+
+Modified: trunk/lib/serialization-qt/QtGUIGenerator.cpp
+===================================================================
+--- trunk/lib/serialization-qt/QtGUIGenerator.cpp	2008-07-16 14:03:20 UTC (rev 1431)
++++ trunk/lib/serialization-qt/QtGUIGenerator.cpp	2008-07-17 09:09:42 UTC (rev 1432)
+@@ -179,7 +179,7 @@
+ 	QPoint p = widget-&gt;pos();
+ 	widget-&gt;move(p.x()+translationX,p.y()+translationY);
+ 	
+-	s-&gt;unregisterSerializableAttributes(false);
++	//s-&gt;unregisterSerializableAttributes(false);
+ 
+ }
+ 
+@@ -234,7 +234,7 @@
+ 	}
+ 
+ 	//ac.markProcessed();
+-	s-&gt;unregisterSerializableAttributes(true);
++	//s-&gt;unregisterSerializableAttributes(true);
+ 
+ }
+ 
+
+Modified: trunk/pkg/common/Engine/ParallelEngine.cpp
+===================================================================
+--- trunk/pkg/common/Engine/ParallelEngine.cpp	2008-07-16 14:03:20 UTC (rev 1431)
++++ trunk/pkg/common/Engine/ParallelEngine.cpp	2008-07-17 09:09:42 UTC (rev 1432)
+@@ -1,5 +1,5 @@
+ #include&quot;ParallelEngine.hpp&quot;
+-#include&lt;omp.h&gt;
++//#include&lt;omp.h&gt; // needed for omp_get_thread_num() (debugging)
+ YADE_PLUGIN(&quot;ParallelEngine&quot;);
+ list&lt;string&gt; ParallelEngine::getNeededBex(){
+ 	list&lt;string&gt; ret;
+
+Modified: trunk/pkg/common/Engine/StandAloneEngine/PeriodicEngines.hpp
+===================================================================
+--- trunk/pkg/common/Engine/StandAloneEngine/PeriodicEngines.hpp	2008-07-16 14:03:20 UTC (rev 1431)
++++ trunk/pkg/common/Engine/StandAloneEngine/PeriodicEngines.hpp	2008-07-17 09:09:42 UTC (rev 1432)
+@@ -65,6 +65,8 @@
+ 			REGISTER_ATTRIBUTE(realLim);
+ 			REGISTER_ATTRIBUTE(virtLim);
+ 			REGISTER_ATTRIBUTE(iterLim);
++			REGISTER_ATTRIBUTE(mayStretch);
++			REGISTER_ATTRIBUTE(stretchFactor);
+ 		}
+ 	REGISTER_CLASS_NAME(StretchPeriodicEngine);
+ 	REGISTER_BASE_CLASS_NAME(PeriodicEngine);
+@@ -72,7 +74,7 @@
+ REGISTER_SERIALIZABLE(StretchPeriodicEngine,false);
+ 
+ // obsolete, too complicated etc
+-#if 1 
++#if 0 
+ 
+ /* Run an action with adjustable and constrained periodicity (real time, virtual time, iteration)
+  *
+
+Modified: trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.cpp
+===================================================================
+--- trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.cpp	2008-07-16 14:03:20 UTC (rev 1431)
++++ trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.cpp	2008-07-17 09:09:42 UTC (rev 1432)
+@@ -555,8 +555,8 @@
+ 	REGISTER_ATTRIBUTE(Shadow_volumes);
+ 	REGISTER_ATTRIBUTE(Fast_shadow_volume);
+ 
+-	//REGISTER_ATTRIBUTE(clipPlaneSe3);
+-	//REGISTER_ATTRIBUTE(clipPlaneActive); // oh, serialization chokes on vector&lt;bool&gt; ... :-|
++	REGISTER_ATTRIBUTE(clipPlaneSe3);
++	REGISTER_ATTRIBUTE(clipPlaneActive);
+ }
+ 
+ 
+
+Modified: trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.hpp
+===================================================================
+--- trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.hpp	2008-07-16 14:03:20 UTC (rev 1431)
++++ trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.hpp	2008-07-17 09:09:42 UTC (rev 1432)
+@@ -31,7 +31,7 @@
+ 		int Draw_mask;
+ 
+ 		vector&lt;Se3r&gt; clipPlaneSe3;
+-		vector&lt;bool&gt; clipPlaneActive;
++		vector&lt;int&gt; clipPlaneActive; // should be bool, but serialization doesn't handle vector&lt;bool&gt;
+ 		const int clipPlaneNum;
+ 
+ 		vector&lt;Se3r&gt; refSe3;
+
+Modified: trunk/pkg/dem/PreProcessor/SnowCreepTest.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/SnowCreepTest.cpp	2008-07-16 14:03:20 UTC (rev 1431)
++++ trunk/pkg/dem/PreProcessor/SnowCreepTest.cpp	2008-07-17 09:09:42 UTC (rev 1432)
+@@ -266,7 +266,6 @@
+ 
+ // 	rootBody-&gt;persistentInteractions	= shared_ptr&lt;InteractionContainer&gt;(new InteractionVecSet);
+ // 	rootBody-&gt;transientInteractions		= shared_ptr&lt;InteractionContainer&gt;(new InteractionVecSet);
+-	rootBody-&gt;persistentInteractions	= shared_ptr&lt;InteractionContainer&gt;(new InteractionHashMap);
+ 	rootBody-&gt;transientInteractions		= shared_ptr&lt;InteractionContainer&gt;(new InteractionHashMap);
+ 	rootBody-&gt;physicalActions		= shared_ptr&lt;PhysicalActionContainer&gt;(new PhysicalActionVectorVector);
+ 	rootBody-&gt;bodies 			= shared_ptr&lt;BodyContainer&gt;(new BodyRedirectionVector);
+
+Modified: trunk/pkg/dem/PreProcessor/TestSimpleViscoelastic.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/TestSimpleViscoelastic.cpp	2008-07-16 14:03:20 UTC (rev 1431)
++++ trunk/pkg/dem/PreProcessor/TestSimpleViscoelastic.cpp	2008-07-17 09:09:42 UTC (rev 1432)
+@@ -90,7 +90,6 @@
+ ////////////////////////////////////
+ ///////// Container
+ 	
+-    rootBody-&gt;persistentInteractions	= shared_ptr&lt;InteractionContainer&gt;(new InteractionVecSet);
+     rootBody-&gt;transientInteractions	= shared_ptr&lt;InteractionContainer&gt;(new InteractionVecSet);
+     rootBody-&gt;physicalActions		= shared_ptr&lt;PhysicalActionContainer&gt;(new PhysicalActionVectorVector);
+     rootBody-&gt;bodies			= shared_ptr&lt;BodyContainer&gt;(new BodyRedirectionVector);
+
+Modified: trunk/pkg/dem/PreProcessor/TetrahedronsTest.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/TetrahedronsTest.cpp	2008-07-16 14:03:20 UTC (rev 1431)
++++ trunk/pkg/dem/PreProcessor/TetrahedronsTest.cpp	2008-07-17 09:09:42 UTC (rev 1432)
+@@ -132,7 +132,6 @@
+ ////////////////////////////////////
+ ///////// Container
+ 	
+-	rootBody-&gt;persistentInteractions	= shared_ptr&lt;InteractionContainer&gt;(new InteractionVecSet);
+ 	rootBody-&gt;transientInteractions		= shared_ptr&lt;InteractionContainer&gt;(new InteractionVecSet);
+ 	rootBody-&gt;physicalActions		= shared_ptr&lt;PhysicalActionContainer&gt;(new PhysicalActionVectorVector);
+ 	rootBody-&gt;bodies 			= shared_ptr&lt;BodyContainer&gt;(new BodyRedirectionVector);
+
+Modified: trunk/pkg/dem/PreProcessor/ThreePointBending.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/ThreePointBending.cpp	2008-07-16 14:03:20 UTC (rev 1431)
++++ trunk/pkg/dem/PreProcessor/ThreePointBending.cpp	2008-07-17 09:09:42 UTC (rev 1432)
+@@ -133,7 +133,6 @@
+ 
+ ////////////////////////////////////
+ 	
+-	rootBody-&gt;persistentInteractions	= shared_ptr&lt;InteractionContainer&gt;(new InteractionVecSet);
+ 	rootBody-&gt;transientInteractions		= shared_ptr&lt;InteractionContainer&gt;(new InteractionVecSet);
+ 	rootBody-&gt;physicalActions		= shared_ptr&lt;PhysicalActionContainer&gt;(new PhysicalActionVectorVector);
+ 	rootBody-&gt;bodies 			= shared_ptr&lt;BodyContainer&gt;(new BodyRedirectionVector);
+
+Modified: trunk/pkg/fem/PreProcessor/FEMBeam.cpp
+===================================================================
+--- trunk/pkg/fem/PreProcessor/FEMBeam.cpp	2008-07-16 14:03:20 UTC (rev 1431)
++++ trunk/pkg/fem/PreProcessor/FEMBeam.cpp	2008-07-17 09:09:42 UTC (rev 1432)
+@@ -119,7 +119,6 @@
+ 	positionRootBody(rootBody);
+ 	
+ 	
+-	rootBody-&gt;persistentInteractions	= shared_ptr&lt;InteractionContainer&gt;(new InteractionVecSet);
+ 	rootBody-&gt;transientInteractions		= shared_ptr&lt;InteractionContainer&gt;(new InteractionVecSet);
+ 	rootBody-&gt;physicalActions		= shared_ptr&lt;PhysicalActionContainer&gt;(new PhysicalActionVectorVector);
+ 	rootBody-&gt;bodies 			= shared_ptr&lt;BodyContainer&gt;(new BodyRedirectionVector);
+
+Modified: trunk/pkg/lattice/PreProcessor/LatticeExample.cpp
+===================================================================
+--- trunk/pkg/lattice/PreProcessor/LatticeExample.cpp	2008-07-16 14:03:20 UTC (rev 1431)
++++ trunk/pkg/lattice/PreProcessor/LatticeExample.cpp	2008-07-17 09:09:42 UTC (rev 1432)
+@@ -442,7 +442,6 @@
+ 	createActors(rootBody);
+ 	positionRootBody(rootBody);
+ 	
+-	rootBody-&gt;persistentInteractions	= shared_ptr&lt;InteractionContainer&gt;(new InteractionVecSet);
+ 	rootBody-&gt;transientInteractions		= shared_ptr&lt;InteractionContainer&gt;(new InteractionVecSet);
+ 	rootBody-&gt;physicalActions		= shared_ptr&lt;PhysicalActionContainer&gt;(new PhysicalActionVectorVector);
+ 	rootBody-&gt;bodies 			= shared_ptr&lt;BodyContainer&gt;(new BodyRedirectionVector);
+
+Modified: trunk/scripts/simple-scene-player.py
+===================================================================
+--- trunk/scripts/simple-scene-player.py	2008-07-16 14:03:20 UTC (rev 1431)
++++ trunk/scripts/simple-scene-player.py	2008-07-17 09:09:42 UTC (rev 1432)
+@@ -44,7 +44,10 @@
+ o.run(15000)
+ o.wait()
+ 
++def setWire():
++	o=Omega()
++	for b in o.bodies: b.shape['wire']=True
+ # you must have saved the viewer state by using Alt-S in the view...
+-utils.qtCreateVideo('/tmp/player.sqlite','/tmp/player.ogg','/tmp/qglviewerState.xml',stride=10,fps=12)
++utils.qtCreateVideo('/tmp/player.sqlite','/tmp/player.ogg','/tmp/qglviewerState.xml',stride=10,fps=12,postLoadHook='setWire()')
+ 
+ quit()
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000391.html">[Yade-commits] r1431 - trunk/pkg/dem/DataClass/InteractionPhysics
+</A></li>
+	<LI>Next message: <A HREF="000393.html">[Yade-commits] r1433 - in trunk: extra gui/py gui/qt3	pkg/common/Engine/StandAloneEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#392">[ date ]</a>
+              <a href="thread.html#392">[ thread ]</a>
+              <a href="subject.html#392">[ subject ]</a>
+              <a href="author.html#392">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

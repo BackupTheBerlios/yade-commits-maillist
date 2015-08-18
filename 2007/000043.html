@@ -1,0 +1,303 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1078 - in trunk: . yade-core/src/yade	yade-libs/yade-lib-factory/src/yade-lib-factory	yade-libs/yade-lib-multimethods/src/yade-lib-multimethods	yade-libs/yade-lib-serialization/src/yade-lib-serialization
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2007/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1078%20-%20in%20trunk%3A%20.%20yade-core/src/yade%0A%09yade-libs/yade-lib-factory/src/yade-lib-factory%0A%09yade-libs/yade-lib-multimethods/src/yade-lib-multimethods%0A%09yade-libs/yade-lib-serialization/src/yade-lib-serialization&In-Reply-To=%3C200703011227.l21CRaUS032544%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000042.html">
+   <LINK REL="Next"  HREF="000044.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1078 - in trunk: . yade-core/src/yade	yade-libs/yade-lib-factory/src/yade-lib-factory	yade-libs/yade-lib-multimethods/src/yade-lib-multimethods	yade-libs/yade-lib-serialization/src/yade-lib-serialization</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1078%20-%20in%20trunk%3A%20.%20yade-core/src/yade%0A%09yade-libs/yade-lib-factory/src/yade-lib-factory%0A%09yade-libs/yade-lib-multimethods/src/yade-lib-multimethods%0A%09yade-libs/yade-lib-serialization/src/yade-lib-serialization&In-Reply-To=%3C200703011227.l21CRaUS032544%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1078 - in trunk: . yade-core/src/yade	yade-libs/yade-lib-factory/src/yade-lib-factory	yade-libs/yade-lib-multimethods/src/yade-lib-multimethods	yade-libs/yade-lib-serialization/src/yade-lib-serialization">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Thu Mar  1 13:27:36 CET 2007</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000042.html">[Yade-commits] r1077 - in trunk: yade-core/src/yade yade-extra/clump	yade-packages/yade-package-common/src/Engine/EngineUnit/CundallNonViscousForceDamping	yade-packages/yade-package-common/src/Engine/EngineUnit/CundallNonViscousMomentumDamping
+</A></li>
+        <LI>Next message: <A HREF="000044.html">[Yade-commits] r1079 - trunk/yade-extra/clump
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#43">[ date ]</a>
+              <a href="thread.html#43">[ thread ]</a>
+              <a href="subject.html#43">[ subject ]</a>
+              <a href="author.html#43">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2007-03-01 13:27:36 +0100 (Thu, 01 Mar 2007)
+New Revision: 1078
+
+Modified:
+   trunk/SConstruct
+   trunk/yade-core/src/yade/yade.cpp
+   trunk/yade-libs/yade-lib-factory/src/yade-lib-factory/ClassFactory.cpp
+   trunk/yade-libs/yade-lib-multimethods/src/yade-lib-multimethods/DynLibDispatcher.hpp
+   trunk/yade-libs/yade-lib-serialization/src/yade-lib-serialization/SerializableSingleton.cpp
+Log:
+1. Debugging mode now #defines YADE_DEBUG in addition to DEBUG, which seems to be #undef'ed by some header. Lazy to trace down.
+2. Removed #ifdef DEBUG messages from dynlib &amp;co (now under #if 0); use LOG_TRACE if you need those messages
+3. Signal handler now handles SIGSEGV (segmentation fault) and SIGABRT (failed assertions, among other) in debugging mode: gdb is run, attached to the current process and backtrace of all threads is printed. 
+
+
+
+Modified: trunk/SConstruct
+===================================================================
+--- trunk/SConstruct	2007-02-28 13:36:12 UTC (rev 1077)
++++ trunk/SConstruct	2007-03-01 12:27:36 UTC (rev 1078)
+@@ -184,7 +184,7 @@
+ env.Append(CPPDEFINES=[('POSTFIX',r'$POSTFIX'),('PREFIX',r'$PREFIX')])
+ 
+ ### COMPILER
+-if env['debug']: env.Append(CXXFLAGS='-ggdb3',CPPDEFINES=['DEBUG'])
++if env['debug']: env.Append(CXXFLAGS='-ggdb3',CPPDEFINES=['DEBUG','YADE_DEBUG'])
+ else: env.Append(CXXFLAGS='-O2')
+ if env['optimize']:
+ 	env.Append(CXXFLAGS=Split('-O3 -ffast-math'))
+
+Modified: trunk/yade-core/src/yade/yade.cpp
+===================================================================
+--- trunk/yade-core/src/yade/yade.cpp	2007-02-28 13:36:12 UTC (rev 1077)
++++ trunk/yade-core/src/yade/yade.cpp	2007-03-01 12:27:36 UTC (rev 1078)
+@@ -10,9 +10,10 @@
+ 
+ #ifdef EMBED_PYTHON
+ 	#include&lt;Python.h&gt;
+-	#include&lt;signal.h&gt;
+ #endif
+ 
++#include&lt;signal.h&gt;
++#include&lt;cstdlib&gt;
+ #include &lt;iostream&gt;
+ #include &lt;string&gt;
+ #include &lt;getopt.h&gt;
+@@ -29,19 +30,32 @@
+ using namespace std;
+ 
+ #ifdef LOG4CXX
+-// provides parent logger for everybody
+-log4cxx::LoggerPtr logger=log4cxx::Logger::getLogger(&quot;yade&quot;);
++	// provides parent logger for everybody
++	log4cxx::LoggerPtr logger=log4cxx::Logger::getLogger(&quot;yade&quot;);
+ #endif
+ 
+-#ifdef EMBED_PYTHON
+-void sigintHandler(int sig){
+-	LOG_DEBUG(&quot;Finalizing Python...&quot;);
+-	Py_Finalize();
+-	// <A HREF="http://www.cons.org/cracauer/sigint.html">http://www.cons.org/cracauer/sigint.html</A>
+-	signal(SIGINT,SIG_DFL); // reset to default
+-	kill(getpid(),SIGINT); // kill ourselves, this time without Python
++string gdbCrashBatch;
++
++void
++sigHandler(int sig){
++	#ifdef EMBED_PYTHON
++		if(sig==SIGINT){
++			LOG_DEBUG(&quot;Finalizing Python...&quot;);
++			Py_Finalize();
++			// <A HREF="http://www.cons.org/cracauer/sigint.html">http://www.cons.org/cracauer/sigint.html</A>
++			signal(SIGINT,SIG_DFL); // reset to default
++			kill(getpid(),SIGINT); // kill ourselves, this time without Python
++		}
++	#endif
++	#ifdef YADE_DEBUG
++		else if(sig==SIGABRT || sig==SIGSEGV){
++			signal(SIGSEGV,SIG_DFL); signal(SIGABRT,SIG_DFL); // prevent loops - default handlers
++			cerr&lt;&lt;&quot;SIGSEGV/SIGABRT handler&quot;;
++			system((string(&quot;gdb -x &quot;)+gdbCrashBatch).c_str());
++			kill(getpid(),sig); // reemit signal after exiting gdb
++		}
++	#endif
+ }
+-#endif
+ 
+ // FIXME - those two function will be moved to some class responsible for configuration
+ std::string getPrefix()
+@@ -85,21 +99,9 @@
+ 	string flags(&quot;&quot;);
+ 	flags=flags+&quot;   PREFIX=&quot; +getPrefix()+ &quot;\n&quot;;
+ 	flags=flags+&quot;   POSTFIX=&quot; + getPostfix() + &quot;\n&quot;;
+-#ifdef SINGLE_PRECISION
+-	flags+=&quot;SINGLE_PRECISION &quot;;
+-#endif
+-#ifdef DOUBLE_PRECISION
+-	flags+=&quot;DOUBLE_PRECISION &quot;;
+-#endif
+-#ifdef QGLVIEWER20
+-	flags+=&quot;QGLVIEWER20 &quot;;
+-#endif
+-#ifdef NO_GLUTINIT
+-	flags+=&quot;NO_GLUTINIT &quot;;
+-#endif
+-#ifdef DEBUG
+-	flags+=&quot;DEBUG (is this flag used?) &quot;;
+-#endif
++	#ifdef YADE_DEBUG
++		flags+=&quot;   DEBUG&quot;;
++	#endif
+ 	cout &lt;&lt; 
+ &quot;\n&quot; &lt;&lt; Omega::instance().yadeVersionName &lt;&lt; &quot;\n\
+ \n\
+@@ -120,7 +122,6 @@
+ 
+ int main(int argc, char *argv[])
+ {
+-
+ 	int ch;
+ 	string gui = &quot;&quot;;
+ 	string configPath = string(getenv(&quot;HOME&quot;)) + &quot;/.yade&quot; + getPostfix();
+@@ -131,24 +132,19 @@
+ 	// Since it is a static variable, it infulences all boost::filesystem operations in this respect (fortunately).
+ 	filesystem::path::default_name_check(filesystem::native);
+ 
+-#	ifdef LOG4CXX
+-	// read logging configuration from file and watch it (creates a separate thread)a
+-	std::string logConf=configPath+&quot;/logging.conf&quot;;
+-	if(filesystem::exists(logConf)){
+-		log4cxx::PropertyConfigurator::configureAndWatch(logConf);
+-		LOG_INFO(&quot;Logger loaded and watches configuration file: &quot;&lt;&lt;logConf&lt;&lt;&quot;.&quot;);
+-	} else { // otherwise use simple console-directed logging
+-		log4cxx::BasicConfigurator::configure();
+-		LOG_INFO(&quot;Logger uses basic (console) configuration (&quot;&lt;&lt;logConf&lt;&lt;&quot; not found). Look at the file yade-doc/logging.conf.sample in the source distribution on an example how to customize logging.&quot;);
+-	}
+-#	endif
+-
+-	#ifdef EMBED_PYTHON
+-		Py_Initialize();
+-		LOG_DEBUG(&quot;Python interpreter initialized.&quot;);
+-		signal(SIGINT,sigintHandler);
++	#ifdef LOG4CXX
++		// read logging configuration from file and watch it (creates a separate thread)a
++		std::string logConf=configPath+&quot;/logging.conf&quot;;
++		if(filesystem::exists(logConf)){
++			log4cxx::PropertyConfigurator::configureAndWatch(logConf);
++			LOG_INFO(&quot;Logger loaded and watches configuration file: &quot;&lt;&lt;logConf&lt;&lt;&quot;.&quot;);
++		} else { // otherwise use simple console-directed logging
++			log4cxx::BasicConfigurator::configure();
++			LOG_INFO(&quot;Logger uses basic (console) configuration (&quot;&lt;&lt;logConf&lt;&lt;&quot; not found). Look at the file yade-doc/logging.conf.sample in the source distribution on an example how to customize logging.&quot;);
++		}
+ 	#endif
+ 
++
+ 	
+ 	bool 	setup 		= false;
+ 	if( ( ch = getopt(argc,argv,&quot;hnN:wC:cS:&quot;) ) != -1)
+@@ -174,6 +170,20 @@
+ 	filesystem::path yadeConfigPath  = filesystem::path(Omega::instance().yadeConfigPath, filesystem::native);
+ 	filesystem::path yadeConfigFile  = filesystem::path(Omega::instance().yadeConfigPath + &quot;/preferences.xml&quot;, filesystem::native);
+ 
++	#ifdef YADE_DEBUG
++		ofstream gdbBatch;
++		gdbCrashBatch=(yadeConfigPath/&quot;gdb_crash_batch&quot;).string();
++		gdbBatch.open(gdbCrashBatch.c_str()); gdbBatch&lt;&lt;&quot;attach &quot;&lt;&lt;lexical_cast&lt;string&gt;(getpid())&lt;&lt;&quot;\nthread info\nthread apply all backtrace\n&quot;; gdbBatch.close();
++		signal(SIGABRT,sigHandler);
++		signal(SIGSEGV,sigHandler);
++	#endif
++
++	#ifdef EMBED_PYTHON
++		LOG_DEBUG(&quot;Initializing Python...&quot;);
++		Py_Initialize();
++		signal(SIGINT,sigHandler);
++	#endif
++
+ 	if ( !filesystem::exists( yadeConfigPath ) || setup || !filesystem::exists(yadeConfigFile) )
+ 	{
+ 		filesystem::create_directories(yadeConfigPath);
+@@ -199,8 +209,8 @@
+  	int ok = frontEnd-&gt;run(argc,argv);
+ 
+ 	#ifdef EMBED_PYTHON
++		LOG_DEBUG(&quot;Finalizing Python...&quot;);
+ 		Py_Finalize();
+-		LOG_DEBUG(&quot;Python interpreter finalized.&quot;);
+ 	#endif
+ 
+ 	LOG_INFO(&quot;Yade: normal exit.&quot;);
+
+Modified: trunk/yade-libs/yade-lib-factory/src/yade-lib-factory/ClassFactory.cpp
+===================================================================
+--- trunk/yade-libs/yade-lib-factory/src/yade-lib-factory/ClassFactory.cpp	2007-02-28 13:36:12 UTC (rev 1077)
++++ trunk/yade-libs/yade-lib-factory/src/yade-lib-factory/ClassFactory.cpp	2007-03-01 12:27:36 UTC (rev 1078)
+@@ -25,7 +25,7 @@
+ 
+ 	bool tmp = map.insert( FactorableCreatorsMap::value_type( name , FactorableCreators(create,createShared, createPureCustom) )).second;
+ 
+-	#ifdef DEBUG
++	#if 0
+ 		if (tmp)
+ 			std::cout &lt;&lt; &quot;registering factorable: &quot; &lt;&lt; name &lt;&lt; &quot; OK\n&quot;;
+ 		else
+
+Modified: trunk/yade-libs/yade-lib-multimethods/src/yade-lib-multimethods/DynLibDispatcher.hpp
+===================================================================
+--- trunk/yade-libs/yade-lib-multimethods/src/yade-lib-multimethods/DynLibDispatcher.hpp	2007-02-28 13:36:12 UTC (rev 1077)
++++ trunk/yade-libs/yade-lib-multimethods/src/yade-lib-multimethods/DynLibDispatcher.hpp	2007-03-01 12:27:36 UTC (rev 1078)
+@@ -308,7 +308,7 @@
+ 			shared_ptr&lt;Executor&gt; executor = ex ? ex : makeExecutor(libName);	// create the requested functor
+ 			callBacks[index] = executor;
+ 						
+-			#ifdef DEBUG
++			#if 0
+ 				cerr &lt;&lt;&quot; New class added to DynLibDispatcher 1D: &quot; &lt;&lt; libName &lt;&lt; endl;
+ 			#endif
+ 		  };
+@@ -431,7 +431,7 @@
+ 				callBacksInfo	[index1][index2] = 0;
+ 			}
+ 
+-			#ifdef DEBUG
++			#if 0
+ 				cerr &lt;&lt;&quot; New class added to MultiMethodsManager 2D: &quot; &lt;&lt; libName &lt;&lt; endl;
+ 			#endif
+ 		  }
+
+Modified: trunk/yade-libs/yade-lib-serialization/src/yade-lib-serialization/SerializableSingleton.cpp
+===================================================================
+--- trunk/yade-libs/yade-lib-serialization/src/yade-lib-serialization/SerializableSingleton.cpp	2007-02-28 13:36:12 UTC (rev 1077)
++++ trunk/yade-libs/yade-lib-serialization/src/yade-lib-serialization/SerializableSingleton.cpp	2007-03-01 12:27:36 UTC (rev 1078)
+@@ -22,7 +22,7 @@
+ 
+ 	bool tmp = map.insert( SerializableDescriptorMap::value_type( name , SerializableDescriptor(verify,type,f) )).second;
+ 
+-	#ifdef DEBUG
++	#if 0
+ 		if (tmp)
+ 			cout &lt;&lt; &quot;registering serializable: &quot; &lt;&lt; name &lt;&lt; &quot; OK\n&quot;;
+ 		else
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000042.html">[Yade-commits] r1077 - in trunk: yade-core/src/yade yade-extra/clump	yade-packages/yade-package-common/src/Engine/EngineUnit/CundallNonViscousForceDamping	yade-packages/yade-package-common/src/Engine/EngineUnit/CundallNonViscousMomentumDamping
+</A></li>
+	<LI>Next message: <A HREF="000044.html">[Yade-commits] r1079 - trunk/yade-extra/clump
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#43">[ date ]</a>
+              <a href="thread.html#43">[ thread ]</a>
+              <a href="subject.html#43">[ subject ]</a>
+              <a href="author.html#43">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

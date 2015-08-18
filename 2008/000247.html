@@ -1,0 +1,466 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1282 - trunk/extra
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1282%20-%20trunk/extra&In-Reply-To=%3C200803202014.m2KKEmMu013687%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000246.html">
+   <LINK REL="Next"  HREF="000248.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1282 - trunk/extra</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1282%20-%20trunk/extra&In-Reply-To=%3C200803202014.m2KKEmMu013687%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1282 - trunk/extra">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Thu Mar 20 21:14:48 CET 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000246.html">[Yade-commits] r1281 - in trunk: . extra gui gui/qt3	pkg/common/Engine/DeusExMachina	pkg/dem/Engine/StandAloneEngine scripts
+</A></li>
+        <LI>Next message: <A HREF="000248.html">[Yade-commits] r1283 - in trunk: . core extra extra/clump gui	gui/cmd lib/serialization pkg/common/DataClass/PhysicalParameters	pkg/common/Engine/EngineUnit	pkg/common/Engine/StandAloneEngine pkg/dem/Engine/EngineUnit scripts
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#247">[ date ]</a>
+              <a href="thread.html#247">[ thread ]</a>
+              <a href="subject.html#247">[ subject ]</a>
+              <a href="author.html#247">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2008-03-20 21:14:47 +0100 (Thu, 20 Mar 2008)
+New Revision: 1282
+
+Modified:
+   trunk/extra/Brefcom.cpp
+   trunk/extra/Brefcom.hpp
+Log:
+1. Include fracture strain calibration routines in brefcom.
+2. Add BrecomDamageColorizer - changes colora ccording to average cohesive interactions the body has.
+3. Delete non-cohesive interactions from inside BrefcomLaw when spheres become distant.
+4. Documentation updates.
+
+
+
+Modified: trunk/extra/Brefcom.cpp
+===================================================================
+--- trunk/extra/Brefcom.cpp	2008-03-18 10:17:56 UTC (rev 1281)
++++ trunk/extra/Brefcom.cpp	2008-03-20 20:14:47 UTC (rev 1282)
+@@ -60,7 +60,8 @@
+ 			/* equilibriumDist */ d0,
+ 			/* crossSection */ S12,
+ 			/* epsCracking */ sigmaT/E12,
+-			/* epsFracture */ 5*sigmaT/E12
++			/* epsFracture */ calibratedEpsFracture,
++			/* expBending */ expBending
+ 			));
+ 		contPhys-&gt;prevNormal=contGeom-&gt;normal;
+ 		contPhys-&gt;isCohesive=(Omega::instance().getCurrentIteration()&gt;5 ? false : true);
+@@ -79,35 +80,6 @@
+ 
+ /********************** BrefcomLaw ****************************/
+ CREATE_LOGGER(BrefcomLaw);
+-#if 0
+-void BrefcomLaw::calculateShearForce(){
+-	Fs=Vector3r::ZERO; return;
+-	
+-	Fs = BC-&gt;Fs;
+-	Real dt=Omega::instance().getTimeStep();
+-	// rotation of the contact normal
+-	Fs += BC-&gt;Fs.Cross( BC-&gt;prevNormal.Cross(contGeom-&gt;normal) );
+-	//TRVAR1(BC-&gt;Fs.Cross( BC-&gt;prevNormal.Cross(contGeom-&gt;normal)));
+-	// mutual rotation of elements
+-	Real angle=dt*.5*contGeom-&gt;normal.Dot(rbp1-&gt;angularVelocity+rbp2-&gt;angularVelocity);
+-	Fs += BC-&gt;Fs.Cross(angle*contGeom-&gt;normal);
+-	//TRVAR1(BC-&gt;Fs.Cross(angle*contGeom-&gt;normal));
+-	// element slip
+-	Vector3r relVelocity=
+-		rbp2-&gt;velocity+rbp2-&gt;angularVelocity.Cross(contGeom-&gt;contactPoint-rbp2-&gt;se3.position)-
+-		rbp1-&gt;velocity+rbp1-&gt;angularVelocity.Cross(contGeom-&gt;contactPoint-rbp1-&gt;se3.position);
+-	Vector3r shearDisplacement=dt*(relVelocity-contGeom-&gt;normal.Dot(relVelocity)*contGeom-&gt;normal);
+-	Fs += BC-&gt;Ks*shearDisplacement;
+-	//TRVAR1(BC-&gt;Ks*shearDisplacement);
+-	if(isnan(Fs[0]) || isnan(Fs[1]) || isnan(Fs[2])){
+-		TRVAR4(BC-&gt;Fs, BC-&gt;prevNormal, contGeom-&gt;normal, BC-&gt;Fs.Cross(BC-&gt;prevNormal.Cross(contGeom-&gt;normal)));
+-		TRVAR4(angle, rbp1-&gt;angularVelocity, rbp2-&gt;angularVelocity,BC-&gt;Fs.Cross(angle*contGeom-&gt;normal));
+-		TRVAR4(rbp1-&gt;se3.position, rbp2-&gt;se3.position,rbp1-&gt;velocity,rbp2-&gt;velocity);
+-		TRVAR4(relVelocity,shearDisplacement,BC-&gt;Ks,BC-&gt;Ks*shearDisplacement);
+-		exit(0);
+-	}
+-}
+-#endif
+ 
+ void BrefcomLaw::applyForce(const Vector3r force){
+ 
+@@ -117,28 +89,85 @@
+ 	static_pointer_cast&lt;Momentum&gt;(rootBody-&gt;physicalActions-&gt;find(id2,MomentumClassIndex))-&gt;momentum-=(contGeom-&gt;contactPoint-rbp2-&gt;se3.position).Cross(force);
+ }
+ 
+-Real BrefcomLaw::funcG(Real kappaD){
+-#ifdef BREFCOM_FUNC_G
+-	BREFCOM_FUNC_G
+-#else
+-	return 0;
+-#endif
++/*! Damage evolution law (static version: all parameters are explicitly passed).
++ *
++ * This function is zero for any eps&lt;=epsCrackOnset (no damage before the material starts cracking),
++ * therefore it will be linear-elastic. Between epsCrackOnset and espFracture (complete damage), it
++ * is a non-decreasing function (an exp curve in this case, controlled by a single parameter expBending).
++ * For any exp&gt;=expFracture, return 1 (complete damage).
++ *
++ * @param kappaD maximum positive strain so far
++ * @param expBending determines whether the function is bent up or down (and how much)
++ * @param epsCrackOnsert strain at which material begins to behave non-linearly
++ * @param epsFracture strain at which material is fully damaged
++ */
++Real BrefcomLaw::damageEvolutionLaw_static(Real kappaD, Real expBending, Real epsCrackOnset, Real epsFracture){
++	//double g(double x, double c, double eps0, double eps1){
++	if(kappaD&lt;epsCrackOnset)return 0;
++	if(kappaD&gt;epsFracture)return 1;
++	return (1/(1-exp(-expBending)))*(1-exp(-expBending*(kappaD-epsCrackOnset)/(epsFracture-epsCrackOnset)));
+ }
+ 
+-Real BrefcomLaw::funcH(Real kappaD){
+-#ifdef BREFCOM_FUNC_H
+-	BREFCOM_FUNC_H
+-#else
+-	return 1;
+-#endif	
+-}	
++/*! Compute fracture energy by numerically integrating damageEvolutionLaw_static, using unitary stiffness.
++ *
++ * The value returned must be multiplied by E to obtain real fracture energy: Fracture energy
++ *    Gf=integral(E*(1-damage(eps))*eps)=E*integral(...) and we compute just the integral(...) part.
++ * The integration uses trapezoidal rule. All parameters except steps have the same
++ * meaning as for damageEvolutionLaw_static.
++ *
++ * @param steps Number of subdivision intervals for integration.
++ */
+ 
++Real BrefcomLaw::unitFractureEnergy(double expBending, double epsCrackOnset, double epsFracture, int steps /*=50*/){
++	assert(steps&gt;=10);
++	const double lo=0, hi=epsFracture;
++	double sum=0,stepSize=(hi-lo)/steps,x1,x2;
++	for(int i=0; i&lt;steps; i++){
++		x1=lo+i*stepSize; x2=x1+stepSize;
++		sum+=((1-damageEvolutionLaw_static(x1,expBending,epsCrackOnset,epsFracture))*x1+(1-damageEvolutionLaw_static(x2,expBending,epsCrackOnset,epsFracture))*x2)*.5*stepSize; /* trapezoid rule */
++	}
++	return sum;
++}
++
++/*! Calibrate epsFracture so that the desired fracture energy is obtained, while other parameters are keps constant.
++ *
++ * The iteration relies on the fact that fractureEnergy is increasing for increasing epsFracture;
++ * first we find some strain value eps at which fractureEnergy(eps,...)&lt;Gf&lt;fractureEnergy(2*eps,...),
++ * then the interval is bisected until fractureEnergy matches Gf with desired precision.
++ *
++ * @param Gf the desired fracture energy.
++ * @param relEpsilon relative (with regards to Gf) result precision.
++ * @param maxIter number of iterations after which we throw exception, since for a reason we don't converge or converge too slowly.
++ *
++ * Other params have the same meaning as for damageEvolutionLaw_static.
++ */
++Real BrefcomLaw::calibrateEpsFracture(double Gf, double E, double expBending, double epsCrackOnset, double epsFractureInit /*=1e-3*/, double relEpsilon /*=1e-3*/, int maxIter /*=1000*/){
++	double E1,E2,Emid,epsLo=epsFractureInit,epsHi=epsFractureInit*2,epsMid,iter=0,Gf_div_E=Gf/E;
++	bool goUp=unitFractureEnergy(expBending,epsCrackOnset,epsHi)&lt;Gf_div_E; // do we double up or down when finding margins?
++	do { epsLo*=goUp?2:.5; epsHi=2*epsLo;
++		E1=unitFractureEnergy(expBending,epsCrackOnset,epsLo); E2=unitFractureEnergy(expBending,epsCrackOnset,epsHi);
++		if((iter++)&gt;maxIter) throw runtime_error(&quot;Convergence problem when finding margin values for bisection.&quot;);
++	} while(!(E1&lt;Gf_div_E &amp;&amp; E2&gt;=Gf_div_E));
++	// now E(epsLo)&lt;Gf_div_E&lt;=E(epsHi); go ahead using interval bisection
++	do {
++		epsMid=.5*(epsLo+epsHi); Emid=unitFractureEnergy(expBending,epsCrackOnset,epsMid);
++		if(Emid&lt;Gf_div_E)epsLo=.5*(epsLo+epsHi);
++		else if(Emid&gt;Gf_div_E)epsHi=.5*(epsLo+epsHi);
++		if((iter++)&gt;maxIter) throw runtime_error(&quot;Convergence problem during bisection (relEpsilon too low?).&quot;);
++	} while (abs(Emid-Gf_div_E)&gt;relEpsilon*Gf_div_E);
++	return epsMid;
++}
++
++
+ void BrefcomLaw::action(Body* body){
+ 	rootBody=YADE_CAST&lt;MetaBody*&gt;(body);
+ 	
+ 	//BOOST_FOREACH(shared_ptr&lt;Interaction&gt; II,*(rootBody-&gt;transientInteractions)){}
+-
+-	for(InteractionContainer::iterator I=rootBody-&gt;transientInteractions-&gt;begin(); I!=rootBody-&gt;transientInteractions-&gt;end(); ++I){
++	
++	list&lt;shared_ptr&lt;Interaction&gt; &gt; interactionsToBeDeleted;
++	
++	InteractionContainer::iterator transientEnd=rootBody-&gt;transientInteractions-&gt;end();
++	for(InteractionContainer::iterator I=rootBody-&gt;transientInteractions-&gt;begin(); I!=transientEnd; ++I){
+ 		if(!(*I)-&gt;isReal) continue;
+ 		// TRACE;
+ 		// initialize temporaries
+@@ -169,6 +198,11 @@
+ 		// shorthands
+ 		Vector3r&amp; epsT(BC-&gt;epsT); Real&amp; kappaD(BC-&gt;kappaD); const Real&amp; equilibriumDist(BC-&gt;equilibriumDist); const Real&amp; xiShear(BC-&gt;xiShear); const Real&amp; Kn(BC-&gt;Kn); const Real&amp; undamagedCohesion(BC-&gt;undamagedCohesion); const Real&amp; frictionAngle(BC-&gt;frictionAngle); const Real&amp; Kt(BC-&gt;Kt); const Real&amp; crossSection(BC-&gt;crossSection); Real&amp; omega(BC-&gt;omega);
+ 
++		Real dist=(rbp1-&gt;se3.position-rbp2-&gt;se3.position).Length();
++
++		/* deleting interaction here would (maybe) break the iterator; do it once this loop is done */
++		if(!BC-&gt;isCohesive &amp;&amp; dist&gt;0){ /* delete this interaction later */ interactionsToBeDeleted.push_back(*I); continue; }
++
+ 		/* rotate epsT to the new contact plane */
+ 			Real dt=Omega::instance().getTimeStep();
+ 			// rotation of the contact normal
+@@ -182,7 +216,6 @@
+ 			rbp2-&gt;velocity+rbp2-&gt;angularVelocity.Cross(contGeom-&gt;contactPoint-rbp2-&gt;se3.position)
+ 			-rbp1-&gt;velocity+rbp1-&gt;angularVelocity.Cross(contGeom-&gt;contactPoint-rbp1-&gt;se3.position);
+ 		Vector3r tangentialDisplacement=dt*(relVelocity-contGeom-&gt;normal.Dot(relVelocity)*contGeom-&gt;normal);
+-		Real dist=(rbp1-&gt;se3.position-rbp2-&gt;se3.position).Length(); 
+ 		epsT+=tangentialDisplacement/dist;
+ 		
+ 		/* normal strain */
+@@ -203,6 +236,8 @@
+ 		for(size_t i=0; i&lt;recValues.size(); i++) recStream&lt;&lt;recLabels[i]&lt;&lt;&quot;: &quot;&lt;&lt;recValues[i]&lt;&lt;&quot; &quot;;
+ 		recStream&lt;&lt;endl;
+ 	}
++	// delete interactions that were requested to be deleted.
++	for(list&lt;shared_ptr&lt;Interaction&gt; &gt;::iterator I=interactionsToBeDeleted.begin(); I!=interactionsToBeDeleted.end(); I++){ rootBody-&gt;transientInteractions-&gt;erase((*I)-&gt;getId1(),(*I)-&gt;getId2()); }
+ }
+ 
+ 
+@@ -237,3 +272,22 @@
+ 	glPopMatrix();
+ }
+ 
++/********************** BrefcomDamageColorizer ****************************/
++void BrefcomDamageColorizer::action(Body* b){
++	MetaBody* rootBody=static_cast&lt;MetaBody*&gt;(b);
++	vector&lt;pair&lt;short,Real&gt; &gt; bodyDamage; /* number of cohesive interactions per body; cummulative damage of interactions */
++	bodyDamage.resize(rootBody-&gt;bodies-&gt;size(),pair&lt;short,Real&gt;(0,0));
++	InteractionContainer::iterator transientEnd=rootBody-&gt;transientInteractions-&gt;end();
++	for(InteractionContainer::iterator I=rootBody-&gt;transientInteractions-&gt;begin(); I!=transientEnd; ++I){
++		shared_ptr&lt;BrefcomContact&gt; BC=YADE_PTR_CAST&lt;BrefcomContact&gt;((*I)-&gt;interactionPhysics);
++		if(!BC-&gt;isCohesive) continue;
++		const body_id_t id1=(*I)-&gt;getId1(), id2=(*I)-&gt;getId2();
++		bodyDamage[id1].first++; bodyDamage[id2].first++;
++		bodyDamage[id1].second+=BC-&gt;omega; bodyDamage[id2].second+=BC-&gt;omega;
++	}
++	BodyContainer::iterator bodiesEnd=rootBody-&gt;bodies-&gt;end();
++	for(BodyContainer::iterator I=rootBody-&gt;bodies-&gt;begin(); I!=bodiesEnd; ++I){
++		Real normDmg=bodyDamage[(*I)-&gt;getId()].second/bodyDamage[(*I)-&gt;getId()].first;
++		(*I)-&gt;geometricalModel-&gt;diffuseColor=Vector3r(normDmg,1-normDmg,.5);	
++	}
++}
+
+Modified: trunk/extra/Brefcom.hpp
+===================================================================
+--- trunk/extra/Brefcom.hpp	2008-03-18 10:17:56 UTC (rev 1281)
++++ trunk/extra/Brefcom.hpp	2008-03-20 20:14:47 UTC (rev 1282)
+@@ -12,45 +12,6 @@
+ #include&lt;yade/pkg-common/GLDrawInteractionPhysicsFunctor.hpp&gt;
+ 
+ 
+-/*! @brief Convert macroscopic properties to BrefcomContact with corresponding parameters.
+- *
+- * Most of the model is taken from MacroMicroElasticRelationships.
+- *
+- * @todo alpha, beta, gamma constants should be set to better values that Laurent presented in Nantes.
+- *
+- * */
+-class BrefcomMakeContact: public InteractionPhysicsEngineUnit{
+-	private:
+-	public:
+-		/* &quot;constants&quot; for macro-micro */
+-		Real alpha, beta, gamma;
+-		/* nonelastic material parameters */
+-		/* alternatively (and more cleanly), we would have subclass of ElasticBodyParameters,
+-		 * which would define just those in addition to the elastic ones.
+-		 * This might be done later, for now hardcode that here. Note that sigmaC and Gf are not used at all now. */
+-		/* uniaxial traction resistance, uniaxial compression resistance, fracture energy, elastic/softening modulus ratio */
+-		Real sigmaT, sigmaC, Gf, zeta;
+-
+-		BrefcomMakeContact(){ alpha=3.7; beta=2.198; gamma=3.79; sigmaT=3e6; sigmaC=30e6; }
+-		virtual void go(const shared_ptr&lt;PhysicalParameters&gt;&amp; pp1, const shared_ptr&lt;PhysicalParameters&gt;&amp; pp2, const shared_ptr&lt;Interaction&gt;&amp; interaction);
+-		virtual void registerAttributes(){
+-			InteractionPhysicsEngineUnit::registerAttributes();
+-			REGISTER_ATTRIBUTE(alpha);
+-			REGISTER_ATTRIBUTE(beta);
+-			REGISTER_ATTRIBUTE(gamma);
+-			/* REGISTER_ATTRIBUTE(sigmaT);
+-			REGISTER_ATTRIBUTE(sigmaC);
+-			REGISTER_ATTRIBUTE(Gf);
+-			REGISTER_ATTRIBUTE(zeta); */
+-		}
+-
+-		FUNCTOR2D(BodyMacroParameters,BodyMacroParameters);
+-		REGISTER_CLASS_NAME(BrefcomMakeContact);
+-		REGISTER_BASE_CLASS_NAME(InteractionPhysicsEngineUnit);
+-		DECLARE_LOGGER;
+-};
+-REGISTER_SERIALIZABLE(BrefcomMakeContact,false);
+-
+ /*! @brief representation of a single interaction of the brefcom type: storage for relevant parameters.
+  *
+  * Evolution of the contact is governed by BrefcomLaw:
+@@ -65,21 +26,21 @@
+ 	private:
+ 	public:
+ 		/*! Fundamental parameters (constants) */
+-		Real Kn, Kt, frictionAngle, undamagedCohesion, equilibriumDist, crossSection, epsCracking, epsFracture, xiShear;
++		Real Kn, Kt, frictionAngle, undamagedCohesion, equilibriumDist, crossSection, epsCracking, epsFracture, expBending, xiShear;
+ 		/*! Up to now maximum normal strain */
+ 		Real kappaD;
+-		/* prevNormal is oriented A&#8594;B (as in SpheresContactGeometry); */
++		/*! prevNormal is oriented A&#8594;B (as in SpheresContactGeometry); */
+ 		Vector3r prevNormal;
+-		/* previous tangential (shear) strain */
++		/*! previous tangential (shear) strain */
+ 		Vector3r epsT;
+-		/* if not cohesive, equivalent to damage being always 1 */
+-		bool isCohesive; // FIXME: not yet implemented
++		/*! if not cohesive, interaction is deleted when distance is greater than zero. */
++		bool isCohesive;
+ 
+-		/* auxiliary variable for visualization, always recalculated by BrefcomLaw */
++		/*! auxiliary variable for visualization, recalculated by BrefcomLaw at every iteration */
+ 		Real omega;
+ 
+-		BrefcomContact(): InteractionPhysics(),Kn(0), Kt(0), frictionAngle(0), undamagedCohesion(0), equilibriumDist(0), crossSection(0), xiShear(0) { createIndex(); epsT=Vector3r::ZERO; kappaD=0; isCohesive=false; }
+-		BrefcomContact(Real _Kn, Real _Ks, Real _frictionAngle, Real _undamagedCohesion, Real _equilibriumDist, Real _crossSection, Real _epsCracking, Real _epsFracture, Real _xiShear=.3): InteractionPhysics(), Kn(_Kn), Kt(_Ks), frictionAngle(_frictionAngle), undamagedCohesion(_undamagedCohesion), equilibriumDist(_equilibriumDist), crossSection(_crossSection), epsCracking(_epsCracking), epsFracture(_epsFracture), xiShear(_xiShear) { epsT=Vector3r::ZERO; kappaD=0; isCohesive=false; }
++		BrefcomContact(): InteractionPhysics(),Kn(0), Kt(0), frictionAngle(0), undamagedCohesion(0), equilibriumDist(0), crossSection(0), expBending(0), xiShear(0) { createIndex(); epsT=Vector3r::ZERO; kappaD=0; isCohesive=false; }
++		BrefcomContact(Real _Kn, Real _Ks, Real _frictionAngle, Real _undamagedCohesion, Real _equilibriumDist, Real _crossSection, Real _epsCracking, Real _epsFracture, Real _expBending, Real _xiShear=.3): InteractionPhysics(), Kn(_Kn), Kt(_Ks), frictionAngle(_frictionAngle), undamagedCohesion(_undamagedCohesion), equilibriumDist(_equilibriumDist), crossSection(_crossSection), epsCracking(_epsCracking), epsFracture(_epsFracture), expBending(_expBending), xiShear(_xiShear) { epsT=Vector3r::ZERO; kappaD=0; isCohesive=false; }
+ 
+ 
+ 		void registerAttributes(){
+@@ -92,6 +53,7 @@
+ 			REGISTER_ATTRIBUTE(crossSection);
+ 			REGISTER_ATTRIBUTE(epsCracking);
+ 			REGISTER_ATTRIBUTE(epsFracture);
++			REGISTER_ATTRIBUTE(expBending);
+ 			REGISTER_ATTRIBUTE(xiShear);
+ 
+ 			REGISTER_ATTRIBUTE(kappaD);
+@@ -141,9 +103,17 @@
+ 		vector&lt;Real&gt; recValues;
+ 		vector&lt;string&gt; recLabels;
+ 		void applyForce(const Vector3r);
+-		Real funcH(Real);
+-		Real funcG(Real);
++		/*! Cohesion evolution law (it is 1-funcH here) */
++		Real funcH(Real kappaD){ return 1-funcG(kappaD); }
++		/*! Damage evolution law */
++		Real funcG(Real kappaD){ return damageEvolutionLaw_static(kappaD, BC-&gt;expBending, BC-&gt;epsCracking, BC-&gt;epsFracture); }
++
++		// static versions: for calibration of parameters without any existing instance
++		static Real damageEvolutionLaw_static(Real kappaD, Real expBending, Real epsCrackOnset, Real epsFracture);
++		static Real unitFractureEnergy(double expBending, double epsCrackOnset, double epsFracture, int steps=50);
+ 	public:
++		static Real calibrateEpsFracture(double Gf, double E, double expBending, double epsCrackOnset, double epsFractureInit=1e-3, double relEpsilon=1e-3, int maxIter=1000);
++
+ 		BrefcomLaw() {
+ 			/* cache indices for Force and Momentum */
+ 			ForceClassIndex=shared_ptr&lt;PhysicalAction&gt;(new Force())-&gt;getClassIndex();
+@@ -161,6 +131,56 @@
+ };
+ REGISTER_SERIALIZABLE(BrefcomLaw,false);
+ 
++/*! @brief Convert macroscopic properties to BrefcomContact with corresponding parameters.
++ *
++ * Most of the model is taken from MacroMicroElasticRelationships.
++ *
++ * @todo alpha, beta, gamma constants should be set to better values that Laurent presented in Nantes.
++ *
++ * */
++class BrefcomMakeContact: public InteractionPhysicsEngineUnit{
++	private:
++	public:
++		/* &quot;constants&quot; for macro-micro: for the algorithm, see comments in code of BrefcomMakeContact::go; values of these constants are based on CFRAC&#160;2007 proceedings. */
++		Real alpha, beta, gamma;
++		/* nonelastic material parameters */
++		/* alternatively (and more cleanly), we would have subclass of ElasticBodyParameters,
++		 * which would define just those in addition to the elastic ones.
++		 * This might be done later, for now hardcode that here. */
++		/* uniaxial traction resistance, uniaxial compression resistance, fracture energy, strain at complete fracture (calibrated in the constructor) */
++		Real sigmaT, sigmaC, /* Griffith's fracture energy */ Gf, calibratedEpsFracture, expBending;
++
++		BrefcomMakeContact(){
++			alpha=3.7; beta=2.198; gamma=3.79; sigmaC=30e6; sigmaT=sigmaC/10.;
++			expBending=4;
++			Gf=500; /* J/m^2&#160;*/
++			/* calibrate epsFracture; WARNING: this is based on the default E value from Shop
++			 * and therefore may not match the actual E !! */
++			Real E=Shop::getDefault&lt;double&gt;(&quot;phys_young&quot;);
++			Real epsCrackOnset=sigmaC/E;
++			calibratedEpsFracture=BrefcomLaw::calibrateEpsFracture(Gf,E,expBending,epsCrackOnset);
++			assert(calibratedEpsFracture&gt;epsCrackOnset);
++			LOG_DEBUG(&quot;calibratedEpsFracture=&quot;&lt;&lt;calibratedEpsFracture&lt;&lt;&quot; for Gf=&quot;&lt;&lt;Gf&lt;&lt;&quot;, expCrackOnset=&quot;&lt;&lt;epsCrackOnset&lt;&lt;&quot;, E=&quot;&lt;&lt;E&lt;&lt;&quot; and expBending=&quot;&lt;&lt;expBending);
++		}
++
++		virtual void go(const shared_ptr&lt;PhysicalParameters&gt;&amp; pp1, const shared_ptr&lt;PhysicalParameters&gt;&amp; pp2, const shared_ptr&lt;Interaction&gt;&amp; interaction);
++		virtual void registerAttributes(){
++			InteractionPhysicsEngineUnit::registerAttributes();
++			REGISTER_ATTRIBUTE(alpha);
++			REGISTER_ATTRIBUTE(beta);
++			REGISTER_ATTRIBUTE(gamma);
++			/* REGISTER_ATTRIBUTE(sigmaT);
++			REGISTER_ATTRIBUTE(sigmaC);
++			REGISTER_ATTRIBUTE(Gf); */
++		}
++
++		FUNCTOR2D(BodyMacroParameters,BodyMacroParameters);
++		REGISTER_CLASS_NAME(BrefcomMakeContact);
++		REGISTER_BASE_CLASS_NAME(InteractionPhysicsEngineUnit);
++		DECLARE_LOGGER;
++};
++REGISTER_SERIALIZABLE(BrefcomMakeContact,false);
++
+ class GLDrawBrefcomContact: public GLDrawInteractionPhysicsFunctor {
+ 	public: virtual void go(const shared_ptr&lt;InteractionPhysics&gt;&amp;,const shared_ptr&lt;Interaction&gt;&amp;,const shared_ptr&lt;Body&gt;&amp;,const shared_ptr&lt;Body&gt;&amp;,bool wireFrame);
+ 	virtual ~GLDrawBrefcomContact() {};
+@@ -170,7 +190,19 @@
+ };
+ REGISTER_SERIALIZABLE(GLDrawBrefcomContact,false);
+ 
++class BrefcomDamageColorizer : public StandAloneEngine {
++	public :
++		int interval;
++		BrefcomDamageColorizer(){interval=100;}
++		virtual void action(Body* b);
++		virtual bool isActivated(){return Omega::instance().getCurrentIteration()%interval==0;}
++	void registerAttributes(){REGISTER_ATTRIBUTE(interval);}
++	REGISTER_CLASS_NAME(BrefcomDamageColorizer);
++	REGISTER_BASE_CLASS_NAME(StandAloneEngine);
++};
++REGISTER_SERIALIZABLE(BrefcomDamageColorizer,false);
+ 
++
+  
+ 
+ 
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000246.html">[Yade-commits] r1281 - in trunk: . extra gui gui/qt3	pkg/common/Engine/DeusExMachina	pkg/dem/Engine/StandAloneEngine scripts
+</A></li>
+	<LI>Next message: <A HREF="000248.html">[Yade-commits] r1283 - in trunk: . core extra extra/clump gui	gui/cmd lib/serialization pkg/common/DataClass/PhysicalParameters	pkg/common/Engine/EngineUnit	pkg/common/Engine/StandAloneEngine pkg/dem/Engine/EngineUnit scripts
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#247">[ date ]</a>
+              <a href="thread.html#247">[ thread ]</a>
+              <a href="subject.html#247">[ subject ]</a>
+              <a href="author.html#247">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

@@ -1,0 +1,271 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1293 - in trunk/gui: . qt3
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1293%20-%20in%20trunk/gui%3A%20.%20qt3&In-Reply-To=%3C200804031912.m33JCR06017012%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000256.html">
+   <LINK REL="Next"  HREF="000258.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1293 - in trunk/gui: . qt3</H1>
+    <B>cosurgi at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1293%20-%20in%20trunk/gui%3A%20.%20qt3&In-Reply-To=%3C200804031912.m33JCR06017012%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1293 - in trunk/gui: . qt3">cosurgi at mail.berlios.de
+       </A><BR>
+    <I>Thu Apr  3 21:12:27 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000256.html">[Yade-commits] r1292 - trunk/debian
+</A></li>
+        <LI>Next message: <A HREF="000258.html">[Yade-commits] r1295 - trunk/doc
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#257">[ date ]</a>
+              <a href="thread.html#257">[ thread ]</a>
+              <a href="subject.html#257">[ subject ]</a>
+              <a href="author.html#257">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: cosurgi
+Date: 2008-04-03 21:12:26 +0200 (Thu, 03 Apr 2008)
+New Revision: 1293
+
+Added:
+   trunk/gui/qt3/YadeCamera.cpp
+   trunk/gui/qt3/YadeCamera.hpp
+Modified:
+   trunk/gui/SConscript
+   trunk/gui/qt3/GLViewer.cpp
+   trunk/gui/qt3/GLViewer.hpp
+   trunk/gui/qt3/SimulationController.cpp
+Log:
+Use / * - + for front cutting plane:
+1. added new class YadeCamera : public qglviewer::Camera
+2. ovverride virtual function which calculates the front cutting plane
+3. it's possible that GLViewer4 will have to be modified - to use YadeCamera to
+   have this new feature - front cutting plane. I didn't touch it.
+
+
+
+Modified: trunk/gui/SConscript
+===================================================================
+--- trunk/gui/SConscript	2008-04-01 06:49:38 UTC (rev 1292)
++++ trunk/gui/SConscript	2008-04-03 19:12:26 UTC (rev 1293)
+@@ -16,6 +16,7 @@
+ 				'qt3/SimulationControllerUpdater.cpp',
+ 				'qt3/YadeQtGeneratedMainWindow.ui',
+ 				'qt3/YadeQtMainWindow.cpp',
++				'qt3/YadeCamera.cpp',
+ 
+ 				'qt3/GLSimulationPlayerViewer.cpp',
+ 				'qt3/QtGeneratedSimulationPlayer.ui',
+
+Modified: trunk/gui/qt3/GLViewer.cpp
+===================================================================
+--- trunk/gui/qt3/GLViewer.cpp	2008-04-01 06:49:38 UTC (rev 1292)
++++ trunk/gui/qt3/GLViewer.cpp	2008-04-03 19:12:26 UTC (rev 1293)
+@@ -9,6 +9,7 @@
+ *************************************************************************/
+ 
+ #include&quot;GLViewer.hpp&quot;
++#include&quot;YadeCamera.hpp&quot;
+ #include&lt;GL/glut.h&gt;
+ #include&lt;yade/lib-opengl/FpsTracker.hpp&gt;
+ #include&lt;yade/core/Body.hpp&gt;
+@@ -21,6 +22,8 @@
+ 	renderer=rendererInit;
+ 	drawGrid = false;
+ 	viewId = id;
++	cut_plane = 0;
++	cut_plane_delta = -2;
+ 	resize(320, 240);
+ 
+ 	if (id==0)
+@@ -112,6 +115,31 @@
+ 	else if( e-&gt;key()==Qt::Key_P )
+ 		camera()-&gt;setFieldOfView(camera()-&gt;fieldOfView()*1.1), updateGL();
+ 
++//////////////////////////////////////////////
++// FIXME that all should be in some nice GUI
++// 
++// Cutting plane
++	else if( e-&gt;key()==Qt::Key_Plus ){
++			cut_plane = std::min(1.0, cut_plane + std::pow(10.0,(double)cut_plane_delta));
++			static_cast&lt;YadeCamera*&gt;(camera())-&gt;setCuttingDistance(cut_plane);
++			displayMessage(&quot;Cut plane: &quot;+lexical_cast&lt;std::string&gt;(cut_plane));
++	}else if( e-&gt;key()==Qt::Key_Minus ){
++			cut_plane = std::max(0.0, cut_plane - std::pow(10.0,(double)cut_plane_delta));
++			static_cast&lt;YadeCamera*&gt;(camera())-&gt;setCuttingDistance(cut_plane);
++			displayMessage(&quot;Cut plane: &quot;+lexical_cast&lt;std::string&gt;(cut_plane));
++	}else if( e-&gt;key()==Qt::Key_Slash ){
++			cut_plane_delta -= 1;
++			displayMessage(&quot;Cut plane increment: 1e&quot;+(cut_plane_delta&gt;0?std::string(&quot;+&quot;):std::string(&quot;&quot;))+lexical_cast&lt;std::string&gt;(cut_plane_delta));
++	}else if( e-&gt;key()==Qt::Key_Asterisk ){
++			cut_plane_delta = std::min(1+cut_plane_delta,-1);
++			displayMessage(&quot;Cut plane increment: 1e&quot;+(cut_plane_delta&gt;0?std::string(&quot;+&quot;):std::string(&quot;&quot;))+lexical_cast&lt;std::string&gt;(cut_plane_delta));
++	}
++
++// FIXME END
++//////////////////////////////////////////////
++
++
++
+ 	else if( e-&gt;key()!=Qt::Key_Escape &amp;&amp; e-&gt;key()!=Qt::Key_Space )
+ 		QGLViewer::keyPressEvent(e);
+ }
+@@ -122,9 +150,9 @@
+ 		return;
+ 
+ 	if(Omega::instance().getRootBody()-&gt;bodies-&gt;size() &lt; 500)
+-		displayMessage(&quot;Less than 500 bodies, moving possible. Select with shift, press 'm' to move.&quot;, 6000);
++		displayMessage(&quot;Less than 500 bodies, moving possible. Select with shift, press 'm' to move. Use / * - + for cutting plane.&quot;, 6000);
+ 	else
+-		displayMessage(&quot;More than 500 bodies. Moving not possible&quot;, 6000);
++		displayMessage(&quot;More than 500 bodies. Moving not possible. Use / * - + for cutting plane.&quot;, 6000);
+ 
+ 	Vector3r min = Omega::instance().getRootBody()-&gt;boundingVolume-&gt;min;
+ 	Vector3r max = Omega::instance().getRootBody()-&gt;boundingVolume-&gt;max;
+
+Modified: trunk/gui/qt3/GLViewer.hpp
+===================================================================
+--- trunk/gui/qt3/GLViewer.hpp	2008-04-01 06:49:38 UTC (rev 1292)
++++ trunk/gui/qt3/GLViewer.hpp	2008-04-03 19:12:26 UTC (rev 1293)
+@@ -24,6 +24,8 @@
+ 		bool			drawGrid; // FIXME - draw grid is in fact just another GLDrawActor
+ 		bool			isMoving;
+ 		bool			wasDynamic;
++		float			cut_plane;
++		int			cut_plane_delta;
+ 		shared_ptr&lt;RenderingEngine&gt; renderer;
+ 
+         public :
+
+Modified: trunk/gui/qt3/SimulationController.cpp
+===================================================================
+--- trunk/gui/qt3/SimulationController.cpp	2008-04-01 06:49:38 UTC (rev 1292)
++++ trunk/gui/qt3/SimulationController.cpp	2008-04-03 19:12:26 UTC (rev 1293)
+@@ -9,6 +9,7 @@
+ #include &quot;SimulationController.hpp&quot;
+ #include &quot;MessageDialog.hpp&quot;
+ #include &quot;FileDialog.hpp&quot;
++#include &quot;YadeCamera.hpp&quot;
+ #include &lt;qlabel.h&gt;
+ #include &lt;qpushbutton.h&gt;
+ #include &lt;qgroupbox.h&gt;
+@@ -179,7 +180,7 @@
+ 			pbOneSimulationStep-&gt;setEnabled(true);
+ 
+ 			Real dt=Omega::instance().getTimeStep();
+-			int exp10=floor(log10(dt));
++			int exp10=(int)floor(log10(dt));
+ 			sbSecond-&gt;setValue((int)(dt/(pow(10.,exp10)))); // we may lose quite some precision here :-(
+ 			sb10PowerSecond-&gt;setValue(exp10);
+ 
+@@ -273,12 +274,16 @@
+ 	if (glViews.size()==0)
+ 	{
+ 		glViews[0] = new GLViewer(0,renderer,format,parentWorkspace);
++		glViews[0]-&gt;setCamera(new YadeCamera);
++		glViews[0]-&gt;camera()-&gt;frame()-&gt;setWheelSensitivity(-1.0f);
+ 		maxNbViews = 0;
+ 	}
+ 	else
+ 	{
+ 		maxNbViews++;
+ 		glViews[maxNbViews] = new GLViewer(maxNbViews,renderer, format, parentWorkspace, glViews[0]);
++		glViews[maxNbViews]-&gt;setCamera(new YadeCamera);
++		glViews[maxNbViews]-&gt;camera()-&gt;frame()-&gt;setWheelSensitivity(-1.0f);
+ 	}
+ 
+ 	connect( glViews[maxNbViews], SIGNAL( closeSignal(int) ), this, SLOT( closeGLViewEvent(int) ) );
+
+Added: trunk/gui/qt3/YadeCamera.cpp
+===================================================================
+--- trunk/gui/qt3/YadeCamera.cpp	2008-04-01 06:49:38 UTC (rev 1292)
++++ trunk/gui/qt3/YadeCamera.cpp	2008-04-03 19:12:26 UTC (rev 1293)
+@@ -0,0 +1,17 @@
++#include&quot;YadeCamera.hpp&quot;
++
++float YadeCamera::zNear() const
++{
++  float z = distanceToSceneCenter() - zClippingCoefficient()*sceneRadius()*(1.f-2*cuttingDistance);
++
++  // Prevents negative or null zNear values.
++  const float zMin = zNearCoefficient() * zClippingCoefficient() * sceneRadius();
++  if (z &lt; zMin)
++/*    switch (type())
++      {
++      case Camera::PERSPECTIVE  :*/ z = zMin; /*break;
++      case Camera::ORTHOGRAPHIC : z = 0.0;  break;
++      }*/
++  return z;
++}
++
+
+Added: trunk/gui/qt3/YadeCamera.hpp
+===================================================================
+--- trunk/gui/qt3/YadeCamera.hpp	2008-04-01 06:49:38 UTC (rev 1292)
++++ trunk/gui/qt3/YadeCamera.hpp	2008-04-03 19:12:26 UTC (rev 1293)
+@@ -0,0 +1,28 @@
++/*************************************************************************
++*  Copyright (C) 2008 by Janek Kozicki                                   *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#ifndef YADE_CAMERA_HPP
++#define YADE_CAMERA_HPP
++
++#include&lt;yade/lib-QGLViewer/qglviewer.h&gt;
++#include&lt;iostream&gt;
++
++
++class YadeCamera : public qglviewer::Camera
++{	
++	Q_OBJECT 
++	private:
++		float cuttingDistance;
++        public :
++		YadeCamera():cuttingDistance(0){};
++		virtual float zNear() const;
++		virtual void setCuttingDistance(float s){cuttingDistance=s;};
++};
++
++#endif
++
++
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000256.html">[Yade-commits] r1292 - trunk/debian
+</A></li>
+	<LI>Next message: <A HREF="000258.html">[Yade-commits] r1295 - trunk/doc
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#257">[ date ]</a>
+              <a href="thread.html#257">[ thread ]</a>
+              <a href="subject.html#257">[ subject ]</a>
+              <a href="author.html#257">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

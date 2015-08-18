@@ -1,0 +1,549 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1187 - in trunk: extra/tetra	pkg/common/Engine/MetaEngine pkg/common/Engine/StandAloneEngine	pkg/dem/Engine/DeusExMachina pkg/dem/Engine/EngineUnit	pkg/dem/Engine/StandAloneEngine pkg/dem/PreProcessor	pkg/fem/PreProcessor pkg/lattice/PreProcessor	pkg/mass-spring/PreProcessor pkg/realtime-rigidbody/PreProcessor
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2007/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1187%20-%20in%20trunk%3A%20extra/tetra%0A%09pkg/common/Engine/MetaEngine%20pkg/common/Engine/StandAloneEngine%0A%09pkg/dem/Engine/DeusExMachina%20pkg/dem/Engine/EngineUnit%0A%09pkg/dem/Engine/StandAloneEngine%20pkg/dem/PreProcessor%0A%09pkg/fem/PreProcessor%20pkg/lattice/PreProcessor%0A%09pkg/mass-spring/PreProcessor%20pkg/realtime-rigidbody/PreProcessor&In-Reply-To=%3C200706051532.l55FWidx015117%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000151.html">
+   <LINK REL="Next"  HREF="000153.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1187 - in trunk: extra/tetra	pkg/common/Engine/MetaEngine pkg/common/Engine/StandAloneEngine	pkg/dem/Engine/DeusExMachina pkg/dem/Engine/EngineUnit	pkg/dem/Engine/StandAloneEngine pkg/dem/PreProcessor	pkg/fem/PreProcessor pkg/lattice/PreProcessor	pkg/mass-spring/PreProcessor pkg/realtime-rigidbody/PreProcessor</H1>
+    <B>cosurgi at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1187%20-%20in%20trunk%3A%20extra/tetra%0A%09pkg/common/Engine/MetaEngine%20pkg/common/Engine/StandAloneEngine%0A%09pkg/dem/Engine/DeusExMachina%20pkg/dem/Engine/EngineUnit%0A%09pkg/dem/Engine/StandAloneEngine%20pkg/dem/PreProcessor%0A%09pkg/fem/PreProcessor%20pkg/lattice/PreProcessor%0A%09pkg/mass-spring/PreProcessor%20pkg/realtime-rigidbody/PreProcessor&In-Reply-To=%3C200706051532.l55FWidx015117%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1187 - in trunk: extra/tetra	pkg/common/Engine/MetaEngine pkg/common/Engine/StandAloneEngine	pkg/dem/Engine/DeusExMachina pkg/dem/Engine/EngineUnit	pkg/dem/Engine/StandAloneEngine pkg/dem/PreProcessor	pkg/fem/PreProcessor pkg/lattice/PreProcessor	pkg/mass-spring/PreProcessor pkg/realtime-rigidbody/PreProcessor">cosurgi at mail.berlios.de
+       </A><BR>
+    <I>Tue Jun  5 17:32:44 CEST 2007</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000151.html">[Yade-commits] r1186 - in trunk: debian scripts
+</A></li>
+        <LI>Next message: <A HREF="000153.html">[Yade-commits] r1188 - in trunk: . lib/base pkg/dem	pkg/dem/DataClass/InteractionGeometry	pkg/dem/DataClass/InteractionPhysics	pkg/dem/DataClass/PhysicalParameters	pkg/dem/Engine/StandAloneEngine scripts
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#152">[ date ]</a>
+              <a href="thread.html#152">[ thread ]</a>
+              <a href="subject.html#152">[ subject ]</a>
+              <a href="author.html#152">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: cosurgi
+Date: 2007-06-05 17:32:42 +0200 (Tue, 05 Jun 2007)
+New Revision: 1187
+
+Modified:
+   trunk/extra/tetra/Tetra.cpp
+   trunk/pkg/common/Engine/MetaEngine/InteractionPhysicsMetaEngine.cpp
+   trunk/pkg/common/Engine/StandAloneEngine/PersistentSAPCollider.cpp
+   trunk/pkg/dem/Engine/DeusExMachina/CapillaryStressRecorder.cpp
+   trunk/pkg/dem/Engine/DeusExMachina/ContactStressRecorder.cpp
+   trunk/pkg/dem/Engine/DeusExMachina/WallStressRecorder.cpp
+   trunk/pkg/dem/Engine/EngineUnit/MacroMicroElasticRelationships.cpp
+   trunk/pkg/dem/Engine/EngineUnit/MacroMicroElasticRelationshipsWater.cpp
+   trunk/pkg/dem/Engine/StandAloneEngine/CapillaryCohesiveLaw.cpp
+   trunk/pkg/dem/Engine/StandAloneEngine/ForceRecorder.cpp
+   trunk/pkg/dem/PreProcessor/SDECImpactTest.cpp
+   trunk/pkg/dem/PreProcessor/SDECMovingWall.cpp
+   trunk/pkg/dem/PreProcessor/TetrahedronsTest.cpp
+   trunk/pkg/dem/PreProcessor/TriaxialTestWater.cpp
+   trunk/pkg/fem/PreProcessor/FEMBeam.cpp
+   trunk/pkg/lattice/PreProcessor/LatticeExample.cpp
+   trunk/pkg/mass-spring/PreProcessor/HangingCloth.cpp
+   trunk/pkg/realtime-rigidbody/PreProcessor/BoxStack.cpp
+   trunk/pkg/realtime-rigidbody/PreProcessor/RotatingBox.cpp
+Log:
+BZR revno: 991
+committer: Janek Kozicki &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">cosurgi at berlios.de</A>&gt;
+message:
+  - Tetra2TetraBang returns before it starts (to avoid crashes in the release)
+  - fixed some crashing of HangingCloth, but I see that there is still some
+    problem. Tracking it down is a waste of time, currently, because new
+    containers will enforce refactoring here and fixing this problem.
+  - FileGenerators try to set the timestep when TimeStepper is not used. But it
+    is still not working when simulation is running during the generation. This
+    means, that 'dt' should not be in Omega, but inside a simulation itself. At
+    last there is a clear answer for this dilemma.
+
+BZR revno: 990
+committer: Janek Kozicki &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">cosurgi at berlios.de</A>&gt;
+message:
+  - fixed warnings in capillary law.
+
+
+
+Modified: trunk/extra/tetra/Tetra.cpp
+===================================================================
+--- trunk/extra/tetra/Tetra.cpp	2007-06-05 15:31:19 UTC (rev 1186)
++++ trunk/extra/tetra/Tetra.cpp	2007-06-05 15:32:42 UTC (rev 1187)
+@@ -254,6 +254,11 @@
+  * <A HREF="http://members.tripod.com/~Paul_Kirby/vector/Vplanelineint.html">http://members.tripod.com/~Paul_Kirby/vector/Vplanelineint.html</A>
+  */
+ list&lt;Tetrahedron&gt; Tetra2TetraBang::TetraClipByPlane(const Tetrahedron&amp; T, const Vector3r&amp; P, const Vector3r&amp; normal){
++	
++	list&lt;Tetrahedron&gt; ret;
++	// FIXME I've put return here, to avoid crashing in the release / Janek
++	return ret;
++
+ 	vector&lt;size_t&gt; pos, neg, zer; Real dist[4];
+ 	for(size_t i=0; i&lt;4; i++){
+ 		dist[i]=(T.v[i]-P).Dot(normal);
+@@ -267,8 +272,6 @@
+ 	#define PTPT(i,j) PtPtPlaneIntr(v[i],v[j],P,normal)
+ 	assert(NEG+POS+ZER==4);
+ 
+-	list&lt;Tetrahedron&gt; ret;
+-
+ 	// HOMOGENEOUS CASES
+ 		// ++++, +++0, ++00, +000, 0000 (degenerate (planar) tetrahedron)
+ 		if(POS==4 || (POS==3 &amp;&amp; ZER==1) || (POS==2 &amp;&amp; ZER==2) || (POS==1 &amp;&amp; ZER==3) || ZER==4) return ret; // &#8709;
+
+Modified: trunk/pkg/common/Engine/MetaEngine/InteractionPhysicsMetaEngine.cpp
+===================================================================
+--- trunk/pkg/common/Engine/MetaEngine/InteractionPhysicsMetaEngine.cpp	2007-06-05 15:31:19 UTC (rev 1186)
++++ trunk/pkg/common/Engine/MetaEngine/InteractionPhysicsMetaEngine.cpp	2007-06-05 15:32:42 UTC (rev 1187)
+@@ -26,7 +26,8 @@
+ 
+ 		shared_ptr&lt;Body&gt;&amp; b1 = (*bodies)[interaction-&gt;getId1()];
+ 		shared_ptr&lt;Body&gt;&amp; b2 = (*bodies)[interaction-&gt;getId2()];
+-		operator()( b1-&gt;physicalParameters , b2-&gt;physicalParameters , interaction );
++		if( b1-&gt;physicalParameters &amp;&amp; b2-&gt;physicalParameters )
++			operator()( b1-&gt;physicalParameters , b2-&gt;physicalParameters , interaction );
+ 	}
+ 
+ 	shared_ptr&lt;InteractionContainer&gt;&amp; transientInteractions = ncb-&gt;transientInteractions;
+
+Modified: trunk/pkg/common/Engine/StandAloneEngine/PersistentSAPCollider.cpp
+===================================================================
+--- trunk/pkg/common/Engine/StandAloneEngine/PersistentSAPCollider.cpp	2007-06-05 15:31:19 UTC (rev 1186)
++++ trunk/pkg/common/Engine/StandAloneEngine/PersistentSAPCollider.cpp	2007-06-05 15:32:42 UTC (rev 1187)
+@@ -178,7 +178,7 @@
+ {
+ 
+ // 	// look if the pair (id1,id2) already exists in the overleppingBB collection
+-	bool found = (transientInteractions-&gt;find(id1,id2)!=0);
++	bool found = (transientInteractions-&gt;find(body_id_t(id1),body_id_t(id2))!=0);
+ 	
+ 	// test if the AABBs of the spheres number &quot;id1&quot; and &quot;id2&quot; are overlapping
+ 	int offset1 = 3*id1;
+@@ -196,10 +196,10 @@
+ 
+ 	// inserts the pair p=(id1,id2) if the two AABB overlaps and if p does not exists in the overlappingBB
+ 	if (overlap &amp;&amp; !found)
+-		transientInteractions-&gt;insert(id1,id2);
++		transientInteractions-&gt;insert(body_id_t(id1),body_id_t(id2));
+ 	// removes the pair p=(id1,id2) if the two AABB do not overlapp any more and if p already exists in the overlappingBB
+ 	else if (!overlap &amp;&amp; found)
+-		transientInteractions-&gt;erase(id1,id2);
++		transientInteractions-&gt;erase(body_id_t(id1),body_id_t(id2));
+ 
+ }
+ 
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/CapillaryStressRecorder.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/CapillaryStressRecorder.cpp	2007-06-05 15:31:19 UTC (rev 1186)
++++ trunk/pkg/dem/Engine/DeusExMachina/CapillaryStressRecorder.cpp	2007-06-05 15:32:42 UTC (rev 1187)
+@@ -211,7 +211,7 @@
+ // 	cerr &lt;&lt; &quot;Vw = &quot; &lt;&lt; Vwater &lt;&lt; &quot;Vv = &quot; &lt;&lt; Vv &lt;&lt; endl;
+ // 	cerr &lt;&lt; &quot;V = &quot; &lt;&lt; V &lt;&lt; &quot;Vs = &quot; &lt;&lt; Vs &lt;&lt; endl;
+ 	
+-	Real n = Vv/Vech;
++//	Real n = Vv/Vech;
+ 	Real Sr = 100*Vwater/Vv;
+ 	if (Sr&gt;100) Sr=100;
+ 	Real w = 100*Vwater/Vech;
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/ContactStressRecorder.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/ContactStressRecorder.cpp	2007-06-05 15:31:19 UTC (rev 1186)
++++ trunk/pkg/dem/Engine/DeusExMachina/ContactStressRecorder.cpp	2007-06-05 15:32:42 UTC (rev 1187)
+@@ -93,7 +93,7 @@
+ 	Real f1_el_x=0, f1_el_y=0, f1_el_z=0, x1=0, y1=0, z1=0, x2=0, y2=0, z2=0;
+ 	
+ 	Real sig11_el=0, sig22_el=0, sig33_el=0, sig12_el=0, sig13_el=0,
+-	sig23_el=0, Vwater = 0, kinematicE = 0;
++	sig23_el=0, /*Vwater = 0,*/ kinematicE = 0;
+ 	
+ 	InteractionContainer::iterator ii    = ncb-&gt;transientInteractions-&gt;begin();
+         InteractionContainer::iterator iiEnd = ncb-&gt;transientInteractions-&gt;end();
+@@ -217,7 +217,7 @@
+ 	/// FabricTensor
+ 	
+ 	//FT = (fabricTensor/j);
+-	Real traceFT = (FT[0][0]+FT[1][1]+FT[2][2])/j;
++//	Real traceFT = (FT[0][0]+FT[1][1]+FT[2][2])/j;
+ 	
+ // 	if (Omega::instance().getCurrentIteration() % 100 == 0) 
+ // 	{cerr &lt;&lt; &quot;interactions de contact = &quot; &lt;&lt; j &lt;&lt; endl;}
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/WallStressRecorder.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/WallStressRecorder.cpp	2007-06-05 15:31:19 UTC (rev 1186)
++++ trunk/pkg/dem/Engine/DeusExMachina/WallStressRecorder.cpp	2007-06-05 15:32:42 UTC (rev 1187)
+@@ -95,8 +95,8 @@
+ 			if (currentContactGeometry-&gt;penetrationDepth &gt;= 0)
+ 
+ 			{
+-			unsigned int id1 = interaction -&gt; getId1();
+-			unsigned int id2 = interaction -&gt; getId2();
++			int id1 = interaction -&gt; getId1();
++			int id2 = interaction -&gt; getId2();
+ 
+ 			ElasticContactInteraction* currentContactPhysics   
+ 			= static_cast&lt;ElasticContactInteraction*&gt;
+
+Modified: trunk/pkg/dem/Engine/EngineUnit/MacroMicroElasticRelationships.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/EngineUnit/MacroMicroElasticRelationships.cpp	2007-06-05 15:31:19 UTC (rev 1186)
++++ trunk/pkg/dem/Engine/EngineUnit/MacroMicroElasticRelationships.cpp	2007-06-05 15:32:42 UTC (rev 1187)
+@@ -105,11 +105,13 @@
+ 		}
+ 		else
+ 		{	// FIXME - are those lines necessary ???? what they are doing in fact ???
+-			ElasticContactInteraction* contactPhysics = YADE_CAST&lt;ElasticContactInteraction*&gt;(interaction-&gt;interactionPhysics.get());
+-
+-			contactPhysics-&gt;kn = contactPhysics-&gt;initialKn;
+-			contactPhysics-&gt;ks = contactPhysics-&gt;initialKs;
+-			contactPhysics-&gt;equilibriumDistance = contactPhysics-&gt;initialEquilibriumDistance;
++			ElasticContactInteraction* contactPhysics = dynamic_cast&lt;ElasticContactInteraction*&gt;(interaction-&gt;interactionPhysics.get());
++			if(contactPhysics)
++			{
++				contactPhysics-&gt;kn = contactPhysics-&gt;initialKn;
++				contactPhysics-&gt;ks = contactPhysics-&gt;initialKs;
++				contactPhysics-&gt;equilibriumDistance = contactPhysics-&gt;initialEquilibriumDistance;
++			}
+ 		}	
+ 		
+ 	}
+
+Modified: trunk/pkg/dem/Engine/EngineUnit/MacroMicroElasticRelationshipsWater.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/EngineUnit/MacroMicroElasticRelationshipsWater.cpp	2007-06-05 15:31:19 UTC (rev 1186)
++++ trunk/pkg/dem/Engine/EngineUnit/MacroMicroElasticRelationshipsWater.cpp	2007-06-05 15:32:42 UTC (rev 1187)
+@@ -75,18 +75,18 @@
+ 
+ 			Real Ea 	= sdec1-&gt;young;
+ 			Real Eb 	= sdec2-&gt;young;
+-			Real Va 	= sdec1-&gt;poisson;
+-			Real Vb 	= sdec2-&gt;poisson;
++//			Real Va 	= sdec1-&gt;poisson;
++//			Real Vb 	= sdec2-&gt;poisson;
+ 			Real Da 	= interactionGeometry-&gt;radius1; // FIXME - multiply by factor of sphere interaction distance (so sphere intaracts at bigger range that its geometrical size)
+ 			Real Db 	= interactionGeometry-&gt;radius2; // FIXME - as above
+ 			Real fa 	= sdec1-&gt;frictionAngle;
+ 			Real fb 	= sdec2-&gt;frictionAngle;
+ 
+-			Real Eab	= 2*Ea*Eb/(Ea+Eb);
+-			Real Vab	= 2*Va*Vb/(Va+Vb);
++//			Real Eab	= 2*Ea*Eb/(Ea+Eb);
++//			Real Vab	= 2*Va*Vb/(Va+Vb);
+ 
+ 			Real Dinit 	= Da+Db; 			// FIXME - is it just a sum?
+-			Real Sinit 	= Mathr::PI * std::pow( std::min(Da,Db) , 2);
++//			Real Sinit 	= Mathr::PI * std::pow( std::min(Da,Db) , 2);
+ 
+ 			//Real Kn						= (Eab*Sinit/Dinit)*( (1+alpha)/(beta*(1+Vab) + gamma*(1-alpha*Vab) ) );
+ 			Real ksOnkn = 0.5;
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/CapillaryCohesiveLaw.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/CapillaryCohesiveLaw.cpp	2007-06-05 15:31:19 UTC (rev 1186)
++++ trunk/pkg/dem/Engine/StandAloneEngine/CapillaryCohesiveLaw.cpp	2007-06-05 15:32:42 UTC (rev 1187)
+@@ -166,8 +166,7 @@
+ 
+                         /// intergranular distance
+ 
+-                        Real intergranularDistance =
+-                                currentContactGeometry-&gt;penetrationDepth;
++//                        Real intergranularDistance = currentContactGeometry-&gt;penetrationDepth;
+ 
+                         Real D =
+                                 alpha*(de2-&gt;se3.position-de1-&gt;se3.position).Length()-alpha*(
+@@ -199,7 +198,7 @@
+                         //meniscusParameters-&gt;CapillaryPressure = CapillaryPressure;
+                         currentContactPhysics-&gt;CapillaryPressure = CapillaryPressure;
+ 
+-                        Real r = R2/R1;
++//                        Real r = R2/R1;
+ 
+                         //cerr &lt;&lt; &quot;r = &quot;&lt;&lt; R2/R1 &lt;&lt; endl ;
+                         //cerr &lt;&lt; &quot;Dinterpol = &quot; &lt;&lt; Dinterpol &lt;&lt; endl;
+@@ -307,9 +306,8 @@
+         Parameters result_inf;
+         Parameters result_sup;
+         Parameters result;
+-        int i = 0;
+ 
+-        for ( i; i &lt; (NB_R_VALUES); i++)
++        for ( int i=0; i &lt; (NB_R_VALUES); i++)
+         {
+                 Real data_R = data_complete[i].R;
+                 //cerr &lt;&lt; &quot;i = &quot; &lt;&lt; i &lt;&lt; endl;
+@@ -358,7 +356,10 @@
+         file &gt;&gt; n_D;
+ 
+         if (!file.is_open())
+-                cout &lt;&lt; &quot;problem opening file for capillary law&quot; &lt;&lt; endl;
++	{
++                cout &lt;&lt; &quot;ERROR: problem opening file for capillary law&quot; &lt;&lt; endl;
++		return;
++	}
+         for (int i=0; i&lt;n_D; i++)
+                 full_data.push_back(TableauD(file));
+         file.close();
+@@ -375,7 +376,7 @@
+         Parameters result_inf;
+         Parameters result_sup;
+ 
+-        for ( int i=0; i &lt; full_data.size(); ++i)
++        for ( unsigned int i=0; i &lt; full_data.size(); ++i)
+         {
+                 if (full_data[i].D &gt; D )	// ok si D rang&#65533;s ds l'ordre croissant
+ 
+@@ -418,7 +419,7 @@
+         file.ignore(200, '\n'); // saute les caract&#65533;res (200 au maximum) jusque au caract&#65533;re \n (fin de ligne)*_
+ 
+         if (n_lines!=0)
+-                for (i; i&lt;n_lines; ++i) {
++                for (; i&lt;n_lines; ++i) {
+                         data.push_back(vector&lt;Real&gt; ());
+                         for (int j=0; j &lt; 6; ++j)	// [D,P,V,F,delta1,delta2]
+                         {
+@@ -509,10 +510,10 @@
+ std::ostream&amp; operator&lt;&lt;(std::ostream&amp; os, Tableau&amp; T)
+ {
+         os &lt;&lt; &quot;Tableau : R=&quot; &lt;&lt; T.R &lt;&lt; endl;
+-        for (int i=0; i&lt;T.full_data.size(); i++) {
++        for (unsigned int i=0; i&lt;T.full_data.size(); i++) {
+                 os &lt;&lt; &quot;TableauD : D=&quot; &lt;&lt; T.full_data[i].D &lt;&lt; endl;
+-                for (int j=0; j&lt;T.full_data[i].data.size();j++) {
+-                        for (int k=0; k&lt;T.full_data[i].data[j].size(); k++)
++                for (unsigned int j=0; j&lt;T.full_data[i].data.size();j++) {
++                        for (unsigned int k=0; k&lt;T.full_data[i].data[j].size(); k++)
+                                 os &lt;&lt; T.full_data[i].data[j][k] &lt;&lt; &quot; &quot;;
+                         os &lt;&lt; endl;
+                 }
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/ForceRecorder.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/ForceRecorder.cpp	2007-06-05 15:31:19 UTC (rev 1186)
++++ trunk/pkg/dem/Engine/StandAloneEngine/ForceRecorder.cpp	2007-06-05 15:32:42 UTC (rev 1187)
+@@ -58,11 +58,18 @@
+ 	
+ 	for( int i = startId ; i &lt;= endId ; ++i )
+ 	{
+-		Vector3r force = YADE_CAST&lt;Force*&gt;(ncb-&gt;physicalActions-&gt;find( i , actionForce-&gt;getClassIndex() ) . get() )-&gt;force;
++		if(ncb-&gt;bodies-&gt;exists(i))
++		{
++			Vector3r force = YADE_CAST&lt;Force*&gt;(ncb-&gt;physicalActions-&gt;find( i , actionForce-&gt;getClassIndex() ) . get() )-&gt;force;
+ 		
+-		x+=force[0];
+-		y+=force[1];
+-		z+=force[2];
++			x+=force[0];
++			y+=force[1];
++			z+=force[2];
++		}
++		else
++		{
++			cerr &lt;&lt; &quot;Warning: trying to record force on non-existing &quot;&lt;&lt; i &lt;&lt;&quot; body!&quot; &lt;&lt; endl;
++		}
+ 	}
+ 	//cerr &lt;&lt; &quot;record force&quot; &lt;&lt; endl;
+ 	ofile &lt;&lt; lexical_cast&lt;string&gt;(Omega::instance().getSimulationTime()) &lt;&lt; &quot; &quot; 
+
+Modified: trunk/pkg/dem/PreProcessor/SDECImpactTest.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/SDECImpactTest.cpp	2007-06-05 15:31:19 UTC (rev 1186)
++++ trunk/pkg/dem/PreProcessor/SDECImpactTest.cpp	2007-06-05 15:32:42 UTC (rev 1187)
+@@ -189,7 +189,7 @@
+ 
+ string SDECImpactTest::generate()
+ {
+-	int startId=boost::numeric::bounds&lt;unsigned int&gt;::highest(), endId=0; // record forces from group 2
++	int startId=boost::numeric::bounds&lt;int&gt;::highest(), endId=0; // record forces from group 2
+ 	
+ 	rootBody = shared_ptr&lt;MetaBody&gt;(new MetaBody);
+ 	createActors(rootBody);
+
+Modified: trunk/pkg/dem/PreProcessor/SDECMovingWall.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/SDECMovingWall.cpp	2007-06-05 15:31:19 UTC (rev 1186)
++++ trunk/pkg/dem/PreProcessor/SDECMovingWall.cpp	2007-06-05 15:32:42 UTC (rev 1187)
+@@ -416,7 +416,7 @@
+ 		rootBody-&gt;engines.push_back(orientationIntegrator);
+ 
+ 	shared_ptr&lt;PositionOrientationRecorder&gt; positionOrientationRecorder(new PositionOrientationRecorder);
+-	rootBody-&gt;engines.push_back(positionOrientationRecorder);
++	//rootBody-&gt;engines.push_back(positionOrientationRecorder);
+ 
+ 	rootBody-&gt;engines.push_back(kinematic);
+ 	
+
+Modified: trunk/pkg/dem/PreProcessor/TetrahedronsTest.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/TetrahedronsTest.cpp	2007-06-05 15:31:19 UTC (rev 1186)
++++ trunk/pkg/dem/PreProcessor/TetrahedronsTest.cpp	2007-06-05 15:32:42 UTC (rev 1187)
+@@ -124,6 +124,7 @@
+ 
+ string TetrahedronsTest::generate()
+ {
++	Omega::instance().setTimeStep(0.04);
+ 	rootBody = shared_ptr&lt;MetaBody&gt;(new MetaBody);
+ 	createActors(rootBody);
+ 	positionRootBody(rootBody);
+
+Modified: trunk/pkg/dem/PreProcessor/TriaxialTestWater.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/TriaxialTestWater.cpp	2007-06-05 15:31:19 UTC (rev 1186)
++++ trunk/pkg/dem/PreProcessor/TriaxialTestWater.cpp	2007-06-05 15:32:42 UTC (rev 1187)
+@@ -223,7 +223,7 @@
+ 
+ string TriaxialTestWater::generate()
+ {
+-	unsigned int startId=boost::numeric::bounds&lt;unsigned int&gt;::highest(), endId=0; // record forces from group 2
++//	unsigned int startId=boost::numeric::bounds&lt;unsigned int&gt;::highest(), endId=0; // record forces from group 2
+ 	
+ 	rootBody = shared_ptr&lt;MetaBody&gt;(new MetaBody);
+ 	createActors(rootBody);
+@@ -385,7 +385,7 @@
+ 
+ void TriaxialTestWater::createSphere(shared_ptr&lt;Body&gt;&amp; body, Vector3r position, Real radius, bool big, bool dynamic )
+ {
+-	body = shared_ptr&lt;Body&gt;(new Body(0,2));
++	body = shared_ptr&lt;Body&gt;(new Body(body_id_t(0),2));
+ 	shared_ptr&lt;BodyMacroParameters&gt; physics(new BodyMacroParameters);
+ 	shared_ptr&lt;AABB&gt; aabb(new AABB);
+ 	shared_ptr&lt;Sphere&gt; gSphere(new Sphere);
+@@ -436,7 +436,7 @@
+ 
+ void TriaxialTestWater::createBox(shared_ptr&lt;Body&gt;&amp; body, Vector3r position, Vector3r extents, bool wire)
+ {
+-	body = shared_ptr&lt;Body&gt;(new Body(0,2));
++	body = shared_ptr&lt;Body&gt;(new Body(body_id_t(0),2));
+ 	shared_ptr&lt;BodyMacroParameters&gt; physics(new BodyMacroParameters);
+ 	shared_ptr&lt;AABB&gt; aabb(new AABB);
+ 	shared_ptr&lt;Box&gt; gBox(new Box);
+
+Modified: trunk/pkg/fem/PreProcessor/FEMBeam.cpp
+===================================================================
+--- trunk/pkg/fem/PreProcessor/FEMBeam.cpp	2007-06-05 15:31:19 UTC (rev 1186)
++++ trunk/pkg/fem/PreProcessor/FEMBeam.cpp	2007-06-05 15:32:42 UTC (rev 1187)
+@@ -114,6 +114,7 @@
+ 
+ string FEMBeam::generate()
+ {
++	Omega::instance().setTimeStep(0.004);
+ 	rootBody = shared_ptr&lt;MetaBody&gt;(new MetaBody);
+ 	positionRootBody(rootBody);
+ 	
+
+Modified: trunk/pkg/lattice/PreProcessor/LatticeExample.cpp
+===================================================================
+--- trunk/pkg/lattice/PreProcessor/LatticeExample.cpp	2007-06-05 15:31:19 UTC (rev 1186)
++++ trunk/pkg/lattice/PreProcessor/LatticeExample.cpp	2007-06-05 15:32:42 UTC (rev 1187)
+@@ -950,7 +950,7 @@
+ 
+ void LatticeExample::calcAxisAngle(LatticeBeamParameters* beam1, BodyContainer* bodies, int otherId, InteractionContainer* ints, int thisId)
+ { 
+-	if( ! ints-&gt;find(otherId,thisId) &amp;&amp; otherId != thisId )
++	if( ! ints-&gt;find(body_id_t(otherId),body_id_t(thisId)) &amp;&amp; otherId != thisId )
+ 	{
+ 		LatticeBeamParameters* 	beam2 		= static_cast&lt;LatticeBeamParameters*&gt;( ((*(bodies))[ otherId ])-&gt;physicalParameters.get() );
+ 		Real 			angle;
+
+Modified: trunk/pkg/mass-spring/PreProcessor/HangingCloth.cpp
+===================================================================
+--- trunk/pkg/mass-spring/PreProcessor/HangingCloth.cpp	2007-06-05 15:31:19 UTC (rev 1186)
++++ trunk/pkg/mass-spring/PreProcessor/HangingCloth.cpp	2007-06-05 15:32:42 UTC (rev 1187)
+@@ -143,6 +143,7 @@
+ 
+ string HangingCloth::generate()
+ {
++	Omega::instance().setTimeStep(0.004);
+ 	rootBody = shared_ptr&lt;MetaBody&gt;(new MetaBody);
+ 
+ 	rootBody-&gt;persistentInteractions	= shared_ptr&lt;InteractionContainer&gt;(new InteractionVecSet);
+@@ -447,17 +448,18 @@
+ 	Body * b2 = static_cast&lt;Body*&gt;((*(rootBody-&gt;bodies))[j].get());
+ 
+ 	spring = shared_ptr&lt;Interaction&gt;(new Interaction( b1-&gt;getId() , b2-&gt;getId() ));
+-	shared_ptr&lt;SpringGeometry&gt;	geometry(new SpringGeometry);
++//	shared_ptr&lt;SpringGeometry&gt;	geometry(new SpringGeometry);
+ 	shared_ptr&lt;SpringPhysics&gt;	physics(new SpringPhysics);
+ 
+-	geometry-&gt;p1			= b1-&gt;physicalParameters-&gt;se3.position;
+-	geometry-&gt;p2			= b2-&gt;physicalParameters-&gt;se3.position;
++//	geometry-&gt;p1			= b1-&gt;physicalParameters-&gt;se3.position;
++//	geometry-&gt;p2			= b2-&gt;physicalParameters-&gt;se3.position;
+ 
+-	physics-&gt;initialLength		= (geometry-&gt;p1-geometry-&gt;p2).Length();
++//	physics-&gt;initialLength		= (geometry-&gt;p1-geometry-&gt;p2).Length();
++	physics-&gt;initialLength		= ( b1-&gt;physicalParameters-&gt;se3.position - b2-&gt;physicalParameters-&gt;se3.position ).Length();
+ 	physics-&gt;stiffness		= springStiffness;
+ 	physics-&gt;damping		= springDamping;
+ 
+-	spring-&gt;interactionGeometry = geometry;
++//	spring-&gt;interactionGeometry = geometry;
+ 	spring-&gt;interactionPhysics = physics;
+ 	spring-&gt;isReal = true;
+ 	spring-&gt;isNew = false;
+
+Modified: trunk/pkg/realtime-rigidbody/PreProcessor/BoxStack.cpp
+===================================================================
+--- trunk/pkg/realtime-rigidbody/PreProcessor/BoxStack.cpp	2007-06-05 15:31:19 UTC (rev 1186)
++++ trunk/pkg/realtime-rigidbody/PreProcessor/BoxStack.cpp	2007-06-05 15:32:42 UTC (rev 1187)
+@@ -85,6 +85,7 @@
+ 
+ string BoxStack::generate()
+ {
++	Omega::instance().setTimeStep(0.04);
+ 	rootBody = shared_ptr&lt;MetaBody&gt;(new MetaBody);
+ 
+ 	createActors(rootBody);
+
+Modified: trunk/pkg/realtime-rigidbody/PreProcessor/RotatingBox.cpp
+===================================================================
+--- trunk/pkg/realtime-rigidbody/PreProcessor/RotatingBox.cpp	2007-06-05 15:31:19 UTC (rev 1186)
++++ trunk/pkg/realtime-rigidbody/PreProcessor/RotatingBox.cpp	2007-06-05 15:32:42 UTC (rev 1187)
+@@ -87,6 +87,7 @@
+ 
+ string RotatingBox::generate()
+ {
++	Omega::instance().setTimeStep(0.01);
+ 	rootBody = shared_ptr&lt;MetaBody&gt;(new MetaBody);
+ 
+ 	createActors(rootBody);
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000151.html">[Yade-commits] r1186 - in trunk: debian scripts
+</A></li>
+	<LI>Next message: <A HREF="000153.html">[Yade-commits] r1188 - in trunk: . lib/base pkg/dem	pkg/dem/DataClass/InteractionGeometry	pkg/dem/DataClass/InteractionPhysics	pkg/dem/DataClass/PhysicalParameters	pkg/dem/Engine/StandAloneEngine scripts
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#152">[ date ]</a>
+              <a href="thread.html#152">[ thread ]</a>
+              <a href="subject.html#152">[ subject ]</a>
+              <a href="author.html#152">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

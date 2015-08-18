@@ -1,0 +1,199 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1254 - in trunk: core lib/multimethods	pkg/dem/Engine/DeusExMachina pkg/dem/Engine/StandAloneEngine
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1254%20-%20in%20trunk%3A%20core%20lib/multimethods%0A%09pkg/dem/Engine/DeusExMachina%20pkg/dem/Engine/StandAloneEngine&In-Reply-To=%3C200802182025.m1IKPWLR000760%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000218.html">
+   <LINK REL="Next"  HREF="000220.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1254 - in trunk: core lib/multimethods	pkg/dem/Engine/DeusExMachina pkg/dem/Engine/StandAloneEngine</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1254%20-%20in%20trunk%3A%20core%20lib/multimethods%0A%09pkg/dem/Engine/DeusExMachina%20pkg/dem/Engine/StandAloneEngine&In-Reply-To=%3C200802182025.m1IKPWLR000760%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1254 - in trunk: core lib/multimethods	pkg/dem/Engine/DeusExMachina pkg/dem/Engine/StandAloneEngine">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Mon Feb 18 21:25:32 CET 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000218.html">[Yade-commits] r1253 - in trunk/pkg: common	common/Engine/DeusExMachina dem dem/Engine/DeusExMachina
+</A></li>
+        <LI>Next message: <A HREF="000220.html">[Yade-commits] r1255 - in trunk/extra: . clump usct
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#219">[ date ]</a>
+              <a href="thread.html#219">[ thread ]</a>
+              <a href="subject.html#219">[ subject ]</a>
+              <a href="author.html#219">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2008-02-18 21:25:31 +0100 (Mon, 18 Feb 2008)
+New Revision: 1254
+
+Modified:
+   trunk/core/MetaDispatchingEngine1D.hpp
+   trunk/core/MetaDispatchingEngine2D.hpp
+   trunk/lib/multimethods/DynLibDispatcher.hpp
+   trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.cpp
+   trunk/pkg/dem/Engine/StandAloneEngine/GlobalStiffnessCounter.cpp
+Log:
+Fix lefover of experimental code in TriaxialCompressionEngine (creating sohesive links after compaction.
+
+Modified: trunk/core/MetaDispatchingEngine1D.hpp
+===================================================================
+--- trunk/core/MetaDispatchingEngine1D.hpp	2008-02-16 01:44:07 UTC (rev 1253)
++++ trunk/core/MetaDispatchingEngine1D.hpp	2008-02-18 20:25:31 UTC (rev 1254)
+@@ -52,7 +52,11 @@
+ 
+ 		virtual void add(string euType){
+ 			shared_ptr&lt;EngineUnitType&gt; eu=dynamic_pointer_cast&lt;EngineUnitType&gt;(ClassFactory::instance().createShared(euType));
+-			if(!eu) throw runtime_error(&quot;Class `&quot;+euType+&quot;' could not be cast to required 1D EngineUnit&quot;);
++			// if(!eu) throw runtime_error(&quot;Class `&quot;+euType+&quot;' could not be cast to required 1D EngineUnit&quot;);
++			if(!eu){
++				cerr&lt;&lt;__FILE__&lt;&lt;&quot;:&quot;&lt;&lt;__LINE__&lt;&lt;&quot; WARNING! dynamic cast of engine unit &quot;&lt;&lt;euType&lt;&lt;&quot; failed, will use static_cast. Go figure why.&quot;&lt;&lt;endl;
++				eu=static_pointer_cast&lt;EngineUnitType&gt;(ClassFactory::instance().createShared(euType));
++			}
+ 			add(eu);
+ 		}
+ 
+
+Modified: trunk/core/MetaDispatchingEngine2D.hpp
+===================================================================
+--- trunk/core/MetaDispatchingEngine2D.hpp	2008-02-16 01:44:07 UTC (rev 1253)
++++ trunk/core/MetaDispatchingEngine2D.hpp	2008-02-18 20:25:31 UTC (rev 1254)
+@@ -57,7 +57,10 @@
+ 		/* add functor by its literal name */
+ 		virtual void add(string euType){
+ 			shared_ptr&lt;EngineUnitType&gt; eu=dynamic_pointer_cast&lt;EngineUnitType&gt;(ClassFactory::instance().createShared(euType));
+-			if(!eu) throw runtime_error(&quot;Class `&quot;+euType+&quot;' could not be cast to required 2D EngineUnit&quot;);
++			if(!eu){
++				cerr&lt;&lt;__FILE__&lt;&lt;&quot;:&quot;&lt;&lt;__LINE__&lt;&lt;&quot; WARNING! dynamic cast of engine unit &quot;&lt;&lt;euType&lt;&lt;&quot; failed, will use static_cast. Go figure why.&quot;&lt;&lt;endl;
++				eu=static_pointer_cast&lt;EngineUnitType&gt;(ClassFactory::instance().createShared(euType));
++			}
+ 			add(eu);
+ 		}
+ 
+
+Modified: trunk/lib/multimethods/DynLibDispatcher.hpp
+===================================================================
+--- trunk/lib/multimethods/DynLibDispatcher.hpp	2008-02-16 01:44:07 UTC (rev 1253)
++++ trunk/lib/multimethods/DynLibDispatcher.hpp	2008-02-18 20:25:31 UTC (rev 1254)
+@@ -226,8 +226,10 @@
+ 			try
+ 			{
+ 				executor = dynamic_pointer_cast&lt;Executor&gt;(ClassFactory::instance().createShared(libName));
+-				if (!executor) //dynamic_cast_failed for some reason so try with static_cast
++				if (!executor){ //dynamic_cast_failed for some reason so try with static_cast
++					// cerr&lt;&lt;__FILE__&lt;&lt;&quot;:&quot;&lt;&lt;__LINE__&lt;&lt;&quot; ERROR dynamic_casting executor of type &quot;&lt;&lt;libName&lt;&lt;&quot;, using static_cast. WHY?&quot;&lt;&lt;endl;
+ 					executor = static_pointer_cast&lt;Executor&gt;(ClassFactory::instance().createShared(libName));
++				}
+ 			}
+ 			catch (FactoryCantCreate&amp; fe)
+ 			{
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.cpp	2008-02-16 01:44:07 UTC (rev 1253)
++++ trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.cpp	2008-02-18 20:25:31 UTC (rev 1254)
+@@ -83,18 +83,6 @@
+ 		wall_bottom_activated=false;
+ 		wall_top_activated=false;
+ 		if(currentState==STATE_ISO_UNLOADING){ LOG_INFO(&quot;Speres -&gt; /tmp/unloaded.spheres&quot;); Shop::saveSpheresToFile(&quot;/tmp/unloaded.spheres&quot;); }
+-		if(1){
+-			max_vel*=20;
+-			Shop::createCohesion(1e-4,1e-4,0); // (boost::lambda::_1 %2==0) &amp;&amp; (boost::lambda::_2%2==0));
+-			/*shared_ptr&lt;MetaBody&gt; rootBody=Omega::instance().getRootBody();
+-			for(vector&lt;shared_ptr&lt;Engine&gt; &gt;::iterator I=rootBody-&gt;engines.begin(); I!=rootBody-&gt;engines.end(); ++I){
+-				if((*I)-&gt;getClassName()==&quot;PersistentSAPCollider&quot;) {
+-					rootBody-&gt;engines.erase(I);
+-					LOG_DEBUG(&quot;Removed PersistentSAPCollider engine.&quot;);
+-					break;
+-				}
+-			}*/
+-		}
+ 		if(!firstRun) saveSimulation=true; // saving snapshot .xml will actually be done in ::applyCondition
+ 	}
+ 	else if(currentState==STATE_ISO_COMPACTION &amp;&amp; nextState==STATE_ISO_UNLOADING){
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/GlobalStiffnessCounter.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/GlobalStiffnessCounter.cpp	2008-02-16 01:44:07 UTC (rev 1253)
++++ trunk/pkg/dem/Engine/StandAloneEngine/GlobalStiffnessCounter.cpp	2008-02-18 20:25:31 UTC (rev 1254)
+@@ -66,35 +66,30 @@
+ 	shared_ptr&lt;ElasticContactInteraction&gt; phys1=dynamic_pointer_cast&lt;ElasticContactInteraction&gt;(contact-&gt;interactionPhysics);
+ 	if(geom1 &amp;&amp; phys1){
+ 		Real fn=phys1-&gt;normalForce.Length();
+-		if(fn&lt;Mathr::EPSILON) return false; // FIXME: sharp comparison of floats will be false on machine-zeros (like 2.3333e-18 etc.): should be Mathr::EPSILON*someScaleFactor
++		if(fn==0) return false;
+ 		normal=geom1-&gt;normal;
+ 		radius1=geom1-&gt;radius1; radius2=geom1-&gt;radius2;
+ 		kn=phys1-&gt;kn; ks=phys1-&gt;ks;
+ 		return true;
+ 	}
+ 
+-	shared_ptr&lt;SpheresContactGeometry&gt; geom2=dynamic_pointer_cast&lt;SpheresContactGeometry&gt;(contact-&gt;interactionGeometry);
+-	shared_ptr&lt;BrefcomContact&gt; phys2=dynamic_pointer_cast&lt;BrefcomContact&gt;(contact-&gt;interactionPhysics);
+-	if(geom2 &amp;&amp; phys2){
+-		Real fn=phys2-&gt;Fn.Length();
+-		if(fn&lt;Mathr::EPSILON) return false; // FIXME: sharp comparison of floats will be false on machine-zeros (like 2.3333e-18 etc.): should be Mathr::EPSILON*someScaleFactor
+-		normal=geom2-&gt;normal;
+-		radius1=geom2-&gt;radius1; radius2=geom2-&gt;radius2;
+-		kn=phys2-&gt;Kn; ks=phys2-&gt;Ks;
+-		return true;
+-	}
+-
+ 	shared_ptr&lt;SDECLinkGeometry&gt; geom3=dynamic_pointer_cast&lt;SDECLinkGeometry&gt;(contact-&gt;interactionGeometry);
+ 	shared_ptr&lt;SDECLinkPhysics&gt; phys3=dynamic_pointer_cast&lt;SDECLinkPhysics&gt;(contact-&gt;interactionPhysics);
+ 	if(geom3 &amp;&amp; phys3){
+ 		Real fn=phys3-&gt;normalForce.Length();
+-		if(fn&lt;Mathr::EPSILON) return false; // FIXME: sharp comparison of floats will be false on machine-zeros (like 2.3333e-18 etc.): should be Mathr::EPSILON*someScaleFactor
++		if(fn==0) return false;
+ 		normal=geom3-&gt;normal;
+ 		radius1=geom3-&gt;radius1; radius2=geom3-&gt;radius2;
+ 		kn=phys3-&gt;kn; ks=phys3-&gt;ks;
+ 		return true;
+ 	}
+ 
++	shared_ptr&lt;SpheresContactGeometry&gt; geom2=dynamic_pointer_cast&lt;SpheresContactGeometry&gt;(contact-&gt;interactionGeometry);
++	shared_ptr&lt;BrefcomContact&gt; phys2=dynamic_pointer_cast&lt;BrefcomContact&gt;(contact-&gt;interactionPhysics);
++	if(geom2 &amp;&amp; phys2){
++		return false; // FIXME, adapt to refactored Brefcom
++	}
++
+ 	return false;
+ }
+ 
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000218.html">[Yade-commits] r1253 - in trunk/pkg: common	common/Engine/DeusExMachina dem dem/Engine/DeusExMachina
+</A></li>
+	<LI>Next message: <A HREF="000220.html">[Yade-commits] r1255 - in trunk/extra: . clump usct
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#219">[ date ]</a>
+              <a href="thread.html#219">[ thread ]</a>
+              <a href="subject.html#219">[ subject ]</a>
+              <a href="author.html#219">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

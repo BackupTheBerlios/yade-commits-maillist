@@ -1,0 +1,1549 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1430 - in trunk: extra/triangulation	pkg/common/Engine/EngineUnit pkg/dem	pkg/dem/Engine/DeusExMachina pkg/dem/Engine/StandAloneEngine	pkg/dem/PreProcessor
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1430%20-%20in%20trunk%3A%20extra/triangulation%0A%09pkg/common/Engine/EngineUnit%20pkg/dem%0A%09pkg/dem/Engine/DeusExMachina%20pkg/dem/Engine/StandAloneEngine%0A%09pkg/dem/PreProcessor&In-Reply-To=%3C200807161317.m6GDHWeZ006899%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000389.html">
+   <LINK REL="Next"  HREF="000391.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1430 - in trunk: extra/triangulation	pkg/common/Engine/EngineUnit pkg/dem	pkg/dem/Engine/DeusExMachina pkg/dem/Engine/StandAloneEngine	pkg/dem/PreProcessor</H1>
+    <B>chareyre at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1430%20-%20in%20trunk%3A%20extra/triangulation%0A%09pkg/common/Engine/EngineUnit%20pkg/dem%0A%09pkg/dem/Engine/DeusExMachina%20pkg/dem/Engine/StandAloneEngine%0A%09pkg/dem/PreProcessor&In-Reply-To=%3C200807161317.m6GDHWeZ006899%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1430 - in trunk: extra/triangulation	pkg/common/Engine/EngineUnit pkg/dem	pkg/dem/Engine/DeusExMachina pkg/dem/Engine/StandAloneEngine	pkg/dem/PreProcessor">chareyre at mail.berlios.de
+       </A><BR>
+    <I>Wed Jul 16 15:17:32 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000389.html">[Yade-commits] r1429 - trunk/pkg/dem
+</A></li>
+        <LI>Next message: <A HREF="000391.html">[Yade-commits] r1431 - trunk/pkg/dem/DataClass/InteractionPhysics
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#390">[ date ]</a>
+              <a href="thread.html#390">[ thread ]</a>
+              <a href="subject.html#390">[ subject ]</a>
+              <a href="author.html#390">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: chareyre
+Date: 2008-07-16 15:17:30 +0200 (Wed, 16 Jul 2008)
+New Revision: 1430
+
+Added:
+   trunk/extra/triangulation/Tenseur3.cpp
+   trunk/extra/triangulation/Tenseur3.h
+   trunk/extra/triangulation/TriaxialState.cpp
+   trunk/extra/triangulation/TriaxialState.h
+Modified:
+   trunk/extra/triangulation/Tesselation.cpp
+   trunk/extra/triangulation/TesselationWrapper.cpp
+   trunk/extra/triangulation/makefile
+   trunk/pkg/common/Engine/EngineUnit/CundallNonViscousForceDamping.cpp
+   trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.cpp
+   trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.hpp
+   trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.cpp
+   trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.hpp
+   trunk/pkg/dem/Engine/DeusExMachina/TriaxialStateRecorder.cpp
+   trunk/pkg/dem/Engine/DeusExMachina/TriaxialStateRecorder.hpp
+   trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.cpp
+   trunk/pkg/dem/Engine/StandAloneEngine/CohesiveFrictionalContactLaw.cpp
+   trunk/pkg/dem/Engine/StandAloneEngine/CohesiveFrictionalContactLaw.hpp
+   trunk/pkg/dem/Engine/StandAloneEngine/GlobalStiffnessTimeStepper.cpp
+   trunk/pkg/dem/PreProcessor/TriaxialTest.hpp
+   trunk/pkg/dem/SConscript
+Log:
+
+Mostly small changes and fixes from previous weeks. Sorry for such poor comments...
+
+
+
+
+Added: trunk/extra/triangulation/Tenseur3.cpp
+===================================================================
+--- trunk/extra/triangulation/Tenseur3.cpp	2008-07-14 20:19:11 UTC (rev 1429)
++++ trunk/extra/triangulation/Tenseur3.cpp	2008-07-16 13:17:30 UTC (rev 1430)
+@@ -0,0 +1,406 @@
++// Tenseur3.cpp : d&#65533;finit le point d'entr&#65533;e pour l'application console.
++//
++
++#include &quot;stdafx.h&quot;
++#include &quot;Tenseur3.h&quot;
++#include &quot;def_types.h&quot; //pour d&#65533;finition de la classe &quot;Vecteur&quot;
++
++using namespace std;
++
++
++//const Tenseur3 NULL_TENSEUR3 = Tenseur3(0,0,0,0,0,0,0,0,0);
++
++
++
++
++// Classe m&#65533;re &quot;Tens&quot; dont d&#65533;rive toutes les classes tenseur
++
++Real Tens::Norme2(void)
++{
++	Real N=0;
++    for (int i=1; i&lt;=3; i++)
++		for (int j=1; j&lt;=3; j++)
++			N+= pow(operator ()(i,j), 2);
++    return N;
++}
++
++
++// D&#65533;finition d'op&#65533;rations compl&#65533;mentaires sur vecteurs et matrices
++
++
++Vecteur operator* (Tens&amp; tens, Vecteur&amp; vect)
++{
++	Vecteur result;
++	result = Vecteur( tens(1,1)*vect.x()+ tens(1,2)*vect.y()+ tens(1,3)*vect.z(),
++		tens(2,1)*vect.x()+ tens(2,2)*vect.y()+ tens(2,3)*vect.z(),
++		tens(3,1)*vect.x()+ tens(3,2)*vect.y()+ tens(3,3)*vect.z() );
++	return result;
++}
++
++Vecteur&amp; NormalizedVecteur (Vecteur&amp; vect)
++{
++	vect = vect*(1/sqrt(pow(vect.x(),2)+pow(vect.y(),2)+pow(vect.z(),2)));
++	return vect;
++}
++
++
++///////////		 Classe Tenseur3		////////////
++
++Tenseur3::Tenseur3(bool init)
++{
++	if (init)
++	{
++		for (int i=0; i&lt;3; i++)
++		{
++			for (int j=0; j&lt;3; j++) T[i][j] = 0;
++		}
++	}
++}
++
++Tenseur3::~Tenseur3(void)
++{
++}
++
++Tenseur3::Tenseur3(const Tenseur3&amp; source)
++{
++	for (int i=0; i&lt;3; i++)
++	{
++		for (int j=0; j&lt;3; j++) T[i][j] = source.T[i][j];
++	}
++}
++
++Tenseur3::Tenseur3(Real a11, Real a12, Real a13,
++				   Real a21, Real a22, Real a23,
++				   Real a31, Real a32, Real a33)
++{
++	T[0][0] = a11;
++	T[0][1] = a12;
++	T[0][2] = a13;
++	T[1][0] = a21;
++	T[1][1] = a22;
++	T[1][2] = a23;
++	T[2][0] = a31;
++	T[2][1] = a32;
++	T[2][2] = a33;
++}
++
++
++Tenseur3 &amp;Tenseur3::operator=(const Tenseur3&amp; source)
++{
++	if (&amp;source != this)
++	{
++		for (int i=0; i&lt;3; i++)
++		{
++			for (int j=0; j&lt;3; j++) T[i][j] = source.T[i][j];
++		}
++	}
++	return *this;
++}
++
++Tenseur3 &amp;Tenseur3::operator/=(Real d)
++{	
++	if (d!=0)
++	{
++		d = 1/d;
++		for (int i=0; i&lt;3; i++)
++		{
++			for (int j=0; j&lt;3; j++) T[i][j] *= d;
++		}
++	}
++	return *this;
++}
++
++
++Tenseur3 &amp; Tenseur3::operator +=(const Tenseur3 &amp; source)
++{
++	for (int i=0; i&lt;3; i++)
++		{
++			for (int j=0; j&lt;3; j++) T[i][j] += source.T[i][j];
++		}
++	return *this;
++}
++
++
++
++///////////		 Classe Tenseur_sym3		////////////
++
++Tenseur_sym3::Tenseur_sym3(bool init)
++{
++	if (init)
++	{
++		for (int i=0; i&lt;6; i++) T[i] = 0;
++	}
++}
++
++Tenseur_sym3::~Tenseur_sym3(void)
++{
++}
++
++Tenseur_sym3::Tenseur_sym3(const Tenseur_sym3&amp; source)
++{
++	for (int i=0; i&lt;6; i++)
++	{
++		for (int i=0; i&lt;6; i++) T[i] = source.T[i];
++	}
++}
++
++Tenseur_sym3::Tenseur_sym3(const Tenseur3&amp; source)
++{
++	for (int i=1; i&lt;=3; i++)
++	{
++		T[i-1]=source(i,i);
++		for (int j=3; j&gt;i; j--) T[i+j] = (source(i,j)+source(j,i))*0.5;
++	}
++}
++
++Tenseur_sym3::Tenseur_sym3(Real a11, Real a22, Real a33,
++				   Real a12, Real a13, Real a23)
++{
++	T[0] = a11;
++	T[1] = a22;
++	T[2] = a33;
++	T[3] = a12;
++	T[4] = a13;
++	T[5] = a23;
++}
++
++
++Tenseur_sym3 &amp;Tenseur_sym3::operator=(const Tenseur_sym3&amp; source)
++{
++	if (&amp;source != this)
++	{
++		for (int i=0; i&lt;6; i++)	T[i] = source.T[i];
++	}
++	return *this;
++}
++
++Tenseur_sym3 &amp;Tenseur_sym3::operator/=(Real d)
++{
++	if (d!=0) {
++		d=1/d;
++		for (int i=0; i&lt;6; i++)	T[i]*= d;}
++	return *this;
++}
++
++Real Tenseur_sym3::operator() (int i, int j) const 
++{
++	if (i==j) return T[i-1];
++	else return T[i+j];
++}
++
++Real &amp;Tenseur_sym3::operator() (int i, int j)
++{	
++	if (i==j) return T[i-1];
++	else return T[i+j];
++}
++
++Tenseur_sym3 Tenseur_sym3::Deviatoric (void) const	//retourne la partie d&#65533;viatoire
++{
++	Tenseur_sym3 temp(*this);
++	Real spheric = temp.Trace()/3;
++	temp(1,1)-= spheric;
++	temp(2,2)-= spheric;
++	temp(3,3)-= spheric;
++	return temp;
++}
++
++///////////		 Classe Tenseur_anti3		////////////
++
++Tenseur_anti3::Tenseur_anti3(bool init)
++{
++	if (init)
++	{
++		for (int i=0; i&lt;6; i++) T[i] = 0;
++	}
++}
++
++Tenseur_anti3::~Tenseur_anti3(void)
++{
++}
++
++Tenseur_anti3::Tenseur_anti3(const Tenseur_anti3&amp; source)
++{
++	for (int i=0; i&lt;6; i++)
++	{
++		for (int i=0; i&lt;6; i++) T[i] = source.T[i];
++	}
++}
++
++Tenseur_anti3::Tenseur_anti3(const Tenseur3&amp; source)
++{
++	for (int i=1; i&lt;=3; i++)
++	{
++		T[i-1]=0;
++		for (int j=3; j&gt;i; j--) T[i+j] = (source(i,j)-source(j,i))*0.5;
++	}
++}
++
++Tenseur_anti3::Tenseur_anti3(Real a11, Real a22, Real a33,
++				   Real a12, Real a13, Real a23)
++{
++	T[0] = a11;
++	T[1] = a22;
++	T[2] = a33;
++	T[3] = a12;
++	T[4] = a13;
++	T[5] = a23;
++}
++
++
++Tenseur_anti3 &amp;Tenseur_anti3::operator=(const Tenseur_anti3&amp; source)
++{
++	if (&amp;source != this)
++	{
++		for (int i=0; i&lt;6; i++)	T[i] = source.T[i];
++	}
++	return *this;
++}
++
++Tenseur_anti3 &amp;Tenseur_anti3::operator/=(Real d)
++{
++	if (d!=0)	for (int i=0; i&lt;6; i++)	T[i]/= d;
++	return *this;
++}
++
++Real Tenseur_anti3::operator() (int i, int j) const 
++{
++	if (i==j) return T[i-1];
++	else
++	{
++		if (i&lt;j) return T[i+j];
++		else return -T[i+j];
++	}
++}
++
++//Real &amp;Tenseur_anti3::operator() (int i, int j) //Supprim&#65533;e car pb. pour retourner une r&#65533;f&#65533;rence vers -T[i+j]
++//{	
++//	if (i==j) return T[i-1];
++//	else 
++//	{
++//		if (i&lt;j) return T[i+j];
++//		else return T[i+j];
++//	}
++//}
++
++
++
++
++void Tenseur_produit (Vecteur &amp;v1, Vecteur &amp;v2, Tenseur3 &amp;result)
++{
++	result(1,1) = v1.x()*v2.x();
++	result(1,2) = v1.x()*v2.y(); 
++	result(1,3) = v1.x()*v2.z(); 
++	result(2,1) = v1.y()*v2.x();
++	result(2,2) = v1.y()*v2.y(); 
++	result(2,3) = v1.y()*v2.z(); 
++	result(3,1) = v1.z()*v2.x();
++	result(3,2) = v1.z()*v2.y(); 
++	result(3,3) = v1.z()*v2.z(); 
++}
++
++void Somme (Tenseur3 &amp;result, Vecteur &amp;v1, Vecteur &amp;v2)
++{
++	result(1,1) += v1.x()*v2.x();
++	result(1,2) += v1.x()*v2.y(); 
++	result(1,3) += v1.x()*v2.z(); 
++	result(2,1) += v1.y()*v2.x();
++	result(2,2) += v1.y()*v2.y(); 
++	result(2,3) += v1.y()*v2.z(); 
++	result(3,1) += v1.z()*v2.x();
++	result(3,2) += v1.z()*v2.y(); 
++	result(3,3) += v1.z()*v2.z(); 
++}
++
++
++// Fonctions d'&#65533;criture
++
++std::ostream&amp;
++operator&lt;&lt;(std::ostream&amp; os, const Tenseur3&amp; T)
++  
++{
++	for (int j=1 ; j&lt;4; j++)
++	{
++		for (int i=1; i&lt;4; i++)
++		{
++			os &lt;&lt; T(j,i) &lt;&lt; &quot; &quot;;
++		}
++		os  &lt;&lt; endl;
++	}	
++	return os;
++}
++
++std::ostream&amp;
++operator&lt;&lt;(std::ostream&amp; os, const Tenseur_sym3&amp; T)
++  
++{
++	for (int j=1 ; j&lt;4; j++)
++	{
++		for (int i=1; i&lt;4; i++)
++		{
++			os &lt;&lt; T(j,i) &lt;&lt; &quot; &quot;;
++		}
++		os  &lt;&lt; endl;
++	}	
++	return os;
++}
++
++std::ostream&amp;
++operator&lt;&lt;(std::ostream&amp; os, const Tenseur_anti3&amp; T)
++  
++{
++	for (int j=1 ; j&lt;4; j++)
++	{
++		for (int i=1; i&lt;4; i++)
++		{
++			os &lt;&lt; (Real) T(j,i) &lt;&lt; (string) &quot; &quot;;
++		}
++		os  &lt;&lt; endl;
++	}	
++	return os;
++}
++
++// std::ofstream&amp;
++// operator&lt;&lt;(std::ofstream&amp; os, Tenseur3&amp; T)
++//   
++// {
++// 	for (int j=1 ; j&lt;4; j++)
++// 	{
++// 		for (int i=1; i&lt;4; i++)
++// 		{
++// 			os &lt;&lt; T(j,i) &lt;&lt; &quot; &quot;;
++// 		}
++// 		os  &lt;&lt; endl;
++// 	}	
++// 	return os;
++// }
++// 
++// std::ofstream&amp;
++// operator&lt;&lt;(std::ofstream&amp; os, Tenseur_sym3&amp; T)
++//   
++// {
++// 	for (int j=1 ; j&lt;4; j++)
++// 	{
++// 		for (int i=1; i&lt;4; i++)
++// 		{
++// 			os &lt;&lt; T(j,i) &lt;&lt; &quot; &quot;;
++// 		}
++// 		os  &lt;&lt; endl;
++// 	}	
++// 	return os;
++// }
++// 
++// std::ofstream&amp;
++// operator&lt;&lt;(std::ofstream&amp; os, Tenseur_anti3&amp; T)
++//   
++// {
++// 	for (int j=1 ; j&lt;4; j++)
++// 	{
++// 		for (int i=1; i&lt;4; i++)
++// 		{
++// 			os &lt;&lt; (Real) T(j,i) &lt;&lt; (string) &quot; &quot;;
++// 		}
++// 		os  &lt;&lt; endl;
++// 	}	
++// 	return os;
++// }
++
+
+
+Property changes on: trunk/extra/triangulation/Tenseur3.cpp
+___________________________________________________________________
+Name: svn:executable
+   + *
+
+Added: trunk/extra/triangulation/Tenseur3.h
+===================================================================
+--- trunk/extra/triangulation/Tenseur3.h	2008-07-14 20:19:11 UTC (rev 1429)
++++ trunk/extra/triangulation/Tenseur3.h	2008-07-16 13:17:30 UTC (rev 1430)
+@@ -0,0 +1,123 @@
++#ifndef TENSEUR3_H
++#define TENSEUR3_H
++
++
++#include &quot;def_types.h&quot; //pour d&#65533;finition de la classe &quot;Vecteur&quot;
++#include &lt;iostream&gt;
++#include &lt;fstream&gt;
++
++using namespace std;
++
++//class Vecteur;// Classe externe
++
++#define NORMALIZE(vecteur) ((vecteur) = (vecteur)*(1/sqrt(pow((vecteur)[0],2)+pow((vecteur)[1],2)+pow((vecteur)[2],2))))
++
++class Tens;
++class Tenseur3;
++class Tenseur_sym3;
++class Tenseur_anti3;
++
++Vecteur operator* ( Tens&amp; tens, Vecteur&amp; vect );
++Vecteur&amp; NormalizedVecteur ( Vecteur&amp; vect );
++
++
++void Tenseur_produit ( Vecteur &amp;v1, Vecteur &amp;v2, Tenseur3 &amp;result );
++void Somme ( Tenseur3 &amp;result, Vecteur &amp;v1, Vecteur &amp;v2 );
++
++std::ostream&amp; operator&lt;&lt; ( std::ostream&amp; os,const Tenseur3&amp; T );
++std::ostream&amp; operator&lt;&lt; ( std::ostream&amp; os,const Tenseur_sym3&amp; T );
++std::ostream&amp; operator&lt;&lt; ( std::ostream&amp; os,const Tenseur_anti3&amp; T );
++
++//  std::ofstream&amp; operator&lt;&lt;(std::ofstream&amp; os, Tenseur3&amp; T);
++//  std::ofstream&amp; operator&lt;&lt;(std::ofstream&amp; os, Tenseur_sym3&amp; T);
++//  std::ofstream&amp; operator&lt;&lt;(std::ofstream&amp; os, Tenseur_anti3&amp; T);
++
++// Classe m&#65533;re &quot;Tens&quot; dont d&#65533;rive toutes les classes tenseur
++class Tens
++{
++	public:
++		Tens ( void ) {}
++		virtual ~Tens ( void ) {}
++		virtual Real operator() ( int i, int j ) const {return 0;}
++		Real Norme2 ( void );
++		Real Norme ( void ) {return sqrt ( Norme2() );}
++		Real Trace ( void )
++		{
++			return this-&gt;operator () ( 1,1 )
++				   + this-&gt;operator () ( 2,2 )
++				   + this-&gt;operator () ( 3,3 );
++		}
++};
++
++class Tenseur3 : public Tens
++{
++	private:
++		Real T [3] [3];
++
++	public:
++		Tenseur3 ( bool init = true );// Sp&#65533;cifier &quot;false&quot; pour &#65533;conomiser le temps d'initialisation du tableau
++		virtual ~Tenseur3 ( void );
++		Tenseur3 ( const Tenseur3&amp; source );
++		Tenseur3 ( Real a11, Real a12, Real a13,
++				   Real a21, Real a22, Real a23,
++				   Real a31, Real a32, Real a33 );
++
++		Tenseur3&amp; operator= ( const Tenseur3&amp; source );
++		Tenseur3&amp; operator/= ( Real d );
++		Tenseur3&amp; operator+= ( const Tenseur3&amp; source );
++		Real operator() ( int i, int j ) const {return T[i-1][j-1];}
++		Real &amp;operator() ( int i, int j ) {return T[i-1][j-1];}
++
++		virtual void reset ( void ) {for ( int i=0; i&lt;3; i++ ) for ( int j=0; j&lt;3; j++ ) T[i][j] = 0;}
++
++};
++
++class Tenseur_sym3 : public Tens
++{
++	private:
++		Real T [6];
++
++	public:
++		Tenseur_sym3 ( bool init = true );// Sp&#65533;cifier &quot;false&quot; pour &#65533;conomiser le temps d'initialisation du tableau
++		~Tenseur_sym3 ( void );
++		Tenseur_sym3 ( const Tenseur_sym3&amp; source );
++		Tenseur_sym3 ( const Tenseur3&amp; source );
++		Tenseur_sym3 ( Real a11, Real a22, Real a33,
++					   Real a12, Real a13, Real a23 );
++
++		Tenseur_sym3&amp; operator= ( const Tenseur_sym3&amp; source );
++		Tenseur_sym3&amp; operator/= ( Real d );
++		Tenseur_sym3 Deviatoric ( void ) const; //retourne la partie d&#65533;viatoire
++		Real operator() ( int i, int j ) const;
++		Real &amp;operator() ( int i, int j );
++
++		void reset ( void ) {for ( int i=0; i&lt;6; i++ ) T[i] = 0;}
++
++};
++
++class Tenseur_anti3 : public Tens
++{
++	private:
++		Real T [6];
++
++	public:
++		Tenseur_anti3 ( bool init = true );// Sp&#65533;cifier &quot;false&quot; pour &#65533;conomiser le temps d'initialisation du tableau
++		virtual ~Tenseur_anti3 ( void );
++		Tenseur_anti3 ( const Tenseur_anti3&amp; source );
++		Tenseur_anti3 ( const Tenseur3&amp; source );
++		Tenseur_anti3 ( Real a11, Real a22, Real a33,
++						Real a12, Real a13, Real a23 );
++
++		Tenseur_anti3&amp; operator= ( const Tenseur_anti3&amp; source );
++		Tenseur_anti3&amp; operator/= ( Real d );
++		Real operator() ( int i, int j ) const;
++		//Real &amp;operator() (int i, int j); //Supprim&#65533;e car pb. pour retourner une r&#65533;f&#65533;rence vers -T[i+j]
++
++		void reset ( void ) {for ( int i=0; i&lt;6; i++ ) T[i] = 0;}
++
++};
++
++static const Tenseur3 NULL_TENSEUR3 ( 0,0,0,0,0,0,0,0,0 );
++
++
++#endif
+
+
+Property changes on: trunk/extra/triangulation/Tenseur3.h
+___________________________________________________________________
+Name: svn:executable
+   + *
+
+Modified: trunk/extra/triangulation/Tesselation.cpp
+===================================================================
+--- trunk/extra/triangulation/Tesselation.cpp	2008-07-14 20:19:11 UTC (rev 1429)
++++ trunk/extra/triangulation/Tesselation.cpp	2008-07-16 13:17:30 UTC (rev 1430)
+@@ -158,7 +158,7 @@
+ 
+ void Tesselation::Compute ()
+ {
+-	std::cout &lt;&lt; &quot;Tesselation::Compute ()&quot; &lt;&lt; std::endl;
++	std::cerr &lt;&lt; &quot;Tesselation::Compute ()&quot; &lt;&lt; std::endl;
+ 	Finite_cells_iterator cell_end = Tri-&gt;finite_cells_end();
+ 	for ( Finite_cells_iterator cell = Tri-&gt;finite_cells_begin(); cell != cell_end; cell++ )
+ 	{
+
+Modified: trunk/extra/triangulation/TesselationWrapper.cpp
+===================================================================
+--- trunk/extra/triangulation/TesselationWrapper.cpp	2008-07-14 20:19:11 UTC (rev 1429)
++++ trunk/extra/triangulation/TesselationWrapper.cpp	2008-07-16 13:17:30 UTC (rev 1430)
+@@ -47,6 +47,21 @@
+ 	bounded = false;
+ 	facet_it = Tes-&gt;Triangulation().finite_edges_end ();
+  }
++ 
++ 
++ void TesselationWrapper::clear2(void) //for testing purpose
++ {
++ 	Tes-&gt;Clear();
++ 	
++//  	Pmin = Point(inf, inf, inf);
++// 	Pmax = Point(-inf, -inf, -inf);
++// 	mean_radius = 0;
++// 	n_spheres = 0;
++// 	rad_divided = false;
++//	bounded = false;
++// 	facet_it = Tes-&gt;Triangulation().finite_edges_end ();
++ }
++ 
+ 
+ double TesselationWrapper::Volume( unsigned int id )
+ {
+@@ -68,7 +83,22 @@
+ 		return (Tes-&gt;insert(x,y,z,rad,id)!=NULL);
+ }
+ 
++void TesselationWrapper::checkMinMax(double x, double y, double z, double rad)
++{	
++	using namespace std;
++		Pmin = Point( min(Pmin.x(), x-rad),
++							min(Pmin.y(), y-rad),
++							min(Pmin.z(), z-rad) );
++		Pmax = Point( max(Pmax.x(), x+rad),
++							max(Pmax.y(), y+rad),
++							max(Pmax.z(), z+rad) );
++		mean_radius += rad;
++		++n_spheres;
++		
++		//return (Tes-&gt;insert(x,y,z,rad,id)!=NULL);
++}
+ 
++
+ bool TesselationWrapper::move(double x, double y, double z, double rad, unsigned int id)
+ {	
+ 	using namespace std;
+
+Added: trunk/extra/triangulation/TriaxialState.cpp
+===================================================================
+--- trunk/extra/triangulation/TriaxialState.cpp	2008-07-14 20:19:11 UTC (rev 1429)
++++ trunk/extra/triangulation/TriaxialState.cpp	2008-07-16 13:17:30 UTC (rev 1430)
+@@ -0,0 +1,314 @@
++/*************************************************************************
++*  Copyright (C) 2006 by Bruno Chareyre                                *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">bruno.chareyre at hmg.inpg.fr</A>                                            *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++
++
++
++#include &quot;TriaxialState.h&quot;
++#include &lt;math.h&gt;
++
++#ifdef USE_OGL_VIEW
++#include &quot;../vueGL/vue3d.h&quot;
++#endif
++
++TriaxialState::TriaxialState(void) : NO_ZERO_ID(true), filter_distance(-0.1), tesselated(false) {}
++
++TriaxialState::~TriaxialState(void)
++{
++	ContactIterator last = contacts_end();
++	for (ContactIterator it=contacts_begin(); it!=last; ++it) {
++		if (*it) delete *it;}
++}
++
++Real TriaxialState::find_parameter (char* parameter_name, ifstream&amp; file)
++{
++	/*long starting_position = file.tellg();
++	file.seekg (0, ios::end);
++	long length = file.tellg();
++	file.seekg (starting_position, ios::beg);*/
++	
++	/*if (starting_position == -1) starting_position=0;
++	cout &lt;&lt; &quot;starting position: &quot; &lt;&lt; starting_position &lt;&lt; endl;
++	bool restarted = false;
++	if (file.tellg()==-1) {
++		file.seekg( 0, ios::beg );}*/
++
++	string buffer;
++	Real value;
++	file &gt;&gt; buffer;
++	bool test = (buffer == string(parameter_name));
++	//cout &lt;&lt; &quot;buffer0 &quot; &lt;&lt; buffer &lt;&lt; &quot; test0: &quot;&lt;&lt; test &lt;&lt; endl;
++	while (!test)
++	{
++		buffer.clear();
++		file &gt;&gt; buffer;
++		//if (buffer.compare(string(&quot; &quot;))==0 || buffer.empty()) continue;
++		/*if (file.eof() &amp;&amp; !restarted) {
++		cout &lt;&lt; &quot;restarted1&quot; &lt;&lt; endl;
++		file.seekg( 0 );
++		restarted= true;}*/
++		//test = ((!buffer.empty() &amp;&amp; (buffer.compare(string(parameter_name))== 0)) || file.eof());
++		test = ( buffer == string(parameter_name) || file.eof());
++		//test = ( buffer == string(parameter_name) || length &lt;= file.tellg());
++		//cout &lt;&lt; &quot;buffer1 &quot; &lt;&lt; buffer &lt;&lt; &quot; test: &quot;&lt;&lt; test &lt;&lt; endl;
++	}
++	if (!file.eof()) file &gt;&gt; value;
++	else value = 0;
++	cout &lt;&lt; string(parameter_name) &lt;&lt; value &lt;&lt; endl;
++	//file.seekg( starting_position, ios::beg );
++	return value;
++}
++
++Real TriaxialState::find_parameter (char* parameter_name, char* filename)
++{
++	ifstream statefile (filename);
++	return find_parameter(parameter_name, statefile);
++}
++
++
++void TriaxialState::reset (void)
++{
++	tesselated = false;
++	Tes.Clear();
++	mean_radius=0;
++	grains.clear();	
++	ContactIterator contacts_end = contacts.end();
++	for (ContactIterator it=contacts.begin(); it!=contacts_end; ++it) delete *it;
++	contacts.clear();
++	contacts.resize(0);	
++	box.base = Point(1.0e10, 1.0e10, 1.0e10);
++	box.sommet = Point(-1.0e10, -1.0e10, -1.0e10);
++}
++
++TriaxialState::GrainIterator TriaxialState::grains_begin (void)
++{	
++	GrainIterator git = grains.begin();
++	if (NO_ZERO_ID) return ++git;
++	else return git;
++}
++
++TriaxialState::ContactIterator TriaxialState::contacts_begin (void)
++{
++	return contacts.begin();
++}
++
++TriaxialState::GrainIterator TriaxialState::grains_end (void)
++{
++	return grains.end();
++}
++
++TriaxialState::ContactIterator TriaxialState::contacts_end (void)
++{
++	return contacts.end();
++}
++
++TriaxialState::Grain&amp; TriaxialState::grain (unsigned int id)
++{
++	return grains[id];
++}
++
++Tesselation&amp; TriaxialState::Tesselate (void)
++{
++	if (!tesselated)
++	{
++		Tes.Clear();
++		GrainIterator git = grains_begin();
++		GrainIterator last = grains_end();
++		for (; git!=last; ++git) {
++			if (git-&gt;id != -1 &amp;&amp; git-&gt;isSphere)	
++				Vertex_handle vh = Tes.insert(git-&gt;sphere.x(), git-&gt;sphere.y(), git-&gt;sphere.z(), git-&gt;sphere.weight(), git-&gt;id);
++			//vh-&gt;-&gt;info() = git-&gt;translation; FIXME : this could define displacements in the triangulation itself
++//			cerr &lt;&lt; &quot;Tes.insert(git-&gt;sphere.x(), git-&gt;sphere.y(), git-&gt;sphere.z(), git-&gt;sphere.weight(), git-&gt;id);&quot; &lt;&lt; endl;
++		}
++		tesselated = true;
++		cerr &lt;&lt; &quot;Triangulated Grains : &quot; &lt;&lt; Tes.Triangulation().number_of_vertices() &lt;&lt; endl;
++	}
++	return Tes;
++}
++
++Tesselation&amp; TriaxialState::tesselation (void)
++{
++	return Tesselate();
++}
++
++bool TriaxialState::inside(Real x, Real y, Real z)
++{
++	return (x &gt;= (box.base.x()+filter_distance*mean_radius) &amp;&amp;
++			x &lt;= (box.sommet.x()-filter_distance*mean_radius) &amp;&amp;
++			y &gt;= (box.base.y()+filter_distance*mean_radius) &amp;&amp;
++			y &lt;= (box.sommet.y()-filter_distance*mean_radius) &amp;&amp;
++			z &gt;= (box.base.z()+filter_distance*mean_radius) &amp;&amp;
++			z &lt;= (box.sommet.z()-filter_distance*mean_radius) );
++}
++
++bool TriaxialState::inside(Vecteur v)
++{
++	return TriaxialState::inside(v.x(), v.y(), v.z());
++}
++
++bool TriaxialState::inside(Point p)
++{
++	return TriaxialState::inside(p.x(), p.y(), p.z());
++}
++
++bool TriaxialState::from_file(const char* filename)
++{
++	reset();
++	
++
++	ifstream Statefile (filename);
++	cout &lt;&lt; filename &lt;&lt; endl;
++	if (!Statefile.is_open())	{
++		cout &lt;&lt; &quot;Error opening files&quot;;
++		return false;	}
++
++	//int a=0;
++	#ifdef USE_OGL_VIEW
++	Vue3D Vue1;
++	#endif
++	
++		
++	long Idg;
++	Statefile &gt;&gt; Ng;
++	//Real x, y, z, rad; //coordonn&#65533;es/rayon
++	//Real tx, ty, tz;
++	Point pos;
++	mean_radius=0;
++	Vecteur trans, rot;
++	Real rad; //coordonn&#65533;es/rayon
++	bool isSphere;
++		
++	
++	grains.resize(Ng+1);
++	//cout &lt;&lt; &quot;Ngrains =&quot; &lt;&lt; Ng &lt;&lt; endl;
++	if (NO_ZERO_ID) {
++		GrainIterator git= grains.begin();
++		git-&gt;id=0;
++		git-&gt;sphere = Sphere(CGAL::ORIGIN, 0);
++		git-&gt;translation = CGAL::NULL_VECTOR;
++		git-&gt;rotation = CGAL::NULL_VECTOR;
++	}
++
++	long i= NO_ZERO_ID ? 1 : 0; 
++	
++	for (; i &lt;= Ng ; ++i) 
++	{
++		Statefile &gt;&gt; Idg &gt;&gt; pos &gt;&gt; rad &gt;&gt; trans &gt;&gt; rot  &gt;&gt; isSphere;
++		grains[Idg].id = Idg;
++		grains[Idg].sphere = Sphere(pos, rad);
++		grains[Idg].translation = trans;
++		grains[Idg].rotation = rot;
++		grains[Idg].isSphere = isSphere;
++
++		box.base = Point( min(box.base.x(), pos.x()-rad),
++							min(box.base.y(), pos.y()-rad),
++							min(box.base.z(), pos.z()-rad) );
++		box.sommet = Point( max(box.sommet.x(), pos.x()+rad),
++							max(box.sommet.y(), pos.y()+rad),
++							max(box.sommet.z(), pos.z()+rad) );
++		mean_radius += grains[Idg].sphere.weight();
++		//cout &lt;&lt; &quot;Idg: &quot;&lt;&lt; Idg &lt;&lt; &quot; sphere: &quot; &lt;&lt; grains[Idg].sphere &lt;&lt; &quot; trans: &quot; &lt;&lt; grains[Idg].translation &lt;&lt; endl;
++	}
++	mean_radius /= Ng;//rayon moyen
++	cout &lt;&lt; filename &lt;&lt; &quot; loaded : &quot; &lt;&lt; Ng &lt;&lt; &quot; grains with mean radius = &quot; &lt;&lt; mean_radius &lt;&lt; endl;
++
++	long id1, id2;
++	int stat;
++	Vecteur c_pos, normal, old_fs, fs;
++	Real old_fn, fn, frictional_work;
++	Statefile &gt;&gt; Nc;
++	contacts.resize(Nc);
++	for (long i=0 ; i &lt; Nc ; ++i)
++	{
++		Contact* c = new Contact;
++		Statefile &gt;&gt; id1 &gt;&gt; id2 &gt;&gt; c_pos &gt;&gt; old_fn &gt;&gt; old_fs &gt;&gt; fn &gt;&gt; fs &gt;&gt; frictional_work &gt;&gt; stat;
++		normal = (grains[id2].sphere.point()-grains[id1].sphere.point());
++		normal = normal/sqrt(pow(normal.x(),2)+pow(normal.y(),2)+pow(normal.z(),2));
++		c-&gt;grain1 = &amp;(grains[id1]);
++		c-&gt;grain2 = &amp;(grains[id2]);
++		grains[id1].contacts.push_back(c);
++		grains[id2].contacts.push_back(c);
++		c-&gt;normal = normal;
++		c-&gt;position = c_pos;
++		c-&gt;old_fn = old_fn;
++		c-&gt;old_fs = old_fs;
++		c-&gt;fn = fn;
++		c-&gt;fs = fs;
++		c-&gt;frictional_work = frictional_work;
++		c-&gt;status = (Contact::Status) stat;
++		if (contacts[i]) delete contacts[i];
++		contacts[i] = c;
++	}
++
++	//cout &lt;&lt; &quot;c_pos=&quot; &lt;&lt; contacts[10]-&gt;position &lt;&lt; &quot; old_fn=&quot; &lt;&lt; contacts[10]-&gt;old_fn &lt;&lt; &quot; normal=&quot; &lt;&lt; contacts[10]-&gt;normal &lt;&lt; endl;
++
++	//rfric = find_parameter(&quot;rfric=&quot;, Statefile);// &#65533; remettre quand les fichiers n'auront plus l'espace de trop...
++	Eyn = find_parameter(&quot;Eyn=&quot;, Statefile);
++	Eys = find_parameter(&quot;Eys=&quot;, Statefile);
++	wszzh = find_parameter(&quot;wszzh=&quot;, Statefile);
++	wsxxd = find_parameter(&quot;wsxxd=&quot;, Statefile);
++	wsyyfa = find_parameter(&quot;wsyyfa=&quot;, Statefile);
++	eps3 = find_parameter(&quot;eps3=&quot;, Statefile);
++	eps1 = find_parameter(&quot;eps1=&quot;, Statefile);
++	eps2 = find_parameter(&quot;eps2=&quot;, Statefile);
++	porom = find_parameter(&quot;porom=&quot;, Statefile);
++	haut = find_parameter(&quot;haut=&quot;, Statefile);
++	larg = find_parameter(&quot;larg=&quot;, Statefile);
++	prof = find_parameter(&quot;prof=&quot;, Statefile);
++	ratio_f = find_parameter(&quot;ratio_f=&quot;, Statefile);
++	vit = find_parameter(&quot;vit=&quot;, Statefile);
++
++	Statefile.close();
++	//cout &lt;&lt; endl &lt;&lt; &quot;wszzh= &quot; &lt;&lt; wszzh &lt;&lt; endl; 
++
++	/*GrainIterator grains_end = grains.end();
++	for (GrainIterator it=grains.begin(); it!=grains_end; ++it)
++	{
++		if (it==grains.begin()) ++it;
++		Vue1.Dessine_Sphere(it-&gt;sphere.x(), it-&gt;sphere.y(), it-&gt;sphere.z(), it-&gt;sphere.weight(), 10);
++	}*/
++	//Vue1.Affiche();
++
++	return true;
++}
++
++
++
++bool TriaxialState::to_file(const char* filename)
++{
++	ofstream Statefile (filename);
++	cout &lt;&lt; filename &lt;&lt; endl;
++	if (!Statefile.is_open())	{
++		cout &lt;&lt; &quot;Error opening files&quot;;
++		return false;	}
++
++		long Id_max = grains.size()-1;
++		Statefile &lt;&lt; Id_max &lt;&lt; endl;
++// 		Point pos;
++// 		mean_radius=0;
++// 		Vecteur trans, rot;
++		//Real rad; //coordonn&#65533;es/rayon
++
++		
++		for (long Idg=0 ; Idg &lt;= Id_max ; ++Idg) 
++		{
++			Statefile &lt;&lt; grains[Idg].id &lt;&lt;	&quot; &quot; &lt;&lt; grains[Idg].sphere.point() &lt;&lt; &quot; &quot; &lt;&lt; grains[Idg].sphere.weight() &lt;&lt; &quot; &quot; &lt;&lt; grains[Idg].translation &lt;&lt; &quot; &quot; &lt;&lt; grains[Idg].rotation &lt;&lt; &quot; &quot;&lt;&lt;grains[Idg].isSphere &lt;&lt; endl;
++		}
++		
++		long Nc = contacts.size();
++		Statefile &lt;&lt; Nc &lt;&lt; endl;
++		for (long i=0 ; i &lt; Nc ; ++i)
++		{			
++			Statefile &lt;&lt; contacts[i]-&gt;grain1-&gt;id &lt;&lt; &quot; &quot; &lt;&lt; contacts[i]-&gt;grain2-&gt;id &lt;&lt; &quot; &quot; &lt;&lt; contacts[i]-&gt;normal &lt;&lt; &quot; &quot; &lt;&lt; contacts[i]-&gt;position &lt;&lt; &quot; &quot; &lt;&lt; contacts[i]-&gt;old_fn &lt;&lt; &quot; &quot; &lt;&lt; contacts[i]-&gt;old_fs &lt;&lt; &quot; &quot; &lt;&lt; contacts[i]-&gt;fn &lt;&lt; &quot; &quot; &lt;&lt; contacts[i]-&gt;fs &lt;&lt; &quot; &quot; &lt;&lt; contacts[i]-&gt;frictional_work &lt;&lt; &quot; &quot; &lt;&lt; contacts[i]-&gt;status &lt;&lt; endl;
++		}
++
++		Statefile &lt;&lt; &quot;Eyn &quot; &lt;&lt; Eyn &lt;&lt; &quot; Eys &quot; &lt;&lt; Eys &lt;&lt; &quot; wszzh &quot; &lt;&lt; wszzh &lt;&lt; &quot; wsxxd &quot; &lt;&lt; wsxxd &lt;&lt; &quot; wsyyfa &quot; &lt;&lt; wsyyfa &lt;&lt; &quot; eps3 &quot; &lt;&lt; eps3 &lt;&lt; &quot; eps1 &quot; &lt;&lt; eps1 &lt;&lt; &quot; eps2 &quot; &lt;&lt; eps2 &lt;&lt; &quot; porom &quot; &lt;&lt; porom &lt;&lt; &quot; haut &quot; &lt;&lt; haut &lt;&lt; &quot; larg &quot; &lt;&lt; larg &lt;&lt; &quot; prof &quot; &lt;&lt; prof &lt;&lt; &quot; ratio_f &quot; &lt;&lt; ratio_f &lt;&lt; &quot; vit &quot; &lt;&lt; vit &lt;&lt; endl;
++
++		Statefile.close();
++		return true;
++}
+
+
+Property changes on: trunk/extra/triangulation/TriaxialState.cpp
+___________________________________________________________________
+Name: svn:executable
+   + *
+
+Added: trunk/extra/triangulation/TriaxialState.h
+===================================================================
+--- trunk/extra/triangulation/TriaxialState.h	2008-07-14 20:19:11 UTC (rev 1429)
++++ trunk/extra/triangulation/TriaxialState.h	2008-07-16 13:17:30 UTC (rev 1430)
+@@ -0,0 +1,101 @@
++/*************************************************************************
++*  Copyright (C) 2006 by Bruno Chareyre                                *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">bruno.chareyre at hmg.inpg.fr</A>                                            *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++/**
+<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">+ at author</A> Bruno Chareyre
++*/
++#ifndef TRIAXIALSTATE_H
++#define TRIAXIALSTATE_H
++
++#include &quot;Tesselation.h&quot;
++#include &lt;vector&gt;
++
++
++using namespace std;
++
++class TriaxialState
++{
++public:
++	
++	class Contact;
++	class Grain;
++	typedef struct {Point base; Point sommet;}			Box;
++	typedef vector&lt;Contact*&gt;							VectorContact;
++	typedef vector&lt;Grain&gt;								VectorGrain;
++	typedef VectorContact::iterator						ContactIterator;
++	typedef VectorGrain::iterator						GrainIterator;
++
++	class Grain {	public :
++					int id;
++					bool isSphere;
++					Sphere sphere;
++					Vecteur translation;
++					Vecteur rotation;
++					VectorContact contacts;
++					
++					Grain(void) {id=-1; isSphere=true;}
++				};
++	class Contact { public :
++					enum Status {NEW, PERSISTENT, LOST};
++					
++					Grain* grain1;
++					Grain* grain2;
++					Vecteur position;
++					Vecteur normal;
++					Real fn;
++					Vecteur fs;
++					Real old_fn;
++					Vecteur old_fs;
++					Real frictional_work;
++					bool visited;
++					
++					Status status;
++					Contact(void) {visited=false; status=PERSISTENT;}
++				};
++
++	TriaxialState(void);
++	~TriaxialState(void);
++		
++	bool from_file(const char* filename);
++	bool to_file(const char* filename);
++	bool inside(Real x, Real y, Real z);
++	bool inside(Vecteur v);
++	bool inside(Point p);
++	static Real find_parameter (char* parameter_name, char* filename);
++	static Real find_parameter (char* parameter_name, ifstream&amp; file);
++	void reset (void);
++
++	GrainIterator grains_begin (void);
++	ContactIterator contacts_begin (void);
++	GrainIterator grains_end (void);
++	ContactIterator contacts_end (void);
++	Tesselation&amp; tesselation (void);
++	Grain&amp; grain (unsigned int id);
++
++
++	//Public member data :
++	bool NO_ZERO_ID;//Is there a body with id=0?
++	Real mean_radius;
++	Box box;
++	Real filter_distance;	//distance de filtrage au voisinage des parois - normalis&#65533;e par le rayon moyen 
++	long Ng, Nc;
++	Real rfric, Eyn, Eys, wszzh, wsxxd, wsyyfa, eps1, eps2, eps3, porom, haut, larg, prof, ratio_f, vit;
++	VectorContact contacts;
++	VectorGrain grains;
++
++private :
++	Tesselation Tes;	
++	Tesselation&amp; Tesselate (void);
++
++	//Private member data :
++	bool tesselated;
++
++
++};
++
++#endif
+
+
+Property changes on: trunk/extra/triangulation/TriaxialState.h
+___________________________________________________________________
+Name: svn:executable
+   + *
+
+Modified: trunk/extra/triangulation/makefile
+===================================================================
+--- trunk/extra/triangulation/makefile	2008-07-14 20:19:11 UTC (rev 1429)
++++ trunk/extra/triangulation/makefile	2008-07-16 13:17:30 UTC (rev 1430)
+@@ -61,6 +61,12 @@
+ 
+ Tenseur3$(OBJ_EXT): Tenseur3.cpp
+ 	$(CGAL_CXX) $(CXXFLAGS) $(OBJ_OPT) Tenseur3.cpp
++	
++TriaxialState$(OBJ_EXT): TriaxialState.cpp
++	$(CGAL_CXX) $(CXXFLAGS) $(OBJ_OPT) TriaxialState.cpp
++	
++KinematicLocalisationAnalyser$(OBJ_EXT): KinematicLocalisationAnalyser.cpp
++	$(CGAL_CXX) $(CXXFLAGS) $(OBJ_OPT) KinematicLocalisationAnalyser.cpp
+ 
+ Tesselation$(OBJ_EXT): Tesselation.cpp
+ 	$(CGAL_CXX) $(CXXFLAGS) $(OBJ_OPT) Tesselation.cpp
+@@ -74,12 +80,18 @@
+ 	-L. -lTesselationWrapper -lCGAL_static
+ 	
+ libTesselationWrapper.a : 	TesselationWrapper$(OBJ_EXT) \
++				Tenseur3$(OBJ_EXT) \
+ 				Tesselation$(OBJ_EXT) \
+-				RegularTriangulation$(OBJ_EXT)
++				RegularTriangulation$(OBJ_EXT) \
++				TriaxialState$(OBJ_EXT) \
++				KinematicLocalisationAnalyser$(OBJ_EXT)
+ 	 		ar cr	libTesselationWrapper.a \
+-				TesselationWrapper$(OBJ_EXT) \
++	 			TesselationWrapper$(OBJ_EXT) \
++				Tenseur3$(OBJ_EXT) \
+ 				Tesselation$(OBJ_EXT) \
+-				RegularTriangulation$(OBJ_EXT)
++				RegularTriangulation$(OBJ_EXT) \
++				TriaxialState$(OBJ_EXT) \
++				KinematicLocalisationAnalyser$(OBJ_EXT)
+ 	
+ TesselationWrapper$(OBJ_EXT): TesselationWrapper.cpp 
+ 	$(CGAL_CXX) $(CXXFLAGS) $(OBJ_OPT) TesselationWrapper.cpp $(LDFLAGS)
+
+Modified: trunk/pkg/common/Engine/EngineUnit/CundallNonViscousForceDamping.cpp
+===================================================================
+--- trunk/pkg/common/Engine/EngineUnit/CundallNonViscousForceDamping.cpp	2008-07-14 20:19:11 UTC (rev 1429)
++++ trunk/pkg/common/Engine/EngineUnit/CundallNonViscousForceDamping.cpp	2008-07-16 13:17:30 UTC (rev 1430)
+@@ -32,7 +32,6 @@
+ 	if(body-&gt;isClump()) return;
+ 	Force * af = static_cast&lt;Force*&gt;(a.get());
+ 	ParticleParameters * p = static_cast&lt;ParticleParameters*&gt;(b.get());
+-		
+ 	
+ 	for (int i=0; i&lt;3; ++i)
+ 	{
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.cpp	2008-07-14 20:19:11 UTC (rev 1429)
++++ trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.cpp	2008-07-16 13:17:30 UTC (rev 1430)
+@@ -107,4 +107,16 @@
+ 	}
+ }
+ 
++/*
++:09:37] eudoxos2: enum {LOOP1,LOOP2,END}
++[16:09:37] eudoxos2: for(int state=LOOP1; state!=END; state++){
++[16:09:37] eudoxos2: 	FOREACH(const shared_ptr&lt;Body&gt;&amp; b, rootBody-&gt;bodies){
++[16:09:38] eudoxos2: 		if(b-&gt;isClumpMember() &amp;&amp; LOOP1){ /* apply that on b-&gt;clumpId  }
++[16:09:38] eudoxos2: 		if((b-&gt;isStandalone &amp;&amp; LOOP1) || (b-&gt;isClump &amp;&amp; LOOP2){ /* damping, newton, integrate }
++[16:09:38] eudoxos2: 		if(b-&gt;isClump() &amp;&amp; LOOP 2){ b-&gt;moveMembers(); }
++[16:09:40] eudoxos2: 		}
++[16:09:42] eudoxos2: 	}
++[16:09:44] eudoxos2: }*/
++
++
+ YADE_PLUGIN();
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.hpp	2008-07-14 20:19:11 UTC (rev 1429)
++++ trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.hpp	2008-07-16 13:17:30 UTC (rev 1430)
+@@ -17,7 +17,7 @@
+ 
+ This engine is faster because it uses less loops and less dispatching 
+ 
+-The result is exactly the same as with :
++The result is almost the same as with :
+ -NewtonsForceLaw
+ -NewtonsMomentumLaw
+ -LeapFrogPositionIntegrator
+@@ -25,7 +25,7 @@
+ -CundallNonViscousForceDamping
+ -CundallNonViscousMomentumDamping
+ 
+-Except that damping is slightly different compared to CundallNonViscousForceDamping+CundallNonViscousMomentumDamping. Here, damping is dependent on predicted (undamped) velocity at t+dt/2, while the other engines use velocity at time t.
++...but the implementation of damping is slightly different compared to CundallNonViscousForceDamping+CundallNonViscousMomentumDamping. Here, damping is dependent on predicted (undamped) velocity at t+dt/2, while the other engines use velocity at time t.
+  
+ Requirements :
+ -All dynamic bodies must have physical parameters of type (or inheriting from) BodyMacroParameters
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.cpp	2008-07-14 20:19:11 UTC (rev 1429)
++++ trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.cpp	2008-07-16 13:17:30 UTC (rev 1430)
+@@ -227,7 +227,7 @@
+ 	{
+ 		if ( Omega::instance().getCurrentIteration() % 100 == 0 )
+ 		{
+-			cerr &lt;&lt; &quot;Compression started&quot; &lt;&lt; endl;
++			LOG_INFO (&quot;Compression started&quot;);
+ 		}
+ 		// if (Omega::instance().getCurrentIteration() % 100 == 0) LOG_DEBUG(&quot;Compression active.&quot;);
+ 		Real dt = Omega::instance().getTimeStep();
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.hpp	2008-07-14 20:19:11 UTC (rev 1429)
++++ trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.hpp	2008-07-16 13:17:30 UTC (rev 1430)
+@@ -17,14 +17,12 @@
+ #include &lt;string&gt;
+ 
+ 
+-/*! \brief Isotropic compression + uniaxial compression test
+ 
+-	detailed description...
+- */
+-
+ class PhysicalAction;
+ 
+-/** \brief Class for controlling optional initial isotropic compaction and subsequent triaxial stress test with hydrostatic confinement.
++
++
++/** \brief Class for controlling optional initial isotropic compaction and subsequent triaxial test with constant lateral stress and constant axial strain rate.
+  *
+  * The engine is a state machine with the following states (and automatic transitions):
+  *
+@@ -41,6 +39,7 @@
+  * 4. STATE_TRIAX_LIMBO: currently unused, since simulation is hard-stopped in the previous state.
+  *
+  */
++
+ class TriaxialCompressionEngine : public TriaxialStressController
+ {
+ 	private :
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/TriaxialStateRecorder.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/TriaxialStateRecorder.cpp	2008-07-14 20:19:11 UTC (rev 1429)
++++ trunk/pkg/dem/Engine/DeusExMachina/TriaxialStateRecorder.cpp	2008-07-16 13:17:30 UTC (rev 1430)
+@@ -1,6 +1,8 @@
+ /*************************************************************************
+-*  Copyright (C) 2006 by luc scholtes                                    *
++*  Copyright (C) 2006 by luc Scholtes                                    *
+ *  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">luc.scholtes at hmg.inpg.fr</A>                                              *
++*  Copyright (C) 2008 by Bruno Chareyre                                  *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">bruno.chareyre at hmg.inpg.fr</A>                                            *
+ *                                                                        *
+ *  This program is free software; it is licensed under the terms of the  *
+ *  GNU General Public License v2 or later. See file LICENSE for details. *
+@@ -42,7 +44,7 @@
+ 	{
+ 		bool file_exists = std::ifstream (outputFile.c_str()); //if file does not exist, we will write colums titles
+ 		ofile.open(outputFile.c_str(), std::ios::app);
+-		if (!file_exists) ofile&lt;&lt;&quot;iteration s11 s22 s33 e11 e22 e33 unb_f porosity&quot; &lt;&lt; endl;
++		if (!file_exists) ofile&lt;&lt;&quot;iteration s11 s22 s33 e11 e22 e33 unb_force porosity kineticE&quot; &lt;&lt; endl;
+ 	}
+ }
+ 
+@@ -122,7 +124,8 @@
+ 	&lt;&lt; lexical_cast&lt;string&gt; ( triaxialCompressionEngine-&gt;strain[1] ) &lt;&lt; &quot; &quot;
+ 	&lt;&lt; lexical_cast&lt;string&gt; ( triaxialCompressionEngine-&gt;strain[2] ) &lt;&lt; &quot; &quot;
+ 	&lt;&lt; lexical_cast&lt;string&gt; ( triaxialCompressionEngine-&gt;ComputeUnbalancedForce ( ncb ) ) &lt;&lt; &quot; &quot;
+-	&lt;&lt; lexical_cast&lt;string&gt; ( porosity )
++	&lt;&lt; lexical_cast&lt;string&gt; ( porosity ) &lt;&lt; &quot; &quot;
++	&lt;&lt; lexical_cast&lt;string&gt; ( kinematicE )
+ 	&lt;&lt; endl;
+ }
+ 
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/TriaxialStateRecorder.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/TriaxialStateRecorder.hpp	2008-07-14 20:19:11 UTC (rev 1429)
++++ trunk/pkg/dem/Engine/DeusExMachina/TriaxialStateRecorder.hpp	2008-07-16 13:17:30 UTC (rev 1430)
+@@ -1,11 +1,14 @@
+ /*************************************************************************
+ *  Copyright (C) 2006 by luc Scholtes                                    *
+ *  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">luc.scholtes at hmg.inpg.fr</A>                                              *
++*  Copyright (C) 2008 by Bruno Chareyre                                  *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">bruno.chareyre at hmg.inpg.fr</A>                                            *
+ *                                                                        *
+ *  This program is free software; it is licensed under the terms of the  *
+ *  GNU General Public License v2 or later. See file LICENSE for details. *
+ *************************************************************************/
+ 
++
+ #ifndef TRIAXIAL_STATE_RECORDER_HPP
+ #define TRIAXIAL_STATE_RECORDER_HPP
+ 
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.cpp	2008-07-14 20:19:11 UTC (rev 1429)
++++ trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.cpp	2008-07-16 13:17:30 UTC (rev 1430)
+@@ -13,6 +13,7 @@
+ #include&lt;yade/pkg-dem/SpheresContactGeometry.hpp&gt;
+ #include&lt;yade/pkg-dem/ElasticContactInteraction.hpp&gt;
+ #include&lt;yade/pkg-common/Force.hpp&gt;
++#include&lt;yade/pkg-common/RigidBodyParameters.hpp&gt;
+ 
+ 
+ 
+@@ -179,7 +180,8 @@
+ 	   else
+ 		translation = wall_max_vel * Mathr::Sign(translation)*Omega::instance().getTimeStep();
+ 	}
+-	previousTranslation[wall] = (1-wallDamping)*translation*normal[wall];// + 0.7*previousTranslation[wall];// formula for &quot;steady-flow&quot; evolution with fluctuations
++	//previousTranslation[wall] = (1-wallDamping)*translation*normal[wall];// + 0.7*previousTranslation[wall];// formula for &quot;steady-flow&quot; evolution with fluctuations
++	previousTranslation[wall] = (1-wallDamping)*translation*normal[wall] + 0.8*previousTranslation[wall];// formula for &quot;steady-flow&quot; evolution with fluctuations
+ 	//cerr &lt;&lt; &quot;translation = &quot; &lt;&lt; previousTranslation[wall] &lt;&lt; endl;
+ 	p-&gt;se3.position += previousTranslation[wall];
+ 	if(log)TRVAR2(previousTranslation,p-&gt;se3.position);
+@@ -304,6 +306,9 @@
+ 		{
+ 			(static_cast&lt;InteractingSphere*&gt; ((*bi)-&gt;interactingGeometry.get()))-&gt;radius *= multiplier;
+ 			(static_cast&lt;Sphere*&gt;((*bi)-&gt;geometricalModel.get()))-&gt;radius *= multiplier;
++			(static_cast&lt;ParticleParameters*&gt;((*bi)-&gt;physicalParameters.get()))-&gt;mass *= pow(multiplier,3);
++			(static_cast&lt;RigidBodyParameters*&gt;((*bi)-&gt;physicalParameters.get()))-&gt;inertia *= pow(multiplier,5);
++			
+ 		}
+ 	}
+ 	// &lt;&lt; &quot;bouclesurInteraction&quot; &lt;&lt; endl;
+@@ -342,10 +347,10 @@
+ 	for(  ; ii!=iiEnd ; ++ii ) {
+ 		if ((*ii)-&gt;isReal) {
+ 			const shared_ptr&lt;Interaction&gt;&amp; contact = *ii;
+-			Real fn = (static_cast&lt;ElasticContactInteraction*&gt; ((contact-&gt;interactionPhysics.get()))-&gt;normalForce+static_cast&lt;ElasticContactInteraction*&gt;(contact-&gt;interactionPhysics.get())-&gt;shearForce).SquaredLength();
+-			if (fn!=0)
++			Real f = (static_cast&lt;ElasticContactInteraction*&gt; ((contact-&gt;interactionPhysics.get()))-&gt;normalForce+static_cast&lt;ElasticContactInteraction*&gt;(contact-&gt;interactionPhysics.get())-&gt;shearForce).SquaredLength();
++			if (f!=0)
+ 			{
+-			MeanForce += Mathr::Sqrt(fn);
++			MeanForce += Mathr::Sqrt(f);
+ 			++nForce;
+ 			}
+ 		}
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/CohesiveFrictionalContactLaw.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/CohesiveFrictionalContactLaw.cpp	2008-07-14 20:19:11 UTC (rev 1429)
++++ trunk/pkg/dem/Engine/StandAloneEngine/CohesiveFrictionalContactLaw.cpp	2008-07-16 13:17:30 UTC (rev 1430)
+@@ -1,6 +1,6 @@
+ /*************************************************************************
+ *  Copyright (C) 2007 by Bruno Chareyre, Janek Kozicki                   *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">bruno.chareyre at imag.fr</A>                                                *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">bruno.chareyre at hmg.inpg.fr</A>                                                *
+ *                                                                        *
+ *  This program is free software; it is licensed under the terms of the  *
+ *  GNU General Public License v2 or later. See file LICENSE for details. *
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/CohesiveFrictionalContactLaw.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/CohesiveFrictionalContactLaw.hpp	2008-07-14 20:19:11 UTC (rev 1429)
++++ trunk/pkg/dem/Engine/StandAloneEngine/CohesiveFrictionalContactLaw.hpp	2008-07-16 13:17:30 UTC (rev 1430)
+@@ -1,6 +1,6 @@
+ /*************************************************************************
+ *  Copyright (C) 2007 by Bruno Chareyre                                 *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">bruno.chareyre at imag.fr</A>                                               *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">bruno.chareyre at hmg.inpg.fr</A>                                               *
+ *                                                                        *
+ *  This program is free software; it is licensed under the terms of the  *
+ *  GNU General Public License v2 or later. See file LICENSE for details. *
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/GlobalStiffnessTimeStepper.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/GlobalStiffnessTimeStepper.cpp	2008-07-14 20:19:11 UTC (rev 1429)
++++ trunk/pkg/dem/Engine/StandAloneEngine/GlobalStiffnessTimeStepper.cpp	2008-07-16 13:17:30 UTC (rev 1430)
+@@ -23,7 +23,7 @@
+ //cerr &lt;&lt; &quot;GlobalStiffnessTimeStepper()&quot;  &lt;&lt; endl;
+ 	globalStiffnessClassIndex = actionParameterGlobalStiffness-&gt;getClassIndex();
+ 	sdecGroupMask = 1;
+-	timestepSafetyCoefficient = 1;
++	timestepSafetyCoefficient = 0.8;
+ 	computedOnce = false;
+ 	defaultDt = 1;
+ 	previousDt = defaultDt;
+@@ -110,7 +110,7 @@
+ 	//cerr &lt;&lt; &quot;sdec-&gt;inertia=&quot; &lt;&lt; sdec-&gt;inertia.x() &lt;&lt; &quot; &quot; &lt;&lt; sdec-&gt;inertia.x() &lt;&lt; &quot; &quot; &lt;&lt; sdec-&gt;inertia.x() &lt;&lt; endl;
+ 	//cerr &lt;&lt; &quot;timesteps : dt=&quot; &lt;&lt; dt &lt;&lt; &quot; / Rdt=&quot; &lt;&lt; Rdt &lt;&lt; endl;
+ 	
+-	dt = 0.709*timestepSafetyCoefficient*std::sqrt(std::min(dt,Rdt));//0.709 = 1/sqrt(2)
++	dt = 1.41044*timestepSafetyCoefficient*std::sqrt(std::min(dt,Rdt));//1.41044 = sqrt(2)
+ 	
+ 	newDt = std::min(dt,newDt);
+ 	//computedSomething = true;
+
+Modified: trunk/pkg/dem/PreProcessor/TriaxialTest.hpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/TriaxialTest.hpp	2008-07-14 20:19:11 UTC (rev 1429)
++++ trunk/pkg/dem/PreProcessor/TriaxialTest.hpp	2008-07-16 13:17:30 UTC (rev 1430)
+@@ -24,7 +24,7 @@
+ class TriaxialCompressionEngine;
+ class TriaxialStateRecorder;
+ 
+-/*! \brief Isotropic compression + uniaxial compression test
++/*! \brief Isotropic compression + triaxial compression test
+ 
+ 	This preprocessor is designed to :
+ 	1/ generate random loose packings and compress them under isotropic confining stress, either squeezing the packing between moving rigid boxes or expanding the particles while boxes are fixed (depending on flag &quot;InternalCompaction&quot;).
+
+Modified: trunk/pkg/dem/SConscript
+===================================================================
+--- trunk/pkg/dem/SConscript	2008-07-14 20:19:11 UTC (rev 1429)
++++ trunk/pkg/dem/SConscript	2008-07-16 13:17:30 UTC (rev 1430)
+@@ -195,27 +195,29 @@
+ 			'Sphere',
+ 			'RigidBodyParameters']),
+ 			
++
++			
+ 	#env.SharedLibrary('VolumicContactLaw',
+-	#	['Engine/StandAloneEngine/VolumicContactLaw.cpp'],
+-	#	LIBS=env['LIBS']+['SDECLinkPhysics',
+-	#		'ElasticContactInteraction',
+-	#		'SDECLinkGeometry',
+-	#		'SpheresContactGeometry',
+-	#		'BodyMacroParameters',
+-	#		'yade-serialization',
+-	#		'yade-base',
+-	#		'GLDrawInteractingSphere',
+-	#		'yade-multimethods',
+-	#		'Force',
+-	#		'Momentum',
+-	#		'Sphere',
+-	#		'RigidBodyParameters',
+-	#		'InteractingSphere',
+-	#		'TesselationWrapper',
+-	#		'CGAL'],
+-	#		CPPPATH=env['CPPPATH']+['/home/bruno/micromacro/KdevMicroMacro/src'],
+-	#		LIBPATH=env['LIBPATH']+['/home/bruno/micromacro/KdevMicroMacro/src']),
+-						
++		#['Engine/StandAloneEngine/VolumicContactLaw.cpp'],
++		#LIBS=env['LIBS']+['SDECLinkPhysics',
++			#'ElasticContactInteraction',
++			#'SDECLinkGeometry',
++			#'SpheresContactGeometry',
++			#'BodyMacroParameters',
++			#'yade-serialization',
++			#'yade-base',
++			#'GLDrawInteractingSphere',
++			#'yade-multimethods',
++			#'Force',
++			#'Momentum',
++			#'Sphere',
++			#'RigidBodyParameters',
++			#'InteractingSphere',
++			#'TesselationWrapper',
++			#'CGAL'],
++			#CPPPATH=env['CPPPATH']+['/home/bruno/YADE/trunk_svn/extra/triangulation'],
++			#LIBPATH=env['LIBPATH']+['/home/bruno/YADE/trunk_svn/extra/triangulation']),
++
+ 	env.SharedLibrary('CohesiveFrictionalContactLaw',
+ 		['Engine/StandAloneEngine/CohesiveFrictionalContactLaw.cpp'],
+ 		LIBS=env['LIBS']+['SDECLinkPhysics',
+@@ -1119,6 +1121,35 @@
+ 				,'Sphere'
+ 				,'RotationEngine'
+ 				,'Vertex'
+-				])
++				])#,
++				
++	#env.SharedLibrary('MicroMacroAnalyser',
++		#['Engine/StandAloneEngine/MicroMacroAnalyser.cpp'],
++		#LIBS=env['LIBS']+['SDECLinkPhysics',
++			#'ElasticContactInteraction',
++			#'SDECLinkGeometry',
++			#'SpheresContactGeometry',
++			#'BodyMacroParameters',
++			#'yade-serialization',
++			#'yade-base',
++			#'GLDrawInteractingSphere',
++			#'yade-multimethods',
++			#'Force',
++			#'Momentum',
++			#'Sphere',
++			#'RigidBodyParameters',
++			#'InteractingSphere',
++			#'TesselationWrapper',
++			#'TriaxialCompressionEngine',
++			#'CGAL'],
++			#CPPPATH=env['CPPPATH']+['/home/bruno/YADE/trunk_svn/extra/triangulation'],
++			#LIBPATH=env['LIBPATH']+['/home/bruno/YADE/trunk_svn/extra/triangulation']),
++
++	#env.Command('/home/bruno/YADE/trunk_svn/extra/triangulation/libTesselationWrapper.a',
++			#['/home/bruno/YADE/trunk_svn/extra/triangulation/TesselationWrapper.cpp',
++			#'/home/bruno/YADE/trunk_svn/extra/triangulation/KinematicLocalisationAnalyser.cpp',
++			#'/home/bruno/YADE/trunk_svn/extra/triangulation/TriaxialState.cpp'],
++			#&quot;make&quot;,
++			#chdir='/home/bruno/YADE/trunk_svn/extra/triangulation')
+ ])
+ 
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000389.html">[Yade-commits] r1429 - trunk/pkg/dem
+</A></li>
+	<LI>Next message: <A HREF="000391.html">[Yade-commits] r1431 - trunk/pkg/dem/DataClass/InteractionPhysics
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#390">[ date ]</a>
+              <a href="thread.html#390">[ thread ]</a>
+              <a href="subject.html#390">[ subject ]</a>
+              <a href="author.html#390">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

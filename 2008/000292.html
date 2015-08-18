@@ -1,0 +1,1256 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1330 - in trunk: . core gui gui/cmd gui/qt3 lib	lib/factory lib/serialization lib/serialization-bin	lib/serialization-xml scripts
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1330%20-%20in%20trunk%3A%20.%20core%20gui%20gui/cmd%20gui/qt3%20lib%0A%09lib/factory%20lib/serialization%20lib/serialization-bin%0A%09lib/serialization-xml%20scripts&In-Reply-To=%3C200804301415.m3UEFGbx002251%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000291.html">
+   <LINK REL="Next"  HREF="000293.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1330 - in trunk: . core gui gui/cmd gui/qt3 lib	lib/factory lib/serialization lib/serialization-bin	lib/serialization-xml scripts</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1330%20-%20in%20trunk%3A%20.%20core%20gui%20gui/cmd%20gui/qt3%20lib%0A%09lib/factory%20lib/serialization%20lib/serialization-bin%0A%09lib/serialization-xml%20scripts&In-Reply-To=%3C200804301415.m3UEFGbx002251%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1330 - in trunk: . core gui gui/cmd gui/qt3 lib	lib/factory lib/serialization lib/serialization-bin	lib/serialization-xml scripts">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Wed Apr 30 16:15:16 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000291.html">[Yade-commits] r1329 - in trunk: core extra extra/clump extra/tetra	extra/usct gui/cmd lib/QGLViewer lib/serialization	pkg/common/DataClass/PhysicalParameters	pkg/common/Engine/DeusExMachina pkg/common/Engine/MetaEngine	pkg/common/Engine/StandAloneEngine	pkg/dem/DataClass/PhysicalParameters	pkg/dem/Engine/DeusExMachina pkg/dem/Engine/StandAloneEngine	pkg/fem/Engine/StandAloneEngine pkg/lattice/Engine/StandAloneEngine	pkg/mass-spring/Engine/StandAloneEngine	pkg/realtime-rigidbody/Engine/StandAloneEngine
+</A></li>
+        <LI>Next message: <A HREF="000293.html">[Yade-commits] r1331 - trunk/gui/cmd
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#292">[ date ]</a>
+              <a href="thread.html#292">[ thread ]</a>
+              <a href="subject.html#292">[ subject ]</a>
+              <a href="author.html#292">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2008-04-30 16:15:14 +0200 (Wed, 30 Apr 2008)
+New Revision: 1330
+
+Added:
+   trunk/gui/cmd/__init__.py
+   trunk/gui/cmd/runtime.py
+   trunk/gui/cmd/utils.py
+   trunk/lib/serialization/FormatChecker.cpp
+   trunk/lib/serialization/FormatChecker.hpp
+Modified:
+   trunk/SConstruct
+   trunk/core/Omega.cpp
+   trunk/core/yade.cpp
+   trunk/gui/SConscript
+   trunk/gui/cmd/attrUtils.cpp
+   trunk/gui/cmd/cmdGui.cpp
+   trunk/gui/cmd/cmdGuiInit.py
+   trunk/gui/cmd/yadeControl.cpp
+   trunk/gui/qt3/QtGUI.cpp
+   trunk/gui/qt3/QtGUI.hpp
+   trunk/lib/SConscript
+   trunk/lib/factory/DynLibManager.cpp
+   trunk/lib/serialization-bin/BINFormatManager.cpp
+   trunk/lib/serialization-xml/XMLFormatManager.cpp
+   trunk/lib/serialization-xml/XMLFormatManager.hpp
+   trunk/lib/serialization/Archive.cpp
+   trunk/lib/serialization/Archive.hpp
+   trunk/lib/serialization/ContainerHandler.tpp
+   trunk/lib/serialization/FundamentalHandler.tpp
+   trunk/lib/serialization/IOFormatManager.cpp
+   trunk/lib/serialization/IOFormatManager.hpp
+   trunk/lib/serialization/KnownFundamentalsHandler.tpp
+   trunk/scripts/default-test.py
+   trunk/scripts/simple-scene.py
+Log:
+1. Add many checks to see where XML and BIN serializers take each other's work (non-intrusive).
+2. reorganization of cmdGui (will be renamed - perhaps - to pyUi or similar)
+3. BINFormatManager is now optional and _disabled by default_. feature 'binfmt' must be enabled to build the plugin.
+4. Added utils classes in python, examples are much simplified now.
+
+
+
+Modified: trunk/SConstruct
+===================================================================
+--- trunk/SConstruct	2008-04-28 21:52:11 UTC (rev 1329)
++++ trunk/SConstruct	2008-04-30 14:15:14 UTC (rev 1330)
+@@ -85,7 +85,7 @@
+ 	BoolOption('optimize','Turn on heavy optimizations (generates SSE2 instructions)',0),
+ 	ListOption('exclude','Yade components that will not be built','none',names=['qt3','gui','extra','common','dem','fem','lattice','mass-spring','realtime-rigidbody']),
+ 	# OK, dummy prevents bug in scons: if one selects all, it says all in scons.config, but without quotes, which generates error.
+-	ListOption('features','Optional features that are turned on','python,log4cxx',names=['python','log4cxx','dummy']),
++	ListOption('features','Optional features that are turned on','python,log4cxx',names=['python','log4cxx','binfmt','dummy']),
+ 	('jobs','Number of jobs to run at the same time (same as -j, but saved)',4,None,int),
+ 	('extraModules', 'Extra directories with their own SConscript files (must be in-tree) (whitespace separated)',None,None,Split),
+ 	('buildPrefix','Where to create build-[version][variant] directory for intermediary files','..'),
+
+Modified: trunk/core/Omega.cpp
+===================================================================
+--- trunk/core/Omega.cpp	2008-04-28 21:52:11 UTC (rev 1329)
++++ trunk/core/Omega.cpp	2008-04-30 14:15:14 UTC (rev 1330)
+@@ -17,7 +17,7 @@
+ #include&lt;Wm3Vector3.h&gt;
+ #include&lt;yade/lib-base/yadeWm3.hpp&gt;
+ #include&lt;yade/lib-serialization/IOFormatManager.hpp&gt;
+-#include&lt;yade/lib-serialization/IOFormatManager.hpp&gt;
++#include&lt;yade/lib-serialization/FormatChecker.hpp&gt;
+ #include&lt;yade/lib-multimethods/FunctorWrapper.hpp&gt;
+ #include&lt;yade/lib-multimethods/Indexable.hpp&gt;
+ #include&lt;cstdlib&gt;
+@@ -369,10 +369,15 @@
+ 			rootBody-&gt;recoverSimulationTime=simulationTime;
+ 		}
+ 
+-		if(filesystem::extension(name)==&quot;.xml&quot;)
++		if(filesystem::extension(name)==&quot;.xml&quot;) {
++			FormatChecker::format=FormatChecker::XML;
+ 			IOFormatManager::saveToFile(&quot;XMLFormatManager&quot;,name,&quot;rootBody&quot;,rootBody);
+-		else if(filesystem::extension(name)==&quot;.yade&quot; )
++		}
++
++		else if(filesystem::extension(name)==&quot;.yade&quot; ) {
++			FormatChecker::format=FormatChecker::BIN;
+ 			IOFormatManager::saveToFile(&quot;BINFormatManager&quot;,name,&quot;rootBody&quot;,rootBody);
++		}
+ 
+ 		if(recover) rootBody-&gt;recover=false;
+ 	}
+
+Modified: trunk/core/yade.cpp
+===================================================================
+--- trunk/core/yade.cpp	2008-04-28 21:52:11 UTC (rev 1329)
++++ trunk/core/yade.cpp	2008-04-30 14:15:14 UTC (rev 1330)
+@@ -18,6 +18,7 @@
+ #include&lt;iostream&gt;
+ #include&lt;string&gt;
+ #include&lt;getopt.h&gt;
++#include&lt;boost/algorithm/string.hpp&gt;
+ #include&lt;boost/filesystem/operations.hpp&gt;
+ #include&lt;boost/filesystem/convenience.hpp&gt;
+ #include&lt;boost/preprocessor/stringize.hpp&gt;
+@@ -174,12 +175,15 @@
+ 			case '-': coreOptions=false; break;
+ 			default: printHelp(); return 1;
+ 		}
++	// peek to see the first non-option arg that will be passed to the gui; may affect the gui we will use
++	if(optind&lt;argc &amp;&amp; boost::algorithm::ends_with(string(argv[optind]),string(&quot;.py&quot;))){ gui=&quot;cmdGui&quot;; LOG_DEBUG(&quot;Selecting cmdGui for .py&quot;); }
+ 	// save original options
+ 	Omega::instance().origArgv=argv; Omega::instance().origArgc=argc;
+-	// kill processed options, keep one more which will is in fact non-option (normally the binary)
++	// kill processed options, keep one more which is in fact non-option (normally the binary)
+ 	argv=&amp;(argv[optind-1]); argc-=optind-1;
+ 	// reset getopt globals for next processing
+ 	optind=0; opterr=0;
++
+ 	
+ 	if(configPath[configPath.size()-1] == '/')
+ 		configPath = configPath.substr(0,configPath.size()-1); 
+
+Modified: trunk/gui/SConscript
+===================================================================
+--- trunk/gui/SConscript	2008-04-28 21:52:11 UTC (rev 1329)
++++ trunk/gui/SConscript	2008-04-30 14:15:14 UTC (rev 1330)
+@@ -1,3 +1,4 @@
++# vim:syntax=python
+ Import('*')
+ 
+ if 'qt3' not in env['exclude']:
+@@ -38,7 +39,12 @@
+ if 'EMBED_PYTHON' in env['CPPDEFINES']:
+ 	env.Install('$PREFIX/lib/yade$SUFFIX/gui',[
+ 		env.SharedLibrary('cmdGui',['cmd/cmdGui.cpp']),
+-		env.SharedLibrary('yadeControl',['cmd/yadeControl.cpp','cmd/GLViewer4.cpp'],SHLIBPREFIX='',
++		env.File('cmdGuiInit.py','cmd'),
++	])
++	# one level deeper so that you can say: from yade.wrapper import *
++	# (more submodules to come)
++	env.Install('$PREFIX/lib/yade$SUFFIX/gui/yade',[
++		env.SharedLibrary('wrapper',['cmd/yadeControl.cpp','cmd/GLViewer4.cpp'],SHLIBPREFIX='',
+ 			LIBS=env['LIBS']+['yade-base','libboost_python','XMLFormatManager','yade-factory','yade-serialization','Shop',
+ 				'BoundingVolumeMetaEngine',
+ 				'GeometricalModelMetaEngine',
+@@ -51,6 +57,8 @@
+ 			#CPPPATH=env['CPPPATH']+['/usr/include/qt4','/usr/include/qt4/Qt','/usr/include/qt4/QtXml','/usr/include/qt4/QtOpenGL','/usr/include/qt4/QtCore','/usr/include/qt4/QtGui'],
+ 			CPPDEFINES=env['CPPDEFINES']+['NO_PYGLVIEWER'],
+ 			),
+-		env.File('cmdGuiInit.py','cmd')
+-])
++		env.File('__init__.py','cmd'),
++		env.File('utils.py','cmd'),
++		env.File('runtime.py','cmd'),
++	])
+ 
+
+Added: trunk/gui/cmd/__init__.py
+===================================================================
+--- trunk/gui/cmd/__init__.py	2008-04-28 21:52:11 UTC (rev 1329)
++++ trunk/gui/cmd/__init__.py	2008-04-30 14:15:14 UTC (rev 1330)
+@@ -0,0 +1,2 @@
++# this file just tells python that yade is package of python modules
++# see <A HREF="http://http://www.python.org/doc/2.1.3/tut/node8.html#SECTION008400000000000000000">http://http://www.python.org/doc/2.1.3/tut/node8.html#SECTION008400000000000000000</A>
+
+Modified: trunk/gui/cmd/attrUtils.cpp
+===================================================================
+--- trunk/gui/cmd/attrUtils.cpp	2008-04-28 21:52:11 UTC (rev 1329)
++++ trunk/gui/cmd/attrUtils.cpp	2008-04-30 14:15:14 UTC (rev 1330)
+@@ -57,7 +57,7 @@
+ 					AttrDesc desc; 
+ 					desc.archive=*ai;
+ 					any instance=(*ai)-&gt;getAddress(); // gets pointer to the stored value
+-					// 3 possibilities: one BOOL, one STRING, one or more NUMBERs
++					// 3 possibilities: one BOOL, one or more STRINGS, one or more NUMBERs (fallback if none matches)
+ 					if      (any_cast&lt;string*&gt;(&amp;instance)) desc.type=AttrAccess::STRING;
+ 					else if (any_cast&lt;bool*&gt;(&amp;instance))   desc.type=AttrAccess::BOOL;
+ 					else if (any_cast&lt;Real*&gt;(&amp;instance) || any_cast&lt;int*&gt;(&amp;instance) || any_cast&lt;unsigned int*&gt;(&amp;instance) || any_cast&lt;long*&gt;(&amp;instance) || any_cast&lt;unsigned long*&gt;(&amp;instance)) desc.type=AttrAccess::NUMBER;
+
+Modified: trunk/gui/cmd/cmdGui.cpp
+===================================================================
+--- trunk/gui/cmd/cmdGui.cpp	2008-04-28 21:52:11 UTC (rev 1329)
++++ trunk/gui/cmd/cmdGui.cpp	2008-04-30 14:15:14 UTC (rev 1330)
+@@ -1,6 +1,7 @@
+ //#include&lt;Python.h&gt;
+ #include&lt;boost/thread/thread.hpp&gt;
+ #include&lt;boost/python.hpp&gt;
++#include&lt;boost/algorithm/string.hpp&gt;
+ #include&lt;errno.h&gt;
+ 
+ #include&quot;cmdGui.hpp&quot;
+@@ -49,30 +50,48 @@
+ int cmdGui::run(int argc, char *argv[]) {
+ 	string runScript;
+ 	string runCommands;
++	bool stopAfter=false;
+ 	
+ 	int ch;
+ 	while((ch=getopt(argc,argv,&quot;hs:&quot;))!=-1)
+ 	switch(ch){
+ 		case 'h': help(); return 1;
+ 		case 's': runScript=string(optarg); break;
++		case 'x': stopAfter=true; break;
+ 		//case 'c': runCommands+=string(optarg)+&quot;\n&quot;; break;
+-		default: break;
++		default:
++			LOG_ERROR(&quot;Unhandled option string: `&quot;&lt;&lt;string(optarg)&lt;&lt;&quot;' (try -h for help on options)&quot;);
++			break;
+ 	}
++	if(optind&lt;argc){ // process non-option arguments
++		if(boost::algorithm::ends_with(string(argv[optind]),string(&quot;.py&quot;))) runScript=string(argv[optind]);
++		else if(boost::algorithm::ends_with(string(argv[optind]),string(&quot;.xml&quot;))) Omega::instance().setSimulationFileName(string(argv[optind]));
++		else optind--;
++	}
++	for (int index = optind+1; index&lt;argc; index++) LOG_ERROR(&quot;Unprocessed non-option argument: `&quot;&lt;&lt;argv[index]&lt;&lt;&quot;'&quot;);
+ 
++
+ 	XInitThreads();
+ 	PyEval_InitThreads();
+ 
+ 	PyGILState_STATE pyState = PyGILState_Ensure();
+ 
+-		#define PYTHON_DEFINE_STRING(pyName,cxxName) PyRun_SimpleString((string(pyName)+&quot;='&quot;+string(cxxName)+&quot;'&quot;).c_str())
++		// this is needed to create the yade.runtime namespace
++		PyRun_SimpleString(&quot;import sys; sys.path.insert(0,'&quot; PREFIX &quot;/lib/yade&quot; SUFFIX &quot;/gui')&quot;);
++		PyRun_SimpleString(&quot;import yade.runtime&quot;);
++
++		#define PYTHON_DEFINE_STRING(pyName,cxxName) PyRun_SimpleString((string(&quot;yade.runtime.&quot; pyName &quot;='&quot;)+cxxName+&quot;'&quot;).c_str())
++		#define PYTHON_DEFINE_BOOL(pyName,cxxName) PyRun_SimpleString((string(&quot;yade.runtime.&quot; pyName &quot;=&quot;)+(cxxName?&quot;True&quot;:&quot;False&quot;)).c_str())
+ 		// wrap those in python::handle&lt;&gt; ??
+-		PYTHON_DEFINE_STRING(&quot;yadePrefix&quot;,PREFIX);
+-		PYTHON_DEFINE_STRING(&quot;yadeSuffix&quot;,SUFFIX);
+-		PYTHON_DEFINE_STRING(&quot;yadeExecutable&quot;,Omega::instance().origArgv[0]);
+-		PYTHON_DEFINE_STRING(&quot;yadeRunSimulation&quot;,Omega::instance().getSimulationFileName());
+-		PYTHON_DEFINE_STRING(&quot;yadeRunScript&quot;,runScript);
+-		PYTHON_DEFINE_STRING(&quot;yadeRunCommands&quot;,runCommands);
++		PYTHON_DEFINE_STRING(&quot;prefix&quot;,PREFIX);
++		PYTHON_DEFINE_STRING(&quot;suffix&quot;,SUFFIX);
++		PYTHON_DEFINE_STRING(&quot;executable&quot;,Omega::instance().origArgv[0]);
++		PYTHON_DEFINE_STRING(&quot;simulation&quot;,Omega::instance().getSimulationFileName());
++		PYTHON_DEFINE_STRING(&quot;script&quot;,runScript);
++		PYTHON_DEFINE_STRING(&quot;commands&quot;,runCommands);
++		PYTHON_DEFINE_BOOL(&quot;stopAfter&quot;,stopAfter);
+ 		#undef PYTHON_DEFINE_STRING
++		#undef PYTHON_DEFINE_BOOL
+ 		execScript(PREFIX &quot;/lib/yade&quot; SUFFIX &quot;/gui/cmdGuiInit.py&quot;);
+ 		
+ 		//PyRun_InteractiveLoop(stdin,&quot;&lt;console&gt;&quot;);
+
+Modified: trunk/gui/cmd/cmdGuiInit.py
+===================================================================
+--- trunk/gui/cmd/cmdGuiInit.py	2008-04-28 21:52:11 UTC (rev 1329)
++++ trunk/gui/cmd/cmdGuiInit.py	2008-04-30 14:15:14 UTC (rev 1330)
+@@ -3,21 +3,25 @@
+ #
+ 
+ ## initialization
++
++from yade import runtime
+ import sys
+-sys.path.insert(0,yadePrefix+'/lib/yade'+yadeSuffix+'/extra')
+-sys.path.insert(0,yadePrefix+'/lib/yade'+yadeSuffix+'/gui')
+-from yadeControl import *
+ sys.excepthook=sys.__excepthook__ # apport on ubuntu override this, we don't need it
++sys.path.insert(0,runtime.prefix+'/lib/yade'+runtime.suffix+'/extra')
++sys.path.insert(0,runtime.prefix+'/lib/yade'+runtime.suffix+'/gui')
+ 
++from yade.wrapper import *
++
+ ## run simulation if requested from the command line
+-if yadeRunSimulation:
+-	print &quot;Running simulation &quot;+yadeRunSimulation
+-	o=Omega(); o.load(yadeRunSimulation); o.run();
++if runtime.simulation:
++	print &quot;Running simulation &quot;+runtime.simulation
++	o=Omega(); o.load(runtime.simulation); o.run();
+ 
+ ## run script if requested from the command line
+-if yadeRunScript:
+-	print &quot;Running script &quot;+yadeRunScript
+-	execfile(yadeRunScript)
++if runtime.script:
++	print &quot;Running script &quot;+runtime.script
++	execfile(runtime.script)
++	if runtime.stopAfter: sys.exit(0)
+ 
+ # run commands if requested from the command line
+ #if yadeRunCommands:
+
+Added: trunk/gui/cmd/runtime.py
+===================================================================
+--- trunk/gui/cmd/runtime.py	2008-04-28 21:52:11 UTC (rev 1329)
++++ trunk/gui/cmd/runtime.py	2008-04-30 14:15:14 UTC (rev 1330)
+@@ -0,0 +1 @@
++# this module is populated at initialization from the c++ part of cmdGui
+
+Added: trunk/gui/cmd/utils.py
+===================================================================
+--- trunk/gui/cmd/utils.py	2008-04-28 21:52:11 UTC (rev 1329)
++++ trunk/gui/cmd/utils.py	2008-04-30 14:15:14 UTC (rev 1330)
+@@ -0,0 +1,110 @@
++# encoding: utf-8
++#
++# utility functions for yade
++#
++# 2008 &#169; V&#225;clav &#352;milauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">eudoxos at arcig.cz</A>&gt;
++
++import math
++
++from yade.wrapper import *
++
++try: # use psyco if available
++	import psyco
++	psyco.full()
++except ImportError: pass
++
++def sphere(radius,center,density=1,young=3e9,poisson=.3,dynamic=True,color=[1,1,1]):
++	&quot;&quot;&quot;Create default sphere, with given parameters. Physical properties such as mass and inertia are calculated automatically.&quot;&quot;&quot;
++	s=Body()
++	s.shape=GeometricalModel('Sphere',{'radius':radius,'diffuseColor':color})
++	s.mold=InteractingGeometry('InteractingSphere',{'radius':radius,'diffuseColor':color})
++	V=(4./3)*math.pi*radius**3
++	inert=(2./5.)*V*density*radius**2
++	s.phys=PhysicalParameters('BodyMacroParameters',{'se3':[center[0],center[1],center[2],1,0,0,0],'mass':V*density,'inertia':[inert,inert,inert],'young':young,'poisson':poisson})
++	s.bound=BoundingVolume('AABB',{'diffuseColor':[0,1,0]})
++	s['isDynamic']=dynamic
++	return s
++
++def box(extents,center,orientation=[1,0,0,0],density=1,young=3e9,poisson=.3,dynamic=True,color=[1,1,1]):
++	&quot;&quot;&quot;Create default box (cuboid), with given parameters. Physical properties such as mass and inertia are calculated automatically.&quot;&quot;&quot;
++	b=Body()
++	b.shape=GeometricalModel('Box',{'extents':extents,'diffuseColor':color})
++	b.mold=InteractingGeometry('InteractingBox',{'extents':extents,'diffuseColor':color})
++	mass=8*extents[0]*extents[1]*extents[2]*density
++	b.phys=PhysicalParameters('BodyMacroParameters',{'se3':[center[0],center[1],center[2],orientation[0],orientation[1],orientation[2],orientation[3]],'mass':mass,'inertia':[mass*4*(extents[1]**2+extents[2]**2),mass*4*(extents[0]**2+extents[2]**2),mass*4*(extents[0]**2+extents[1]**2)],'young':young,'poisson':poisson})
++	b.bound=BoundingVolume('AABB',{'diffuseColor':[0,1,0]})
++	b['isDynamic']=dynamic
++	return b
++
++def negPosExtremes(axis,distFactor=1.1):
++	&quot;&quot;&quot;Get 2 lists (negative and positive extremes) of sphere ids that are close to the boundary
++	in the direction of requested axis (0=x,1=y,2=z).
++
++	distFactor enlarges radius of the sphere, it can be considered 'extremal' even if it doesn't touch the extreme.
++	&quot;&quot;&quot;
++	inf=float('inf')
++	extremes=[inf,-inf]
++	ret=[[],[]]
++	o=Omega()
++	for b in o.bodies:
++		extremes[1]=max(extremes[1],+b.shape['radius']+b.phys['se3'][axis])
++		extremes[0]=min(extremes[0],-b.shape['radius']+b.phys['se3'][axis])
++	print extremes
++	for b in o.bodies:
++		if b.phys['se3'][axis]-b.shape['radius']*distFactor&lt;=extremes[0]: ret[0].append(b.id)
++		if b.phys['se3'][axis]+b.shape['radius']*distFactor&gt;=extremes[1]: ret[1].append(b.id)
++	return ret
++
++def randomizeColors(onShapes=True,onMolds=False,onlyDynamic=False):
++	&quot;&quot;&quot;Assign random colors to shape's (GeometricalModel) and/or mold's (InteractingGeometry) diffuseColor.
++	
++	onShapes and onMolds turn on/off operating on the respective colors.
++	If onlyDynamic is true, only dynamic bodies will have the color changed.
++	&quot;&quot;&quot;
++	if not onShapes and not onMolds: return
++	o=Omega()
++	for b in o.bodies:
++		color=(random.random(),random.random(),random.random())
++		if onShapes and (b['isDynamic'] or not onlyDynamic): b.shape['diffuseColor']=color
++		if onMolds  and (b['isDynamic'] or not onlyDynamic): b.mold['diffuseColor']=color
++
++def runInQtGui(background=True):
++	&quot;&quot;&quot;Run the current simulation with the QtGUI.
++	
++	If background is True, the command will be run in background and the saved simulation temporary will not be deleted.
++
++	Note that it runs in separate process, hence no changes will propagate back to this simulation.&quot;&quot;&quot;
++	import os,tempfile,yade.runtime
++	[fileobj,filename]=tempfile.mkstemp('.xml','yade')
++	Omega().save(filename)
++	os.system(yade.runtime.executable+' -N QtGUI -S &quot;'+filename+'&quot;'+(' &amp;' if background else ''))
++	if not background: os.remove(filename)
++
++def PWaveTimeStep():
++	&quot;&quot;&quot;Estimate timestep by the elastic wave propagation speed (p-wave).
++	
++	Multiply the value returned by some safety factor &lt; 1, since shear waves are not taken into account here.&quot;&quot;&quot;
++	o=Omega()
++	dt=float('inf')
++	for b in o.bodies:
++		if not (b.phys.has_key('young') and b.shape.has_key('radius')): continue
++		density=b.phys['mass']/((4./3.)*math.pi*b.shape['radius']**3)
++		thisDt=b.shape['radius']/math.sqrt(b.phys['young']/density)
++		dt=min(dt,thisDt)
++	return dt
++
++def spheresFromFile(filename,**kw):
++	&quot;&quot;&quot;Load sphere coordinates from file, create spheres, insert them to the simulation.
++
++	filename is the file holding ASCII numbers (at least 4 colums that hold x_center, y_center, z_center, radius).
++	All remaining arguments are passed the the yade.utils.sphere function that creates the bodies.
++	
++	Returns list of body ids that were inserted.&quot;&quot;&quot;
++	ret=[]
++	for l in open(filename):
++		ss=[float(i) for i in l.split()]
++		id=o.bodies.append(sphere(ss[3],[ss[0],ss[2],ss[1]],**kw))
++		ret.append(id)
++	return ret
++
++
+
+Modified: trunk/gui/cmd/yadeControl.cpp
+===================================================================
+--- trunk/gui/cmd/yadeControl.cpp	2008-04-28 21:52:11 UTC (rev 1329)
++++ trunk/gui/cmd/yadeControl.cpp	2008-04-30 14:15:14 UTC (rev 1330)
+@@ -497,7 +497,7 @@
+ #endif /* USE_PYGLVIEWER&#160;*/
+ 
+ 
+-BOOST_PYTHON_MODULE(yadeControl)
++BOOST_PYTHON_MODULE(wrapper)
+ {
+ 	/* <A HREF="http://mail.python.org/pipermail/c++-sig/2004-March/007025.html">http://mail.python.org/pipermail/c++-sig/2004-March/007025.html</A>
+ 	<A HREF="http://mail.python.org/pipermail/c++-sig/2004-March/007029.html">http://mail.python.org/pipermail/c++-sig/2004-March/007029.html</A>
+
+Modified: trunk/gui/qt3/QtGUI.cpp
+===================================================================
+--- trunk/gui/qt3/QtGUI.cpp	2008-04-28 21:52:11 UTC (rev 1329)
++++ trunk/gui/qt3/QtGUI.cpp	2008-04-30 14:15:14 UTC (rev 1330)
+@@ -8,6 +8,7 @@
+ 
+ #include &quot;QtGUI.hpp&quot;
+ #include &quot;YadeQtMainWindow.hpp&quot;
++#include&lt;boost/algorithm/string.hpp&gt;
+ //#ifdef HAVE_CONFIG_H
+ //	#include &lt;config.h&gt;
+ //#endif
+@@ -19,6 +20,8 @@
+ QtGUI::QtGUI(){}
+ QtGUI::~QtGUI(){}
+ 
++CREATE_LOGGER(QtGUI);
++
+ int QtGUI::run(int argc, char *argv[])
+ {
+ //	#ifdef Q_WS_X11
+@@ -32,10 +35,15 @@
+ 		switch(ch){
+ //			case 'H'	: help(); 						return 1;
+ 			case 't'	: Omega::instance().setTimeStep(lexical_cast&lt;Real&gt;(optarg)); break;
+-//			case 'g'	: Omega::instance().setGravity
+-//						(Vector3r(0,-lexical_cast&lt;Real&gt;(optarg),0));	break;
+ 			default: break;	
+ 		}
++	if(optind&lt;argc){ // process non-option arguments
++		if(boost::algorithm::ends_with(string(argv[optind]),string(&quot;.xml&quot;))) Omega::instance().setSimulationFileName(string(argv[optind]));
++		else optind--;
++	}
++	for (int index=optind+1; index&lt;argc; index++) LOG_ERROR(&quot;Unprocessed non-option argument: `&quot;&lt;&lt;argv[index]&lt;&lt;&quot;'&quot;);
++	
++	
+ 
+ 	
+    QApplication app(argc,argv);
+
+Modified: trunk/gui/qt3/QtGUI.hpp
+===================================================================
+--- trunk/gui/qt3/QtGUI.hpp	2008-04-28 21:52:11 UTC (rev 1329)
++++ trunk/gui/qt3/QtGUI.hpp	2008-04-30 14:15:14 UTC (rev 1330)
+@@ -22,6 +22,7 @@
+ 		QtGUI ();
+ 		virtual ~QtGUI ();
+ 		virtual int run(int argc, char *argv[]);
++		DECLARE_LOGGER;
+ 	
+ 	REGISTER_CLASS_NAME(QtGUI);
+ 	REGISTER_BASE_CLASS_NAME(FrontEnd);
+
+Modified: trunk/lib/SConscript
+===================================================================
+--- trunk/lib/SConscript	2008-04-28 21:52:11 UTC (rev 1329)
++++ trunk/lib/SConscript	2008-04-30 14:15:14 UTC (rev 1330)
+@@ -44,6 +44,12 @@
+ 			),
+ 		])
+ 
++	if 'binfmt' in env['features']:
++		env.Install('$PREFIX/lib/yade$SUFFIX/lib',[
++			env.SharedLibrary('BINFormatManager',['serialization-bin/BINFormatManager.cpp']),
++		])
++
++
+ env.Install('$PREFIX/lib/yade$SUFFIX/lib',[
+ 
+ 	env.SharedLibrary('yade-base',
+@@ -94,19 +100,17 @@
+ 			'opengl/GLWindowsManager.cpp'],
+ 		LIBS=env['LIBS']+['glut']),
+ 
+-	env.SharedLibrary('BINFormatManager',
+-		['serialization-bin/BINFormatManager.cpp']),
+ 
+-
+ 	env.SharedLibrary('XMLFormatManager',
+ 		['serialization-xml/XMLFormatManager.cpp',
+ 			'serialization-xml/XMLSaxParser.cpp'],
+-		LIBS=env['LIBS']+['yade-base']),
++		LIBS=env['LIBS']+['yade-base']), #,'BINFormatManager']),
+ 
+ 	env.SharedLibrary('yade-serialization',
+ 		['serialization/Archive.cpp',
+ 			'serialization/IOFormatManager.cpp',
+ 			'serialization/IOManagerExceptions.cpp',
++			'serialization/FormatChecker.cpp',
+ 			'serialization/Serializable.cpp',
+ 			'serialization/SerializableSingleton.cpp',
+ 			'serialization/SerializationExceptions.cpp'])
+
+Modified: trunk/lib/factory/DynLibManager.cpp
+===================================================================
+--- trunk/lib/factory/DynLibManager.cpp	2008-04-28 21:52:11 UTC (rev 1329)
++++ trunk/lib/factory/DynLibManager.cpp	2008-04-30 14:15:14 UTC (rev 1330)
+@@ -123,7 +123,7 @@
+ #ifndef WIN32
+ 	char**yadePluginClasses=(char**)dlsym(handle, &quot;yadePluginClasses&quot;);
+ 	// errors are ignored, since definition of this sybol is optional
+-	if(dlerror()==NULL){ for(int i=0; yadePluginClasses[i]!=NULL &amp;&amp; strlen(yadePluginClasses[i])&gt;0; i++){
++	if(!dlerror()){ for(int i=0; yadePluginClasses[i]!=NULL &amp;&amp; strlen(yadePluginClasses[i])&gt;0; i++){
+ 		lastPluginClasses.push_back(yadePluginClasses[i]); LOG_DEBUG(&quot;Pushed back `&quot;&lt;&lt;yadePluginClasses[i]&lt;&lt;&quot;'.&quot;); }
+ 	}
+ #endif
+
+Modified: trunk/lib/serialization/Archive.cpp
+===================================================================
+--- trunk/lib/serialization/Archive.cpp	2008-04-28 21:52:11 UTC (rev 1329)
++++ trunk/lib/serialization/Archive.cpp	2008-04-30 14:15:14 UTC (rev 1330)
+@@ -14,6 +14,8 @@
+ map&lt;SerializableTypes::Type,pair&lt;SerializeFnPtr,DeserializeFnPtr&gt; &gt; Archive::serializationMapOfFundamental;
+ Archive::SerializableDescriptorMap Archive::map;
+ 
++void Archive::clearSerializablePointers() { serializationMap.clear(); serializationMapOfFundamental.clear(); }
++
+ Archive::Archive(const string&amp; n)
+ {
+ 	processed	= false;
+
+Modified: trunk/lib/serialization/Archive.hpp
+===================================================================
+--- trunk/lib/serialization/Archive.hpp	2008-04-28 21:52:11 UTC (rev 1329)
++++ trunk/lib/serialization/Archive.hpp	2008-04-30 14:15:14 UTC (rev 1330)
+@@ -25,6 +25,7 @@
+ #include &quot;ArchiveTypes.hpp&quot;
+ #include &quot;SerializableTypes.hpp&quot;
+ #include &quot;SerializableSingleton.hpp&quot;
++#include &quot;FormatChecker.hpp&quot;
+ 
+ using namespace boost;
+ using namespace std;
+@@ -151,6 +152,8 @@
+ 	fundamental type */
+ 	private   : static map&lt;SerializableTypes::Type,pair&lt;SerializeFnPtr,DeserializeFnPtr&gt; &gt; serializationMapOfFundamental;
+ 
++	public: static void clearSerializablePointers(); 
++
+ 	/*! &lt;a href=&quot;../ArchiveTypes.html&quot;&gt;Type&lt;/a&gt; of the attribute represented by the current archive */
+ 	private   : SerializableTypes::Type recordType;
+ 
+
+Modified: trunk/lib/serialization/ContainerHandler.tpp
+===================================================================
+--- trunk/lib/serialization/ContainerHandler.tpp	2008-04-28 21:52:11 UTC (rev 1329)
++++ trunk/lib/serialization/ContainerHandler.tpp	2008-04-30 14:15:14 UTC (rev 1330)
+@@ -1,3 +1,4 @@
++// vim:syn=cpp
+ /*************************************************************************
+ *  Copyright (C) 2004 by Olivier Galizzi                                 *
+ *  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">olivier.galizzi at imag.fr</A>                                               *
+
+Added: trunk/lib/serialization/FormatChecker.cpp
+===================================================================
+--- trunk/lib/serialization/FormatChecker.cpp	2008-04-28 21:52:11 UTC (rev 1329)
++++ trunk/lib/serialization/FormatChecker.cpp	2008-04-30 14:15:14 UTC (rev 1330)
+@@ -0,0 +1,2 @@
++#include&quot;FormatChecker.hpp&quot;
++int FormatChecker::format;
+
+Added: trunk/lib/serialization/FormatChecker.hpp
+===================================================================
+--- trunk/lib/serialization/FormatChecker.hpp	2008-04-28 21:52:11 UTC (rev 1329)
++++ trunk/lib/serialization/FormatChecker.hpp	2008-04-30 14:15:14 UTC (rev 1330)
+@@ -0,0 +1,9 @@
++#pragma once
++#define CHK_BIN() if(FormatChecker::format!=FormatChecker::BIN){cerr&lt;&lt;__FILE__&lt;&lt;&quot;:&quot;&lt;&lt;__LINE__&lt;&lt;&quot;: wrong format (should be BIN)!&quot;&lt;&lt;endl;}
++#define CHK_XML() if(FormatChecker::format!=FormatChecker::XML){cerr&lt;&lt;__FILE__&lt;&lt;&quot;:&quot;&lt;&lt;__LINE__&lt;&lt;&quot;: wrong format (should be XML)!&quot;&lt;&lt;endl;}
++
++class FormatChecker{
++public:
++	enum{XML,BIN};
++	static int format;
++};
+
+Modified: trunk/lib/serialization/FundamentalHandler.tpp
+===================================================================
+--- trunk/lib/serialization/FundamentalHandler.tpp	2008-04-28 21:52:11 UTC (rev 1329)
++++ trunk/lib/serialization/FundamentalHandler.tpp	2008-04-30 14:15:14 UTC (rev 1330)
+@@ -63,7 +63,7 @@
+ 	static void accessor(Archive&amp; ac, any&amp; a)
+ 	{ // FIXME - throw when trying to serialize a string that has spaces. ( if(string.find(' ') != string.end() ...) : (eudoxos: WHY?!!!!!)
+ 		if (a.type()==typeid(string*)) // serialization - writing to string from some Type
+-		{
++		{ CHK_XML();
+ 			string * tmpStr = any_cast&lt;string*&gt;(a);
+ 			string * tmp = any_cast&lt;string*&gt;(ac.getAddress());
+ 			*tmpStr=*tmp;
+@@ -74,7 +74,7 @@
+ 			#undef _ESCAPE_SPECIAL
+ 		}
+ 		else if (a.type()==typeid(vector&lt;unsigned char&gt;*)) // from string to binary stream
+-		{
++		{ CHK_BIN();
+ 			vector&lt;unsigned char&gt;* tmpBin = any_cast&lt; vector&lt;unsigned char&gt;* &gt;(a);
+ 			string * tmp = any_cast&lt;string*&gt;(ac.getAddress());
+ 			(*tmpBin).clear();
+@@ -91,6 +91,7 @@
+ template&lt;typename Type &gt;
+ inline void lexical_copy(Archive&amp; ac , any&amp; a )
+ {
++	if(FormatChecker::format==FormatChecker::XML){
+ 	// Textual serialization
+ 	if (a.type()==typeid(const string*)) // deserialization - reading from string to some Type
+ 	{
+@@ -99,13 +100,17 @@
+ 		*tmp = lexical_cast&lt;Type&gt;(*tmpStr);
+ 	}
+ 	else if (a.type()==typeid(string*)) // serialization - writing to string from some Type
+-	{
++	{ CHK_XML();
+ 		string * tmpStr = any_cast&lt;string*&gt;(a);
+ 		Type * tmp = any_cast&lt;Type*&gt;(ac.getAddress());
+ 		*tmpStr = lexical_cast&lt;string&gt;(*tmp);
+ 	}
++	else
++		cerr&lt;&lt;&quot;lexical_cast(XML): (de)serialization format mismatch&quot;&lt;&lt;endl;
++	}
++	else if(FormatChecker::format==FormatChecker::BIN){
+ 	// Binary serialization
+-	else if (a.type()==typeid(const vector&lt;unsigned char&gt;*)) // from binary stream to Type
++	if (a.type()==typeid(const vector&lt;unsigned char&gt;*)) // from binary stream to Type
+ 	{
+ 		const vector&lt;unsigned char&gt;* tmpBin = any_cast&lt; const vector&lt;unsigned char&gt;* &gt;(a);
+ 		Type * tmp = any_cast&lt;Type*&gt;(ac.getAddress());
+@@ -118,7 +123,7 @@
+ 		std::copy(ptr,end,ptr2);
+ 	}
+ 	else if (a.type()==typeid(vector&lt;unsigned char&gt;*)) // from Type to binary stream
+-	{
++	{ CHK_BIN();
+ 		vector&lt;unsigned char&gt;* tmpBin = any_cast&lt; vector&lt;unsigned char&gt;* &gt;(a);
+ 		Type * tmp = any_cast&lt;Type*&gt;(ac.getAddress());
+ 		(*tmpBin).clear();
+@@ -128,6 +133,9 @@
+ 		std::copy(ptr, end, (*tmpBin).begin() );
+ 	}
+ 	else
++		cerr&lt;&lt;&quot;lexical_cast(BIN): (de)serialization format mismatch&quot;&lt;&lt;endl;
++	}
++	else // never reached
+ 		throw HandlerError(SerializationExceptions::LexicalCopyError);
+ }
+ 
+
+Modified: trunk/lib/serialization/IOFormatManager.cpp
+===================================================================
+--- trunk/lib/serialization/IOFormatManager.cpp	2008-04-28 21:52:11 UTC (rev 1329)
++++ trunk/lib/serialization/IOFormatManager.cpp	2008-04-30 14:15:14 UTC (rev 1330)
+@@ -15,6 +15,8 @@
+ using namespace boost::spirit;
+ 
+ 
++int IOFormatManager::format;
++
+ char IOFormatManager::cOB	= ' ';
+ char IOFormatManager::cCB	= ' ';
+ char IOFormatManager::cS	= ' ';
+
+Modified: trunk/lib/serialization/IOFormatManager.hpp
+===================================================================
+--- trunk/lib/serialization/IOFormatManager.hpp	2008-04-28 21:52:11 UTC (rev 1329)
++++ trunk/lib/serialization/IOFormatManager.hpp	2008-04-30 14:15:14 UTC (rev 1330)
+@@ -24,6 +24,9 @@
+ 
+ class IOFormatManager : public Factorable
+ {
++	public:
++		enum {FORMAT_BIN,FORMAT_XML};
++		static int format;
+ 	private :
+ 		static char cOB;	// containerOpeningBracket 
+ 		static char cCB;	// containerClosingBracket
+
+Modified: trunk/lib/serialization/KnownFundamentalsHandler.tpp
+===================================================================
+--- trunk/lib/serialization/KnownFundamentalsHandler.tpp	2008-04-28 21:52:11 UTC (rev 1329)
++++ trunk/lib/serialization/KnownFundamentalsHandler.tpp	2008-04-30 14:15:14 UTC (rev 1330)
+@@ -1,3 +1,4 @@
++// vim:syntax=cpp
+ /*************************************************************************
+ *  Copyright (C) 2004 by Olivier Galizzi                                 *
+ *  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">olivier.galizzi at imag.fr</A>                                               *
+@@ -72,7 +73,7 @@
+ 
+ template&lt;typename Type &gt;
+ inline void data_to_binary(vector&lt;Type&gt;&amp; data, vector&lt;unsigned char&gt;&amp; bin)
+-{ 
++{ CHK_BIN(); 
+ 	unsigned char size3,size = data.size() - 1; 	// 8 bits
+ 	assert(size &lt; 16);
+ 	size3 = size &lt;&lt; 4; 				// max size is 16, so 4 bits is enough to store a number = 16-1 = 15
+
+Modified: trunk/lib/serialization-bin/BINFormatManager.cpp
+===================================================================
+--- trunk/lib/serialization-bin/BINFormatManager.cpp	2008-04-28 21:52:11 UTC (rev 1329)
++++ trunk/lib/serialization-bin/BINFormatManager.cpp	2008-04-30 14:15:14 UTC (rev 1330)
+@@ -6,10 +6,12 @@
+ *  GNU General Public License v2 or later. See file LICENSE for details. *
+ *************************************************************************/
+ 
+-#include &quot;BINFormatManager.hpp&quot;
++#include&quot;BINFormatManager.hpp&quot;
+ #include&lt;yade/lib-serialization/IOManagerExceptions.hpp&gt;
+-#include &lt;string&gt;
+-#include &lt;vector&gt;
++#include&lt;yade/lib-serialization/FormatChecker.hpp&gt;
++#include&lt;yade/lib-serialization-xml/XMLFormatManager.hpp&gt;
++#include&lt;string&gt;
++#include&lt;vector&gt;
+ 
+ using namespace std;
+ 
+@@ -19,27 +21,26 @@
+ {
+ 	names.clear();
+ 	names.push_back(&quot;&quot;);
++
++	Archive::clearSerializablePointers();
+ 	
+-	Archive::addSerializablePointer(SerializableTypes::SERIALIZABLE , false, serializeSerializable             , deserializeSerializable);
+-	Archive::addSerializablePointer(SerializableTypes::SERIALIZABLE , true , serializeSerializable             , deserializeSerializable);
+-	Archive::addSerializablePointer(SerializableTypes::FUNDAMENTAL  , true , serializeFundamental              , deserializeFundamental);
+-	Archive::addSerializablePointer(SerializableTypes::CONTAINER    , false, serializeContainer                , deserializeContainer);
+-	Archive::addSerializablePointer(SerializableTypes::CONTAINER    , true , serializeContainer                , deserializeContainer);
+-	Archive::addSerializablePointer(SerializableTypes::POINTER      , false, serializeSmartPointer             , deserializeSmartPointer);
+-	Archive::addSerializablePointer(SerializableTypes::POINTER      , true , serializeSmartPointer             , deserializeSmartPointer);
++	Archive::addSerializablePointer(SerializableTypes::SERIALIZABLE , false, BINFormatManager::serializeSerializable             , BINFormatManager::deserializeSerializable);
++	Archive::addSerializablePointer(SerializableTypes::SERIALIZABLE , true , BINFormatManager::serializeSerializable             , BINFormatManager::deserializeSerializable);
++	Archive::addSerializablePointer(SerializableTypes::FUNDAMENTAL  , true , BINFormatManager::serializeFundamental              , BINFormatManager::deserializeFundamental);
++	Archive::addSerializablePointer(SerializableTypes::CONTAINER    , false, BINFormatManager::serializeContainer                , BINFormatManager::deserializeContainer);
++	Archive::addSerializablePointer(SerializableTypes::CONTAINER    , true , BINFormatManager::serializeContainer                , BINFormatManager::deserializeContainer);
++	Archive::addSerializablePointer(SerializableTypes::POINTER      , false, BINFormatManager::serializeSmartPointer             , BINFormatManager::deserializeSmartPointer);
++	Archive::addSerializablePointer(SerializableTypes::POINTER      , true , BINFormatManager::serializeSmartPointer             , BINFormatManager::deserializeSmartPointer);
+ 
+-	Archive::addSerializablePointer(SerializableTypes::CUSTOM_CLASS , false, serializeUnsupported              , deserializeUnsupported);
++	Archive::addSerializablePointer(SerializableTypes::CUSTOM_CLASS , false, BINFormatManager::serializeUnsupported              , BINFormatManager::deserializeUnsupported);
+ 	//Archive::addSerializablePointer(SerializableTypes::CUSTOM_CLASS , true , serializeUnsupported              , deserializeUnsupported);
+-	Archive::addSerializablePointer(SerializableTypes::CUSTOM_CLASS , true , serializeCustomFundamental        , deserializeCustomFundamental);
++
+ }
+ 
+-BINFormatManager::~BINFormatManager()
+-{
++BINFormatManager::~BINFormatManager(){}
+ 
+-}
+-
+ void BINFormatManager::serializeNameMarker(ostream&amp; stream, std::string name)
+-{
++{ CHK_BIN();
+ 	
+ 	unsigned short i , namesSize = names.size();
+ 	for(i = 0 ; i &lt; namesSize ; ++i)
+@@ -79,7 +80,7 @@
+ }
+ 
+ std::string BINFormatManager::deserializeNameMarker(istream&amp; stream)
+-{
++{ CHK_BIN();
+ 	static std::string result;
+ 	result.clear();
+ 
+@@ -110,7 +111,7 @@
+ }
+ 
+ string BINFormatManager::beginDeserialization(istream&amp; stream, Archive&amp; ac)
+-{
++{ CHK_BIN();
+ 	unsigned char ch[5];
+ 	stream.read(reinterpret_cast&lt;char*&gt;(&amp;ch[0]),5);
+ 	unsigned char version = ch[4];
+@@ -123,24 +124,24 @@
+ }
+ 
+ void BINFormatManager::finalizeDeserialization(istream&amp; , Archive&amp;)
+-{
++{ CHK_BIN();
+ //	cerr &lt;&lt; &quot;finalizeDeserialization\n&quot;;
+ }
+ 
+ void BINFormatManager::beginSerialization(ostream&amp; stream, Archive&amp; ac)
+-{
++{ CHK_BIN();
+ 	unsigned char version = 1;
+ 	stream &lt;&lt; &quot;YADE&quot; &lt;&lt; version;
+ }
+ 
+ void BINFormatManager::finalizeSerialization(ostream&amp; stream, Archive&amp; ac)
+-{
++{ CHK_BIN();
+ }
+ 
+ /// Serialization and Deserialization of Serializable
+ 
+ void BINFormatManager::serializeSerializable(ostream&amp; stream, Archive&amp; ac, int depth)
+-{
++{ CHK_BIN();
+ 	Serializable * s;
+ 	s = any_cast&lt;Serializable*&gt;(ac.getAddress());
+ 	s-&gt;registerSerializableAttributes(false);
+@@ -162,7 +163,7 @@
+ 
+ 
+ void BINFormatManager::deserializeSerializable(istream&amp; stream, Archive&amp; ac, const string&amp; )
+-{
++{ CHK_BIN();
+ //cerr &lt;&lt; &quot;+ deserializeSerializable start\n&quot;;
+ 	shared_ptr&lt;Archive&gt; tmpAc;
+ 	Serializable * s = any_cast&lt;Serializable*&gt;(ac.getAddress());
+@@ -192,7 +193,7 @@
+ }
+ 
+ void BINFormatManager::serializeFundamental(ostream&amp; stream, Archive&amp; ac, int depth)
+-{
++{ CHK_BIN();
+ 	static std::vector&lt;unsigned char&gt; bin;
+ 	boost::any v = &bin;
+ 	ac.serializeFundamental(ac,v);
+@@ -206,7 +207,7 @@
+ }
+ 
+ void BINFormatManager::deserializeFundamental(istream&amp; stream, Archive&amp; ac, const string&amp;)
+-{
++{ CHK_BIN();
+ 	static std::vector&lt;unsigned char&gt; bin;
+ 	unsigned short size;
+ 	stream.read(&amp;((reinterpret_cast&lt;char*&gt;(&amp;size))[0]),1);
+@@ -229,6 +230,8 @@
+ 
+ void BINFormatManager::serializeContainer(ostream&amp; stream, Archive&amp; ac , int depth)
+ {
++	if(FormatChecker::format!=FormatChecker::BIN) { cerr&lt;&lt;__FILE__&lt;&lt;&quot;:&quot;&lt;&lt;__LINE__&lt;&lt;&quot; &quot;&lt;&lt;__FUNCTION__&lt;&lt;&quot;: diverting to XMLFormatManager&quot;&lt;&lt;endl; return XMLFormatManager::serializeContainer(stream,ac,depth); }
++
+ 	shared_ptr&lt;Archive&gt; tmpAc;
+ 	unsigned int size = ac.createNextArchive(ac,tmpAc,true);
+ 	assert(sizeof(size) == 4);
+@@ -246,7 +249,7 @@
+ 
+ 
+ void BINFormatManager::deserializeContainer(istream&amp; stream, Archive&amp; ac, const string&amp; str)
+-{
++{ CHK_BIN();
+ //cerr &lt;&lt; &quot;+ deserializeContainer start\n&quot;; int cccc=0;
+ 	unsigned int size;
+ 	stream.read(&amp;((reinterpret_cast&lt;char*&gt;(&amp;size))[0]),1);
+@@ -272,7 +275,7 @@
+ /// Serialization and Deserialization of Smart Pointer
+ 
+ void BINFormatManager::serializeSmartPointer(ostream&amp; stream, Archive&amp; ac , int depth)
+-{
++{ CHK_BIN();
+ 	shared_ptr&lt;Archive&gt; tmpAc;
+ 	unsigned char ch;
+ 	if(ac.createPointedArchive(ac,tmpAc))
+@@ -302,7 +305,7 @@
+ 
+ 
+ void BINFormatManager::deserializeSmartPointer(istream&amp; stream, Archive&amp; ac, const string&amp; )
+-{
++{ CHK_BIN();
+ //cerr &lt;&lt; &quot;+ deserializeSmartPointer start\n&quot;;
+ 	unsigned char ch;
+ 	stream.read(reinterpret_cast&lt;char*&gt;(&amp;ch),1);
+@@ -326,19 +329,19 @@
+ }
+ 
+ void BINFormatManager::serializeUnsupported(ostream&amp;, Archive&amp;, int)
+-{
++{ CHK_BIN();
+ 	string error=string(IOManagerExceptions::BadAttributeValue) + &quot; - custom class is not supported in binary, I'm too lazy to write this stuff, but you can write it ;)&quot;;
+ 	throw SerializableError(error.c_str());
+ }
+ 
+ void BINFormatManager::deserializeUnsupported(istream&amp;, Archive&amp;,const string&amp;)
+-{
++{ CHK_BIN();
+ 	string error=string(IOManagerExceptions::BadAttributeValue) + &quot; - custom class is not supported in binary, I'm too lazy to write this stuff, but you can write it ;)&quot;;
+ 	throw SerializableError(error.c_str());
+ }
+ 
+ void BINFormatManager::deserializeCustomFundamental(istream&amp; stream, Archive&amp; ac,const string&amp; str)
+-{
++{ CHK_BIN();
+ 	shared_ptr&lt;Serializable&gt; s = YADE_PTR_CAST&lt;Serializable&gt;(ClassFactory::instance().createShared(ac.getSerializableClassName()));
+ 
+ 	s-&gt;registerSerializableAttributes(true);
+@@ -356,7 +359,7 @@
+ 
+ 
+ void BINFormatManager::serializeCustomFundamental(ostream&amp; stream, Archive&amp; ac,int depth)
+-{
++{ CHK_BIN();
+ 	shared_ptr&lt;Serializable&gt; ss = YADE_PTR_CAST&lt;Serializable&gt;(ClassFactory::instance().createShared(ac.getSerializableClassName()));
+ 	ss-&gt;serialize(ac.getAddress());
+ 	ss-&gt;registerSerializableAttributes(false);
+
+Modified: trunk/lib/serialization-xml/XMLFormatManager.cpp
+===================================================================
+--- trunk/lib/serialization-xml/XMLFormatManager.cpp	2008-04-28 21:52:11 UTC (rev 1329)
++++ trunk/lib/serialization-xml/XMLFormatManager.cpp	2008-04-30 14:15:14 UTC (rev 1330)
+@@ -6,9 +6,11 @@
+ *  GNU General Public License v2 or later. See file LICENSE for details. *
+ *************************************************************************/
+ 
+-#include &quot;XMLFormatManager.hpp&quot;
++#include&quot;XMLFormatManager.hpp&quot;
+ #include&lt;yade/lib-serialization/IOManagerExceptions.hpp&gt;
+-#include &lt;string&gt;
++#include&lt;yade/lib-serialization/FormatChecker.hpp&gt;
++// #include&lt;yade/lib-serialization-bin/BINFormatManager.hpp&gt;
++#include&lt;string&gt;
+ 
+ using namespace std;
+ 
+@@ -16,13 +18,15 @@
+ 
+ XMLFormatManager::XMLFormatManager() : IOFormatManager()
+ {
+-	Archive::addSerializablePointer(SerializableTypes::SERIALIZABLE , false, serializeSerializable, deserializeSerializable);
++	Archive::clearSerializablePointers();
++
++	Archive::addSerializablePointer(SerializableTypes::SERIALIZABLE , false, XMLFormatManager::serializeSerializable, XMLFormatManager::deserializeSerializable);
+ 	Archive::addSerializablePointer(SerializableTypes::SERIALIZABLE , true , IOFormatManager::serializeFundamentalSerializable, IOFormatManager::deserializeFundamentalSerializable);
+-	Archive::addSerializablePointer(SerializableTypes::CONTAINER    , false, serializeContainer, deserializeContainer);
++	Archive::addSerializablePointer(SerializableTypes::CONTAINER    , false, XMLFormatManager::serializeContainer, XMLFormatManager::deserializeContainer);
+ 	Archive::addSerializablePointer(SerializableTypes::CONTAINER    , true , IOFormatManager::serializeContainerOfFundamental, IOFormatManager::deserializeContainerOfFundamental);
+ 
+ 	Archive::addSerializablePointer(SerializableTypes::POINTER      , true , IOFormatManager::serializeSmartPointerOfFundamental, IOFormatManager::deserializeSmartPointerOfFundamental);
+-	Archive::addSerializablePointer(SerializableTypes::POINTER      , false, serializeSmartPointer, deserializeSmartPointer);
++	Archive::addSerializablePointer(SerializableTypes::POINTER      , false, XMLFormatManager::serializeSmartPointer, XMLFormatManager::deserializeSmartPointer);
+ 	Archive::addSerializablePointer(SerializableTypes::CUSTOM_CLASS , true , IOFormatManager::serializeCustomFundamental, IOFormatManager::deserializeCustomFundamental);
+ 	Archive::addSerializablePointer(SerializableTypes::CUSTOM_CLASS , false, IOFormatManager::serializeCustomClass, IOFormatManager::deserializeCustomClass);
+ 	
+@@ -45,14 +49,14 @@
+ 
+ 
+ void XMLFormatManager::writeTabs(ostream&amp; stream, int depth)
+-{
++{ CHK_XML();
+ 	for(int i=0;i&lt;depth+1;i++)
+ 		stream &lt;&lt; '\t';
+ }
+ 
+ 
+ void XMLFormatManager::writeOpeningTag(ostream&amp; stream, Archive&amp; ac, int depth)
+-{
++{ CHK_XML();
+ 	writeTabs(stream, depth);
+ 	stream &lt;&lt; &quot;&lt;&quot; &lt;&lt; ac.getName();
+ 
+@@ -62,7 +66,7 @@
+ 
+ 
+ void XMLFormatManager::writeClosingTag(ostream&amp; stream, Archive&amp; ac, int depth)
+-{
++{ CHK_XML();
+ 	if (ac.isFundamental())
+ 		stream &lt;&lt; &quot;&lt;/&quot; &lt;&lt; ac.getName() &lt;&lt; &quot;&gt;&quot; &lt;&lt; endl;
+ 	else if (ac.containsOnlyFundamentals())
+@@ -76,7 +80,7 @@
+ 
+ 
+ string XMLFormatManager::beginDeserialization(istream&amp; stream, Archive&amp; ac)
+-{
++{ CHK_XML();
+ 	saxParser.readAndParseNextXmlLine(stream);
+ 	if (saxParser.getTagName()==&quot;Yade&quot;)
+ 	{
+@@ -97,7 +101,7 @@
+ 
+ 
+ void XMLFormatManager::finalizeDeserialization(istream&amp; , Archive&amp;)
+-{
++{ CHK_XML();
+ 	//saxParser.readAndParseNextXmlLine(stream);
+ 
+ 	//if (saxParser.getTagName()!=&quot;Yade&quot;)
+@@ -106,14 +110,14 @@
+ 
+ 
+ void XMLFormatManager::beginSerialization(ostream&amp; stream, Archive&amp; ac)
+-{
++{ CHK_XML();
+ 	stream &lt;&lt; &quot;&lt;Yade&gt;&quot; &lt;&lt; endl;
+ 	writeOpeningTag(stream,ac,0);
+ }
+ 
+ 
+ void XMLFormatManager::finalizeSerialization(ostream&amp; stream, Archive&amp; ac)
+-{
++{ CHK_XML();
+ 	writeClosingTag(stream,ac,0);
+ 	stream &lt;&lt; &quot;&lt;/Yade&gt;&quot; &lt;&lt; endl;
+ }
+@@ -123,7 +127,7 @@
+ /// Serialization and Deserialization of Serializable						///
+ 
+ void XMLFormatManager::serializeSerializable(ostream&amp; stream, Archive&amp; ac, int depth)
+-{
++{ CHK_XML();
+ 	Serializable * s;
+ 
+ 	s = any_cast&lt;Serializable*&gt;(ac.getAddress());
+@@ -166,7 +170,7 @@
+ 
+ 
+ void XMLFormatManager::deserializeSerializable(istream&amp; stream, Archive&amp; ac, const string&amp; )
+-{
++{ CHK_XML();
+ 	shared_ptr&lt;Archive&gt; tmpAc;
+ 
+ 	Serializable * s = any_cast&lt;Serializable*&gt;(ac.getAddress());
+@@ -215,9 +219,10 @@
+ 
+ 
+ /// Serialization and Deserialization of Container						///
++void XMLFormatManager::serializeContainer(ostream&amp; stream, Archive&amp; ac , int depth)
++{ CHK_XML();
++	//if(FormatChecker::format!=FormatChecker::XML) { cerr&lt;&lt;__FILE__&lt;&lt;&quot;:&quot;&lt;&lt;__LINE__&lt;&lt;&quot; &quot;&lt;&lt;__FUNCTION__&lt;&lt;&quot;: diverting to BINFormatManager&quot;&lt;&lt;endl; return BINFormatManager::serializeContainer(stream,ac,depth); }
+ 
+-void XMLFormatManager::serializeContainer(ostream&amp; stream, Archive&amp; ac , int depth)
+-{
+ 	shared_ptr&lt;Archive&gt; tmpAc;
+ 
+ 	int size = ac.createNextArchive(ac,tmpAc,true);
+@@ -240,7 +245,7 @@
+ 
+ 
+ void XMLFormatManager::deserializeContainer(istream&amp; stream, Archive&amp; ac, const string&amp; str)
+-{
++{ CHK_XML();
+ 	map&lt;string,string&gt; basicAttributes = saxParser.getBasicAttributes();
+ 	unsigned int size = lexical_cast&lt;unsigned int&gt;(basicAttributes[&quot;size&quot;]);
+ 	if (size&gt;0)
+@@ -266,6 +271,7 @@
+ 
+ void XMLFormatManager::serializeSmartPointer(ostream&amp; stream, Archive&amp; ac , int depth)
+ {
++//	if(FormatChecker::format!=FormatChecker::XML) { cerr&lt;&lt;__FILE__&lt;&lt;&quot;:&quot;&lt;&lt;__LINE__&lt;&lt;&quot; &quot;&lt;&lt;__FUNCTION__&lt;&lt;&quot;: diverting to BINFormatManager&quot;&lt;&lt;endl; return BINFormatManager::serializeSmartPointer(stream,ac,depth); }
+ 	shared_ptr&lt;Archive&gt; tmpAc;
+ 
+ 	if(ac.createPointedArchive(ac,tmpAc))
+@@ -292,7 +298,7 @@
+ 
+ 
+ void XMLFormatManager::deserializeSmartPointer(istream&amp; stream, Archive&amp; ac, const string&amp; )
+-{
++{ CHK_XML();
+ 	map&lt;string,string&gt; basicAttributes = saxParser.getBasicAttributes();
+ 
+ 	if (basicAttributes.size()!=0)
+@@ -308,7 +314,7 @@
+ 
+ 
+ void XMLFormatManager::deserializeFundamental(istream&amp; stream, Archive&amp; ac, const string&amp; str)
+-{
++{ CHK_XML();
+ 	try
+ 	{
+ 		IOFormatManager::deserializeFundamental(stream,ac,str);
+
+Modified: trunk/lib/serialization-xml/XMLFormatManager.hpp
+===================================================================
+--- trunk/lib/serialization-xml/XMLFormatManager.hpp	2008-04-28 21:52:11 UTC (rev 1329)
++++ trunk/lib/serialization-xml/XMLFormatManager.hpp	2008-04-30 14:15:14 UTC (rev 1330)
+@@ -12,7 +12,7 @@
+ #define XMLFORMATMANAGER_HPP
+ 
+ #include&lt;yade/lib-serialization/IOFormatManager.hpp&gt;
+-#include &quot;XMLSaxParser.hpp&quot;
++#include&quot;XMLSaxParser.hpp&quot;
+ 
+ class XMLFormatManager : public IOFormatManager
+ {
+
+Modified: trunk/scripts/default-test.py
+===================================================================
+--- trunk/scripts/default-test.py	2008-04-28 21:52:11 UTC (rev 1329)
++++ trunk/scripts/default-test.py	2008-04-30 14:15:14 UTC (rev 1330)
+@@ -1,5 +1,6 @@
++#!/usr/local/bin/yade-trunk
++# coding=UTF-8
+ # this must be run inside yade
+-# coding=UTF-8
+ 
+ import os,time,sys
+ simulFile='/tmp/yade-test-%d.xml'%(os.getpid()) # generated simulations here
+@@ -17,6 +18,7 @@
+ start=time.time(); o.run(nIter); o.wait(); finish=time.time() # run nIter iterations, wait to finish, measure elapsed time
+ speed=nIter/(finish-start) # rough estimate
+ open(speedFile,'w').write('%%g'%%speed)
++print quit
+ quit()
+ &quot;&quot;&quot;%(simulFile,speedFile,100)
+ 
+@@ -24,7 +26,7 @@
+ 
+ #broken=['SDECLinkedSpheres','SDECMovingWall','SDECSpheresPlane','ThreePointBending']
+ genParams={
+-	'USCTGen':{'spheresFile':'examples/small.sdec.xyz'}
++	#'USCTGen':{'spheresFile':'examples/small.sdec.xyz'}
+ 	}
+ #nIter=100
+ summary=[]
+
+Modified: trunk/scripts/simple-scene.py
+===================================================================
+--- trunk/scripts/simple-scene.py	2008-04-28 21:52:11 UTC (rev 1329)
++++ trunk/scripts/simple-scene.py	2008-04-30 14:15:14 UTC (rev 1330)
+@@ -1,4 +1,6 @@
++#!/usr/local/bin/yade-trunk -x
+ # -*- encoding=utf-8 -*-
++
+ o=Omega() # this creates default rootBody as well
+ 
+ # is used in both initializers and engines, assign to a temporary
+@@ -19,7 +21,7 @@
+ 	MetaEngine('InteractionPhysicsMetaEngine',[EngineUnit('SimpleElasticRelationships')]),
+ 	StandAloneEngine('ElasticContactLaw'),
+ 	StandAloneEngine('GlobalStiffnessCounter',{'interval':50}),
+-	StandAloneEngine('GlobalStiffnessTimeStepper',{'defaultDt':1e-4,'active':True,'timeStepUpdateInterval':50}),
++	StandAloneEngine('GlobalStiffnessTimeStepper',{'defaultDt':1e-5,'active':True,'timeStepUpdateInterval':50}),
+ 	DeusExMachina('GravityEngine',{'gravity':[0,0,-9.81]}),
+ 	MetaEngine('PhysicalActionDamper',[
+ 		EngineUnit('CundallNonViscousForceDamping',{'damping':0.2}),
+@@ -33,26 +35,25 @@
+ 	MetaEngine('PhysicalParametersMetaEngine',[EngineUnit('LeapFrogOrientationIntegrator')]),
+ ]
+ 
+-s=Body()
+-s.shape=GeometricalModel('Sphere',{'radius':1,'diffuseColor':[0,1,0]})
+-s.mold=InteractingGeometry('InteractingSphere',{'radius':1,'diffuseColor':[1,0,0]})
+-s.phys=PhysicalParameters('BodyMacroParameters',{'se3':[0,0,2,1,0,0,0],'mass':1000,'inertia':[7e4,7e4,7e4],'young':3e9,'poisson':0.3})
+-s.bound=BoundingVolume('AABB',{'diffuseColor':[0,0,1]})
+-s['isDynamic']=True
+ 
+-b=Body()
+-b.shape=GeometricalModel('Box',{'extents':[.5,.5,.5],'diffuseColor':[1,0,0]})
+-b.mold=InteractingGeometry('InteractingBox',{'extents':[.5,.5,.5],'diffuseColor':[0,1,0]})
+-b.phys=PhysicalParameters('BodyMacroParameters',{'se3':[0,0,0,1,0,0,0],'mass':2000,'inertia':[1e5,1e5,1e5],'young':3e9,'poisson':0.3})
+-b.bound=BoundingVolume('AABB',{'diffuseColor':[0,0,1]})
+-b['isDynamic']=False
++from yade import utils
++o.bodies.append(utils.box(extents=[.5,.5,.5],center=[0,0,0],dynamic=False,color=[1,0,0]))
++o.bodies.append(utils.sphere(1,[0,0,2],color=[0,1,0]))
++# o.dt=.2*utils.PWaveTimeStep()
+ 
+-o.bodies.append(b)
+-o.bodies.append(s)
+-
+ o.save('/tmp/a.xml')
++print &quot;===================== SAVING&#160;FINISHED&#160;=====================&quot;
++o.load('/tmp/a.xml')
++import sys
++sys.exit(0)
+ 
+-# load that with the QtGUI
+-import os
+-os.system(yadeExecutable+' -N QtGUI -S /tmp/a.xml')
++if True: # shorter, but doesn't test the (de)serializer, since binary format is used
++	# will run in background
++	utils.runInQtGui()
++else:
++	## we could save it to a file just as well
++	o.save('/tmp/a.xml')
++	# load that with the QtGUI
++	import os,yade.runtime
++	os.system(yade.runtime.executable+' -N QtGUI -S /tmp/a.xml &amp;')
+ 
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000291.html">[Yade-commits] r1329 - in trunk: core extra extra/clump extra/tetra	extra/usct gui/cmd lib/QGLViewer lib/serialization	pkg/common/DataClass/PhysicalParameters	pkg/common/Engine/DeusExMachina pkg/common/Engine/MetaEngine	pkg/common/Engine/StandAloneEngine	pkg/dem/DataClass/PhysicalParameters	pkg/dem/Engine/DeusExMachina pkg/dem/Engine/StandAloneEngine	pkg/fem/Engine/StandAloneEngine pkg/lattice/Engine/StandAloneEngine	pkg/mass-spring/Engine/StandAloneEngine	pkg/realtime-rigidbody/Engine/StandAloneEngine
+</A></li>
+	<LI>Next message: <A HREF="000293.html">[Yade-commits] r1331 - trunk/gui/cmd
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#292">[ date ]</a>
+              <a href="thread.html#292">[ thread ]</a>
+              <a href="subject.html#292">[ subject ]</a>
+              <a href="author.html#292">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

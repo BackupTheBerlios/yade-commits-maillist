@@ -1,0 +1,317 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1413 - in trunk: core gui/qt3	pkg/common/Engine/DeusExMachina	pkg/common/RenderingEngine/OpenGLRenderingEngine
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1413%20-%20in%20trunk%3A%20core%20gui/qt3%0A%09pkg/common/Engine/DeusExMachina%0A%09pkg/common/RenderingEngine/OpenGLRenderingEngine&In-Reply-To=%3C200807040257.m642vAqh029042%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000372.html">
+   <LINK REL="Next"  HREF="000374.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1413 - in trunk: core gui/qt3	pkg/common/Engine/DeusExMachina	pkg/common/RenderingEngine/OpenGLRenderingEngine</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1413%20-%20in%20trunk%3A%20core%20gui/qt3%0A%09pkg/common/Engine/DeusExMachina%0A%09pkg/common/RenderingEngine/OpenGLRenderingEngine&In-Reply-To=%3C200807040257.m642vAqh029042%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1413 - in trunk: core gui/qt3	pkg/common/Engine/DeusExMachina	pkg/common/RenderingEngine/OpenGLRenderingEngine">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Fri Jul  4 04:57:10 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000372.html">[Yade-commits] r1412 - in trunk: gui/py gui/qt3	pkg/common/Engine/DeusExMachina
+</A></li>
+        <LI>Next message: <A HREF="000374.html">[Yade-commits] r1414 - in trunk: gui/qt3	pkg/common/Engine/DeusExMachina pkg/dem/Engine/StandAloneEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#373">[ date ]</a>
+              <a href="thread.html#373">[ thread ]</a>
+              <a href="subject.html#373">[ subject ]</a>
+              <a href="author.html#373">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2008-07-04 04:57:10 +0200 (Fri, 04 Jul 2008)
+New Revision: 1413
+
+Modified:
+   trunk/core/BoundingVolume.hpp
+   trunk/gui/qt3/GLViewer.cpp
+   trunk/gui/qt3/GLViewer.hpp
+   trunk/pkg/common/Engine/DeusExMachina/ResetPositionEngine.cpp
+   trunk/pkg/common/Engine/DeusExMachina/ResetPositionEngine.hpp
+   trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.cpp
+Log:
+1. Double-click aligns clipping planes if manipulated, x,y,z aligns normal with axis.
+2. Default number of clipping planes is 3 instead of 2 now.
+2. Fix compilation error in ResetPositionEngine (missing logger)
+
+
+
+Modified: trunk/core/BoundingVolume.hpp
+===================================================================
+--- trunk/core/BoundingVolume.hpp	2008-07-03 17:23:12 UTC (rev 1412)
++++ trunk/core/BoundingVolume.hpp	2008-07-04 02:57:10 UTC (rev 1413)
+@@ -5,13 +5,8 @@
+ *  This program is free software; it is licensed under the terms of the  *
+ *  GNU General Public License v2 or later. See file LICENSE for details. *
+ *************************************************************************/
++#pragma once
+ 
+-#ifndef BOUNDINGVOLUME_HPP
+-#define BOUNDINGVOLUME_HPP
+-
+-#include &lt;GL/glut.h&gt;
+-#include &lt;GL/gl.h&gt;
+-
+ #include&lt;yade/lib-base/yadeWm3Extra.hpp&gt;
+ #include&lt;yade/lib-serialization/Serializable.hpp&gt;
+ #include&lt;yade/lib-multimethods/Indexable.hpp&gt;
+@@ -25,26 +20,15 @@
+ 
+ class BoundingVolume : public Serializable, public Indexable
+ {
+-
+-/// Attributes
+-	public : // FIXME - maybe private?
++	public :
+ 		Vector3r	 diffuseColor		/// Color of the bounding volume. Used only for drawing purpose
+ 				,min			/// Minimum of the bounding volume
+ 				,max;			/// Maximum of the bounding volume
+-		BoundingVolume(): diffuseColor(Vector3r(1,1,1)){}
++		BoundingVolume(): diffuseColor(Vector3r(1,1,1)), min(Vector3r(0,0,0)), max(Vector3r(0,0,0)) {}
+ 
+-/// Serialization
+ 		void registerAttributes();
+ 	REGISTER_CLASS_NAME(BoundingVolume);
+ 	REGISTER_BASE_CLASS_NAME(Serializable Indexable);
+-
+-	
+-/// Indexable
+ 	REGISTER_INDEX_COUNTER(BoundingVolume);
+-
+ };
+-
+ REGISTER_SERIALIZABLE(BoundingVolume,false);
+-
+-#endif // __BOUNDINGVOLUME_H__
+-
+
+Modified: trunk/gui/qt3/GLViewer.cpp
+===================================================================
+--- trunk/gui/qt3/GLViewer.cpp	2008-07-03 17:23:12 UTC (rev 1412)
++++ trunk/gui/qt3/GLViewer.cpp	2008-07-04 02:57:10 UTC (rev 1413)
+@@ -47,10 +47,10 @@
+ 	setKeyDescription(Qt::Key_C,&quot;Set scene center to the selected body (if any)&quot;);
+ 	setKeyDescription(Qt::Key_C &amp; Qt::ALT,&quot;Set scene center to median body position&quot;);
+ 	setKeyDescription(Qt::Key_D,&quot;Toggle Body::isDynamic on selection&quot;);
+-	setKeyDescription(Qt::Key_G,&quot;Toggle YZ grid&quot;);
+-	setKeyDescription(Qt::Key_X,&quot;Toggle YZ grid&quot;);
+-	setKeyDescription(Qt::Key_Y,&quot;Toggle XZ grid&quot;);
+-	setKeyDescription(Qt::Key_Z,&quot;Toggle XY grid&quot;);
++	setKeyDescription(Qt::Key_G,&quot;Toggle grid&quot;);
++	setKeyDescription(Qt::Key_X,&quot;Toggle YZ grid (or: align manipulated clip plane normal with +X)&quot;);
++	setKeyDescription(Qt::Key_Y,&quot;Toggle XZ grid (or: align manipulated clip plane normal with +Y)&quot;);
++	setKeyDescription(Qt::Key_Z,&quot;Toggle XY grid (or: align manipulated clip plane normal with +Z)&quot;);
+ 	setKeyDescription(Qt::Key_Delete,&quot;(lattice) increase isoValue&quot;);
+ 	setKeyDescription(Qt::Key_Insert,&quot;(lattice) decrease isoValue&quot;);
+ 	setKeyDescription(Qt::Key_Next,  &quot;(lattice) increase isoThic&quot;);
+@@ -110,6 +110,7 @@
+ }
+ 
+ void GLViewer::startClipPlaneManipulation(int planeNo){
++	assert(planeNo&lt;renderer-&gt;clipPlaneNum);
+ 	resetManipulation();
+ 	mouseMovesManipulatedFrame(xyPlaneConstraint.get());
+ 	manipulatedClipPlane=planeNo;
+@@ -129,8 +130,9 @@
+ 	else if(e-&gt;key()==Qt::Key_C &amp;&amp; (e-&gt;state() &amp; AltButton)){ displayMessage(&quot;Median centering&quot;); centerMedianQuartile(); updateGL(); }
+ 
+ 	else if(e-&gt;key()==Qt::Key_Escape){ resetManipulation();displayMessage(&quot;Manipulating scene.&quot;); }
+-	else if(e-&gt;key()==Qt::Key_F1 || e-&gt;key()==Qt::Key_F2 /* || ... */ ){
+-		int n=0; if(e-&gt;key()==Qt::Key_F1) n=1; else if(e-&gt;key()==Qt::Key_F2) n=2; /* ... */ assert(n&gt;0); int planeId=n-1;
++	else if(e-&gt;key()==Qt::Key_F1 || e-&gt;key()==Qt::Key_F2 || e-&gt;key()==Qt::Key_F3 /* || ... */ ){
++		int n=0; if(e-&gt;key()==Qt::Key_F1) n=1; else if(e-&gt;key()==Qt::Key_F2) n=2; else if(e-&gt;key()==Qt::Key_F3) n=3; assert(n&gt;0); int planeId=n-1;
++		if(planeId&gt;=renderer-&gt;clipPlaneNum) return;
+ 		if(planeId!=manipulatedClipPlane) startClipPlaneManipulation(planeId);
+ 		updateGL();
+ 	}
+@@ -146,8 +148,8 @@
+ 		if(manipulatedClipPlane&gt;=0) {displayMessage(&quot;Clip plane #&quot;+lexical_cast&lt;string&gt;(manipulatedClipPlane+1)+(renderer-&gt;clipPlaneActive[manipulatedClipPlane]?&quot; de&quot;:&quot; &quot;)+&quot;activated&quot;); renderer-&gt;clipPlaneActive[manipulatedClipPlane]=!renderer-&gt;clipPlaneActive[manipulatedClipPlane]; updateGL(); }
+ 	}
+ 	else if(e-&gt;key()==Qt::Key_0 &amp;&amp;(e-&gt;state() &amp; AltButton)) {boundClipPlanes.clear(); displayMessage(&quot;Cleared the bound group.&quot;);}
+-	else if(e-&gt;key()==Qt::Key_1 || e-&gt;key()==Qt::Key_2 /* || ... */ ){
+-		int n=0; if(e-&gt;key()==Qt::Key_1) n=1; else if(e-&gt;key()==Qt::Key_2) n=2; /* ... */ assert(n&gt;0); int planeId=n-1;
++	else if(e-&gt;key()==Qt::Key_1 || e-&gt;key()==Qt::Key_2 || e-&gt;key()==Qt::Key_3 /* || ... */ ){
++		int n=0; if(e-&gt;key()==Qt::Key_1) n=1; else if(e-&gt;key()==Qt::Key_2) n=2; else if(e-&gt;key()==Qt::Key_3) n=3; assert(n&gt;0); int planeId=n-1;
+ 		if(planeId&gt;=renderer-&gt;clipPlaneNum) return; // no such clipping plane
+ 		if(e-&gt;state() &amp; AltButton){
+ 			if(boundClipPlanes.count(planeId)==0) {boundClipPlanes.insert(planeId); displayMessage(&quot;Added plane #&quot;+lexical_cast&lt;string&gt;(planeId+1)+&quot; to the bound group: &quot;+strBoundGroup());}
+@@ -162,7 +164,18 @@
+ 	}
+ 	else if(e-&gt;key()==Qt::Key_D) wasDynamic = true;
+ 	else if(e-&gt;key()==Qt::Key_G) {bool anyDrawn=drawGridXYZ[0]||drawGridXYZ[1]||drawGridXYZ[2]; for(int i=0; i&lt;3; i++)drawGridXYZ[i]=!anyDrawn; updateGL();}
+-	else if(e-&gt;key()==Qt::Key_X) drawGridXYZ[0]=!drawGridXYZ[0], updateGL();
++	else if(e-&gt;key()==Qt::Key_X || e-&gt;key()==Qt::Key_Y || e-&gt;key()==Qt::Key_Z){
++		int axisIdx=(e-&gt;key()==Qt::Key_X?0:(e-&gt;key()==Qt::Key_Y?1:2));
++		if(manipulatedClipPlane&lt;0){ drawGridXYZ[axisIdx]=!drawGridXYZ[axisIdx]; }
++		else{ // align clipping plane with world axis
++			// x: (0,1,0),pi/2
++			// y: (0,0,1),pi/2
++			// z: (1,0,0),0
++			qglviewer::Vec axis(0,0,0); axis[(axisIdx+1)%3]=1;
++			manipulatedFrame()-&gt;setOrientation(qglviewer::Quaternion(axis,axisIdx==2?0:Mathr::PI/2));
++		}
++		updateGL();
++	}
+ 	else if(e-&gt;key()==Qt::Key_Y) drawGridXYZ[1]=!drawGridXYZ[1], updateGL();
+ 	else if(e-&gt;key()==Qt::Key_Z) drawGridXYZ[2]=!drawGridXYZ[2], updateGL();
+ // FIXME BEGIN - arguments for GLDraw*ers should be from dialog box, not through Omega !!!
+@@ -248,7 +261,7 @@
+ 		min=rb-&gt;boundingVolume-&gt;min; max=rb-&gt;boundingVolume-&gt;max;
+ 		if(std::max(max[0]-min[0],std::max(max[1]-min[1],max[2]-min[2]))&lt;=0){
+ 			// AABB is not yet calculated...
+-			LOG_DEBUG(&quot;rootBody's AABB not yet calculated or has one dimension zero, attempt get that from bodies' positions.&quot;);
++			LOG_DEBUG(&quot;rootBody's boundingVolume not yet calculated or has one dimension zero, attempt get that from bodies' positions.&quot;);
+ 			Real inf=std::numeric_limits&lt;Real&gt;::infinity();
+ 			min=Vector3r(inf,inf,inf); max=Vector3r(-inf,-inf,-inf);
+ 			FOREACH(const shared_ptr&lt;Body&gt;&amp; b, *rb-&gt;bodies){
+@@ -381,3 +394,21 @@
+ 	YadeQtMainWindow::self-&gt;closeView(this);
+ }
+ 
++/* Handle double-click event; if clipping plane is manipulated, align it with the global coordinate system.
++ * Otherwise pass the event to QGLViewer to handle it normally.
++ *
++ * mostly copied over from ManipulatedFrame::mouseDoubleClickEvent
++ */
++void GLViewer::mouseDoubleClickEvent(QMouseEvent *event){
++	if(manipulatedClipPlane&lt;0) { /* LOG_DEBUG(&quot;Double click not on clipping plane&quot;); */ QGLViewer::mouseDoubleClickEvent(event); return; }
++#if QT_VERSION &gt;= 0x040000
++	if (event-&gt;modifiers() == Qt::NoModifier)
++#else
++	if (event-&gt;state() == Qt::NoButton)
++#endif
++	switch (event-&gt;button()){
++		case Qt::LeftButton:  manipulatedFrame()-&gt;alignWithFrame(NULL,true); LOG_DEBUG(&quot;Aligning cutting plane&quot;); break;
++		// case Qt::RightButton: projectOnLine(camera-&gt;position(), camera-&gt;viewDirection()); break;
++		default: break; // avoid warning
++	}
++}
+
+Modified: trunk/gui/qt3/GLViewer.hpp
+===================================================================
+--- trunk/gui/qt3/GLViewer.hpp	2008-07-03 17:23:12 UTC (rev 1412)
++++ trunk/gui/qt3/GLViewer.hpp	2008-07-04 02:57:10 UTC (rev 1413)
+@@ -13,13 +13,26 @@
+ #include&lt;yade/lib-QGLViewer/constraint.h&gt;
+ #include&lt;set&gt;
+ 
+-/* There can be several clipping planes (default is up to 2).
+- * Clipping plane is manipulated after hitting F1, F2, .... To end manipulation, press Escape.
+- * During manipulation, hitting 1,2,... will align the current plane with #1,2,... (same orientation).
+- * Hitting 'R' will reverse the plane (normal*=-1).
+- * Alt-1,Alt-2,... adds/removes the respective plane to boud group: when any of planes in the group is moved,
+- * 	all other planes are moved as well so that their relative positions are the same.
++/*! Class handling user interaction with the openGL rendering of simulation.
+  *
++ * Clipping planes:
++ * ================
++ *
++ * Clipping plane is manipulated after hitting F1, F2, .... To end the manipulation, press Escape.
++ *
++ * Keystrokes during clipping plane manipulation:
++ * * space activates/deactives the clipping plane
++ * * x,y,z aligns the plane with yz, xz, xy planes
++ * * left-double-click aligns the plane with world coordinates system (canonical planes + 45&#730; interpositions)
++ * * 1,2,... will align the current plane with #1, #2, ... (same orientation)
++ * * r reverses the plane (normal*=-1)a
++ *
++ * Keystrokes that work regardless of whether a clipping plane is being manipulated:
++ * * Alt-1,Alt-2,... adds/removes the respective plane to bound group:
++ * 	mutual positions+orientations of planes in the group are maintained when one of those planes is manipulated
++ *
++ * Clip plane number is 3; change OpenGLRenderingEngine::clipPlaneNum, complete switches &quot;|| ...&quot; in keyPressEvent
++ * and recompile to have more.
+  */
+ 
+ class GLViewer : public QGLViewer
+@@ -62,4 +75,5 @@
+ 		virtual void closeEvent(QCloseEvent *e);
+ 		virtual void postSelection(const QPoint&amp; point);
+ 		virtual void endSelection(const QPoint &amp;point);
++		virtual void mouseDoubleClickEvent (QMouseEvent *e);
+ };
+
+Modified: trunk/pkg/common/Engine/DeusExMachina/ResetPositionEngine.cpp
+===================================================================
+--- trunk/pkg/common/Engine/DeusExMachina/ResetPositionEngine.cpp	2008-07-03 17:23:12 UTC (rev 1412)
++++ trunk/pkg/common/Engine/DeusExMachina/ResetPositionEngine.cpp	2008-07-04 02:57:10 UTC (rev 1413)
+@@ -11,6 +11,8 @@
+ #include&lt;yade/pkg-common/ParticleParameters.hpp&gt;
+ #include&lt;boost/foreach.hpp&gt;
+ 
++CREATE_LOGGER(ResetPositionEngine);
++
+ ResetPositionEngine::ResetPositionEngine(){
+ 		Y_min=-1;
+ 		interval=0;
+
+Modified: trunk/pkg/common/Engine/DeusExMachina/ResetPositionEngine.hpp
+===================================================================
+--- trunk/pkg/common/Engine/DeusExMachina/ResetPositionEngine.hpp	2008-07-03 17:23:12 UTC (rev 1412)
++++ trunk/pkg/common/Engine/DeusExMachina/ResetPositionEngine.hpp	2008-07-04 02:57:10 UTC (rev 1413)
+@@ -26,7 +26,8 @@
+ 		/// import/export initial positions
+ 		std::string fileName; 
+ 		std::vector&lt;Vector3r&gt; initial_positions; // for serialization
+-
++		
++		DECLARE_LOGGER;
+ 	protected:
+ 		virtual void postProcessAttributes(bool);
+ 		virtual void registerAttributes();
+
+Modified: trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.cpp
+===================================================================
+--- trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.cpp	2008-07-03 17:23:12 UTC (rev 1412)
++++ trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.cpp	2008-07-04 02:57:10 UTC (rev 1413)
+@@ -13,7 +13,7 @@
+ #include &lt;GL/glut.h&gt;
+ CREATE_LOGGER(OpenGLRenderingEngine);
+ 
+-OpenGLRenderingEngine::OpenGLRenderingEngine() : RenderingEngine(), clipPlaneNum(2)
++OpenGLRenderingEngine::OpenGLRenderingEngine() : RenderingEngine(), clipPlaneNum(3)
+ {
+ 
+ 	Body_state		= false;
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000372.html">[Yade-commits] r1412 - in trunk: gui/py gui/qt3	pkg/common/Engine/DeusExMachina
+</A></li>
+	<LI>Next message: <A HREF="000374.html">[Yade-commits] r1414 - in trunk: gui/qt3	pkg/common/Engine/DeusExMachina pkg/dem/Engine/StandAloneEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#373">[ date ]</a>
+              <a href="thread.html#373">[ thread ]</a>
+              <a href="subject.html#373">[ subject ]</a>
+              <a href="author.html#373">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

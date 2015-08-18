@@ -1,0 +1,125 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1247 - in trunk: core pkg/dem/PreProcessor
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1247%20-%20in%20trunk%3A%20core%20pkg/dem/PreProcessor&In-Reply-To=%3C200802151612.m1FGCAFT026604%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000211.html">
+   <LINK REL="Next"  HREF="000213.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1247 - in trunk: core pkg/dem/PreProcessor</H1>
+    <B>chareyre at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1247%20-%20in%20trunk%3A%20core%20pkg/dem/PreProcessor&In-Reply-To=%3C200802151612.m1FGCAFT026604%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1247 - in trunk: core pkg/dem/PreProcessor">chareyre at mail.berlios.de
+       </A><BR>
+    <I>Fri Feb 15 17:12:10 CET 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000211.html">[Yade-commits] r1246 - in trunk: core extra/clump extra/tetra	extra/usct gui/cmd gui/qt3 lib/base pkg/common/Container	pkg/dem/Engine/StandAloneEngine
+</A></li>
+        <LI>Next message: <A HREF="000213.html">[Yade-commits] r1248 - in trunk/pkg/dem: . PreProcessor
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#212">[ date ]</a>
+              <a href="thread.html#212">[ thread ]</a>
+              <a href="subject.html#212">[ subject ]</a>
+              <a href="author.html#212">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: chareyre
+Date: 2008-02-15 17:12:09 +0100 (Fri, 15 Feb 2008)
+New Revision: 1247
+
+Modified:
+   trunk/core/yade.cpp
+   trunk/pkg/dem/PreProcessor/TriaxialTest.cpp
+Log:
+In Yade.cpp : conditional compilation in order to compile with boost 
+1.33
+In TriaxialTest.cpp : instanciation of a SimpleElasticRelationship 
+object before adding it to engines (to avoid a crash). Va?\195?\167lav please, 
+what is going on here?O
+
+
+
+Modified: trunk/core/yade.cpp
+===================================================================
+--- trunk/core/yade.cpp	2008-02-13 14:56:19 UTC (rev 1246)
++++ trunk/core/yade.cpp	2008-02-15 16:12:09 UTC (rev 1247)
+@@ -88,6 +88,7 @@
+ }
+ 
+ string findRecoveryCandidate(filesystem::path dir, string start){
++#if BOOST_VERSION &gt; 103400
+ 	if(!filesystem::exists(dir)) return false;
+ 	filesystem::directory_iterator end;
+ 	for(filesystem::directory_iterator I(dir); I!=end; ++I){
+@@ -95,6 +96,7 @@
+ 			return (I-&gt;path()).string();
+ 		}
+ 	}
++#endif
+ 	return &quot;&quot;;
+ }
+ 
+
+Modified: trunk/pkg/dem/PreProcessor/TriaxialTest.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/TriaxialTest.cpp	2008-02-13 14:56:19 UTC (rev 1246)
++++ trunk/pkg/dem/PreProcessor/TriaxialTest.cpp	2008-02-15 16:12:09 UTC (rev 1247)
+@@ -86,7 +86,7 @@
+ 
+ 
+ typedef pair&lt;Vector3r, Real&gt; BasicSphere;
+-//! make a list of spheres non-overlapping sphere
++//! generate a list of non-overlapping spheres
+ string GenerateCloud(vector&lt;BasicSphere&gt;&amp; sphere_list, Vector3r lowerCorner, Vector3r upperCorner, long number, Real rad_std_dev, Real porosity);
+ 
+ 
+@@ -550,7 +550,11 @@
+ 	interactionGeometryDispatcher-&gt;add(&quot;InteractingBox2InteractingSphere4SpheresContactGeometry&quot;);
+ 
+ 	shared_ptr&lt;InteractionPhysicsMetaEngine&gt; interactionPhysicsDispatcher(new InteractionPhysicsMetaEngine);
+-	interactionPhysicsDispatcher-&gt;add(&quot;SimpleElasticRelationships&quot;);
++//	interactionPhysicsDispatcher-&gt;add(&quot;SimpleElasticRelationships&quot;);
++// Unhandled exception: St13runtime_error : Class `SimpleElasticRelationships' could not be cast to required 2D EngineUnit	
++	shared_ptr&lt;InteractionPhysicsEngineUnit&gt; ss(new SimpleElasticRelationships);
++	interactionPhysicsDispatcher-&gt;add(ss);
++	
+ 		
+ 	shared_ptr&lt;BoundingVolumeMetaEngine&gt; boundingVolumeDispatcher	= shared_ptr&lt;BoundingVolumeMetaEngine&gt;(new BoundingVolumeMetaEngine);
+ 	boundingVolumeDispatcher-&gt;add(&quot;InteractingSphere2AABB&quot;);
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000211.html">[Yade-commits] r1246 - in trunk: core extra/clump extra/tetra	extra/usct gui/cmd gui/qt3 lib/base pkg/common/Container	pkg/dem/Engine/StandAloneEngine
+</A></li>
+	<LI>Next message: <A HREF="000213.html">[Yade-commits] r1248 - in trunk/pkg/dem: . PreProcessor
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#212">[ date ]</a>
+              <a href="thread.html#212">[ thread ]</a>
+              <a href="subject.html#212">[ subject ]</a>
+              <a href="author.html#212">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

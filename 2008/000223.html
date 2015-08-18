@@ -1,0 +1,226 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1258 - in trunk/pkg/dem: Engine/DeusExMachina	Engine/StandAloneEngine PreProcessor
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1258%20-%20in%20trunk/pkg/dem%3A%20Engine/DeusExMachina%0A%09Engine/StandAloneEngine%20PreProcessor&In-Reply-To=%3C200802191438.m1JEcjGa032420%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000222.html">
+   <LINK REL="Next"  HREF="000224.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1258 - in trunk/pkg/dem: Engine/DeusExMachina	Engine/StandAloneEngine PreProcessor</H1>
+    <B>chareyre at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1258%20-%20in%20trunk/pkg/dem%3A%20Engine/DeusExMachina%0A%09Engine/StandAloneEngine%20PreProcessor&In-Reply-To=%3C200802191438.m1JEcjGa032420%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1258 - in trunk/pkg/dem: Engine/DeusExMachina	Engine/StandAloneEngine PreProcessor">chareyre at mail.berlios.de
+       </A><BR>
+    <I>Tue Feb 19 15:38:45 CET 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000222.html">[Yade-commits] r1257 - trunk/pkg/dem
+</A></li>
+        <LI>Next message: <A HREF="000224.html">[Yade-commits] r1259 - trunk/pkg/dem/Engine/StandAloneEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#223">[ date ]</a>
+              <a href="thread.html#223">[ thread ]</a>
+              <a href="subject.html#223">[ subject ]</a>
+              <a href="author.html#223">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: chareyre
+Date: 2008-02-19 15:38:44 +0100 (Tue, 19 Feb 2008)
+New Revision: 1258
+
+Modified:
+   trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.cpp
+   trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.cpp
+   trunk/pkg/dem/Engine/StandAloneEngine/GlobalStiffnessTimeStepper.cpp
+   trunk/pkg/dem/Engine/StandAloneEngine/GlobalStiffnessTimeStepper.hpp
+   trunk/pkg/dem/PreProcessor/TriaxialTest.cpp
+Log:
+-TimeStepper : previousDt is now a registerable parameter, which can be used after saving/loading. New feature implemented : dt can be 
+increased at a steady rate : dt=1.5*dt each time maximum (to prevent sudden increases and explosions). Comments added.
+-TriaxialTest : The timestepper is moved to a earlier location in the list of engines, so that the timestep is set before the 
+stressController call. REMARK : REGISTERABLE dt IN THE TIMESTEPPER MAY BE REDUNDANT WITH THE &quot;RECOVER TIME STEP&quot; FEATURE OF YADE, DO WE 
+NEED THIS ONE? 
+-StressController : revert a small mistake in last commit. 
+
+
+
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.cpp	2008-02-19 10:58:42 UTC (rev 1257)
++++ trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.cpp	2008-02-19 14:38:44 UTC (rev 1258)
+@@ -125,7 +125,7 @@
+ 			computeStressStrain(ncb);
+ 			//TRVAR5(UnbalancedForce,StabilityCriterion,meanStress,sigma_iso,abs((meanStress-sigma_iso)/sigma_iso));
+ 		}
+-		if ( UnbalancedForce&lt;=StabilityCriterion &amp;&amp; abs((meanStress-sigma_iso)/sigma_iso)&lt;0.02 ) {
++		if ( UnbalancedForce&lt;=StabilityCriterion &amp;&amp; abs((meanStress-sigma_iso)/sigma_iso)&lt;0.005 ) {
+ 			if(currentState==STATE_ISO_COMPACTION &amp;&amp; autoCompressionActivation){
+ 				doStateTransition(STATE_ISO_UNLOADING); /*update stress and strain here*/ computeStressStrain(ncb);
+ 			}
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.cpp	2008-02-19 10:58:42 UTC (rev 1257)
++++ trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.cpp	2008-02-19 14:38:44 UTC (rev 1258)
+@@ -355,7 +355,7 @@
+ 				if (f!=0) ++nBodies;
+ 			}
+ 		}
+-		if (nBodies != 0 &amp;&amp; MeanForce != 0) MeanUnbalanced = 0.5*MeanUnbalanced/nBodies/MeanForce;
++		if (nBodies != 0 &amp;&amp; MeanForce != 0) MeanUnbalanced = MeanUnbalanced/nBodies/MeanForce;
+ 		return  MeanUnbalanced;
+ 	} else {
+ 		//compute max Unbalanced Force
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/GlobalStiffnessTimeStepper.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/GlobalStiffnessTimeStepper.cpp	2008-02-19 10:58:42 UTC (rev 1257)
++++ trunk/pkg/dem/Engine/StandAloneEngine/GlobalStiffnessTimeStepper.cpp	2008-02-19 14:38:44 UTC (rev 1258)
+@@ -26,7 +26,7 @@
+ 	timestepSafetyCoefficient = 0.25;
+ 	computedOnce = false;
+ 	defaultDt = 1;
+-	//previousDt = defaultDt;
++	previousDt = defaultDt;
+ 	
+ }
+ 
+@@ -42,8 +42,9 @@
+ 	TimeStepper::registerAttributes();
+ 	REGISTER_ATTRIBUTE(sdecGroupMask);
+ 	REGISTER_ATTRIBUTE(defaultDt);
+-	//REGISTER_ATTRIBUTE(previousDt);
++	REGISTER_ATTRIBUTE(previousDt);
+ 	REGISTER_ATTRIBUTE(timestepSafetyCoefficient);
++	REGISTER_ATTRIBUTE(computedOnce);
+ }
+ 
+ 
+@@ -83,11 +84,11 @@
+ 
+ 	Real dt = max( max (stiffness.X(), stiffness.Y()), stiffness.Z() );
+ 	if (dt!=0) {
+-		dt = sqrt(sdec-&gt;mass/dt);  computedSomething = true;}
++		dt = sdec-&gt;mass/dt;  computedSomething = true;}//dt = squared eigenperiod of translational motion 
+ 	else dt = Mathr::MAX_REAL;
+ 	
+ 	if (Rstiffness.X()!=0) {
+-		dtx = sdec-&gt;inertia.X()/Rstiffness.X();  computedSomething = true;}
++		dtx = sdec-&gt;inertia.X()/Rstiffness.X();  computedSomething = true;}//dtx = squared eigenperiod of rotational motion around x
+ 	else dtx = Mathr::MAX_REAL;
+ 
+ 	if (Rstiffness.Y()!=0) {
+@@ -103,13 +104,13 @@
+ 	//Real dtx = (Rstiffness.X()!=0 ? sdec-&gt;inertia.X()/Rstiffness.X() : Mathr::MAX_REAL);
+ 	//Real dty = (Rstiffness.Y()!=0 ? sdec-&gt;inertia.Y()/Rstiffness.Y() : Mathr::MAX_REAL);
+ 	//Real dtz = (Rstiffness.Z()!=0 ? sdec-&gt;inertia.Z()/Rstiffness.Z() : Mathr::MAX_REAL);
+-	Real Rdt = sqrt( min( min (dtx, dty), dtz ) );
++	Real Rdt =  std::min( std::min (dtx, dty), dtz );//Rdt = smallest squared eigenperiod for rotational motions
+ 	
+ 	//cerr &lt;&lt; &quot;Rstiffness.x()=&quot; &lt;&lt; Rstiffness.x() &lt;&lt; &quot;  &quot; &lt;&lt; Rstiffness.y() &lt;&lt; &quot;  &quot; &lt;&lt; Rstiffness.z() &lt;&lt; endl;
+ 	//cerr &lt;&lt; &quot;sdec-&gt;inertia=&quot; &lt;&lt; sdec-&gt;inertia.x() &lt;&lt; &quot; &quot; &lt;&lt; sdec-&gt;inertia.x() &lt;&lt; &quot; &quot; &lt;&lt; sdec-&gt;inertia.x() &lt;&lt; endl;
+ 	//cerr &lt;&lt; &quot;timesteps : dt=&quot; &lt;&lt; dt &lt;&lt; &quot; / Rdt=&quot; &lt;&lt; Rdt &lt;&lt; endl;
+ 	
+-	dt = 0.709*timestepSafetyCoefficient*std::min(dt,Rdt);//0.709 = 1/sqrt(2)
++	dt = 0.709*timestepSafetyCoefficient*std::sqrt(std::min(dt,Rdt));//0.709 = 1/sqrt(2)
+ 	
+ 	newDt = std::min(dt,newDt);
+ 	//computedSomething = true;
+@@ -170,12 +171,13 @@
+ 		
+ 	if(computedSomething)
+ 	{
+-		Omega::instance().setTimeStep(min(newDt , defaultDt));
++		previousDt = min ( min(newDt , defaultDt), 1.5*previousDt );// at maximum, dt will be multiplied by 1.5 in one iterration, this is to prevent brutal switches from 0.000... to 1 in some computations 
++		Omega::instance().setTimeStep(previousDt);
+ 		//previousDt = Omega::instance().getTimeStep();
+ 		//Omega::instance().setTimeStep(newDt);
+ 		computedOnce = true;	
+ 		//cerr &lt;&lt; &quot;computedOnce=&quot; &lt;&lt; computedOnce &lt;&lt; endl;	
+-		cerr &lt;&lt; &quot;computed timestep is:&quot; &lt;&lt; min(newDt , defaultDt);
++		cerr &lt;&lt; &quot;computed timestep is:&quot; &lt;&lt; newDt;
+ 	}
+ 	else if (!computedOnce) Omega::instance().setTimeStep(defaultDt);
+ 	cerr &lt;&lt; &quot; new timestep is:&quot; &lt;&lt; Omega::instance().getTimeStep() &lt;&lt; endl;
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/GlobalStiffnessTimeStepper.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/GlobalStiffnessTimeStepper.hpp	2008-02-19 10:58:42 UTC (rev 1257)
++++ trunk/pkg/dem/Engine/StandAloneEngine/GlobalStiffnessTimeStepper.hpp	2008-02-19 14:38:44 UTC (rev 1258)
+@@ -32,7 +32,9 @@
+ 
+ 	public :
+ 		int sdecGroupMask; // FIXME - we should find a way to clean groupmask stuff
++		//! defaultDt is used as default AND as max value of the timestep
+ 		Real defaultDt;
++		//! used as a multiplier on the theoretical critical timestep (compensate some approximations in the computation)
+ 		Real timestepSafetyCoefficient;
+ 
+ 		GlobalStiffnessTimeStepper();
+
+Modified: trunk/pkg/dem/PreProcessor/TriaxialTest.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/TriaxialTest.cpp	2008-02-19 10:58:42 UTC (rev 1257)
++++ trunk/pkg/dem/PreProcessor/TriaxialTest.cpp	2008-02-19 14:38:44 UTC (rev 1258)
+@@ -151,7 +151,7 @@
+ 	strainRate = 0.1;
+ 	maxWallVelocity=10;
+ 	StabilityCriterion = 0.01;
+-	autoCompressionActivation = false;
++	autoCompressionActivation = true;
+ 	maxMultiplier = 1.01;
+ 	finalMaxMultiplier = 1.001;
+ 	
+@@ -659,12 +659,13 @@
+ 	rootBody-&gt;engines.push_back(interactionGeometryDispatcher);
+ 	rootBody-&gt;engines.push_back(interactionPhysicsDispatcher);
+ 	rootBody-&gt;engines.push_back(elasticContactLaw);
+-	rootBody-&gt;engines.push_back(elasticCohesiveLaw);
+-	rootBody-&gt;engines.push_back(triaxialcompressionEngine);
++	//rootBody-&gt;engines.push_back(elasticCohesiveLaw);
++	
+ 	//rootBody-&gt;engines.push_back(stiffnesscounter);
+ 	//rootBody-&gt;engines.push_back(stiffnessMatrixTimeStepper);
+ 	rootBody-&gt;engines.push_back(globalStiffnessCounter);
+ 	rootBody-&gt;engines.push_back(globalStiffnessTimeStepper);
++	rootBody-&gt;engines.push_back(triaxialcompressionEngine);
+ 	rootBody-&gt;engines.push_back(triaxialStateRecorder);
+ 	//rootBody-&gt;engines.push_back(gravityCondition);
+ 	rootBody-&gt;engines.push_back(actionDampingDispatcher);
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000222.html">[Yade-commits] r1257 - trunk/pkg/dem
+</A></li>
+	<LI>Next message: <A HREF="000224.html">[Yade-commits] r1259 - trunk/pkg/dem/Engine/StandAloneEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#223">[ date ]</a>
+              <a href="thread.html#223">[ thread ]</a>
+              <a href="subject.html#223">[ subject ]</a>
+              <a href="author.html#223">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

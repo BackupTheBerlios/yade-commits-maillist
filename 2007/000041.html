@@ -1,0 +1,1709 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1076 - in trunk: . yade-scripts
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2007/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1076%20-%20in%20trunk%3A%20.%20yade-scripts&In-Reply-To=%3C200702281037.l1SAbSZw022895%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000040.html">
+   <LINK REL="Next"  HREF="000042.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1076 - in trunk: . yade-scripts</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1076%20-%20in%20trunk%3A%20.%20yade-scripts&In-Reply-To=%3C200702281037.l1SAbSZw022895%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1076 - in trunk: . yade-scripts">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Wed Feb 28 11:37:28 CET 2007</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000040.html">[Yade-commits] r1075 - in trunk: . yade-core/src/yade	yade-extra/clump yade-guis/yade-gui-qt/src/QtGUI	yade-packages/yade-package-common/src/Engine/DeusExMachina/GravityEngine	yade-packages/yade-package-common/src/Engine/EngineUnit/NewtonsForceLaw	yade-packages/yade-package-common/src/Engine/EngineUnit/NewtonsMomentumLaw	yade-packages/yade-package-common/src/Engine/StandAloneEngine/PersistentSAPCollider	yade-packages/yade-package-common/src/Engine/StandAloneEngine/SAPCollider	yade-scripts
+</A></li>
+        <LI>Next message: <A HREF="000042.html">[Yade-commits] r1077 - in trunk: yade-core/src/yade yade-extra/clump	yade-packages/yade-package-common/src/Engine/EngineUnit/CundallNonViscousForceDamping	yade-packages/yade-package-common/src/Engine/EngineUnit/CundallNonViscousMomentumDamping
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#41">[ date ]</a>
+              <a href="thread.html#41">[ thread ]</a>
+              <a href="subject.html#41">[ subject ]</a>
+              <a href="author.html#41">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2007-02-28 11:37:27 +0100 (Wed, 28 Feb 2007)
+New Revision: 1076
+
+Added:
+   trunk/ChangeLog
+   trunk/yade-all.kdevelop
+   trunk/yade-all.pro
+   trunk/yade-scripts/svn2cl.xsl
+Removed:
+   trunk/Changelog
+   trunk/wscript
+Modified:
+   trunk/Makefile
+   trunk/SConstruct
+   trunk/yade-scripts/erskine3-apply.sh
+Log:
+1. renamed Chagelog to ChangeLog, will be generated autmatically from svn chamgelog
+2. removed waf script (wscript), not used
+3. scons now installs everything with '-version-postfix' appended, like yade-svn1072-debug
+4. scons builds different variants (version and postfix) in separate directories
+
+
+
+Copied: trunk/ChangeLog (from rev 1072, trunk/Changelog)
+
+Deleted: trunk/Changelog
+===================================================================
+--- trunk/Changelog	2007-02-27 16:09:05 UTC (rev 1075)
++++ trunk/Changelog	2007-02-28 10:37:27 UTC (rev 1076)
+@@ -1,695 +0,0 @@
+-r.974 version 0.10.0
+-  - added SimulationRunner, that can start/stop or perform singleLoop of simulation in separate thread.
+-  - Maybe some signal capability will be added to SimulationRunner, so that something can be notified when singleLoop is finished during calculations.
+-
+-r.972
+-  - GLSimulationPlayerviewer - change of function call, because qglviewer 2.2 has changed a function name: added compilation flag: QGLVIEWER20
+-  - OpenGLRenderingEngine - latest version of libglut3d requires to call glutInit(): added compilation flags: NO_GLUTINIT
+-
+-r.970
+-  - Threadable class has been removed:
+-  - when yade is idle 0% of CPU is consumed by the display,
+-  - when simulation is ran it is in separate thread, second processor (if present) is drawing on the screen,
+-  - with two processors theoretically QtGUI should have speed equal to NullGUI,
+-  - drawing on the screen is not synchronized, so some bodies are from previous iteration, some are from next iteration (later there will be an option to turn synchronization ON - it will slow down computations a bit)
+-  - This implementation is stil not 100% tested, please report if there are any problems. Especially if there is a segfault on exit. Press enter in each graphical view to start/stop updating it.
+-
+-r.960
+-  - 'cancel' when loading filegenerator is not crashing now
+-  - started non-local model for lattice
+-  - hopefully 2d lattice beams are now okay.
+-  - middle button in 3d view is now &quot;PAN&quot; command, not &quot;ZOOM&quot; as it used to be. It's more similar to AutoCAD
+-  - 'yade -h' will now display compilation flags (currently only DOUBLE_PRECISION - how about adding long double ;) ?)
+-
+-r.957
+-  - added function Quaternion::power(RealType)
+-  - lattice bending works now in 2d (X-Y plane), using angles. not vectors or quaternions. I will do 3d later.
+-
+-r.956
+-  - fixed serious bug in bool BodyRedirectionVector::erase(unsigned int);
+-  - added function bool exists() const; to BodyContainer
+-  - graphical display now has reversed meaning of scrollwheel, so it is now similar to behaviour of blender and autocad
+-  - SDECLinkedSpheres is working after some (surprise!) quick hack. That part is still waiting for total rewrite.
+-  - big improvements in lattice model. beam bending works (but not always) with axis+angle notation. maybe with quaternions it will be better. There is a problem that shows itself when using regular triangular grid.
+-
+-r.955 version 0.9.8
+-  - NullGUI displays help when called without arguments
+-  - fixed serious problem in OpenGLRenderingEngine's constructor - there were hardoced plugin names. now the list is built dynamically
+-  - configurable path to preferences, not forcing users to use ~/.yade/
+-  - QtGUI is now saving the configuration of RenderingEngine, so for example background color is remembered now.
+-  - 'Load' and 'Save' in FileGenerator works
+-  - added yadeVersionName to Omega - so that all plugins can query it to correcly display version, which is set by main(), and general cleaning of the mess in main(), yade.cpp
+-  - fixed handling of pointer to simulationController in YadeQtMainWindow.cpp
+-  - lattice model based on rods works great
+-  - add a FIXME in XMLFormatManager, beginDesrialization : rootBody can load FileGenerator, because is not checking names
+-
+-r.954 version 0.9.7
+-  - NullGUI can save to binary format
+-  - graphical windows GLViewer displays a grid with cell size exacly 1 meter or 1 cm (depending on the model size) previously that grid had some random size, which was totally useless
+-  - added DisplacementEngine derived from DeuxExMachina - is like translation, but without velocity - purely kinematic displacement.
+-  - disorder parameters in FileGenerators SDECSpheresPlane and LatticeExample are now Vector3r, so that we can specify different randomness in each direction. This is useful for flat 2D simulations
+-  - major improvements to lattice model (rod model is working)
+-
+-r.953 version 0.9.6
+-  - binary serialization for yade
+-  - fixed one bug in BINFormatManager
+-  - fixed saving ElasticContactParameters and SpheresContactGeometry, so that after loading the simulation is not going crazy
+-  - removed GLAPI and GLAPIENTRY from OpenGLWrapper
+-  - XMLSaxParser is now better at counting lines
+-
+-r.951 version 0.9.5
+-  - can save simulation from simulation controller
+-  - can change background color of the simulation displayed
+-
+-r.950
+-  - QtEngineEditor is not working - doesn't detect correctly StandAloneEngines
+-  - there was a collision between PersistentSAPCollider and PersistentSAPCollider from yade-extra, renamed second one to PersistentAloneSAPCollider
+-
+-r.949 version 0.9.4
+-  - added: StandAloneEngine.hpp, InteractionSolver.hpp, DataRecorder.hpp, BroadInteractor.hpp - to have a nicer and easier to navigate class diagram
+-  - fixed drawing of bounding volumes inside rootBody
+-
+-r.948 version 0.9.3
+-  - MetaBody::actors -&gt; engines
+-  - GLDrawInteractionBox -&gt; GLDrawInteractingBox
+-  - GLDrawInteractionGeometryFunctor -&gt; GLDrawInteractingGeometryFunctor
+-  - GLDrawInteractionSphere -&gt; GLDrawInteractingSphere
+-  - GLDrawInteractionGeometrySet -&gt; GLDrawMetaInteractingGeometry
+-  - ErrorTolerantContactModel -&gt; ErrorTolerantContact
+-  - AABox2Sphere4ClosestFeatures -&gt; AAInteractingBox2InteractingSphere4ClosestFeatures
+-  - Box2Box4ClosestFeatures -&gt; InteractingBox2InteractingBox4ClosestFeatures
+-  - Box2Sphere4ClosestFeatures -&gt; InteractingBox2InteractingSphere4ClosestFeatures
+-  - Box2Sphere4ErrorTolerant -&gt; InteractingBox2InteractingSphere4ErrorTolerantContact
+-  - Box2Sphere4MacroMicroContactGeometry -&gt; InteractingBox2InteractingSphere4SpheresContactGeometry
+-  - Sphere2Sphere4ClosestFeatures -&gt; InteractingSphere2InteractingSphere4ClosestFeatures
+-  - Sphere2Sphere4ErrorTolerant -&gt; InteractingSphere2InteractingSphere4ErrorTolerantContact
+-  - Sphere2Sphere4MacroMicroContactGeometry -&gt; InteractingSphere2InteractingSphere4SpheresContactGeometry
+-  - Box2AABB -&gt; InteractingBox2AABB
+-  - Sphere2AABB -&gt; InteractingSphere2AABB
+-
+-r.938 version 0.9.2
+-  - added SDECMovingWall FileGenerator contributed by Andreas Plesch.
+-  - cleaned all .cpp files. they are all now less cluttered and easier/shorter to read.
+-  - So I have started compiling it on windows, and I stopped on the problem that linker cannot link serialization with factory.
+-
+-
+-r.917 version 0.9.1
+-  - SimulationPlayer - can play recorded position/orientation data
+-  - QtSimulationPlayer
+-  - SphericalDEMSimulator - a separate version of DEM calculations without all &quot;yade burden&quot; to make speed comparisons
+-
+-r.914
+-  - new version of docs, checked by my sister.
+-
+-r.904 yade-core version 0.9.0
+-  - split of packages done. Now each package can be developed separately and has own version numbers.
+-  - Initial version numbers are choosen arbitrally to reflect their advancement state.
+-  - huge improvement in Makefile. 'make compile_install' and yade is ready to release to the wild world.
+-  - some class renamed to better reflect their functions,
+-  - some cleaning,
+-  - Simulation loop editing through GUI starts to work,
+-  - added REGSITER_BASE_CLASS_NAME, so we can build class tree on runtime (used by simulation loop GUI),
+-  - removed all references from Serialization stuff to yade-lib-multimethod as they are totally unrelated,
+-  - plugins of yade containers are now using ::iterator, just like STL !
+-  - Tetrahedron Discrete Model, and Lattice Discrete Model start to work, but not good enough to increment a major revision number.
+-  - FEM, DEM, Mass Spring and Rigid Body are working good.
+-
+- yade-core                                      version 0.9.0
+- yade-libs:         
+-        yade-lib-algorithms                     version 0.1.0
+-        yade-lib-computational-geometry         version 0.5.0
+-        yade-lib-factory                        version 1.0.0
+-        yade-lib-loki                           version 0.9.5  because is different than Loki
+-        yade-lib-multimethods                   version 1.0.0
+-        yade-lib-opengl                         version 0.5.0
+-        yade-lib-qhull                          version 1.0.0
+-        yade-lib-serialization                  version 1.0.0
+-        yade-lib-serialization-qt               version 0.8.0  because is not serializing containers
+-        yade-lib-serialization-xml              version 1.0.0
+-        yade-lib-swiftpp                        version 1.0.0
+-        yade-lib-threads                        version 0.3.0  because is not supporting multithreaded calculations
+-        yade-lib-time                           version 0.5.0
+-        yade-lib-wm3-math                       version 0.7.0
+- yade-guis:         
+-        yade-gui-qt                             version 0.7.0
+- yade-packages:         
+-        yade-package-common                     version 0.9.0
+-        yade-package-dem                        version 0.9.0
+-        yade-package-fem                        version 0.7.0
+-        yade-package-lattice                    version 0.3.0
+-        yade-package-mass-spring                version 0.9.0
+-        yade-package-realtime-rigidbody         version 0.9.0
+-
+-r.890
+-  preparing for release.
+-
+-r.845
+-  renaming:
+-  XMLManager -&gt; XMLFormatManager
+-  IOManager  -&gt; IOFormatManager
+-  MacroMicroContactGeometry -&gt; SpheresContactGeometry
+-  SDECTimeStepper -&gt; ElasticCriterionTimeStepper
+-  InteractionDescriptionSet2AABB -&gt; MetaInteractingGeometry2AABB
+-
+-r.832 (*)
+-  huge improvement in Makefile. now the mechanism of make is ready to release yade to the wild world.
+-
+-r.821
+-  Simulation loop editing is now working. There are still some random crashes to fix and for now it is not possible to load a simulation loop.
+-
+-r.818 (*) (fix article)
+-  Removed unused classes.
+-  D    yade-core/src/InteractionSolver.cpp
+-  D    yade-core/src/InteractionSolver.hpp
+-  D    yade-core/src/BroadInteractor.cpp
+-  D    yade-core/src/BroadInteractor.hpp
+-  D    yade-core/projects/kdevelop/yade/InteractionSolver.cpp
+-  D    yade-core/projects/kdevelop/yade/BroadInteractor.cpp
+-  M    yade-core/projects/kdevelop/yade/yade.pro
+-  D    yade-core/projects/kdevelop/yade/InteractionSolver.hpp
+-  D    yade-core/projects/kdevelop/yade/BroadInteractor.hpp
+-
+-
+-r.817
+-  added REGSITER_BASE_CLASS_NAME, so we can build class tree on runtime.
+-
+-r.815
+-  Improvements in QtEngineEditor. Now it is almost possible to create graphically a simultation loop.Now I have to make something to set parameter of MetaEngines.
+-
+-r.812 (*)
+-  Better design : added class related to MetaEngine. Removed all references to Serialization stuff into yade-lib-multimethod. They are now into newly added classes.
+-
+-r.809 (*)
+-  plugin containers for yade use ::iterator, just like STL !
+-
+-r.808
+-  I have introduced iterators for all types of containers in order to remove the dirty gotoFirst, gotoNext, hasNext and notAtEnd methods. Now it looks like more like STL iterators. It is compiling but unfortunately it is segfaulting at runtime, probably some problems in ++,* operators.
+-
+-r.804
+-  Better YadeQtMainWindow. Now menus are displayed in menu bar in the same order they are added in the program. Added preferences for QtGUI. Now it remembers size and position and exit. Now it is possible to choose time step from GUI.
+-
+-r.801 (*) version 0.8.7
+-  tagging v.0.8.7
+-  - second redesign of directory tree finished.
+-  - yade-core is clean
+-  - yade-empties contain templates for whole packages.
+-  - New yade-empty-package which is simpler than previous one.
+-  - Makefiles install correctly.
+-  - Yade is now compiling with separate libraries projects
+-
+-
+-r.758
+-  yade-core is clean
+-
+-r.754
+-  yade-empties contain templates for whole packages.
+-
+-r.748
+-  New yade-empty-package which is simpler than previous one. Makefiles install correctly. Yade is now compiling with separate libraries projects
+-
+-r.746
+-  fixed all #include paths, started Makefiles
+-
+-r.732
+-  second directory tree redesign started. much better now.
+-
+-r.714 (*) version 0.8.6
+-  tagging v.0.8.6
+-  - All those extra environment variables are no longer needed. Currently only LD_LIBRARY_PATH is used by dlopen. Dunno how to remove it.
+-  - added user manual to doc/, without pictures, and still a draft.
+-  - Small change so that yade is compiling with qglviewer 2.0
+-  - Updates in Omega : now foreach plugins we store if it is indexable, factorable or serializable.
+-  - Improved GUI for code generation : Data class, engine and dispatching engine works. No stuff is done for generation of kdevelop projects.
+-
+-
+-r.709 (*)
+-  All those extra environment variables are no longer needed. Currently only LD_LIBRARY_PATH is used by dlopen. Dunno how to remove it.
+-
+-r.708
+-  Small change so that yade is compiling with qglviewer 2.0
+-
+-r.705
+-  Updates in Omega : now foreach plugins we store if it is indexable, factorable or serializable. Improved GUI for code generation : Data class, engine and dispatching engine works. No stuff is done for generation of kdevelop projects.
+-
+-r.701
+-  Added some functions into yade-lib-computational-geometry. Started to and graphical interface for buliding simulation loop and initializer list
+-
+-r.700 (*) version 0.8.5
+-  tagging v.0.8.5
+-  - Lattice works with rods, but dirty, of course - as always when something is implemented for the first time :&gt;
+-
+-r.691 (*)
+-  Added some dynlibs for handling swept sphere volume.
+-
+-r.690
+-  To make yade deserialization working I had to modify PointerHandler.tpp around line 90. Basically I just replaced a dynamic_cast by a reinterpret_cast. We have to find why dynamic_cast is not working anymore.
+-
+-r.688 (*) version 0.8.4
+-  tagging v.0.8.4
+-  - Added new file generator Funnel and TetrahedronsTest (*)
+-  - Added new InteractingGeometry PolyhedralSweptSphere (*)
+-  - Added new NarrowInteractionGeometryEngine SwiftPolyhedronProximityModeler that will use SWIFT++ library and PolyhedralSweptSphere (*)
+-  - Added EngineUnit Tetrahedron2PolyhedralSweptSphere and Box2PolyhedralSweptSphere that will build InteractingGeometry
+-
+-r.687 (*)
+-  Lets consider here that splitting is done. (but almost)
+-
+-r.686
+-  Added MarchingCube algorithm into yade-lib-computationnal-geometry
+-  Created lib yade-lib-algorithms were to gather algorithms of different type : for now there is only a PerlinNoise algorithm, but we can put here sorting algorithm ...
+-
+-r.684
+-  Added libraries swift++ and qhull.
+-  Modified scripts so that they work with .h and .c files. improved documentation
+-
+-r.680
+-  SimpleSpringLaw renamed to FrictionLessElasticContactLaw.
+-
+-r.671
+-  Renaming:
+-  PhysicalActionEngineUnit -&gt; PhysicalActionDamperUnit, PhysicalActionApplierUnit
+-  Added class Preferences that contains directory to dynlibs.
+-  Modification of library yade-lib-factory so that it is using multiple directories to look for requested dynlib
+-
+-r.669 version 0.8.3
+-  tagging v.0.8.3
+-  - Splitted ElasticContactLaw into 2 : ElasticContactLaw and ElasticCohesiveLaw.
+-  - Autocollision for hanging cloth is working without hack.
+-
+-r.668
+-  Removing all references to libraries Interactions, Body and Engine that no longer exist. Yade should now compile.
+-
+-r.639
+-  renamed ActionParameter to PhysicalAction
+-
+-r.637 version 0.8.2
+-  tagging v.0.8.2
+-  - new directory structure almost splitted, we start to have packages. 
+-  - Yade is now compiling on the first try.
+-  - removed initialization in constructor of bodyContainer, InteractionContainer ... because now container are in plugins and so compiled after yade itself.
+-  - Changed name Dispatcher/funtor to MetaEngine/EngineUnit
+-
+-r.562 version 0.8.1
+-  tagging v.0.8.1
+-  - we have made a great yade-empty directory structure. This is a design for future split of yade into several packages.
+-
+-r.554
+-  Renaming classes. First draft of documentation.
+-
+-r.512
+-  Added layout and scrollview to QTGUI
+-
+-r.510 (*)
+-  better openGL tetrahedron display. created empty directories for splitting to packages.
+-
+-r.486 version 0.8.0
+-  tagging v.0.8.0
+-  - FEM works!
+-
+-r.482
+-  FEM is half done - generation works. and other stuff. Only Constitutive Law for FEM is empty - waiting to be written. But there is a compilation problem we have to compile twice now, because of linker errors in fem loader.
+-
+-r.481
+-  ComplexBody has now actors and initializers, and thanks to that FEMSetTextLoaderFunctor is working. loading terrain from VRML file will work in a similar way that FEMSetTextLoaderFunctor
+-
+-r.480 version 0.7.5
+-  tagging v.0.7.5
+-  - Quite stable version used for course (teaching how to use yade) with Frederic, Emmanuel and Julien.
+-
+-r.470
+-  FEMBeam loads the file correctly
+-
+-r.469
+-  renamed:
+-  SDECParameters -&gt; BodyMacroParameters
+-  SDECContactGeometry -&gt; MacroMicroContactGeometry, and all functors
+-  SDECMacroMicroElasticRelationships -&gt; MacroMicroElasticRelationships
+-  SDECContactPhysics -&gt; ElasticContactParameters
+-  SDECLaw -&gt; ElasticContactLaw
+-  added epmty classes:
+-  FEMTetrahedronParameters
+-  FEMSetParameters
+-  FEMSet2MarchingCubes
+-  LatticeSet2MarchingCubes
+-  MarchingCubes
+-  FEMSetTextLoaderFunctor
+-
+-r.458
+-  ActionParameterInitializer and ActionParameterReset, LeapFrogOrientationIntegratorFunctor and LeapFrogPositionIntegratorFunctor, ForceCondition GravityCondition RotationCondition TranslationCondition
+-
+-r.450
+-  separating gravity to GravityForceFunctor
+-
+-r.444 version 0.7.4
+-  tagging v.0.7.4
+-  - version used for training with Julien, Frederic, and Luc
+-
+-r.441
+-  renaming:
+-  DynamicEngine -&gt; ConsitutiveLaw
+-  KinematicEngine -&gt; KinematicMotion
+-  ApplyActionForce2Particle -&gt; NewtonsForceLaw
+-  ApplyActionMomentum2RigidBody -&gt; NewtonsMomentumLaw
+-
+-r.435
+-  fixed stupid and embarassing error when calculating sphere volume. All physical results are totally different now. comparing results again with SDEC.
+-
+-r.434
+-  Body::group changed into Body::groupMask (so bodies can belong to many groups - max. 16 groups, because we have 16 bits here). added fem.beam, so that we can start with FEM
+-
+-r.432
+-  started lattice model. Generation works.
+-
+-r.430
+-  Splitted leapfrog integrator into two parts (position and orientation)
+-
+-r.427
+-  internal shearing angle is added, and yade is ready to compare results with
+-  sdec, although force recorder is little dirty, because it is releasing the big ball
+-
+-r.426 version 0.7.3
+-  tagging v.0.7.3
+-  - RotatingBox example with spheres and boxes inside is working quite good - with SimpleSpringDynamicEngine.
+-  - BoxStack example is working quite good. meybe it should be renamed to WallImpact.
+-  - the real name for damping is: Cundall Non Viscous Local Damping.
+-  - TimeStepper is working quite nice, and now - even SDECLinkedSpheres example is stable.
+-  - SDECParameters is now holding shearingAngle, young modulus and posions ratio - as it should. 
+-  - timestepper is working good with that. All examples filegenerators exept FEM are working!
+-
+-r.419
+-  added ActionReset - it is not inside SDECDynamicEngine - because for cloth example we have two/three engines, so they can't do a reset - because they will delete results from other engine
+-  also changed arguments to InteractionGeometryFunctor - from shared_ptr&lt;Interaction&gt;&amp; to const shared_ptr&lt;Interaction&gt;&amp;, because InteractionContainer is returning cont reference. So by passing this const&amp; - we avoid making extra copy of shared_ptr so it is faster - lot of files were changed.
+-  I also started separating computation of InteractionGeometry and InteractionPhysics for permanent links. Currently this calculation is inside SDECDynamicEngine ! it is very bad, and must be moved outside, because for lattice model I want to make those calculations in a clean way - outside of dynamic engine. To do that I had to modify dispatcher - so now dispatcher is doing two loops - one over permanentInteractions and second over interactions. So this dirty part of deleting duplicated interactions was moved from SDECDynamicEngine to InteractionGeometryDispatcher. It is still dirty and must be solved, but now it is dirty outside of dynamic engine, so it is possible to work on dynamic engine in a clean way.
+-
+-r.417 version 0.7.2
+-  tagging v.0.7.2
+-  - damping is separated from SDECDynamicEngine and works, strange is that ActionDampingDispatcher and ActionApplyDispatcher are exactly the same! so they should be merged into one dispatcher. maybe Action2BodyPhysicalParametersDispatcher
+-
+-r.416 version 0.7.1
+-  tagging v.0.7.1
+-  - I have done some general cleaning - removed unnecessary constructors, deleted unused postProcessAttributes, etc..
+-  - FunctorWrapper is Serializable, now - because we want Dispatcher to work with serialization, so that Functors can get extra arguments from .xml
+-
+-r.413
+-  FunctorWrapper is Serializable, now - because we want Dispatcher to work with serialization, so that Functors can get extra arguments from .xml
+-
+-r.410
+-  finished all renaming. update of GeometricalModel for cloth is working
+-
+-r.407
+-  OK/Cancel works now in file selection dialog, 
+-  ActionForce2RigidBody was deleted, because ActionForce2Particle does the same job 
+-  now I'm starting to work on updating GeometricalModel of Mesh2D, so that cloth will be displayed properly
+-
+-r.406
+-  I have done some general cleaning - removed unnecessary constructors, deleted unused postProcessAttributes, etc.. and I have discovered that when class has no virtual destructor then dunamic_cast fails! I wanted to remove all unused destructor, and then all dynamic_cast were failing. So instead I added virtual destructor everywhere :)
+-
+-r.399
+-  We have now: ( &lt;- means 'aggregates' )
+-  Interaction &lt;- InteractionGeometry
+-  Interaction &lt;- InteractionPhysics
+-  Body &lt;- BodyPhysicalParameters
+-  Body &lt;- BoundingVolume
+-  Body &lt;- GeometricalModel
+-  Body &lt;- InteractionDescription
+-
+-r.395
+-  lots of class renaming. openGL improvement, Loki stored in single place.
+-
+-r.379 version 0.7.0
+-  tagging v.0.7.0
+-  - To add BodyPhysicalParameter the OpenGLDispatchers have been added. This greatly separates display from numerics.
+-  -  MassSpring cloth is now working : but we still have to update geometricalModel. Created TimeIntegratorFunctor and Dispatcher. BallisticDynamicEngine is now LeapFrogIntegrator
+-  
+-
+-r.374
+-  MassSpring cloth is now working : but we still have to update geometricalModel. Created TimeIntegratorFunctor and Dispatcher. BallisticDynamicEngine is now LeapFrogIntegrator
+-
+-r.373
+-  To add BodyPhysicalParameter the OpenGLDispatchers have been added. This greatly separates display from numerics.
+-
+-r.368
+-  Added BodyPhysics class and moved all type of bodies into subdirectory, BodyPhysics
+-
+-r.367 version 0.6.8
+-  tagging v.0.6.8
+-  - Added single step button in QtGUI
+-  - Better SpheresPlanes FileGenerator
+-  - HangingCloth is working again but it is designed using Yade framework
+-
+-r.366
+-  HangingCloth is working again but it is designed adhering to Yade framework.
+-
+-r.355
+-  InteractionPhysicsDispatcher starts to works. But we have to make BodyPhysics
+-
+-r.352 (*) (****) version 0.6.7
+-  tagging v.0.6.7
+-  - small change in ActionDispatcher.cpp, is faster, but if Action was holding body's id it is possible that it can be faster result: 107 seconds is faster compared to 111 seconds
+-  - tere are a lot of places where we can do improvement like this. if we do code change like here - in every possible places - yade can gain a lot of speed.
+-  - basically I've discovered that every temporary variable of type shared_ptr&lt;&gt; costs 3 seconds, so we should avoid creating them and instead pass them around by references - whenever possible. 
+-  - And very iportant to note is that this speed improvement is possible ONLY because we have introduced Action, which is more generic! without this class it would be impossible to get faster. So it means that good generic code allows faster code - at least sometimes - as we have example if this here. The same was with containers - introducing containers made code slower, but it made possible to make improvements in other places (because containers increased genericity) and as a result the code got faster.
+-
+-r.351
+-  renamed CollisionFunctor to InteractionFunctor
+-
+-r.345 version 0.6.6
+-  tagging v.0.6.6
+-  - possibly faster DynLibDispatcher, 
+-  - I was also trying to fix problem that Singleton is not deleted at end, but finally I made only some improvement, but it is still not fixed.
+-
+-r.344
+-  some optimizations by using references. Multimethods now support inheritance in Indexable objects, I had to modify in Indexable class:
+-  #define REGISTER_CLASS_INDEX(SomeClass,BaseClass)
+-
+-r.342 version 0.6.5
+-  tagging v.0.6.5
+-  - containers return references (no temporary objects are created)
+-
+-r.340 version 0.6.4
+-  tagging v.0.6.4
+-  - ActionContainer, without creating new pointers everytime.
+-
+-r.339 version 0.6.3
+-  tagging v.0.6.3
+-  - ActionContainer-&gt;reset() - faster code.
+-  - benchmark tests.
+-
+-r.338 version 0.6.2
+-  tagging v.0.6.2
+-  - ActionDispatcher is working
+-  - dispatcher for creating actions need createIndex() in constructor of all Actions
+-  - Added classes: Action, ActionVecVec, ActionContainer, ActionForce, ActionMomentum, etc.. but they are empty. And it is compiling
+-
+-r.337
+-  ActionDispatcher is working
+-
+-r.334
+-  dispatcher for creating actions need createIndex() in constructor of all Actions
+-
+-r.330
+-  Added classes: Action, ActionVecVec, ActionContainer, ActionForce, ActionMomentum, etc.. but they are empty. And it is compiling
+-
+-r.323
+-  Added Action, ActionContainer, SDECLinearContactModel, PhysicalInteractor. We started redesign to introduce Action which are the response of a DynamicEngine to an Interaction and acts on body.
+-
+-r.315 version 0.6.1
+-  tagging v.0.6.1
+-  - versioon used for benchmark checks
+-  - small fixes.
+-  - Real used everywhere instead of floar or double.
+-
+-r.312 (*)
+-  now Real is used everywhere instead of double or float. Specify with compilation flag #define DOUBLE_PRECISION, whether you want float or double.
+-
+-r.307
+-  splitting InteractionModel to InteractionGeometry and InteractionPhysics
+-
+-r.303
+-  iterating containers in done with: gotoFirst, gotoNext, notAtEnd gotoFirstPotential, gotoNextPotential, notAtEndPotential.
+-
+-r.300 version 0.6.0
+-  tagging v.0.6.0
+-  - moment rotation law added, mess inside SDECDynamicEngine (three enegines in one!)
+-  - Serialization now supports almost all std, boost and Loki containers and more
+-  - math classes are separate from serialization, and done with templates (but with wild-magic license)
+-  - for storing Bodies and Interactions we now use polymorphic classes InteractionContainer and BodyContainer
+-  - yade uses threads now, but still not fully stable
+-  - switch at compile time to select float/double precision of calculation
+-  - displayed objects are now casting really cool shadows
+-  - some examples are not updated, and therefor not working. it is guaranteed that SDECBenchmark8k will always work.
+-  - BoundingVolume optimized for each kind of GeometricalModel makes computation almost twice faster
+-  - new very generic MultiMethods are added, allowing multivirtual call with extra parameters, and easy code reuse
+-
+-r.298
+-  new very generic MultiMethods are added, allowing multivirtual call with extra parameters, and easy code reuse
+-
+-r.291
+-  better handling of threads, but still not fully stable
+-
+-r.254 version 0.5.2
+-  tagging v.0.5.2
+-  - Finished rearranging subdirectories. Now we have directory extensions (we can rename it,
+-  - if there is a better name), and ClassFactory is in toolbox/Libraries,
+-  - yade is now compiling (and works) with g++ 3.3,
+-  - all .xml examples except ErrorTolerant, are now working,
+-  - Improved version of QtGUIGenerator. Now boolean are represented by
+-  - checkboxes instead of linedits,
+-  - Better handling of start,stop and reload simulation. Thread now terminate
+-  - when associated window is closed,
+-  - NullGUI is now saving results during computations. Those results can be opened with QtGUI and we can see what is computed.
+-  - added filegenerator that can import data files from SDEC,
+-  - Boxes are now casting shadows,
+-  - Better handling of thread into GUI.
+-  - is compiling with double.
+-
+-r.245
+-  BoundingVolume now can be used to center scene for display
+-
+-r.232 version 0.5.1
+-  tagging v.0.5.1
+-  - small fixes, little faster
+-
+-r.227 version 0.5.0
+-  tagging v.0.5.0
+-  - Bounding volume are now both indexalbe and a GeometricalModel,
+-  - BoundingVolume update is now done in an actor,
+-  - Improved version of GLWindowManager library,
+-  - BoundingVolume optimized for each kind of GeometricalModel makes computation almost twice faster
+-
+-r.225
+-  some examples are not updated, and therefore not working. it is guaranteed that SDECBenchmark8k will always work.
+-
+-r.223 version 0.4.8
+-  tagging v.0.4.8
+-  - scripts are checking all Environement Variables - more safety,
+-  - fixed missing is_base_and_derived in Indexable.hpp,
+-  - Much better version of Thread library and multithreaded QGLViewer,
+-  - Reenabling GUI updater thread,
+-  - Now we use InteractionHashMap by default because InteractionVecSet is not ready yet,
+-  - Added RenderingEngines,
+-  - OpenGLWrapper 50% done  - and #DOUBLE_PRECISION works! (float/double),
+-  - Shadows are working
+-  - SDECCollision.xml and SDECTetrahedronWithLinks.xml work for dt=0.003,
+-  - comparing results with older versions.
+-  
+-r.219
+-  displayed objects are now casting really cool shadows
+-
+-r.209
+-  switch at compile time to select float/double precision of calculation
+-
+-r.196 version 0.4.7
+-  tagging v.0.4.7
+-  - Improved thread management. Multiple views are now working,
+-  - Improved GUI.
+-  - scripts that allow easy switching between relative paths and paths in environemnt YADE*PATH variables
+-  - XMLManager writes pointers in a shorter way, with _className_
+-  - NullGUI works - for benchmars of Vector3 not in Serializable, etc..
+-
+-r.182
+-  yade uses threads now, but still not fully stable
+-
+-r.184 version 0.4.6
+-  tagging version 0.4.6
+-  - New SimulationController is now working
+-  - Started moving simulation loop from glViewer to a specific thread
+-  - InteractionContainer and BodyContainer integration completed. but container classes quality/speed is not good (and tested) yet
+-  - InteractionVecSet and BodyVector done.
+-  - Added ThreadSynchronizer. Yade is now working with external simulation loop
+-  - FIXED threading on multi-processor machine (not real multiprocessor, just hyper threading...)
+-  - rename BodyVector to BodyRedirectionVector
+-  
+-r.180
+-  for storing Bodies and Interactions we now use polymorphic classes InteractionContainer and BodyContainer
+-
+-r.175 version 0.4.5
+-  tagging 0.4.5
+-  - Add QtFileGenerator, for automatic file generation with Qt GUI (not completely working yet)
+-  - QtGuiGenerator and QtFileGenerator are now working
+-  - BodyContainer starts to work
+-  - All Qt libraries are now in one library.
+-  - Created new qt controller for simulation and new opengl library
+-
+-r.168 version 0.4.4
+-  tagging v.0.4.4
+-  InteractionContainer starts working
+-
+-r.165 version 0.4.3
+-  tagging v.0.4.3
+-  praparing for InteractionContainer. small fixes
+-
+-r.155 version 0.4.2
+-  tagging v.0.4.2
+-  - better serialization for math stuff.
+-
+-r.154 
+-  math classes are separate from serialization, and done with templates (but with wild-magic license)
+-
+-r.147 version 0.4.1
+-  tagging v.0.4.1
+-  - Serialization now supports almost all STL containers from std namespace, boost and Loki containers and more
+-  - comparing resluts with older revisions.
+-
+-r.140
+-  Serialization now supports almost all STL containers from std namespace, boost and Loki containers and more
+-
+-r.129 version 0.4.0
+-  moment rotation law added,
+-  - unit tests of SDEC with r.90 (checking results correctness)
+-  - LPC solver for ErrorTolerant computations
+-
+-r.127
+-  LPC solver for ErrorTolerant computations
+-
+-r.122
+-  moment rotation law added, mess inside SDECDynamicEngine (three enegines in one!)
+-
+-r.112 version 0.3.1
+-  tagging v.0.3.1
+-  - added NullGUI, so commandline computation is possible
+-
+-r.108
+-  started ErrorTolerant DynamicEngine
+-
+-r.90 version 0.3.0
+-  tagging v.0.3.0
+-  - SDEC (DEM) added and works with contact law
+-
+-r.83
+-  SDECDynamicEngine starts to work with SDEC contact law
+-
+-r.80
+-  simple example for SDEC added
+-
+-r.76
+-  Serialization uses boost::spirit
+-
+-r.74 version 0.2.0
+-  tagging v.0.2.0 with working cloth, rotatingbox and falling boxes. before adding SDEC
+-  - ClassFactory is now reusable
+-  
+-r.56
+-  ClassFactory is now reusable
+-
+-r.40
+-  setDebug, setRelease scripts added
+-
+-r.30
+-  cloth simulation added
+-
+-r.26 version 0.1.1
+-  tagging version v.0.1.1 after adding multimethods and before adding Cloth
+-
+-r.17
+-  first try at multimethods, added class Indexable, and multimethods are used for collision
+-
+-r.6 version 0.1.0
+-  tagging v.0.1.0
+-  - initial yade version imported (after 6 months of work by Olivier alone)
+-  - tagging this version before adding multimethods
+-  - Rigid Body example works
+-  
+-r.1
+-  rigid body example works
+-
+
+Modified: trunk/Makefile
+===================================================================
+--- trunk/Makefile	2007-02-27 16:09:05 UTC (rev 1075)
++++ trunk/Makefile	2007-02-28 10:37:27 UTC (rev 1076)
+@@ -46,6 +46,9 @@
+ doc:
+ 	cd yade-doc; doxygen Doxyfile
+ 
++ChangeLog:
++	svn log --xml --verbose | xsltproc yade-scripts/svn2cl.xsl - &gt; ChangeLog
++
+ #### convenience and individual targets; saves typing.
+ # helper target for parallel compilation which is broken generally and needs to be tried repeatedly until it succeeds (or not)
+ ci:
+
+Modified: trunk/SConstruct
+===================================================================
+--- trunk/SConstruct	2007-02-27 16:09:05 UTC (rev 1075)
++++ trunk/SConstruct	2007-02-28 10:37:27 UTC (rev 1076)
+@@ -52,7 +52,7 @@
+ 	('CPPPATH', 'Additional paths for the C preprocessor (whitespace separated)',['/usr/include/wm3'],None,Split),
+ 	('LIBPATH','Additional paths for the linker (whitespace separated)',None,None,Split),
+ 	('QTDIR','Directories where to look for qt3',['/usr/share/qt3','/usr/lib/qt'],None,Split),
+-	('CXX','The c++ compiler','ccache g++-4.0'),
++	('CXX','The c++ compiler','distcc g++-4.0'),
+ 	BoolOption('pretty',&quot;Don't show compiler command line (like the Linux kernel)&quot;,1)
+ )
+ 
+@@ -107,8 +107,22 @@
+ 		return False
+ 	context.Result(True)
+ 	return True
+-		
+ 
++def CheckYadeVersion(context):
++	context.Message('Getting Yade version... ')
++	svnRevision=None
++	for l in os.popen(&quot;svn info&quot;).readlines():
++		m=re.match(r'Revision: ([0-9]+)',l)
++		if m:
++			svnRevision=m.group(1)
++			break
++	if svnRevision:
++		env['VERSION']='svn'+svnRevision
++		context.Result(env['VERSION'])
++	else:
++		env['VERSION']=''
++		context.Result('Svn revision not found, leaving empty')
++
+ def CheckCXX(context):
+ 	context.Message('Checking whether c++ compiler &quot;%s&quot; works...'%env['CXX'])
+ 	ret=context.TryLink('#include&lt;iostream&gt;\nint main(int argc, char**argv){std::cerr&lt;&lt;std::endl;return 0;}\n','.cpp')
+@@ -119,7 +133,9 @@
+ if not env.GetOption('clean'):
+ 	#essential libraries first
+ 	ok=True
+-	conf=Configure(env,custom_tests={'CheckQt':CheckQt,'CheckCXX':CheckCXX,'CheckPython':CheckPython})
++	conf=Configure(env,custom_tests={'CheckQt':CheckQt,'CheckCXX':CheckCXX,'CheckPython':CheckPython,'CheckYadeVersion':CheckYadeVersion})
++	conf.CheckYadeVersion()
++	env['POSTFIX']='-'+env['VERSION']+env['POSTFIX']
+ 	ok&amp;=conf.CheckCXX()
+ 	ok&amp;=conf.CheckLibWithHeader('pthread','pthread.h','c','pthread_exit(NULL);')
+ 	ok&amp;=conf.CheckLibWithHeader('glut','GL/glut.h','c','glutGetModifiers();')
+@@ -150,14 +166,16 @@
+ if 1:
+ 	env.SourceSignatures('MD5')
+ 	env.SetOption('max_drift',5) # cache md5sums of files older than 5 seconds
+-	SetOption('implicit_cache',1) # cahe #include files etc.
++	SetOption('implicit_cache',1) # cache #include files etc.
+ 	env.SourceCode(&quot;.&quot;,None) # skip dotted directories
+ 	SetOption('num_jobs',6)
+ 
+ ### DIRECTORIES
+ libDirs=['yade-libs','yade-packages/yade-package-common','yade-packages/yade-package-dem','yade-packages/yade-package-fem','yade-packages/yade-package-lattice','yade-packages/yade-package-mass-spring','yade-packages/yade-package-realtime-rigidbody','yade-extra','yade-guis']
+ # exclude stuff that should be excluded
+-libDirs=[x for x in libDirs if not re.match('^.*-('+string.join(env['exclude'],'|')+')$',x)]
++libDirs=[x for x in libDirs if not re.match('^.*-('+'|'.join(env['exclude'])+')$',x)]
++# all things will be built here...
++buildDir=env.subst('build$POSTFIX')
+ 
+ instDirs=[os.path.join('$PREFIX','bin')]+[os.path.join('$PREFIX','lib','yade$POSTFIX',string.split(x,os.path.sep)[-1]) for x in libDirs]
+ instIncludeDirs=['yade-core']+[os.path.join('$PREFIX','include','yade',string.split(x,os.path.sep)[-1]) for x in libDirs]
+@@ -193,7 +211,15 @@
+ # makes dynamic library loading easied (no LD_LIBRARY_PATH) and perhaps faster
+ env.Append(RPATH=[os.path.join('$PREFIX','lib','yade$POSTFIX',string.split(x,os.path.sep)[-1]) for x in libDirs])
+ # find already compiled but not yet installed libraries for linking
+-#env.Append(LIBPATH=[os.path.join('#',x) for x in libDirs])
++#env.Append(LIBPATH=[os.path.join('#',x) for x in libDirs]	# -floop-optimize2 is a gcc-4.x flag, doesn't exist on previous version
++	# CRASH -ffloat-store
++	# maybe not CRASH?: -fno-math-errno
++	# CRASH?: -fmodulo-sched  
++	#   it is probably --ffast-fath that crashes !!!
++	# gcc-4.1 only: -funsafe-loop-optimizations -Wunsafe-loop-optimizations
++	# sure CRASH: -ftree-vectorize
++	# CRASH (one of them): -fivopts -fgcse-sm -fgcse-las (one of them - not sure which one exactly)
++	# ?: -ftree-loop-linear -ftree-loop-ivcanon)
+ env.Append(LIBPATH=env['RPATH'])
+ 
+ 
+@@ -220,7 +246,7 @@
+ 	global env
+ 	import os,string,re
+ 	from os.path import join,split,isabs,isdir,exists,islink,isfile
+-	if not prefix: yadeRoot='.' # MUST be relative, otherwise relative symlinks for the local includes will break badly
++	if not prefix: yadeRoot=env.subst('build$POSTFIX') # MUST be relative, otherwise relative symlinks for the local includes will break badly
+ 	else: yadeRoot=prefix
+ 	yadeInc=join(yadeRoot,'include','yade')
+ 	#### POSTFIX_INCLUDES
+@@ -232,7 +258,7 @@
+ 	# This makes all headers installed to ./include/yade go actually to ./include/yade-debug
+ 	#
+ 	# I hope this doesn't break scons' algorithm for dependency detection
+-	if len(env['POSTFIX'])&gt;0:
++	if 0 and len(env['POSTFIX'])&gt;0:
+ 		import shutil
+ 		yadeIncPostfix=yadeInc+env.subst(&quot;$POSTFIX&quot;)
+ 		
+@@ -254,12 +280,12 @@
+ 				subInc=join(yadeInc,m.group(1))
+ 				if not prefix: # local include directory
+ 					if not isdir(subInc): os.makedirs(subInc)
+-					try: os.symlink(join('..','..','..',root,f),join(subInc,f));
++					upLevels=len(subInc.split(os.path.sep))
++					linkTarget=os.path.sep.join(['..' for x in range(0,upLevels)]+[root]+[f])
++					try: os.symlink(linkTarget,join(subInc,f));
+ 					except OSError: pass # if the file already exists, symlink fails
+ 				else: env.Install(subInc,join(root,f))
+ 
+-
+-
+ # 1. re-generate SConscript files if some of them do not exist. This must be done in-place for
+ #		scons postpones all actions after having processed SConscruct and SConscript files.
+ # 2. symlink all headers to ./include/... so that we can build without installing headers to $PREFIX first (pre-build)
+@@ -278,21 +304,24 @@
+ 			Exit(1)
+ 
+ 	prepareLocalIncludesProxy=prepareIncludes()
+-	prepareIncludesProxy=prepareIncludes(prefix=env['PREFIX'])
++	#prepareIncludesProxy=prepareIncludes(prefix=env['PREFIX'])
+ 	prebuildAlias=env.Alias('prebuild',[prepareLocalIncludesProxy])
+-	installAlias=env.Alias('install',[instDirs,prepareIncludesProxy,os.path.join('$PREFIX','include','yade')])
++	installAlias=env.Alias('install',[instDirs]) #,os.path.join('$PREFIX','include','yade')]) #prepareIncludesProxy,
+ 	Depends(installAlias,prebuildAlias)
+ 	Default(installAlias)
+ 
+ # read all SConscript files
+ env.Export('env');
+-env.SConscript(dirs=libDirs+['yade-core'])
+-if env.has_key('extraModules'):
+-	env.SConscript(dirs=env['extraModules'])
+-	#make sure extra modules find their own components for linking
+-	env.Append(LIBPATH=[os.path.join('#',x) for x in env['extraModules']])
+ 
++if env.has_key('extraModules'): extraModules=env['extraModules']
++else: extraModules=[]
+ 
++for libDir in extraModules+libDirs+['yade-core']:
++	#print libDir
++	env.SConscript(dirs=libDir,build_dir=os.path.join(buildDir,libDir),duplicate=0)
++env.Append(LIBPATH=[os.path.join('#',x) for x in extraModules])
++
++
+ #env.NoClean('$PREFIX/bin/yade$POSTFIX','$PREFIX/lib/yade$POSTFIX','$PREFIX/include/yade')
+ ##########################################################################################
+ ############# INSTALLATION ###############################################################
+
+Deleted: trunk/wscript
+===================================================================
+--- trunk/wscript	2007-02-27 16:09:05 UTC (rev 1075)
++++ trunk/wscript	2007-02-28 10:37:27 UTC (rev 1076)
+@@ -1,41 +0,0 @@
+-APPNAME='yade'
+-VERSION='svn1008'
+-srcdir='.'
+-blddir='_build_'
+-
+-import os.path, string                                                                                                                                 
+-def filesInDir(dir,files): return string.join(map(lambda x: os.path.join(dir,x),files)) 
+-
+-def build(bld):
+-	bld.add_subdirs('yade-libs')
+-	bld.add_subdirs('yade-core')
+-	bld.add_subdirs('yade-guis')
+-	bld.add_subdirs('yade-packages/yade-package-common')
+-	bld.add_subdirs('yade-packages/yade-package-dem')
+-	bld.add_subdirs('yade-packages/yade-package-fem')
+-	bld.add_subdirs('yade-packages/yade-package-lattice')
+-	bld.add_subdirs('yade-packages/yade-package-mass-spring')
+-	bld.add_subdirs('yade-packages/yade-package-realtime-rigidbody')
+-
+-def configure(conf):
+-	conf.check_tool(['g++','Qt3'])
+-
+-	def getlib(lib):
+-		lcfg=conf.create_library_configurator()
+-		lcfg.uselib=lib
+-		lcfg.name=lib
+-		lcfg.paths=['/usr/lib','/usr/local/lib']
+-		lcfg.run()
+-
+-	getlib('glut')
+-	getlib('boost_date_time')
+-	getlib('boost_filesystem')
+-	getlib('boost_thread')
+-
+-
+-def set_options(opt): 
+-	opt.tool_options('Qt3')
+-	#opt.tool_options('KDE3')
+-	#opt.add_option('--prefix', type='string', help='installation prefix', dest='prefix')
+-	#for i in &quot;execprefix datadir libdir kdedir kdeincludes kdelibs qtdir qtincludes qtlibs libsuffix&quot;.split():
+-	#	opt.add_option('--'+i, type='string', default='', dest=i)
+
+Added: trunk/yade-all.kdevelop
+===================================================================
+--- trunk/yade-all.kdevelop	2007-02-27 16:09:05 UTC (rev 1075)
++++ trunk/yade-all.kdevelop	2007-02-28 10:37:27 UTC (rev 1076)
+@@ -0,0 +1,183 @@
++&lt;?xml version = '1.0'?&gt;
++&lt;kdevelop&gt;
++  &lt;general&gt;
++    &lt;author&gt;Olivier Galizzi&lt;/author&gt;
++    &lt;email&gt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">olivier.galizzi at imag.fr</A>&lt;/email&gt;
++    &lt;version&gt;0.1&lt;/version&gt;
++    &lt;projectmanagement&gt;KDevTrollProject&lt;/projectmanagement&gt;
++    &lt;primarylanguage&gt;C++&lt;/primarylanguage&gt;
++    &lt;keywords&gt;
++      &lt;keyword&gt;Qt&lt;/keyword&gt;
++    &lt;/keywords&gt;
++    &lt;ignoreparts/&gt;
++    &lt;projectdirectory&gt;.&lt;/projectdirectory&gt;
++    &lt;absoluteprojectpath&gt;false&lt;/absoluteprojectpath&gt;
++    &lt;description/&gt;
++    &lt;secondaryLanguages/&gt;
++    &lt;versioncontrol/&gt;
++  &lt;/general&gt;
++  &lt;kdevfileview&gt;
++    &lt;groups&gt;
++      &lt;group pattern=&quot;*.cpp;*.cxx;*.h;*.hpp;*.tpp;*.ipp&quot; name=&quot;Sources&quot; /&gt;
++      &lt;group pattern=&quot;*.ui&quot; name=&quot;User Interface&quot; /&gt;
++      &lt;group pattern=&quot;*.png&quot; name=&quot;Icons&quot; /&gt;
++      &lt;group pattern=&quot;*&quot; name=&quot;Others&quot; /&gt;
++      &lt;hidenonprojectfiles&gt;false&lt;/hidenonprojectfiles&gt;
++      &lt;hidenonlocation&gt;false&lt;/hidenonlocation&gt;
++    &lt;/groups&gt;
++    &lt;tree&gt;
++      &lt;hidepatterns&gt;*.o,*.lo,CVS&lt;/hidepatterns&gt;
++      &lt;hidenonprojectfiles&gt;false&lt;/hidenonprojectfiles&gt;
++      &lt;showvcsfields&gt;false&lt;/showvcsfields&gt;
++    &lt;/tree&gt;
++  &lt;/kdevfileview&gt;
++  &lt;kdevdoctreeview&gt;
++    &lt;ignoretocs&gt;
++      &lt;toc&gt;ada&lt;/toc&gt;
++      &lt;toc&gt;ada_bugs_gcc&lt;/toc&gt;
++      &lt;toc&gt;bash&lt;/toc&gt;
++      &lt;toc&gt;bash_bugs&lt;/toc&gt;
++      &lt;toc&gt;clanlib&lt;/toc&gt;
++      &lt;toc&gt;w3c-dom-level2-html&lt;/toc&gt;
++      &lt;toc&gt;fortran_bugs_gcc&lt;/toc&gt;
++      &lt;toc&gt;gnome1&lt;/toc&gt;
++      &lt;toc&gt;gnustep&lt;/toc&gt;
++      &lt;toc&gt;gtk&lt;/toc&gt;
++      &lt;toc&gt;gtk_bugs&lt;/toc&gt;
++      &lt;toc&gt;haskell&lt;/toc&gt;
++      &lt;toc&gt;haskell_bugs_ghc&lt;/toc&gt;
++      &lt;toc&gt;java_bugs_gcc&lt;/toc&gt;
++      &lt;toc&gt;java_bugs_sun&lt;/toc&gt;
++      &lt;toc&gt;kde2book&lt;/toc&gt;
++      &lt;toc&gt;opengl&lt;/toc&gt;
++      &lt;toc&gt;pascal_bugs_fp&lt;/toc&gt;
++      &lt;toc&gt;php&lt;/toc&gt;
++      &lt;toc&gt;php_bugs&lt;/toc&gt;
++      &lt;toc&gt;perl&lt;/toc&gt;
++      &lt;toc&gt;perl_bugs&lt;/toc&gt;
++      &lt;toc&gt;python&lt;/toc&gt;
++      &lt;toc&gt;python_bugs&lt;/toc&gt;
++      &lt;toc&gt;ruby&lt;/toc&gt;
++      &lt;toc&gt;ruby_bugs&lt;/toc&gt;
++      &lt;toc&gt;sdl&lt;/toc&gt;
++      &lt;toc&gt;stl&lt;/toc&gt;
++      &lt;toc&gt;w3c-svg&lt;/toc&gt;
++      &lt;toc&gt;sw&lt;/toc&gt;
++      &lt;toc&gt;w3c-uaag10&lt;/toc&gt;
++      &lt;toc&gt;wxwidgets_bugs&lt;/toc&gt;
++    &lt;/ignoretocs&gt;
++    &lt;ignoredoxygen&gt;
++      &lt;toc&gt;KDE Libraries (Doxygen)&lt;/toc&gt;
++    &lt;/ignoredoxygen&gt;
++  &lt;/kdevdoctreeview&gt;
++  &lt;kdevdebugger&gt;
++    &lt;general&gt;
++      &lt;dbgshell/&gt;
++      &lt;programargs/&gt;
++      &lt;gdbpath/&gt;
++      &lt;configGdbScript/&gt;
++      &lt;runShellScript/&gt;
++      &lt;runGdbScript/&gt;
++      &lt;breakonloadinglibs&gt;true&lt;/breakonloadinglibs&gt;
++      &lt;separatetty&gt;false&lt;/separatetty&gt;
++      &lt;floatingtoolbar&gt;false&lt;/floatingtoolbar&gt;
++    &lt;/general&gt;
++    &lt;display&gt;
++      &lt;staticmembers&gt;false&lt;/staticmembers&gt;
++      &lt;demanglenames&gt;true&lt;/demanglenames&gt;
++      &lt;outputradix&gt;10&lt;/outputradix&gt;
++    &lt;/display&gt;
++  &lt;/kdevdebugger&gt;
++  &lt;kdevtrollproject&gt;
++    &lt;run&gt;
++      &lt;mainprogram&gt;bin/yade&lt;/mainprogram&gt;
++      &lt;programargs/&gt;
++      &lt;directoryradio&gt;executable&lt;/directoryradio&gt;
++      &lt;customdirectory&gt;/&lt;/customdirectory&gt;
++      &lt;terminal&gt;false&lt;/terminal&gt;
++      &lt;autocompile&gt;true&lt;/autocompile&gt;
++      &lt;envvars/&gt;
++    &lt;/run&gt;
++    &lt;general&gt;
++      &lt;activedir&gt;yade-packages/yade-package-realtime-rigidbody/src&lt;/activedir&gt;
++    &lt;/general&gt;
++    &lt;make&gt;
++      &lt;abortonerror&gt;false&lt;/abortonerror&gt;
++      &lt;numberofjobs&gt;1&lt;/numberofjobs&gt;
++      &lt;dontact&gt;false&lt;/dontact&gt;
++      &lt;makebin/&gt;
++      &lt;prio&gt;0&lt;/prio&gt;
++      &lt;envvars/&gt;
++    &lt;/make&gt;
++    &lt;subclassing/&gt;
++  &lt;/kdevtrollproject&gt;
++  &lt;kdevfilecreate&gt;
++    &lt;filetypes/&gt;
++    &lt;useglobaltypes&gt;
++      &lt;type ext=&quot;ui&quot; /&gt;
++      &lt;type ext=&quot;cpp&quot; /&gt;
++      &lt;type ext=&quot;h&quot; /&gt;
++      &lt;type ext=&quot;ts&quot; /&gt;
++    &lt;/useglobaltypes&gt;
++  &lt;/kdevfilecreate&gt;
++  &lt;kdevdocumentation&gt;
++    &lt;projectdoc&gt;
++      &lt;docsystem&gt;Doxygen Documentation Collection&lt;/docsystem&gt;
++      &lt;docurl&gt;yade.tag&lt;/docurl&gt;
++      &lt;usermanualurl/&gt;
++    &lt;/projectdoc&gt;
++  &lt;/kdevdocumentation&gt;
++  &lt;substmap&gt;
++    &lt;APPNAME&gt;yade&lt;/APPNAME&gt;
++    &lt;APPNAMELC&gt;yade&lt;/APPNAMELC&gt;
++    &lt;APPNAMEUC&gt;YADE&lt;/APPNAMEUC&gt;
++    &lt;AUTHOR&gt;Olivier Galizzi&lt;/AUTHOR&gt;
++    &lt;EMAIL&gt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">olivier.galizzi at imag.fr</A>&lt;/EMAIL&gt;
++    &lt;LICENSE&gt;GPL&lt;/LICENSE&gt;
++    &lt;LICENSEFILE&gt;COPYING&lt;/LICENSEFILE&gt;
++    &lt;VERSION&gt;0.1&lt;/VERSION&gt;
++    &lt;dest&gt;/home/evasion/galizzi/devel/yade/yade/projects/yade&lt;/dest&gt;
++  &lt;/substmap&gt;
++  &lt;kdevcppsupport&gt;
++    &lt;references/&gt;
++    &lt;codecompletion&gt;
++      &lt;includeGlobalFunctions&gt;true&lt;/includeGlobalFunctions&gt;
++      &lt;includeTypes&gt;true&lt;/includeTypes&gt;
++      &lt;includeEnums&gt;true&lt;/includeEnums&gt;
++      &lt;includeTypedefs&gt;false&lt;/includeTypedefs&gt;
++      &lt;automaticCodeCompletion&gt;true&lt;/automaticCodeCompletion&gt;
++      &lt;automaticArgumentsHint&gt;true&lt;/automaticArgumentsHint&gt;
++      &lt;automaticHeaderCompletion&gt;true&lt;/automaticHeaderCompletion&gt;
++      &lt;codeCompletionDelay&gt;250&lt;/codeCompletionDelay&gt;
++      &lt;argumentsHintDelay&gt;400&lt;/argumentsHintDelay&gt;
++      &lt;headerCompletionDelay&gt;250&lt;/headerCompletionDelay&gt;
++    &lt;/codecompletion&gt;
++    &lt;creategettersetter&gt;
++      &lt;prefixGet/&gt;
++      &lt;prefixSet&gt;set&lt;/prefixSet&gt;
++      &lt;prefixVariable&gt;m_,_&lt;/prefixVariable&gt;
++      &lt;parameterName&gt;theValue&lt;/parameterName&gt;
++      &lt;inlineGet&gt;true&lt;/inlineGet&gt;
++      &lt;inlineSet&gt;true&lt;/inlineSet&gt;
++    &lt;/creategettersetter&gt;
++  &lt;/kdevcppsupport&gt;
++  &lt;cppsupportpart&gt;
++    &lt;filetemplates&gt;
++      &lt;interfacesuffix&gt;.hpp&lt;/interfacesuffix&gt;
++      &lt;implementationsuffix&gt;.cpp&lt;/implementationsuffix&gt;
++    &lt;/filetemplates&gt;
++  &lt;/cppsupportpart&gt;
++  &lt;kdevvisualadvance&gt;
++    &lt;emulator&gt;VisualBoyAdvance&lt;/emulator&gt;
++    &lt;binary/&gt;
++    &lt;addOptions/&gt;
++    &lt;terminal&gt;false&lt;/terminal&gt;
++    &lt;fullscreen&gt;false&lt;/fullscreen&gt;
++    &lt;graphicFilter&gt;-f0&lt;/graphicFilter&gt;
++    &lt;scaling&gt;-1&lt;/scaling&gt;
++  &lt;/kdevvisualadvance&gt;
++  &lt;ctagspart&gt;
++    &lt;customArguments/&gt;
++    &lt;customTagfilePath/&gt;
++  &lt;/ctagspart&gt;
++&lt;/kdevelop&gt;
+
+Added: trunk/yade-all.pro
+===================================================================
+--- trunk/yade-all.pro	2007-02-27 16:09:05 UTC (rev 1075)
++++ trunk/yade-all.pro	2007-02-28 10:37:27 UTC (rev 1076)
+@@ -0,0 +1,54 @@
++isEmpty ( YADE_QMAKE_PATH ) {
++error( &quot;YADE_QMAKE_PATH internal qmake variable is not set, you should run for example qmake YADE_QMAKE_PATH=/home/janek/YADE, this will not work from inside kdevelop (when they will fix it?)&quot; )
++}
++
++
++SUBDIRS += \
++yade-core/src yade-libs/yade-lib-base/src \
++yade-libs/yade-lib-computational-geometry/src \
++yade-libs/yade-lib-factory/src \
++yade-libs/yade-lib-loki/src \
++yade-libs/yade-lib-multimethods/src \
++yade-libs/yade-lib-opengl/src \
++yade-libs/yade-lib-serialization-bin/src \
++yade-libs/yade-lib-serialization-qt/src \
++yade-libs/yade-lib-serialization/src \
++yade-libs/yade-lib-serialization-xml/src \
++yade-guis/yade-gui-qt/src \
++yade-extra/yade-spherical-dem-simulator/src \
++yade-packages/yade-package-common/src \
++yade-packages/yade-package-dem/src \
++yade-packages/yade-package-fem/src \
++yade-packages/yade-package-lattice/src \
++yade-packages/yade-package-mass-spring/src \
++yade-packages/yade-package-realtime-rigidbody/src
++
++#yade-core/src/yade.pro
++#yade-libs/yade-lib-base/src/yade-lib-base.pro
++#yade-libs/yade-lib-computational-geometry/src/yade-lib-computational-geometry.pro
++#yade-libs/yade-lib-factory/src/yade-lib-factory.pro
++#yade-libs/yade-lib-loki/src/yade-lib-loki.pro
++#yade-libs/yade-lib-multimethods/src/yade-lib-multimethods.pro
++#yade-libs/yade-lib-opengl/src/yade-lib-opengl.pro
++#yade-libs/yade-lib-serialization-bin/src/yade-lib-serialization-bin.pro
++#yade-libs/yade-lib-serialization-qt/src/yade-lib-serialization-qt.pro
++#yade-libs/yade-lib-serialization/src/yade-lib-serialization.pro
++#yade-libs/yade-lib-serialization-xml/src/yade-lib-serialization-xml.pro
++#yade-guis/yade-gui-qt/src/QtGUI.pro
++#yade-extra/yade-spherical-dem-simulator/src/yade-spherical-dem-simulator.pro
++#yade-packages/yade-package-common/src/yade-package-common.pro
++#yade-packages/yade-package-dem/src/yade-package-dem.pro
++#yade-packages/yade-package-fem/src/yade-package-fem.pro
++#yade-packages/yade-package-lattice/src/yade-package-lattice.pro
++#yade-packages/yade-package-mass-spring/src/yade-package-mass-spring.pro
++#yade-packages/yade-package-realtime-rigidbody/src/yade-package-realtime-rigidbody.pro
++
++MOC_DIR = $(YADECOMPILATIONPATH)
++UI_DIR = $(YADECOMPILATIONPATH)
++OBJECTS_DIR = $(YADECOMPILATIONPATH)
++DEFINES = DEBUG
++CONFIG += debug thread warn_on
++TEMPLATE = subdirs
++INCLUDEPATH += $${YADE_QMAKE_PATH}/include
++
++QMAKE_RUN_CXX_IMP = $(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $(shell pwd)/$&lt;
+
+Modified: trunk/yade-scripts/erskine3-apply.sh
+===================================================================
+--- trunk/yade-scripts/erskine3-apply.sh	2007-02-27 16:09:05 UTC (rev 1075)
++++ trunk/yade-scripts/erskine3-apply.sh	2007-02-28 10:37:27 UTC (rev 1076)
+@@ -27,4 +27,4 @@
+ $ERSKINE $ENGINE $YADE/yade-packages/yade-package-realtime-rigidbody/src/yade-package-realtime-rigidbody.pro $YADE/yade-packages/yade-package-realtime-rigidbody &gt; $YADE/yade-packages/yade-package-realtime-rigidbody/$SCRIPT
+ 
+ echo Creating entry for yade-extra/Clump in $YADE/yade-extra/$SCRIPT
+-echo &quot;env.SConscript(dirs=['Clump'])&quot; &gt;&gt; $YADE/yade-extra/$SCRIPT
++echo &quot;env.SConscript(dirs=['clump'])&quot; &gt;&gt; $YADE/yade-extra/$SCRIPT
+
+Added: trunk/yade-scripts/svn2cl.xsl
+===================================================================
+--- trunk/yade-scripts/svn2cl.xsl	2007-02-27 16:09:05 UTC (rev 1075)
++++ trunk/yade-scripts/svn2cl.xsl	2007-02-28 10:37:27 UTC (rev 1076)
+@@ -0,0 +1,442 @@
++&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;
++
++&lt;!--
++
++   svn2cl.xsl - xslt stylesheet for converting svn log to a normal
++                changelog
++
++   version 0.8
++
++   Usage (replace ++ with two minus signs which aren't allowed
++   inside xml comments):
++     svn ++verbose ++xml log | \
++       xsltproc ++stringparam strip-prefix `basename $(pwd)` \
++                ++stringparam linelen 75 \
++                ++stringparam groupbyday yes \
++                ++stringparam separate-daylogs yes \
++                ++stringparam include-rev yes \
++                ++stringparam breakbeforemsg yes/2 \
++                ++stringparam reparagraph yes \
++                ++stringparam authorsfile FILE \
++                svn2cl.xsl - &gt; ChangeLog
++
++   This file is based on several implementations of this conversion
++   that I was not completely happy with and some other common
++   xslt constructs found on the web.
++
++   Copyright (C) 2004, 2005, 2006 Arthur de Jong.
++
++   Redistribution and use in source and binary forms, with or without
++   modification, are permitted provided that the following conditions
++   are met:
++   1. Redistributions of source code must retain the above copyright
++      notice, this list of conditions and the following disclaimer.
++   2. Redistributions in binary form must reproduce the above copyright
++      notice, this list of conditions and the following disclaimer in
++      the documentation and/or other materials provided with the
++      distribution.
++   3. The name of the author may not be used to endorse or promote
++      products derived from this software without specific prior
++      written permission.
++
++   THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
++   IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
++   WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
++   ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
++   DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
++   DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
++   GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
++   INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
++   IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
++   OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
++   IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
++
++--&gt;
++
++&lt;!DOCTYPE xsl:stylesheet [
++ &lt;!ENTITY tab &quot;&#9;&quot;&gt;
++ &lt;!ENTITY newl &quot;&#10;&quot;&gt;
++ &lt;!ENTITY space &quot;&#32;&quot;&gt;
++]&gt;
++
++&lt;xsl:stylesheet
++  version=&quot;1.0&quot;
++  xmlns:xsl=&quot;<A HREF="http://www.w3.org/1999/XSL/Transform">http://www.w3.org/1999/XSL/Transform</A>&quot;&gt;
++
++ &lt;xsl:output
++   method=&quot;text&quot;
++   encoding=&quot;utf-8&quot;
++   media-type=&quot;text/plain&quot;
++   omit-xml-declaration=&quot;yes&quot;
++   standalone=&quot;yes&quot;
++   indent=&quot;no&quot; /&gt;
++
++ &lt;xsl:strip-space elements=&quot;*&quot; /&gt;
++
++ &lt;!-- the prefix of pathnames to strip --&gt;
++ &lt;xsl:param name=&quot;strip-prefix&quot; select=&quot;'/'&quot; /&gt;
++
++ &lt;!-- the length of a line to wrap messages at --&gt;
++ &lt;xsl:param name=&quot;linelen&quot; select=&quot;75&quot; /&gt;
++ 
++ &lt;!-- whether entries should be grouped by day --&gt;
++ &lt;xsl:param name=&quot;groupbyday&quot; select=&quot;'no'&quot; /&gt;
++
++ &lt;!-- whether to seperate log messages by empty lines --&gt;
++ &lt;xsl:param name=&quot;separate-daylogs&quot; select=&quot;'no'&quot; /&gt;
++
++ &lt;!-- whether a revision number should be included --&gt;
++ &lt;xsl:param name=&quot;include-rev&quot; select=&quot;'no'&quot; /&gt;
++
++ &lt;!-- whether the log message should start on a new line --&gt;
++ &lt;xsl:param name=&quot;breakbeforemsg&quot; select=&quot;'no'&quot; /&gt;
++
++ &lt;!-- whether the message should be rewrapped within one paragraph --&gt;
++ &lt;xsl:param name=&quot;reparagraph&quot; select=&quot;'no'&quot; /&gt;
++
++ &lt;!-- location of authors file if any --&gt;
++ &lt;xsl:param name=&quot;authorsfile&quot; select=&quot;''&quot; /&gt;
++ &lt;xsl:key name=&quot;author-lookup&quot; match=&quot;author&quot; use=&quot;@uid&quot; /&gt;
++ &lt;xsl:variable name=&quot;authors-top&quot; select=&quot;document($authorsfile)/authors&quot; /&gt;
++
++ &lt;!-- add newlines at the end of the changelog --&gt;
++ &lt;xsl:template match=&quot;log&quot;&gt;
++  &lt;xsl:apply-templates /&gt;
++  &lt;xsl:text&gt;&newl;&lt;/xsl:text&gt;
++ &lt;/xsl:template&gt;
++
++ &lt;!-- format one entry from the log --&gt;
++ &lt;xsl:template match=&quot;logentry&quot;&gt;
++  &lt;xsl:choose&gt;
++   &lt;!-- if we're grouping we should omit some headers --&gt;
++   &lt;xsl:when test=&quot;$groupbyday='yes'&quot;&gt;
++    &lt;!-- save log entry number --&gt;
++    &lt;xsl:variable name=&quot;pos&quot; select=&quot;position()&quot; /&gt;
++    &lt;!-- fetch previous entry's date --&gt;
++    &lt;xsl:variable name=&quot;prevdate&quot;&gt;
++     &lt;xsl:apply-templates select=&quot;../logentry[position()=(($pos)-1)]/date&quot; /&gt;
++    &lt;/xsl:variable&gt;
++    &lt;!-- fetch previous entry's author --&gt;
++    &lt;xsl:variable name=&quot;prevauthor&quot;&gt;
++     &lt;xsl:value-of select=&quot;normalize-space(../logentry[position()=(($pos)-1)]/author)&quot; /&gt;
++    &lt;/xsl:variable&gt;
++    &lt;!-- fetch this entry's date --&gt;
++    &lt;xsl:variable name=&quot;date&quot;&gt;
++     &lt;xsl:apply-templates select=&quot;date&quot; /&gt;
++    &lt;/xsl:variable&gt;
++    &lt;!-- fetch this entry's author --&gt;
++    &lt;xsl:variable name=&quot;author&quot;&gt;
++     &lt;xsl:value-of select=&quot;normalize-space(author)&quot; /&gt;
++    &lt;/xsl:variable&gt;
++    &lt;!-- check if header is changed --&gt;
++    &lt;xsl:if test=&quot;($prevdate!=$date) or ($prevauthor!=$author)&quot;&gt;
++     &lt;!-- add newline --&gt;
++     &lt;xsl:if test=&quot;not(position()=1)&quot;&gt;
++      &lt;xsl:text&gt;&newl;&lt;/xsl:text&gt;
++     &lt;/xsl:if&gt;
++     &lt;!-- date --&gt;
++     &lt;xsl:value-of select=&quot;$date&quot; /&gt;
++     &lt;!-- two spaces --&gt;
++     &lt;xsl:text&gt;&space;&space;&lt;/xsl:text&gt;
++     &lt;!-- author's name --&gt;
++     &lt;xsl:apply-templates select=&quot;author&quot; /&gt;
++     &lt;!-- two newlines --&gt;
++     &lt;xsl:text&gt;&newl;&lt;/xsl:text&gt;
++     &lt;xsl:if test=&quot;$separate-daylogs!='yes'&quot;&gt;&lt;xsl:text&gt;&newl;&lt;/xsl:text&gt;&lt;/xsl:if&gt;
++    &lt;/xsl:if&gt;
++   &lt;/xsl:when&gt;
++   &lt;!-- write the log header --&gt;
++   &lt;xsl:otherwise&gt;
++    &lt;!-- add newline --&gt;
++    &lt;xsl:if test=&quot;not(position()=1)&quot;&gt;
++     &lt;xsl:text&gt;&newl;&lt;/xsl:text&gt;
++    &lt;/xsl:if&gt;
++    &lt;!-- date --&gt;
++    &lt;xsl:apply-templates select=&quot;date&quot; /&gt;
++    &lt;!-- two spaces --&gt;
++    &lt;xsl:text&gt;&space;&space;&lt;/xsl:text&gt;
++    &lt;!-- author's name --&gt;
++    &lt;xsl:apply-templates select=&quot;author&quot; /&gt;
++    &lt;!-- two newlines --&gt;
++    &lt;xsl:text&gt;&newl;&newl;&lt;/xsl:text&gt;
++   &lt;/xsl:otherwise&gt;
++  &lt;/xsl:choose&gt;
++  &lt;!-- get paths string --&gt;
++  &lt;xsl:variable name=&quot;paths&quot;&gt;
++   &lt;xsl:apply-templates select=&quot;paths&quot; /&gt;
++   &lt;xsl:text&gt;:&space;&lt;/xsl:text&gt;
++  &lt;/xsl:variable&gt;
++  &lt;!-- get revision number --&gt;
++  &lt;xsl:variable name=&quot;rev&quot;&gt;
++   &lt;xsl:if test=&quot;$include-rev='yes'&quot;&gt;
++    &lt;xsl:text&gt;[r&lt;/xsl:text&gt;
++    &lt;xsl:value-of select=&quot;@revision&quot; /&gt;
++    &lt;xsl:text&gt;]&space;&lt;/xsl:text&gt;
++   &lt;/xsl:if&gt;
++  &lt;/xsl:variable&gt;
++  &lt;!-- trim trailing newlines --&gt;
++  &lt;xsl:variable name=&quot;msg&quot;&gt;
++   &lt;!-- add a line break before the log message --&gt;
++   &lt;xsl:choose&gt;
++    &lt;xsl:when test=&quot;$breakbeforemsg='yes'&quot;&gt;
++     &lt;xsl:text&gt;&newl;&lt;/xsl:text&gt;
++    &lt;/xsl:when&gt;
++    &lt;xsl:when test=&quot;number($breakbeforemsg)&gt;0&quot;&gt;
++     &lt;xsl:call-template name=&quot;newlines&quot;&gt;
++      &lt;xsl:with-param name=&quot;count&quot; select=&quot;number($breakbeforemsg)&quot; /&gt;
++     &lt;/xsl:call-template&gt;
++    &lt;/xsl:when&gt;
++   &lt;/xsl:choose&gt;
++   &lt;xsl:call-template name=&quot;trim-newln&quot;&gt;
++    &lt;xsl:with-param name=&quot;txt&quot; select=&quot;msg&quot; /&gt;
++   &lt;/xsl:call-template&gt;
++  &lt;/xsl:variable&gt;
++  &lt;!-- add newline here if separate-daylogs is in effect --&gt;
++  &lt;xsl:if test=&quot;$groupbyday='yes' and $separate-daylogs='yes'&quot;&gt;&lt;xsl:text&gt;&newl;&lt;/xsl:text&gt;&lt;/xsl:if&gt;
++  &lt;!-- first line is indented (other indents are done in wrap template) --&gt;
++  &lt;xsl:text&gt;&tab;*&space;&lt;/xsl:text&gt;
++  &lt;!-- print the paths and message nicely wrapped --&gt;
++  &lt;xsl:call-template name=&quot;wrap&quot;&gt;
++   &lt;xsl:with-param name=&quot;txt&quot; select=&quot;concat($rev,$paths,$msg)&quot; /&gt;
++  &lt;/xsl:call-template&gt;
++ &lt;/xsl:template&gt;
++
++ &lt;!-- format date --&gt;
++ &lt;xsl:template match=&quot;date&quot;&gt;
++  &lt;xsl:variable name=&quot;date&quot; select=&quot;normalize-space(.)&quot; /&gt;
++  &lt;!-- output date part --&gt;
++  &lt;xsl:value-of select=&quot;substring($date,1,10)&quot; /&gt;
++  &lt;!-- output time part --&gt;
++  &lt;xsl:if test=&quot;$groupbyday!='yes'&quot;&gt;
++   &lt;xsl:text&gt;&space;&lt;/xsl:text&gt;
++   &lt;xsl:value-of select=&quot;substring($date,12,5)&quot; /&gt;
++  &lt;/xsl:if&gt;
++ &lt;/xsl:template&gt;
++
++ &lt;!-- format author --&gt;
++ &lt;xsl:template match=&quot;author&quot;&gt;
++  &lt;xsl:variable name=&quot;uid&quot; select=&quot;normalize-space(.)&quot; /&gt;
++  &lt;!-- try to lookup author in authorsfile --&gt;
++  &lt;xsl:choose&gt;
++   &lt;xsl:when test=&quot;$authorsfile!=''&quot;&gt;
++    &lt;xsl:for-each select=&quot;$authors-top&quot;&gt;
++     &lt;xsl:variable name=&quot;author&quot; select=&quot;key('author-lookup',$uid)&quot; /&gt;
++     &lt;!-- present result --&gt;
++     &lt;xsl:choose&gt;
++      &lt;xsl:when test=&quot;string($author/.)&quot;&gt;
++       &lt;xsl:apply-templates select=&quot;$author/node()&quot; mode=&quot;copy&quot; /&gt;
++      &lt;/xsl:when&gt;
++      &lt;xsl:otherwise&gt;
++       &lt;xsl:value-of select=&quot;$uid&quot; /&gt;
++      &lt;/xsl:otherwise&gt;
++     &lt;/xsl:choose&gt;
++    &lt;/xsl:for-each&gt;
++   &lt;/xsl:when&gt;
++   &lt;xsl:otherwise&gt;
++    &lt;xsl:value-of select=&quot;$uid&quot; /&gt;
++   &lt;/xsl:otherwise&gt;
++  &lt;/xsl:choose&gt;
++ &lt;/xsl:template&gt;
++
++ &lt;!-- copy but normalize text --&gt;
++ &lt;xsl:template match=&quot;text()&quot; mode=&quot;copy&quot;&gt;
++  &lt;xsl:value-of select=&quot;normalize-space(.)&quot; /&gt;
++ &lt;/xsl:template&gt;
++
++ &lt;!-- simple copy template --&gt;
++ &lt;xsl:template match=&quot;@*|node()&quot; mode=&quot;copy&quot;&gt;
++  &lt;xsl:copy&gt;
++   &lt;xsl:apply-templates select=&quot;@*|node()&quot; mode=&quot;copy&quot; /&gt;
++  &lt;/xsl:copy&gt;
++ &lt;/xsl:template&gt;
++
++ &lt;!-- present a list of paths names --&gt;
++ &lt;xsl:template match=&quot;paths&quot;&gt;
++  &lt;xsl:for-each select=&quot;path&quot;&gt;
++   &lt;xsl:sort select=&quot;normalize-space(.)&quot; data-type=&quot;text&quot; /&gt;
++   &lt;!-- unless we are the first entry, add a comma --&gt;
++   &lt;xsl:if test=&quot;not(position()=1)&quot;&gt;
++    &lt;xsl:text&gt;,&space;&lt;/xsl:text&gt;
++   &lt;/xsl:if&gt;
++   &lt;!-- print the path name --&gt;
++   &lt;xsl:apply-templates select=&quot;.&quot; /&gt;
++  &lt;/xsl:for-each&gt;
++ &lt;/xsl:template&gt;
++
++ &lt;!-- transform path to something printable --&gt;
++ &lt;xsl:template match=&quot;path&quot;&gt;
++  &lt;!-- fetch the pathname --&gt;
++  &lt;xsl:variable name=&quot;p1&quot; select=&quot;normalize-space(.)&quot; /&gt;
++  &lt;!-- strip leading slash --&gt;
++  &lt;xsl:variable name=&quot;p2&quot;&gt;
++   &lt;xsl:choose&gt;
++    &lt;xsl:when test=&quot;starts-with($p1,'/')&quot;&gt;
++     &lt;xsl:value-of select=&quot;substring($p1,2)&quot; /&gt;
++    &lt;/xsl:when&gt;
++    &lt;xsl:otherwise&gt;
++     &lt;xsl:value-of select=&quot;$p1&quot; /&gt;
++    &lt;/xsl:otherwise&gt;
++   &lt;/xsl:choose&gt;
++  &lt;/xsl:variable&gt;
++  &lt;!-- strip trailing slash from strip-prefix --&gt;
++  &lt;xsl:variable name=&quot;sp&quot;&gt;
++   &lt;xsl:choose&gt;
++    &lt;xsl:when test=&quot;substring($strip-prefix,string-length($strip-prefix),1)='/'&quot;&gt;
++     &lt;xsl:value-of select=&quot;substring($strip-prefix,1,string-length($strip-prefix)-1)&quot; /&gt;
++    &lt;/xsl:when&gt;
++    &lt;xsl:otherwise&gt;
++     &lt;xsl:value-of select=&quot;$strip-prefix&quot; /&gt;
++    &lt;/xsl:otherwise&gt;
++   &lt;/xsl:choose&gt;
++  &lt;/xsl:variable&gt;
++  &lt;!-- strip strip-prefix --&gt;
++  &lt;xsl:variable name=&quot;p3&quot;&gt;
++   &lt;xsl:choose&gt;
++    &lt;xsl:when test=&quot;starts-with($p2,$sp)&quot;&gt;
++     &lt;xsl:value-of select=&quot;substring($p2,1+string-length($sp))&quot; /&gt;
++    &lt;/xsl:when&gt;
++    &lt;xsl:otherwise&gt;
++     &lt;!-- TODO: do not print strings that do not begin with strip-prefix --&gt;
++     &lt;xsl:value-of select=&quot;$p2&quot; /&gt;
++    &lt;/xsl:otherwise&gt;
++   &lt;/xsl:choose&gt;
++  &lt;/xsl:variable&gt;
++  &lt;!-- strip another slash --&gt;
++  &lt;xsl:variable name=&quot;p4&quot;&gt;
++   &lt;xsl:choose&gt;
++    &lt;xsl:when test=&quot;starts-with($p3,'/')&quot;&gt;
++     &lt;xsl:value-of select=&quot;substring($p3,2)&quot; /&gt;
++    &lt;/xsl:when&gt;
++    &lt;xsl:otherwise&gt;
++     &lt;xsl:value-of select=&quot;$p3&quot; /&gt;
++    &lt;/xsl:otherwise&gt;
++   &lt;/xsl:choose&gt;
++  &lt;/xsl:variable&gt;
++  &lt;!-- translate empty string to dot --&gt;
++  &lt;xsl:choose&gt;
++   &lt;xsl:when test=&quot;$p4 = ''&quot;&gt;
++    &lt;xsl:text&gt;.&lt;/xsl:text&gt;
++   &lt;/xsl:when&gt;
++   &lt;xsl:otherwise&gt;
++    &lt;xsl:value-of select=&quot;$p4&quot; /&gt;
++   &lt;/xsl:otherwise&gt;
++  &lt;/xsl:choose&gt;
++ &lt;/xsl:template&gt;
++
++ &lt;!-- string-wrapping template --&gt;
++ &lt;xsl:template name=&quot;wrap&quot;&gt;
++  &lt;xsl:param name=&quot;txt&quot; /&gt;
++  &lt;xsl:variable name=&quot;normtxt&quot; select=&quot;normalize-space($txt)&quot; /&gt;
++  &lt;xsl:choose&gt;
++   &lt;xsl:when test=&quot;contains($txt,'&newl;')&quot;&gt;
++     &lt;!-- text contains newlines, do the first line --&gt;
++     &lt;xsl:call-template name=&quot;wrap&quot;&gt;
++      &lt;xsl:with-param name=&quot;txt&quot; select=&quot;substring-before($txt,'&newl;')&quot; /&gt;
++     &lt;/xsl:call-template&gt;
++     &lt;!-- print tab --&gt;
++     &lt;xsl:text&gt;&tab;&space;&space;&lt;/xsl:text&gt;
++     &lt;!-- wrap the rest of the text --&gt;
++     &lt;xsl:call-template name=&quot;wrap&quot;&gt;
++      &lt;xsl:with-param name=&quot;txt&quot; select=&quot;substring-after($txt,'&newl;')&quot; /&gt;
++     &lt;/xsl:call-template&gt;
++   &lt;/xsl:when&gt;
++   &lt;xsl:when test=&quot;(string-length($normtxt) &lt; (($linelen)-9)) or not(contains($normtxt,' '))&quot;&gt;
++    &lt;!-- this is easy, nothing to do --&gt;
++    &lt;xsl:value-of select=&quot;$normtxt&quot; /&gt;
++    &lt;!-- add newline --&gt;
++    &lt;xsl:text&gt;&newl;&lt;/xsl:text&gt;
++   &lt;/xsl:when&gt;
++   &lt;xsl:otherwise&gt;
++    &lt;!-- find the first line --&gt;
++    &lt;xsl:variable name=&quot;tmp&quot; select=&quot;substring($normtxt,1,(($linelen)-9))&quot; /&gt;
++    &lt;xsl:variable name=&quot;line&quot;&gt;
++     &lt;xsl:choose&gt;
++      &lt;!-- if our attempt contains spaces wrap on that --&gt;
++      &lt;xsl:when test=&quot;contains($tmp,' ')&quot;&gt;
++       &lt;xsl:call-template name=&quot;find-line&quot;&gt;
++        &lt;xsl:with-param name=&quot;txt&quot; select=&quot;$tmp&quot; /&gt;
++       &lt;/xsl:call-template&gt;
++      &lt;/xsl:when&gt;
++      &lt;!-- otherwise use the first non-space characters from the text --&gt;
++      &lt;xsl:otherwise&gt;
++       &lt;xsl:value-of select=&quot;substring-before($normtxt,' ')&quot; /&gt;
++      &lt;/xsl:otherwise&gt;
++     &lt;/xsl:choose&gt;
++    &lt;/xsl:variable&gt;
++    &lt;!-- print line --&gt;
++    &lt;xsl:value-of select=&quot;$line&quot; /&gt;
++    &lt;!-- print newline and tab --&gt;
++    &lt;xsl:text&gt;&newl;&tab;&space;&space;&lt;/xsl:text&gt;
++    &lt;!-- wrap the rest of the text --&gt;
++    &lt;xsl:call-template name=&quot;wrap&quot;&gt;
++     &lt;xsl:with-param name=&quot;txt&quot; select=&quot;normalize-space(substring($normtxt,string-length($line)+1))&quot; /&gt;
++    &lt;/xsl:call-template&gt;
++   &lt;/xsl:otherwise&gt;
++  &lt;/xsl:choose&gt;
++ &lt;/xsl:template&gt;
++
++ &lt;!-- template to trim line to contain space as last char --&gt;
++ &lt;xsl:template name=&quot;find-line&quot;&gt;
++  &lt;xsl:param name=&quot;txt&quot; /&gt;
++  &lt;xsl:choose&gt;
++   &lt;xsl:when test=&quot;substring($txt,string-length($txt),1)=' '&quot;&gt;
++    &lt;xsl:value-of select=&quot;substring($txt,1,string-length($txt)-1)&quot; /&gt;
++   &lt;/xsl:when&gt;
++   &lt;xsl:otherwise&gt;
++    &lt;xsl:call-template name=&quot;find-line&quot;&gt;
++     &lt;xsl:with-param name=&quot;txt&quot; select=&quot;substring($txt,1,string-length($txt)-1)&quot; /&gt;
++    &lt;/xsl:call-template&gt;
++   &lt;/xsl:otherwise&gt;
++  &lt;/xsl:choose&gt;
++ &lt;/xsl:template&gt;
++
++ &lt;!-- template to trim trailing and starting newlines --&gt;
++ &lt;xsl:template name=&quot;trim-newln&quot;&gt;
++  &lt;xsl:param name=&quot;txt&quot; /&gt;
++  &lt;xsl:choose&gt;
++   &lt;!-- find starting newlines --&gt;
++   &lt;xsl:when test=&quot;substring($txt,1,1) = '&newl;'&quot;&gt;
++    &lt;xsl:call-template name=&quot;trim-newln&quot;&gt;
++     &lt;xsl:with-param name=&quot;txt&quot; select=&quot;substring($txt,2)&quot; /&gt;
++    &lt;/xsl:call-template&gt;
++   &lt;/xsl:when&gt;
++   &lt;!-- find trailing newlines --&gt;
++   &lt;xsl:when test=&quot;substring($txt,string-length($txt),1) = '&newl;'&quot;&gt;
++    &lt;xsl:call-template name=&quot;trim-newln&quot;&gt;
++     &lt;xsl:with-param name=&quot;txt&quot; select=&quot;substring($txt,1,string-length($txt)-1)&quot; /&gt;
++    &lt;/xsl:call-template&gt;
++   &lt;/xsl:when&gt;
++   &lt;!-- if the message has paragrapgs, find the first one --&gt;
++   &lt;xsl:when test=&quot;$reparagraph='yes' and contains($txt,'&newl;&newl;')&quot;&gt;
++     &lt;!-- remove newlines from first paragraph --&gt;
++     &lt;xsl:value-of select=&quot;normalize-space(substring-before($txt,'&newl;&newl;'))&quot; /&gt;
++     &lt;!-- paragraph separator --&gt;
++     &lt;xsl:text&gt;&newl;&newl;&lt;/xsl:text&gt;
++     &lt;!-- do the rest of the text --&gt;
++     &lt;xsl:call-template name=&quot;trim-newln&quot;&gt;
++      &lt;xsl:with-param name=&quot;txt&quot; select=&quot;substring-after($txt,'&newl;&newl;')&quot; /&gt;
++     &lt;/xsl:call-template&gt;
++   &lt;/xsl:when&gt;
++   &lt;!-- remove more single newlines --&gt;
++   &lt;xsl:when test=&quot;$reparagraph='yes'&quot;&gt;
++    &lt;xsl:value-of select=&quot;normalize-space($txt)&quot; /&gt;
++   &lt;/xsl:when&gt;
++   &lt;!-- no newlines found, we're done --&gt;
++   &lt;xsl:otherwise&gt;
++    &lt;xsl:value-of select=&quot;$txt&quot; /&gt;
++   &lt;/xsl:otherwise&gt;
++  &lt;/xsl:choose&gt;
++ &lt;/xsl:template&gt;
++
++ &lt;!-- insert a number of newlines --&gt;
++ &lt;xsl:template name=&quot;newlines&quot;&gt;
++  &lt;xsl:param name=&quot;count&quot; /&gt;
++  &lt;xsl:text&gt;&newl;&lt;/xsl:text&gt;
++  &lt;xsl:if test=&quot;$count&gt;1&quot;&gt;
++   &lt;xsl:call-template name=&quot;newlines&quot;&gt;
++    &lt;xsl:with-param name=&quot;count&quot; select=&quot;($count)-1&quot; /&gt;
++   &lt;/xsl:call-template&gt;
++  &lt;/xsl:if&gt;
++ &lt;/xsl:template&gt;
++
++&lt;/xsl:stylesheet&gt;
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000040.html">[Yade-commits] r1075 - in trunk: . yade-core/src/yade	yade-extra/clump yade-guis/yade-gui-qt/src/QtGUI	yade-packages/yade-package-common/src/Engine/DeusExMachina/GravityEngine	yade-packages/yade-package-common/src/Engine/EngineUnit/NewtonsForceLaw	yade-packages/yade-package-common/src/Engine/EngineUnit/NewtonsMomentumLaw	yade-packages/yade-package-common/src/Engine/StandAloneEngine/PersistentSAPCollider	yade-packages/yade-package-common/src/Engine/StandAloneEngine/SAPCollider	yade-scripts
+</A></li>
+	<LI>Next message: <A HREF="000042.html">[Yade-commits] r1077 - in trunk: yade-core/src/yade yade-extra/clump	yade-packages/yade-package-common/src/Engine/EngineUnit/CundallNonViscousForceDamping	yade-packages/yade-package-common/src/Engine/EngineUnit/CundallNonViscousMomentumDamping
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#41">[ date ]</a>
+              <a href="thread.html#41">[ thread ]</a>
+              <a href="subject.html#41">[ subject ]</a>
+              <a href="author.html#41">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

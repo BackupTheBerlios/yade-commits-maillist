@@ -1,0 +1,1618 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1239 - in trunk: core extra extra/clump gui/cmd	lib/base pkg/dem/Engine/DeusExMachina pkg/dem/PreProcessor
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1239%20-%20in%20trunk%3A%20core%20extra%20extra/clump%20gui/cmd%0A%09lib/base%20pkg/dem/Engine/DeusExMachina%20pkg/dem/PreProcessor&In-Reply-To=%3C200801070959.m079x6qi025108%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   
+   <LINK REL="Next"  HREF="000205.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1239 - in trunk: core extra extra/clump gui/cmd	lib/base pkg/dem/Engine/DeusExMachina pkg/dem/PreProcessor</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1239%20-%20in%20trunk%3A%20core%20extra%20extra/clump%20gui/cmd%0A%09lib/base%20pkg/dem/Engine/DeusExMachina%20pkg/dem/PreProcessor&In-Reply-To=%3C200801070959.m079x6qi025108%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1239 - in trunk: core extra extra/clump gui/cmd	lib/base pkg/dem/Engine/DeusExMachina pkg/dem/PreProcessor">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Mon Jan  7 10:59:06 CET 2008</I>
+    <P><UL>
+        
+        <LI>Next message: <A HREF="000205.html">[Yade-commits] r1240 - in trunk/pkg/lattice: Engine/EngineUnit	PreProcessor
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#204">[ date ]</a>
+              <a href="thread.html#204">[ thread ]</a>
+              <a href="subject.html#204">[ subject ]</a>
+              <a href="author.html#204">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2008-01-07 10:59:04 +0100 (Mon, 07 Jan 2008)
+New Revision: 1239
+
+Removed:
+   trunk/core/yadeWm3.hpp
+   trunk/core/yadeWm3Extra.hpp
+Modified:
+   trunk/core/Omega.cpp
+   trunk/core/Omega.hpp
+   trunk/extra/SConscript
+   trunk/extra/clump/Shop.cpp
+   trunk/gui/cmd/yadeControl.cpp
+   trunk/lib/base/yadeWm3.hpp
+   trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.cpp
+   trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.hpp
+   trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.cpp
+   trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.hpp
+   trunk/pkg/dem/PreProcessor/TriaxialTest.cpp
+   trunk/pkg/dem/PreProcessor/TriaxialTest.hpp
+Log:
+1. Remove relicts of old Omega::logMessage &amp;c
+2. Remove duplicated Wm3 headers in core (is already in lib-yade-base)
+3. Update python scripting (object.attribute is shorthand for object['attribute'] now)
+4. Cleanups in triaxial, adding STATE_UNINITIALIZED
+
+
+
+Modified: trunk/core/Omega.cpp
+===================================================================
+--- trunk/core/Omega.cpp	2007-12-19 11:26:29 UTC (rev 1238)
++++ trunk/core/Omega.cpp	2008-01-07 09:59:04 UTC (rev 1239)
+@@ -35,9 +35,7 @@
+ 
+ Omega::~Omega()
+ {
+-	*logFile &lt;&lt; &quot;\t&quot; &lt;&lt; &quot;&lt;Summary Duration=\&quot;&quot; &lt;&lt; sStartingSimulationTime-second_clock::local_time() &lt;&lt; &quot;\&quot;&gt;&quot; &lt;&lt;endl;
+-	*logFile &lt;&lt; &quot;&lt;/Simulation&gt;&quot; &lt;&lt; endl &lt;&lt; endl;
+-	logFile-&gt;close();
++	LOG_INFO(&quot;Shuting down; duration &quot;&lt;&lt;sStartingSimulationTime-second_clock::local_time());
+ }
+ 
+ 
+@@ -46,22 +44,9 @@
+ 	simulationFileName=&quot;&quot;;
+ 	currentIteration = 0;
+ 	dt = 1e-8;
+-	logFile = shared_ptr&lt;ofstream&gt;(new ofstream(&quot;../data/log.xml&quot;, ofstream::out | ofstream::app));
+ }
+ 
+ 
+-void Omega::logError(const string&amp; str)
+-{
+-	*logFile &lt;&lt; &quot;\t&quot; &lt;&lt; &quot;&lt;Error Date=\&quot;&quot; &lt;&lt; sStartingSimulationTime-second_clock::local_time() &lt;&lt; &quot;\&quot; &quot; &lt;&lt; &quot;Message =\&quot;&quot;&lt;&lt; str &lt;&lt; &quot;\&quot;&quot; &lt;&lt; endl;
+-}
+-
+-
+-void Omega::logMessage(const string&amp; str)
+-{
+-	*logFile &lt;&lt; &quot;\t&quot; &lt;&lt; &quot;&lt;Message Date=\&quot;&quot; &lt;&lt; sStartingSimulationTime-second_clock::local_time() &lt;&lt; &quot;\&quot; &quot; &lt;&lt; &quot;Message =\&quot;&quot;&lt;&lt; str &lt;&lt; &quot;\&quot;&quot; &lt;&lt; endl;
+-}
+-
+-
+ void Omega::createSimulationLoop()
+ {
+ 	simulationLoop   = shared_ptr&lt;ThreadRunner&gt;(new ThreadRunner(&amp;simulationFlow_));
+@@ -95,6 +80,7 @@
+ }
+ 
+ 
++
+ void Omega::startSimulationLoop()
+ {
+ 	if (simulationLoop &amp;&amp; !simulationLoop-&gt;looping())
+@@ -114,6 +100,7 @@
+ 	}
+ }
+ 
++	bool Omega::isRunning(){ return simulationLoop-&gt;looping(); }
+ 
+ void Omega::buildDynlibDatabase(const vector&lt;string&gt;&amp; dynlibsList)
+ {	
+@@ -369,20 +356,20 @@
+ 		&amp;&amp;  (filesystem::extension(simulationFileName)==&quot;.xml&quot; || filesystem::extension(simulationFileName)==&quot;.yade&quot; ))
+ 	{
+ 		freeRootBody();
+-		logMessage(&quot;Loading file &quot; + simulationFileName);
++		LOG_INFO(&quot;Loading file &quot; + simulationFileName);
+ 		
+ 		if(filesystem::extension(simulationFileName)==&quot;.xml&quot;)
+ 			IOFormatManager::loadFromFile(&quot;XMLFormatManager&quot;,simulationFileName,&quot;rootBody&quot;,rootBody);
+ 		else if(filesystem::extension(simulationFileName)==&quot;.yade&quot; )
+ 			IOFormatManager::loadFromFile(&quot;BINFormatManager&quot;,simulationFileName,&quot;rootBody&quot;,rootBody);
+ 		if( rootBody-&gt;getClassName() != &quot;MetaBody&quot;)
+-			throw yadeBadFile(&quot;bad file to load&quot;);
++			throw yadeBadFile(string(&quot;Unrecognized extension `&quot;+filesystem::extension(simulationFileName)+&quot;': should be .xml|.yade&quot;).c_str());
+ 
+ 		sStartingSimulationTime = second_clock::local_time();
+ 		msStartingSimulationTime = microsec_clock::local_time();
+ 		simulationPauseDuration = msStartingSimulationTime-msStartingSimulationTime;
+ 		msStartingPauseTime = msStartingSimulationTime;
+-		*logFile &lt;&lt; &quot;&lt;Simulation&quot; &lt;&lt; &quot; Date =\&quot;&quot; &lt;&lt; sStartingSimulationTime &lt;&lt; &quot;\&quot;&gt;&quot; &lt;&lt; endl;
++		LOG_DEBUG(&quot;Simulation loaded&quot;);
+ 		currentIteration = 0;
+ 		simulationTime = 0;	
+ 	}
+@@ -399,7 +386,7 @@
+ 	if(	   (name.size() != 0)
+ 		&amp;&amp; (filesystem::extension(name)==&quot;.xml&quot; || filesystem::extension(name)==&quot;.yade&quot;) )
+         {
+-		logMessage(&quot;Saving file &quot; + name);
++		LOG_INFO(&quot;Saving file &quot; &lt;&lt; name);
+ 		if(filesystem::extension(name)==&quot;.xml&quot;)
+ 			IOFormatManager::saveToFile(&quot;XMLFormatManager&quot;,name,&quot;rootBody&quot;,rootBody);
+ 		else if(filesystem::extension(name)==&quot;.yade&quot; )
+
+Modified: trunk/core/Omega.hpp
+===================================================================
+--- trunk/core/Omega.hpp	2007-12-19 11:26:29 UTC (rev 1238)
++++ trunk/core/Omega.hpp	2008-01-07 09:59:04 UTC (rev 1239)
+@@ -53,7 +53,6 @@
+ {
+ 
+ 	private	:
+-		shared_ptr&lt;ofstream&gt;		 logFile;
+ 		boost::mutex			 omegaMutex
+ 						,rootBodyMutex;
+ 
+@@ -81,9 +80,6 @@
+ 		string 				 yadeVersionName;	// FIXME - public ?
+ 		list&lt;body_id_t&gt; selectedBodies;
+ 	
+-		void logMessage(const string&amp; str);
+-		void logError(const string&amp; str);
+-		
+ 		// FIXME this is a hack. See  GLViewer:86
+ 		// problem is that currently there is no way to transmit arguments between UI and GLDraw* methods.
+ 		// Omega will be deleted anyway, so, uh.. I am polluting it now :/
+@@ -103,7 +99,7 @@
+ 		void		finishSimulationLoop();
+ 		void		joinSimulationLoop();
+ 		void		spawnSingleSimulationLoop();
+-
++		bool		isRunning();
+         //      shared_ptr&lt;ThreadSynchronizer&gt; getSynchronizer();
+ 
+ 		const		map&lt;string,DynlibDescriptor&gt;&amp; getDynlibsDescriptor();
+
+Deleted: trunk/core/yadeWm3.hpp
+===================================================================
+--- trunk/core/yadeWm3.hpp	2007-12-19 11:26:29 UTC (rev 1238)
++++ trunk/core/yadeWm3.hpp	2008-01-07 09:59:04 UTC (rev 1239)
+@@ -1,289 +0,0 @@
+-#ifndef USE_BASTARDIZED_WM3
+-#ifndef YADE_WM3_HPP
+-#define YADE_WM3_HPP
+-
+-#ifdef DOUBLE_PRECISION
+-	typedef double Real;
+-#else
+-	typedef float Real;
+-#endif
+-
+-namespace Wm3 {
+-// GeometricTools/WildMagic3/Include$ egrep '^typedef\s*([a-zA-Z0-9]+)&lt;float&gt; \1f;' *.h | perl -pe 's/^.*?:(typedef ([a-zA-Z0-9]+).*$)/\ttemplate&lt;class T&gt; class \2; typedef \2&lt;Real&gt; \2r;/'
+-//
+-	template&lt;class T&gt; class CylinderFit3; typedef CylinderFit3&lt;Real&gt; CylinderFit3r;
+-	template&lt;class T&gt; class EllipseFit2; typedef EllipseFit2&lt;Real&gt; EllipseFit2r;
+-	template&lt;class T&gt; class EllipsoidFit3; typedef EllipsoidFit3&lt;Real&gt; EllipsoidFit3r;
+-	template&lt;class T&gt; class Arc2; typedef Arc2&lt;Real&gt; Arc2r;
+-	template&lt;class T&gt; class AxisAlignedBox2; typedef AxisAlignedBox2&lt;Real&gt; AxisAlignedBox2r;
+-	template&lt;class T&gt; class AxisAlignedBox3; typedef AxisAlignedBox3&lt;Real&gt; AxisAlignedBox3r;
+-	template&lt;class T&gt; class BandedMatrix; typedef BandedMatrix&lt;Real&gt; BandedMatrixr;
+-	template&lt;class T&gt; class BezierCurve2; typedef BezierCurve2&lt;Real&gt; BezierCurve2r;
+-	template&lt;class T&gt; class BezierCurve3; typedef BezierCurve3&lt;Real&gt; BezierCurve3r;
+-	template&lt;class T&gt; class Bisect1; typedef Bisect1&lt;Real&gt; Bisect1r;
+-	template&lt;class T&gt; class Bisect2; typedef Bisect2&lt;Real&gt; Bisect2r;
+-	template&lt;class T&gt; class Bisect3; typedef Bisect3&lt;Real&gt; Bisect3r;
+-	template&lt;class T&gt; class Box2; typedef Box2&lt;Real&gt; Box2r;
+-	template&lt;class T&gt; class Box3; typedef Box3&lt;Real&gt; Box3r;
+-	template&lt;class T&gt; class BSplineBasis; typedef BSplineBasis&lt;Real&gt; BSplineBasisr;
+-	template&lt;class T&gt; class BSplineCurve2; typedef BSplineCurve2&lt;Real&gt; BSplineCurve2r;
+-	template&lt;class T&gt; class BSplineCurve3; typedef BSplineCurve3&lt;Real&gt; BSplineCurve3r;
+-	template&lt;class T&gt; class BSplineFitBasis; typedef BSplineFitBasis&lt;Real&gt; BSplineFitBasisr;
+-	template&lt;class T&gt; class BSplineFit; typedef BSplineFit&lt;Real&gt; BSplineFitr;
+-	template&lt;class T&gt; class BSplineGeodesic; typedef BSplineGeodesic&lt;Real&gt; BSplineGeodesicr;
+-	template&lt;class T&gt; class BSplineRectangle; typedef BSplineRectangle&lt;Real&gt; BSplineRectangler;
+-	template&lt;class T&gt; class BSplineVolume; typedef BSplineVolume&lt;Real&gt; BSplineVolumer;
+-	template&lt;class T&gt; class Capsule3; typedef Capsule3&lt;Real&gt; Capsule3r;
+-	template&lt;class T&gt; class Circle2; typedef Circle2&lt;Real&gt; Circle2r;
+-	template&lt;class T&gt; class Circle3; typedef Circle3&lt;Real&gt; Circle3r;
+-	template&lt;class T&gt; class Cone3; typedef Cone3&lt;Real&gt; Cone3r;
+-	template&lt;class T&gt; class ConformalMap; typedef ConformalMap&lt;Real&gt; ConformalMapr;
+-	template&lt;class T&gt; class MinCircle2; typedef MinCircle2&lt;Real&gt; MinCircle2r;
+-	template&lt;class T&gt; class PointInPolygon2; typedef PointInPolygon2&lt;Real&gt; PointInPolygon2r;
+-	template&lt;class T&gt; class SeparatePoints2; typedef SeparatePoints2&lt;Real&gt; SeparatePoints2r;
+-	template&lt;class T&gt; class SeparatePoints3; typedef SeparatePoints3&lt;Real&gt; SeparatePoints3r;
+-	template&lt;class T&gt; class MinSphere3; typedef MinSphere3&lt;Real&gt; MinSphere3r;
+-	template&lt;class T&gt; class ConvexHull1; typedef ConvexHull1&lt;Real&gt; ConvexHull1r;
+-	template&lt;class T&gt; class ConvexHull2; typedef ConvexHull2&lt;Real&gt; ConvexHull2r;
+-	template&lt;class T&gt; class ConvexHull3; typedef ConvexHull3&lt;Real&gt; ConvexHull3r;
+-	template&lt;class T&gt; class ConvexHull; typedef ConvexHull&lt;Real&gt; ConvexHullr;
+-	template&lt;class T&gt; class ConvexPolyhedron3; typedef ConvexPolyhedron3&lt;Real&gt; ConvexPolyhedron3r;
+-	template&lt;class T&gt; class CubicPolynomialCurve2; typedef CubicPolynomialCurve2&lt;Real&gt; CubicPolynomialCurve2r;
+-	template&lt;class T&gt; class CubicPolynomialCurve3; typedef CubicPolynomialCurve3&lt;Real&gt; CubicPolynomialCurve3r;
+-	template&lt;class T&gt; class Curve2; typedef Curve2&lt;Real&gt; Curve2r;
+-	template&lt;class T&gt; class Curve3; typedef Curve3&lt;Real&gt; Curve3r;
+-	template&lt;class T&gt; class Cylinder3; typedef Cylinder3&lt;Real&gt; Cylinder3r;
+-	template&lt;class T&gt; class Delaunay1; typedef Delaunay1&lt;Real&gt; Delaunay1r;
+-	template&lt;class T&gt; class Delaunay2; typedef Delaunay2&lt;Real&gt; Delaunay2r;
+-	template&lt;class T&gt; class Delaunay3; typedef Delaunay3&lt;Real&gt; Delaunay3r;
+-	template&lt;class T&gt; class Delaunay; typedef Delaunay&lt;Real&gt; Delaunayr;
+-	template&lt;class T&gt; class DelPolygonEdge; typedef DelPolygonEdge&lt;Real&gt; DelPolygonEdger;
+-	template&lt;class T&gt; class DelPolyhedronFace; typedef DelPolyhedronFace&lt;Real&gt; DelPolyhedronFacer;
+-	template&lt;class T&gt; class DelTetrahedron; typedef DelTetrahedron&lt;Real&gt; DelTetrahedronr;
+-	template&lt;class T&gt; class DelTriangle; typedef DelTriangle&lt;Real&gt; DelTriangler;
+-	template&lt;class T&gt; class DistCircle3Circle3; typedef DistCircle3Circle3&lt;Real&gt; DistCircle3Circle3r;
+-	template&lt;class T&gt; class DistLine2Line2; typedef DistLine2Line2&lt;Real&gt; DistLine2Line2r;
+-	template&lt;class T&gt; class DistLine2Ray2; typedef DistLine2Ray2&lt;Real&gt; DistLine2Ray2r;
+-	template&lt;class T&gt; class DistLine2Segment2; typedef DistLine2Segment2&lt;Real&gt; DistLine2Segment2r;
+-	template&lt;class T&gt; class DistLine3Box3; typedef DistLine3Box3&lt;Real&gt; DistLine3Box3r;
+-	template&lt;class T&gt; class DistLine3Circle3; typedef DistLine3Circle3&lt;Real&gt; DistLine3Circle3r;
+-	template&lt;class T&gt; class DistLine3Line3; typedef DistLine3Line3&lt;Real&gt; DistLine3Line3r;
+-	template&lt;class T&gt; class DistLine3Ray3; typedef DistLine3Ray3&lt;Real&gt; DistLine3Ray3r;
+-	template&lt;class T&gt; class DistLine3Rectangle3; typedef DistLine3Rectangle3&lt;Real&gt; DistLine3Rectangle3r;
+-	template&lt;class T&gt; class DistLine3Segment3; typedef DistLine3Segment3&lt;Real&gt; DistLine3Segment3r;
+-	template&lt;class T&gt; class DistLine3Triangle3; typedef DistLine3Triangle3&lt;Real&gt; DistLine3Triangle3r;
+-	template&lt;class T&gt; class DistRay2Ray2; typedef DistRay2Ray2&lt;Real&gt; DistRay2Ray2r;
+-	template&lt;class T&gt; class DistRay2Segment2; typedef DistRay2Segment2&lt;Real&gt; DistRay2Segment2r;
+-	template&lt;class T&gt; class DistRay3Box3; typedef DistRay3Box3&lt;Real&gt; DistRay3Box3r;
+-	template&lt;class T&gt; class DistRay3Ray3; typedef DistRay3Ray3&lt;Real&gt; DistRay3Ray3r;
+-	template&lt;class T&gt; class DistRay3Rectangle3; typedef DistRay3Rectangle3&lt;Real&gt; DistRay3Rectangle3r;
+-	template&lt;class T&gt; class DistRay3Segment3; typedef DistRay3Segment3&lt;Real&gt; DistRay3Segment3r;
+-	template&lt;class T&gt; class DistRay3Triangle3; typedef DistRay3Triangle3&lt;Real&gt; DistRay3Triangle3r;
+-	template&lt;class T&gt; class DistRectangle3Rectangle3; typedef DistRectangle3Rectangle3&lt;Real&gt; DistRectangle3Rectangle3r;
+-	template&lt;class T&gt; class DistSegment2Segment2; typedef DistSegment2Segment2&lt;Real&gt; DistSegment2Segment2r;
+-	template&lt;class T&gt; class DistSegment3Box3; typedef DistSegment3Box3&lt;Real&gt; DistSegment3Box3r;
+-	template&lt;class T&gt; class DistSegment3Rectangle3; typedef DistSegment3Rectangle3&lt;Real&gt; DistSegment3Rectangle3r;
+-	template&lt;class T&gt; class DistSegment3Segment3; typedef DistSegment3Segment3&lt;Real&gt; DistSegment3Segment3r;
+-	template&lt;class T&gt; class DistSegment3Triangle3; typedef DistSegment3Triangle3&lt;Real&gt; DistSegment3Triangle3r;
+-	template&lt;class T&gt; class DistTriangle3Rectangle3; typedef DistTriangle3Rectangle3&lt;Real&gt; DistTriangle3Rectangle3r;
+-	template&lt;class T&gt; class DistTriangle3Triangle3; typedef DistTriangle3Triangle3&lt;Real&gt; DistTriangle3Triangle3r;
+-	template&lt;class T&gt; class DistVector2Box2; typedef DistVector2Box2&lt;Real&gt; DistVector2Box2r;
+-	template&lt;class T&gt; class DistVector2Ellipse2; typedef DistVector2Ellipse2&lt;Real&gt; DistVector2Ellipse2r;
+-	template&lt;class T&gt; class DistVector2Line2; typedef DistVector2Line2&lt;Real&gt; DistVector2Line2r;
+-	template&lt;class T&gt; class DistVector2Quadratic2; typedef DistVector2Quadratic2&lt;Real&gt; DistVector2Quadratic2r;
+-	template&lt;class T&gt; class DistVector2Ray2; typedef DistVector2Ray2&lt;Real&gt; DistVector2Ray2r;
+-	template&lt;class T&gt; class DistVector2Segment2; typedef DistVector2Segment2&lt;Real&gt; DistVector2Segment2r;
+-	template&lt;class T&gt; class DistVector3Box3; typedef DistVector3Box3&lt;Real&gt; DistVector3Box3r;
+-	template&lt;class T&gt; class DistVector3Circle3; typedef DistVector3Circle3&lt;Real&gt; DistVector3Circle3r;
+-	template&lt;class T&gt; class DistVector3Ellipsoid3; typedef DistVector3Ellipsoid3&lt;Real&gt; DistVector3Ellipsoid3r;
+-	template&lt;class T&gt; class DistVector3Frustum3; typedef DistVector3Frustum3&lt;Real&gt; DistVector3Frustum3r;
+-	template&lt;class T&gt; class DistVector3Line3; typedef DistVector3Line3&lt;Real&gt; DistVector3Line3r;
+-	template&lt;class T&gt; class DistVector3Plane3; typedef DistVector3Plane3&lt;Real&gt; DistVector3Plane3r;
+-	template&lt;class T&gt; class DistVector3Quadratic3; typedef DistVector3Quadratic3&lt;Real&gt; DistVector3Quadratic3r;
+-	template&lt;class T&gt; class DistVector3Ray3; typedef DistVector3Ray3&lt;Real&gt; DistVector3Ray3r;
+-	template&lt;class T&gt; class DistVector3Rectangle3; typedef DistVector3Rectangle3&lt;Real&gt; DistVector3Rectangle3r;
+-	template&lt;class T&gt; class DistVector3Segment3; typedef DistVector3Segment3&lt;Real&gt; DistVector3Segment3r;
+-	template&lt;class T&gt; class DistVector3Tetrahedron3; typedef DistVector3Tetrahedron3&lt;Real&gt; DistVector3Tetrahedron3r;
+-	template&lt;class T&gt; class DistVector3Triangle3; typedef DistVector3Triangle3&lt;Real&gt; DistVector3Triangle3r;
+-	template&lt;class T&gt; class Eigen; typedef Eigen&lt;Real&gt; Eigenr;
+-	template&lt;class T&gt; class Ellipse2; typedef Ellipse2&lt;Real&gt; Ellipse2r;
+-	template&lt;class T&gt; class Ellipsoid3; typedef Ellipsoid3&lt;Real&gt; Ellipsoid3r;
+-	template&lt;class T&gt; class EllipsoidGeodesic; typedef EllipsoidGeodesic&lt;Real&gt; EllipsoidGeodesicr;
+-	template&lt;class T&gt; class ExtremalQuery3BSP; typedef ExtremalQuery3BSP&lt;Real&gt; ExtremalQuery3BSPr;
+-	template&lt;class T&gt; class ExtremalQuery3; typedef ExtremalQuery3&lt;Real&gt; ExtremalQuery3r;
+-	template&lt;class T&gt; class ExtremalQuery3PRJ; typedef ExtremalQuery3PRJ&lt;Real&gt; ExtremalQuery3PRJr;
+-	template&lt;class T&gt; class Frustum3; typedef Frustum3&lt;Real&gt; Frustum3r;
+-	template&lt;class T&gt; class GMatrix; typedef GMatrix&lt;Real&gt; GMatrixr;
+-	template&lt;class T&gt; class GridGraph2; typedef GridGraph2&lt;Real&gt; GridGraph2r;
+-	template&lt;class T&gt; class GVector; typedef GVector&lt;Real&gt; GVectorr;
+-	template&lt;class T&gt; class ImplicitSurface; typedef ImplicitSurface&lt;Real&gt; ImplicitSurfacer;
+-	template&lt;class T&gt; class Integrate1; typedef Integrate1&lt;Real&gt; Integrate1r;
+-	template&lt;class T&gt; class IntersectingBoxes; typedef IntersectingBoxes&lt;Real&gt; IntersectingBoxesr;
+-	template&lt;class T&gt; class IntersectingIntervals; typedef IntersectingIntervals&lt;Real&gt; IntersectingIntervalsr;
+-	template&lt;class T&gt; class IntersectingRectangles; typedef IntersectingRectangles&lt;Real&gt; IntersectingRectanglesr;
+-	template&lt;class T&gt; class Intersector1; typedef Intersector1&lt;Real&gt; Intersector1r;
+-	template&lt;class T&gt; class IntpAkima1; typedef IntpAkima1&lt;Real&gt; IntpAkima1r;
+-	template&lt;class T&gt; class IntpAkimaNonuniform1; typedef IntpAkimaNonuniform1&lt;Real&gt; IntpAkimaNonuniform1r;
+-	template&lt;class T&gt; class IntpAkimaUniform1; typedef IntpAkimaUniform1&lt;Real&gt; IntpAkimaUniform1r;
+-	template&lt;class T&gt; class IntpAkimaUniform2; typedef IntpAkimaUniform2&lt;Real&gt; IntpAkimaUniform2r;
+-	template&lt;class T&gt; class IntpAkimaUniform3; typedef IntpAkimaUniform3&lt;Real&gt; IntpAkimaUniform3r;
+-	template&lt;class T&gt; class IntpBicubic2; typedef IntpBicubic2&lt;Real&gt; IntpBicubic2r;
+-	template&lt;class T&gt; class IntpBilinear2; typedef IntpBilinear2&lt;Real&gt; IntpBilinear2r;
+-	template&lt;class T&gt; class IntpBSplineUniform1; typedef IntpBSplineUniform1&lt;Real&gt; IntpBSplineUniform1r;
+-	template&lt;class T&gt; class IntpBSplineUniform2; typedef IntpBSplineUniform2&lt;Real&gt; IntpBSplineUniform2r;
+-	template&lt;class T&gt; class IntpBSplineUniform3; typedef IntpBSplineUniform3&lt;Real&gt; IntpBSplineUniform3r;
+-	template&lt;class T&gt; class IntpBSplineUniform4; typedef IntpBSplineUniform4&lt;Real&gt; IntpBSplineUniform4r;
+-	template&lt;class T&gt; class IntpBSplineUniform; typedef IntpBSplineUniform&lt;Real&gt; IntpBSplineUniformr;
+-	template&lt;class T&gt; class IntpBSplineUniformN; typedef IntpBSplineUniformN&lt;Real&gt; IntpBSplineUniformNr;
+-	template&lt;class T&gt; class IntpLinearNonuniform2; typedef IntpLinearNonuniform2&lt;Real&gt; IntpLinearNonuniform2r;
+-	template&lt;class T&gt; class IntpLinearNonuniform3; typedef IntpLinearNonuniform3&lt;Real&gt; IntpLinearNonuniform3r;
+-	template&lt;class T&gt; class IntpQdrNonuniform2; typedef IntpQdrNonuniform2&lt;Real&gt; IntpQdrNonuniform2r;
+-	template&lt;class T&gt; class IntpSphere2; typedef IntpSphere2&lt;Real&gt; IntpSphere2r;
+-	template&lt;class T&gt; class IntpThinPlateSpline2; typedef IntpThinPlateSpline2&lt;Real&gt; IntpThinPlateSpline2r;
+-	template&lt;class T&gt; class IntpThinPlateSpline3; typedef IntpThinPlateSpline3&lt;Real&gt; IntpThinPlateSpline3r;
+-	template&lt;class T&gt; class IntpTricubic3; typedef IntpTricubic3&lt;Real&gt; IntpTricubic3r;
+-	template&lt;class T&gt; class IntpTrilinear3; typedef IntpTrilinear3&lt;Real&gt; IntpTrilinear3r;
+-	template&lt;class T&gt; class IntpVectorField2; typedef IntpVectorField2&lt;Real&gt; IntpVectorField2r;
+-	template&lt;class T&gt; class IntrArc2Arc2; typedef IntrArc2Arc2&lt;Real&gt; IntrArc2Arc2r;
+-	template&lt;class T&gt; class IntrArc2Circle2; typedef IntrArc2Circle2&lt;Real&gt; IntrArc2Circle2r;
+-	template&lt;class T&gt; class IntrBox2Box2; typedef IntrBox2Box2&lt;Real&gt; IntrBox2Box2r;
+-	template&lt;class T&gt; class IntrBox2Circle2; typedef IntrBox2Circle2&lt;Real&gt; IntrBox2Circle2r;
+-	template&lt;class T&gt; class IntrBox3Box3; typedef IntrBox3Box3&lt;Real&gt; IntrBox3Box3r;
+-	template&lt;class T&gt; class IntrBox3Frustum3; typedef IntrBox3Frustum3&lt;Real&gt; IntrBox3Frustum3r;
+-	template&lt;class T&gt; class IntrBox3Sphere3; typedef IntrBox3Sphere3&lt;Real&gt; IntrBox3Sphere3r;
+-	template&lt;class T&gt; class IntrCapsule3Capsule3; typedef IntrCapsule3Capsule3&lt;Real&gt; IntrCapsule3Capsule3r;
+-	template&lt;class T&gt; class IntrCircle2Circle2; typedef IntrCircle2Circle2&lt;Real&gt; IntrCircle2Circle2r;
+-	template&lt;class T&gt; class IntrCircle3Plane3; typedef IntrCircle3Plane3&lt;Real&gt; IntrCircle3Plane3r;
+-	template&lt;class T&gt; class IntrEllipse2Ellipse2; typedef IntrEllipse2Ellipse2&lt;Real&gt; IntrEllipse2Ellipse2r;
+-	template&lt;class T&gt; class IntrLinComp2LinComp2; typedef IntrLinComp2LinComp2&lt;Real&gt; IntrLinComp2LinComp2r;
+-	template&lt;class T&gt; class IntrLinComp2Triangle2; typedef IntrLinComp2Triangle2&lt;Real&gt; IntrLinComp2Triangle2r;
+-	template&lt;class T&gt; class IntrLine2Arc2; typedef IntrLine2Arc2&lt;Real&gt; IntrLine2Arc2r;
+-	template&lt;class T&gt; class IntrLine2Box2; typedef IntrLine2Box2&lt;Real&gt; IntrLine2Box2r;
+-	template&lt;class T&gt; class IntrLine2Circle2; typedef IntrLine2Circle2&lt;Real&gt; IntrLine2Circle2r;
+-	template&lt;class T&gt; class IntrLine3Box3; typedef IntrLine3Box3&lt;Real&gt; IntrLine3Box3r;
+-	template&lt;class T&gt; class IntrLine3Capsule3; typedef IntrLine3Capsule3&lt;Real&gt; IntrLine3Capsule3r;
+-	template&lt;class T&gt; class IntrLine3Cone3; typedef IntrLine3Cone3&lt;Real&gt; IntrLine3Cone3r;
+-	template&lt;class T&gt; class IntrLine3Cylinder3; typedef IntrLine3Cylinder3&lt;Real&gt; IntrLine3Cylinder3r;
+-	template&lt;class T&gt; class IntrLine3Ellipsoid3; typedef IntrLine3Ellipsoid3&lt;Real&gt; IntrLine3Ellipsoid3r;
+-	template&lt;class T&gt; class IntrLine3Lozenge3; typedef IntrLine3Lozenge3&lt;Real&gt; IntrLine3Lozenge3r;
+-	template&lt;class T&gt; class IntrLine3Plane3; typedef IntrLine3Plane3&lt;Real&gt; IntrLine3Plane3r;
+-	template&lt;class T&gt; class IntrLine3Sphere3; typedef IntrLine3Sphere3&lt;Real&gt; IntrLine3Sphere3r;
+-	template&lt;class T&gt; class IntrLine3Torus3; typedef IntrLine3Torus3&lt;Real&gt; IntrLine3Torus3r;
+-	template&lt;class T&gt; class IntrLine3Triangle3; typedef IntrLine3Triangle3&lt;Real&gt; IntrLine3Triangle3r;
+-	template&lt;class T&gt; class IntrLozenge3Lozenge3; typedef IntrLozenge3Lozenge3&lt;Real&gt; IntrLozenge3Lozenge3r;
+-	template&lt;class T&gt; class IntrPlane3Box3; typedef IntrPlane3Box3&lt;Real&gt; IntrPlane3Box3r;
+-	template&lt;class T&gt; class IntrPlane3Capsule3; typedef IntrPlane3Capsule3&lt;Real&gt; IntrPlane3Capsule3r;
+-	template&lt;class T&gt; class IntrPlane3Cylinder3; typedef IntrPlane3Cylinder3&lt;Real&gt; IntrPlane3Cylinder3r;
+-	template&lt;class T&gt; class IntrPlane3Ellipsoid3; typedef IntrPlane3Ellipsoid3&lt;Real&gt; IntrPlane3Ellipsoid3r;
+-	template&lt;class T&gt; class IntrPlane3Lozenge3; typedef IntrPlane3Lozenge3&lt;Real&gt; IntrPlane3Lozenge3r;
+-	template&lt;class T&gt; class IntrPlane3Plane3; typedef IntrPlane3Plane3&lt;Real&gt; IntrPlane3Plane3r;
+-	template&lt;class T&gt; class IntrPlane3Sphere3; typedef IntrPlane3Sphere3&lt;Real&gt; IntrPlane3Sphere3r;
+-	template&lt;class T&gt; class IntrPlane3Triangle3; typedef IntrPlane3Triangle3&lt;Real&gt; IntrPlane3Triangle3r;
+-	template&lt;class T&gt; class IntrRay2Arc2; typedef IntrRay2Arc2&lt;Real&gt; IntrRay2Arc2r;
+-	template&lt;class T&gt; class IntrRay2Box2; typedef IntrRay2Box2&lt;Real&gt; IntrRay2Box2r;
+-	template&lt;class T&gt; class IntrRay2Circle2; typedef IntrRay2Circle2&lt;Real&gt; IntrRay2Circle2r;
+-	template&lt;class T&gt; class IntrRay3Box3; typedef IntrRay3Box3&lt;Real&gt; IntrRay3Box3r;
+-	template&lt;class T&gt; class IntrRay3Capsule3; typedef IntrRay3Capsule3&lt;Real&gt; IntrRay3Capsule3r;
+-	template&lt;class T&gt; class IntrRay3Cylinder3; typedef IntrRay3Cylinder3&lt;Real&gt; IntrRay3Cylinder3r;
+-	template&lt;class T&gt; class IntrRay3Ellipsoid3; typedef IntrRay3Ellipsoid3&lt;Real&gt; IntrRay3Ellipsoid3r;
+-	template&lt;class T&gt; class IntrRay3Lozenge3; typedef IntrRay3Lozenge3&lt;Real&gt; IntrRay3Lozenge3r;
+-	template&lt;class T&gt; class IntrRay3Plane3; typedef IntrRay3Plane3&lt;Real&gt; IntrRay3Plane3r;
+-	template&lt;class T&gt; class IntrRay3Sphere3; typedef IntrRay3Sphere3&lt;Real&gt; IntrRay3Sphere3r;
+-	template&lt;class T&gt; class IntrRay3Triangle3; typedef IntrRay3Triangle3&lt;Real&gt; IntrRay3Triangle3r;
+-	template&lt;class T&gt; class IntrSegment2Arc2; typedef IntrSegment2Arc2&lt;Real&gt; IntrSegment2Arc2r;
+-	template&lt;class T&gt; class IntrSegment2Box2; typedef IntrSegment2Box2&lt;Real&gt; IntrSegment2Box2r;
+-	template&lt;class T&gt; class IntrSegment2Circle2; typedef IntrSegment2Circle2&lt;Real&gt; IntrSegment2Circle2r;
+-	template&lt;class T&gt; class IntrSegment3Box3; typedef IntrSegment3Box3&lt;Real&gt; IntrSegment3Box3r;
+-	template&lt;class T&gt; class IntrSegment3Capsule3; typedef IntrSegment3Capsule3&lt;Real&gt; IntrSegment3Capsule3r;
+-	template&lt;class T&gt; class IntrSegment3Cylinder3; typedef IntrSegment3Cylinder3&lt;Real&gt; IntrSegment3Cylinder3r;
+-	template&lt;class T&gt; class IntrSegment3Ellipsoid3; typedef IntrSegment3Ellipsoid3&lt;Real&gt; IntrSegment3Ellipsoid3r;
+-	template&lt;class T&gt; class IntrSegment3Lozenge3; typedef IntrSegment3Lozenge3&lt;Real&gt; IntrSegment3Lozenge3r;
+-	template&lt;class T&gt; class IntrSegment3Plane3; typedef IntrSegment3Plane3&lt;Real&gt; IntrSegment3Plane3r;
+-	template&lt;class T&gt; class IntrSegment3Sphere3; typedef IntrSegment3Sphere3&lt;Real&gt; IntrSegment3Sphere3r;
+-	template&lt;class T&gt; class IntrSegment3Triangle3; typedef IntrSegment3Triangle3&lt;Real&gt; IntrSegment3Triangle3r;
+-	template&lt;class T&gt; class IntrSphere3Cone3; typedef IntrSphere3Cone3&lt;Real&gt; IntrSphere3Cone3r;
+-	template&lt;class T&gt; class IntrSphere3Frustum3; typedef IntrSphere3Frustum3&lt;Real&gt; IntrSphere3Frustum3r;
+-	template&lt;class T&gt; class IntrSphere3Sphere3; typedef IntrSphere3Sphere3&lt;Real&gt; IntrSphere3Sphere3r;
+-	template&lt;class T&gt; class IntrTetrahedron3Tetrahedron3; typedef IntrTetrahedron3Tetrahedron3&lt;Real&gt; IntrTetrahedron3Tetrahedron3r;
+-	template&lt;class T&gt; class IntrTriangle2Triangle2; typedef IntrTriangle2Triangle2&lt;Real&gt; IntrTriangle2Triangle2r;
+-	template&lt;class T&gt; class IntrTriangle3Cone3; typedef IntrTriangle3Cone3&lt;Real&gt; IntrTriangle3Cone3r;
+-	template&lt;class T&gt; class IntrTriangle3Triangle3; typedef IntrTriangle3Triangle3&lt;Real&gt; IntrTriangle3Triangle3r;
+-	template&lt;class T&gt; class LinComp2; typedef LinComp2&lt;Real&gt; LinComp2r;
+-	template&lt;class T&gt; class LinComp3; typedef LinComp3&lt;Real&gt; LinComp3r;
+-	template&lt;class T&gt; class LinComp; typedef LinComp&lt;Real&gt; LinCompr;
+-	template&lt;class T&gt; class Line2; typedef Line2&lt;Real&gt; Line2r;
+-	template&lt;class T&gt; class Line3; typedef Line3&lt;Real&gt; Line3r;
+-	template&lt;class T&gt; class LinearSystem; typedef LinearSystem&lt;Real&gt; LinearSystemr;
+-	template&lt;class T&gt; class Lozenge3; typedef Lozenge3&lt;Real&gt; Lozenge3r;
+-	template&lt;class T&gt; class Mapper2; typedef Mapper2&lt;Real&gt; Mapper2r;
+-	template&lt;class T&gt; class Mapper3; typedef Mapper3&lt;Real&gt; Mapper3r;
+-	template&lt;class T&gt; class Math; typedef Math&lt;Real&gt; Mathr;
+-	template&lt;class T&gt; class Matrix2; typedef Matrix2&lt;Real&gt; Matrix2r;
+-	template&lt;class T&gt; class Matrix3; typedef Matrix3&lt;Real&gt; Matrix3r;
+-	template&lt;class T&gt; class Matrix4; typedef Matrix4&lt;Real&gt; Matrix4r;
+-	template&lt;class T&gt; class MeshCurvature; typedef MeshCurvature&lt;Real&gt; MeshCurvaturer;
+-	template&lt;class T&gt; class MeshSmoother; typedef MeshSmoother&lt;Real&gt; MeshSmootherr;
+-	template&lt;class T&gt; class Minimize1; typedef Minimize1&lt;Real&gt; Minimize1r;
+-	template&lt;class T&gt; class MinimizeN; typedef MinimizeN&lt;Real&gt; MinimizeNr;
+-	template&lt;class T&gt; class MultipleCurve2; typedef MultipleCurve2&lt;Real&gt; MultipleCurve2r;
+-	template&lt;class T&gt; class MultipleCurve3; typedef MultipleCurve3&lt;Real&gt; MultipleCurve3r;
+-	template&lt;class T&gt; class NaturalSpline2; typedef NaturalSpline2&lt;Real&gt; NaturalSpline2r;
+-	template&lt;class T&gt; class NaturalSpline3; typedef NaturalSpline3&lt;Real&gt; NaturalSpline3r;
+-	template&lt;class T&gt; class NoniterativeEigen3x3; typedef NoniterativeEigen3x3&lt;Real&gt; NoniterativeEigen3x3r;
+-	template&lt;class T&gt; class NURBSCurve2; typedef NURBSCurve2&lt;Real&gt; NURBSCurve2r;
+-	template&lt;class T&gt; class NURBSCurve3; typedef NURBSCurve3&lt;Real&gt; NURBSCurve3r;
+-	template&lt;class T&gt; class NURBSRectangle; typedef NURBSRectangle&lt;Real&gt; NURBSRectangler;
+-	template&lt;class T&gt; class OdeEuler; typedef OdeEuler&lt;Real&gt; OdeEulerr;
+-	template&lt;class T&gt; class OdeImplicitEuler; typedef OdeImplicitEuler&lt;Real&gt; OdeImplicitEulerr;
+-	template&lt;class T&gt; class OdeMidpoint; typedef OdeMidpoint&lt;Real&gt; OdeMidpointr;
+-	template&lt;class T&gt; class OdeRungeKutta4; typedef OdeRungeKutta4&lt;Real&gt; OdeRungeKutta4r;
+-	template&lt;class T&gt; class OdeSolver; typedef OdeSolver&lt;Real&gt; OdeSolverr;
+-	template&lt;class T&gt; class ParametricSurface; typedef ParametricSurface&lt;Real&gt; ParametricSurfacer;
+-	template&lt;class T&gt; class Plane3; typedef Plane3&lt;Real&gt; Plane3r;
+-	template&lt;class T&gt; class Polyhedron3; typedef Polyhedron3&lt;Real&gt; Polyhedron3r;
+-	template&lt;class T&gt; class Polynomial1; typedef Polynomial1&lt;Real&gt; Polynomial1r;
+-	template&lt;class T&gt; class PolynomialCurve2; typedef PolynomialCurve2&lt;Real&gt; PolynomialCurve2r;
+-	template&lt;class T&gt; class PolynomialCurve3; typedef PolynomialCurve3&lt;Real&gt; PolynomialCurve3r;
+-	template&lt;class T&gt; class PolynomialRoots; typedef PolynomialRoots&lt;Real&gt; PolynomialRootsr;
+-	template&lt;class T&gt; class Quadratic2; typedef Quadratic2&lt;Real&gt; Quadratic2r;
+-	template&lt;class T&gt; class Quadratic3; typedef Quadratic3&lt;Real&gt; Quadratic3r;
+-	template&lt;class T&gt; class QuadricSurface; typedef QuadricSurface&lt;Real&gt; QuadricSurfacer;
+-	template&lt;class T&gt; class HmQuadToSqr; typedef HmQuadToSqr&lt;Real&gt; HmQuadToSqrr;
+-	template&lt;class T&gt; class HmSqrToQuad; typedef HmSqrToQuad&lt;Real&gt; HmSqrToQuadr;
+-	template&lt;class T&gt; class BiQuadToSqr; typedef BiQuadToSqr&lt;Real&gt; BiQuadToSqrr;
+-	template&lt;class T&gt; class BiSqrToQuad; typedef BiSqrToQuad&lt;Real&gt; BiSqrToQuadr;
+-	template&lt;class T&gt; class Quaternion; typedef Quaternion&lt;Real&gt; Quaternionr;
+-	template&lt;class T&gt; class Query2Filtered; typedef Query2Filtered&lt;Real&gt; Query2Filteredr;
+-	template&lt;class T&gt; class Query2; typedef Query2&lt;Real&gt; Query2r;
+-	template&lt;class T&gt; class Query2Int64; typedef Query2Int64&lt;Real&gt; Query2Int64r;
+-	template&lt;class T&gt; class Query2TInteger; typedef Query2TInteger&lt;Real&gt; Query2TIntegerr;
+-	template&lt;class T&gt; class Query2TRational; typedef Query2TRational&lt;Real&gt; Query2TRationalr;
+-	template&lt;class T&gt; class Query3Filtered; typedef Query3Filtered&lt;Real&gt; Query3Filteredr;
+-	template&lt;class T&gt; class Query3; typedef Query3&lt;Real&gt; Query3r;
+-	template&lt;class T&gt; class Query3Int64; typedef Query3Int64&lt;Real&gt; Query3Int64r;
+-	template&lt;class T&gt; class Query3TInteger; typedef Query3TInteger&lt;Real&gt; Query3TIntegerr;
+-	template&lt;class T&gt; class Query3TRational; typedef Query3TRational&lt;Real&gt; Query3TRationalr;
+-	template&lt;class T&gt; class Ray2; typedef Ray2&lt;Real&gt; Ray2r;
+-	template&lt;class T&gt; class Ray3; typedef Ray3&lt;Real&gt; Ray3r;
+-	template&lt;class T&gt; class Rectangle3; typedef Rectangle3&lt;Real&gt; Rectangle3r;
+-	template&lt;class T&gt; class RiemannianGeodesic; typedef RiemannianGeodesic&lt;Real&gt; RiemannianGeodesicr;
+-	template&lt;class T&gt; class RigidBody; typedef RigidBody&lt;Real&gt; RigidBodyr;
+-	template&lt;class T&gt; class Segment2; typedef Segment2&lt;Real&gt; Segment2r;
+-	template&lt;class T&gt; class Segment3; typedef Segment3&lt;Real&gt; Segment3r;
+-	template&lt;class T&gt; class SingleCurve2; typedef SingleCurve2&lt;Real&gt; SingleCurve2r;
+-	template&lt;class T&gt; class SingleCurve3; typedef SingleCurve3&lt;Real&gt; SingleCurve3r;
+-	template&lt;class T&gt; class Sphere3; typedef Sphere3&lt;Real&gt; Sphere3r;
+-	template&lt;class T&gt; class Surface; typedef Surface&lt;Real&gt; Surfacer;
+-	template&lt;class T&gt; class TCBSpline2; typedef TCBSpline2&lt;Real&gt; TCBSpline2r;
+-	template&lt;class T&gt; class TCBSpline3; typedef TCBSpline3&lt;Real&gt; TCBSpline3r;
+-	template&lt;class T&gt; class Tetrahedron3; typedef Tetrahedron3&lt;Real&gt; Tetrahedron3r;
+-	template&lt;class T&gt; class Torus3; typedef Torus3&lt;Real&gt; Torus3r;
+-	template&lt;class T&gt; class Triangle2; typedef Triangle2&lt;Real&gt; Triangle2r;
+-	template&lt;class T&gt; class Triangle3; typedef Triangle3&lt;Real&gt; Triangle3r;
+-	template&lt;class T&gt; class TriangulateEC; typedef TriangulateEC&lt;Real&gt; TriangulateECr;
+-	template&lt;class T&gt; class Vector2; typedef Vector2&lt;Real&gt; Vector2r;
+-	template&lt;class T&gt; class Vector3; typedef Vector3&lt;Real&gt; Vector3r;
+-	template&lt;class T&gt; class Vector4; typedef Vector4&lt;Real&gt; Vector4r;
+-}
+-#endif
+-#endif
+
+Deleted: trunk/core/yadeWm3Extra.hpp
+===================================================================
+--- trunk/core/yadeWm3Extra.hpp	2007-12-19 11:26:29 UTC (rev 1238)
++++ trunk/core/yadeWm3Extra.hpp	2008-01-07 09:59:04 UTC (rev 1239)
+@@ -1,249 +0,0 @@
+-#ifndef YADE_GEOM_UTILS_HPP
+-#define YADE_GEOM_UTILS_HPP
+-
+-#ifndef USE_BASTARDIZED_WM3
+-#	include&lt;Wm3Vector2.h&gt;
+-#	include&lt;Wm3Vector3.h&gt;
+-#	include&lt;Wm3Vector4.h&gt;
+-#	include&lt;Wm3Matrix2.h&gt;
+-#	include&lt;Wm3Matrix3.h&gt;
+-#	include&lt;Wm3Matrix4.h&gt;
+-#	include&lt;Wm3Quaternion.h&gt;
+-	using namespace Wm3;
+-#else
+-#	include&quot;Vector2.hpp&quot;
+-#	include&quot;Vector3.hpp&quot;
+-#	include&quot;Vector4.hpp&quot;
+-#	include&quot;Matrix2.hpp&quot;
+-#	include&quot;Matrix3.hpp&quot;
+-#	include&quot;Matrix4.hpp&quot;
+-#	include&quot;Quaternion.hpp&quot;
+-#endif
+-
+-#include&quot;yadeWm3.hpp&quot;
+-
+-// for std::min and std::max
+-#include&lt;cstdlib&gt;
+-//using namespace std;
+-
+-#ifndef USE_BASTARDIZED_WM3
+-	/*************************************** OPERATORS *********************************************
+-	 * NOTE these operators are also defined by legacy yade's wm3 headers. Therefore
+-	 * they are defined ONLY if USE_BASTARDIZED_WM3 is not defined
+-	 */
+-
+-	Vector2r operator*(Real fScalar, const Vector2r&amp; rkV){return Vector2r(fScalar*rkV[0],fScalar*rkV[1]);}
+-
+-	template&lt;class RealType1, class RealType2&gt;
+-	Vector3&lt;RealType2&gt; operator* (RealType1 fScalar, const Vector3&lt;RealType2&gt;&amp; rkV){ return Vector3&lt;RealType2&gt;(fScalar*rkV[0],fScalar*rkV[1],fScalar*rkV[2]);}
+-
+-	/*__attribute__((deprecated)) Vector3r operator*(const double s, const Vector3r&amp; v){return Vector3r(s*v[0],s*v[1],s*v[2]);}
+-	__attribute__((deprecated)) Vector3d operator*(const float s, const Vector3d&amp; v){return Vector3d(s*v[0],s*v[1],s*v[2]);}
+-	__attribute__((deprecated)) Vector3r operator*(const Vector3r&amp; v, const double s){return Vector3r(s*v[0],s*v[1],s*v[2]);}
+-	__attribute__((deprecated)) Vector3d operator*(const Vector3d&amp; v, const float s){return Vector3d(s*v[0],s*v[1],s*v[2]);}*/
+-
+-	std::ostream &amp; operator&lt;&lt; (std::ostream &amp;os, const Vector3r &amp;v){ return os &lt;&lt; v[0] &lt;&lt; &quot; &quot; &lt;&lt; v[1] &lt;&lt; &quot; &quot; &lt;&lt; v[2];}
+-
+-	template&lt;class RealType1, class RealType2&gt;
+-	Vector4&lt;RealType2&gt; operator* (RealType1 fScalar, const Vector4&lt;RealType2&gt;&amp; rkV){ return Vector4&lt;RealType2&gt;(fScalar*rkV[0],fScalar*rkV[1],fScalar*rkV[2],fScalar*rkV[3]);}
+-
+-
+-
+-	Matrix2r operator*(Real fScalar, const Matrix2r&amp; rkM){return rkM*fScalar;}
+-	// v^T * M
+-	Vector2r operator* (const Vector2r&amp; rkV, const Matrix2r&amp; rkM){
+-		 return Vector2r(rkV[0]*rkM[0][0] + rkV[1]*rkM[1][0],rkV[0]*rkM[0][1] + rkV[1]*rkM[1][1]);
+-	}
+-
+-	// c * M
+-	Matrix3r operator* (Real fScalar, const Matrix3r&amp; rkM){return rkM*fScalar;}
+-	// v^T * M
+-	Vector3r operator* (const Vector3r rkV, const Matrix3r rkM){
+-		return Vector3r(rkV[0]*rkM[0][0] + rkV[1]*rkM[1][0] + rkV[2]*rkM[2][0],
+-		rkV[0]*rkM[0][1] + rkV[1]*rkM[1][1] + rkV[2]*rkM[2][1],
+-		rkV[0]*rkM[0][2] + rkV[1]*rkM[1][2] + rkV[2]*rkM[2][2]);
+-	}
+-
+-	// c * M
+-	Matrix4r operator* (Real fScalar, const Matrix4r&amp; rkM){return rkM*fScalar;}
+-	// v^T * M
+-	Vector4r operator* (const Vector4r&amp; rkV, const Matrix4r&amp; rkM){
+-		return Vector4r(rkV[0]*rkM[0][0]+rkV[1]*rkM[1][0]+rkV[2]*rkM[2][0]+rkV[3]*rkM[3][0],
+-		rkV[0]*rkM[0][1]+rkV[1]*rkM[1][1]+rkV[2]*rkM[2][1]+rkV[3]*rkM[3][1],
+-		rkV[0]*rkM[0][2]+rkV[1]*rkM[1][2]+rkV[2]*rkM[2][2]+rkV[3]*rkM[3][2],
+-		rkV[0]*rkM[0][3]+rkV[1]*rkM[1][3]+rkV[2]*rkM[2][3]+rkV[3]*rkM[3][3]);
+-	}
+-
+-
+-	template&lt;class RealType1, class RealType2&gt;
+-	Quaternion&lt;RealType2&gt; operator* (RealType1 fScalar, const Quaternion&lt;RealType2&gt;&amp; rkQ){
+-		 Quaternion&lt;RealType2&gt; kProd;
+-		 for (int i = 0; i &lt; 4; i++) kProd[i] = fScalar*rkQ[i];
+-		 return kProd;
+-	}
+-
+-
+-	Vector3r operator* (const Quaternionr&amp; q, const Vector3r&amp; v)
+-	{
+-		 // Given a vector u = (x0,y0,z0) and a unit length quaternion
+-		 // q = &lt;w,x,y,z&gt;, the vector v = (x1,y1,z1) which represents the
+-		 // orientation of u by q is v = q*u*q^{-1} where * indicates quaternion
+-		 // multiplication and where u is treated as the quaternion &lt;0,x0,y0,z0&gt;.
+-		 // Note that q^{-1} = &lt;w,-x,-y,-z&gt;, so no float work is required to
+-		 // invert q.  Now
+-		 //
+-		 //   q*u*q^{-1} = q*&lt;0,x0,y0,z0&gt;*q^{-1}
+-		 //     = q*(x0*i+y0*j+z0*k)*q^{-1}
+-		 //     = x0*(q*i*q^{-1})+y0*(q*j*q^{-1})+z0*(q*k*q^{-1})
+-		 //
+-		 // As 3-vectors, q*i*q^{-1}, q*j*q^{-1}, and 2*k*q^{-1} are the columns
+-		 // of the orientation matrix computed in Quaternion::ToRotationMatrix.
+-		 // The vector v is obtained as the product of that orientation matrix with
+-		 // vector u.  As such, the quaternion representation of a orientation
+-		 // matrix requires less space than the matrix and more time to compute
+-		 // the rotated vector.  Typical space-time tradeoff...
+-
+-		 Matrix3r m;
+-		 q.ToRotationMatrix(m);
+-		 return m*v;
+-	}
+-
+-
+-
+-	/************************* END OF OPERATORS ************************/
+-#endif /* not USE_BASRADIZED_WM3 */
+-
+-
+-/*Vector2 std::maxVector (const Vector2&amp; rkV) const;
+-Vector2 std::minVector (const Vector2&amp; rkV) const;
+-Vector2 multDiag (const Vector2&amp; rkV) const;*/
+-
+-Vector2r componentMaxVector(const Vector2r&amp; a, const Vector2r&amp; rkV) {return Vector2r(std::max(a.X(),rkV.X()),std::max(a.Y(),rkV.Y()));}
+-Vector2r componentMinVector(const Vector2r&amp; a, const Vector2r&amp; rkV)  {return Vector2r(std::min(a.X(),rkV.X()),std::min(a.Y(),rkV.Y()));}
+-Vector2r diagMult(const Vector2r&amp; a, const Vector2r&amp; rkV)  { return Vector2r(a.X()*rkV.X(),a.Y()*rkV.Y());}
+-
+-
+-
+-/*RealType angleBetweenUnitVectors(const Vector3r&amp; rkV) const;
+-Vector3r std::maxVector (const Vector3r&amp; rkV) const;
+-Vector3r std::minVector (const Vector3r&amp; rkV) const;
+-Vector3r multDiag (const Vector3r&amp; rkV) const;
+-Vector3r divDiag (const Vector3r&amp; rkV) const;*/
+-
+-Vector3r componentMaxVector (const Vector3r&amp; a, const Vector3r&amp; rkV)  { return Vector3r(std::max(a.X(),rkV.X()),std::max(a.Y(),rkV.Y()),std::max(a.Z(),rkV.Z()));}
+-Vector3r componentMinVector (const Vector3r&amp; a, const Vector3r&amp; rkV)  { return Vector3r(std::min(a.X(),rkV.X()),std::min(a.Y(),rkV.Y()),std::min(a.Z(),rkV.Z())); }
+-Vector3r diagMult (const Vector3r&amp; a, const Vector3r&amp; rkV)  {	return Vector3r(a.X()*rkV.X(),a.Y()*rkV.Y(),a.Z()*rkV.Z()); }
+-Vector3r diagDiv (const Vector3r&amp; a, const Vector3r&amp; rkV)  { return Vector3r(a.X()/rkV.X(),a.Y()/rkV.Y(),a.Z()/rkV.Z()); }
+-Real unitVectorsAngle(const Vector3r&amp; a, const Vector3r&amp; rkV)  { return Mathr::ACos(a.Dot(rkV)); }
+-
+-
+-
+-/*Vector4r std::maxVector (const Vector4r&amp; rkV) const;
+-Vector4r std::minVector (const Vector4r&amp; rkV) const;
+-Vector4r multDiag (const Vector4r&amp; rkV) const;*/
+-Vector4r componentMaxVector (const Vector4r&amp; a, const Vector4r&amp; rkV) {return Vector4r(std::max(a.X(),rkV.X()),std::max(a.Y(),rkV.Y()),std::max(a.Z(),rkV.Z()),std::max(a.W(),rkV.W()));}
+-Vector4r componentMinVector (const Vector4r&amp; a, const Vector4r&amp; rkV) {return Vector4r(std::min(a.X(),rkV.X()),std::min(a.Y(),rkV.Y()),std::min(a.Z(),rkV.Z()),std::min(a.W(),rkV.W()));}
+-Vector4r diagMult (const Vector4r&amp; a, const Vector4r&amp; rkV) {return Vector4r(a.X()*rkV.X(),a.Y()*rkV.Y(),a.Z()*rkV.Z(),a.W()*rkV.W());}
+-//template&lt;class RealType1, class RealType2&gt;
+-
+-
+-/*void toAxes (Vector3r&amp; axis1, Vector3r&amp; axis2, Vector3r&amp; axis3) const; 
+-void fromAxes (const Vector3r&amp; axis1,const Vector3r&amp; axis2,const Vector3r&amp; axis3); 
+-void toGLMatrix(RealType m[16]) const;
+-void toEulerAngles (Vector3r&amp; eulerAngles,RealType threshold = 1e-06f) const;
+-Vector3r operator* (const Vector3r&amp; v) const;*/
+-
+-
+-Quaternionr quaternionFromAxes (const Vector3r&amp; axis1,const Vector3r&amp; axis2,const Vector3r&amp; axis3){
+-	Matrix3r m;
+-	m[0][0] = axis1.X(); m[1][0] = axis1.Y(); m[2][0] = axis1.Z();
+-	m[0][1] = axis2.X(); m[1][1] = axis2.Y(); m[2][1] = axis2.Z();
+-	m[0][2] = axis3.X(); m[1][2] = axis3.Y(); m[2][2] = axis3.Z();
+-	Quaternionr ret;
+-	ret.FromRotationMatrix(m);
+-	return ret;
+-}
+-
+-void quaternionToAxes(const Quaternionr&amp; q, Vector3r&amp; axis1, Vector3r&amp; axis2, Vector3r&amp; axis3){
+-	Matrix3r m;
+-	q.ToRotationMatrix(m);
+-   axis1.X() = m[0][0]; axis1.Y() = m[1][0]; axis1.Z() = m[2][0];
+-	axis2.X() = m[0][1]; axis2.Y() = m[1][1]; axis2.Z() = m[2][1];
+-	axis3.X() = m[0][2]; axis3.Y() = m[1][2]; axis3.Z() = m[2][2];
+-}
+-
+-//template &lt;class RealType&gt;
+-void quaternionToEulerAngles (const Quaternionr&amp; q, Vector3r&amp; eulerAngles,Real threshold=1e-6f){
+-	Real heading,attitude,bank;
+-	Real test = q.X()*q.Y() + q.Z()*q.W();
+-	if (test &gt; 0.5-threshold /*0.499*/) // singularity at north pole
+-	{ 
+-		heading = 2 * Mathr::ATan2(q.X(),q.W());
+-		attitude = Mathr::HALF_PI;
+-		bank = 0;
+-	}
+-	if (test &lt; threshold-0.5 /*-0.499*/) // singularity at south pole
+-	{
+-		heading = -2 * Mathr::ATan2(q.X(),q.W());
+-		attitude = - Mathr::HALF_PI;
+-		bank = 0;
+-	}
+-	else
+-	{
+-		Real sqx = q.X()*q.X();
+-		Real sqy = q.Y()*q.Y();
+-		Real sqz = q.Z()*q.Z();
+-		heading = Mathr::ATan2(2*q.Y()*q.W()-2*q.X()*q.Z() , 1 - 2*sqy - 2*sqz);
+-		attitude = Mathr::ASin(2*test);
+-		bank = Mathr::ATan2(2*q.X()*q.W()-2*q.Y()*q.Z() , 1 - 2*sqx - 2*sqz);
+-	}
+-	eulerAngles[0] = bank;
+- 	eulerAngles[1] = heading;
+- 	eulerAngles[2] = attitude;
+-//  	Matrix3 m;
+-//   	this-&gt;normalize();
+-//  	this-&gt;toRotationMatrix(m);
+-//   	m.ToEulerAnglesXYZ(eulerAngles[0],eulerAngles[1],eulerAngles[2]);
+-}
+-
+-//template &lt;class RealType&gt;
+-void quaterniontoGLMatrix(const Quaternionr&amp; q, Real m[16]) {
+-	// FIXME: why float? and not RealType?
+-    float x2  = 2.0f*q.X();
+-    float y2  = 2.0f*q.Y();
+-    float z2  = 2.0f*q.Z();
+-    float x2w = x2*q.W();
+-    float y2w = y2*q.W();
+-    float z2w = z2*q.W();
+-    float x2x = x2*q.X();
+-    float y2x = y2*q.X();
+-    float z2x = z2*q.X();
+-    float y2y = y2*q.Y();
+-    float z2y = z2*q.Y();
+-    float z2z = z2*q.Z();
+-
+-    m[0]  = 1.0f-(y2y+z2z);
+-    m[4]  = y2x-z2w;
+-    m[8]  = z2x+y2w;
+-    m[1]  = y2x+z2w;
+-    m[5]  = 1.0f-(x2x+z2z);
+-    m[9]  = z2y-x2w;
+-    m[2]  = z2x-y2w;
+-    m[6]  = z2y+x2w;
+-    m[10] = 1.0f-(x2x+y2y);
+-
+-	m[12] = 0.0l;
+-	m[13] = 0.0l;
+-	m[14] = 0.0l;
+-
+-	m[3] = 0.0l;
+-	m[7] = 0.0l;
+-	m[11] = 0.0l;
+-	m[15] = 1.0l;
+-}
+-
+-
+-
+-
+-#endif
+-//#endif
+
+Modified: trunk/extra/SConscript
+===================================================================
+--- trunk/extra/SConscript	2007-12-19 11:26:29 UTC (rev 1238)
++++ trunk/extra/SConscript	2008-01-07 09:59:04 UTC (rev 1239)
+@@ -1,10 +1,10 @@
+ Import('*')
+ 
+-if 'EMBED_PYTHON' in env['CPPDEFINES']:
+-	env.Install('$PREFIX/lib/yade$SUFFIX/extra',[
+-		env.SharedLibrary('PythonRecorder',['clump/PythonRecorder.cpp']),
+-		env.SharedLibrary('_pyade',['clump/pyade.cpp'],SHLIBPREFIX='',LIBS=env['LIBS']+['yade-base','ParticleParameters','RigidBodyParameters']),
+-		env.File('clump/pyade.py')])
++#if 'EMBED_PYTHON' in env['CPPDEFINES']:
++#	env.Install('$PREFIX/lib/yade$SUFFIX/extra',[
++#		env.SharedLibrary('PythonRecorder',['clump/PythonRecorder.cpp']),
++#		env.SharedLibrary('_pyade',['clump/pyade.cpp'],SHLIBPREFIX='',LIBS=env['LIBS']+['yade-base','ParticleParameters','RigidBodyParameters']),
++#		env.File('clump/pyade.py')])
+ 
+ 
+ env.Install('$PREFIX/lib/yade$SUFFIX/extra',[
+@@ -81,7 +81,7 @@
+ 			'SAPCollider',
+ 			'MetaInteractingGeometry',
+ 			'MetaInteractingGeometry2AABB',
+-			'EMBED_PYTHON' in env['CPPDEFINES'] and 'PythonRecorder' or 'yade-base', # FIXME: handle python properly; duplicated base is harmless
++			# 'EMBED_PYTHON' in env['CPPDEFINES'] and 'PythonRecorder' or 'yade-base', # FIXME: handle python properly; duplicated base is harmless
+ 			'InteractingSphere2AABB',\
+ 			'InteractingBox2AABB',
+ 			'NewtonsMomentumLaw',
+
+Modified: trunk/extra/clump/Shop.cpp
+===================================================================
+--- trunk/extra/clump/Shop.cpp	2007-12-19 11:26:29 UTC (rev 1238)
++++ trunk/extra/clump/Shop.cpp	2008-01-07 09:59:04 UTC (rev 1239)
+@@ -54,9 +54,11 @@
+ #include&lt;yade/pkg-dem/ElasticContactLaw.hpp&gt;
+ #include&lt;yade/pkg-dem/ElasticCohesiveLaw.hpp&gt;
+ 
++#if 0
+ #ifdef EMBED_PYTHON
+ 	#include&lt;yade/extra/PythonRecorder.hpp&gt;
+ #endif
++#endif
+ 
+ #include&lt;yade/extra/Tetra.hpp&gt;
+ 
+@@ -243,7 +245,7 @@
+ 	shared_ptr&lt;PhysicalParametersMetaEngine&gt; orientationIntegrator(new PhysicalParametersMetaEngine);
+ 	orientationIntegrator-&gt;DISPATCHER_ADD2(RigidBodyParameters,LeapFrogOrientationIntegrator);
+ 	rootBody-&gt;engines.push_back(orientationIntegrator);
+-
++#if 0
+ 	#ifdef EMBED_PYTHON
+ 		if(getDefault&lt;string&gt;(&quot;param_pythonRunExpr&quot;).length()&gt;0 || getDefault&lt;string&gt;(&quot;param_pythonInitExpr&quot;).length()&gt;0){
+ 			shared_ptr&lt;PythonRecorder&gt; pythonRecorder=shared_ptr&lt;PythonRecorder&gt;(new PythonRecorder);
+@@ -252,6 +254,7 @@
+ 			rootBody-&gt;engines.push_back(pythonRecorder);
+ 		}
+ 	#endif
++#endif
+ }
+ 
+ 
+
+Modified: trunk/gui/cmd/yadeControl.cpp
+===================================================================
+--- trunk/gui/cmd/yadeControl.cpp	2007-12-19 11:26:29 UTC (rev 1238)
++++ trunk/gui/cmd/yadeControl.cpp	2008-01-07 09:59:04 UTC (rev 1239)
+@@ -61,6 +61,7 @@
+ 		OMEGA.createSimulationLoop();
+ 		cerr&lt;&lt;&quot;LOAD!&quot;&lt;&lt;endl;
+ 	}
++	//void join(){cerr&lt;&lt;&quot;JOIN!&quot;&lt;&lt;endl; OMEGA.joinSimulationLoop();}
+ 	#undef OMEGA
+ };
+ 
+@@ -120,7 +121,12 @@
+ 	shared_ptr&lt;boost::thread&gt; redrawThread,appThread;
+ 	QApplication* app;
+ 	void redrawAlarm(void){
+-		while(true){viewer-&gt;updateGL(); usleep(50000);}
++		while(true){
++			Omega::instance().stopSimulationLoop();
++			viewer-&gt;updateGL();
++			Omega::instance().startSimulationLoop();
++			usleep(10000000);
++		}
+ 	}
+ 	shared_ptr&lt;AttrAccess&gt; accessor;
+ 	void ensureAcc(){if(!accessor)accessor=shared_ptr&lt;AttrAccess&gt;(new AttrAccess(renderer));}
+@@ -128,6 +134,8 @@
+ 	DECLARE_LOGGER;
+ 	ATTR_ACCESS_CXX(accessor,ensureAcc);	
+ 	pyGLViewer(){
++		throw std::runtime_error(&quot;Programming error: Threading in pyGLViewer is broken and crashes; ignored.&quot;);
++		// LOG_WARN(&quot;Thread locking not correctly implemented, will pause Omega for redraw every 10s instead!&quot;);
+ 		shared_ptr&lt;Factorable&gt; _renderer=ClassFactory::instance().createShared(&quot;OpenGLRenderingEngine&quot;);
+ 		renderer=static_pointer_cast&lt;RenderingEngine&gt;(_renderer);
+ 
+@@ -135,6 +143,7 @@
+ 			Type of instance is: 15RenderingEngine
+ 			RuntimeError: Cannot determine type with findType()
+ 		*/
++		#if 0
+ 		if(renderer){// TODO: handle exceptions
+ 			filesystem::path rendererConfig=filesystem::path(Omega::instance().yadeConfigPath+&quot;/OpenGLRendererPref.xml&quot;);
+ 			if(filesystem::exists(rendererConfig)){
+@@ -142,11 +151,13 @@
+ 				catch(SerializableError&amp; e){LOG_WARN(&quot;Unable to load renderer preferences from `&quot;&lt;&lt;rendererConfig.string()&lt;&lt;&quot;': &quot;&lt;&lt;e.what());}
+ 			}
+ 		} else throw runtime_error(&quot;Unable to create renderer!&quot;);
++		#endif
++		if(!renderer) throw runtime_error(&quot;Unable to create renderer!&quot;);
+ 
+ 		int viewId=0;
+-		if(viewId==0){	int _argc=0; char* _argv[]={&quot;foo&quot;}; app=new QApplication(_argc,_argv);}
++		if(viewId==0){	int _argc=0; char _argvv[]=&quot;foo&quot;; app=new QApplication(_argc,(char**) &amp;_argvv);}
+ 
+-		QGLFormat format;	QGLFormat::setDefaultFormat(format); format.setStencil(TRUE); format.setAlpha(TRUE);
++		QGLFormat format;	QGLFormat::setDefaultFormat(format); // format.setStencil(TRUE); format.setAlpha(TRUE);
+ 		viewer=shared_ptr&lt;GLViewer&gt;(new GLViewer(viewId,renderer,format,0,0));
+ 		viewer-&gt;centerScene();
+ 		viewer-&gt;notMoving();
+@@ -184,6 +195,7 @@
+ 		//.add_property(&quot;timeStepper&quot;,&amp;timeStepper_get,&amp;timeStepper_set)
+ 		.def(&quot;load&quot;,&amp;pyOmega::load)
+ 		.def(&quot;run&quot;,&amp;pyOmega::run)
++		// .def(&quot;join&quot;,&amp;pyOmega::join)
+ 		.def(&quot;pause&quot;,&amp;pyOmega::pause)
+ 		.def(&quot;step&quot;,&amp;pyOmega::step);
+ 
+
+Modified: trunk/lib/base/yadeWm3.hpp
+===================================================================
+--- trunk/lib/base/yadeWm3.hpp	2007-12-19 11:26:29 UTC (rev 1238)
++++ trunk/lib/base/yadeWm3.hpp	2008-01-07 09:59:04 UTC (rev 1239)
+@@ -1,13 +1,6 @@
++#pragma once
+ 
+-#ifdef USE_BASTARDIZED_WM3
+-#error Bastardized wm3 no longer supported. Install the wm3 library.
+-#endif
+ 
+-#ifndef YADE_WM3_HPP
+-#define YADE_WM3_HPP
+-
+-using namespace Wm3;
+-
+ #ifndef SINGLE_PRECISION
+ 	typedef double Real;
+ #else
+@@ -291,4 +284,4 @@
+ 	template&lt;class T&gt; class Vector3; typedef Vector3&lt;Real&gt; Vector3r;
+ 	template&lt;class T&gt; class Vector4; typedef Vector4&lt;Real&gt; Vector4r;
+ }
+-#endif
++using namespace Wm3;
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.cpp	2007-12-19 11:26:29 UTC (rev 1238)
++++ trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.cpp	2008-01-07 09:59:04 UTC (rev 1239)
+@@ -25,7 +25,8 @@
+ 	currentStrainRate=0;
+ 	StabilityCriterion=0.001;
+ 	//Phase1=false;
+-	currentState=STATE_ISO_COMPACTION;
++	currentState=STATE_UNINITIALIZED;
++	previousState=currentState;
+ 	UnbalancedForce = 1;
+ 	Phase1End = &quot;Compacted&quot;;
+ 	FinalIterationPhase1 = 0;
+@@ -63,51 +64,66 @@
+ 	REGISTER_ATTRIBUTE(testEquilibriumInterval);
+ 	REGISTER_ATTRIBUTE(currentState);
+ 	REGISTER_ATTRIBUTE(previousState);
++	REGISTER_ATTRIBUTE(sigmaIsoCompaction);
++	REGISTER_ATTRIBUTE(sigmaLateralConfinement);
+ }
+ 
+ void TriaxialCompressionEngine::doStateTransition(stateNum nextState){
+-	if (nextState==STATE_ISO_COMPACTION){
+-		currentState=nextState;
+-		LOG_INFO(&quot;State transition to STATE_ISO_COMPACTION done.&quot;);
++	if ( currentState==STATE_UNINITIALIZED &amp;&amp; nextState==STATE_ISO_COMPACTION){
++		sigma_iso=sigmaIsoCompaction;
+ 	}
+-	if(nextState==STATE_TRIAX_LOADING){
+-		assert(currentState==STATE_ISO_COMPACTION || currentState==STATE_LIMBO);
++	else if((currentState==STATE_ISO_COMPACTION || currentState==STATE_ISO_UNLOADING || currentState==STATE_LIMBO) &amp;&amp; nextState==STATE_TRIAX_LOADING){
++		sigma_iso=sigmaLateralConfinement;
+ 		internalCompaction = false;
+ 		height0 = height; depth0 = depth; width0 = width;
+ 		//compressionActivated = true;
+ 		wall_bottom_activated=false;
+ 		wall_top_activated=false;
+-		autoCompressionActivation = false; // FIXME: this can be removed, since it will not be used anymore
+ 		if(!firstRun) saveSimulation=true; // saving snapshot .xml will actually be done in ::applyCondition
+-		currentState=nextState;
+-		LOG_INFO(&quot;State transition from STATE_ISO_COMPACTION to STATE_TRIAX_LOADING done.&quot;);
+ 	}
+-	if(nextState==STATE_LIMBO){
+-		assert(currentState==STATE_ISO_COMPACTION);
++	else if(currentState==STATE_ISO_COMPACTION &amp;&amp; nextState==STATE_ISO_UNLOADING){
++		sigma_iso=sigmaLateralConfinement;
++		internalCompaction=false; // unloading will not change grain sizes
++	}
++	else if(currentState==STATE_ISO_COMPACTION &amp;&amp; nextState==STATE_LIMBO){
+ 		internalCompaction = false;
+ 		height0 = height; depth0 = depth; width0 = width;
+ 		saveSimulation=true; // saving snapshot .xml will actually be done in ::applyCondition
+-		currentState=nextState;
+-		LOG_INFO(&quot;State transition from STATE_ISO_COMPACTION to STATE_LIMBO done.&quot;);
+ 		// stop simulation here, since nothing will happen from now on
+-		// Omega::instance().stopSimulationLoop();
++		Omega::instance().stopSimulationLoop();
+ 	}
++	else goto undefinedTransition;
++
++	LOG_INFO(&quot;State transition from &quot;&lt;&lt;stateName(currentState)&lt;&lt;&quot; to &quot;&lt;&lt;stateName(nextState)&lt;&lt;&quot; done.&quot;);
++	currentState=nextState;
+ 	previousState=currentState; // should be always kept in sync, used to track manual changes to the .xml
++	return;
++
++	undefinedTransition:
++		LOG_ERROR(&quot;Undefined transition from &quot;&lt;&lt;stateName(currentState)&lt;&lt;&quot; to &quot;&lt;&lt;stateName(nextState)&lt;&lt;&quot;! (ignored)&quot;);
+ }
+ 
+ void TriaxialCompressionEngine::updateParameters(Body * body)
+ {
+ 
+-	UnbalancedForce=ComputeUnbalancedForce(body);
++	UnbalancedForce=ComputeUnbalancedForce(body); // calculated at every iteration
+ 	MetaBody * ncb = static_cast&lt;MetaBody*&gt;(body);
+-	if (Omega::instance().getCurrentIteration() % 100 == 0) LOG_DEBUG(&quot;UnbalancedForce=&quot;&lt;&lt;UnbalancedForce);
++	if (Omega::instance().getCurrentIteration() % 100 == 0) {
++		LOG_DEBUG(stateName(currentState));}
+ 
+-	if(currentState==STATE_ISO_COMPACTION){ // FIXME: do we need this?? it makes sense to activate compression only during compaction!: || autoCompressionActivation){
+-		if ((Omega::instance().getCurrentIteration() % computeStressStrainInterval) == 0) computeStressStrain(ncb);
+-		TRVAR5(UnbalancedForce,StabilityCriterion,meanStress,sigma_iso,abs((meanStress-sigma_iso)/sigma_iso));
+-
++	if(currentState==STATE_ISO_COMPACTION || currentState==STATE_ISO_UNLOADING){
++		// FIXME: do we need this?? it makes sense to activate compression only during compaction!: || autoCompressionActivation)
++		if ((Omega::instance().getCurrentIteration() % computeStressStrainInterval) == 0){
++			computeStressStrain(ncb);
++			//TRVAR5(UnbalancedForce,StabilityCriterion,meanStress,sigma_iso,abs((meanStress-sigma_iso)/sigma_iso));
++		}
+ 		if ( UnbalancedForce&lt;=StabilityCriterion &amp;&amp; abs((meanStress-sigma_iso)/sigma_iso)&lt;0.02 ) {
+-			if(autoCompressionActivation) doStateTransition(STATE_TRIAX_LOADING);
++			if(currentState==STATE_ISO_COMPACTION &amp;&amp; autoCompressionActivation){
++				doStateTransition(STATE_ISO_UNLOADING); /*update stress and strain here*/ computeStressStrain(ncb);
++			}
++			else if(currentState==STATE_ISO_UNLOADING &amp;&amp; autoCompressionActivation) {
++				doStateTransition(STATE_TRIAX_LOADING); computeStressStrain(ncb);
++			}
+ 			else doStateTransition(STATE_LIMBO);
+ 		}
+ #if 0
+@@ -137,6 +153,7 @@
+ {
+ 	// here, we make sure to get consistent parameters, in case someone fiddled with the scene .xml manually
+ 	if(firstRun){
++		LOG_FATAL(&quot;First run!&quot;);
+ 		//sigma_iso was changed, we need to rerun compaction
+ 		if(sigma_iso!=previousSigmaIso) doStateTransition(STATE_ISO_COMPACTION);
+ 		if(previousState==STATE_LIMBO &amp;&amp; currentState==STATE_TRIAX_LOADING) doStateTransition(STATE_TRIAX_LOADING);
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.hpp	2007-12-19 11:26:29 UTC (rev 1238)
++++ trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.hpp	2008-01-07 09:59:04 UTC (rev 1239)
+@@ -16,8 +16,6 @@
+ #include &quot;TriaxialStressController.hpp&quot;
+ #include &lt;string&gt;
+ 
+-// FIXME: current serializer doesn't handle named enum types, this is workaround.
+-#define stateNum int
+ 
+ /*! \brief Isotropic compression + uniaxial compression test
+ 
+@@ -39,11 +37,16 @@
+ 	public :
+ 		TriaxialCompressionEngine();
+ 		virtual ~TriaxialCompressionEngine();
+-
+-		enum {STATE_ISO_COMPACTION, STATE_ISO_UNLOADING, STATE_TRIAX_LOADING, STATE_LIMBO}; 
++		
++		// FIXME: current serializer doesn't handle named enum types, this is workaround.
++		#define stateNum int
++		// should be &quot;enum stateNum {...}&quot; once this is fixed
++		enum {STATE_UNINITIALIZED, STATE_ISO_COMPACTION, STATE_ISO_UNLOADING, STATE_TRIAX_LOADING, STATE_LIMBO};
+ 		stateNum currentState;
+-		//const char* stateNames[]={&quot;istropic_compression&quot;,&quot;isotropic_unloading&quot;,&quot;triaxial_loading&quot;};
+ 		void doStateTransition(stateNum nextState);
++		#define _STATE_CASE(ST) case ST: return #ST
++		string stateName(stateNum st){switch(st){ _STATE_CASE(STATE_UNINITIALIZED);_STATE_CASE(STATE_ISO_COMPACTION);_STATE_CASE(STATE_ISO_UNLOADING);_STATE_CASE(STATE_TRIAX_LOADING);_STATE_CASE(STATE_LIMBO); default: return &quot;&lt;unknown state&gt;&quot;; } }
++		#undef _STATE_CASE
+ 		
+ 		//! Strain velocity (./s)
+ 		Real strainRate;
+@@ -54,6 +57,10 @@
+ 		Real StabilityCriterion;
+ 		//! Previous value of inherited sigma_iso (used to detect manual changes of the confining pressure)
+ 		Real previousSigmaIso;
++		//! Desired isotropic pressure during the compaction phase
++		Real sigmaIsoCompaction;
++		//! Desired isotropic pressure during the confined uniaxial test; may be different from sigmaIsoCompaction
++		Real sigmaLateralConfinement;
+ 		//! Previous state (used to detect manual changes of the state in .xml)
+ 		stateNum previousState;
+ 		//Vector3r strain;
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.cpp	2007-12-19 11:26:29 UTC (rev 1238)
++++ trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.cpp	2008-01-07 09:59:04 UTC (rev 1239)
+@@ -1,7 +1,7 @@
+ /*************************************************************************
+-*  Copyright (C) 2006 by Bruno Chareyre                                  *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">bruno.chareyre at hmg.inpg.fr</A>                                            *
+-*                                                                        *
++*  Copyright (C) 2006 by Bruno Chareyre				  *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">bruno.chareyre at hmg.inpg.fr</A>					    *
++*									*
+ *  This program is free software; it is licensed under the terms of the  *
+ *  GNU General Public License v2 or later. See file LICENSE for details. *
+ *************************************************************************/
+@@ -14,6 +14,7 @@
+ #include&lt;yade/pkg-common/Force.hpp&gt;
+ 
+ 
++
+ #include&lt;yade/core/MetaBody.hpp&gt;
+ #include&lt;yade/pkg-common/Sphere.hpp&gt;
+ 
+@@ -21,19 +22,11 @@
+ 
+ TriaxialStressController::TriaxialStressController() : actionParameterForce(new Force), wall_bottom_id(wall_id[0]), wall_top_id(wall_id[1]), wall_left_id(wall_id[2]), wall_right_id(wall_id[3]), wall_front_id(wall_id[4]), wall_back_id(wall_id[5])
+ {
+-	//cerr &lt;&lt; &quot;constructor of TriaxialStressController&quot; &lt;&lt; std::endl;
+ 	//StiffnessMatrixClassIndex = actionParameterStiffnessMatrix-&gt;getClassIndex();
+ 	ForceClassIndex = actionParameterForce-&gt;getClassIndex();
+ 	previousStress = 0;
+ 	previousMultiplier = 1;
+-	wall_bottom = 0;
+-	wall_top = 1;
+-	wall_left = 2;
+-	wall_right = 3;
+-	wall_front = 4;
+-	wall_back = 5;
+ 	
+-	
+ 	stiffnessUpdateInterval =10;
+ 	radiusControlInterval =10;
+ 	computeStressStrainInterval = 10;
+@@ -55,13 +48,6 @@
+ 	normal[wall_front].Z()=-1;
+ 	normal[wall_back].Z()=1;
+ 	
+-// 	wall_bottom_id = wall_id[0];
+-// 	wall_top_id = wall_id[1];
+-// 	wall_left_id = wall_id[2];
+-// 	wall_right_id = wall_id[3];
+-// 	wall_front_id = wall_id[4];
+-// 	wall_back_id = wall_id[5];
+-	
+ 	//stiffness = Vector3r::ZERO;
+ 	max_vel = 0.001;
+ 	maxMultiplier = 1.001;
+@@ -89,7 +75,6 @@
+ 	//UnbalancedForce = 0;
+ 	
+ 	sigma_iso = 0;
+-	//cerr &lt;&lt; &quot;end of TriaxialStressController constructor&quot; &lt;&lt; std::endl;
+ }
+ 
+ TriaxialStressController::~TriaxialStressController()
+@@ -98,7 +83,6 @@
+ 
+ void TriaxialStressController::registerAttributes()
+ {
+-	//cerr &lt;&lt; &quot;TriaxialStressController::registerAttributes()&quot; &lt;&lt; std::endl;
+ 	DeusExMachina::registerAttributes();
+ 	REGISTER_ATTRIBUTE(stiffnessUpdateInterval);
+ 	REGISTER_ATTRIBUTE(radiusControlInterval);
+@@ -140,23 +124,12 @@
+ 	REGISTER_ATTRIBUTE(previousStress);
+ 	REGISTER_ATTRIBUTE(previousMultiplier);
+ 	REGISTER_ATTRIBUTE(internalCompaction);
+-	//cerr &lt;&lt; &quot;fin de TriaxialStressController::registerAttributes()&quot; &lt;&lt; std::endl;
+ }
+ 
+ void TriaxialStressController::updateStiffness (MetaBody * ncb)
+ {
+-	//cerr &lt;&lt; &quot;updateStiffness&quot; &lt;&lt; endl;
+-	
+-	//shared_ptr&lt;BodyContainer&gt;&amp; bodies = ncb-&gt;bodies;
++	for (int i=0; i&lt;6; ++i) stiffness[i] = 0;
+ 
+-	//Real dt = Omega::instance().getTimeStep();
+-
+-	for (int i=0; i&lt;6; ++i)
+-	{		
+-		stiffness[i] = 0;
+-	}									
+-
+-
+ 	InteractionContainer::iterator ii    = ncb-&gt;transientInteractions-&gt;begin();
+ 	InteractionContainer::iterator iiEnd = ncb-&gt;transientInteractions-&gt;end();
+ 	for(  ; ii!=iiEnd ; ++ii )
+@@ -165,54 +138,42 @@
+ 		{
+ 			const shared_ptr&lt;Interaction&gt;&amp; contact = *ii;
+ 			
+-			Real fn = (static_cast&lt;ElasticContactInteraction*&gt;	
+-	(contact-&gt;interactionPhysics.get()))-&gt;normalForce.Length();
++			Real fn = (static_cast&lt;ElasticContactInteraction*&gt;	(contact-&gt;interactionPhysics.get()))-&gt;normalForce.Length();
+ 
+ 			if (fn!=0)
+ 			{
+-				int id1 = contact-&gt;getId1();
+-				int id2 = contact-&gt;getId2();
++				int id1 = contact-&gt;getId1(), id2 = contact-&gt;getId2();
+ 				
+ 				for (int index=0; index&lt;6; ++index)
+ 				{
+-				if ( wall_id[index]==id1 || wall_id[index]==id2 )
+-				{
+-					ElasticContactInteraction* currentContactPhysics =
+-					static_cast&lt;ElasticContactInteraction*&gt; ( contact-&gt;interactionPhysics.get() );
+-					stiffness[index]  += currentContactPhysics-&gt;kn;
++					if ( wall_id[index]==id1 || wall_id[index]==id2 )
++					{
++						ElasticContactInteraction* currentContactPhysics =
++						static_cast&lt;ElasticContactInteraction*&gt; ( contact-&gt;interactionPhysics.get() );
++						stiffness[index]  += currentContactPhysics-&gt;kn;
++					}
+ 				}
+-				}
+ 			}
+ 		}
+ 	}
+-	
+-	{		
+-		//cerr &lt;&lt; &quot;stiffness 1 = &quot; &lt;&lt; stiffness[1] &lt;&lt; endl;
+-	}
+-	
+-	//cerr &lt;&lt; &quot;fin updateStiffness&quot; &lt;&lt; endl;
+-	
+ }
+ 
+ void TriaxialStressController::controlExternalStress(int wall, MetaBody* ncb, Vector3r resultantForce, PhysicalParameters* p, Real wall_max_vel)
+ {
+ 	Real translation=normal[wall].Dot(static_cast&lt;Force*&gt;( ncb-&gt;physicalActions-&gt;find(wall_id[wall],ForceClassIndex).get() )-&gt;force - resultantForce);
+ 	//cerr &lt;&lt; &quot;current force= &quot; &lt;&lt; static_cast&lt;Force*&gt;(ncb-&gt;physicalActions-&gt;find(wall_id[wall],ForceClassIndex).get() )-&gt;force &lt;&lt; &quot; imposed force = &quot; &lt;&lt; resultantForce &lt;&lt; endl;
+-        if (translation!=0)
+-        {
+-        //cerr &lt;&lt; &quot;translation!=0&quot; &lt;&lt; endl;
+-            if (stiffness[wall]!=0)
+-            {
+-           // cerr &lt;&lt; &quot;stiffness[wall]=&quot; &lt;&lt; stiffness[wall] &lt;&lt; endl;
+-                translation /= stiffness[wall];
+-                translation = std::min( abs(translation), wall_max_vel*Omega::instance().getTimeStep() ) * Mathr::Sign(translation);
+-            	//cerr &lt;&lt; &quot;translation=&quot; &lt;&lt; translation &lt;&lt; endl;
+-            }
+-            else
+-                translation = wall_max_vel * Mathr::Sign(translation);
+-        }
+-        previousTranslation[wall] = (1-wallDamping)*translation*normal[wall];// + 0.7*previousTranslation[wall];// formula for &quot;steady-flow&quot; evolution with fluctuations
+-        p-&gt;se3.position	+= previousTranslation[wall];
++	if (translation!=0)
++	{
++	   if (stiffness[wall]!=0)
++	   {
++			translation /= stiffness[wall];
++			translation = std::min( abs(translation), wall_max_vel*Omega::instance().getTimeStep() ) * Mathr::Sign(translation);
++	   }
++	   else
++		translation = wall_max_vel * Mathr::Sign(translation);
++	}
++	previousTranslation[wall] = (1-wallDamping)*translation*normal[wall];// + 0.7*previousTranslation[wall];// formula for &quot;steady-flow&quot; evolution with fluctuations
++	p-&gt;se3.position	+= previousTranslation[wall];
+ }
+ 
+ 
+@@ -221,59 +182,59 @@
+ void TriaxialStressController::applyCondition(Body* body)
+ {
+ 	//cerr &lt;&lt; &quot;TriaxialStressController::applyCondition&quot; &lt;&lt; endl;
+-        MetaBody * ncb = YADE_CAST&lt;MetaBody*&gt;(body);
++	MetaBody * ncb = YADE_CAST&lt;MetaBody*&gt;(body);
+ 
+-        //Update stiffness only if it has been computed by StiffnessCounter (see &quot;stiffnessUpdateInterval&quot;)
+-        if (Omega::instance().getCurrentIteration() % stiffnessUpdateInterval == 0 || Omega::instance().getCurrentIteration()&lt;1000)
+-                updateStiffness(ncb);
+-                
+-        shared_ptr&lt;BodyContainer&gt;&amp; bodies = ncb-&gt;bodies;
++	//Update stiffness only if it has been computed by StiffnessCounter (see &quot;stiffnessUpdateInterval&quot;)
++	if (Omega::instance().getCurrentIteration() % stiffnessUpdateInterval == 0 || Omega::instance().getCurrentIteration()&lt;1000)
++		updateStiffness(ncb);
++		
++	shared_ptr&lt;BodyContainer&gt;&amp; bodies = ncb-&gt;bodies;
+ 
+-        PhysicalParameters* p_bottom = static_cast&lt;PhysicalParameters*&gt;((*bodies)[wall_bottom_id]-&gt;physicalParameters.get());
+-        PhysicalParameters* p_top   =	 static_cast&lt;PhysicalParameters*&gt;((*bodies)[wall_top_id]-&gt;physicalParameters.get());
+-        PhysicalParameters* p_left 	= static_cast&lt;PhysicalParameters*&gt;((*bodies)[wall_left_id]-&gt;physicalParameters.get());
+-        PhysicalParameters* p_right = static_cast&lt;PhysicalParameters*&gt;((*bodies)[wall_right_id]-&gt;physicalParameters.get());
+-        PhysicalParameters* p_front = static_cast&lt;PhysicalParameters*&gt;((*bodies)[wall_front_id]-&gt;physicalParameters.get());
+-        PhysicalParameters* p_back 	= static_cast&lt;PhysicalParameters*&gt;((*bodies)[wall_back_id]-&gt;physicalParameters.get());
+-                
+-        height = p_top-&gt;se3.position.Y() - p_bottom-&gt;se3.position.Y() - thickness;
+-        width = p_right-&gt;se3.position.X() - p_left-&gt;se3.position.X() - thickness;
+-        depth = p_front-&gt;se3.position.Z() - p_back-&gt;se3.position.Z() - thickness;
++	PhysicalParameters* p_bottom = static_cast&lt;PhysicalParameters*&gt;((*bodies)[wall_bottom_id]-&gt;physicalParameters.get());
++	PhysicalParameters* p_top   =	 static_cast&lt;PhysicalParameters*&gt;((*bodies)[wall_top_id]-&gt;physicalParameters.get());
++	PhysicalParameters* p_left  = static_cast&lt;PhysicalParameters*&gt;((*bodies)[wall_left_id]-&gt;physicalParameters.get());
++	PhysicalParameters* p_right = static_cast&lt;PhysicalParameters*&gt;((*bodies)[wall_right_id]-&gt;physicalParameters.get());
++	PhysicalParameters* p_front = static_cast&lt;PhysicalParameters*&gt;((*bodies)[wall_front_id]-&gt;physicalParameters.get());
++	PhysicalParameters* p_back  = static_cast&lt;PhysicalParameters*&gt;((*bodies)[wall_back_id]-&gt;physicalParameters.get());
++		
++	height = p_top-&gt;se3.position.Y() - p_bottom-&gt;se3.position.Y() - thickness;
++	width = p_right-&gt;se3.position.X() - p_left-&gt;se3.position.X() - thickness;
++	depth = p_front-&gt;se3.position.Z() - p_back-&gt;se3.position.Z() - thickness;
+  
+-        bool isARadiusControlIteration = (Omega::instance().getCurrentIteration() % radiusControlInterval == 0);
+-        if (Omega::instance().getCurrentIteration() % computeStressStrainInterval == 0 ||
+-        	(internalCompaction &amp;&amp; isARadiusControlIteration) )
+-        		computeStressStrain(ncb);
++	bool isARadiusControlIteration = (Omega::instance().getCurrentIteration() % radiusControlInterval == 0);
++	if (Omega::instance().getCurrentIteration() % computeStressStrainInterval == 0 ||
++		 (internalCompaction &amp;&amp; isARadiusControlIteration) )
++		computeStressStrain(ncb);
+ 
+-        if (!internalCompaction) {
+-                Vector3r wallForce (0, sigma_iso*width*depth, 0);
+-                if (wall_bottom_activated) controlExternalStress(wall_bottom, ncb, -wallForce, p_bottom, max_vel);
+-                if (wall_top_activated) controlExternalStress(wall_top, ncb, wallForce, p_top, max_vel);
+-                wallForce = Vector3r(sigma_iso*height*depth, 0, 0);
+-                if (wall_left_activated) controlExternalStress(wall_left, ncb, -wallForce, p_left, max_vel*width/height);
+-                if (wall_right_activated) controlExternalStress(wall_right, ncb, wallForce, p_right, max_vel*width/height);
+-                wallForce = Vector3r(0, 0, sigma_iso*height*width);
+-					 if (wall_back_activated) controlExternalStress(wall_back, ncb, -wallForce, p_back, max_vel*depth/height);
+-					 if (wall_front_activated) controlExternalStress(wall_front, ncb, wallForce, p_front, max_vel*depth/height);
+-        }
+-        else //if internal compaction
+-        {
+-                if (isARadiusControlIteration) {
+-                        //Real s = computeStressStrain(ncb);
+-                        if (sigma_iso&lt;=meanStress) maxMultiplier = finalMaxMultiplier;
+-                        if (meanStress==0)
+-                                previousMultiplier = maxMultiplier;
+-                        else {
+-                                //     		previousMultiplier = 1+0.7*(sigma_iso-s)*(previousMultiplier-1.f)/(s-previousStress); // = (Dsigma/apparentModulus)*0.7
+-                                //     		previousMultiplier = std::max(2-maxMultiplier, std::min(previousMultiplier, maxMultiplier));
+-                                previousMultiplier = 1.f+(sigma_iso-meanStress)/sigma_iso*(maxMultiplier-1.f); // = (Dsigma/apparentModulus)*0.7
+-                        }
+-                        previousStress = meanStress;
+-                        //cerr &lt;&lt; &quot;maxMultiplier&quot; &lt;&lt; maxMultiplier &lt;&lt; endl;
+-                        //Real apparentModulus = (s-previousStress)/(previousMultiplier-1.f);
+-                        controlInternalStress(ncb, previousMultiplier);
+-                }
+-        }
++	if (!internalCompaction) {
++		Vector3r wallForce (0, sigma_iso*width*depth, 0);
++		if (wall_bottom_activated) controlExternalStress(wall_bottom, ncb, -wallForce, p_bottom, max_vel);
++		if (wall_top_activated) controlExternalStress(wall_top, ncb, wallForce, p_top, max_vel);
++		wallForce = Vector3r(sigma_iso*height*depth, 0, 0);
++		if (wall_left_activated) controlExternalStress(wall_left, ncb, -wallForce, p_left, max_vel*width/height);
++		if (wall_right_activated) controlExternalStress(wall_right, ncb, wallForce, p_right, max_vel*width/height);
++		wallForce = Vector3r(0, 0, sigma_iso*height*width);
++		if (wall_back_activated) controlExternalStress(wall_back, ncb, -wallForce, p_back, max_vel*depth/height);
++		if (wall_front_activated) controlExternalStress(wall_front, ncb, wallForce, p_front, max_vel*depth/height);
++	}
++	else //if internal compaction
++	{
++		if (isARadiusControlIteration) {
++			//Real s = computeStressStrain(ncb);
++			if (sigma_iso&lt;=meanStress) maxMultiplier = finalMaxMultiplier;
++			if (meanStress==0)
++				previousMultiplier = maxMultiplier;
++			else {
++				//     		previousMultiplier = 1+0.7*(sigma_iso-s)*(previousMultiplier-1.f)/(s-previousStress); // = (Dsigma/apparentModulus)*0.7
++				//     		previousMultiplier = std::max(2-maxMultiplier, std::min(previousMultiplier, maxMultiplier));
++				previousMultiplier = 1.+(sigma_iso-meanStress)/sigma_iso*(maxMultiplier-1.); // = (Dsigma/apparentModulus)*0.7
++			}
++			previousStress = meanStress;
++			//cerr &lt;&lt; &quot;maxMultiplier&quot; &lt;&lt; maxMultiplier &lt;&lt; endl;
++			//Real apparentModulus = (s-previousStress)/(previousMultiplier-1.f);
++			controlInternalStress(ncb, previousMultiplier);
++		}
++	}
+ }
+ 
+ Real TriaxialStressController::computeStressStrain(MetaBody* ncb)
+@@ -314,38 +275,36 @@
+ 
+ void TriaxialStressController::controlInternalStress(MetaBody* ncb, Real multiplier)
+ {
+-    BodyContainer::iterator bi    = ncb-&gt;bodies-&gt;begin();
+-    BodyContainer::iterator biEnd = ncb-&gt;bodies-&gt;end();
+-    //cerr &lt;&lt; &quot;meanstress = &quot;radius = &quot; &lt;&lt; endl;
+-    //cerr &lt;&lt; &quot;bouclesurBodies&quot; &lt;&lt; endl;
+-    for (  ; bi!=biEnd ; ++bi )
+-    {
+-        if ((*bi)-&gt;isDynamic)
+-        {
+-            (static_cast&lt;InteractingSphere*&gt; ((*bi)-&gt;interactingGeometry.get()))-&gt;radius *= multiplier;
+-            (static_cast&lt;Sphere*&gt;((*bi)-&gt;geometricalModel.get()))-&gt;radius *= multiplier;
+-        }
+-    }
+-    // &lt;&lt; &quot;bouclesurInteraction&quot; &lt;&lt; endl;
+-    InteractionContainer::iterator ii    = ncb-&gt;transientInteractions-&gt;begin();
+-    InteractionContainer::iterator iiEnd = ncb-&gt;transientInteractions-&gt;end();
+-    for (  ; ii!=iiEnd ; ++ii )
+-    {
+-        if ((*ii)-&gt;isReal)
+-
+-        {
+-            SpheresContactGeometry* contact = static_cast&lt;SpheresContactGeometry*&gt; ((*ii)-&gt;interactionGeometry.get());
+-//             if ((*(ncb-&gt;bodies))[(*ii)-&gt;getId1()]-&gt;isDynamic)
+-//                 contact-&gt;radius1 *= multiplier;
+-//             if ((*(ncb-&gt;bodies))[(*ii)-&gt;getId2()]-&gt;isDynamic)
+-//                 contact-&gt;radius2 *= multiplier;
+-            if ((*(ncb-&gt;bodies))[(*ii)-&gt;getId1()]-&gt;isDynamic)
+-                contact-&gt;radius1 = static_cast&lt;InteractingSphere*&gt; ((*(ncb-&gt;bodies))[(*ii)-&gt;getId1()]-&gt;interactingGeometry.get())-&gt;radius;
+-            if ((*(ncb-&gt;bodies))[(*ii)-&gt;getId2()]-&gt;isDynamic)
+-                contact-&gt;radius2 = static_cast&lt;InteractingSphere*&gt; ((*(ncb-&gt;bodies))[(*ii)-&gt;getId2()]-&gt;interactingGeometry.get())-&gt;radius;
+-
+-        }
+-    }
++   BodyContainer::iterator bi    = ncb-&gt;bodies-&gt;begin();
++   BodyContainer::iterator biEnd = ncb-&gt;bodies-&gt;end();
++   //cerr &lt;&lt; &quot;meanstress = &quot;radius = &quot; &lt;&lt; endl;
++   //cerr &lt;&lt; &quot;bouclesurBodies&quot; &lt;&lt; endl;
++   for (  ; bi!=biEnd ; ++bi )
++   {
++		if ((*bi)-&gt;isDynamic)
++		{
++			(static_cast&lt;InteractingSphere*&gt; ((*bi)-&gt;interactingGeometry.get()))-&gt;radius *= multiplier;
++			(static_cast&lt;Sphere*&gt;((*bi)-&gt;geometricalModel.get()))-&gt;radius *= multiplier;
++		}
++	}
++	// &lt;&lt; &quot;bouclesurInteraction&quot; &lt;&lt; endl;
++	InteractionContainer::iterator ii    = ncb-&gt;transientInteractions-&gt;begin();
++	InteractionContainer::iterator iiEnd = ncb-&gt;transientInteractions-&gt;end();
++	for (  ; ii!=iiEnd ; ++ii )
++	{
++		if ((*ii)-&gt;isReal)
++		{
++			SpheresContactGeometry* contact = static_cast&lt;SpheresContactGeometry*&gt; ((*ii)-&gt;interactionGeometry.get());
++			//	     if ((*(ncb-&gt;bodies))[(*ii)-&gt;getId1()]-&gt;isDynamic)
++			//		 contact-&gt;radius1 *= multiplier;
++			//	     if ((*(ncb-&gt;bodies))[(*ii)-&gt;getId2()]-&gt;isDynamic)
++			//		 contact-&gt;radius2 *= multiplier;
++			if ((*(ncb-&gt;bodies))[(*ii)-&gt;getId1()]-&gt;isDynamic)
++				contact-&gt;radius1 = static_cast&lt;InteractingSphere*&gt; ((*(ncb-&gt;bodies))[(*ii)-&gt;getId1()]-&gt;interactingGeometry.get())-&gt;radius;
++			if ((*(ncb-&gt;bodies))[(*ii)-&gt;getId2()]-&gt;isDynamic)
++				contact-&gt;radius2 = static_cast&lt;InteractingSphere*&gt; ((*(ncb-&gt;bodies))[(*ii)-&gt;getId2()]-&gt;interactingGeometry.get())-&gt;radius;
++		}
++	}
+ }
+ 
+ /*!
+@@ -353,58 +312,58 @@
+  */
+ Real TriaxialStressController::ComputeUnbalancedForce(Body * body, bool maxUnbalanced)
+ {
+-        //compute the mean contact force
+-        Real MeanForce=0;
+-        long nForce = 0;
++	//compute the mean contact force
++	Real MeanForce=0;
++	long nForce = 0;
+ 
+-        MetaBody * ncb = static_cast&lt;MetaBody*&gt;(body);
+-        shared_ptr&lt;BodyContainer&gt;&amp; bodies = ncb-&gt;bodies;
++	MetaBody * ncb = static_cast&lt;MetaBody*&gt;(body);
++	shared_ptr&lt;BodyContainer&gt;&amp; bodies = ncb-&gt;bodies;
+ 
+-        InteractionContainer::iterator ii    = ncb-&gt;transientInteractions-&gt;begin();
+-        InteractionContainer::iterator iiEnd = ncb-&gt;transientInteractions-&gt;end();
+-        for(  ; ii!=iiEnd ; ++ii ) {
+-                if ((*ii)-&gt;isReal) {
+-                        const shared_ptr&lt;Interaction&gt;&amp; contact = *ii;
+-                        Real fn = (static_cast&lt;ElasticContactInteraction*&gt; (contact-&gt;interactionPhysics.get()))-&gt;normalForce.Length();
+-                        if (fn!=0)
+-                        {
+-                        MeanForce += (static_cast&lt;ElasticContactInteraction*&gt; (contact-&gt;interactionPhysics.get()))-&gt;normalForce.Length();
+-                        ++nForce;
+-                        }
+-                }
+-        }
+-        if (nForce!=0) MeanForce /= nForce;
++	InteractionContainer::iterator ii    = ncb-&gt;transientInteractions-&gt;begin();
++	InteractionContainer::iterator iiEnd = ncb-&gt;transientInteractions-&gt;end();
++	for(  ; ii!=iiEnd ; ++ii ) {
++		if ((*ii)-&gt;isReal) {
++			const shared_ptr&lt;Interaction&gt;&amp; contact = *ii;
++			Real fn = (static_cast&lt;ElasticContactInteraction*&gt; (contact-&gt;interactionPhysics.get()))-&gt;normalForce.Length();
++			if (fn!=0)
++			{
++			MeanForce += (static_cast&lt;ElasticContactInteraction*&gt; (contact-&gt;interactionPhysics.get()))-&gt;normalForce.Length();
++			++nForce;
++			}
++		}
++	}
++	if (nForce!=0) MeanForce /= nForce;
+ 
+-//        int actionForceIndex = actionForce-&gt;getClassIndex();
++//	int actionForceIndex = actionForce-&gt;getClassIndex();
+ 
+-        if (!maxUnbalanced) {
+-                //compute mean Unbalanced Force
+-                Real MeanUnbalanced=0;
+-                long nBodies = 0;
+-                BodyContainer::iterator bi    = bodies-&gt;begin();
+-                BodyContainer::iterator biEnd = bodies-&gt;end();
+-                Real f;
+-                for(  ; bi!=biEnd ; ++bi ) {
+-                        if ((*bi)-&gt;isDynamic) {
+-                                f= (static_cast&lt;Force*&gt;   ( ncb-&gt;physicalActions-&gt;find( (*bi)-&gt;getId() , ForceClassIndex).get() )-&gt;force).Length();
+-                                MeanUnbalanced += f;
+-                                if (f!=0) ++nBodies;
+-                        }
+-                }
+-                if (nBodies != 0 &amp;&amp; MeanForce != 0) MeanUnbalanced = MeanUnbalanced/nBodies/MeanForce;
+-                return  MeanUnbalanced;
+-        } else {
+-                //compute max Unbalanced Force
+-                Real MaxUnbalanced=0;
+-                BodyContainer::iterator bi    = bodies-&gt;begin();
+-                BodyContainer::iterator biEnd = bodies-&gt;end();
+-                for(  ; bi!=biEnd ; ++bi ) {
+-                        if ((*bi)-&gt;isDynamic) {
+-                                MaxUnbalanced = std::max((static_cast&lt;Force*&gt;   ( ncb-&gt;physicalActions-&gt;find( (*bi)-&gt;getId() , ForceClassIndex).get() )-&gt;force).Length(), MaxUnbalanced);
+-                        }
+-                }
+-                if (MeanForce != 0) MaxUnbalanced = MaxUnbalanced/MeanForce;
+-                return MaxUnbalanced/MeanForce;
+-        }
++	if (!maxUnbalanced) {
++		//compute mean Unbalanced Force
++		Real MeanUnbalanced=0;
++		long nBodies = 0;
++		BodyContainer::iterator bi    = bodies-&gt;begin();
++		BodyContainer::iterator biEnd = bodies-&gt;end();
++		Real f;
++		for(  ; bi!=biEnd ; ++bi ) {
++			if ((*bi)-&gt;isDynamic) {
++				f= (static_cast&lt;Force*&gt;   ( ncb-&gt;physicalActions-&gt;find( (*bi)-&gt;getId() , ForceClassIndex).get() )-&gt;force).Length();
++				MeanUnbalanced += f;
++				if (f!=0) ++nBodies;
++			}
++		}
++		if (nBodies != 0 &amp;&amp; MeanForce != 0) MeanUnbalanced = MeanUnbalanced/nBodies/MeanForce;
++		return  MeanUnbalanced;
++	} else {
++		//compute max Unbalanced Force
++		Real MaxUnbalanced=0;
++		BodyContainer::iterator bi    = bodies-&gt;begin();
++		BodyContainer::iterator biEnd = bodies-&gt;end();
++		for(  ; bi!=biEnd ; ++bi ) {
++			if ((*bi)-&gt;isDynamic) {
++				MaxUnbalanced = std::max((static_cast&lt;Force*&gt;   ( ncb-&gt;physicalActions-&gt;find( (*bi)-&gt;getId() , ForceClassIndex).get() )-&gt;force).Length(), MaxUnbalanced);
++			}
++		}
++		if (MeanForce != 0) MaxUnbalanced = MaxUnbalanced/MeanForce;
++		return MaxUnbalanced/MeanForce;
++	}
+ }
+ 
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.hpp	2007-12-19 11:26:29 UTC (rev 1238)
++++ trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.hpp	2008-01-07 09:59:04 UTC (rev 1239)
+@@ -35,7 +35,7 @@
+ 	public :
+ 		unsigned int stiffnessUpdateInterval, computeStressStrainInterval, radiusControlInterval;
+ 		//! internal index values for retrieving walls
+-		int wall_bottom, wall_top, wall_left, wall_right, wall_front, wall_back;
++		enum { wall_bottom=0, wall_top, wall_left, wall_right, wall_front, wall_back };
+ 		//! real index values of walls in the MetaBody
+ 		int wall_id [6];
+ 		//! Defines the prescibed resultant force 
+
+Modified: trunk/pkg/dem/PreProcessor/TriaxialTest.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/TriaxialTest.cpp	2007-12-19 11:26:29 UTC (rev 1238)
++++ trunk/pkg/dem/PreProcessor/TriaxialTest.cpp	2008-01-07 09:59:04 UTC (rev 1239)
+@@ -161,7 +161,8 @@
+ 	boxFrictionDeg   = 0.f;
+ 	gravity 	= Vector3r(0,-9.81,0);
+ 	
+-	sigma_iso = 50000;
++	sigmaIsoCompaction = 50000;
++	sigmaLateralConfinement=sigmaIsoCompaction;
+ 	
+ //	wall_top_id =0;
+ // 	wall_bottom_id =0;
+@@ -246,7 +247,9 @@
+ 	//REGISTER_ATTRIBUTE(bigBallYoungModulus);
+ 	//REGISTER_ATTRIBUTE(bigBallPoissonRatio);
+ 	//REGISTER_ATTRIBUTE(bigBallDropHeight);
+-	REGISTER_ATTRIBUTE(sigma_iso);
++	//REGISTER_ATTRIBUTE(sigma_iso);
++	REGISTER_ATTRIBUTE(sigmaIsoCompaction);
++	REGISTER_ATTRIBUTE(sigmaLateralConfinement);
+ 
+ }
+ 
+@@ -643,7 +646,9 @@
+ 	triaxialcompressionEngine = shared_ptr&lt;TriaxialCompressionEngine&gt; (new TriaxialCompressionEngine);
+ 	triaxialcompressionEngine-&gt; stiffnessUpdateInterval = wallStiffnessUpdateInterval;// = stiffness update interval
+ 	triaxialcompressionEngine-&gt; radiusControlInterval = radiusControlInterval;// = stiffness update interval
+-	triaxialcompressionEngine-&gt; sigma_iso = sigma_iso;
++	//triaxialcompressionEngine-&gt; sigma_iso = sigma_iso;
++	triaxialcompressionEngine-&gt; sigmaIsoCompaction = sigmaIsoCompaction;
++	triaxialcompressionEngine-&gt; sigmaLateralConfinement = sigmaLateralConfinement;
+ 	triaxialcompressionEngine-&gt; max_vel = 0.01;
+ 	triaxialcompressionEngine-&gt; thickness = thickness;
+ 	triaxialcompressionEngine-&gt;strainRate = strainRate;
+@@ -661,7 +666,7 @@
+ 	triaxialStateRecorder-&gt; interval 		= recordIntervalIter;
+ 	//triaxialStateRecorderer-&gt; thickness 		= thickness;
+ 	
+-	
++	#if 0	
+ 	// moving walls to regulate the stress applied
+ 	//cerr &lt;&lt; &quot;triaxialstressController = shared_ptr&lt;TriaxialStressController&gt; (new TriaxialStressController);&quot; &lt;&lt; std::endl;
+ 	triaxialstressController = shared_ptr&lt;TriaxialStressController&gt; (new TriaxialStressController);
+@@ -672,6 +677,7 @@
+ 	triaxialstressController-&gt;wall_bottom_activated = false;
+ 	triaxialstressController-&gt;wall_top_activated = false;	
+ 		//cerr &lt;&lt; &quot;fin de sezction triaxialstressController = shared_ptr&lt;TriaxialStressController&gt; (new TriaxialStressController);&quot; &lt;&lt; std::endl;
++	#endif
+ 	
+ 	rootBody-&gt;engines.clear();
+ 	rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new PhysicalActionContainerReseter));
+
+Modified: trunk/pkg/dem/PreProcessor/TriaxialTest.hpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/TriaxialTest.hpp	2007-12-19 11:26:29 UTC (rev 1238)
++++ trunk/pkg/dem/PreProcessor/TriaxialTest.hpp	2008-01-07 09:59:04 UTC (rev 1239)
+@@ -70,10 +70,11 @@
+ 				,bigBallPoissonRatio
+ 				,bigBallYoungModulus
+ 				,bigBallFrictDeg
+-				,bigBallDropHeight
++				,bigBallDropHeight,
+ 				
+-				,sigma_iso
+-				,strainRate
++				sigmaIsoCompaction,
++				sigmaLateralConfinement,
++				strainRate
+ 				,StabilityCriterion
+ 				,maxMultiplier ///max multiplier of diameters during internal compaction
+ 				,finalMaxMultiplier;
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	
+	<LI>Next message: <A HREF="000205.html">[Yade-commits] r1240 - in trunk/pkg/lattice: Engine/EngineUnit	PreProcessor
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#204">[ date ]</a>
+              <a href="thread.html#204">[ thread ]</a>
+              <a href="subject.html#204">[ subject ]</a>
+              <a href="author.html#204">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

@@ -1,0 +1,504 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1355 - in trunk: examples gui gui/py scripts
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1355%20-%20in%20trunk%3A%20examples%20gui%20gui/py%20scripts&In-Reply-To=%3C200805151659.m4FGx9WP000297%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000316.html">
+   <LINK REL="Next"  HREF="000318.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1355 - in trunk: examples gui gui/py scripts</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1355%20-%20in%20trunk%3A%20examples%20gui%20gui/py%20scripts&In-Reply-To=%3C200805151659.m4FGx9WP000297%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1355 - in trunk: examples gui gui/py scripts">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Thu May 15 18:59:09 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000316.html">[Yade-commits] r1354 - in trunk: examples gui gui/py lib/import	pkg/dem/PreProcessor
+</A></li>
+        <LI>Next message: <A HREF="000318.html">[Yade-commits] r1356 - branches
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#317">[ date ]</a>
+              <a href="thread.html#317">[ thread ]</a>
+              <a href="subject.html#317">[ subject ]</a>
+              <a href="author.html#317">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2008-05-15 18:59:06 +0200 (Thu, 15 May 2008)
+New Revision: 1355
+
+Added:
+   trunk/gui/py/PlotDataGetter.cpp
+   trunk/gui/py/PlotDataGetter.hpp
+   trunk/gui/py/plot.py
+   trunk/scripts/simple-scene-graph.py
+Modified:
+   trunk/examples/cmdGui1.py
+   trunk/gui/SConscript
+   trunk/gui/py/PythonUI.cpp
+   trunk/gui/py/PythonUI.hpp
+Log:
+1. Rudimentary plotting support through python; see <A HREF="http://yade.wikia.com/wiki/PythonPlotting">http://yade.wikia.com/wiki/PythonPlotting</A> and scripts/simple-scene-graph.py for details
+2. Updates in examples/cmdGui1.py
+
+
+Modified: trunk/examples/cmdGui1.py
+===================================================================
+--- trunk/examples/cmdGui1.py	2008-05-15 10:51:37 UTC (rev 1354)
++++ trunk/examples/cmdGui1.py	2008-05-15 16:59:06 UTC (rev 1355)
+@@ -1,21 +1,11 @@
+-# sample rc script for cmdGui
++# sample rc script for PythonUI
+ #
+-# yade-trunk -N cmdGui -- -s examples/cmdGui1.py
+-#
+-#
+-p=Preprocessor()
+-# show available generators
+-print &quot;Available generators:&quot;,p.listGenerators()
+-p.generator=&quot;BoxStack&quot;
+-# set output file (default: ../data/scene.xml)
+-p.output=&quot;/tmp/scene.xml&quot;
+-# serializer (default: XMLFormatManager, no need to change)
+-print &quot;Available serializers:&quot;,p.listSerializers()
++p=Preprocessor(&quot;BoxStack&quot;)
+ # changing attributes
+ p['nbBoxes']=[3,5,5]
+ p['boxDensity']=4000
+ # run the generator, returns status
+-p.generate()
++p.generate('/tmp/scene.xml')
+ #
+ # create Omega instance, which controls simulation
+ #
+@@ -24,9 +14,9 @@
+ o.load(&quot;/tmp/scene.xml&quot;)
+ # run the simulation
+ o.run()
+-#
++# !! views currently broken
+ # open one View (more views will crash...)
+-v=View()
++# v=View()
+ # get iteration number
+ print o.iter
+ # stop somewhere after iteration 10000
+
+Modified: trunk/gui/SConscript
+===================================================================
+--- trunk/gui/SConscript	2008-05-15 10:51:37 UTC (rev 1354)
++++ trunk/gui/SConscript	2008-05-15 16:59:06 UTC (rev 1355)
+@@ -40,6 +40,7 @@
+ 	env.Install('$PREFIX/lib/yade$SUFFIX/gui',[
+ 		env.SharedLibrary('PythonUI',['py/PythonUI.cpp']),
+ 		env.File('PythonUI_rc.py','py'),
++		env.SharedLibrary('PlotDataGetter',['py/PlotDataGetter.cpp']),
+ 	])
+ 	# one level deeper so that you can say: from yade.wrapper import *
+ 	# (more submodules to come)
+@@ -63,5 +64,6 @@
+ 		env.File('utils.py','py'),
+ 		env.File('runtime.py','py'),
+ 		env.File('ipython.py','py'),
++		env.File('plot.py','py'),
+ 	])
+ 
+
+Added: trunk/gui/py/PlotDataGetter.cpp
+===================================================================
+--- trunk/gui/py/PlotDataGetter.cpp	2008-05-15 10:51:37 UTC (rev 1354)
++++ trunk/gui/py/PlotDataGetter.cpp	2008-05-15 16:59:06 UTC (rev 1355)
+@@ -0,0 +1,19 @@
++// 2008 &#169; V&#225;clav &#352;milauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">eudoxos at arcig.cz</A>&gt;
++#include&quot;PlotDataGetter.hpp&quot;
++#include&lt;Python.h&gt;
++YADE_PLUGIN(&quot;PlotDataGetter&quot;);
++CREATE_LOGGER(PlotDataGetter);
++void PlotDataGetter::action(MetaBody* rb){
++	long iter=Omega::instance().getCurrentIteration();
++	Real time=Omega::instance().getSimulationTime();
++	if((iterInterval&gt;0 &amp;&amp; (iter-lastRecIter&gt;=iterInterval)) || (timeInterval&gt;0 &amp;&amp; (time-lastRecTime&gt;=timeInterval))){
++		LOG_DEBUG(&quot;#&quot;&lt;&lt;iter&lt;&lt;&quot; &quot;&lt;&lt;time&lt;&lt;&quot;s (#&quot;&lt;&lt;iter-lastRecIter&lt;&lt;&quot; &quot;&lt;&lt;time-lastRecTime&lt;&lt;&quot; since last run), running `&quot;&lt;&lt;addPlotDataCall&lt;&lt;&quot;'&quot;);
++		lastRecIter=iter; lastRecTime=time;
++		// here, we use python API, but there already is an interpreter (MainLoop) running
++		// if no GIL (GlobalInterpreterLock) &#8594; segfault!
++		PyGILState_STATE gstate;
++			gstate = PyGILState_Ensure();
++			PyRun_SimpleString(addPlotDataCall.c_str()); // OK, this is suboptimal, since it has to be parsed at every execution; critical?
++		PyGILState_Release(gstate);
++	}
++}
+
+Added: trunk/gui/py/PlotDataGetter.hpp
+===================================================================
+--- trunk/gui/py/PlotDataGetter.hpp	2008-05-15 10:51:37 UTC (rev 1354)
++++ trunk/gui/py/PlotDataGetter.hpp	2008-05-15 16:59:06 UTC (rev 1355)
+@@ -0,0 +1,37 @@
++// 2008 &#169; V&#225;clav &#352;milauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">eudoxos at arcig.cz</A>&gt;
++#pragma once
++#include&lt;yade/core/StandAloneEngine.hpp&gt;
++#include&lt;yade/core/MetaBody.hpp&gt;
++/* Execute a python command (in addPlotDataCall) periodically, with defined (and adjustable) periodicity.
++ *
++ * Period constraints are iterInterval and timeInterval. When either of them is exceeded, the addPlotDataCall is run.
++ *
++ * Thie engine is primarily conceived for collecting data for yade.plot plots during simulations, hence the name.
++ */
++class PlotDataGetter: public StandAloneEngine {
++	private:
++		long iterInterval;
++		Real timeInterval;
++		Real lastRecTime;
++		long lastRecIter;
++		string addPlotDataCall;
++	public :
++		PlotDataGetter(): iterInterval(0),timeInterval(0),lastRecTime(0),lastRecIter(0),addPlotDataCall(&quot;addPlotDataCall&quot;){};
++		virtual void action(MetaBody* b);
++		virtual bool isActivated(){return true;}
++		virtual void registerAttributes(){
++			REGISTER_ATTRIBUTE(iterInterval);
++			REGISTER_ATTRIBUTE(timeInterval);
++			REGISTER_ATTRIBUTE(lastRecTime);
++			REGISTER_ATTRIBUTE(lastRecIter);
++			REGISTER_ATTRIBUTE(addPlotDataCall);
++		}
++	protected :
++		virtual void postProcessAttributes(bool deserializing){}
++	DECLARE_LOGGER;
++	REGISTER_CLASS_NAME(PlotDataGetter);
++	REGISTER_BASE_CLASS_NAME(StandAloneEngine);
++};
++
++REGISTER_SERIALIZABLE(PlotDataGetter,false);
++
+
+Modified: trunk/gui/py/PythonUI.cpp
+===================================================================
+--- trunk/gui/py/PythonUI.cpp	2008-05-15 10:51:37 UTC (rev 1354)
++++ trunk/gui/py/PythonUI.cpp	2008-05-15 16:59:06 UTC (rev 1355)
+@@ -48,6 +48,17 @@
+ 	}
+ }
+ 
++void PythonUI::termSetup(void){
++	LOG_DEBUG(&quot;Setting terminal discipline (^C kills line, ^U does nothing)&quot;);
++	tcgetattr(STDIN_FILENO,&amp;PythonUI::tios);
++	memcpy(&amp;PythonUI::tios_orig,&amp;PythonUI::tios,sizeof(struct termios));
++	atexit(PythonUI::termRestore);
++	tios.c_cc[VKILL]=tios.c_cc[VINTR]; // assign ^C what ^U normally does (delete line)
++	tios.c_cc[VINTR] = 0; // disable sending SIGINT at ^C
++	tcsetattr(STDIN_FILENO,TCSANOW,&amp;PythonUI::tios);
++	tcflush(STDIN_FILENO,TCIFLUSH);
++}
++
+ void PythonUI::termRestore(void){
+ 	LOG_DEBUG(&quot;Restoring terminal discipline.&quot;);
+ 	tcsetattr(STDIN_FILENO,TCSANOW,&amp;PythonUI::tios_orig);
+@@ -80,14 +91,8 @@
+ 	 * Hence we remap ^C (keycode in c_cc[VINTR]) to killing the line (c_cc[VKILL]) and disable VINTR afterwards.
+ 	 * The behavior is restored back by the PythonUI::termRestore registered with atexit.
+ 	 * */
+-	LOG_DEBUG(&quot;Setting terminal discipline (^C kills line, ^U does nothing)&quot;);
+-	tcgetattr(STDIN_FILENO,&amp;PythonUI::tios);
+-	memcpy(&amp;PythonUI::tios_orig,&amp;PythonUI::tios,sizeof(struct termios));
++	termSetup();
+ 	atexit(PythonUI::termRestore);
+-	tios.c_cc[VKILL]=tios.c_cc[VINTR]; // assign ^C what ^U normally does (delete line)
+-	tios.c_cc[VINTR] = 0; // disable sending SIGINT at ^C
+-	tcsetattr(STDIN_FILENO,TCSANOW,&amp;PythonUI::tios);
+-	tcflush(STDIN_FILENO,TCIFLUSH);
+ 
+ 
+ 	XInitThreads();
+
+Modified: trunk/gui/py/PythonUI.hpp
+===================================================================
+--- trunk/gui/py/PythonUI.hpp	2008-05-15 10:51:37 UTC (rev 1354)
++++ trunk/gui/py/PythonUI.hpp	2008-05-15 16:59:06 UTC (rev 1355)
+@@ -10,6 +10,7 @@
+ 		void help();
+ 		void execScript(string);
+ 		static struct termios tios,tios_orig;
++		static void termSetup();
+ 		static void termRestore();
+ 	public:
+ 		PythonUI(){};
+
+Added: trunk/gui/py/plot.py
+===================================================================
+--- trunk/gui/py/plot.py	2008-05-15 10:51:37 UTC (rev 1354)
++++ trunk/gui/py/plot.py	2008-05-15 16:59:06 UTC (rev 1355)
+@@ -0,0 +1,153 @@
++# encoding: utf-8
++# 2008 &#169; V&#225;clav &#352;milauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">eudoxos at arcig.cz</A>&gt; 
++&quot;&quot;&quot;
++Module containing utility functions for plotting inside yade.
++
++Experimental, interface may change (even drastically).
++
++&quot;&quot;&quot;
++import matplotlib
++# matplotlib.use('GtkCairo')
++matplotlib.rc('axes',grid=True) # put grid in all figures
++import pylab
++
++
++
++data={} # global, common for all plots: {'name':[value,...],...}
++plots={} # dictionary x-name -&gt; (yspec,...), where yspec is either y-name or (y-name,'line-specification')
++plotLines={} # dictionary x-name -&gt; Line2d objects (that hopefully still correspond to yspec in plots)
++needsFullReplot=True
++
++# we could have a yplot class, that would hold: (yspec,...), (Line2d,Line2d,...) ?
++
++
++plotDataGetterEngine=None
++import yade.wrapper
++o=yade.wrapper.Omega()
++
++maxDataLen=1000
++
++def reduceData(l):
++	&quot;&quot;&quot;If we have too much data, take every second value and double the step for DateGetterEngine. This will keep the samples equidistant.
++	&quot;&quot;&quot;
++	if l&gt;maxDataLen:
++		print &quot;Reducing: %d&gt;%d&quot;%(l,maxDataLen)
++		for d in data: data[d]=data[d][::2]
++		global plotDataGetterEngine
++		if not plotDataGetterEngine:
++			plotDataGetterEngine=[e for e in o.engines if e.name=='PlotDataGetter'][0]
++		if plotDataGetterEngine:
++			plotDataGetterEngine['iterInterval']=2*plotDataGetterEngine['iterInterval']
++			plotDataGetterEngine['timeInterval']=2*plotDataGetterEngine['timeInterval']
++		else: raise RuntimeError(&quot;Interval for getting data couldn't be adjusted. (yade.plot.plotDataGetterEngine should be proxy to DataGetterEngine in yade, but is None. &quot;)
++
++
++def addData(d):
++	&quot;&quot;&quot;Add data from argument {'name':value,...} to yade.plot.data.
++
++	New data will be left-padded with nan's, unspecified data will be nan.
++	This way, equal length of all data is assured so that they can be plotted one against any other.
++
++	Nan's don't appear in graphs and are skipped. &quot;&quot;&quot;
++	if len(data)&gt;0: numSamples=len(data[data.keys()[0]])
++	else: numSamples=0
++	reduceData(numSamples)
++	nan=float('nan')
++	for name in d:
++		if not name in data.keys():
++			data[name]=[nan for i in range(numSamples)]
++	for name in data:
++		if name in d: data[name].append(d[name])
++		else: data[name].append(nan)
++
++def fillNonSequence(o):
++	if o.__class__==tuple().__class__ or o.__class__==list().__class__: return o
++	else: return (o,'')
++
++#def updatePlots():
++#	fignum=0
++#	for p in plots:
++#		pylab.figure(fignum)
++#		plots_p=[fillNonSequence(o) for o in plots[p]]
++#		for d in plots_p:
++#			pylab.axi
++#		fignum+=1
++
++import threading,gtk
++
++def killPlots():
++	pylab.clf() # clear figures
++	needsFullReplot=True
++	for t in [t for t in threading.enumerate() if t.getName()=='Thread-plots']:
++		print &quot;GTK&#160;quit&quot;
++		gtk.main_quit()
++
++def fullPlot(): makePlot(update=False)
++def updatePlot():
++	raise RuntimeError(&quot;Updating plot not supported in non-interactive mode!&quot;)
++	if needsFullReplot:
++		print &quot;updatePlot called, doing FULL replot&quot;
++		makePlot(update=False)
++	else:
++		print &quot;updatePlot called, updating plot&quot;
++		makePlot(update=True)
++
++def minMax(l): return [min(l),max(l)]
++
++def makePlot(update=False):
++	fignum=0 # figure counter
++	if not update:
++		killPlots() # quit gkt main loop so that GUi is not blocked
++		pylab.clf() # clear figures, if any
++		global needsFullReplot
++		needsFullReplot=False
++		print &quot;FULL plot&quot;
++	for p in plots:
++		print p,fignum,plots[p]
++		pylab.figure(fignum)
++		pylab.ioff() # turn off interactive mode
++		plots_p=[fillNonSequence(o) for o in plots[p]]
++		if update:
++			for i in range(len(plots_p)): plotLines[p][i].set_data(data[p],data[plots_p[i][0]])
++			pylab.axis(minMax(data[p])+minMax(sum([data[d[0]] for d in plots_p],[])))
++		else:
++			plotLines[p]=pylab.plot(*sum([[data[p],data[d[0]],d[1]] for d in plots_p],[]))
++		pylab.legend([_p[0] for _p in plots_p])
++		pylab.xlabel(p)
++		#pylab.draw()
++		fignum+=1
++	if not update:
++		pylab.show()
++		#threading.Thread(target=pylab.show,name='Thread-plots').start() # works with GTK, cool! (will it work inside yade, though?!)
++def show():
++	fullPlot()
++	
++import random
++if __name__ == &quot;__main__&quot;:
++	for i in range(10):
++		addData({'a':random.random(),'b':random.random(),'t':i*.001,'i':i})
++	print data
++	for i in range(15):
++		addData({'a':random.random(),'c':random.random(),'d':random.random(),'one':1,'t':(i+10)*.001,'i':i+10})
++	print data
++	# all lists must have the same length
++	l=set([len(data[n]) for n in data])
++	print l
++	assert(len(l)==1)
++	plots={'t':('a',('b','g^'),'d'),'i':('a',('one','g^'))}
++	fullPlot()
++	print &quot;PLOT DONE!&quot;
++	fullPlot()
++	plots['t']=('a',('b','r^','d'))
++	print &quot;FULL&#160;PLOT&#160;DONE!&quot;
++	for i in range(20):
++		addData({'d':.1,'a':.5,'c':.6,'c':random.random(),'t':(i+25)*0.001,'i':i+25})
++	updatePlot()
++	print &quot;UPDATED!&quot;
++	print data['d']
++	import time
++	#time.sleep(60)
++	killPlots()
++	#pylab.clf()
++
++
+
+Added: trunk/scripts/simple-scene-graph.py
+===================================================================
+--- trunk/scripts/simple-scene-graph.py	2008-05-15 10:51:37 UTC (rev 1354)
++++ trunk/scripts/simple-scene-graph.py	2008-05-15 16:59:06 UTC (rev 1355)
+@@ -0,0 +1,71 @@
++#!/usr/local/bin/yade-trunk -x
++# -*- encoding=utf-8 -*-
++
++o=Omega()
++o.initializers=[
++	StandAloneEngine('PhysicalActionContainerInitializer'),
++	MetaEngine('BoundingVolumeMetaEngine',[EngineUnit('InteractingSphere2AABB'),EngineUnit('InteractingBox2AABB'),EngineUnit('MetaInteractingGeometry2AABB')])
++	]
++o.engines=[
++	StandAloneEngine('PhysicalActionContainerReseter'),
++	MetaEngine('BoundingVolumeMetaEngine',[
++		EngineUnit('InteractingSphere2AABB'),
++		EngineUnit('InteractingBox2AABB'),
++		EngineUnit('MetaInteractingGeometry2AABB')
++	]),
++	StandAloneEngine('PersistentSAPCollider'),
++	MetaEngine('InteractionGeometryMetaEngine',[
++		EngineUnit('InteractingSphere2InteractingSphere4SpheresContactGeometry'),
++		EngineUnit('InteractingBox2InteractingSphere4SpheresContactGeometry')
++	]),
++	MetaEngine('InteractionPhysicsMetaEngine',[EngineUnit('SimpleElasticRelationships')]),
++	StandAloneEngine('ElasticContactLaw'),
++	DeusExMachina('GravityEngine',{'gravity':[0,0,-9.81]}),
++	MetaEngine('PhysicalActionDamper',[
++		EngineUnit('CundallNonViscousForceDamping',{'damping':0.2}),
++		EngineUnit('CundallNonViscousMomentumDamping',{'damping':0.2})
++	]),
++	MetaEngine('PhysicalActionApplier',[
++		EngineUnit('NewtonsForceLaw'),
++		EngineUnit('NewtonsMomentumLaw'),
++	]),
++	MetaEngine('PhysicalParametersMetaEngine',[EngineUnit('LeapFrogPositionIntegrator')]),
++	MetaEngine('PhysicalParametersMetaEngine',[EngineUnit('LeapFrogOrientationIntegrator')]),
++	###
++	### NOTE&#160;this extra engine
++	###
++	StandAloneEngine('PlotDataGetter',{'timeInterval':.01,'addPlotDataCall':'myAddPlotData()'})
++]
++from yade import utils
++o.bodies.append(utils.box(center=[0,0,0],extents=[.5,.5,.5],dynamic=False,color=[1,0,0],young=30e9,poisson=.3,density=2400))
++o.bodies.append(utils.sphere([0,0,2],1,color=[0,1,0],young=30e9,poisson=.3,density=2400))
++o.dt=.2*utils.PWaveTimeStep()
++
++
++############################################
++##### now the part pertaining to plots #####
++############################################
++
++import yade.plot
++## we will have 2 plots:
++## 1. t as function of i (joke test function)
++## 2. z_sph and v_sph (rendered as green triangles, 'g^') as function of t
++yade.plot.plots={'i':('t'),'t':('z_sph',('v_sph','g^'))}
++
++## static var to specify max number of samples we want to have (1000 is default, no change)
++# yade.plot.maxDataLen=1000
++## this function will be called by PlotDataGetter
++## it should add data with the labels that we will plot
++## if a datum is not specified (but exists), it will be NaN and will not be plotted
++def myAddPlotData():
++	## store some numbers under some labels
++	sph=o.bodies[1]
++	yade.plot.addData({'t':o.time,'i':o.iter,'z_sph':sph.phys['se3'][2],'v_sph':sqrt(sum([v**2 for v in sph.phys['velocity']]))})
++
++o.run();
++print &quot;&quot;&quot;Now, you can say
++
++ yade.plot.show()
++
++to see figures. Calculation will be suspended until all plot windows will have been closed.
++&quot;&quot;&quot;
+
+
+Property changes on: trunk/scripts/simple-scene-graph.py
+___________________________________________________________________
+Name: svn:executable
+   + *
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000316.html">[Yade-commits] r1354 - in trunk: examples gui gui/py lib/import	pkg/dem/PreProcessor
+</A></li>
+	<LI>Next message: <A HREF="000318.html">[Yade-commits] r1356 - branches
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#317">[ date ]</a>
+              <a href="thread.html#317">[ thread ]</a>
+              <a href="subject.html#317">[ subject ]</a>
+              <a href="author.html#317">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

@@ -1,0 +1,634 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1286 - in trunk: gui/cmd	pkg/common/RenderingEngine/GLDrawGeometricalModel	pkg/dem/Engine/StandAloneEngine	pkg/dem/RenderingEngine/GLDrawCohesiveFrictionalContactInteraction
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1286%20-%20in%20trunk%3A%20gui/cmd%0A%09pkg/common/RenderingEngine/GLDrawGeometricalModel%0A%09pkg/dem/Engine/StandAloneEngine%0A%09pkg/dem/RenderingEngine/GLDrawCohesiveFrictionalContactInteraction&In-Reply-To=%3C200803261419.m2QEJsCT021723%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000249.html">
+   <LINK REL="Next"  HREF="000251.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1286 - in trunk: gui/cmd	pkg/common/RenderingEngine/GLDrawGeometricalModel	pkg/dem/Engine/StandAloneEngine	pkg/dem/RenderingEngine/GLDrawCohesiveFrictionalContactInteraction</H1>
+    <B>cosurgi at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1286%20-%20in%20trunk%3A%20gui/cmd%0A%09pkg/common/RenderingEngine/GLDrawGeometricalModel%0A%09pkg/dem/Engine/StandAloneEngine%0A%09pkg/dem/RenderingEngine/GLDrawCohesiveFrictionalContactInteraction&In-Reply-To=%3C200803261419.m2QEJsCT021723%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1286 - in trunk: gui/cmd	pkg/common/RenderingEngine/GLDrawGeometricalModel	pkg/dem/Engine/StandAloneEngine	pkg/dem/RenderingEngine/GLDrawCohesiveFrictionalContactInteraction">cosurgi at mail.berlios.de
+       </A><BR>
+    <I>Wed Mar 26 15:19:54 CET 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000249.html">[Yade-commits] r1284 - in trunk: core gui/cmd	pkg/common/Engine/DeusExMachina scripts
+</A></li>
+        <LI>Next message: <A HREF="000251.html">[Yade-commits] r1287 -	trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#250">[ date ]</a>
+              <a href="thread.html#250">[ thread ]</a>
+              <a href="subject.html#250">[ subject ]</a>
+              <a href="author.html#250">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: cosurgi
+Date: 2008-03-26 15:19:53 +0100 (Wed, 26 Mar 2008)
+New Revision: 1286
+
+Modified:
+   trunk/gui/cmd/yadeControl.cpp
+   trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawSphere.cpp
+   trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawSphere.hpp
+   trunk/pkg/dem/Engine/StandAloneEngine/CohesiveFrictionalContactLaw.cpp
+   trunk/pkg/dem/RenderingEngine/GLDrawCohesiveFrictionalContactInteraction/GLDrawCohesiveFrictionalContactInteraction.cpp
+Log:
+1. moment law: some cleaning
+2. GLDrawSphere - draws circles faster (wireframe)
+3. yadeControl - fix compilation error with optimized builds: YADE_PTR_CAST -&gt; dynamic_pointer_cast
+
+
+
+Modified: trunk/gui/cmd/yadeControl.cpp
+===================================================================
+--- trunk/gui/cmd/yadeControl.cpp	2008-03-25 19:13:54 UTC (rev 1285)
++++ trunk/gui/cmd/yadeControl.cpp	2008-03-26 14:19:53 UTC (rev 1286)
+@@ -268,7 +268,7 @@
+ 			if(!actionName_.check()) throw invalid_argument(&quot;Could not extract action-name.&quot;);
+ 			if(!id_.check()) throw invalid_argument(&quot;Could not extract body id.&quot;);
+ 			// FIXME: this may be rather slow (at every lookup!)
+-			int actionClassIndex=YADE_PTR_CAST&lt;Indexable&gt;(ClassFactory::instance().createShared(actionName_()))-&gt;getClassIndex();
++			int actionClassIndex=dynamic_pointer_cast&lt;Indexable&gt;(ClassFactory::instance().createShared(actionName_()))-&gt;getClassIndex();
+ 			LOG_DEBUG(&quot;Got class index &quot;&lt;&lt;actionClassIndex&lt;&lt;&quot; for &quot;&lt;&lt;actionName_());
+ 			return pyPhysicalAction(proxee-&gt;find(id_(),actionClassIndex));
+ 		}
+
+Modified: trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawSphere.cpp
+===================================================================
+--- trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawSphere.cpp	2008-03-25 19:13:54 UTC (rev 1285)
++++ trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawSphere.cpp	2008-03-26 14:19:53 UTC (rev 1286)
+@@ -11,12 +11,6 @@
+ #include&lt;yade/lib-opengl/OpenGLWrapper.hpp&gt;
+ 
+ 
+-//int GLDrawSphere::glSphereList=-1;
+-//int GLDrawSphere::glWiredSphereList=-1;
+-
+-//vector&lt;Vector3r&gt; GLDrawSphere::vertices;
+-//vector&lt;Vector3r&gt; GLDrawSphere::faces;
+-
+ //void drawString(string str,int x,int y,float * c)
+ //{
+ //      glPushMatrix();
+@@ -74,7 +68,7 @@
+ 		glWiredSphereList = glGenLists(1);
+ 		glNewList(glWiredSphereList,GL_COMPILE);
+ 			glDisable(GL_LIGHTING);
+-			drawSphere(1);
++			drawWiredSphere();
+ 		glEndList();
+ 		glSphereList = glGenLists(1);
+ 		glNewList(glSphereList,GL_COMPILE);
+@@ -95,59 +89,13 @@
+ //glColor4(gm-&gt;diffuseColor[0],gm-&gt;diffuseColor[1],gm-&gt;diffuseColor[2],0.4);
+ 
+  	if (gm-&gt;wire || wire)
+- 	{
+-		//glScalef(radius,radius,radius);
+-                //glCallList(glWiredSphereList);
+-
+-//                glutWireSphere(radius,4,4);
+-
+-		///////////////////////
+-		// draw a circle from a bunch of short lines
+-		//
+-		// FACING the camera !!
+-		// FIXME: this can be done faster, by storing the circle in the buffer (similarly as the sphere)
+-		///////////////////////
+-		//
+-			glPushMatrix();
+-
+-			float modelview[16];
+-			int i,j;
+-			glGetFloatv(GL_MODELVIEW_MATRIX , modelview);
+-			// undo all rotations
+-			// beware all scaling is lost as well 
+-			for( i=0; i&lt;3; i++ ) 
+-				for( j=0; j&lt;3; j++ ) {
+-					if ( i==j )
+-						modelview[i*4+j] = 1.0;
+-					else
+-						modelview[i*4+j] = 0.0;
+-				}
+-			glLoadMatrixf(modelview);
+-
+-
++ 	{// circle facing the camera
++		glPushMatrix();
++		clearGlMatrix();
++		glScalef(radius,radius,radius);
++                glCallList(glWiredSphereList);
++		glPopMatrix();
+ 		
+-		glDisable(GL_LIGHTING);
+-		float vectorY1=radius,startY=vectorY1;
+-		float vectorX1=0,startX=vectorX1;
+-	glBegin(GL_LINE_STRIP);
+-//filled circle (why it doesn't work? in separate small test program - 20 lines - it works)
+-//glBegin(GL_TRIANGLE_FAN);
+-//glVertex2d(0.0,0.0);
+-		for(float angle=0.0f ; angle &lt;= (2.0f*3.14159) ; angle+=0.31f)
+-		{		
+-			float vectorX=(radius*(float)sin((double)angle));
+-			float vectorY=(radius*(float)cos((double)angle));		
+-			glVertex2d(vectorX1,vectorY1);
+-			vectorY1=vectorY;
+-			vectorX1=vectorX;			
+-		}
+-		glVertex2d(startX,startY);
+-		glEnd();
+-
+-			glPopMatrix();
+-
+-		/////////////////////
+-		
+ /////////////////////////// FIXME - display coordinates (stupid place!!)
+ //              glPushMatrix();
+ //              glRasterPos2i(0,0);
+@@ -156,7 +104,6 @@
+ //                      glutBitmapCharacter(GLUT_BITMAP_HELVETICA_12, str[i]);
+ //              glPopMatrix();
+ ///////////////////////////
+-
+         }
+         else
+         {
+@@ -235,5 +182,43 @@
+ 		subdivideTriangle(vertices[(unsigned int)faces[i][0]],vertices[(unsigned int)faces[i][1]],vertices[(unsigned int)faces[i][2]],depth);
+ }
+ 
++void GLDrawSphere::drawWiredSphere()
++{
++		float vectorY1=1.0,startY=vectorY1;
++		float vectorX1=0,startX=vectorX1;
++
++	//not filled circle
++	//glBegin(GL_LINE_STRIP);
++//filled circle
++glBegin(GL_POLYGON);
++		for(float angle=0.0f ; angle &gt;= (-2.0f*3.14159) ; angle-=0.155f)
++		{		
++			float vectorX=((float)sin((double)angle));
++			float vectorY=((float)cos((double)angle));		
++			glVertex2d(vectorX1,vectorY1);
++			vectorY1=vectorY;
++			vectorX1=vectorX;			
++		}
++	//not filled circle
++	//glVertex2d(startX,startY);
++		glEnd();
++}
++
++void GLDrawSphere::clearGlMatrix()
++{
++	float modelview[16];
++	int i,j;
++	glGetFloatv(GL_MODELVIEW_MATRIX , modelview);
++	// undo all rotations
++	// beware all scaling is lost as well 
++	for( i=0; i&lt;3; i++ ) 
++		for( j=0; j&lt;3; j++ ) {
++			if ( i==j )
++				modelview[i*4+j] = 1.0;
++			else
++				modelview[i*4+j] = 0.0;
++		}
++	glLoadMatrixf(modelview);
++}
+ ///////////////////////////////////////////////////////////////////////////////////////////////////
+ YADE_PLUGIN();
+
+Modified: trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawSphere.hpp
+===================================================================
+--- trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawSphere.hpp	2008-03-25 19:13:54 UTC (rev 1285)
++++ trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawSphere.hpp	2008-03-26 14:19:53 UTC (rev 1286)
+@@ -21,6 +21,8 @@
+ 		int glSphereList;
+ 		void subdivideTriangle(Vector3r&amp; v1,Vector3r&amp; v2,Vector3r&amp; v3, int depth);
+ 		void drawSphere(int depth);
++		void drawWiredSphere();
++		void clearGlMatrix();
+ 	
+ 	public :
+ 		GLDrawSphere();
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/CohesiveFrictionalContactLaw.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/CohesiveFrictionalContactLaw.cpp	2008-03-25 19:13:54 UTC (rev 1285)
++++ trunk/pkg/dem/Engine/StandAloneEngine/CohesiveFrictionalContactLaw.cpp	2008-03-26 14:19:53 UTC (rev 1286)
+@@ -1,5 +1,5 @@
+ /*************************************************************************
+-*  Copyright (C) 2007 by Bruno Chareyre                                  *
++*  Copyright (C) 2007 by Bruno Chareyre, Janek Kozicki                   *
+ *  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">bruno.chareyre at imag.fr</A>                                                *
+ *                                                                        *
+ *  This program is free software; it is licensed under the terms of the  *
+@@ -79,8 +79,6 @@
+     }
+     //iter = Omega::instance().getCurrentIteration();
+ 
+-/// Non Permanents Links												///
+-
+     InteractionContainer::iterator ii    = ncb-&gt;transientInteractions-&gt;begin();
+     InteractionContainer::iterator iiEnd = ncb-&gt;transientInteractions-&gt;end();
+     for (  ; ii!=iiEnd ; ++ii )
+@@ -144,134 +142,55 @@
+             else
+             {
+ 
+-/* ORIG */                Vector3r axis;
+-/* ORIG */                Real angle;
+-/* ORIG */
+-/* ORIG */                /// Here is the code with approximated rotations 	 ///
+-/* ORIG */
+-/* ORIG */		axis	 		= currentContactPhysics-&gt;prevNormal.Cross(currentContactGeometry-&gt;normal);
+-/* ORIG */		shearForce 	       -= shearForce.Cross(axis);
+-/* ORIG */		angle 			= dt*0.5*currentContactGeometry-&gt;normal.Dot(de1-&gt;angularVelocity+de2-&gt;angularVelocity);
+-/* ORIG */		axis 			= angle*currentContactGeometry-&gt;normal;
+-/* ORIG */		shearForce 	       -= shearForce.Cross(axis);
+-/* ORIG */
+-/* ORIG */                /// Here is the code with exact rotations 		 ///
+-/* ORIG */
+-/* ORIG */                // 		Quaternionr q;
+-/* ORIG */                //
+-/* ORIG */                // 		axis					= currentContactPhysics-&gt;prevNormal.cross(currentContactGeometry-&gt;normal);
+-/* ORIG */                // 		angle					= acos(currentContactGeometry-&gt;normal.dot(currentContactPhysics-&gt;prevNormal));
+-/* ORIG */                // 		q.fromAngleAxis(angle,axis);
+-/* ORIG */                //
+-/* ORIG */                // 		currentContactPhysics-&gt;shearForce	= currentContactPhysics-&gt;shearForce*q;
+-/* ORIG */                //
+-/* ORIG */                // 		angle					= dt*0.5*currentContactGeometry-&gt;normal.dot(de1-&gt;angularVelocity+de2-&gt;angularVelocity);
+-/* ORIG */                // 		axis					= currentContactGeometry-&gt;normal;
+-/* ORIG */                // 		q.fromAngleAxis(angle,axis);
+-/* ORIG */                // 		currentContactPhysics-&gt;shearForce	= q*currentContactPhysics-&gt;shearForce;
+-/* ORIG */
+-/* ORIG */                /// 							 ///
+-/* ORIG */
+-/* ORIG */                Vector3r x				= currentContactGeometry-&gt;contactPoint;
+-/* ORIG */                //Vector3r c1x				= (x - de1-&gt;se3.position);
+-/* ORIG */                //Vector3r c2x				= (x - de2-&gt;se3.position);
+-/* ORIG */                /// The following definition of c1x and c2x is to avoid &quot;granular ratcheting&quot; 
+-/* ORIG */		///  (see F. ALONSO-MARROQUIN, R. GARCIA-ROJO, H.J. HERRMANN, 
+-/* ORIG */		///   &quot;Micro-mechanical investigation of granular ratcheting, in Cyclic Behaviour of Soils and Liquefaction Phenomena&quot;,
+-/* ORIG */		///   ed. T. Triantafyllidis (Balklema, London, 2004), p. 3-10 - and a lot more papers from the same authors)
+-/* BRUNO's ERROR was here*/                Vector3r c1x	= currentContactGeometry-&gt;radius1*currentContactGeometry-&gt;normal;
+-/* BRUNO's ERROR was here*/                Vector3r c2x	= -currentContactGeometry-&gt;radius2*currentContactGeometry-&gt;normal;
+-/* ORIG */                Vector3r relativeVelocity		= (de2-&gt;velocity+de2-&gt;angularVelocity.Cross(c2x)) - (de1-&gt;velocity+de1-&gt;angularVelocity.Cross(c1x));
+-/* ORIG */                Vector3r shearVelocity			= relativeVelocity-currentContactGeometry-&gt;normal.Dot(relativeVelocity)*currentContactGeometry-&gt;normal;
+-/* ORIG */                Vector3r shearDisplacement		= shearVelocity*dt;
+-/* ORIG */
+-/* ORIG */
+-/* ORIG *////////////////////////// CREEP START ///////////////////////////
+-/* ORIG *///	Real    viscosity = 300000.0;
+-/* ORIG *///	shearForce                            -= currentContactPhysics-&gt;ks*(shearDisplacement + shearForce*dt/viscosity);
+-/* ORIG */
+-/* ORIG */shearForce 			       -= currentContactPhysics-&gt;ks*shearDisplacement;
+-/* ORIG *////////////////////////// CREEP END /////////////////////////////
++                Vector3r axis;
++                Real angle;
+ 
+-//DEBUGGING// if((id1==22 &amp;&amp; id2==6)){
+-//DEBUGGING// std::cout.precision(17);
+-//DEBUGGING// std::cout &lt;&lt; &quot;shearForce: &quot; &lt;&lt; shearForce &lt;&lt; &quot; &quot;;
+-//DEBUGGING// std::cout &lt;&lt; &quot;shearDisplacement: &quot; &lt;&lt; shearDisplacement &lt;&lt; &quot; &quot;;
+-//DEBUGGING// std::cout &lt;&lt; &quot;relativeVelocity: &quot; &lt;&lt; relativeVelocity &lt;&lt; &quot; &quot;;
+-//DEBUGGING// std::cout &lt;&lt; &quot;velocity1: &quot; &lt;&lt; de1-&gt;velocity &lt;&lt; &quot; &quot;;
+-//DEBUGGING// std::cout &lt;&lt; &quot;velocity2: &quot; &lt;&lt; de2-&gt;velocity &lt;&lt; &quot; &quot;;
+-//DEBUGGING// std::cout &lt;&lt; &quot;angularVelocity1: &quot; &lt;&lt; de1-&gt;angularVelocity &lt;&lt; &quot; &quot;;
+-//DEBUGGING// std::cout &lt;&lt; &quot;angularVelocity2: &quot; &lt;&lt; de2-&gt;angularVelocity &lt;&lt; &quot; &quot;;
+-//DEBUGGING// }
++                /// Here is the code with approximated rotations 	 ///
+ 
+-//////////////////////////////////////////////////////////////////////////////////////////////////////
+-//////////////////////////////////////////////////////////////////////////////////////////////////////
+-//////////////////////////////////////////////////////////////////////////////////////////////////////
+-//////////////////////////////////////////////////////////////////////////////////////////////////////
+-//////////////////////////////////////////////////////////////////////////////////////////////////////
+-//////////////////////////////////////////////////////////////////////////////////////////////////////
+-//{
+-//		Vector3r axis;//,axis1,axis2;
+-//		Real angle,shearDisplacement;//,angle1,angle2;
+-//		Quaternionr shear1(de1-&gt;se3.orientation * currentContactPhysics-&gt;initialOrientation1.Conjugate());
+-//		Quaternionr shear2(de2-&gt;se3.orientation * currentContactPhysics-&gt;initialOrientation2.Conjugate());
+-//		Quaternionr shearDelta( shear1 * shear2);
+-//		//shear1.ToAxisAngle(axis1,angle1);
+-//		//shear1.ToAxisAngle(axis2,angle2);
+-//		//if(angle1 &gt; Mathr::PI) angle1 -= Mathr::TWO_PI;
+-//		//if(angle2 &gt; Mathr::PI) angle2 -= Mathr::TWO_PI;
+-//		shearDelta.ToAxisAngle(axis,angle);
+-//		if(angle &gt; Mathr::PI) angle -= Mathr::TWO_PI;
+-//		//angle1 *= currentContactGeometry-&gt;radius1;
+-//		//angle2 *= currentContactGeometry-&gt;radius2;
+-//		shearDisplacement = angle * std::min(currentContactGeometry-&gt;radius1,currentContactGeometry-&gt;radius2);//angle1+angle2;
+-//		Vector3r shearForceXX = -currentContactPhysics-&gt;ks*axis.Cross(currentContactGeometry-&gt;normal)*shearDisplacement;
+-//
+-//if((id1==22 &amp;&amp; id2==6)){
+-//std::cerr /*&lt;&lt; &quot;axis1: &quot; &lt;&lt; axis1 &lt;&lt; &quot; axis2: &quot; &lt;&lt; axis2*/ &lt;&lt; &quot; axis: &quot; &lt;&lt; axis &lt;&lt; &quot;\n&quot;;
+-//std::cerr &lt;&lt; &quot;shearDisplacement: &quot; &lt;&lt; shearDisplacement &lt;&lt; &quot; angle: &quot; &lt;&lt; angle /*&lt;&lt; &quot; angle2: &quot; &lt;&lt; angle2*/ &lt;&lt; &quot;\n&quot;;
+-//std::cerr &lt;&lt; &quot;shearForce  : &quot; &lt;&lt; shearForce &lt;&lt;   &quot; length: &quot; &lt;&lt; shearForce.Length() &lt;&lt; &quot;\n&quot;;
+-//std::cerr &lt;&lt; &quot;shearForceXX: &quot; &lt;&lt; shearForceXX &lt;&lt; &quot; length: &quot; &lt;&lt; shearForceXX.Length() &lt;&lt; &quot;\n\n&quot;;
+-//}
+-//}
+-//
+-//Vector3r contactPointsSpringForce;
+-//{
+-//	Quaternionr curr1(de1-&gt;se3.orientation * currentContactPhysics-&gt;orientationToContact1);
+-//	Quaternionr curr2(de2-&gt;se3.orientation * currentContactPhysics-&gt;orientationToContact2);
+-//	Vector3r initialContactPoint1(de1-&gt;se3.position + curr1*Vector3r(     currentContactGeometry-&gt;radius1,0,0) );
+-//	Vector3r initialContactPoint2(de2-&gt;se3.position + curr2*Vector3r(-1.0*currentContactGeometry-&gt;radius2,0,0) );
+-//	Vector3r contactDist( initialContactPoint2 - initialContactPoint1 );
+-//
+-//	Vector3r contactDir(contactDist); contactDir.Normalize();
+-//	//Vector3r shearDir(shearForce); shearDir.Normalize();
+-//	//Vector3r contactShearDisplacement( shearDir * shearDir.Dot(contactDir) * contactDist.Length() );
+-//	//Vector3r contactNormalDisplacement( contactDist - contactShearDisplacement );
+-//	//contactPointsSpringForce=(contactShearDisplacement+contactNormalDisplacement) * currentContactPhysics-&gt;ks;
+-//	//contactPointsSpringForce= contactDist * currentContactPhysics-&gt;ks;
+-//	
+-//	Vector3r contactNormalDisplacement(currentContactGeometry-&gt;normal * currentContactGeometry-&gt;normal.Dot(contactDir) * contactDist.Length());
+-//	Vector3r contactShearDisplacement(contactDist - contactNormalDisplacement);
+-//	contactPointsSpringForce=contactShearDisplacement * currentContactPhysics-&gt;ks;// - contactNormalDisplacement*currentContactPhysics-&gt;kn;
+-//
+-////if((id1==22 &amp;&amp; id2==6)){
+-////std::cerr &lt;&lt; &quot;contactPointsSpringForce: &quot; &lt;&lt; contactPointsSpringForce &lt;&lt; &quot; length:&quot; &lt;&lt; contactPointsSpringForce.Length() &lt;&lt; &quot;\n&quot;;
+-////std::cerr &lt;&lt; &quot;shearForce              : &quot; &lt;&lt; shearForce       &lt;&lt; &quot; length:&quot; &lt;&lt; shearForce      .Length() &lt;&lt; &quot;\n&quot;;
+-////std::cerr &lt;&lt; &quot;shearForce - cpSpringF  : &quot; &lt;&lt; Vector3r(shearForce - contactPointsSpringForce) &lt;&lt; &quot; length:&quot; &lt;&lt; (shearForce - contactPointsSpringForce).Length() &lt;&lt; &quot;\n\n&quot;;
+-////std::cerr &lt;&lt; contactDist * currentContactPhysics-&gt;ks &lt;&lt; &quot;\n&quot; &lt;&lt; contactPointsSpringForce &lt;&lt; &quot;\n\n&quot;;
+-////}
+-//}
++		axis	 		= currentContactPhysics-&gt;prevNormal.Cross(currentContactGeometry-&gt;normal);
++		shearForce 	       -= shearForce.Cross(axis);
++		angle 			= dt*0.5*currentContactGeometry-&gt;normal.Dot(de1-&gt;angularVelocity+de2-&gt;angularVelocity);
++		axis 			= angle*currentContactGeometry-&gt;normal;
++		shearForce 	       -= shearForce.Cross(axis);
+ 
+-//Vector3r WhatTheFuckForce(   de1-&gt;se3.position - currentContactPhysics-&gt;initialPosition1 
+-//                           - de2-&gt;se3.position + currentContactPhysics-&gt;initialPosition2 );
+-//WhatTheFuckForce *= currentContactPhysics-&gt;ks;
+-//////////////////////////////////////////////////////////////////////////////////////////////////////
+-//////////////////////////////////////////////////////////////////////////////////////////////////////
+-//////////////////////////////////////////////////////////////////////////////////////////////////////
+-//////////////////////////////////////////////////////////////////////////////////////////////////////
+-//////////////////////////////////////////////////////////////////////////////////////////////////////
+-//////////////////////////////////////////////////////////////////////////////////////////////////////
++                /// Here is the code with exact rotations 		 ///
+ 
++                // 		Quaternionr q;
++                //
++                // 		axis					= currentContactPhysics-&gt;prevNormal.cross(currentContactGeometry-&gt;normal);
++                // 		angle					= acos(currentContactGeometry-&gt;normal.dot(currentContactPhysics-&gt;prevNormal));
++                // 		q.fromAngleAxis(angle,axis);
++                //
++                // 		currentContactPhysics-&gt;shearForce	= currentContactPhysics-&gt;shearForce*q;
++                //
++                // 		angle					= dt*0.5*currentContactGeometry-&gt;normal.dot(de1-&gt;angularVelocity+de2-&gt;angularVelocity);
++                // 		axis					= currentContactGeometry-&gt;normal;
++                // 		q.fromAngleAxis(angle,axis);
++                // 		currentContactPhysics-&gt;shearForce	= q*currentContactPhysics-&gt;shearForce;
++
++                /// 							 ///
++
++                Vector3r x				= currentContactGeometry-&gt;contactPoint;
++                //Vector3r c1x				= (x - de1-&gt;se3.position);
++                //Vector3r c2x				= (x - de2-&gt;se3.position);
++                /// The following definition of c1x and c2x is to avoid &quot;granular ratcheting&quot; 
++		///  (see F. ALONSO-MARROQUIN, R. GARCIA-ROJO, H.J. HERRMANN, 
++		///   &quot;Micro-mechanical investigation of granular ratcheting, in Cyclic Behaviour of Soils and Liquefaction Phenomena&quot;,
++		///   ed. T. Triantafyllidis (Balklema, London, 2004), p. 3-10 - and a lot more papers from the same authors)
++                Vector3r c1x	= currentContactGeometry-&gt;radius1*currentContactGeometry-&gt;normal;
++                Vector3r c2x	= -currentContactGeometry-&gt;radius2*currentContactGeometry-&gt;normal;
++                Vector3r relativeVelocity		= (de2-&gt;velocity+de2-&gt;angularVelocity.Cross(c2x)) - (de1-&gt;velocity+de1-&gt;angularVelocity.Cross(c1x));
++                Vector3r shearVelocity			= relativeVelocity-currentContactGeometry-&gt;normal.Dot(relativeVelocity)*currentContactGeometry-&gt;normal;
++                Vector3r shearDisplacement		= shearVelocity*dt;
++
++
++///////////////////////// CREEP START (commented out) ///////////
++//	Real    viscosity = 300000.0;
++//	shearForce                            -= currentContactPhysics-&gt;ks*(shearDisplacement + shearForce*dt/viscosity);
++
++shearForce 			       -= currentContactPhysics-&gt;ks*shearDisplacement;
++///////////////////////// CREEP END /////////////////////////////
++
+                 //  cerr &lt;&lt; &quot;shearForce = &quot; &lt;&lt; shearForce &lt;&lt; endl;
+                 Real maxFs = 0;
+                 Real Fs = currentContactPhysics-&gt;shearForce.Length();
+@@ -335,28 +254,8 @@
+ /////	/// Moment law					 	 ///
+ /////		if(momentRotationLaw /*&amp;&amp; currentContactPhysics-&gt;cohesionBroken == false*/ )
+ /////		{	
+-/////			Quaternionr initialRelativeOrientation = currentContactPhysics-&gt;initialOrientation1 * currentContactPhysics-&gt;initialOrientation2.Conjugate();
+-/////			Quaternionr currentRelativeOrientation = de1-&gt;se3.orientation * de2-&gt;se3.orientation.Conjugate();
+-/////			// difference of rotations between two spheres
+-/////			Quaternionr delta = /*initialRelativeOrientation */ currentRelativeOrientation.Conjugate();
+-/////			Vector3r axis;	// axis of rotation - this is the Moment direction UNIT vector.
+-/////			Real angle;	// angle represents the power of resistant ELASTIC moment
+-/////			delta.ToAxisAngle(axis,angle);
+-/////			if(angle &gt; Mathr::PI) angle -= Mathr::TWO_PI; // angle is between 0 and 2*pi, but should be between -pi and pi 
++/////			Quaternionr delta = ...
+ /////
+-///////if((id1==18 &amp;&amp; id2==12)||(id1==12 &amp;&amp; id2==18)){
+-///////out(currentContactPhysics-&gt;initialOrientation1 * currentContactPhysics-&gt;initialOrientation2.Conjugate());std::cout &lt;&lt; &quot;\n&quot;;
+-///////out(currentContactPhysics-&gt;initialOrientation2);std::cout &lt;&lt; &quot;\n&quot;;
+-///////out(delta * de1-&gt;se3.orientation * de2-&gt;se3.orientation.Conjugate());std::cout &lt;&lt; &quot;\n&quot;;
+-///////out(de2-&gt;se3.orientation * delta);std::cout &lt;&lt; &quot;\n&quot;;
+-/////
+-///////Quaternionr A(de1-&gt;se3.orientation), B(de2-&gt;se3.orientation);
+-///////out( (  A * B.Conjugate() ).Conjugate() );std::cout &lt;&lt; &quot;\n&quot;;
+-///////out( (  B * A.Conjugate() ) );std::cout &lt;&lt; &quot;\n&quot;;
+-///////out( (  A.Conjugate() * B ).Conjugate() );std::cout &lt;&lt; &quot;\n&quot;;
+-///////out( (  B.Conjugate() * A ) );std::cout &lt;&lt; &quot;\n&quot;;
+-///////}
+-/////
+ /////	//This indentation is a rewrite of original equations (the two commented lines), should work exactly the same.
+ ///////Real elasticMoment = currentContactPhysics-&gt;kr * std::abs(angle); // positive value (*)
+ /////
+@@ -391,99 +290,48 @@
+ /////
+ /////	Vector3r moment = moment_twist + moment_bending;
+ /////
+-///////if((id1==18 &amp;&amp; id2==12)||(id1==12 &amp;&amp; id2==18)){
+-///////outv(moment);std::cout &lt;&lt; &quot;\n&quot;;
+-///////}
+-/////
+ /////			static_cast&lt;Momentum*&gt;( ncb-&gt;physicalActions-&gt;find( id1 , actionMomentum-&gt;getClassIndex() ).get() )-&gt;momentum += moment;
+ /////			static_cast&lt;Momentum*&gt;( ncb-&gt;physicalActions-&gt;find( id2 , actionMomentum-&gt;getClassIndex() ).get() )-&gt;momentum -= moment;
+ /////		}
+ /////	/// Moment law	END				 	 ///
+ 
+-/* RATHER CORRECT */	/// Moment law					 	 ///
+-/* RATHER CORRECT */		if(momentRotationLaw &amp;&amp; currentContactPhysics-&gt;cohesionBroken == false )
+-/* RATHER CORRECT */		{
+-/* RATHER CORRECT */			{// updates only orientation of contact (local coordinate system)
+-/* RATHER CORRECT */				Vector3r axis = currentContactPhysics-&gt;prevNormal.UnitCross(currentContactGeometry-&gt;normal);
+-/* RATHER CORRECT */				Real angle =  unitVectorsAngle(currentContactPhysics-&gt;prevNormal,currentContactGeometry-&gt;normal);
+-/* RATHER CORRECT */				Quaternionr align(axis,angle);
+-/* RATHER CORRECT */				currentContactPhysics-&gt;currentContactOrientation =  align * currentContactPhysics-&gt;currentContactOrientation;
+-/* RATHER CORRECT */			}
+-/* RATHER CORRECT */
+-/* RATHER CORRECT *///			Quaternionr curr1(de1-&gt;se3.orientation * currentContactPhysics-&gt;orientationToContact1);
+-/* RATHER CORRECT *///			Quaternionr curr2(de2-&gt;se3.orientation * currentContactPhysics-&gt;orientationToContact2);
+-/* RATHER CORRECT *///			Quaternionr delta=curr1 * curr2.Conjugate();
+-/* RATHER CORRECT */
+-/* RATHER CORRECT */			Quaternionr delta( de1-&gt;se3.orientation * currentContactPhysics-&gt;initialOrientation1.Conjugate() *
+-/* RATHER CORRECT */		                           currentContactPhysics-&gt;initialOrientation2 * de2-&gt;se3.orientation.Conjugate());
+-/* RATHER CORRECT */
+-/* RATHER CORRECT */			Vector3r axis;	// axis of rotation - this is the Moment direction UNIT vector.
+-/* RATHER CORRECT */			Real angle;	// angle represents the power of resistant ELASTIC moment
+-/* RATHER CORRECT */			delta.ToAxisAngle(axis,angle);
+-/* RATHER CORRECT */			if(angle &gt; Mathr::PI) angle -= Mathr::TWO_PI; // angle is between 0 and 2*pi, but should be between -pi and pi 
+-/* RATHER CORRECT */
+-/* RATHER CORRECT */	//This indentation is a rewrite of original equations (the two commented lines), should work exactly the same.
+-/* RATHER CORRECT *///Real elasticMoment = currentContactPhysics-&gt;kr * std::abs(angle); // positive value (*)
+-/* RATHER CORRECT */
+-/* RATHER CORRECT */	Real angle_twist(angle * axis.Dot(currentContactGeometry-&gt;normal) );
+-/* RATHER CORRECT */	Vector3r axis_twist(angle_twist * currentContactGeometry-&gt;normal);
+-/* RATHER CORRECT */	Vector3r moment_twist(axis_twist * currentContactPhysics-&gt;kr);
+-/* RATHER CORRECT */
+-/* RATHER CORRECT */	Vector3r axis_bending(angle*axis - axis_twist);
+-/* RATHER CORRECT */	Vector3r moment_bending(axis_bending * currentContactPhysics-&gt;kr);
+-/* RATHER CORRECT */
+-/* RATHER CORRECT *///Vector3r moment = axis * elasticMoment * (angle&lt;0.0?-1.0:1.0); // restore sign. (*)
+-/* RATHER CORRECT */
+-/* RATHER CORRECT */	Vector3r moment = moment_twist + moment_bending;
+-/* RATHER CORRECT */
+-/* RATHER CORRECT *///DEBUGGING// if((id1==22 &amp;&amp; id2==6)){
+-/* RATHER CORRECT *///DEBUGGING// std::cout &lt;&lt; &quot;moment: &quot; &lt;&lt; moment &lt;&lt; &quot; &quot;;
+-/* RATHER CORRECT *///DEBUGGING// std::cout &lt;&lt; &quot;normal: &quot; &lt;&lt; currentContactGeometry-&gt;normal &lt;&lt; &quot;\n&quot;;
+-/* RATHER CORRECT *///DEBUGGING// }
+-/* RATHER CORRECT */
+-/* RATHER CORRECT */			static_cast&lt;Momentum*&gt;( ncb-&gt;physicalActions-&gt;find( id1 , actionMomentum-&gt;getClassIndex() ).get() )-&gt;momentum -= moment;
+-/* RATHER CORRECT */			static_cast&lt;Momentum*&gt;( ncb-&gt;physicalActions-&gt;find( id2 , actionMomentum-&gt;getClassIndex() ).get() )-&gt;momentum += moment;
+-/* RATHER CORRECT */		}
+-/* RATHER CORRECT */	/// Moment law	END				 	 ///
+-///*EXPERIMENT*/	/// Moment law					 	 ///
+-///*EXPERIMENT*/		if(momentRotationLaw &amp;&amp; currentContactPhysics-&gt;cohesionBroken == false )
+-///*EXPERIMENT*/		{
+-///*EXPERIMENT*/			{// updates only orientation of contact (local coordinate system)
+-///*EXPERIMENT*/				Vector3r axis = currentContactPhysics-&gt;prevNormal.UnitCross(currentContactGeometry-&gt;normal);
+-///*EXPERIMENT*/				Real angle =  unitVectorsAngle(currentContactPhysics-&gt;prevNormal,currentContactGeometry-&gt;normal);
+-///*EXPERIMENT*/				Quaternionr align(axis,angle);
+-///*EXPERIMENT*/				currentContactPhysics-&gt;currentContactOrientation =  align * currentContactPhysics-&gt;currentContactOrientation;
+-///*EXPERIMENT*/			}
+-///*EXPERIMENT*/
+-///*EXPERIMENT*/			Quaternionr delta1( de1-&gt;se3.orientation * currentContactPhysics-&gt;initialOrientation1.Conjugate() *
+-///*EXPERIMENT*/		                           currentContactPhysics-&gt;initialOrientation2 * de2-&gt;se3.orientation.Conjugate());
+-///*EXPERIMENT*/		                           //currentContactPhysics-&gt;initialContactOrientation * currentContactPhysics-&gt;currentContactOrientation.Conjugate());
+-///*EXPERIMENT*/
+-///*EXPERIMENT*/			Vector3r axis1;
+-///*EXPERIMENT*/			Real angle1;
+-///*EXPERIMENT*/			delta1.ToAxisAngle(axis1,angle1);
+-///*EXPERIMENT*/			if(angle1 &gt; Mathr::PI) angle1 -= Mathr::TWO_PI;
+-///*EXPERIMENT*/
+-///*EXPERIMENT*/			Vector3r moment1 = axis1 * currentContactPhysics-&gt;kr * angle1;
+-///*EXPERIMENT*/
+-///*EXPERIMENT*/
+-///*EXPERIMENT*/			Quaternionr delta2( de1-&gt;se3.orientation * currentContactPhysics-&gt;initialOrientation1.Conjugate() *
+-///*EXPERIMENT*/			//Quaternionr delta2( currentContactPhysics-&gt;currentContactOrientation * currentContactPhysics-&gt;initialContactOrientation.Conjugate() *
+-///*EXPERIMENT*/		                            currentContactPhysics-&gt;initialOrientation2 * de2-&gt;se3.orientation.Conjugate());
+-///*EXPERIMENT*/
+-///*EXPERIMENT*/			Vector3r axis2;
+-///*EXPERIMENT*/			Real angle2;
+-///*EXPERIMENT*/			delta2.ToAxisAngle(axis2,angle2);
+-///*EXPERIMENT*/			if(angle2 &gt; Mathr::PI) angle2 -= Mathr::TWO_PI;
+-///*EXPERIMENT*/
+-///*EXPERIMENT*/			Vector3r moment2 = axis2 * currentContactPhysics-&gt;kr * angle2;
+-///*EXPERIMENT*/
+-///*EXPERIMENT*/			static_cast&lt;Momentum*&gt;( ncb-&gt;physicalActions-&gt;find( id1 , actionMomentum-&gt;getClassIndex() ).get() )-&gt;momentum -= moment1;
+-///*EXPERIMENT*/			static_cast&lt;Momentum*&gt;( ncb-&gt;physicalActions-&gt;find( id2 , actionMomentum-&gt;getClassIndex() ).get() )-&gt;momentum += moment2;
+-///*EXPERIMENT*/		}
+-///*EXPERIMENT*/	/// Moment law	END				 	 ///
++	/// Moment law					 	 ///
++		if(momentRotationLaw &amp;&amp; currentContactPhysics-&gt;cohesionBroken == false )
++		{
++			{// updates only orientation of contact (local coordinate system)
++				Vector3r axis = currentContactPhysics-&gt;prevNormal.UnitCross(currentContactGeometry-&gt;normal);
++				Real angle =  unitVectorsAngle(currentContactPhysics-&gt;prevNormal,currentContactGeometry-&gt;normal);
++				Quaternionr align(axis,angle);
++				currentContactPhysics-&gt;currentContactOrientation =  align * currentContactPhysics-&gt;currentContactOrientation;
++			}
+ 
++			Quaternionr delta( de1-&gt;se3.orientation * currentContactPhysics-&gt;initialOrientation1.Conjugate() *
++		                           currentContactPhysics-&gt;initialOrientation2 * de2-&gt;se3.orientation.Conjugate());
+ 
++			Vector3r axis;	// axis of rotation - this is the Moment direction UNIT vector.
++			Real angle;	// angle represents the power of resistant ELASTIC moment
++			delta.ToAxisAngle(axis,angle);
++			if(angle &gt; Mathr::PI) angle -= Mathr::TWO_PI; // angle is between 0 and 2*pi, but should be between -pi and pi 
++
++	//This indentation is a rewrite of original equations (the two commented lines), should work exactly the same.
++//Real elasticMoment = currentContactPhysics-&gt;kr * std::abs(angle); // positive value (*)
++
++	Real angle_twist(angle * axis.Dot(currentContactGeometry-&gt;normal) );
++	Vector3r axis_twist(angle_twist * currentContactGeometry-&gt;normal);
++	Vector3r moment_twist(axis_twist * currentContactPhysics-&gt;kr);
++
++	Vector3r axis_bending(angle*axis - axis_twist);
++	Vector3r moment_bending(axis_bending * currentContactPhysics-&gt;kr);
++
++//Vector3r moment = axis * elasticMoment * (angle&lt;0.0?-1.0:1.0); // restore sign. (*)
++
++	Vector3r moment = moment_twist + moment_bending;
++
++			static_cast&lt;Momentum*&gt;( ncb-&gt;physicalActions-&gt;find( id1 , actionMomentum-&gt;getClassIndex() ).get() )-&gt;momentum -= moment;
++			static_cast&lt;Momentum*&gt;( ncb-&gt;physicalActions-&gt;find( id2 , actionMomentum-&gt;getClassIndex() ).get() )-&gt;momentum += moment;
++		}
++	/// Moment law	END				 	 ///
++
+                 currentContactPhysics-&gt;prevNormal = currentContactGeometry-&gt;normal;
+             }
+         }
+
+Modified: trunk/pkg/dem/RenderingEngine/GLDrawCohesiveFrictionalContactInteraction/GLDrawCohesiveFrictionalContactInteraction.cpp
+===================================================================
+--- trunk/pkg/dem/RenderingEngine/GLDrawCohesiveFrictionalContactInteraction/GLDrawCohesiveFrictionalContactInteraction.cpp	2008-03-25 19:13:54 UTC (rev 1285)
++++ trunk/pkg/dem/RenderingEngine/GLDrawCohesiveFrictionalContactInteraction/GLDrawCohesiveFrictionalContactInteraction.cpp	2008-03-26 14:19:53 UTC (rev 1286)
+@@ -133,9 +133,9 @@
+ 
+ // draw middle
+ // middle initial orientation
+-	drawAxis(middle,ph-&gt;initialContactOrientation,size,1);
++//	drawAxis(middle,ph-&gt;initialContactOrientation,size,1);
+ // middle current orientation
+-	drawAxis(middle,ph-&gt;currentContactOrientation,size);
++//	drawAxis(middle,ph-&gt;currentContactOrientation,size);
+ 
+ 
+ 
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000249.html">[Yade-commits] r1284 - in trunk: core gui/cmd	pkg/common/Engine/DeusExMachina scripts
+</A></li>
+	<LI>Next message: <A HREF="000251.html">[Yade-commits] r1287 -	trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#250">[ date ]</a>
+              <a href="thread.html#250">[ thread ]</a>
+              <a href="subject.html#250">[ subject ]</a>
+              <a href="author.html#250">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

@@ -1,0 +1,166 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1241 - in trunk: . doc
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1241%20-%20in%20trunk%3A%20.%20doc&In-Reply-To=%3C200801270734.m0R7YPUi010472%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000205.html">
+   <LINK REL="Next"  HREF="000207.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1241 - in trunk: . doc</H1>
+    <B>cosurgi at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1241%20-%20in%20trunk%3A%20.%20doc&In-Reply-To=%3C200801270734.m0R7YPUi010472%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1241 - in trunk: . doc">cosurgi at mail.berlios.de
+       </A><BR>
+    <I>Sun Jan 27 08:34:25 CET 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000205.html">[Yade-commits] r1240 - in trunk/pkg/lattice: Engine/EngineUnit	PreProcessor
+</A></li>
+        <LI>Next message: <A HREF="000207.html">[Yade-commits] r1242 - in trunk: . core extra extra/clump extra/screw extra/tetra extra/usct gui gui/cmd lib/factory pkg/common pkg/common/Container pkg/common/DataClass/BoundingVolume pkg/common/DataClass/GeometricalModel pkg/common/DataClass/InteractingGeometry pkg/common/DataClass/InteractionGeometry pkg/common/DataClass/InteractionPhysics pkg/common/DataClass/PhysicalAction pkg/common/DataClass/PhysicalParameters pkg/common/Engine/DeusExMachina pkg/common/Engine/EngineUnit pkg/common/Engine/MetaEngine pkg/common/Engine/StandAloneEngine pkg/common/RenderingEngine/GLDrawBoundingVolume pkg/common/RenderingEngine/GLDrawGeometricalModel pkg/common/RenderingEngine/GLDrawInteractingGeometry pkg/common/RenderingEngine/GLDrawInteractionGeometry pkg/common/RenderingEngine/GLDrawInteractionPhysics pkg/common/RenderingEngine/GLDrawShadowVolume pkg/common/RenderingEngine/GLDrawState pkg/common/RenderingEngine/OpenGLRenderingEngine pkg/dem pkg/dem/DataClass/InteractingGeometry pkg/dem/DataC! lass/InteractionGeometry pkg/dem/DataClass/InteractionPhysics pkg/dem/DataClass/PhysicalAction pkg/dem/DataClass/PhysicalParameters pkg/dem/Engine/DeusExMachina pkg/dem/Engine/EngineUnit pkg/dem/Engine/StandAloneEngine pkg/dem/PreProcessor pkg/dem/RenderingEngine/GLDrawInteractingMyTetrahedron pkg/dem/RenderingEngine/GLDrawSDECLinkGeometry pkg/dem/RenderingEngine/GLDrawSpheresContactGeometry pkg/fem/DataClass/GeometricalModel pkg/fem/DataClass/PhysicalParameters pkg/fem/Engine/EngineUnit pkg/fem/Engine/StandAloneEngine pkg/fem/PreProcessor pkg/lattice/DataClass/GeometricalModel pkg/lattice/DataClass/InteractingGeometry pkg/lattice/DataClass/InteractionPhysics pkg/lattice/DataClass/PhysicalParameters pkg/lattice/Engine/EngineUnit pkg/lattice/Engine/StandAloneEngine pkg/lattice/PreProcessor pkg/lattice/RenderingEngine/GLDrawLatticeBeamState pkg/lattice/RenderingEngine/GLDrawLatticeInteractingGeometry pkg/lattice/RenderingEngine/GLDrawLatticeSetGeometry pkg/lattice/RenderingEn! gine/GLDrawLineSegment pkg/mass-spring/DataClass/InteractionGe! ometry p
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#206">[ date ]</a>
+              <a href="thread.html#206">[ thread ]</a>
+              <a href="subject.html#206">[ subject ]</a>
+              <a href="author.html#206">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: cosurgi
+Date: 2008-01-27 08:34:24 +0100 (Sun, 27 Jan 2008)
+New Revision: 1241
+
+Modified:
+   trunk/SConstruct
+   trunk/doc/Doxyfile
+Log:
+SConstruct is now working on debian etch,
+exclude multimethods in Doxyfile
+
+M    trunk/doc/Doxyfile
+M    trunk/SConstruct
+
+
+Modified: trunk/SConstruct
+===================================================================
+--- trunk/SConstruct	2008-01-24 15:04:10 UTC (rev 1240)
++++ trunk/SConstruct	2008-01-27 07:34:24 UTC (rev 1241)
+@@ -25,18 +25,20 @@
+ import os,os.path,string,re,sys
+ import SCons
+ # SCons version numbers are needed a few times
+-ver=[str(x) for x in SCons.__version__.split('.')]
+-for i in range(0,len(ver)):
+-	ver[i]=&quot;&quot;.join([x if x in ('0123456789') else '0' for x in ver[i]])
+-	if len(ver[i])&gt;2: ver[i]=ver[i][0:2]+&quot;.&quot;+ver[i][2:]
+-sconsVersion=10000*float(ver[0])+(100*float(ver[1]) if len(ver)&gt;1 else 0)+(float(ver[2]) if len(ver)&gt;2 else 0)
+-#sconsVersion=sum([int(SCons.__version__.split('.')[ord[0]])*ord[1] for ord in [(0,10000),(1,100),(2,1)][:len(SCons.__version__.split('.'))] ])
++#ver=[str(x) for x in SCons.__version__.split('.')]
++#for i in range(0,len(ver)):
++#	ver[i]=&quot;&quot;.join([x if x in ('0123456789') else '0' for x in ver[i]])
++#	if len(ver[i])&gt;2: ver[i]=ver[i][0:2]+&quot;.&quot;+ver[i][2:]
++#sconsVersion=10000*float(ver[0])+(100*float(ver[1]) if len(ver)&gt;1 else 0)+(float(ver[2]) if len(ver)&gt;2 else 0)
++#
++# should work with python 2.4
++sconsVersion=sum([int(SCons.__version__.split('.')[ord[0]])*ord[1] for ord in [(0,10000),(1,100),(2,1)][:len(SCons.__version__.split('.'))] ])
+ 
+ ##########################################################################################
+ ########## PROXY TO NEWER SCONS (DOWNLOADED IF NEEDED) ###################################
+ ##########################################################################################
+ #print sconsVersion
+-if sconsVersion&lt;9700.20071212:  ##&lt;9700 ##&lt;9693: 
++if sconsVersion&lt;9693: ##9700.20071212:  ##&lt;9700 ##&lt;9693: 
+ 	#tgzParams=(&quot;<A HREF="http://dfn.dl.sourceforge.net/sourceforge/scons/scons-local-0.97.tar.gz">http://dfn.dl.sourceforge.net/sourceforge/scons/scons-local-0.97.tar.gz</A>&quot;,&quot;scons-local-0.97&quot;)
+ 	#tgzParams=(&quot;<A HREF="http://ovh.dl.sourceforge.net/sourceforge/scons/scons-local-0.97.0d20070918.tar.gz">http://ovh.dl.sourceforge.net/sourceforge/scons/scons-local-0.97.0d20070918.tar.gz</A>&quot;,&quot;/scons-local-0.97.0d20070918&quot;) ## sconsVersion&lt;=9700
+ 	tgzParams=(&quot;<A HREF="http://switch.dl.sourceforge.net/sourceforge/scons/scons-local-0.97.0d20071212.tar.gz">http://switch.dl.sourceforge.net/sourceforge/scons/scons-local-0.97.0d20071212.tar.gz</A>&quot;,&quot;/scons-local-0.97.0d20071212&quot;)
+
+Modified: trunk/doc/Doxyfile
+===================================================================
+--- trunk/doc/Doxyfile	2008-01-24 15:04:10 UTC (rev 1240)
++++ trunk/doc/Doxyfile	2008-01-27 07:34:24 UTC (rev 1241)
+@@ -187,7 +187,7 @@
+ # The TAB_SIZE tag can be used to set the number of spaces in a tab. 
+ # Doxygen uses this value to replace tabs by spaces in code fragments.
+ 
+-TAB_SIZE               = 3
++TAB_SIZE               = 8
+ 
+ # This tag can be used to specify a number of aliases that acts 
+ # as commands in the documentation. An alias has the form &quot;name=value&quot;. 
+@@ -231,7 +231,7 @@
+ # Private class members and static file members will be hidden unless 
+ # the EXTRACT_PRIVATE and EXTRACT_STATIC tags are set to YES
+ 
+-EXTRACT_ALL            = YES
++EXTRACT_ALL            = NO
+ 
+ # If the EXTRACT_PRIVATE tag is set to YES all private members of a class 
+ # will be included in the documentation.
+@@ -254,7 +254,7 @@
+ # the interface are included in the documentation. 
+ # If set to NO (the default) only methods in the interface are included.
+ 
+-EXTRACT_LOCAL_METHODS  = NO
++EXTRACT_LOCAL_METHODS  = YES
+ 
+ # If the HIDE_UNDOC_MEMBERS tag is set to YES, Doxygen will hide all 
+ # undocumented members of documented classes, files or namespaces. 
+@@ -436,7 +436,7 @@
+ # wrong or incomplete parameter documentation, but not about the absence of 
+ # documentation.
+ 
+-WARN_NO_PARAMDOC       = NO
++WARN_NO_PARAMDOC       = YES
+ 
+ # The WARN_FORMAT tag determines the format of the warning messages that 
+ # doxygen can produce. The string should contain the $file, $line, and $text 
+@@ -536,10 +536,11 @@
+ # certain files from those directories.
+ 
+ EXCLUDE_PATTERNS       = */yade-flat/* \
+-									*/include/* \
+-									*/.* \
+-									*/loki/* \
+-									*/miniWm3/* 
++			*/include/* \
++			*/.* \
++			*/miniWm3/* \
++			*/multimethods/* \
++			*/loki/*
+ 
+ # The EXAMPLE_PATH tag can be used to specify one or more files or 
+ # directories that contain example code fragments that are included (see 
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000205.html">[Yade-commits] r1240 - in trunk/pkg/lattice: Engine/EngineUnit	PreProcessor
+</A></li>
+	<LI>Next message: <A HREF="000207.html">[Yade-commits] r1242 - in trunk: . core extra extra/clump extra/screw extra/tetra extra/usct gui gui/cmd lib/factory pkg/common pkg/common/Container pkg/common/DataClass/BoundingVolume pkg/common/DataClass/GeometricalModel pkg/common/DataClass/InteractingGeometry pkg/common/DataClass/InteractionGeometry pkg/common/DataClass/InteractionPhysics pkg/common/DataClass/PhysicalAction pkg/common/DataClass/PhysicalParameters pkg/common/Engine/DeusExMachina pkg/common/Engine/EngineUnit pkg/common/Engine/MetaEngine pkg/common/Engine/StandAloneEngine pkg/common/RenderingEngine/GLDrawBoundingVolume pkg/common/RenderingEngine/GLDrawGeometricalModel pkg/common/RenderingEngine/GLDrawInteractingGeometry pkg/common/RenderingEngine/GLDrawInteractionGeometry pkg/common/RenderingEngine/GLDrawInteractionPhysics pkg/common/RenderingEngine/GLDrawShadowVolume pkg/common/RenderingEngine/GLDrawState pkg/common/RenderingEngine/OpenGLRenderingEngine pkg/dem pkg/dem/DataClass/InteractingGeometry pkg/dem/DataC! lass/InteractionGeometry pkg/dem/DataClass/InteractionPhysics pkg/dem/DataClass/PhysicalAction pkg/dem/DataClass/PhysicalParameters pkg/dem/Engine/DeusExMachina pkg/dem/Engine/EngineUnit pkg/dem/Engine/StandAloneEngine pkg/dem/PreProcessor pkg/dem/RenderingEngine/GLDrawInteractingMyTetrahedron pkg/dem/RenderingEngine/GLDrawSDECLinkGeometry pkg/dem/RenderingEngine/GLDrawSpheresContactGeometry pkg/fem/DataClass/GeometricalModel pkg/fem/DataClass/PhysicalParameters pkg/fem/Engine/EngineUnit pkg/fem/Engine/StandAloneEngine pkg/fem/PreProcessor pkg/lattice/DataClass/GeometricalModel pkg/lattice/DataClass/InteractingGeometry pkg/lattice/DataClass/InteractionPhysics pkg/lattice/DataClass/PhysicalParameters pkg/lattice/Engine/EngineUnit pkg/lattice/Engine/StandAloneEngine pkg/lattice/PreProcessor pkg/lattice/RenderingEngine/GLDrawLatticeBeamState pkg/lattice/RenderingEngine/GLDrawLatticeInteractingGeometry pkg/lattice/RenderingEngine/GLDrawLatticeSetGeometry pkg/lattice/RenderingEn! gine/GLDrawLineSegment pkg/mass-spring/DataClass/InteractionGe! ometry p
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#206">[ date ]</a>
+              <a href="thread.html#206">[ thread ]</a>
+              <a href="subject.html#206">[ subject ]</a>
+              <a href="author.html#206">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

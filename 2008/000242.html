@@ -1,0 +1,134 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1277 - trunk/pkg/common/Engine/DeusExMachina
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1277%20-%20trunk/pkg/common/Engine/DeusExMachina&In-Reply-To=%3C200803132043.m2DKhNJh024704%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000241.html">
+   <LINK REL="Next"  HREF="000243.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1277 - trunk/pkg/common/Engine/DeusExMachina</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1277%20-%20trunk/pkg/common/Engine/DeusExMachina&In-Reply-To=%3C200803132043.m2DKhNJh024704%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1277 - trunk/pkg/common/Engine/DeusExMachina">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Thu Mar 13 21:43:23 CET 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000241.html">[Yade-commits] r1276 - in trunk/lib: . QGLViewer
+</A></li>
+        <LI>Next message: <A HREF="000243.html">[Yade-commits] r1278 - in trunk: gui/cmd lib lib/QGLViewer
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#242">[ date ]</a>
+              <a href="thread.html#242">[ thread ]</a>
+              <a href="subject.html#242">[ subject ]</a>
+              <a href="author.html#242">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2008-03-13 21:43:23 +0100 (Thu, 13 Mar 2008)
+New Revision: 1277
+
+Added:
+   trunk/pkg/common/Engine/DeusExMachina/CentralGravityEngine.cpp
+   trunk/pkg/common/Engine/DeusExMachina/CentralGravityEngine.hpp
+Log:
+Forgotten files, build crashed on foreign machine. Fixed now. (This stuff is not tested, do not use!)
+
+
+Added: trunk/pkg/common/Engine/DeusExMachina/CentralGravityEngine.cpp
+===================================================================
+--- trunk/pkg/common/Engine/DeusExMachina/CentralGravityEngine.cpp	2008-03-13 20:36:49 UTC (rev 1276)
++++ trunk/pkg/common/Engine/DeusExMachina/CentralGravityEngine.cpp	2008-03-13 20:43:23 UTC (rev 1277)
+@@ -0,0 +1,25 @@
++// 2008 &#169; V&#225;clav &#352;milauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">eudoxos at arcig.cz</A>&gt; 
++#include&quot;CentralGravityEngine.hpp&quot;
++#include&lt;yade/core/MetaBody.hpp&gt;
++#include&lt;yade/pkg-common/ParticleParameters.hpp&gt;
++
++void CentralGravityEngine::applyCondition(Body* _rootBody){
++	MetaBody* rootBody=YADE_CAST&lt;MetaBody*&gt;(_rootBody);
++	Real centralMass=YADE_PTR_CAST&lt;ParticleParameters&gt;(Body::byId(centralBody)-&gt;physicalParameters)-&gt;mass;
++	const Vector3r&amp; centralPos=Body::byId(centralBody)-&gt;physicalParameters-&gt;se3.position;
++	BodyContainer::iterator Iend=rootBody-&gt;bodies-&gt;end();
++	for(BodyContainer::iterator I=rootBody-&gt;bodies-&gt;begin(); I!=Iend; ++I){
++		const shared_ptr&lt;Body&gt;&amp; b(*I);
++		if(b-&gt;isClumpMember()) continue; // skip clump members
++		if(b-&gt;getId()==centralBody) continue; // don't gravitate central body to itself
++		Real myMass=YADE_PTR_CAST&lt;ParticleParameters&gt;(b-&gt;physicalParameters)-&gt;mass; // will crash nicely in debug builds
++		const Vector3r&amp; myPos=b-&gt;physicalParameters-&gt;se3.position;
++		Real F=kappa*centralMass*myMass/(centralPos-myPos).SquaredLength();
++		Vector3r toCenter=centralPos-myPos; toCenter.Normalize();
++		static_cast&lt;Force*&gt;(rootBody-&gt;physicalActions-&gt;find(b-&gt;getId(),cachedForceClassIndex).get())-&gt;force+=F*toCenter;
++	}
++}
++
++YADE_PLUGIN(&quot;CentralGravityEngine&quot;);
++
++
+
+Added: trunk/pkg/common/Engine/DeusExMachina/CentralGravityEngine.hpp
+===================================================================
+--- trunk/pkg/common/Engine/DeusExMachina/CentralGravityEngine.hpp	2008-03-13 20:36:49 UTC (rev 1276)
++++ trunk/pkg/common/Engine/DeusExMachina/CentralGravityEngine.hpp	2008-03-13 20:43:23 UTC (rev 1277)
+@@ -0,0 +1,25 @@
++#pragma once
++
++#include&lt;yade/core/DeusExMachina.hpp&gt;
++#include&lt;yade/pkg-common/Force.hpp&gt;
++
++/* Engine attracting all bodies towards a central body, using Newton's gravity law.
++ *
++ */
++
++class CentralGravityEngine: public DeusExMachina {
++	private:
++		int cachedForceClassIndex;
++	public:
++		body_id_t centralBody;
++		Real kappa;
++		CentralGravityEngine(){ shared_ptr&lt;Force&gt; f(new Force); cachedForceClassIndex=f-&gt;getClassIndex(); }
++		virtual ~CentralGravityEngine(){};
++		virtual void applyCondition(Body*);
++	protected:
++		virtual void registerAttributes(){REGISTER_ATTRIBUTE(centralBody); REGISTER_ATTRIBUTE(kappa);}
++		REGISTER_CLASS_NAME(CentralGravityEngine);
++		REGISTER_BASE_CLASS_NAME(DeusExMachina);
++};
++REGISTER_SERIALIZABLE(CentralGravityEngine,false);
++
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000241.html">[Yade-commits] r1276 - in trunk/lib: . QGLViewer
+</A></li>
+	<LI>Next message: <A HREF="000243.html">[Yade-commits] r1278 - in trunk: gui/cmd lib lib/QGLViewer
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#242">[ date ]</a>
+              <a href="thread.html#242">[ thread ]</a>
+              <a href="subject.html#242">[ subject ]</a>
+              <a href="author.html#242">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

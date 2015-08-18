@@ -1,0 +1,123 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1263 - trunk/gui/cmd
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1263%20-%20trunk/gui/cmd&In-Reply-To=%3C200802251556.m1PFuNU0016249%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000227.html">
+   <LINK REL="Next"  HREF="000229.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1263 - trunk/gui/cmd</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1263%20-%20trunk/gui/cmd&In-Reply-To=%3C200802251556.m1PFuNU0016249%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1263 - trunk/gui/cmd">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Mon Feb 25 16:56:23 CET 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000227.html">[Yade-commits] r1262 - in trunk: . gui gui/cmd
+</A></li>
+        <LI>Next message: <A HREF="000229.html">[Yade-commits] r1264 - in trunk/pkg: common/Container	common/Engine/StandAloneEngine dem/Engine/DeusExMachina	dem/Engine/EngineUnit dem/Engine/StandAloneEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#228">[ date ]</a>
+              <a href="thread.html#228">[ thread ]</a>
+              <a href="subject.html#228">[ subject ]</a>
+              <a href="author.html#228">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2008-02-25 16:56:23 +0100 (Mon, 25 Feb 2008)
+New Revision: 1263
+
+Added:
+   trunk/gui/cmd/cmdGuiInit.py
+Log:
+Adding init code as advertised in last commit.
+
+
+
+Added: trunk/gui/cmd/cmdGuiInit.py
+===================================================================
+--- trunk/gui/cmd/cmdGuiInit.py	2008-02-25 15:55:51 UTC (rev 1262)
++++ trunk/gui/cmd/cmdGuiInit.py	2008-02-25 15:56:23 UTC (rev 1263)
+@@ -0,0 +1,45 @@
++# os.path contains $PREFIX/lib/yade$SUFFIX/{extra,gui}
++# YADE_CONFIG_DIR=~/.yade$SUFFIX is defined
++#
++
++## initialization
++import sys
++sys.path.insert(0,yadePrefix+'/lib/yade'+yadeSuffix+'/extra')
++sys.path.insert(0,yadePrefix+'/lib/yade'+yadeSuffix+'/gui')
++from yadeControl import *
++sys.excepthook=sys.__excepthook__ # apport on ubuntu override this, we don't need it
++
++## run simulation if requested from the command line
++if yadeRunSimulation:
++	print &quot;Running simulation &quot;+yadeRunSimulation
++	o=Omega(); o.load(yadeRunSimulation); o.run();
++
++## run script if requested from the command line
++if yadeRunScript:
++	print &quot;Running script &quot;+yadeRunScript
++	execfile(yadeRunScript)
++
++try:
++	# prefer ipython, since it is colorful and cool
++	from IPython.Shell import IPShellEmbed
++	sys.argv=['&lt;embedded python interpreter&gt;']
++	ipshell = IPShellEmbed()
++	ipshell()
++except ImportError:
++	## no ipython :-(, let's emulate it
++	# <A HREF="http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/473900">http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/473900</A>
++	import os, readline, rlcompleter, atexit
++	history_file = os.path.join(os.environ['HOME']+'/.yade_python_history')
++	try:
++	    readline.read_history_file(history_file)
++	except IOError:
++	    pass
++	readline.parse_and_bind(&quot;tab: complete&quot;)
++	readline.set_history_length(1000)
++	atexit.register(readline.write_history_file, history_file) # FIXME: this will probably not work!
++	#del os, readline, rlcompleter, atexit, history_file, __file__
++
++	# run interactive loop
++	import code
++	code.InteractiveConsole(globals()).interact()
++	
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000227.html">[Yade-commits] r1262 - in trunk: . gui gui/cmd
+</A></li>
+	<LI>Next message: <A HREF="000229.html">[Yade-commits] r1264 - in trunk/pkg: common/Container	common/Engine/StandAloneEngine dem/Engine/DeusExMachina	dem/Engine/EngineUnit dem/Engine/StandAloneEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#228">[ date ]</a>
+              <a href="thread.html#228">[ thread ]</a>
+              <a href="subject.html#228">[ subject ]</a>
+              <a href="author.html#228">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

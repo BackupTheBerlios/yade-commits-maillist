@@ -1,0 +1,221 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1394 - in trunk: examples pkg/common	pkg/common/Engine/DeusExMachina
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1394%20-%20in%20trunk%3A%20examples%20pkg/common%0A%09pkg/common/Engine/DeusExMachina&In-Reply-To=%3C200806181329.m5IDTZTg028519%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000354.html">
+   <LINK REL="Next"  HREF="000356.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1394 - in trunk: examples pkg/common	pkg/common/Engine/DeusExMachina</H1>
+    <B>sega at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1394%20-%20in%20trunk%3A%20examples%20pkg/common%0A%09pkg/common/Engine/DeusExMachina&In-Reply-To=%3C200806181329.m5IDTZTg028519%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1394 - in trunk: examples pkg/common	pkg/common/Engine/DeusExMachina">sega at mail.berlios.de
+       </A><BR>
+    <I>Wed Jun 18 15:29:35 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000354.html">[Yade-commits] r1393 - in trunk/lib: QGLViewer QGLViewer/VRender	factory import serialization
+</A></li>
+        <LI>Next message: <A HREF="000356.html">[Yade-commits] r1395 - in trunk: . extra extra/usct gui/py
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#355">[ date ]</a>
+              <a href="thread.html#355">[ thread ]</a>
+              <a href="subject.html#355">[ subject ]</a>
+              <a href="author.html#355">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: sega
+Date: 2008-06-18 15:29:35 +0200 (Wed, 18 Jun 2008)
+New Revision: 1394
+
+Added:
+   trunk/pkg/common/Engine/DeusExMachina/ResetPositionEngine.cpp
+   trunk/pkg/common/Engine/DeusExMachina/ResetPositionEngine.hpp
+Modified:
+   trunk/examples/STLImporterTest.py
+   trunk/pkg/common/SConscript
+Log:
+1. Add engine ResetPositionEngine for the return of bodies at their initilal positions.
+2. small fixes.
+
+
+Modified: trunk/examples/STLImporterTest.py
+===================================================================
+--- trunk/examples/STLImporterTest.py	2008-06-17 16:07:27 UTC (rev 1393)
++++ trunk/examples/STLImporterTest.py	2008-06-18 13:29:35 UTC (rev 1394)
+@@ -97,7 +97,8 @@
+ 
+ ## Save the scene to file, so that it can be loaded later. Supported extension are: .xml, .xml.gz, .xml.bz2.
+ o.save('/tmp/a.xml');
++o.load('/tmp/a.xml');
+ 
+-utils.runInQtGui() # will run in background
+-quit()
++#utils.runInQtGui() # will run in background
++#quit()
+ 
+
+Added: trunk/pkg/common/Engine/DeusExMachina/ResetPositionEngine.cpp
+===================================================================
+--- trunk/pkg/common/Engine/DeusExMachina/ResetPositionEngine.cpp	2008-06-17 16:07:27 UTC (rev 1393)
++++ trunk/pkg/common/Engine/DeusExMachina/ResetPositionEngine.cpp	2008-06-18 13:29:35 UTC (rev 1394)
+@@ -0,0 +1,55 @@
++/*************************************************************************
++*  Copyright (C) 2008 by Sergei Dorofeenko				 *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">sega at users.berlios.de</A>                                                 *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#include&quot;ResetPositionEngine.hpp&quot;
++#include&lt;yade/core/MetaBody.hpp&gt;
++#include&lt;yade/pkg-common/ParticleParameters.hpp&gt;
++#include&lt;boost/foreach.hpp&gt;
++
++ResetPositionEngine::ResetPositionEngine(){
++		Y_min=-1;
++		interval=0;
++		initial_positions.clear();
++}
++
++void ResetPositionEngine::postProcessAttributes(bool deserializing){}
++
++void ResetPositionEngine::registerAttributes(){
++	DeusExMachina::registerAttributes(); // for subscribedBodies
++	REGISTER_ATTRIBUTE(interval);
++	REGISTER_ATTRIBUTE(Y_min);
++	REGISTER_ATTRIBUTE(initial_positions);
++}
++
++
++void ResetPositionEngine::applyCondition(MetaBody * ncb){
++		if (initial_positions.size()==0) 
++		{
++				initialize(ncb);
++				return;
++		}
++
++	shared_ptr&lt;BodyContainer&gt;&amp; bodies = ncb-&gt;bodies;
++	for(int i=0,e=subscribedBodies.size(); i&lt;e; ++i)
++	{
++			ParticleParameters* pp = YADE_CAST&lt;ParticleParameters*&gt;((*bodies)[subscribedBodies[i]]-&gt;physicalParameters.get());
++			if (pp-&gt;se3.position[1]&lt;Y_min)
++			{
++					pp-&gt;se3.position = initial_positions[i];
++					pp-&gt;velocity = Vector3r(0,0,0);
++			}
++	}
++}
++
++void ResetPositionEngine::initialize(MetaBody * ncb){
++	initial_positions.resize(subscribedBodies.size());
++	shared_ptr&lt;BodyContainer&gt;&amp; bodies = ncb-&gt;bodies;
++	for(int i=0,e=subscribedBodies.size(); i&lt;e; ++i)
++		initial_positions[i]=(*bodies)[subscribedBodies[i]]-&gt;physicalParameters-&gt;se3.position;
++}
++YADE_PLUGIN();
+
+Added: trunk/pkg/common/Engine/DeusExMachina/ResetPositionEngine.hpp
+===================================================================
+--- trunk/pkg/common/Engine/DeusExMachina/ResetPositionEngine.hpp	2008-06-17 16:07:27 UTC (rev 1393)
++++ trunk/pkg/common/Engine/DeusExMachina/ResetPositionEngine.hpp	2008-06-18 13:29:35 UTC (rev 1394)
+@@ -0,0 +1,39 @@
++/*************************************************************************
++*  Copyright (C) 2008 by Sergei Dorofeenko				 *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">sega at users.berlios.de</A>                                                 *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#ifndef RESETPOSITONENGINE_HPP
++#define RESETPOSITONENGINE_HPP
++
++#include&lt;yade/core/DeusExMachina.hpp&gt;
++#include &lt;Wm3Vector3.h&gt;
++#include&lt;yade/lib-base/yadeWm3.hpp&gt;
++
++/* Resets spatial position for all subscribed bodies to the desired value. */
++class ResetPositionEngine : public DeusExMachina {
++	public:
++		void applyCondition(MetaBody*);
++		bool isActivated()
++				{return ((Omega::instance().getCurrentIteration() % interval == 0));}
++		ResetPositionEngine();
++
++		int interval;
++		Real Y_min;
++		std::vector&lt;Vector3r&gt; initial_positions;
++	protected:
++		virtual void postProcessAttributes(bool);
++		virtual void registerAttributes();
++	REGISTER_CLASS_NAME(ResetPositionEngine);
++	REGISTER_BASE_CLASS_NAME(DeusExMachina);
++	private:
++		void initialize(MetaBody * ncb);
++};
++
++REGISTER_SERIALIZABLE(ResetPositionEngine,false);
++
++#endif //  RESETPOSITONENGINE_HPP
++
+
+Modified: trunk/pkg/common/SConscript
+===================================================================
+--- trunk/pkg/common/SConscript	2008-06-17 16:07:27 UTC (rev 1393)
++++ trunk/pkg/common/SConscript	2008-06-18 13:29:35 UTC (rev 1394)
+@@ -249,6 +249,17 @@
+ 			'yade-multimethods'],
+ 		CPPPATH=env['CPPPATH']+['$PREFIX/include', 'Engine/DeusExMachina']),
+ 
++	env.SharedLibrary('ResetPositionEngine',
++		['Engine/DeusExMachina/ResetPositionEngine.cpp'],
++		LIBS=env['LIBS']+['yade-base',
++			'yade-factory',
++			'yade-base',
++			'yade-serialization',
++			'yade-loki',
++			'yade-multimethods',
++			'ParticleParameters'],
++		CPPPATH=env['CPPPATH']+['$PREFIX/include', 'Engine/DeusExMachina']),
++	
+ 	env.SharedLibrary('BoundingVolumeMetaEngine',
+ 		['Engine/MetaEngine/BoundingVolumeMetaEngine.cpp'],
+ 		LIBS=env['LIBS']+['yade-base'],
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000354.html">[Yade-commits] r1393 - in trunk/lib: QGLViewer QGLViewer/VRender	factory import serialization
+</A></li>
+	<LI>Next message: <A HREF="000356.html">[Yade-commits] r1395 - in trunk: . extra extra/usct gui/py
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#355">[ date ]</a>
+              <a href="thread.html#355">[ thread ]</a>
+              <a href="subject.html#355">[ subject ]</a>
+              <a href="author.html#355">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

@@ -1,0 +1,149 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1091 - in branches/scons-layout: . core
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2007/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1091%20-%20in%20branches/scons-layout%3A%20.%20core&In-Reply-To=%3C200703070905.l27954xk013071%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000055.html">
+   <LINK REL="Next"  HREF="000057.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1091 - in branches/scons-layout: . core</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1091%20-%20in%20branches/scons-layout%3A%20.%20core&In-Reply-To=%3C200703070905.l27954xk013071%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1091 - in branches/scons-layout: . core">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Wed Mar  7 10:05:04 CET 2007</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000055.html">[Yade-commits] r1090 - in branches/scons-layout: . core
+</A></li>
+        <LI>Next message: <A HREF="000057.html">[Yade-commits] r1092 - in branches/scons-layout/libs: yade-lib-base	yade-lib-computational-geometry yade-lib-factory	yade-lib-loki yade-lib-multimethods yade-lib-opengl	yade-lib-serialization yade-lib-serialization-bin	yade-lib-serialization-qt yade-lib-serialization-xml
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#56">[ date ]</a>
+              <a href="thread.html#56">[ thread ]</a>
+              <a href="subject.html#56">[ subject ]</a>
+              <a href="author.html#56">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2007-03-07 10:05:03 +0100 (Wed, 07 Mar 2007)
+New Revision: 1091
+
+Added:
+   branches/scons-layout/core/SConscript
+   branches/scons-layout/doc/
+   branches/scons-layout/examples/
+   branches/scons-layout/extra/
+   branches/scons-layout/guis/
+   branches/scons-layout/libs/
+   branches/scons-layout/pkg/
+   branches/scons-layout/scripts/
+Removed:
+   branches/scons-layout/yade-doc/
+   branches/scons-layout/yade-examples/
+   branches/scons-layout/yade-extra/
+   branches/scons-layout/yade-flat/
+   branches/scons-layout/yade-guis/
+   branches/scons-layout/yade-libs/
+   branches/scons-layout/yade-packages/
+   branches/scons-layout/yade-scripts/
+Log:
+remove yade- prefix from toplevels.
+
+
+Added: branches/scons-layout/core/SConscript
+===================================================================
+--- branches/scons-layout/core/SConscript	2007-03-07 09:01:36 UTC (rev 1090)
++++ branches/scons-layout/core/SConscript	2007-03-07 09:05:03 UTC (rev 1091)
+@@ -0,0 +1,42 @@
++Import('*')
++env.InstallAs(['$PREFIX/bin/yade$POSTFIX'],[
++	## ..//yade-core/src/yade/yade.pro
++	env.Program('yade',
++		['Body.cpp',
++			'BodyContainer.cpp',
++			'BoundingVolume.cpp',
++			'DeusExMachina.cpp',
++			'FileGenerator.cpp',
++			'FrontEnd.cpp',
++			'GeometricalModel.cpp',
++			'InteractingGeometry.cpp',
++			'Interaction.cpp',
++			'InteractionContainer.cpp',
++			'MetaBody.cpp',
++			'MetaDispatchingEngine.cpp',
++			'NullGUI.cpp',
++			'Omega.cpp',
++			'PhysicalActionContainer.cpp',
++			'PhysicalParameters.cpp',
++			'Preferences.cpp',
++			'SimulationFlow.cpp',
++			'StandAloneSimulator.cpp',
++			'ThreadRunner.cpp',
++			'ThreadWorker.cpp',
++			'TimeStepper.cpp',
++			'yade.cpp',
++			'yadeExceptions.cpp'],
++		LIBS=env['LIBS']+['yade-lib-base',
++			'Wm3Foundation',
++			'yade-lib-serialization',
++			'yade-lib-factory',
++			'yade-lib-base',
++			'Wm3Foundation',
++			'yade-lib-loki',
++			'yade-lib-multimethods',
++			'glut',
++			'boost_date_time',
++			'boost_filesystem',
++			'boost_thread'],
++		CPPPATH=env['CPPPATH']+['$PREFIX/include', '.'])
++])
+
+Copied: branches/scons-layout/doc (from rev 1089, branches/scons-layout/yade-doc)
+
+Copied: branches/scons-layout/examples (from rev 1089, branches/scons-layout/yade-examples)
+
+Copied: branches/scons-layout/extra (from rev 1089, branches/scons-layout/yade-extra)
+
+Copied: branches/scons-layout/guis (from rev 1089, branches/scons-layout/yade-guis)
+
+Copied: branches/scons-layout/libs (from rev 1089, branches/scons-layout/yade-libs)
+
+Copied: branches/scons-layout/pkg (from rev 1089, branches/scons-layout/yade-packages)
+
+Copied: branches/scons-layout/scripts (from rev 1089, branches/scons-layout/yade-scripts)
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000055.html">[Yade-commits] r1090 - in branches/scons-layout: . core
+</A></li>
+	<LI>Next message: <A HREF="000057.html">[Yade-commits] r1092 - in branches/scons-layout/libs: yade-lib-base	yade-lib-computational-geometry yade-lib-factory	yade-lib-loki yade-lib-multimethods yade-lib-opengl	yade-lib-serialization yade-lib-serialization-bin	yade-lib-serialization-qt yade-lib-serialization-xml
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#56">[ date ]</a>
+              <a href="thread.html#56">[ thread ]</a>
+              <a href="subject.html#56">[ subject ]</a>
+              <a href="author.html#56">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

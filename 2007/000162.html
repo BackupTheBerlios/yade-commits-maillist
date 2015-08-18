@@ -1,0 +1,167 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1197 - trunk/pkg/dem/Engine/StandAloneEngine
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2007/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1197%20-%20trunk/pkg/dem/Engine/StandAloneEngine&In-Reply-To=%3C200706131449.l5DEnUVN019461%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000161.html">
+   <LINK REL="Next"  HREF="000163.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1197 - trunk/pkg/dem/Engine/StandAloneEngine</H1>
+    <B>chareyre at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1197%20-%20trunk/pkg/dem/Engine/StandAloneEngine&In-Reply-To=%3C200706131449.l5DEnUVN019461%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1197 - trunk/pkg/dem/Engine/StandAloneEngine">chareyre at mail.berlios.de
+       </A><BR>
+    <I>Wed Jun 13 16:49:30 CEST 2007</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000161.html">[Yade-commits] r1196 - in trunk: . pkg/dem/Engine/EngineUnit
+</A></li>
+        <LI>Next message: <A HREF="000163.html">[Yade-commits] r1198 - in trunk/pkg/dem: . PreProcessor
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#162">[ date ]</a>
+              <a href="thread.html#162">[ thread ]</a>
+              <a href="subject.html#162">[ subject ]</a>
+              <a href="author.html#162">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: chareyre
+Date: 2007-06-13 16:49:30 +0200 (Wed, 13 Jun 2007)
+New Revision: 1197
+
+Modified:
+   trunk/pkg/dem/Engine/StandAloneEngine/GlobalStiffnessCounter.cpp
+   trunk/pkg/dem/Engine/StandAloneEngine/GlobalStiffnessTimeStepper.cpp
+Log:
+Some changes in the computation of critical timestep so that the 
+triaxial samples do not explode when dt is set to the automatic 
+value. The change mostly affects the first steps of a simulation. Now, 
+dt is computed at each timestep during the first steps, whatever the 
+value of the user-defined variable &quot;timeStepUpdateInterval&quot;, until a 
+relevant value is found.
+ 
+
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/GlobalStiffnessCounter.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/GlobalStiffnessCounter.cpp	2007-06-12 20:43:51 UTC (rev 1196)
++++ trunk/pkg/dem/Engine/StandAloneEngine/GlobalStiffnessCounter.cpp	2007-06-13 14:49:30 UTC (rev 1197)
+@@ -42,7 +42,7 @@
+ 
+ bool GlobalStiffnessCounter::isActivated()
+ {
+-	return ((Omega::instance().getCurrentIteration() % interval == 0) );
++	return ((Omega::instance().getCurrentIteration() % interval == 0) || (Omega::instance().getCurrentIteration() &lt; 100));
+ }
+ 
+ void GlobalStiffnessCounter::action(Body* body)
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/GlobalStiffnessTimeStepper.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/GlobalStiffnessTimeStepper.cpp	2007-06-12 20:43:51 UTC (rev 1196)
++++ trunk/pkg/dem/Engine/StandAloneEngine/GlobalStiffnessTimeStepper.cpp	2007-06-13 14:49:30 UTC (rev 1197)
+@@ -22,7 +22,7 @@
+ //cerr &lt;&lt; &quot;GlobalStiffnessTimeStepper()&quot;  &lt;&lt; endl;
+ 	globalStiffnessClassIndex = actionParameterGlobalStiffness-&gt;getClassIndex();
+ 	sdecGroupMask = 1;
+-	timestepSafetyCoefficient = 0.4;
++	timestepSafetyCoefficient = 0.6;
+ 	computedOnce = false;
+ 	defaultDt = 1;
+ 	
+@@ -75,13 +75,30 @@
+ 	
+ // 	Real dt = min (sqrt( sdec-&gt;mass  /  stiffness.x()) ,sqrt( sdec-&gt;mass  /  stiffness.y() ) );
+ // 	dt = 0.5 * min (sqrt( sdec-&gt;mass  /  stiffness.z()), dt);
++	Real dtx, dty, dtz;	
++
++	Real dt = max( max (stiffness.X(), stiffness.Y()), stiffness.Z() );
++	if (dt!=0) {
++		dt = sqrt(sdec-&gt;mass/dt);  computedSomething = true;}
++	else dt = Mathr::MAX_REAL;
+ 	
+-	Real dt = max( max (stiffness.X(), stiffness.Y()), stiffness.Z() );
+-	dt = (dt!=0 ? sqrt(sdec-&gt;mass/dt) : Mathr::MAX_REAL);	
+-		
+-	Real dtx = (Rstiffness.X()!=0 ? sdec-&gt;inertia.X()/Rstiffness.X() : Mathr::MAX_REAL);
+-	Real dty = (Rstiffness.Y()!=0 ? sdec-&gt;inertia.Y()/Rstiffness.Y() : Mathr::MAX_REAL);
+-	Real dtz = (Rstiffness.Z()!=0 ? sdec-&gt;inertia.Z()/Rstiffness.Z() : Mathr::MAX_REAL);
++	if (Rstiffness.X()!=0) {
++		dtx = sdec-&gt;inertia.X()/Rstiffness.X();  computedSomething = true;}
++	else dtx = Mathr::MAX_REAL;
++
++	if (Rstiffness.Y()!=0) {
++		dty = sdec-&gt;inertia.Y()/Rstiffness.Y();  computedSomething = true;}
++	else dty = Mathr::MAX_REAL;
++
++	if (Rstiffness.Z()!=0) {
++		dtz = sdec-&gt;inertia.Z()/Rstiffness.Z();  computedSomething = true;}
++	else dtz = Mathr::MAX_REAL;
++
++
++	//if (Rstiffness.X()!=0) 
++	//Real dtx = (Rstiffness.X()!=0 ? sdec-&gt;inertia.X()/Rstiffness.X() : Mathr::MAX_REAL);
++	//Real dty = (Rstiffness.Y()!=0 ? sdec-&gt;inertia.Y()/Rstiffness.Y() : Mathr::MAX_REAL);
++	//Real dtz = (Rstiffness.Z()!=0 ? sdec-&gt;inertia.Z()/Rstiffness.Z() : Mathr::MAX_REAL);
+ 	Real Rdt = sqrt( min( min (dtx, dty), dtz ) );
+ 	
+ 	//cerr &lt;&lt; &quot;Rstiffness.x()=&quot; &lt;&lt; Rstiffness.x() &lt;&lt; &quot;  &quot; &lt;&lt; Rstiffness.y() &lt;&lt; &quot;  &quot; &lt;&lt; Rstiffness.z() &lt;&lt; endl;
+@@ -91,7 +108,7 @@
+ 	dt = 0.709*timestepSafetyCoefficient*std::min(dt,Rdt);//0.709 = 1/sqrt(2)
+ 	
+ 	newDt = std::min(dt,newDt);
+-	computedSomething = true;
++	//computedSomething = true;
+ 	
+ }
+ 
+@@ -150,9 +167,12 @@
+ 	if(computedSomething)
+ 	{
+ 		Omega::instance().setTimeStep(min(newDt , defaultDt));
+-		computedOnce = true;		
++		//Omega::instance().setTimeStep(newDt);
++		computedOnce = true;	
++		//cerr &lt;&lt; &quot;computedOnce=&quot; &lt;&lt; computedOnce &lt;&lt; endl;	
+ 		//cerr &lt;&lt; &quot;GlobalStiffnessTimeStepper, timestep chosen is:&quot; &lt;&lt; Omega::instance().getTimeStep() &lt;&lt; endl;
+ 	}
+-	cerr &lt;&lt; &quot;new timestep is:&quot; &lt;&lt; Omega::instance().getTimeStep() &lt;&lt; endl;
++	else Omega::instance().setTimeStep(defaultDt);
++	cerr &lt;&lt; &quot;computed timestep = &quot; &lt;&lt; newDt &lt;&lt; &quot;; new timestep is:&quot; &lt;&lt; Omega::instance().getTimeStep() &lt;&lt; endl;
+ }
+ 
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000161.html">[Yade-commits] r1196 - in trunk: . pkg/dem/Engine/EngineUnit
+</A></li>
+	<LI>Next message: <A HREF="000163.html">[Yade-commits] r1198 - in trunk/pkg/dem: . PreProcessor
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#162">[ date ]</a>
+              <a href="thread.html#162">[ thread ]</a>
+              <a href="subject.html#162">[ subject ]</a>
+              <a href="author.html#162">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

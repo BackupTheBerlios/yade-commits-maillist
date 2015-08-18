@@ -1,0 +1,3876 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1133 - branches/scons-layout/lib/miniWm3
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2007/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1133%20-%20branches/scons-layout/lib/miniWm3&In-Reply-To=%3C200703101019.l2AAJJ0w016212%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000097.html">
+   <LINK REL="Next"  HREF="000099.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1133 - branches/scons-layout/lib/miniWm3</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1133%20-%20branches/scons-layout/lib/miniWm3&In-Reply-To=%3C200703101019.l2AAJJ0w016212%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1133 - branches/scons-layout/lib/miniWm3">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Sat Mar 10 11:19:19 CET 2007</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000097.html">[Yade-commits] r1132 - in branches/scons-layout: . lib
+</A></li>
+        <LI>Next message: <A HREF="000099.html">[Yade-commits] r1134 - branches/scons-layout/lib/miniWm3
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#98">[ date ]</a>
+              <a href="thread.html#98">[ thread ]</a>
+              <a href="subject.html#98">[ subject ]</a>
+              <a href="author.html#98">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2007-03-10 11:19:18 +0100 (Sat, 10 Mar 2007)
+New Revision: 1133
+
+Added:
+   branches/scons-layout/lib/miniWm3/Wm3DelTetrahedron.cpp
+   branches/scons-layout/lib/miniWm3/Wm3DelTetrahedron.h
+   branches/scons-layout/lib/miniWm3/Wm3DelTriangle.cpp
+   branches/scons-layout/lib/miniWm3/Wm3DelTriangle.h
+   branches/scons-layout/lib/miniWm3/Wm3Delaunay.cpp
+   branches/scons-layout/lib/miniWm3/Wm3Delaunay.h
+   branches/scons-layout/lib/miniWm3/Wm3Delaunay1.cpp
+   branches/scons-layout/lib/miniWm3/Wm3Delaunay1.h
+   branches/scons-layout/lib/miniWm3/Wm3Delaunay2.cpp
+   branches/scons-layout/lib/miniWm3/Wm3Delaunay2.h
+   branches/scons-layout/lib/miniWm3/Wm3Delaunay3.cpp
+   branches/scons-layout/lib/miniWm3/Wm3Delaunay3.h
+   branches/scons-layout/lib/miniWm3/Wm3Query.h
+   branches/scons-layout/lib/miniWm3/Wm3Query.inl
+   branches/scons-layout/lib/miniWm3/Wm3Query2.h
+   branches/scons-layout/lib/miniWm3/Wm3Query2.inl
+Log:
+forgot to add
+
+Added: branches/scons-layout/lib/miniWm3/Wm3DelTetrahedron.cpp
+===================================================================
+--- branches/scons-layout/lib/miniWm3/Wm3DelTetrahedron.cpp	2007-03-10 10:16:29 UTC (rev 1132)
++++ branches/scons-layout/lib/miniWm3/Wm3DelTetrahedron.cpp	2007-03-10 10:19:18 UTC (rev 1133)
+@@ -0,0 +1,122 @@
++// Geometric Tools, Inc.
++// <A HREF="http://www.geometrictools.com">http://www.geometrictools.com</A>
++// Copyright (c) 1998-2006.  All Rights Reserved
++//
++// The Wild Magic Library (WM3) source code is supplied under the terms of
++// the license agreement
++//     <A HREF="http://www.geometrictools.com/License/WildMagic3License.pdf">http://www.geometrictools.com/License/WildMagic3License.pdf</A>
++// and may not be copied or disclosed except in accordance with the terms
++// of that agreement.
++
++#include &quot;Wm3FoundationPCH.h&quot;
++#include &quot;Wm3DelTetrahedron.h&quot;
++
++namespace Wm3
++{
++//----------------------------------------------------------------------------
++template &lt;class Real&gt;
++DelTetrahedron&lt;Real&gt;::DelTetrahedron (int iV0, int iV1, int iV2, int iV3)
++{
++    V[0] = iV0;
++    V[1] = iV1;
++    V[2] = iV2;
++    V[3] = iV3;
++    A[0] = 0;
++    A[1] = 0;
++    A[2] = 0;
++    A[3] = 0;
++    Time = -1;
++    IsComponent = false;
++    OnStack = false;
++}
++//----------------------------------------------------------------------------
++template &lt;class Real&gt;
++bool DelTetrahedron&lt;Real&gt;::IsInsertionComponent (int i, DelTetrahedron* pkAdj,
++    const Query3&lt;Real&gt;* pkQuery, const int* aiSupervertex)
++{
++    // Indexing for the vertices of the triangle opposite a vertex.  The
++    // triangle opposite vertex j is
++    //   &lt;aaiIndex[j][0], aaiIndex[j][1], aaiIndex[j][2]&gt;
++    // and is listed in counterclockwise order when viewed from outside the
++    // tetrahedron.
++    const int aaiIndex[4][3] = { {1,2,3}, {0,3,2}, {0,1,3}, {0,2,1} };
++
++    if (i != Time)
++    {
++        Time = i;
++
++        // Determine if the circumsphere of the tetrahedron contains the
++        // input point.
++        int iRelation = pkQuery-&gt;ToCircumsphere(i,V[0],V[1],V[2],V[3]);
++        IsComponent = (iRelation &lt;= 0);
++        if (IsComponent)
++        {
++            return true;
++        }
++
++        // It is possible that a tetrahedron that shares a supervertex does
++        // not have the circumsphere-containing property, but all faces of
++        // it (other than the shared one with the calling tetrahedron) are
++        // visible.  These are also included in the insertion polyhedron.
++        for (int j = 0; j &lt; 4; j++)
++        {
++            for (int k = 0; k &lt; 4; k++)
++            {
++                if (V[j] == aiSupervertex[k])
++                {
++                    // Tetrahedron shares a supervertex.  It is safe to reuse
++                    // k as a loop index because we are returning from the
++                    // function.
++                    int iNumInvisible = 0;
++                    for (k = 0; k &lt; 4; k++)
++                    {
++                        if (A[k] != pkAdj)
++                        {
++                            int iV0 = V[aaiIndex[k][0]];
++                            int iV1 = V[aaiIndex[k][1]];
++                            int iV2 = V[aaiIndex[k][2]];
++                            iRelation = pkQuery-&gt;ToPlane(i,iV0,iV1,iV2);
++                            if (iRelation &gt; 0)
++                            {
++                                iNumInvisible++;
++                            }
++                        }
++                    }
++                    IsComponent = (iNumInvisible == 0);
++                    return IsComponent;
++                }
++            }
++        }
++    }
++
++    return IsComponent;
++}
++//----------------------------------------------------------------------------
++template &lt;class Real&gt;
++int DelTetrahedron&lt;Real&gt;::DetachFrom (int iAdj, DelTetrahedron* pkAdj)
++{
++    assert(0 &lt;= iAdj &amp;&amp; iAdj &lt; 4 &amp;&amp; A[iAdj] == pkAdj);
++    A[iAdj] = 0;
++    for (int i = 0; i &lt; 4; i++)
++    {
++        if (pkAdj-&gt;A[i] == this)
++        {
++            pkAdj-&gt;A[i] = 0;
++            return i;
++        }
++    }
++    return -1;
++}
++//----------------------------------------------------------------------------
++
++//----------------------------------------------------------------------------
++// explicit instantiation
++//----------------------------------------------------------------------------
++template WM3_ITEM
++class DelTetrahedron&lt;float&gt;;
++
++template WM3_ITEM
++class DelTetrahedron&lt;double&gt;;
++//----------------------------------------------------------------------------
++}
++
+
+Added: branches/scons-layout/lib/miniWm3/Wm3DelTetrahedron.h
+===================================================================
+--- branches/scons-layout/lib/miniWm3/Wm3DelTetrahedron.h	2007-03-10 10:16:29 UTC (rev 1132)
++++ branches/scons-layout/lib/miniWm3/Wm3DelTetrahedron.h	2007-03-10 10:19:18 UTC (rev 1133)
+@@ -0,0 +1,43 @@
++// Geometric Tools, Inc.
++// <A HREF="http://www.geometrictools.com">http://www.geometrictools.com</A>
++// Copyright (c) 1998-2006.  All Rights Reserved
++//
++// The Wild Magic Library (WM3) source code is supplied under the terms of
++// the license agreement
++//     <A HREF="http://www.geometrictools.com/License/WildMagic3License.pdf">http://www.geometrictools.com/License/WildMagic3License.pdf</A>
++// and may not be copied or disclosed except in accordance with the terms
++// of that agreement.
++
++#ifndef WM3DELTETRAHEDRON_H
++#define WM3DELTETRAHEDRON_H
++
++#include &quot;Wm3FoundationLIB.h&quot;
++#include &quot;Wm3Query3.h&quot;
++
++namespace Wm3
++{
++
++template &lt;class Real&gt;
++class WM3_ITEM DelTetrahedron
++{
++public:
++    DelTetrahedron (int iV0, int iV1, int iV2, int iV3);
++
++    bool IsInsertionComponent (int i, DelTetrahedron* pkAdj,
++        const Query3&lt;Real&gt;* pkQuery, const int* aiSupervertex);
++    int DetachFrom (int iAdj, DelTetrahedron* pkAdj);
++
++    int V[4];
++    DelTetrahedron* A[4];
++    int Time;
++    bool IsComponent;
++    bool OnStack;
++};
++
++typedef DelTetrahedron&lt;float&gt; DelTetrahedronf;
++typedef DelTetrahedron&lt;double&gt; DelTetrahedrond;
++
++}
++
++#endif
++
+
+Added: branches/scons-layout/lib/miniWm3/Wm3DelTriangle.cpp
+===================================================================
+--- branches/scons-layout/lib/miniWm3/Wm3DelTriangle.cpp	2007-03-10 10:16:29 UTC (rev 1132)
++++ branches/scons-layout/lib/miniWm3/Wm3DelTriangle.cpp	2007-03-10 10:19:18 UTC (rev 1133)
+@@ -0,0 +1,125 @@
++// Geometric Tools, Inc.
++// <A HREF="http://www.geometrictools.com">http://www.geometrictools.com</A>
++// Copyright (c) 1998-2006.  All Rights Reserved
++//
++// The Wild Magic Library (WM3) source code is supplied under the terms of
++// the license agreement
++//     <A HREF="http://www.geometrictools.com/License/WildMagic3License.pdf">http://www.geometrictools.com/License/WildMagic3License.pdf</A>
++// and may not be copied or disclosed except in accordance with the terms
++// of that agreement.
++
++#include &quot;Wm3FoundationPCH.h&quot;
++#include &quot;Wm3DelTriangle.h&quot;
++
++namespace Wm3
++{
++//----------------------------------------------------------------------------
++template &lt;class Real&gt;
++DelTriangle&lt;Real&gt;::DelTriangle (int iV0, int iV1, int iV2)
++{
++    V[0] = iV0;
++    V[1] = iV1;
++    V[2] = iV2;
++    A[0] = 0;
++    A[1] = 0;
++    A[2] = 0;
++    Time = -1;
++    IsComponent = false;
++    OnStack = false;
++}
++//----------------------------------------------------------------------------
++template &lt;class Real&gt;
++bool DelTriangle&lt;Real&gt;::IsInsertionComponent (int i, DelTriangle* pkAdj,
++    const Query2&lt;Real&gt;* pkQuery, const int* aiSupervertex)
++{
++    if (i != Time)
++    {
++        Time = i;
++
++        // Determine the number of vertices in common with the supertriangle.
++        // The supertriangle vertices have indices VQ-3, VQ-2, and VQ-1, where
++        // VQ is the quantity of input vertices.
++        int iCommon = 0, iSVIndex = -1, j;
++        for (j = 0; j &lt; 3; j++)
++        {
++            for (int k = 0; k &lt; 3; k++)
++            {
++                if (V[j] == aiSupervertex[k])
++                {
++                    iCommon++;
++                    iSVIndex = j;
++                }
++            }
++        }
++
++        int iRelation;
++        if (iCommon == 0)
++        {
++            // The classic case is that a point is in the mesh formed only by
++            // the input vertices, in which case we only test for containment
++            // in the circumcircle of the triangle.
++            iRelation = pkQuery-&gt;ToCircumcircle(i,V[0],V[1],V[2]);
++        }
++        else
++        {
++            // The classic problem is that points outside the mesh formed
++            // only by the input vertices must be handled from a visibility
++            // perspective rather than using circumcircles (compare with
++            // convex hull construction).  By not doing this, you can run into
++            // the pitfall that has snared many folks--the boundary edges of
++            // the final triangulation do not form a convex polygon.
++            int iV0, iV1;
++            if (iCommon == 1)
++            {
++                iV0 = V[(iSVIndex+1)%3];
++                iV1 = V[(iSVIndex+2)%3];
++            }
++            else  // iCommon == 2
++            {
++                for (j = 0; j &lt; 3; j++)
++                {
++                    if (A[j] != 0 &amp;&amp; A[j] != pkAdj)
++                    {
++                        break;
++                    }
++                }
++                iV0 = V[j];
++                iV1 = V[(j+1)%3];
++            }
++            iRelation = pkQuery-&gt;ToLine(i,iV0,iV1);
++        }
++
++        IsComponent = (iRelation &lt; 0);
++    }
++
++    return IsComponent;
++}
++//----------------------------------------------------------------------------
++template &lt;class Real&gt;
++int DelTriangle&lt;Real&gt;::DetachFrom (int iAdj, DelTriangle* pkAdj)
++{
++    assert(0 &lt;= iAdj &amp;&amp; iAdj &lt; 3 &amp;&amp; A[iAdj] == pkAdj);
++    A[iAdj] = 0;
++    for (int i = 0; i &lt; 3; i++)
++    {
++        if (pkAdj-&gt;A[i] == this)
++        {
++            pkAdj-&gt;A[i] = 0;
++            return i;
++        }
++    }
++    return -1;
++}
++//----------------------------------------------------------------------------
++
++//----------------------------------------------------------------------------
++// explicit instantiation
++//----------------------------------------------------------------------------
++template WM3_ITEM
++class DelTriangle&lt;float&gt;;
++
++template WM3_ITEM
++class DelTriangle&lt;double&gt;;
++//----------------------------------------------------------------------------
++}
++
+
+Added: branches/scons-layout/lib/miniWm3/Wm3DelTriangle.h
+===================================================================
+--- branches/scons-layout/lib/miniWm3/Wm3DelTriangle.h	2007-03-10 10:16:29 UTC (rev 1132)
++++ branches/scons-layout/lib/miniWm3/Wm3DelTriangle.h	2007-03-10 10:19:18 UTC (rev 1133)
+@@ -0,0 +1,43 @@
++// Geometric Tools, Inc.
++// <A HREF="http://www.geometrictools.com">http://www.geometrictools.com</A>
++// Copyright (c) 1998-2006.  All Rights Reserved
++//
++// The Wild Magic Library (WM3) source code is supplied under the terms of
++// the license agreement
++//     <A HREF="http://www.geometrictools.com/License/WildMagic3License.pdf">http://www.geometrictools.com/License/WildMagic3License.pdf</A>
++// and may not be copied or disclosed except in accordance with the terms
++// of that agreement.
++
++#ifndef WM3DELTRIANGLE_H
++#define WM3DELTRIANGLE_H
++
++#include &quot;Wm3FoundationLIB.h&quot;
++#include &quot;Wm3Query2.h&quot;
++
++namespace Wm3
++{
++
++template &lt;class Real&gt;
++class WM3_ITEM DelTriangle
++{
++public:
++    DelTriangle (int iV0, int iV1, int iV2);
++
++    bool IsInsertionComponent (int i, DelTriangle* pkAdj,
++        const Query2&lt;Real&gt;* pkQuery, const int* aiSupervertex);
++    int DetachFrom (int iAdj, DelTriangle* pkAdj);
++
++    int V[3];
++    DelTriangle* A[3];
++    int Time;
++    bool IsComponent;
++    bool OnStack;
++};
++
++typedef DelTriangle&lt;float&gt; DelTrianglef;
++typedef DelTriangle&lt;double&gt; DelTriangled;
++
++}
++
++#endif
++
+
+Added: branches/scons-layout/lib/miniWm3/Wm3Delaunay.cpp
+===================================================================
+--- branches/scons-layout/lib/miniWm3/Wm3Delaunay.cpp	2007-03-10 10:16:29 UTC (rev 1132)
++++ branches/scons-layout/lib/miniWm3/Wm3Delaunay.cpp	2007-03-10 10:19:18 UTC (rev 1133)
+@@ -0,0 +1,159 @@
++// Geometric Tools, Inc.
++// <A HREF="http://www.geometrictools.com">http://www.geometrictools.com</A>
++// Copyright (c) 1998-2005.  All Rights Reserved
++//
++// The Wild Magic Library (WM4) source code is supplied under the terms of
++// the license agreement
++//     <A HREF="http://www.geometrictools.com/License/WildMagic4License.pdf">http://www.geometrictools.com/License/WildMagic4License.pdf</A>
++// and may not be copied or disclosed except in accordance with the terms
++// of that agreement.
++
++#include &quot;Wm3FoundationPCH.h&quot;
++#include &quot;Wm3Delaunay.h&quot;
++
++namespace Wm3
++{
++//----------------------------------------------------------------------------
++template &lt;class Real&gt;
++Delaunay&lt;Real&gt;::Delaunay (int iVertexQuantity, Real fEpsilon, bool bOwner,
++    Query::Type eQueryType)
++{
++    m_eQueryType = eQueryType;
++    m_iVertexQuantity = iVertexQuantity;
++    m_iDimension = 0;
++    m_iSimplexQuantity = 0;
++    m_aiIndex = 0;
++    m_aiAdjacent = 0;
++    m_fEpsilon = fEpsilon;
++    m_bOwner = bOwner;
++}
++//----------------------------------------------------------------------------
++template &lt;class Real&gt;
++Delaunay&lt;Real&gt;::~Delaunay ()
++{
++    WM3_DELETE[] m_aiIndex;
++    WM3_DELETE[] m_aiAdjacent;
++}
++//----------------------------------------------------------------------------
++template &lt;class Real&gt;
++int Delaunay&lt;Real&gt;::GetQueryType () const
++{
++    return m_eQueryType;
++}
++//----------------------------------------------------------------------------
++template &lt;class Real&gt;
++int Delaunay&lt;Real&gt;::GetVertexQuantity () const
++{
++    return m_iVertexQuantity;
++}
++//----------------------------------------------------------------------------
++template &lt;class Real&gt;
++Real Delaunay&lt;Real&gt;::GetEpsilon () const
++{
++    return m_fEpsilon;
++}
++//----------------------------------------------------------------------------
++template &lt;class Real&gt;
++bool Delaunay&lt;Real&gt;::GetOwner () const
++{
++    return m_bOwner;
++}
++//----------------------------------------------------------------------------
++template &lt;class Real&gt;
++int Delaunay&lt;Real&gt;::GetDimension () const
++{
++    return m_iDimension;
++}
++//----------------------------------------------------------------------------
++template &lt;class Real&gt;
++int Delaunay&lt;Real&gt;::GetSimplexQuantity () const
++{
++    return m_iSimplexQuantity;
++}
++//----------------------------------------------------------------------------
++template &lt;class Real&gt;
++const int* Delaunay&lt;Real&gt;::GetIndices () const
++{
++    return m_aiIndex;
++}
++//----------------------------------------------------------------------------
++template &lt;class Real&gt;
++const int* Delaunay&lt;Real&gt;::GetAdjacencies () const
++{
++    return m_aiAdjacent;
++}
++//----------------------------------------------------------------------------
++template &lt;class Real&gt;
++bool Delaunay&lt;Real&gt;::Load (FILE* pkIFile)
++{
++    WM3_DELETE[] m_aiIndex;
++    WM3_DELETE[] m_aiAdjacent;
++
++    // fixed-size members
++    int iQueryType;
++    System::Read4le(pkIFile,1,&amp;iQueryType);
++    m_eQueryType = (Query::Type)iQueryType;
++    System::Read4le(pkIFile,1,&amp;m_iVertexQuantity);
++    System::Read4le(pkIFile,1,&amp;m_iDimension);
++    System::Read4le(pkIFile,1,&amp;m_iSimplexQuantity);
++    System::Read4le(pkIFile,1,&amp;m_fEpsilon);
++
++    // variable-size members
++    int iIQuantity;
++    System::Read4le(pkIFile,1,&amp;iIQuantity);
++    if (1 &lt;= m_iDimension &amp;&amp; m_iDimension &lt;= 3)
++    {
++        assert(iIQuantity == (m_iDimension+1)*m_iSimplexQuantity);
++        m_aiIndex = WM3_NEW int[iIQuantity];
++        m_aiAdjacent = WM3_NEW int[iIQuantity];
++        System::Read4le(pkIFile,iIQuantity,m_aiIndex);
++        System::Read4le(pkIFile,iIQuantity,m_aiAdjacent);
++        return true;
++    }
++
++    m_aiIndex = 0;
++    m_aiAdjacent = 0;
++    return m_iDimension == 0;
++}
++//----------------------------------------------------------------------------
++template &lt;class Real&gt;
++bool Delaunay&lt;Real&gt;::Save (FILE* pkOFile) const
++{
++    // fixed-size members
++    int iQueryType = (int)m_eQueryType;
++    System::Write4le(pkOFile,1,&amp;iQueryType);
++    System::Write4le(pkOFile,1,&amp;m_iVertexQuantity);
++    System::Write4le(pkOFile,1,&amp;m_iDimension);
++    System::Write4le(pkOFile,1,&amp;m_iSimplexQuantity);
++    System::Write4le(pkOFile,1,&amp;m_fEpsilon);
++
++    // The member m_bOwner is not streamed because on a Load call, this
++    // object will allocate the vertices and own this memory.
++
++    // variable-size members
++    int iIQuantity;
++    if (1 &lt;= m_iDimension &amp;&amp; m_iDimension &lt;= 3)
++    {
++        iIQuantity = (m_iDimension+1)*m_iSimplexQuantity;
++        System::Write4le(pkOFile,1,&amp;iIQuantity);
++        System::Write4le(pkOFile,iIQuantity,m_aiIndex);
++        System::Write4le(pkOFile,iIQuantity,m_aiAdjacent);
++        return true;
++    }
++
++    iIQuantity = 0;
++    System::Write4le(pkOFile,1,&amp;iIQuantity);
++    return m_iDimension == 0;
++}
++//----------------------------------------------------------------------------
++
++//----------------------------------------------------------------------------
++// explicit instantiation
++//----------------------------------------------------------------------------
++template WM3_ITEM
++class Delaunay&lt;float&gt;;
++
++template WM3_ITEM
++class Delaunay&lt;double&gt;;
++//----------------------------------------------------------------------------
++}
+
+Added: branches/scons-layout/lib/miniWm3/Wm3Delaunay.h
+===================================================================
+--- branches/scons-layout/lib/miniWm3/Wm3Delaunay.h	2007-03-10 10:16:29 UTC (rev 1132)
++++ branches/scons-layout/lib/miniWm3/Wm3Delaunay.h	2007-03-10 10:19:18 UTC (rev 1133)
+@@ -0,0 +1,164 @@
++// Geometric Tools, Inc.
++// <A HREF="http://www.geometrictools.com">http://www.geometrictools.com</A>
++// Copyright (c) 1998-2006.  All Rights Reserved
++//
++// The Wild Magic Library (WM3) source code is supplied under the terms of
++// the license agreement
++//     <A HREF="http://www.geometrictools.com/License/WildMagic3License.pdf">http://www.geometrictools.com/License/WildMagic3License.pdf</A>
++// and may not be copied or disclosed except in accordance with the terms
++// of that agreement.
++
++#ifndef WM3DELAUNAY_H
++#define WM3DELAUNAY_H
++
++// The base class for Delaunay algorithms stores the number of mesh components
++// and the connectivity information for the mesh.
++
++#include &quot;Wm3FoundationLIB.h&quot;
++#include &quot;Wm3System.h&quot;
++#include &quot;Wm3Query.h&quot;
++
++namespace Wm3
++{
++
++template &lt;class Real&gt;
++class WM3_ITEM Delaunay
++{
++public:
++    // Abstract base class.
++    virtual ~Delaunay ();
++
++    // Member accessors.  For notational purposes in this class documentation,
++    // The number of vertices is VQ and the vertex array is V.
++    int GetQueryType () const;
++    int GetVertexQuantity () const;
++    Real GetEpsilon () const;
++    bool GetOwner () const;
++
++    // The dimension of the result, call it d.  If n is the dimension of the
++    // space of the input points, then 0 &lt;= d &lt;= n.
++    int GetDimension () const;
++
++    // The interpretations of the return values of these functions depends on
++    // the dimension.  Generally, SQ = GetSimplexQuantity() is the number of
++    // simplices in the mesh.  The array returned by I = GetIndices() contains
++    // SQ tuples, each tuple having d+1 elements and representing a simplex.
++    // An index I[*] is relative to the vertex array V.  The array returned by
++    // A = GetAdjacencies() contains SQ tuples, each tuple having d+1 elements
++    // and representing those simplices adjacent to the d+1 faces of a simplex.
++    // An index A[*] is relative to the index array I.
++    int GetSimplexQuantity () const;
++    const int* GetIndices () const;
++    const int* GetAdjacencies () const;
++
++    // Dimension d = 0.
++    //   SQ = 1
++    //   I  = null (use index zero for vertices)
++    //   A  = null (use index zero for vertices)
++
++    // Dimension d = 1.
++    //   SQ = VQ-1
++    //   I  = Array of 2-tuples of indices into V that represent the
++    //        segments (2*SQ total elements).
++    //   A  = Array of 2-tuples of indices into I that represent the
++    //        adjacent segments (2*SQ total elements).
++    // The i-th segment has vertices
++    //   vertex[0] = V[I[2*i+0]]
++    //   vertex[1] = V[I[2*i+1]].
++    // The segments adjacent to these vertices have indices
++    //   adjacent[0] = A[2*i+0] is the segment sharing vertex[0]
++    //   adjacent[1] = A[2*i+1] is the segment sharing vertex[1]
++    // If there is no adjacent segment, the A[*] value is set to -1.  The
++    // segment adjacent to vertex[j] has vertices
++    //   adjvertex[0] = V[I[2*adjacent[j]+0]]
++    //   adjvertex[1] = V[I[2*adjacent[j]+1]]
++
++    // Dimension d = 2.
++    //   SQ = number of triangles
++    //   I  = Array of 3-tuples of indices into V that represent the
++    //        triangles (3*SQ total elements).
++    //   A  = Array of 3-tuples of indices into I that represent the
++    //        adjacent triangles (3*SQ total elements).
++    // The i-th triangle has vertices
++    //   vertex[0] = V[I[3*i+0]]
++    //   vertex[1] = V[I[3*i+1]]
++    //   vertex[2] = V[I[3*i+2]]
++    // and edge index pairs
++    //   edge[0] = &lt;I[3*i+0],I[3*i+1]&gt;
++    //   edge[1] = &lt;I[3*i+1],I[3*i+2]&gt;
++    //   edge[2] = &lt;I[3*i+2],I[3*i+0]&gt;
++    // The triangles adjacent to these edges have indices
++    //   adjacent[0] = A[3*i+0] is the triangle sharing edge[0]
++    //   adjacent[1] = A[3*i+1] is the triangle sharing edge[1]
++    //   adjacent[2] = A[3*i+2] is the triangle sharing edge[2]
++    // If there is no adjacent triangle, the A[*] value is set to -1.  The
++    // triangle adjacent to edge[j] has vertices
++    //   adjvertex[0] = V[I[3*adjacent[j]+0]]
++    //   adjvertex[1] = V[I[3*adjacent[j]+1]]
++    //   adjvertex[2] = V[I[3*adjacent[j]+2]]
++
++    // Dimension d = 3.
++    //   SQ = number of tetrahedra
++    //   I  = Array of 4-tuples of indices into V that represent the
++    //        tetrahedra (4*SQ total elements).
++    //   A  = Array of 4-tuples of indices into I that represent the
++    //        adjacent tetrahedra (4*SQ total elements).
++    // The i-th tetrahedron has vertices
++    //   vertex[0] = V[I[4*i+0]]
++    //   vertex[1] = V[I[4*i+1]]
++    //   vertex[2] = V[I[4*i+2]]
++    //   vertex[3] = V[I[4*i+3]]
++    // and face index triples listed below.  The face vertex ordering when
++    // viewed from outside the tetrahedron is counterclockwise.
++    //   face[0] = &lt;I[4*i+1],I[4*i+2],I[4*i+3]&gt;
++    //   face[1] = &lt;I[4*i+0],I[4*i+3],I[4*i+2]&gt;
++    //   face[2] = &lt;I[4*i+0],I[4*i+1],I[4*i+3]&gt;
++    //   face[3] = &lt;I[4*i+0],I[4*i+2],I[4*i+1]&gt;
++    // The tetrahedra adjacent to these faces have indices
++    //   adjacent[0] = A[4*i+0] is the tetrahedron opposite vertex[0], so it
++    //                 is the tetrahedron sharing face[0].
++    //   adjacent[1] = A[4*i+1] is the tetrahedron opposite vertex[1], so it
++    //                 is the tetrahedron sharing face[1].
++    //   adjacent[2] = A[4*i+2] is the tetrahedron opposite vertex[2], so it
++    //                 is the tetrahedron sharing face[2].
++    //   adjacent[3] = A[4*i+3] is the tetrahedron opposite vertex[3], so it
++    //                 is the tetrahedron sharing face[3].
++    // If there is no adjacent tetrahedron, the A[*] value is set to -1.  The
++    // tetrahedron adjacent to face[j] has vertices
++    //   adjvertex[0] = V[I[4*adjacent[j]+0]]
++    //   adjvertex[1] = V[I[4*adjacent[j]+1]]
++    //   adjvertex[2] = V[I[4*adjacent[j]+2]]
++    //   adjvertex[3] = V[I[4*adjacent[j]+3]]
++
++protected:
++    // Abstract base class.  The number of vertices to be processed is
++    // iVQuantity.  The value of fEpsilon is a tolerance used for determining
++    // the intrinsic dimension of the input set of vertices.  Ownership of the
++    // input points to the constructors for the derived classes may be
++    // transferred to this class.  If you want the input vertices to be
++    // deleted by this class, set bOwner to 'true'; otherwise, you own the
++    // array and must delete it yourself.
++    Delaunay (int iVertexQuantity, Real fEpsilon, bool bOwner,
++        Query::Type eQueryType);
++
++    // Support for streaming to/from disk.
++    bool Load (FILE* pkIFile);
++    bool Save (FILE* pkOFile) const;
++
++    Query::Type m_eQueryType;
++    int m_iVertexQuantity;
++    int m_iDimension;
++    int m_iSimplexQuantity;
++    int* m_aiIndex;
++    int* m_aiAdjacent;
++    Real m_fEpsilon;
++    bool m_bOwner;
++};
++
++typedef Delaunay&lt;float&gt; Delaunayf;
++typedef Delaunay&lt;double&gt; Delaunayd;
++
++}
++
++#endif
++
+
+Added: branches/scons-layout/lib/miniWm3/Wm3Delaunay1.cpp
+===================================================================
+--- branches/scons-layout/lib/miniWm3/Wm3Delaunay1.cpp	2007-03-10 10:16:29 UTC (rev 1132)
++++ branches/scons-layout/lib/miniWm3/Wm3Delaunay1.cpp	2007-03-10 10:19:18 UTC (rev 1133)
+@@ -0,0 +1,283 @@
++// Geometric Tools, Inc.
++// <A HREF="http://www.geometrictools.com">http://www.geometrictools.com</A>
++// Copyright (c) 1998-2006.  All Rights Reserved
++//
++// The Wild Magic Library (WM3) source code is supplied under the terms of
++// the license agreement
++//     <A HREF="http://www.geometrictools.com/License/WildMagic3License.pdf">http://www.geometrictools.com/License/WildMagic3License.pdf</A>
++// and may not be copied or disclosed except in accordance with the terms
++// of that agreement.
++
++#include &quot;Wm3FoundationPCH.h&quot;
++#include &quot;Wm3Delaunay1.h&quot;
++#include &lt;algorithm&gt;
++#include &lt;vector&gt;
++
++namespace Wm3
++{
++//----------------------------------------------------------------------------
++template &lt;class Real&gt;
++Delaunay1&lt;Real&gt;::Delaunay1 (int iVertexQuantity, Real* afVertex,
++    Real fEpsilon, bool bOwner, Query::Type eQueryType)
++    :
++    Delaunay&lt;Real&gt;(iVertexQuantity,fEpsilon,bOwner,eQueryType)
++{
++    assert(afVertex);
++    m_afVertex = afVertex;
++
++    std::vector&lt;SortedVertex&gt; kArray(m_iVertexQuantity);
++    int i;
++    for (i = 0; i &lt; m_iVertexQuantity; i++)
++    {
++        kArray[i].Value = m_afVertex[i];
++        kArray[i].Index = i;
++    }
++    std::sort(kArray.begin(),kArray.end());
++
++    Real fRange = kArray[m_iVertexQuantity-1].Value - kArray[0].Value;
++    if (fRange &gt;= m_fEpsilon)
++    {
++        m_iDimension = 1;
++        m_iSimplexQuantity = m_iVertexQuantity - 1;
++        m_aiIndex = WM3_NEW int[2*m_iSimplexQuantity];
++        for (i = 0; i &lt; m_iSimplexQuantity; i++)
++        {
++            m_aiIndex[2*i] = kArray[i].Index;
++            m_aiIndex[2*i+1] = kArray[i+1].Index;
++        }
++
++        m_aiAdjacent = WM3_NEW int[2*m_iSimplexQuantity];
++        for (i = 0; i &lt; m_iSimplexQuantity; i++)
++        {
++            m_aiAdjacent[2*i] = i-1;
++            m_aiAdjacent[2*i+1] = i+1;
++        }
++        m_aiAdjacent[2*m_iSimplexQuantity-1] = -1;
++    }
++}
++//----------------------------------------------------------------------------
++template &lt;class Real&gt;
++Delaunay1&lt;Real&gt;::~Delaunay1 ()
++{
++    if (m_bOwner)
++    {
++        WM3_DELETE[] m_afVertex;
++    }
++}
++//----------------------------------------------------------------------------
++template &lt;class Real&gt;
++const Real* Delaunay1&lt;Real&gt;::GetVertices () const
++{
++    return m_afVertex;
++}
++//----------------------------------------------------------------------------
++template &lt;class Real&gt;
++bool Delaunay1&lt;Real&gt;::GetHull (int aiIndex[2])
++{
++    assert(m_iDimension == 1);
++    if (m_iDimension != 1)
++    {
++        return false;
++    }
++
++    aiIndex[0] = m_aiIndex[0];
++    aiIndex[1] = m_aiIndex[2*m_iSimplexQuantity-1];
++    return true;
++}
++//----------------------------------------------------------------------------
++template &lt;class Real&gt;
++int Delaunay1&lt;Real&gt;::GetContainingSegment (const Real fP) const
++{
++    assert(m_iDimension == 1);
++    if (m_iDimension != 1)
++    {
++        return -1;
++    }
++
++    if (fP &lt; m_afVertex[m_aiIndex[0]])
++    {
++        return -1;
++    }
++
++    if (fP &gt; m_afVertex[m_aiIndex[2*m_iSimplexQuantity-1]])
++    {
++        return -1;
++    }
++
++    int i;
++    for (i = 0; i &lt; m_iSimplexQuantity; i++)
++    {
++        if (fP &lt; m_afVertex[m_aiIndex[2*i+1]])
++        {
++            break;
++        }
++    }
++
++    assert(i &lt; m_iSimplexQuantity);
++    return i;
++}
++//----------------------------------------------------------------------------
++template &lt;class Real&gt;
++bool Delaunay1&lt;Real&gt;::GetVertexSet (int i, Real afV[2]) const
++{
++    assert(m_iDimension == 1);
++    if (m_iDimension != 1)
++    {
++        return false;
++    }
++
++    if (0 &lt;= i &amp;&amp; i &lt; m_iSimplexQuantity)
++    {
++        afV[0] = m_afVertex[m_aiIndex[2*i]];
++        afV[1] = m_afVertex[m_aiIndex[2*i+1]];
++        return true;
++    }
++    return false;
++}
++//----------------------------------------------------------------------------
++template &lt;class Real&gt;
++bool Delaunay1&lt;Real&gt;::GetIndexSet (int i, int aiIndex[2]) const
++{
++    assert(m_iDimension == 1);
++    if (m_iDimension != 1)
++    {
++        return false;
++    }
++
++    if (0 &lt;= i &amp;&amp; i &lt; m_iSimplexQuantity)
++    {
++        aiIndex[0] = m_aiIndex[2*i];
++        aiIndex[1] = m_aiIndex[2*i+1];
++        return true;
++    }
++    return false;
++}
++//----------------------------------------------------------------------------
++template &lt;class Real&gt;
++bool Delaunay1&lt;Real&gt;::GetAdjacentSet (int i, int aiAdjacent[2]) const
++{
++    assert(m_iDimension == 1);
++    if (m_iDimension != 1)
++    {
++        return false;
++    }
++
++    if (0 &lt;= i &amp;&amp; i &lt; m_iSimplexQuantity)
++    {
++        aiAdjacent[0] = m_aiAdjacent[2*i];
++        aiAdjacent[1] = m_aiAdjacent[2*i+1];
++        return true;
++    }
++    return false;
++}
++//----------------------------------------------------------------------------
++template &lt;class Real&gt;
++bool Delaunay1&lt;Real&gt;::GetBarycentricSet (int i, const Real fP, Real afBary[2])
++    const
++{
++    assert(m_iDimension == 1);
++    if (m_iDimension != 1)
++    {
++        return false;
++    }
++
++    if (0 &lt;= i &amp;&amp; i &lt; m_iSimplexQuantity)
++    {
++        Real fV0 = m_afVertex[m_aiIndex[2*i]];
++        Real fV1 = m_afVertex[m_aiIndex[2*i+1]];
++        Real fDenom = fV1 - fV0;
++        if (fDenom &gt; m_fEpsilon)
++        {
++            afBary[0] = (fV1 - fP)/fDenom;
++        }
++        else
++        {
++            afBary[0] = (Real)1.0;
++        }
++
++        afBary[1] = (Real)1.0 - afBary[0];
++        return true;
++    }
++    return false;
++}
++//----------------------------------------------------------------------------
++template &lt;class Real&gt;
++Delaunay1&lt;Real&gt;::Delaunay1 (const char* acFilename)
++    :
++    Delaunay&lt;Real&gt;(0,(Real)0.0,false,Query::QT_REAL)
++{
++    m_afVertex = 0;
++    bool bLoaded = Load(acFilename);
++    assert(bLoaded);
++}
++//----------------------------------------------------------------------------
++template &lt;class Real&gt;
++bool Delaunay1&lt;Real&gt;::Load (const char* acFilename)
++{
++    FILE* pkIFile = System::Fopen(acFilename,&quot;rb&quot;);
++    if (!pkIFile)
++    {
++        return false;
++    }
++
++    Delaunay&lt;Real&gt;::Load(pkIFile);
++
++    if (m_bOwner)
++    {
++        WM3_DELETE[] m_afVertex;
++    }
++
++    m_bOwner = true;
++    m_afVertex = WM3_NEW Real[m_iVertexQuantity];
++
++    size_t uiSize = sizeof(Real);
++    if (uiSize == 4)
++    {
++        System::Read4le(pkIFile,m_iVertexQuantity,m_afVertex);
++    }
++    else // uiSize == 8
++    {
++        System::Read8le(pkIFile,m_iVertexQuantity,m_afVertex);
++    }
++
++    System::Fclose(pkIFile);
++    return true;
++}
++//----------------------------------------------------------------------------
++template &lt;class Real&gt;
++bool Delaunay1&lt;Real&gt;::Save (const char* acFilename) const
++{
++    FILE* pkOFile = System::Fopen(acFilename,&quot;wb&quot;);
++    if (!pkOFile)
++    {
++        return false;
++    }
++
++    Delaunay&lt;Real&gt;::Save(pkOFile);
++
++    size_t uiSize = sizeof(Real);
++    if (uiSize == 4)
++    {
++        System::Write4le(pkOFile,m_iVertexQuantity,m_afVertex);
++    }
++    else // uiSize == 8
++    {
++        System::Write8le(pkOFile,m_iVertexQuantity,m_afVertex);
++    }
++
++    System::Fclose(pkOFile);
++    return true;
++}
++//----------------------------------------------------------------------------
++
++//----------------------------------------------------------------------------
++// explicit instantiation
++//----------------------------------------------------------------------------
++template WM3_ITEM
++class Delaunay1&lt;float&gt;;
++
++template WM3_ITEM
++class Delaunay1&lt;double&gt;;
++//----------------------------------------------------------------------------
++}
++
+
+Added: branches/scons-layout/lib/miniWm3/Wm3Delaunay1.h
+===================================================================
+--- branches/scons-layout/lib/miniWm3/Wm3Delaunay1.h	2007-03-10 10:16:29 UTC (rev 1132)
++++ branches/scons-layout/lib/miniWm3/Wm3Delaunay1.h	2007-03-10 10:19:18 UTC (rev 1133)
+@@ -0,0 +1,112 @@
++// Geometric Tools, Inc.
++// <A HREF="http://www.geometrictools.com">http://www.geometrictools.com</A>
++// Copyright (c) 1998-2006.  All Rights Reserved
++//
++// The Wild Magic Library (WM3) source code is supplied under the terms of
++// the license agreement
++//     <A HREF="http://www.geometrictools.com/License/WildMagic3License.pdf">http://www.geometrictools.com/License/WildMagic3License.pdf</A>
++// and may not be copied or disclosed except in accordance with the terms
++// of that agreement.
++
++#ifndef WM3DELAUNAY1_H
++#define WM3DELAUNAY1_H
++
++// A fancy class to sort a collection of real-valued numbers, but this
++// provides some convenience for Delaunay2 and Delaunay3 when the input point
++// set has intrinsic dimension smaller than the containing space.  The
++// interface of Delaunay1 is also the model for those of Delaunay2 and
++// Delaunay3.
++
++#include &quot;Wm3FoundationLIB.h&quot;
++#include &quot;Wm3Delaunay.h&quot;
++
++namespace Wm3
++{
++
++template &lt;class Real&gt;
++class WM3_ITEM Delaunay1 : public Delaunay&lt;Real&gt;
++{
++public:
++    // The input to the constructor is the array of vertices you want to sort.
++    // If you want Delaunay1 to delete the array during destruction, set
++    // bOwner to 'true'.  Otherwise, you own the array and must delete it
++    // yourself.  TO DO:  The query type is currently ignored by this class.
++    // Add support for the various types later.
++    Delaunay1 (int iVertexQuantity, Real* afVertex, Real fEpsilon,
++        bool bOwner, Query::Type eQueryType);
++    virtual ~Delaunay1 ();
++
++    // The input vertex array.
++    const Real* GetVertices () const;
++
++    // The functions listed here are valid only for dimension 1.
++
++    // The convex hull of the vertices is an interval.  This function returns
++    // the indices of the vertices that form the interval.  The return value
++    // is 'true' iff the dimension is 1.
++    bool GetHull (int aiIndex[2]);
++
++    // Support for searching the sorted vertices for a interval that contains
++    // P.  If there is a containing interval, the returned value is a index i
++    // into the GetIndices() array with 0 &lt;= i &lt; GetSimplexQuantity().  If
++    // there is not a containing segment, -1 is returned.
++    int GetContainingSegment (const Real fP) const;
++
++    // Get the vertices for segment i.  The function returns 'true' if i is a
++    // valid segment index, in which case the vertices are valid.  Otherwise,
++    // the function returns 'false' and the vertices are invalid.
++    bool GetVertexSet (int i, Real afV[2]) const;
++
++    // Get the vertex indices for segment i.  The function returns 'true' if
++    // i is a valid segment index, in which case the vertices are valid.
++    // Otherwise, the function returns 'false' and the vertices are invalid.
++    bool GetIndexSet (int i, int aiIndex[2]) const;
++
++    // Get the indices for segments adjacent to segment i.  The function
++    // returns 'true' if i is a valid segment index, in which case the
++    // adjacencies are valid.  Otherwise, the function returns 'false' and
++    // the adjacencies are invalid.
++    bool GetAdjacentSet (int i, int aiAdjacent[2]) const;
++
++    // Compute the barycentric coordinates of P with respect to segment i.
++    // The function returns 'true' if i is a valid segment index, in which
++    // case the coordinates are valid.  Otherwise, the function returns
++    // 'false' and the coordinate array is invalid.
++    bool GetBarycentricSet (int i, const Real fP, Real afBary[2]) const;
++
++    // Support for streaming to/from disk.
++    Delaunay1 (const char* acFilename);
++    bool Load (const char* acFilename);
++    bool Save (const char* acFilename) const;
++
++private:
++    using Delaunay&lt;Real&gt;::m_iVertexQuantity;
++    using Delaunay&lt;Real&gt;::m_iDimension;
++    using Delaunay&lt;Real&gt;::m_iSimplexQuantity;
++    using Delaunay&lt;Real&gt;::m_aiIndex;
++    using Delaunay&lt;Real&gt;::m_aiAdjacent;
++    using Delaunay&lt;Real&gt;::m_fEpsilon;
++    using Delaunay&lt;Real&gt;::m_bOwner;
++
++    Real* m_afVertex;
++
++    class WM3_ITEM SortedVertex
++    {
++    public:
++        Real Value;
++        int Index;
++
++        bool operator&lt; (const SortedVertex&amp; rkProj) const
++        {
++            return Value &lt; rkProj.Value;
++        }
++    };
++};
++
++typedef Delaunay1&lt;float&gt; Delaunay1f;
++typedef Delaunay1&lt;double&gt; Delaunay1d;
++
++}
++
++#endif
++
+
+Added: branches/scons-layout/lib/miniWm3/Wm3Delaunay2.cpp
+===================================================================
+--- branches/scons-layout/lib/miniWm3/Wm3Delaunay2.cpp	2007-03-10 10:16:29 UTC (rev 1132)
++++ branches/scons-layout/lib/miniWm3/Wm3Delaunay2.cpp	2007-03-10 10:19:18 UTC (rev 1133)
+@@ -0,0 +1,877 @@
++// Geometric Tools, Inc.
++// <A HREF="http://www.geometrictools.com">http://www.geometrictools.com</A>
++// Copyright (c) 1998-2006.  All Rights Reserved
++//
++// The Wild Magic Library (WM3) source code is supplied under the terms of
++// the license agreement
++//     <A HREF="http://www.geometrictools.com/License/WildMagic3License.pdf">http://www.geometrictools.com/License/WildMagic3License.pdf</A>
++// and may not be copied or disclosed except in accordance with the terms
++// of that agreement.
++
++#include &quot;Wm3FoundationPCH.h&quot;
++#include &quot;Wm3Delaunay2.h&quot;
++#include &quot;Wm3DelPolygonEdge.h&quot;
++#include &quot;Wm3Mapper2.h&quot;
++#include &quot;Wm3VEManifoldMesh.h&quot;
++#include &quot;Wm3Query2Filtered.h&quot;
++#include &quot;Wm3Query2Int64.h&quot;
++#include &quot;Wm3Query2TInteger.h&quot;
++#include &quot;Wm3Query2TRational.h&quot;
++
++#include &lt;algorithm&gt;
++#include &lt;map&gt;
++#include &lt;stack&gt;
++#include &lt;vector&gt;
++
++namespace Wm3
++{
++//----------------------------------------------------------------------------
++template &lt;class Real&gt;
++Delaunay2&lt;Real&gt;::Delaunay2 (int iVertexQuantity, Vector2&lt;Real&gt;* akVertex,
++    Real fEpsilon, bool bOwner, Query::Type eQueryType)
++    :
++    Delaunay&lt;Real&gt;(iVertexQuantity,fEpsilon,bOwner,eQueryType),
++    m_kLineOrigin(Vector2&lt;Real&gt;::ZERO),
++    m_kLineDirection(Vector2&lt;Real&gt;::ZERO)
++{
++    assert(akVertex);
++    m_akVertex = akVertex;
++    m_iUniqueVertexQuantity = 0;
++    m_akSVertex = 0;
++    m_pkQuery = 0;
++    m_iPathLast = -1;
++    m_aiPath = 0;
++    m_iLastEdgeV0 = -1;
++    m_iLastEdgeV1 = -1;
++    m_iLastEdgeOpposite = -1;
++    m_iLastEdgeOppositeIndex = -1;
++
++    Mapper2&lt;Real&gt; kMapper(m_iVertexQuantity,m_akVertex,m_fEpsilon);
++    if (kMapper.GetDimension() == 0)
++    {
++        // The values of m_iDimension, m_aiIndex, and m_aiAdjacent were
++        // already initialized by the Delaunay base class.
++        return;
++    }
++
++    if (kMapper.GetDimension() == 1)
++    {
++        // The set is (nearly) collinear.  The caller is responsible for
++        // creating a Delaunay1 object.
++        m_iDimension = 1;
++        m_kLineOrigin = kMapper.GetOrigin();
++        m_kLineDirection = kMapper.GetDirection(0);
++        return;
++    }
++
++    m_iDimension = 2;
++
++    // Allocate storage for the input vertices and the supertriangle
++    // vertices.
++    m_akSVertex = WM3_NEW Vector2&lt;Real&gt;[m_iVertexQuantity+3];
++    int i;
++
++    if (eQueryType != Query::QT_RATIONAL &amp;&amp; eQueryType != Query::QT_FILTERED)
++    {
++        // Transform the vertices to the square [0,1]^2.
++        m_kMin = kMapper.GetMin();
++        m_fScale = ((Real)1.0)/kMapper.GetMaxRange();
++        for (i = 0; i &lt; m_iVertexQuantity; i++)
++        {
++            m_akSVertex[i] = (m_akVertex[i] - m_kMin)*m_fScale;
++        }
++
++        // Construct the supertriangle to contain [0,1]^2.
++        m_aiSV[0] = m_iVertexQuantity++;
++        m_aiSV[1] = m_iVertexQuantity++;
++        m_aiSV[2] = m_iVertexQuantity++;
++        m_akSVertex[m_aiSV[0]] = Vector2&lt;Real&gt;((Real)-1.0,(Real)-1.0);
++        m_akSVertex[m_aiSV[1]] = Vector2&lt;Real&gt;((Real)+4.0,(Real)-1.0);
++        m_akSVertex[m_aiSV[2]] = Vector2&lt;Real&gt;((Real)-1.0,(Real)+4.0);
++
++        Real fExpand;
++        if (eQueryType == Query::QT_INT64)
++        {
++            // Scale the vertices to the square [0,2^{16}]^2 to allow use of
++            // 64-bit integers for triangulation.
++            fExpand = (Real)(1 &lt;&lt; 16);
++            m_pkQuery = WM3_NEW Query2Int64&lt;Real&gt;(m_iVertexQuantity,
++                m_akSVertex);
++        }
++        else if (eQueryType == Query::QT_INTEGER)
++        {
++            // Scale the vertices to the square [0,2^{20}]^2 to get more
++            // precision for TInteger than for 64-bit integers for
++            // triangulation.
++            fExpand = (Real)(1 &lt;&lt; 20);
++            m_pkQuery = WM3_NEW Query2TInteger&lt;Real&gt;(m_iVertexQuantity,
++                m_akSVertex);
++        }
++        else // eQueryType == Query::QT_REAL
++        {
++            // No scaling for floating point.
++            fExpand = (Real)1.0;
++            m_pkQuery = WM3_NEW Query2&lt;Real&gt;(m_iVertexQuantity,m_akSVertex);
++        }
++
++        m_fScale *= fExpand;
++        for (i = 0; i &lt; m_iVertexQuantity; i++)
++        {
++            m_akSVertex[i] *= fExpand;
++        }
++    }
++    else
++    {
++        // No transformation needed for exact rational arithmetic or filtered
++        // predicates.
++        m_kMin = Vector2&lt;Real&gt;::ZERO;
++        m_fScale = (Real)1.0;
++        size_t uiSize = m_iVertexQuantity*sizeof(Vector2&lt;Real&gt;);
++        System::Memcpy(m_akSVertex,uiSize,m_akVertex,uiSize);
++
++        // Construct the supertriangle to contain [min,max].
++        Vector2&lt;Real&gt; kMin = kMapper.GetMin();
++        Vector2&lt;Real&gt; kMax = kMapper.GetMax();
++        Vector2&lt;Real&gt; kDelta = kMax - kMin;
++        Vector2&lt;Real&gt; kSMin = kMin - kDelta;
++        Vector2&lt;Real&gt; kSMax = kMax + kDelta*((Real)3.0);
++        m_aiSV[0] = m_iVertexQuantity++;
++        m_aiSV[1] = m_iVertexQuantity++;
++        m_aiSV[2] = m_iVertexQuantity++;
++        m_akSVertex[m_aiSV[0]] = kSMin;
++        m_akSVertex[m_aiSV[1]] = Vector2&lt;Real&gt;(kSMax[0],kSMin[1]);
++        m_akSVertex[m_aiSV[2]] = Vector2&lt;Real&gt;(kSMin[0],kSMax[1]);
++
++        if (eQueryType == Query::QT_RATIONAL)
++        {
++            m_pkQuery = WM3_NEW Query2TRational&lt;Real&gt;(m_iVertexQuantity,
++                m_akSVertex);
++        }
++        else // eQueryType == Query::QT_FILTERED
++        {
++            m_pkQuery = WM3_NEW Query2Filtered&lt;Real&gt;(m_iVertexQuantity,
++                m_akSVertex,m_fEpsilon);
++        }
++    }
++
++    DelTriangle&lt;Real&gt;* pkTri = WM3_NEW DelTriangle&lt;Real&gt;(m_aiSV[0],m_aiSV[1],
++        m_aiSV[2]);
++    m_kTriangle.insert(pkTri);
++
++    // Incrementally update the triangulation.  The set of processed points
++    // is maintained to eliminate duplicates, either in the original input
++    // points or in the points obtained by snap rounding.
++    std::set&lt;Vector2&lt;Real&gt; &gt; kProcessed;
++    for (i = 0; i &lt; m_iVertexQuantity-3; i++)
++    {
++        if (kProcessed.find(m_akSVertex[i]) == kProcessed.end())
++        {
++            Update(i);
++            kProcessed.insert(m_akSVertex[i]);
++        }
++    }
++    m_iUniqueVertexQuantity = (int)kProcessed.size();
++
++    // Remove triangles sharing a vertex of the supertriangle.
++    RemoveTriangles();
++
++    // Assign integer values to the triangles for use by the caller.
++    std::map&lt;DelTriangle&lt;Real&gt;*,int&gt; kPermute;
++    typename std::set&lt;DelTriangle&lt;Real&gt;*&gt;::iterator pkTIter =
++        m_kTriangle.begin();
++    for (i = 0; pkTIter != m_kTriangle.end(); pkTIter++)
++    {
++        pkTri = *pkTIter;
++        kPermute[pkTri] = i++;
++    }
++    kPermute[0] = -1;
++
++    // Put Delaunay triangles into an array (vertices and adjacency info).
++    m_iSimplexQuantity = (int)m_kTriangle.size();
++    if (m_iSimplexQuantity &gt; 0)
++    {
++        m_aiIndex = WM3_NEW int[3*m_iSimplexQuantity];
++        m_aiAdjacent = WM3_NEW int[3*m_iSimplexQuantity];
++        i = 0;
++        pkTIter = m_kTriangle.begin();
++        for (/**/; pkTIter != m_kTriangle.end(); pkTIter++)
++        {
++            pkTri = *pkTIter;
++            m_aiIndex[i] = pkTri-&gt;V[0];
++            m_aiAdjacent[i++] = kPermute[pkTri-&gt;A[0]];
++            m_aiIndex[i] = pkTri-&gt;V[1];
++            m_aiAdjacent[i++] = kPermute[pkTri-&gt;A[1]];
++            m_aiIndex[i] = pkTri-&gt;V[2];
++            m_aiAdjacent[i++] = kPermute[pkTri-&gt;A[2]];
++        }
++        assert(i == 3*m_iSimplexQuantity);
++
++        m_iPathLast = -1;
++        m_aiPath = WM3_NEW int[m_iSimplexQuantity+1];
++    }
++
++    // Restore the vertex count to the original (discards the vertices of the
++    // supertriangle).
++    m_iVertexQuantity -= 3;
++
++    pkTIter = m_kTriangle.begin();
++    for (/**/; pkTIter != m_kTriangle.end(); ++pkTIter)
++    {
++        WM3_DELETE *pkTIter;
++    }
++}
++//----------------------------------------------------------------------------
++template &lt;class Real&gt;
++Delaunay2&lt;Real&gt;::~Delaunay2 ()
++{
++    WM3_DELETE m_pkQuery;
++    WM3_DELETE[] m_akSVertex;
++    WM3_DELETE[] m_aiPath;
++    if (m_bOwner)
++    {
++        WM3_DELETE[] m_akVertex;
++    }
++}
++//----------------------------------------------------------------------------
++template &lt;class Real&gt;
++const Vector2&lt;Real&gt;* Delaunay2&lt;Real&gt;::GetVertices () const
++{
++    return m_akVertex;
++}
++//----------------------------------------------------------------------------
++template &lt;class Real&gt;
++int Delaunay2&lt;Real&gt;::GetUniqueVertexQuantity () const
++{
++    return m_iUniqueVertexQuantity;
++}
++//----------------------------------------------------------------------------
++template &lt;class Real&gt;
++const Vector2&lt;Real&gt;&amp; Delaunay2&lt;Real&gt;::GetLineOrigin () const
++{
++    return m_kLineOrigin;
++}
++//----------------------------------------------------------------------------
++template &lt;class Real&gt;
++const Vector2&lt;Real&gt;&amp; Delaunay2&lt;Real&gt;::GetLineDirection () const
++{
++    return m_kLineDirection;
++}
++//----------------------------------------------------------------------------
++template &lt;class Real&gt;
++Delaunay1&lt;Real&gt;* Delaunay2&lt;Real&gt;::GetDelaunay1 () const
++{
++    assert(m_iDimension == 1);
++    if (m_iDimension != 1)
++    {
++        return 0;
++    }
++
++    Real* afProjection = WM3_NEW Real[m_iVertexQuantity];
++    for (int i = 0; i &lt; m_iVertexQuantity; i++)
++    {
++        Vector2&lt;Real&gt; kDiff = m_akVertex[i] - m_kLineOrigin;
++        afProjection[i] = m_kLineDirection.Dot(kDiff);
++    }
++
++    return WM3_NEW Delaunay1&lt;Real&gt;(m_iVertexQuantity,afProjection,m_fEpsilon,
++        true,m_eQueryType);
++}
++//----------------------------------------------------------------------------
++template &lt;class Real&gt;
++bool Delaunay2&lt;Real&gt;::GetHull (int&amp; riEQuantity, int*&amp; raiIndex)
++{
++    assert(m_iDimension == 2);
++    if (m_iDimension != 2)
++    {
++        return false;
++    }
++
++    riEQuantity = 0;
++    raiIndex = 0;
++
++    // Count the number of edges that are not shared by two triangles.
++    int i, iAdjQuantity = 3*m_iSimplexQuantity;
++    for (i = 0; i &lt; iAdjQuantity; i++)
++    {
++        if (m_aiAdjacent[i] == -1)
++        {
++            riEQuantity++;
++        }
++    }
++    assert(riEQuantity &gt; 0);
++    if (riEQuantity == 0)
++    {
++        return false;
++    }
++
++    // Enumerate the edges.
++    raiIndex = WM3_NEW int[2*riEQuantity];
++    int* piIndex = raiIndex;
++    for (i = 0; i &lt; iAdjQuantity; i++)
++    {
++        if (m_aiAdjacent[i] == -1)
++        {
++            int iTri = i/3, j = i%3;
++            *piIndex++ = m_aiIndex[3*iTri+j];
++            *piIndex++ = m_aiIndex[3*iTri+((j+1)%3)];
++        }
++    }
++
++    return true;
++}
++//----------------------------------------------------------------------------
++template &lt;class Real&gt;
++int Delaunay2&lt;Real&gt;::GetContainingTriangle (const Vector2&lt;Real&gt;&amp; rkP) const
++{
++    assert(m_iDimension == 2);
++    if (m_iDimension != 2)
++    {
++        return -1;
++    }
++
++    // convert to scaled coordinates
++    Vector2&lt;Real&gt; kXFrmP = (rkP - m_kMin)*m_fScale;
++
++    // start at first triangle in mesh
++    int iIndex = (m_iPathLast &gt;= 0 ? m_aiPath[m_iPathLast] : 0);
++    m_iPathLast = -1;
++    m_iLastEdgeV0 = -1;
++    m_iLastEdgeV1 = -1;
++    m_iLastEdgeOpposite = -1;
++    m_iLastEdgeOppositeIndex = -1;
++
++    // use triangle edges as binary separating lines
++    for (int i = 0; i &lt; m_iSimplexQuantity; i++)
++    {
++        m_aiPath[++m_iPathLast] = iIndex;
++
++        int* aiV = &amp;m_aiIndex[3*iIndex];
++
++        if (m_pkQuery-&gt;ToLine(kXFrmP,aiV[0],aiV[1]) &gt; 0)
++        {
++            iIndex = m_aiAdjacent[3*iIndex];
++            if (iIndex == -1)
++            {
++                m_iLastEdgeV0 = aiV[0];
++                m_iLastEdgeV1 = aiV[1];
++                m_iLastEdgeOpposite = aiV[2];
++                m_iLastEdgeOppositeIndex = 2;
++                return -1;
++            }
++            continue;
++        }
++
++        if (m_pkQuery-&gt;ToLine(kXFrmP,aiV[1],aiV[2]) &gt; 0)
++        {
++            iIndex = m_aiAdjacent[3*iIndex+1];
++            if (iIndex == -1)
++            {
++                m_iLastEdgeV0 = aiV[1];
++                m_iLastEdgeV1 = aiV[2];
++                m_iLastEdgeOpposite = aiV[0];
++                m_iLastEdgeOppositeIndex = 0;
++                return -1;
++            }
++            continue;
++        }
++
++        if (m_pkQuery-&gt;ToLine(kXFrmP,aiV[2],aiV[0]) &gt; 0)
++        {
++            iIndex = m_aiAdjacent[3*iIndex+2];
++            if (iIndex == -1)
++            {
++                m_iLastEdgeV0 = aiV[2];
++                m_iLastEdgeV1 = aiV[0];
++                m_iLastEdgeOpposite = aiV[1];
++                m_iLastEdgeOppositeIndex = 1;
++                return -1;
++            }
++            continue;
++        }
++
++        m_iLastEdgeV0 = -1;
++        m_iLastEdgeV1 = -1;
++        m_iLastEdgeOpposite = -1;
++        m_iLastEdgeOppositeIndex = -1;
++        return iIndex;
++    }
++
++    return -1;
++}
++//----------------------------------------------------------------------------
++template &lt;class Real&gt;
++int Delaunay2&lt;Real&gt;::GetPathLast () const
++{
++    return m_iPathLast;
++}
++//----------------------------------------------------------------------------
++template &lt;class Real&gt;
++const int* Delaunay2&lt;Real&gt;::GetPath () const
++{
++    return m_aiPath;
++}
++//----------------------------------------------------------------------------
++template &lt;class Real&gt;
++int Delaunay2&lt;Real&gt;::GetLastEdge (int&amp; riV0, int&amp; riV1, int&amp; riV2) const
++{
++    riV0 = m_iLastEdgeV0;
++    riV1 = m_iLastEdgeV1;
++    riV2 = m_iLastEdgeOpposite;
++    return m_iLastEdgeOppositeIndex;
++}
++//----------------------------------------------------------------------------
++template &lt;class Real&gt;
++bool Delaunay2&lt;Real&gt;::GetVertexSet (int i, Vector2&lt;Real&gt; akV[3]) const
++{
++    assert(m_iDimension == 2);
++    if (m_iDimension != 2)
++    {
++        return false;
++    }
++
++    if (0 &lt;= i &amp;&amp; i &lt; m_iSimplexQuantity)
++    {
++        akV[0] = m_akVertex[m_aiIndex[3*i  ]];
++        akV[1] = m_akVertex[m_aiIndex[3*i+1]];
++        akV[2] = m_akVertex[m_aiIndex[3*i+2]];
++        return true;
++    }
++
++    return false;
++}
++//----------------------------------------------------------------------------
++template &lt;class Real&gt;
++bool Delaunay2&lt;Real&gt;::GetIndexSet (int i, int aiIndex[3]) const
++{
++    assert(m_iDimension == 2);
++    if (m_iDimension != 2)
++    {
++        return false;
++    }
++
++    if (0 &lt;= i &amp;&amp; i &lt; m_iSimplexQuantity)
++    {
++        aiIndex[0] = m_aiIndex[3*i  ];
++        aiIndex[1] = m_aiIndex[3*i+1];
++        aiIndex[2] = m_aiIndex[3*i+2];
++        return true;
++    }
++
++    return false;
++}
++//----------------------------------------------------------------------------
++template &lt;class Real&gt;
++bool Delaunay2&lt;Real&gt;::GetAdjacentSet (int i, int aiAdjacent[3]) const
++{
++    assert(m_iDimension == 2);
++    if (m_iDimension != 2)
++    {
++        return false;
++    }
++
++    if (0 &lt;= i &amp;&amp; i &lt; m_iSimplexQuantity)
++    {
++        aiAdjacent[0] = m_aiAdjacent[3*i  ];
++        aiAdjacent[1] = m_aiAdjacent[3*i+1];
++        aiAdjacent[2] = m_aiAdjacent[3*i+2];
++        return true;
++    }
++
++    return false;
++}
++//----------------------------------------------------------------------------
++template &lt;class Real&gt;
++bool Delaunay2&lt;Real&gt;::GetBarycentricSet (int i, const Vector2&lt;Real&gt;&amp; rkP,
++    Real afBary[3]) const
++{
++    assert(m_iDimension == 2);
++    if (m_iDimension != 2)
++    {
++        return false;
++    }
++
++    if (0 &lt;= i &amp;&amp; i &lt; m_iSimplexQuantity)
++    {
++        Vector2&lt;Real&gt; kV0 = m_akVertex[m_aiIndex[3*i  ]];
++        Vector2&lt;Real&gt; kV1 = m_akVertex[m_aiIndex[3*i+1]];
++        Vector2&lt;Real&gt; kV2 = m_akVertex[m_aiIndex[3*i+2]];
++        rkP.GetBarycentrics(kV0,kV1,kV2,afBary);
++        return true;
++    }
++
++    return false;
++}
++//----------------------------------------------------------------------------
++template &lt;class Real&gt;
++void Delaunay2&lt;Real&gt;::Update (int i)
++{
++    // Locate the triangle containing vertex i.
++    DelTriangle&lt;Real&gt;* pkTri = GetContainingTriangle(i);
++
++    // Locate and remove the triangles forming the insertion polygon.
++    std::stack&lt;DelTriangle&lt;Real&gt;*&gt; kStack;
++    VEManifoldMesh kPolygon(0,DelPolygonEdge&lt;Real&gt;::ECreator);
++    kStack.push(pkTri);
++    pkTri-&gt;OnStack = true;
++    int j, iV0, iV1;
++    DelPolygonEdge&lt;Real&gt;* pkEdge;
++    while (!kStack.empty())
++    {
++        pkTri = kStack.top();
++        kStack.pop();
++        pkTri-&gt;OnStack = false;
++        for (j = 0; j &lt; 3; j++)
++        {
++            DelTriangle&lt;Real&gt;* pkAdj = pkTri-&gt;A[j];
++            if (pkAdj)
++            {
++                // Detach triangle and adjacent triangle from each other.
++                int iNullIndex = pkTri-&gt;DetachFrom(j,pkAdj);
++
++                if (pkAdj-&gt;IsInsertionComponent(i,pkTri,m_pkQuery,m_aiSV))
++                {
++                    if (!pkAdj-&gt;OnStack)
++                    {
++                        // Adjacent triangle inside insertion polygon.
++                        kStack.push(pkAdj);
++                        pkAdj-&gt;OnStack = true;
++                    }
++                }
++                else
++                {
++                    // Adjacent triangle outside insertion polygon.
++                    iV0 = pkTri-&gt;V[j];
++                    iV1 = pkTri-&gt;V[(j+1)%3];
++                    pkEdge = (DelPolygonEdge&lt;Real&gt;*)kPolygon.InsertEdge(iV0,
++                        iV1);
++                    pkEdge-&gt;NullIndex = iNullIndex;
++                    pkEdge-&gt;Tri = pkAdj;
++                }
++            }
++            else
++            {
++                // The triangle is in the insertion polygon, but the adjacent
++                // one does not exist.  This means one of two things:
++                // (1) We are at an edge of the supertriangle, and that edge
++                //     is part of the insertion polygon.
++                // (2) We are at an edge that was recently shared by the
++                //     triangle and the adjacent, but we detached those
++                //     triangles from each other.  These edges should be
++                //     ignored.
++                iV0 = pkTri-&gt;V[j];
++                if (IsSupervertex(iV0))
++                {
++                    iV1 = pkTri-&gt;V[(j+1)%3];
++                    if (IsSupervertex(iV1))
++                    {
++                        pkEdge = (DelPolygonEdge&lt;Real&gt;*)kPolygon.InsertEdge(
++                            iV0,iV1);
++                        pkEdge-&gt;NullIndex = -1;
++                        pkEdge-&gt;Tri = 0;
++                    }
++                }
++            }
++        }
++        m_kTriangle.erase(pkTri);
++        WM3_DELETE pkTri;
++    }
++
++    // Insert the new triangles formed by the input point and the edges of
++    // the insertion polygon.
++    const VEManifoldMesh::EMap&amp; rkEMap = kPolygon.GetEdges();
++    assert(rkEMap.size() &gt;= 3 &amp;&amp; kPolygon.IsClosed());
++    typename VEManifoldMesh::EMapCIterator pkEIter;
++    for (pkEIter = rkEMap.begin(); pkEIter != rkEMap.end(); pkEIter++)
++    {
++        pkEdge = (DelPolygonEdge&lt;Real&gt;*)pkEIter-&gt;second;
++
++        // Create and insert the new triangle.
++        pkTri = WM3_NEW DelTriangle&lt;Real&gt;(i,pkEdge-&gt;V[0],pkEdge-&gt;V[1]);
++        m_kTriangle.insert(pkTri);
++
++        // Establish the adjacency links across the polygon edge.
++        pkTri-&gt;A[1] = pkEdge-&gt;Tri;
++        if (pkEdge-&gt;Tri)
++        {
++            pkEdge-&gt;Tri-&gt;A[pkEdge-&gt;NullIndex] = pkTri;
++        }
++
++        // Update the edge's triangle pointer to point to the newly created
++        // triangle.  This information is used later to establish the links
++        // between the new triangles.
++        pkEdge-&gt;Tri = pkTri;
++    }
++
++    // Establish the adjacency links between the new triangles.
++    DelPolygonEdge&lt;Real&gt;* pkAdjEdge;
++    for (pkEIter = rkEMap.begin(); pkEIter != rkEMap.end(); pkEIter++)
++    {
++        pkEdge = (DelPolygonEdge&lt;Real&gt;*)pkEIter-&gt;second;
++        pkAdjEdge = (DelPolygonEdge&lt;Real&gt;*)pkEdge-&gt;E[0];
++        pkEdge-&gt;Tri-&gt;A[0] = pkAdjEdge-&gt;Tri;
++        pkAdjEdge = (DelPolygonEdge&lt;Real&gt;*)pkEdge-&gt;E[1];
++        pkEdge-&gt;Tri-&gt;A[2] = pkAdjEdge-&gt;Tri;
++    }
++}
++//----------------------------------------------------------------------------
++template &lt;class Real&gt;
++DelTriangle&lt;Real&gt;* Delaunay2&lt;Real&gt;::GetContainingTriangle (int i) const
++{
++    // Locate which triangle in the current mesh contains vertex i.  By
++    // construction, there must be such a triangle (the vertex cannot be
++    // outside the supertriangle).
++
++    DelTriangle&lt;Real&gt;* pkTri = *m_kTriangle.begin();
++    int iTQuantity = (int)m_kTriangle.size();
++    for (int iT = 0; iT &lt; iTQuantity; iT++)
++    {
++        int* aiV = pkTri-&gt;V;
++
++        if (m_pkQuery-&gt;ToLine(i,aiV[0],aiV[1]) &gt; 0)
++        {
++            pkTri = pkTri-&gt;A[0];
++            if (!pkTri)
++            {
++                break;
++            }
++            continue;
++        }
++
++        if (m_pkQuery-&gt;ToLine(i,aiV[1],aiV[2]) &gt; 0)
++        {
++            pkTri = pkTri-&gt;A[1];
++            if (!pkTri)
++            {
++                break;
++            }
++            continue;
++        }
++
++        if (m_pkQuery-&gt;ToLine(i,aiV[2],aiV[0]) &gt; 0)
++        {
++            pkTri = pkTri-&gt;A[2];
++            if (!pkTri)
++            {
++                break;
++            }
++            continue;
++        }
++
++        return pkTri;
++    }
++
++    assert(false);
++    return 0;
++}
++//----------------------------------------------------------------------------
++template &lt;class Real&gt;
++void Delaunay2&lt;Real&gt;::RemoveTriangles ()
++{
++    // Identify those triangles sharing a vertex of the supertriangle.
++    std::set&lt;DelTriangle&lt;Real&gt;*&gt; kRemoveTri;
++    DelTriangle&lt;Real&gt;* pkTri;
++    typename std::set&lt;DelTriangle&lt;Real&gt;*&gt;::iterator pkTIter =
++        m_kTriangle.begin();
++    for (/**/; pkTIter != m_kTriangle.end(); pkTIter++)
++    {
++        pkTri = *pkTIter;
++        for (int j = 0; j &lt; 3; j++)
++        {
++            if (IsSupervertex(pkTri-&gt;V[j]))
++            {
++                kRemoveTri.insert(pkTri);
++                break;
++            }
++        }
++    }
++
++    // Remove the triangles from the mesh.
++    pkTIter = kRemoveTri.begin();
++    for (/**/; pkTIter != kRemoveTri.end(); pkTIter++)
++    {
++        pkTri = *pkTIter;
++        for (int j = 0; j &lt; 3; j++)
++        {
++            // Break the links with adjacent triangles.
++            DelTriangle&lt;Real&gt;* pkAdj = pkTri-&gt;A[j];
++            if (pkAdj)
++            {
++                for (int k = 0; k &lt; 3; k++)
++                {
++                    if (pkAdj-&gt;A[k] == pkTri)
++                    {
++                        pkAdj-&gt;A[k] = 0;
++                        break;
++                    }
++                }
++            }
++        }
++        m_kTriangle.erase(pkTri);
++        WM3_DELETE pkTri;
++    }
++}
++//----------------------------------------------------------------------------
++template &lt;class Real&gt;
++bool Delaunay2&lt;Real&gt;::IsSupervertex (int i) const
++{
++    for (int j = 0; j &lt; 3; j++)
++    {
++        if (i == m_aiSV[j])
++        {
++            return true;
++        }
++    }
++    return false;
++}
++//----------------------------------------------------------------------------
++template &lt;class Real&gt;
++Delaunay2&lt;Real&gt;::Delaunay2 (const char* acFilename)
++    :
++    Delaunay&lt;Real&gt;(0,(Real)0.0,false,Query::QT_REAL)
++{
++    m_akVertex = 0;
++    m_akSVertex = 0;
++    m_pkQuery = 0;
++    m_aiPath = 0;
++    bool bLoaded = Load(acFilename);
++    assert(bLoaded);
++}
++//----------------------------------------------------------------------------
++template &lt;class Real&gt;
++bool Delaunay2&lt;Real&gt;::Load (const char* acFilename)
++{
++    FILE* pkIFile = System::Fopen(acFilename,&quot;rb&quot;);
++    if (!pkIFile)
++    {
++        return false;
++    }
++
++    Delaunay&lt;Real&gt;::Load(pkIFile);
++
++    WM3_DELETE m_pkQuery;
++    WM3_DELETE[] m_akSVertex;
++    WM3_DELETE[] m_aiPath;
++    if (m_bOwner)
++    {
++        WM3_DELETE[] m_akVertex;
++    }
++
++    m_bOwner = true;
++    m_akVertex = WM3_NEW Vector2&lt;Real&gt;[m_iVertexQuantity];
++    m_akSVertex = WM3_NEW Vector2&lt;Real&gt;[m_iVertexQuantity+3];
++    m_aiPath = WM3_NEW int[m_iSimplexQuantity+1];
++
++    System::Read4le(pkIFile,1,&amp;m_iUniqueVertexQuantity);
++    System::Read4le(pkIFile,3,m_aiSV);
++    System::Read4le(pkIFile,1,&amp;m_iPathLast);
++    System::Read4le(pkIFile,1,&amp;m_iLastEdgeV0);
++    System::Read4le(pkIFile,1,&amp;m_iLastEdgeV1);
++    System::Read4le(pkIFile,1,&amp;m_iLastEdgeOpposite);
++    System::Read4le(pkIFile,1,&amp;m_iLastEdgeOppositeIndex);
++    System::Read4le(pkIFile,m_iSimplexQuantity+1,m_aiPath);
++
++    size_t uiSize = sizeof(Real);
++    int iVQ = 2*m_iVertexQuantity, iSVQ = 2*(m_iVertexQuantity + 3);
++    if (uiSize == 4)
++    {
++        System::Read4le(pkIFile,iVQ,m_akVertex);
++        System::Read4le(pkIFile,iSVQ,m_akSVertex);
++        System::Read4le(pkIFile,2,(Real*)m_kMin);
++        System::Read4le(pkIFile,1,&amp;m_fScale);
++        System::Read4le(pkIFile,2,(Real*)m_kLineOrigin);
++        System::Read4le(pkIFile,2,(Real*)m_kLineDirection);
++    }
++    else // iSize == 8
++    {
++        System::Read8le(pkIFile,iVQ,m_akVertex);
++        System::Read8le(pkIFile,iSVQ,m_akSVertex);
++        System::Read8le(pkIFile,2,(Real*)m_kMin);
++        System::Read8le(pkIFile,1,&amp;m_fScale);
++        System::Read8le(pkIFile,2,(Real*)m_kLineOrigin);
++        System::Read8le(pkIFile,2,(Real*)m_kLineDirection);
++    }
++
++    System::Fclose(pkIFile);
++
++    switch (m_eQueryType)
++    {
++    case Query::QT_INT64:
++        m_pkQuery = WM3_NEW Query2Int64&lt;Real&gt;(m_iVertexQuantity,m_akSVertex);
++        break;
++    case Query::QT_INTEGER:
++        m_pkQuery = WM3_NEW Query2TInteger&lt;Real&gt;(m_iVertexQuantity,
++            m_akSVertex);
++        break;
++    case Query::QT_RATIONAL:
++        m_pkQuery = WM3_NEW Query2TRational&lt;Real&gt;(m_iVertexQuantity,
++            m_akSVertex);
++        break;
++    case Query::QT_REAL:
++        m_pkQuery = WM3_NEW Query2&lt;Real&gt;(m_iVertexQuantity,m_akSVertex);
++        break;
++    case Query::QT_FILTERED:
++        m_pkQuery = WM3_NEW Query2Filtered&lt;Real&gt;(m_iVertexQuantity,
++            m_akSVertex,m_fEpsilon);
++        break;
++    }
++
++    return true;
++}
++//----------------------------------------------------------------------------
++template &lt;class Real&gt;
++bool Delaunay2&lt;Real&gt;::Save (const char* acFilename) const
++{
++    FILE* pkOFile = System::Fopen(acFilename,&quot;wb&quot;);
++    if (!pkOFile)
++    {
++        return false;
++    }
++
++    Delaunay&lt;Real&gt;::Save(pkOFile);
++
++    System::Write4le(pkOFile,1,&amp;m_iUniqueVertexQuantity);
++    System::Write4le(pkOFile,3,m_aiSV);
++    System::Write4le(pkOFile,1,&amp;m_iPathLast);
++    System::Write4le(pkOFile,1,&amp;m_iLastEdgeV0);
++    System::Write4le(pkOFile,1,&amp;m_iLastEdgeV1);
++    System::Write4le(pkOFile,1,&amp;m_iLastEdgeOpposite);
++    System::Write4le(pkOFile,1,&amp;m_iLastEdgeOppositeIndex);
++    System::Write4le(pkOFile,m_iSimplexQuantity+1,m_aiPath);
++
++    size_t uiSize = sizeof(Real);
++    int iVQ = 2*m_iVertexQuantity, iSVQ = 2*(m_iVertexQuantity + 3);
++    if (uiSize == 4)
++    {
++        System::Write4le(pkOFile,iVQ,m_akVertex);
++        System::Write4le(pkOFile,iSVQ,m_akSVertex);
++        System::Write4le(pkOFile,2,(const Real*)m_kMin);
++        System::Write4le(pkOFile,1,&amp;m_fScale);
++        System::Write4le(pkOFile,2,(const Real*)m_kLineOrigin);
++        System::Write4le(pkOFile,2,(const Real*)m_kLineDirection);
++    }
++    else // iSize == 8
++    {
++        System::Write8le(pkOFile,iVQ,m_akVertex);
++        System::Write8le(pkOFile,iSVQ,m_akSVertex);
++        System::Write8le(pkOFile,2,(const Real*)m_kMin);
++        System::Write8le(pkOFile,1,&amp;m_fScale);
++        System::Write8le(pkOFile,2,(const Real*)m_kLineOrigin);
++        System::Write8le(pkOFile,2,(const Real*)m_kLineDirection);
++    }
++
++    System::Fclose(pkOFile);
++    return true;
++}
++//----------------------------------------------------------------------------
++
++//----------------------------------------------------------------------------
++// explicit instantiation
++//----------------------------------------------------------------------------
++template WM3_ITEM
++class Delaunay2&lt;float&gt;;
++
++template WM3_ITEM
++class Delaunay2&lt;double&gt;;
++//----------------------------------------------------------------------------
++}
++
+
+Added: branches/scons-layout/lib/miniWm3/Wm3Delaunay2.h
+===================================================================
+--- branches/scons-layout/lib/miniWm3/Wm3Delaunay2.h	2007-03-10 10:16:29 UTC (rev 1132)
++++ branches/scons-layout/lib/miniWm3/Wm3Delaunay2.h	2007-03-10 10:19:18 UTC (rev 1133)
+@@ -0,0 +1,171 @@
++// Geometric Tools, Inc.
++// <A HREF="http://www.geometrictools.com">http://www.geometrictools.com</A>
++// Copyright (c) 1998-2006.  All Rights Reserved
++//
++// The Wild Magic Library (WM3) source code is supplied under the terms of
++// the license agreement
++//     <A HREF="http://www.geometrictools.com/License/WildMagic3License.pdf">http://www.geometrictools.com/License/WildMagic3License.pdf</A>
++// and may not be copied or disclosed except in accordance with the terms
++// of that agreement.
++
++#ifndef WM3DELAUNAY2_H
++#define WM3DELAUNAY2_H
++
++#include &quot;Wm3FoundationLIB.h&quot;
++#include &quot;Wm3Delaunay1.h&quot;
++#include &quot;Wm3DelTriangle.h&quot;
++#include &quot;Wm3Query2.h&quot;
++#include &lt;set&gt;
++
++namespace Wm3
++{
++
++template &lt;class Real&gt;
++class WM3_ITEM Delaunay2 : public Delaunay&lt;Real&gt;
++{
++public:
++    // The input to the constructor is the array of vertices whose Delaunay
++    // triangulation is required.  If you want Delaunay2 to delete the
++    // vertices during destruction, set bOwner to 'true'.  Otherwise, you
++    // own the vertices and must delete them yourself.
++    //
++    // You have a choice of speed versus accuracy.  The fastest choice is
++    // Query::QT_INT64, but it gives up a lot of precision, scaling the points
++    // to [0,2^{16}]^3.  The choice Query::QT_INTEGER gives up less precision,
++    // scaling the points to [0,2^{20}]^3.  The choice Query::QT_RATIONAL uses
++    // exact arithmetic, but is the slowest choice.  The choice Query::QT_REAL
++    // uses floating-point arithmetic, but is not robust in all cases.
++
++    Delaunay2 (int iVertexQuantity, Vector2&lt;Real&gt;* akVertex, Real fEpsilon,
++        bool bOwner, Query::Type eQueryType);
++    virtual ~Delaunay2 ();
++
++    // The input vertex array.
++    const Vector2&lt;Real&gt;* GetVertices () const;
++
++    // The number of unique vertices processed.
++    int GetUniqueVertexQuantity () const;
++
++    // If GetDimension() returns 1, then the points lie on a line.  You must
++    // create a Delaunay1 object using the function provided.
++    const Vector2&lt;Real&gt;&amp; GetLineOrigin () const;
++    const Vector2&lt;Real&gt;&amp; GetLineDirection () const;
++    Delaunay1&lt;Real&gt;* GetDelaunay1 () const;
++
++    // Locate those triangle edges that do not share other triangles.  The
++    // returned quantity is the number of edges in the hull.  The returned
++    // array has 2*quantity indices, each pair representing an edge.  The
++    // edges are not ordered, but the pair of vertices for an edge is ordered
++    // so that they conform to a counterclockwise traversal of the hull.  The
++    // return value is 'true' iff the dimension is 2.
++    bool GetHull (int&amp; riEQuantity, int*&amp; raiIndex);
++
++    // Support for searching the triangulation for a triangle that contains
++    // a point.  If there is a containing triangle, the returned value is a
++    // triangle index i with 0 &lt;= i &lt; riTQuantity.  If there is not a
++    // containing triangle, -1 is returned.
++    int GetContainingTriangle (const Vector2&lt;Real&gt;&amp; rkP) const;
++
++    // If GetContainingTriangle returns a nonnegative value, the path of
++    // triangles searched for the containing triangles is stored in an array.
++    // The last index of the array is returned by GetPathLast; it is one
++    // less than the number of array elements.  The array itself is returned
++    // by GetPath.
++    int GetPathLast () const;
++    const int* GetPath () const;
++
++    // If GetContainingTriangle returns -1, the path of triangles searched
++    // may be obtained by GetPathLast and GetPath.  The input point is outside
++    // an edge of the last triangle in the path.  This function returns the
++    // vertex indices &lt;v0,v1&gt; of the edge, listed in counterclockwise order
++    // relative to the convex hull of the data points.  The final output is
++    // the index of the vertex v2 opposite the edge.  The return value of
++    // the function is the index of the triple of vertex indices; the value
++    // is 0, 1, or 2.
++    int GetLastEdge (int&amp; riV0, int&amp; riV1, int&amp; riV2) const;
++
++    // Get the vertices for triangle i.  The function returns 'true' if i is
++    // a valid triangle index, in which case the vertices are valid.
++    // Otherwise, the function returns 'false' and the vertices are invalid.
++    bool GetVertexSet (int i, Vector2&lt;Real&gt; akV[3]) const;
++
++    // Get the vertex indices for triangle i.  The function returns 'true' if
++    // i is a valid triangle index, in which case the vertices are valid.
++    // Otherwise, the function returns 'false' and the vertices are invalid.
++    bool GetIndexSet (int i, int aiIndex[3]) const;
++
++    // Get the indices for triangles adjacent to triangle i.  The function
++    // returns 'true' if i is a valid triangle index, in which case the
++    // adjacencies are valid.  Otherwise, the function returns 'false' and
++    // the adjacencies are invalid.
++    bool GetAdjacentSet (int i, int aiAdjacent[3]) const;
++
++    // Compute the barycentric coordinates of P with respect to triangle i.
++    // The function returns 'true' if i is a valid triangle index, in which
++    // case the coordinates are valid.  Otherwise, the function returns
++    // 'false' and the coordinate array is invalid.
++    bool GetBarycentricSet (int i, const Vector2&lt;Real&gt;&amp; rkP, Real afBary[3])
++        const;
++
++    // Support for streaming to/from disk.
++    Delaunay2 (const char* acFilename);
++    bool Load (const char* acFilename);
++    bool Save (const char* acFilename) const;
++
++private:
++    using Delaunay&lt;Real&gt;::m_eQueryType;
++    using Delaunay&lt;Real&gt;::m_iVertexQuantity;
++    using Delaunay&lt;Real&gt;::m_iDimension;
++    using Delaunay&lt;Real&gt;::m_iSimplexQuantity;
++    using Delaunay&lt;Real&gt;::m_aiIndex;
++    using Delaunay&lt;Real&gt;::m_aiAdjacent;
++    using Delaunay&lt;Real&gt;::m_fEpsilon;
++    using Delaunay&lt;Real&gt;::m_bOwner;
++
++    void Update (int i);
++    DelTriangle&lt;Real&gt;* GetContainingTriangle (int i) const;
++    void RemoveTriangles ();
++    bool IsSupervertex (int i) const;
++
++    // The input vertices.
++    Vector2&lt;Real&gt;* m_akVertex;
++
++    // The number of unique vertices processed.
++    int m_iUniqueVertexQuantity;
++
++    // The scaled input vertices with additional storage for the three
++    // supertriangle vertices.  This array and supporting data structures
++    // are for robust calculations.
++    Vector2&lt;Real&gt;* m_akSVertex;
++    Query2&lt;Real&gt;* m_pkQuery;
++    Vector2&lt;Real&gt; m_kMin;
++    Real m_fScale;
++
++    // The indices for the three supertriangle vertices.
++    int m_aiSV[3];
++
++    // The current triangulation.
++    std::set&lt;DelTriangle&lt;Real&gt;*&gt; m_kTriangle;
++
++    // The line of containment if the dimension is 1.
++    Vector2&lt;Real&gt; m_kLineOrigin, m_kLineDirection;
++
++    // Store the path of tetrahedra visited in a GetContainingTetrahedron
++    // function call.
++    mutable int m_iPathLast;
++    mutable int* m_aiPath;
++
++    // If a query point is not in the convex hull of the input points, the
++    // point is outside an edge of the last triangle in the search path.
++    // These are the vertex indices for that edge.
++    mutable int m_iLastEdgeV0, m_iLastEdgeV1;
++    mutable int m_iLastEdgeOpposite, m_iLastEdgeOppositeIndex;
++};
++
++typedef Delaunay2&lt;float&gt; Delaunay2f;
++typedef Delaunay2&lt;double&gt; Delaunay2d;
++
++}
++
++#endif
++
+
+Added: branches/scons-layout/lib/miniWm3/Wm3Delaunay3.cpp
+===================================================================
+--- branches/scons-layout/lib/miniWm3/Wm3Delaunay3.cpp	2007-03-10 10:16:29 UTC (rev 1132)
++++ branches/scons-layout/lib/miniWm3/Wm3Delaunay3.cpp	2007-03-10 10:19:18 UTC (rev 1133)
+@@ -0,0 +1,1112 @@
++// Geometric Tools, Inc.
++// <A HREF="http://www.geometrictools.com">http://www.geometrictools.com</A>
++// Copyright (c) 1998-2006.  All Rights Reserved
++//
++// The Wild Magic Library (WM3) source code is supplied under the terms of
++// the license agreement
++//     <A HREF="http://www.geometrictools.com/License/WildMagic3License.pdf">http://www.geometrictools.com/License/WildMagic3License.pdf</A>
++// and may not be copied or disclosed except in accordance with the terms
++// of that agreement.
++
++#include &quot;Wm3FoundationPCH.h&quot;
++#include &quot;Wm3Delaunay3.h&quot;
++#include &quot;Wm3DelPolyhedronFace.h&quot;
++#include &quot;Wm3Mapper3.h&quot;
++#include &quot;Wm3ETManifoldMesh.h&quot;
++#include &quot;Wm3Delaunay2.h&quot;
++#include &quot;Wm3Query3Filtered.h&quot;
++#include &quot;Wm3Query3Int64.h&quot;
++#include &quot;Wm3Query3TInteger.h&quot;
++#include &quot;Wm3Query3TRational.h&quot;
++
++#include &lt;algorithm&gt;
++#include &lt;map&gt;
++#include &lt;stack&gt;
++#include &lt;vector&gt;
++
++// Indexing for the vertices of the triangle opposite a vertex.  The triangle
++// opposite vertex j is
++//   &lt;gs_aaiIndex[j][0],gs_aaiIndex[j][1],gs_aaiIndex[j][2]&gt;
++// and is listed in counterclockwise order when viewed from outside the
++// tetrahedron.
++static const int gs_aaiIndex[4][3] = { {1,2,3}, {0,3,2}, {0,1,3}, {0,2,1} };
++
++namespace Wm3
++{
++//----------------------------------------------------------------------------
++template &lt;class Real&gt;
++Delaunay3&lt;Real&gt;::Delaunay3 (int iVertexQuantity, Vector3&lt;Real&gt;* akVertex,
++    Real fEpsilon, bool bOwner, Query::Type eQueryType)
++    :
++    Delaunay&lt;Real&gt;(iVertexQuantity,fEpsilon,bOwner,eQueryType),
++    m_kLineOrigin(Vector3&lt;Real&gt;::ZERO),
++    m_kLineDirection(Vector3&lt;Real&gt;::ZERO),
++    m_kPlaneOrigin(Vector3&lt;Real&gt;::ZERO)
++{
++    assert(akVertex);
++    m_akVertex = akVertex;
++    m_iUniqueVertexQuantity = 0;
++    m_akPlaneDirection[0] = Vector3&lt;Real&gt;::ZERO;
++    m_akPlaneDirection[1] = Vector3&lt;Real&gt;::ZERO;
++    m_akSVertex = 0;
++    m_pkQuery = 0;
++    m_iPathLast = -1;
++    m_aiPath = 0;
++    m_iLastFaceV0 = -1;
++    m_iLastFaceV1 = -1;
++    m_iLastFaceV2 = -1;
++    m_iLastFaceOpposite = -1;
++    m_iLastFaceOppositeIndex = -1;
++
++    Mapper3&lt;Real&gt; kMapper(m_iVertexQuantity,m_akVertex,m_fEpsilon);
++    if (kMapper.GetDimension() == 0)
++    {
++        // The values of m_iDimension, m_aiIndex, and m_aiAdjacent were
++        // already initialized by the Delaunay base class.
++        return;
++    }
++
++    int i;
++    if (kMapper.GetDimension() == 1)
++    {
++        // The set is (nearly) collinear.  The caller is responsible for
++        // creating a Delaunay1 object.
++        m_iDimension = 1;
++        m_kLineOrigin = kMapper.GetOrigin();
++        m_kLineDirection = kMapper.GetDirection(0);
++        return;
++    }
++
++    if (kMapper.GetDimension() == 2)
++    {
++        // The set is (nearly) coplanar.  The caller is responsible for
++        // creating a Delaunay2 object.
++        m_iDimension = 2;
++        m_kPlaneOrigin = kMapper.GetOrigin();
++        m_akPlaneDirection[0] = kMapper.GetDirection(0);
++        m_akPlaneDirection[1] = kMapper.GetDirection(1);
++        return;
++    }
++
++    m_iDimension = 3;
++
++    // Allocate storage for the input vertices and the supertetrahedron
++    // vertices.
++    m_akSVertex = WM3_NEW Vector3&lt;Real&gt;[m_iVertexQuantity+4];
++
++    if (eQueryType != Query::QT_RATIONAL &amp;&amp; eQueryType != Query::QT_FILTERED)
++    {
++        // Transform the vertices to the cube [0,1]^3.
++        m_kMin = kMapper.GetMin();
++        m_fScale = ((Real)1.0)/kMapper.GetMaxRange();
++        for (i = 0; i &lt; m_iVertexQuantity; i++)
++        {
++            m_akSVertex[i] = (m_akVertex[i] - m_kMin)*m_fScale;
++        }
++
++        // Construct the supertetrahedron to contain [0,1]^3.
++        m_aiSV[0] = m_iVertexQuantity++;
++        m_aiSV[1] = m_iVertexQuantity++;
++        m_aiSV[2] = m_iVertexQuantity++;
++        m_aiSV[3] = m_iVertexQuantity++;
++        m_akSVertex[m_aiSV[0]] = Vector3&lt;Real&gt;((Real)-1.0,(Real)-1.0,
++            (Real)-1.0);
++        m_akSVertex[m_aiSV[1]] = Vector3&lt;Real&gt;((Real)+6.0,(Real)-1.0,
++            (Real)-1.0);
++        m_akSVertex[m_aiSV[2]] = Vector3&lt;Real&gt;((Real)-1.0,(Real)+6.0,
++            (Real)-1.0);
++        m_akSVertex[m_aiSV[3]] = Vector3&lt;Real&gt;((Real)-1.0,(Real)-1.0,
++            (Real)+6.0);
++
++        Real fExpand;
++        if (eQueryType == Query::QT_INT64)
++        {
++            // Scale the vertices to the cube [0,2^{10}]^3 to allow use of
++            // 64-bit integers for tetrahedralization.
++            fExpand = (Real)(1 &lt;&lt; 10);
++            m_pkQuery = WM3_NEW Query3Int64&lt;Real&gt;(m_iVertexQuantity,
++                m_akSVertex);
++        }
++        else if (eQueryType == Query::QT_INTEGER)
++        {
++            // Scale the vertices to the cube [0,2^{20}]^3 to get more
++            // precision for TInteger than for 64-bit integers for
++            // tetrahedralization.
++            fExpand = (Real)(1 &lt;&lt; 20);
++            m_pkQuery = WM3_NEW Query3TInteger&lt;Real&gt;(m_iVertexQuantity,
++                m_akSVertex);
++        }
++        else // eQueryType == Query::QT_REAL
++        {
++            // No scaling for floating point.
++            fExpand = (Real)1.0;
++            m_pkQuery = WM3_NEW Query3&lt;Real&gt;(m_iVertexQuantity,m_akSVertex);
++        }
++
++        m_fScale *= fExpand;
++        for (i = 0; i &lt; m_iVertexQuantity; i++)
++        {
++            m_akSVertex[i] *= fExpand;
++        }
++    }
++    else
++    {
++        // No transformation needed for exact rational arithmetic or filtered
++        // predicates.
++        m_kMin = Vector3&lt;Real&gt;::ZERO;
++        m_fScale = (Real)1.0;
++        size_t uiSize = m_iVertexQuantity*sizeof(Vector3&lt;Real&gt;);
++        System::Memcpy(m_akSVertex,uiSize,m_akVertex,uiSize);
++
++        // Construct the supertriangle to contain [min,max].
++        Vector3&lt;Real&gt; kMin = kMapper.GetMin();
++        Vector3&lt;Real&gt; kMax = kMapper.GetMax();
++        Vector3&lt;Real&gt; kDelta = kMax - kMin;
++        Vector3&lt;Real&gt; kSMin = kMin - kDelta;
++        Vector3&lt;Real&gt; kSMax = kMax + ((Real)5.0)*kDelta;
++        m_aiSV[0] = m_iVertexQuantity++;
++        m_aiSV[1] = m_iVertexQuantity++;
++        m_aiSV[2] = m_iVertexQuantity++;
++        m_aiSV[3] = m_iVertexQuantity++;
++        m_akSVertex[m_aiSV[0]] = kSMin;
++        m_akSVertex[m_aiSV[1]] = Vector3&lt;Real&gt;(kSMax[0],kSMin[1],kSMin[2]);
++        m_akSVertex[m_aiSV[2]] = Vector3&lt;Real&gt;(kSMin[0],kSMax[1],kSMin[2]);
++        m_akSVertex[m_aiSV[3]] = Vector3&lt;Real&gt;(kSMin[0],kSMin[1],kSMax[2]);
++
++        if (eQueryType == Query::QT_RATIONAL)
++        {
++            m_pkQuery = WM3_NEW Query3TRational&lt;Real&gt;(m_iVertexQuantity,
++                m_akSVertex);
++        }
++        else // eQueryType == Query::QT_FILTERED
++        {
++            m_pkQuery = WM3_NEW Query3Filtered&lt;Real&gt;(m_iVertexQuantity,
++                m_akSVertex,fEpsilon);
++        }
++    }
++
++    DelTetrahedron&lt;Real&gt;* pkTetra = WM3_NEW DelTetrahedron&lt;Real&gt;(m_aiSV[0],
++        m_aiSV[1],m_aiSV[2],m_aiSV[3]);
++    m_kTetrahedron.insert(pkTetra);
++
++    // Incrementally update the tetrahedralization.  The set of processed
++    // points is maintained to eliminate duplicates, either in the original
++    // input points or in the points obtained by snap rounding.
++    std::set&lt;Vector3&lt;Real&gt; &gt; kProcessed;
++    for (i = 0; i &lt; m_iVertexQuantity-4; i++)
++    {
++        if (kProcessed.find(m_akSVertex[i]) == kProcessed.end())
++        {
++            Update(i);
++            kProcessed.insert(m_akSVertex[i]);
++        }
++    }
++    m_iUniqueVertexQuantity = (int)kProcessed.size();
++
++    // Remove tetrahedra sharing a vertex of the supertetrahedron.
++    RemoveTetrahedra();
++
++    // Assign integer values to the tetrahedra for use by the caller.
++    std::map&lt;DelTetrahedron&lt;Real&gt;*,int&gt; kPermute;
++    typename std::set&lt;DelTetrahedron&lt;Real&gt;*&gt;::iterator pkTIter =
++        m_kTetrahedron.begin();
++    for (i = 0; pkTIter != m_kTetrahedron.end(); pkTIter++)
++    {
++        pkTetra = *pkTIter;
++        kPermute[pkTetra] = i++;
++    }
++    kPermute[0] = -1;
++
++    // Put Delaunay tetrahedra into an array (vertices and adjacency info).
++    m_iSimplexQuantity = (int)m_kTetrahedron.size();
++    if (m_iSimplexQuantity &gt; 0)
++    {
++        m_aiIndex = WM3_NEW int[4*m_iSimplexQuantity];
++        m_aiAdjacent = WM3_NEW int[4*m_iSimplexQuantity];
++        i = 0;
++        pkTIter = m_kTetrahedron.begin();
++        for (/**/; pkTIter != m_kTetrahedron.end(); pkTIter++)
++        {
++            pkTetra = *pkTIter;
++            m_aiIndex[i] = pkTetra-&gt;V[0];
++            m_aiAdjacent[i++] = kPermute[pkTetra-&gt;A[0]];
++            m_aiIndex[i] = pkTetra-&gt;V[1];
++            m_aiAdjacent[i++] = kPermute[pkTetra-&gt;A[1]];
++            m_aiIndex[i] = pkTetra-&gt;V[2];
++            m_aiAdjacent[i++] = kPermute[pkTetra-&gt;A[2]];
++            m_aiIndex[i] = pkTetra-&gt;V[3];
++            m_aiAdjacent[i++] = kPermute[pkTetra-&gt;A[3]];
++        }
++        assert(i == 4*m_iSimplexQuantity);
++
++        m_iPathLast = -1;
++        m_aiPath = WM3_NEW int[m_iSimplexQuantity+1];
++    }
++
++    // Restore the vertex count to the original (discards the vertices of the
++    // supertetrahedron).
++    m_iVertexQuantity -= 4;
++
++
++    pkTIter = m_kTetrahedron.begin();
++    for (/**/; pkTIter != m_kTetrahedron.end(); ++pkTIter)
++    {
++        WM3_DELETE *pkTIter;
++    }
++}
++//----------------------------------------------------------------------------
++template &lt;class Real&gt;
++Delaunay3&lt;Real&gt;::~Delaunay3 ()
++{
++    WM3_DELETE m_pkQuery;
++    WM3_DELETE[] m_akSVertex;
++    WM3_DELETE[] m_aiPath;
++    if (m_bOwner)
++    {
++        WM3_DELETE[] m_akVertex;
++    }
++}
++//----------------------------------------------------------------------------
++template &lt;class Real&gt;
++const Vector3&lt;Real&gt;* Delaunay3&lt;Real&gt;::GetVertices () const
++{
++    return m_akVertex;
++}
++//----------------------------------------------------------------------------
++template &lt;class Real&gt;
++int Delaunay3&lt;Real&gt;::GetUniqueVertexQuantity () const
++{
++    return m_iUniqueVertexQuantity;
++}
++//----------------------------------------------------------------------------
++template &lt;class Real&gt;
++const Vector3&lt;Real&gt;&amp; Delaunay3&lt;Real&gt;::GetLineOrigin () const
++{
++    return m_kLineOrigin;
++}
++//----------------------------------------------------------------------------
++template &lt;class Real&gt;
++const Vector3&lt;Real&gt;&amp; Delaunay3&lt;Real&gt;::GetLineDirection () const
++{
++    return m_kLineDirection;
++}
++//----------------------------------------------------------------------------
++template &lt;class Real&gt;
++Delaunay1&lt;Real&gt;* Delaunay3&lt;Real&gt;::GetDelaunay1 () const
++{
++    assert(m_iDimension == 1);
++    if (m_iDimension != 1)
++    {
++        return 0;
++    }
++
++    Real* afProjection = WM3_NEW Real[m_iVertexQuantity];
++    for (int i = 0; i &lt; m_iVertexQuantity; i++)
++    {
++        Vector3&lt;Real&gt; kDiff = m_akVertex[i] - m_kLineOrigin;
++        afProjection[i] = m_kLineDirection.Dot(kDiff);
++    }
++
++    return WM3_NEW Delaunay1&lt;Real&gt;(m_iVertexQuantity,afProjection,m_fEpsilon,
++        true,m_eQueryType);
++}
++//----------------------------------------------------------------------------
++template &lt;class Real&gt;
++const Vector3&lt;Real&gt;&amp; Delaunay3&lt;Real&gt;::GetPlaneOrigin () const
++{
++    return m_kPlaneOrigin;
++}
++//----------------------------------------------------------------------------
++template &lt;class Real&gt;
++const Vector3&lt;Real&gt;&amp; Delaunay3&lt;Real&gt;::GetPlaneDirection (int i) const
++{
++    assert(0 &lt;= i &amp;&amp; i &lt; 2);
++    return m_akPlaneDirection[i];
++}
++//----------------------------------------------------------------------------
++template &lt;class Real&gt;
++Delaunay2&lt;Real&gt;* Delaunay3&lt;Real&gt;::GetDelaunay2 () const
++{
++    assert(m_iDimension == 2);
++    if (m_iDimension != 2)
++    {
++        return 0;
++    }
++
++    Vector2&lt;Real&gt;* akProjection = WM3_NEW Vector2&lt;Real&gt;[m_iVertexQuantity];
++    for (int i = 0; i &lt; m_iVertexQuantity; i++)
++    {
++        Vector3&lt;Real&gt; kDiff = m_akVertex[i] - m_kPlaneOrigin;
++        akProjection[i][0] = m_akPlaneDirection[0].Dot(kDiff);
++        akProjection[i][1] = m_akPlaneDirection[1].Dot(kDiff);
++    }
++
++    return WM3_NEW Delaunay2&lt;Real&gt;(m_iVertexQuantity,akProjection,m_fEpsilon,
++        true,m_eQueryType);
++}
++//----------------------------------------------------------------------------
++template &lt;class Real&gt;
++bool Delaunay3&lt;Real&gt;::GetHull (int&amp; riTQuantity, int*&amp; raiIndex) const
++{
++    assert(m_iDimension == 3);
++    if (m_iDimension != 3)
++    {
++        return false;
++    }
++
++    riTQuantity = 0;
++    raiIndex = 0;
++
++    // Count the number of triangles that are not shared by two tetrahedra.
++    int i, iAdjQuantity = 4*m_iSimplexQuantity;
++    for (i = 0; i &lt; iAdjQuantity; i++)
++    {
++        if (m_aiAdjacent[i] == -1)
++        {
++            riTQuantity++;
++        }
++    }
++    assert(riTQuantity &gt; 0);
++    if (riTQuantity == 0)
++    {
++        return false;
++    }
++
++    // Enumerate the triangles.
++    raiIndex = WM3_NEW int[3*riTQuantity];
++    int* piIndex = raiIndex;
++    for (i = 0; i &lt; iAdjQuantity; i++)
++    {
++        if (m_aiAdjacent[i] == -1)
++        {
++            int iTetra = i/4, iFace = i%4;
++            for (int j = 0; j &lt; 4; j++)
++            {
++                if (j != iFace)
++                {
++                    *piIndex++ = m_aiIndex[4*iTetra+j];
++                }
++            }
++            if ((iFace % 2) == 0)
++            {
++                int iSave = *(piIndex-1);
++                *(piIndex-1) = *(piIndex-2);
++                *(piIndex-2) = iSave;
++            }
++        }
++    }
++
++    return true;
++}
++//----------------------------------------------------------------------------
++template &lt;class Real&gt;
++int Delaunay3&lt;Real&gt;::GetContainingTetrahedron (const Vector3&lt;Real&gt;&amp; rkP)
++    const
++{
++    assert(m_iDimension == 3);
++    if (m_iDimension != 3)
++    {
++        return -1;
++    }
++
++    // convert to scaled coordinates
++    Vector3&lt;Real&gt; kXFrmP = (rkP - m_kMin)*m_fScale;
++
++    // start at first tetrahedron in mesh
++    int iIndex = (m_iPathLast &gt;= 0 ? m_aiPath[m_iPathLast] : 0);
++    m_iPathLast = -1;
++    m_iLastFaceV0 = -1;
++    m_iLastFaceV1 = -1;
++    m_iLastFaceV2 = -1;
++    m_iLastFaceOpposite = -1;
++    m_iLastFaceOppositeIndex = -1;
++
++    // use tetrahedron faces as binary separating planes
++    for (int i = 0; i &lt; m_iSimplexQuantity; i++)
++    {
++        m_aiPath[++m_iPathLast] = iIndex;
++
++        int* aiV = &amp;m_aiIndex[4*iIndex];
++
++        // &lt;V1,V2,V3&gt; counterclockwise when viewed outside tetrahedron
++        if (m_pkQuery-&gt;ToPlane(kXFrmP,aiV[1],aiV[2],aiV[3]) &gt; 0)
++        {
++            iIndex = m_aiAdjacent[4*iIndex];
++            if (iIndex == -1)
++            {
++                m_iLastFaceV0 = aiV[1];
++                m_iLastFaceV1 = aiV[2];
++                m_iLastFaceV2 = aiV[3];
++                m_iLastFaceOpposite = aiV[0];
++                m_iLastFaceOppositeIndex = 0;
++                return -1;
++            }
++            continue;
++        }
++
++        // &lt;V0,V3,V2&gt; counterclockwise when viewed outside tetrahedron
++        if (m_pkQuery-&gt;ToPlane(kXFrmP,aiV[0],aiV[2],aiV[3]) &lt; 0)
++        {
++            iIndex = m_aiAdjacent[4*iIndex+1];
++            if (iIndex == -1)
++            {
++                m_iLastFaceV0 = aiV[0];
++                m_iLastFaceV1 = aiV[2];
++                m_iLastFaceV2 = aiV[3];
++                m_iLastFaceOpposite = aiV[1];
++                m_iLastFaceOppositeIndex = 1;
++                return -1;
++            }
++            continue;
++        }
++
++        // &lt;V0,V1,V3&gt; counterclockwise when viewed outside tetrahedron
++        if (m_pkQuery-&gt;ToPlane(kXFrmP,aiV[0],aiV[1],aiV[3]) &gt; 0)
++        {
++            iIndex = m_aiAdjacent[4*iIndex+2];
++            if (iIndex == -1)
++            {
++                m_iLastFaceV0 = aiV[0];
++                m_iLastFaceV1 = aiV[1];
++                m_iLastFaceV2 = aiV[3];
++                m_iLastFaceOpposite = aiV[2];
++                m_iLastFaceOppositeIndex = 2;
++                return -1;
++            }
++            continue;
++        }
++
++        // &lt;V0,V2,V1&gt; counterclockwise when viewed outside tetrahedron
++        if (m_pkQuery-&gt;ToPlane(kXFrmP,aiV[0],aiV[1],aiV[2]) &lt; 0)
++        {
++            iIndex = m_aiAdjacent[4*iIndex+3];
++            if (iIndex == -1)
++            {
++                m_iLastFaceV0 = aiV[0];
++                m_iLastFaceV1 = aiV[1];
++                m_iLastFaceV2 = aiV[2];
++                m_iLastFaceOpposite = aiV[3];
++                m_iLastFaceOppositeIndex = 3;
++                return -1;
++            }
++            continue;
++        }
++
++        m_iLastFaceV0 = -1;
++        m_iLastFaceV1 = -1;
++        m_iLastFaceV2 = -1;
++        m_iLastFaceOppositeIndex = -1;
++        return iIndex;
++    }
++
++    return -1;
++}
++//----------------------------------------------------------------------------
++template &lt;class Real&gt;
++int Delaunay3&lt;Real&gt;::GetPathLast () const
++{
++    return m_iPathLast;
++}
++//----------------------------------------------------------------------------
++template &lt;class Real&gt;
++const int* Delaunay3&lt;Real&gt;::GetPath () const
++{
++    return m_aiPath;
++}
++//----------------------------------------------------------------------------
++template &lt;class Real&gt;
++int Delaunay3&lt;Real&gt;::GetLastFace (int&amp; riV0, int&amp; riV1, int&amp; riV2,
++    int&amp; riV3) const
++{
++    riV0 = m_iLastFaceV0;
++    riV1 = m_iLastFaceV1;
++    riV2 = m_iLastFaceV2;
++    riV3 = m_iLastFaceOpposite;
++    return m_iLastFaceOppositeIndex;
++}
++//----------------------------------------------------------------------------
++template &lt;class Real&gt;
++bool Delaunay3&lt;Real&gt;::GetVertexSet (int i, Vector3&lt;Real&gt; akV[4]) const
++{
++    assert(m_iDimension == 3);
++    if (m_iDimension != 3)
++    {
++        return false;
++    }
++
++    if (0 &lt;= i &amp;&amp; i &lt; m_iSimplexQuantity)
++    {
++        akV[0] = m_akVertex[m_aiIndex[4*i  ]];
++        akV[1] = m_akVertex[m_aiIndex[4*i+1]];
++        akV[2] = m_akVertex[m_aiIndex[4*i+2]];
++        akV[3] = m_akVertex[m_aiIndex[4*i+3]];
++        return true;
++    }
++
++    return false;
++}
++//----------------------------------------------------------------------------
++template &lt;class Real&gt;
++bool Delaunay3&lt;Real&gt;::GetIndexSet (int i, int aiIndex[4]) const
++{
++    assert(m_iDimension == 3);
++    if (m_iDimension != 3)
++    {
++        return false;
++    }
++
++    if (0 &lt;= i &amp;&amp; i &lt; m_iSimplexQuantity)
++    {
++        aiIndex[0] = m_aiIndex[4*i  ];
++        aiIndex[1] = m_aiIndex[4*i+1];
++        aiIndex[2] = m_aiIndex[4*i+2];
++        aiIndex[3] = m_aiIndex[4*i+3];
++        return true;
++    }
++
++    return false;
++}
++//----------------------------------------------------------------------------
++template &lt;class Real&gt;
++bool Delaunay3&lt;Real&gt;::GetAdjacentSet (int i, int aiAdjacent[4]) const
++{
++    assert(m_iDimension == 3);
++    if (m_iDimension != 3)
++    {
++        return false;
++    }
++
++    if (0 &lt;= i &amp;&amp; i &lt; m_iSimplexQuantity)
++    {
++        aiAdjacent[0] = m_aiAdjacent[4*i  ];
++        aiAdjacent[1] = m_aiAdjacent[4*i+1];
++        aiAdjacent[2] = m_aiAdjacent[4*i+2];
++        aiAdjacent[3] = m_aiAdjacent[4*i+3];
++        return true;
++    }
++
++    return false;
++}
++//----------------------------------------------------------------------------
++template &lt;class Real&gt;
++bool Delaunay3&lt;Real&gt;::GetBarycentricSet (int i, const Vector3&lt;Real&gt;&amp; rkP,
++    Real afBary[4]) const
++{
++    assert(m_iDimension == 3);
++    if (m_iDimension != 3)
++    {
++        return false;
++    }
++
++    if (0 &lt;= i &amp;&amp; i &lt; m_iSimplexQuantity)
++    {
++        Vector3&lt;Real&gt; kV0 = m_akVertex[m_aiIndex[4*i  ]];
++        Vector3&lt;Real&gt; kV1 = m_akVertex[m_aiIndex[4*i+1]];
++        Vector3&lt;Real&gt; kV2 = m_akVertex[m_aiIndex[4*i+2]];
++        Vector3&lt;Real&gt; kV3 = m_akVertex[m_aiIndex[4*i+3]];
++        rkP.GetBarycentrics(kV0,kV1,kV2,kV3,afBary);
++        return true;
++    }
++
++    return false;
++}
++//----------------------------------------------------------------------------
++template &lt;class Real&gt;
++void Delaunay3&lt;Real&gt;::Update (int i)
++{
++    // Locate the tetrahedron containing vertex i.
++    DelTetrahedron&lt;Real&gt;* pkTetra = GetContainingTetrahedron(i);
++
++    // Locate and remove the tetrahedra forming the insertion polyhedron.
++    std::stack&lt;DelTetrahedron&lt;Real&gt;*&gt; kStack;
++    ETManifoldMesh kPolyhedron(0,DelPolyhedronFace&lt;Real&gt;::TCreator);
++    kStack.push(pkTetra);
++    pkTetra-&gt;OnStack = true;
++    int j, iV0, iV1, iV2;
++    DelPolyhedronFace&lt;Real&gt;* pkFace;
++    while (!kStack.empty())
++    {
++        pkTetra = kStack.top();
++        kStack.pop();
++        pkTetra-&gt;OnStack = false;
++        for (j = 0; j &lt; 4; j++)
++        {
++            DelTetrahedron&lt;Real&gt;* pkAdj = pkTetra-&gt;A[j];
++            if (pkAdj)
++            {
++                // Detach tetrahedron and adjacent tetrahedron from each
++                // other.
++                int iNullIndex = pkTetra-&gt;DetachFrom(j,pkAdj);
++
++                if (pkAdj-&gt;IsInsertionComponent(i,pkTetra,m_pkQuery,m_aiSV))
++                {
++                    if (!pkAdj-&gt;OnStack)
++                    {
++                        // Adjacent triangle inside insertion polyhedron.
++                        kStack.push(pkAdj);
++                        pkAdj-&gt;OnStack = true;
++                    }
++                }
++                else
++                {
++                    // Adjacent tetrahedron outside insertion polyhedron.
++                    iV0 = pkTetra-&gt;V[gs_aaiIndex[j][0]];
++                    iV1 = pkTetra-&gt;V[gs_aaiIndex[j][1]];
++                    iV2 = pkTetra-&gt;V[gs_aaiIndex[j][2]];
++                    pkFace = (DelPolyhedronFace&lt;Real&gt;*)
++                        kPolyhedron.InsertTriangle(iV0,iV1,iV2);
++                    pkFace-&gt;NullIndex = iNullIndex;
++                    pkFace-&gt;Tetra = pkAdj;
++                }
++            }
++            else
++            {
++                // The tetrahedron is in the insertion polyhedron, but the
++                // adjacent one does not exist.  This means one of two things:
++                // (1) We are at a face of the supertetrahedron, and that
++                //     face is part of the insertion polyhedron.
++                // (2) We are at a face that was recently shared by the
++                //     tetrahedron and the adjacent, but we detached those
++                //     tetrahedra from each other.  These faces should be
++                //     ignored.
++
++                iV0 = pkTetra-&gt;V[gs_aaiIndex[j][0]];
++                if (IsSupervertex(iV0))
++                {
++                    iV1 = pkTetra-&gt;V[gs_aaiIndex[j][1]];
++                    if (IsSupervertex(iV1))
++                    {
++                        iV2 = pkTetra-&gt;V[gs_aaiIndex[j][2]];
++                        if (IsSupervertex(iV2))
++                        {
++                            pkFace = (DelPolyhedronFace&lt;Real&gt;*)
++                                kPolyhedron.InsertTriangle(iV0,iV1,iV2);
++                            pkFace-&gt;NullIndex = -1;
++                            pkFace-&gt;Tetra = 0;
++                        }
++                    }
++                }
++            }
++        }
++        m_kTetrahedron.erase(pkTetra);
++        WM3_DELETE pkTetra;
++    }
++
++    // Insert the new tetrahedra formed by the input point and the faces of
++    // the insertion polyhedron.
++    const ETManifoldMesh::TMap&amp; rkTMap = kPolyhedron.GetTriangles();
++    assert(rkTMap.size() &gt;= 4 &amp;&amp; kPolyhedron.IsClosed());
++    typename ETManifoldMesh::TMapCIterator pkTIter;
++    for (pkTIter = rkTMap.begin(); pkTIter != rkTMap.end(); pkTIter++)
++    {
++        pkFace = (DelPolyhedronFace&lt;Real&gt;*)pkTIter-&gt;second;
++
++        // Create and insert the new tetrahedron.
++        pkTetra = WM3_NEW DelTetrahedron&lt;Real&gt;(i,pkFace-&gt;V[0],pkFace-&gt;V[1],
++            pkFace-&gt;V[2]);
++        m_kTetrahedron.insert(pkTetra);
++
++        // Establish the adjacency links across the polyhedron face.
++        pkTetra-&gt;A[0] = pkFace-&gt;Tetra;
++        if (pkFace-&gt;Tetra)
++        {
++            pkFace-&gt;Tetra-&gt;A[pkFace-&gt;NullIndex] = pkTetra;
++        }
++
++        // Update the faces's tetrahedron pointer to point to the newly
++        // created tetrahedron.  This information is used later to establish
++        // the links between the new tetrahedra.
++        pkFace-&gt;Tetra = pkTetra;
++    }
++
++    // Establish the adjacency links between the new tetrahedra.
++    DelPolyhedronFace&lt;Real&gt;* pkAdjFace;
++    for (pkTIter = rkTMap.begin(); pkTIter != rkTMap.end(); pkTIter++)
++    {
++        pkFace = (DelPolyhedronFace&lt;Real&gt;*)pkTIter-&gt;second;
++
++        pkAdjFace = (DelPolyhedronFace&lt;Real&gt;*)pkFace-&gt;T[0];
++        pkFace-&gt;Tetra-&gt;A[3] = pkAdjFace-&gt;Tetra;
++        assert(SharesFace(3,pkFace-&gt;Tetra,pkAdjFace-&gt;Tetra));
++
++        pkAdjFace = (DelPolyhedronFace&lt;Real&gt;*)pkFace-&gt;T[1];
++        pkFace-&gt;Tetra-&gt;A[1] = pkAdjFace-&gt;Tetra;
++        assert(SharesFace(1,pkFace-&gt;Tetra,pkAdjFace-&gt;Tetra));
++
++        pkAdjFace = (DelPolyhedronFace&lt;Real&gt;*)pkFace-&gt;T[2];
++        pkFace-&gt;Tetra-&gt;A[2] = pkAdjFace-&gt;Tetra;
++        assert(SharesFace(2,pkFace-&gt;Tetra,pkAdjFace-&gt;Tetra));
++    }
++}
++//----------------------------------------------------------------------------
++template &lt;class Real&gt;
++DelTetrahedron&lt;Real&gt;* Delaunay3&lt;Real&gt;::GetContainingTetrahedron (int i) const
++{
++    // Locate which tetrahedron in the current mesh contains vertex i.  By
++    // construction, there must be such a tetrahedron (the vertex cannot be
++    // outside the supertetrahedron).
++
++    DelTetrahedron&lt;Real&gt;* pkTetra = *m_kTetrahedron.begin();
++    int iTQuantity = (int)m_kTetrahedron.size();
++    for (int iT = 0; iT &lt; iTQuantity; iT++)
++    {
++        int* aiV = pkTetra-&gt;V;
++
++        // &lt;V1,V2,V3&gt; counterclockwise when viewed outside tetrahedron
++        if (m_pkQuery-&gt;ToPlane(i,aiV[1],aiV[2],aiV[3]) &gt; 0)
++        {
++            pkTetra = pkTetra-&gt;A[0];
++            if (!pkTetra)
++            {
++                break;
++            }
++            continue;
++        }
++
++        // &lt;V0,V3,V2&gt; counterclockwise when viewed outside tetrahedron
++        if (m_pkQuery-&gt;ToPlane(i,aiV[0],aiV[2],aiV[3]) &lt; 0)
++        {
++            pkTetra = pkTetra-&gt;A[1];
++            if (!pkTetra)
++            {
++                break;
++            }
++            continue;
++        }
++
++        // &lt;V0,V1,V3&gt; counterclockwise when viewed outside tetrahedron
++        if (m_pkQuery-&gt;ToPlane(i,aiV[0],aiV[1],aiV[3]) &gt; 0)
++        {
++            pkTetra = pkTetra-&gt;A[2];
++            if (!pkTetra)
++            {
++                break;
++            }
++            continue;
++        }
++
++        // &lt;V0,V2,V1&gt; counterclockwise when viewed outside tetrahedron
++        if (m_pkQuery-&gt;ToPlane(i,aiV[0],aiV[1],aiV[2]) &lt; 0)
++        {
++            pkTetra = pkTetra-&gt;A[3];
++            if (!pkTetra)
++            {
++                break;
++            }
++            continue;
++        }
++
++        return pkTetra;
++    }
++
++    assert(false);
++    return 0;
++}
++//----------------------------------------------------------------------------
++template &lt;class Real&gt;
++void Delaunay3&lt;Real&gt;::RemoveTetrahedra ()
++{
++    // Identify those triangles sharing a vertex of the supertetrahedron.
++    std::set&lt;DelTetrahedron&lt;Real&gt;*&gt; kRemoveTetra;
++    DelTetrahedron&lt;Real&gt;* pkTetra;
++    typename std::set&lt;DelTetrahedron&lt;Real&gt;*&gt;::iterator pkTIter =
++        m_kTetrahedron.begin();
++    for (/**/; pkTIter != m_kTetrahedron.end(); pkTIter++)
++    {
++        pkTetra = *pkTIter;
++        for (int j = 0; j &lt; 4; j++)
++        {
++            if (IsSupervertex(pkTetra-&gt;V[j]))
++            {
++                kRemoveTetra.insert(pkTetra);
++                break;
++            }
++        }
++    }
++
++    // Remove the tetrahedra from the mesh.
++    pkTIter = kRemoveTetra.begin();
++    for (/**/; pkTIter != kRemoveTetra.end(); pkTIter++)
++    {
++        pkTetra = *pkTIter;
++        for (int j = 0; j &lt; 4; j++)
++        {
++            // Break the links with adjacent tetrahedra.
++            DelTetrahedron&lt;Real&gt;* pkAdj = pkTetra-&gt;A[j];
++            if (pkAdj)
++            {
++                for (int k = 0; k &lt; 4; k++)
++                {
++                    if (pkAdj-&gt;A[k] == pkTetra)
++                    {
++                        pkAdj-&gt;A[k] = 0;
++                        break;
++                    }
++                }
++            }
++        }
++        m_kTetrahedron.erase(pkTetra);
++        WM3_DELETE pkTetra;
++    }
++}
++//----------------------------------------------------------------------------
++template &lt;class Real&gt;
++bool Delaunay3&lt;Real&gt;::IsSupervertex (int i) const
++{
++    for (int j = 0; j &lt; 4; j++)
++    {
++        if (i == m_aiSV[j])
++        {
++            return true;
++        }
++    }
++    return false;
++}
++//----------------------------------------------------------------------------
++template &lt;class Real&gt;
++bool Delaunay3&lt;Real&gt;::SharesFace (int i, DelTetrahedron&lt;Real&gt;* pkFace,
++    DelTetrahedron&lt;Real&gt;* pkAdj)
++{
++    int aiF[3], iCount = 0, j;
++    for (j = 0; j &lt; 4; j++)
++    {
++        if (j != i)
++        {
++            aiF[iCount++] = pkFace-&gt;V[j];
++        }
++    }
++
++    for (i = 0; i &lt; 4; i++)
++    {
++        if (pkAdj-&gt;V[i] != aiF[0] &amp;&amp;
++            pkAdj-&gt;V[i] != aiF[1] &amp;&amp;
++            pkAdj-&gt;V[i] != aiF[2])
++        {
++            break;
++        }
++    }
++    if (i == 4)
++    {
++        return false;
++    }
++
++    int aiA[3];
++    for (j = 0, iCount = 0; j &lt; 4; j++)
++    {
++        if (j != i)
++        {
++            aiA[iCount++] = pkAdj-&gt;V[j];
++        }
++    }
++
++    if (aiF[0] &gt; aiF[1])
++    {
++        j = aiF[0];
++        aiF[0] = aiF[1];
++        aiF[1] = j;
++    }
++    if (aiF[1] &gt; aiF[2])
++    {
++        j = aiF[1];
++        aiF[1] = aiF[2];
++        aiF[2] = j;
++    }
++    if (aiF[0] &gt; aiF[1])
++    {
++        j = aiF[0];
++        aiF[0] = aiF[1];
++        aiF[1] = j;
++    }
++
++    if (aiA[0] &gt; aiA[1])
++    {
++        j = aiA[0];
++        aiA[0] = aiA[1];
++        aiA[1] = j;
++    }
++    if (aiA[1] &gt; aiA[2])
++    {
++        j = aiA[1];
++        aiA[1] = aiA[2];
++        aiA[2] = j;
++    }
++    if (aiA[0] &gt; aiA[1])
++    {
++        j = aiA[0];
++        aiA[0] = aiA[1];
++        aiA[1] = j;
++    }
++
++    if (aiA[0] != aiF[0] || aiA[1] != aiF[1] || aiA[2] != aiF[2])
++    {
++        return false;
++    }
++
++    return true;
++}
++//----------------------------------------------------------------------------
++template &lt;class Real&gt;
++Delaunay3&lt;Real&gt;::Delaunay3 (const char* acFilename)
++    :
++    Delaunay&lt;Real&gt;(0,(Real)0.0,false,Query::QT_REAL)
++{
++    m_akVertex = 0;
++    m_akSVertex = 0;
++    m_pkQuery = 0;
++    m_aiPath = 0;
++    bool bLoaded = Load(acFilename);
++    assert(bLoaded);
++}
++//----------------------------------------------------------------------------
++template &lt;class Real&gt;
++bool Delaunay3&lt;Real&gt;::Load (const char* acFilename)
++{
++    FILE* pkIFile = System::Fopen(acFilename,&quot;rb&quot;);
++    if (!pkIFile)
++    {
++        return false;
++    }
++
++    Delaunay&lt;Real&gt;::Load(pkIFile);
++
++    WM3_DELETE m_pkQuery;
++    WM3_DELETE[] m_akSVertex;
++    WM3_DELETE[] m_aiPath;
++    if (m_bOwner)
++    {
++        WM3_DELETE[] m_akVertex;
++    }
++
++    m_bOwner = true;
++    m_akVertex = WM3_NEW Vector3&lt;Real&gt;[m_iVertexQuantity];
++    m_akSVertex = WM3_NEW Vector3&lt;Real&gt;[m_iVertexQuantity+4];
++    m_aiPath = WM3_NEW int[m_iSimplexQuantity+1];
++
++    System::Read4le(pkIFile,1,&amp;m_iUniqueVertexQuantity);
++    System::Read4le(pkIFile,4,m_aiSV);
++    System::Read4le(pkIFile,1,&amp;m_iPathLast);
++    System::Read4le(pkIFile,1,&amp;m_iLastFaceV0);
++    System::Read4le(pkIFile,1,&amp;m_iLastFaceV1);
++    System::Read4le(pkIFile,1,&amp;m_iLastFaceV2);
++    System::Read4le(pkIFile,1,&amp;m_iLastFaceOpposite);
++    System::Read4le(pkIFile,1,&amp;m_iLastFaceOppositeIndex);
++    System::Read4le(pkIFile,m_iSimplexQuantity+1,m_aiPath);
++
++    size_t uiSize = sizeof(Real);
++    int iVQ = 3*m_iVertexQuantity, iSVQ = 3*(m_iVertexQuantity + 4);
++    if (uiSize == 4)
++    {
++        System::Read4le(pkIFile,iVQ,m_akVertex);
++        System::Read4le(pkIFile,iSVQ,m_akSVertex);
++        System::Read4le(pkIFile,3,(Real*)m_kMin);
++        System::Read4le(pkIFile,1,&amp;m_fScale);
++        System::Read4le(pkIFile,3,(Real*)m_kLineOrigin);
++        System::Read4le(pkIFile,3,(Real*)m_kLineDirection);
++        System::Read4le(pkIFile,3,(Real*)m_kPlaneOrigin);
++        System::Read4le(pkIFile,3,(Real*)m_akPlaneDirection[0]);
++        System::Read4le(pkIFile,3,(Real*)m_akPlaneDirection[1]);
++    }
++    else // iSize == 8
++    {
++        System::Read8le(pkIFile,iVQ,m_akVertex);
++        System::Read8le(pkIFile,iSVQ,m_akSVertex);
++        System::Read8le(pkIFile,3,(Real*)m_kMin);
++        System::Read8le(pkIFile,1,&amp;m_fScale);
++        System::Read8le(pkIFile,3,(Real*)m_kLineOrigin);
++        System::Read8le(pkIFile,3,(Real*)m_kLineDirection);
++        System::Read8le(pkIFile,3,(Real*)m_kPlaneOrigin);
++        System::Read8le(pkIFile,3,(Real*)m_akPlaneDirection[0]);
++        System::Read8le(pkIFile,3,(Real*)m_akPlaneDirection[1]);
++    }
++
++    System::Fclose(pkIFile);
++
++    switch (m_eQueryType)
++    {
++    case Query::QT_INT64:
++        m_pkQuery = WM3_NEW Query3Int64&lt;Real&gt;(m_iVertexQuantity,m_akSVertex);
++        break;
++    case Query::QT_INTEGER:
++        m_pkQuery = WM3_NEW Query3TInteger&lt;Real&gt;(m_iVertexQuantity,
++            m_akSVertex);
++        break;
++    case Query::QT_RATIONAL:
++        m_pkQuery = WM3_NEW Query3TRational&lt;Real&gt;(m_iVertexQuantity,
++            m_akSVertex);
++        break;
++    case Query::QT_REAL:
++        m_pkQuery = WM3_NEW Query3&lt;Real&gt;(m_iVertexQuantity,m_akSVertex);
++        break;
++    case Query::QT_FILTERED:
++        m_pkQuery = WM3_NEW Query3Filtered&lt;Real&gt;(m_iVertexQuantity,
++            m_akSVertex,m_fEpsilon);
++        break;
++    }
++
++    return true;
++}
++//----------------------------------------------------------------------------
++template &lt;class Real&gt;
++bool Delaunay3&lt;Real&gt;::Save (const char* acFilename) const
++{
++    FILE* pkOFile = System::Fopen(acFilename,&quot;wb&quot;);
++    if (!pkOFile)
++    {
++        return false;
++    }
++
++    Delaunay&lt;Real&gt;::Save(pkOFile);
++
++    System::Write4le(pkOFile,1,&amp;m_iUniqueVertexQuantity);
++    System::Write4le(pkOFile,4,m_aiSV);
++    System::Write4le(pkOFile,1,&amp;m_iPathLast);
++    System::Write4le(pkOFile,1,&amp;m_iLastFaceV0);
++    System::Write4le(pkOFile,1,&amp;m_iLastFaceV1);
++    System::Write4le(pkOFile,1,&amp;m_iLastFaceV2);
++    System::Write4le(pkOFile,1,&amp;m_iLastFaceOpposite);
++    System::Write4le(pkOFile,1,&amp;m_iLastFaceOppositeIndex);
++    System::Write4le(pkOFile,m_iSimplexQuantity+1,m_aiPath);
++
++    size_t uiSize = sizeof(Real);
++    int iVQ = 3*m_iVertexQuantity, iSVQ = 3*(m_iVertexQuantity + 4);
++    if (uiSize == 4)
++    {
++        System::Write4le(pkOFile,iVQ,m_akVertex);
++        System::Write4le(pkOFile,iSVQ,m_akSVertex);
++        System::Write4le(pkOFile,3,(const Real*)m_kMin);
++        System::Write4le(pkOFile,1,&amp;m_fScale);
++        System::Write4le(pkOFile,3,(const Real*)m_kLineOrigin);
++        System::Write4le(pkOFile,3,(const Real*)m_kLineDirection);
++        System::Write4le(pkOFile,3,(const Real*)m_kPlaneOrigin);
++        System::Write4le(pkOFile,3,(const Real*)m_akPlaneDirection[0]);
++        System::Write4le(pkOFile,3,(const Real*)m_akPlaneDirection[1]);
++    }
++    else // iSize == 8
++    {
++        System::Write8le(pkOFile,iVQ,m_akVertex);
++        System::Write8le(pkOFile,iSVQ,m_akSVertex);
++        System::Write8le(pkOFile,3,(const Real*)m_kMin);
++        System::Write8le(pkOFile,1,&amp;m_fScale);
++        System::Write8le(pkOFile,3,(const Real*)m_kLineOrigin);
++        System::Write8le(pkOFile,3,(const Real*)m_kLineDirection);
++        System::Write8le(pkOFile,3,(const Real*)m_kPlaneOrigin);
++        System::Write8le(pkOFile,3,(const Real*)m_akPlaneDirection[0]);
++        System::Write8le(pkOFile,3,(const Real*)m_akPlaneDirection[1]);
++    }
++
++    System::Fclose(pkOFile);
++    return true;
++}
++//----------------------------------------------------------------------------
++
++//----------------------------------------------------------------------------
++// explicit instantiation
++//----------------------------------------------------------------------------
++template WM3_ITEM
++class Delaunay3&lt;float&gt;;
++
++template WM3_ITEM
++class Delaunay3&lt;double&gt;;
++//----------------------------------------------------------------------------
++}
++
+
+Added: branches/scons-layout/lib/miniWm3/Wm3Delaunay3.h
+===================================================================
+--- branches/scons-layout/lib/miniWm3/Wm3Delaunay3.h	2007-03-10 10:16:29 UTC (rev 1132)
++++ branches/scons-layout/lib/miniWm3/Wm3Delaunay3.h	2007-03-10 10:19:18 UTC (rev 1133)
+@@ -0,0 +1,186 @@
++// Geometric Tools, Inc.
++// <A HREF="http://www.geometrictools.com">http://www.geometrictools.com</A>
++// Copyright (c) 1998-2006.  All Rights Reserved
++//
++// The Wild Magic Library (WM3) source code is supplied under the terms of
++// the license agreement
++//     <A HREF="http://www.geometrictools.com/License/WildMagic3License.pdf">http://www.geometrictools.com/License/WildMagic3License.pdf</A>
++// and may not be copied or disclosed except in accordance with the terms
++// of that agreement.
++
++#ifndef WM3DELAUNAY3_H
++#define WM3DELAUNAY3_H
++
++#include &quot;Wm3FoundationLIB.h&quot;
++#include &quot;Wm3Delaunay1.h&quot;
++#include &quot;Wm3Delaunay2.h&quot;
++#include &quot;Wm3DelTetrahedron.h&quot;
++#include &quot;Wm3Query3.h&quot;
++#include &lt;set&gt;
++
++namespace Wm3
++{
++
++template &lt;class Real&gt;
++class WM3_ITEM Delaunay3 : public Delaunay&lt;Real&gt;
++{
++public:
++    // The input to the constructor is the array of vertices whose Delaunay
++    // tetrahedralization is required.  If you want Delaunay3 to delete the
++    // vertices during destruction, set bOwner to 'true'.  Otherwise, you
++    // own the vertices and must delete them yourself.  Before using this
++    // class, you should &quot;clean&quot; your input points by removing duplicates.
++    //
++    // You have a choice of speed versus accuracy.  The fastest choice is
++    // Query::QT_INT64, but it gives up a lot of precision, scaling the points
++    // to [0,2^{10}]^3.  The choice Query::QT_INTEGER gives up less precision,
++    // scaling the points to [0,2^{20}]^3.  The choice Query::QT_RATIONAL uses
++    // exact arithmetic, but is the slowest choice.  The choice Query::QT_REAL
++    // uses floating-point arithmetic, but is not robust in all cases.
++
++    Delaunay3 (int iVertexQuantity, Vector3&lt;Real&gt;* akVertex, Real fEpsilon,
++        bool bOwner, Query::Type eQueryType);
++    virtual ~Delaunay3 ();
++
++    // The input vertex array.
++    const Vector3&lt;Real&gt;* GetVertices () const;
++
++    // The number of unique vertices processed.
++    int GetUniqueVertexQuantity () const;
++
++    // If GetDimension() returns 1, then the points lie on a line.  You must
++    // create a Delaunay1 object using the function provided.
++    const Vector3&lt;Real&gt;&amp; GetLineOrigin () const;
++    const Vector3&lt;Real&gt;&amp; GetLineDirection () const;
++    Delaunay1&lt;Real&gt;* GetDelaunay1 () const;
++
++    // If GetDimension() returns 2, then the points lie on a plane.  The plane
++    // has two direction vectors (inputs 0 or 1).  You must create a Delaunay2
++    // object using the function provided.
++    const Vector3&lt;Real&gt;&amp; GetPlaneOrigin () const;
++    const Vector3&lt;Real&gt;&amp; GetPlaneDirection (int i) const;
++    Delaunay2&lt;Real&gt;* GetDelaunay2 () const;
++
++    // Locate those tetrahedra faces that do not share other tetrahedra.
++    // The returned quantity is the number of triangles in the hull.  The
++    // returned array has 3*quantity indices, each triple representing a
++    // triangle.  The triangles are counterclockwise ordered when viewed
++    // from outside the hull.  The return value is 'true' iff the dimension
++    // is 3.
++    bool GetHull (int&amp; riTQuantity, int*&amp; raiIndex) const;
++
++    // Support for searching the tetrahedralization for a tetrahedron that
++    // contains a point.  If there is a containing tetrahedron, the returned
++    // value is a tetrahedron index i with 0 &lt;= i &lt; riTQuantity.  If there is
++    // not a containing tetrahedron, -1 is returned.
++    int GetContainingTetrahedron (const Vector3&lt;Real&gt;&amp; rkP) const;
++
++    // If GetContainingTetrahedron returns a nonnegative value, the path of
++    // tetrahedra searched for the containing tetrahedra is stored in an
++    // array.  The last index of the array is returned by GetPathLast; it is
++    // one less than the number of array elements.  The array itself is
++    // returned by GetPath.
++    int GetPathLast () const;
++    const int* GetPath () const;
++
++    // If GetContainingTetrahedron returns -1, the path of tetrahedra
++    // searched may be obtained by GetPathLast and GetPath.  The input point
++    // is outside a face of the last tetrahedron in the path.  This function
++    // returns the vertex indices &lt;v0,v1,v2&gt; of the face, listed in
++    // counterclockwise order relative to the convex hull of the data points
++    // as viewed by an outside observer.  The final output is the index of the
++    // vertex v3 opposite the face.  The return value of the function is the
++    // index of the quadruple of vertex indices; the value is 0, 1, 2, or 3.
++    int GetLastFace (int&amp; riV0, int&amp; riV1, int&amp; riV2, int&amp; riV3) const;
++
++    // Get the vertices for tetrahedron i.  The function returns 'true' if i
++    // is a valid tetrahedron index, in which case the vertices are valid.
++    // Otherwise, the function returns 'false' and the vertices are invalid.
++    bool GetVertexSet (int i, Vector3&lt;Real&gt; akV[4]) const;
++
++    // Get the vertex indices for tetrahedron i.  The function returns 'true'
++    // if i is a valid tetrahedron index, in which case the vertices are
++    // valid.  Otherwise, the function returns 'false' and the vertices are
++    // invalid.
++    bool GetIndexSet (int i, int aiIndex[4]) const;
++
++    // Get the indices for tetrahedra adjacent to tetrahedron i.  The function
++    // returns 'true' if i is a valid tetrahedron index, in which case the
++    // adjacencies are valid.  Otherwise, the function returns 'false' and
++    // the adjacencies are invalid.
++    bool GetAdjacentSet (int i, int aiAdjacent[4]) const;
++
++    // Compute the barycentric coordinates of P with respect to tetrahedron i.
++    // The function returns 'true' if i is a valid tetrahedron index, in which
++    // case the coordinates are valid.  Otherwise, the function returns
++    // 'false' and the coordinate array is invalid.
++    bool GetBarycentricSet (int i, const Vector3&lt;Real&gt;&amp; rkP, Real afBary[4])
++        const;
++
++    // Support for streaming to/from disk.
++    Delaunay3 (const char* acFilename);
++    bool Load (const char* acFilename);
++    bool Save (const char* acFilename) const;
++
++private:
++    using Delaunay&lt;Real&gt;::m_eQueryType;
++    using Delaunay&lt;Real&gt;::m_iVertexQuantity;
++    using Delaunay&lt;Real&gt;::m_iDimension;
++    using Delaunay&lt;Real&gt;::m_iSimplexQuantity;
++    using Delaunay&lt;Real&gt;::m_aiIndex;
++    using Delaunay&lt;Real&gt;::m_aiAdjacent;
++    using Delaunay&lt;Real&gt;::m_fEpsilon;
++    using Delaunay&lt;Real&gt;::m_bOwner;
++
++    void Update (int i);
++    DelTetrahedron&lt;Real&gt;* GetContainingTetrahedron (int i) const;
++    void RemoveTetrahedra ();
++    bool IsSupervertex (int i) const;
++    bool SharesFace (int i, DelTetrahedron&lt;Real&gt;* pkFace,
++        DelTetrahedron&lt;Real&gt;* pkAdj);
++
++    // The input vertices.
++    Vector3&lt;Real&gt;* m_akVertex;
++
++    // The number of unique vertices processed.
++    int m_iUniqueVertexQuantity;
++
++    // The scaled input vertices with additional storage for the four
++    // supertetrahedron vertices.  This array and supporting data structures
++    // are for robust calculations.
++    Vector3&lt;Real&gt;* m_akSVertex;
++    Query3&lt;Real&gt;* m_pkQuery;
++    Vector3&lt;Real&gt; m_kMin;
++    Real m_fScale;
++
++    // The indices for the three supertetrahedron vertices.
++    int m_aiSV[4];
++
++    // The current tetrahedralization.
++    std::set&lt;DelTetrahedron&lt;Real&gt;*&gt; m_kTetrahedron;
++
++    // The line of containment if the dimension is 1.
++    Vector3&lt;Real&gt; m_kLineOrigin, m_kLineDirection;
++
++    // The plane of containment if the dimension is 2.
++    Vector3&lt;Real&gt; m_kPlaneOrigin, m_akPlaneDirection[2];
++
++    // Store the path of tetrahedra visited in a GetContainingTetrahedron
++    // function call.
++    mutable int m_iPathLast;
++    mutable int* m_aiPath;
++
++    // If a query point is not in the convex hull of the input points, the
++    // point is outside a face of the last tetrahedron in the search path.
++    // These are the vertex indices for that face.
++    mutable int m_iLastFaceV0, m_iLastFaceV1, m_iLastFaceV2;
++    mutable int m_iLastFaceOpposite, m_iLastFaceOppositeIndex;
++};
++
++typedef Delaunay3&lt;float&gt; Delaunay3f;
++typedef Delaunay3&lt;double&gt; Delaunay3d;
++
++}
++
++#endif
++
+
+Added: branches/scons-layout/lib/miniWm3/Wm3Query.h
+===================================================================
+--- branches/scons-layout/lib/miniWm3/Wm3Query.h	2007-03-10 10:16:29 UTC (rev 1132)
++++ branches/scons-layout/lib/miniWm3/Wm3Query.h	2007-03-10 10:19:18 UTC (rev 1133)
+@@ -0,0 +1,46 @@
++// Geometric Tools, Inc.
++// <A HREF="http://www.geometrictools.com">http://www.geometrictools.com</A>
++// Copyright (c) 1998-2006.  All Rights Reserved
++//
++// The Wild Magic Library (WM3) source code is supplied under the terms of
++// the license agreement
++//     <A HREF="http://www.geometrictools.com/License/WildMagic3License.pdf">http://www.geometrictools.com/License/WildMagic3License.pdf</A>
++// and may not be copied or disclosed except in accordance with the terms
++// of that agreement.
++
++#ifndef WM3QUERY_H
++#define WM3QUERY_H
++
++#include &quot;Wm3FoundationLIB.h&quot;
++
++namespace Wm3
++{
++
++class Query
++{
++public:
++    // abstract base class
++    virtual ~Query ();
++
++    // run-time type information
++    enum Type
++    {
++        QT_INT64,
++        QT_INTEGER,
++        QT_RATIONAL,
++        QT_REAL,
++        QT_FILTERED
++    };
++
++    virtual Type GetType () const = 0;
++
++protected:
++    Query ();
++};
++
++#include &quot;Wm3Query.inl&quot;
++
++}
++
++#endif
++
+
+Added: branches/scons-layout/lib/miniWm3/Wm3Query.inl
+===================================================================
+--- branches/scons-layout/lib/miniWm3/Wm3Query.inl	2007-03-10 10:16:29 UTC (rev 1132)
++++ branches/scons-layout/lib/miniWm3/Wm3Query.inl	2007-03-10 10:19:18 UTC (rev 1133)
+@@ -0,0 +1,20 @@
++// Geometric Tools, Inc.
++// <A HREF="http://www.geometrictools.com">http://www.geometrictools.com</A>
++// Copyright (c) 1998-2006.  All Rights Reserved
++//
++// The Wild Magic Library (WM3) source code is supplied under the terms of
++// the license agreement
++//     <A HREF="http://www.geometrictools.com/License/WildMagic3License.pdf">http://www.geometrictools.com/License/WildMagic3License.pdf</A>
++// and may not be copied or disclosed except in accordance with the terms
++// of that agreement.
++
++//----------------------------------------------------------------------------
++inline Query::Query ()
++{
++}
++//----------------------------------------------------------------------------
++inline Query::~Query ()
++{
++}
++//----------------------------------------------------------------------------
++
+
+Added: branches/scons-layout/lib/miniWm3/Wm3Query2.h
+===================================================================
+--- branches/scons-layout/lib/miniWm3/Wm3Query2.h	2007-03-10 10:16:29 UTC (rev 1132)
++++ branches/scons-layout/lib/miniWm3/Wm3Query2.h	2007-03-10 10:19:18 UTC (rev 1133)
+@@ -0,0 +1,82 @@
++// Geometric Tools, Inc.
++// <A HREF="http://www.geometrictools.com">http://www.geometrictools.com</A>
++// Copyright (c) 1998-2006.  All Rights Reserved
++//
++// The Wild Magic Library (WM3) source code is supplied under the terms of
++// the license agreement
++//     <A HREF="http://www.geometrictools.com/License/WildMagic3License.pdf">http://www.geometrictools.com/License/WildMagic3License.pdf</A>
++// and may not be copied or disclosed except in accordance with the terms
++// of that agreement.
++
++#ifndef WM3QUERY2_H
++#define WM3QUERY2_H
++
++#include &quot;Wm3FoundationLIB.h&quot;
++#include &quot;Wm3Query.h&quot;
++#include &quot;Wm3Vector2.h&quot;
++
++namespace Wm3
++{
++
++template &lt;class Real&gt;
++class Query2 : public Query
++{
++public:
++    // The base class handles floating-point queries.
++    Query2 (int iVQuantity, const Vector2&lt;Real&gt;* akVertex);
++    virtual ~Query2 ();
++
++    // run-time type information
++    virtual Query::Type GetType () const;
++
++    // member access
++    int GetQuantity () const;
++    const Vector2&lt;Real&gt;* GetVertices () const;
++
++    // Queries about the relation of a point to various geometric objects.
++
++    // returns
++    //   +1, on right of line
++    //   -1, on left of line
++    //    0, on the line
++    virtual int ToLine (int i, int iV0, int iV1) const;
++    virtual int ToLine (const Vector2&lt;Real&gt;&amp; rkP, int iV0, int iV1) const;
++
++    // returns
++    //   +1, outside triangle
++    //   -1, inside triangle
++    //    0, on triangle
++    virtual int ToTriangle (int i, int iV0, int iV1, int iV2) const;
++    virtual int ToTriangle (const Vector2&lt;Real&gt;&amp; rkP, int iV0, int iV1,
++        int iV2) const;
++
++    // returns
++    //   +1, outside circumcircle of triangle
++    //   -1, inside circumcircle of triangle
++    //    0, on circumcircle of triangle
++    virtual int ToCircumcircle (int i, int iV0, int iV1, int iV2) const;
++    virtual int ToCircumcircle (const Vector2&lt;Real&gt;&amp; rkP, int iV0, int iV1,
++        int iV2) const;
++
++protected:
++    // input points
++    int m_iVQuantity;
++    const Vector2&lt;Real&gt;* m_akVertex;
++
++    static Real Dot (Real fX0, Real fY0, Real fX1, Real fY1);
++
++    static Real Det2 (Real fX0, Real fY0, Real fX1, Real fY1);
++
++    static Real Det3 (Real iX0, Real iY0, Real iZ0, Real iX1, Real iY1,
++        Real iZ1, Real iX2, Real iY2, Real iZ2);
++};
++
++#include &quot;Wm3Query2.inl&quot;
++
++typedef Query2&lt;float&gt; Query2f;
++typedef Query2&lt;double&gt; Query2d;
++
++}
++
++#endif
++
+
+Added: branches/scons-layout/lib/miniWm3/Wm3Query2.inl
+===================================================================
+--- branches/scons-layout/lib/miniWm3/Wm3Query2.inl	2007-03-10 10:16:29 UTC (rev 1132)
++++ branches/scons-layout/lib/miniWm3/Wm3Query2.inl	2007-03-10 10:19:18 UTC (rev 1133)
+@@ -0,0 +1,150 @@
++// Geometric Tools, Inc.
++// <A HREF="http://www.geometrictools.com">http://www.geometrictools.com</A>
++// Copyright (c) 1998-2006.  All Rights Reserved
++//
++// The Wild Magic Library (WM3) source code is supplied under the terms of
++// the license agreement
++//     <A HREF="http://www.geometrictools.com/License/WildMagic3License.pdf">http://www.geometrictools.com/License/WildMagic3License.pdf</A>
++// and may not be copied or disclosed except in accordance with the terms
++// of that agreement.
++
++//----------------------------------------------------------------------------
++template &lt;class Real&gt;
++Query2&lt;Real&gt;::Query2 (int iVQuantity, const Vector2&lt;Real&gt;* akVertex)
++{
++    assert(iVQuantity &gt; 0 &amp;&amp; akVertex);
++    m_iVQuantity = iVQuantity;
++    m_akVertex = akVertex;
++}
++//----------------------------------------------------------------------------
++template &lt;class Real&gt;
++Query2&lt;Real&gt;::~Query2 ()
++{
++}
++//----------------------------------------------------------------------------
++template &lt;class Real&gt;
++Query::Type Query2&lt;Real&gt;::GetType () const
++{
++    return Query::QT_REAL;
++}
++//----------------------------------------------------------------------------
++template &lt;class Real&gt;
++int Query2&lt;Real&gt;::GetQuantity () const
++{
++    return m_iVQuantity;
++}
++//----------------------------------------------------------------------------
++template &lt;class Real&gt;
++const Vector2&lt;Real&gt;* Query2&lt;Real&gt;::GetVertices () const
++{
++    return m_akVertex;
++}
++//----------------------------------------------------------------------------
++template &lt;class Real&gt;
++int Query2&lt;Real&gt;::ToLine (int i, int iV0, int iV1) const
++{
++    return ToLine(m_akVertex[i],iV0,iV1);
++}
++//----------------------------------------------------------------------------
++template &lt;class Real&gt;
++int Query2&lt;Real&gt;::ToLine (const Vector2&lt;Real&gt;&amp; rkP, int iV0, int iV1) const
++{
++    const Vector2&lt;Real&gt;&amp; rkV0 = m_akVertex[iV0];
++    const Vector2&lt;Real&gt;&amp; rkV1 = m_akVertex[iV1];
++
++    Real fX0 = rkP[0] - rkV0[0];
++    Real fY0 = rkP[1] - rkV0[1];
++    Real fX1 = rkV1[0] - rkV0[0];
++    Real fY1 = rkV1[1] - rkV0[1];
++
++    Real fDet2 = Det2(fX0,fY0,fX1,fY1);
++    return (fDet2 &gt; (Real)0.0 ? +1 : (fDet2 &lt; (Real)0.0 ? -1 : 0));
++}
++//----------------------------------------------------------------------------
++template &lt;class Real&gt;
++int Query2&lt;Real&gt;::ToTriangle (int i, int iV0, int iV1, int iV2) const
++{
++    return ToTriangle(m_akVertex[i],iV0,iV1,iV2);
++}
++//----------------------------------------------------------------------------
++template &lt;class Real&gt;
++int Query2&lt;Real&gt;::ToTriangle (const Vector2&lt;Real&gt;&amp; rkP, int iV0, int iV1,
++    int iV2) const
++{
++    int iSign0 = ToLine(rkP,iV1,iV2);
++    if (iSign0 &gt; 0)
++    {
++        return +1;
++    }
++
++    int iSign1 = ToLine(rkP,iV0,iV2);
++    if (iSign1 &lt; 0)
++    {
++        return +1;
++    }
++
++    int iSign2 = ToLine(rkP,iV0,iV1);
++    if (iSign2 &gt; 0)
++    {
++        return +1;
++    }
++
++    return ((iSign0 &amp;&amp; iSign1 &amp;&amp; iSign2) ? -1 : 0);
++}
++//----------------------------------------------------------------------------
++template &lt;class Real&gt;
++int Query2&lt;Real&gt;::ToCircumcircle (int i, int iV0, int iV1, int iV2) const
++{
++    return ToCircumcircle(m_akVertex[i],iV0,iV1,iV2);
++}
++//----------------------------------------------------------------------------
++template &lt;class Real&gt;
++int Query2&lt;Real&gt;::ToCircumcircle (const Vector2&lt;Real&gt;&amp; rkP, int iV0,
++    int iV1, int iV2) const
++{
++    const Vector2&lt;Real&gt;&amp; rkV0 = m_akVertex[iV0];
++    const Vector2&lt;Real&gt;&amp; rkV1 = m_akVertex[iV1];
++    const Vector2&lt;Real&gt;&amp; rkV2 = m_akVertex[iV2];
++
++    Real fS0x = rkV0[0] + rkP[0];
++    Real fD0x = rkV0[0] - rkP[0];
++    Real fS0y = rkV0[1] + rkP[1];
++    Real fD0y = rkV0[1] - rkP[1];
++    Real fS1x = rkV1[0] + rkP[0];
++    Real fD1x = rkV1[0] - rkP[0];
++    Real fS1y = rkV1[1] + rkP[1];
++    Real fD1y = rkV1[1] - rkP[1];
++    Real fS2x = rkV2[0] + rkP[0];
++    Real fD2x = rkV2[0] - rkP[0];
++    Real fS2y = rkV2[1] + rkP[1];
++    Real fD2y = rkV2[1] - rkP[1];
++    Real fZ0 = fS0x*fD0x + fS0y*fD0y;
++    Real fZ1 = fS1x*fD1x + fS1y*fD1y;
++    Real fZ2 = fS2x*fD2x + fS2y*fD2y;
++    Real fDet3 = Det3(fD0x,fD0y,fZ0,fD1x,fD1y,fZ1,fD2x,fD2y,fZ2);
++    return (fDet3 &lt; (Real)0.0 ? 1 : (fDet3 &gt; (Real)0.0 ? -1 : 0));
++}
++//----------------------------------------------------------------------------
++template &lt;class Real&gt;
++Real Query2&lt;Real&gt;::Dot (Real fX0, Real fY0, Real fX1, Real fY1)
++{
++    return fX0*fX1 + fY0*fY1;
++}
++//----------------------------------------------------------------------------
++template &lt;class Real&gt;
++Real Query2&lt;Real&gt;::Det2 (Real fX0, Real fY0, Real fX1, Real fY1)
++{
++    return fX0*fY1 - fX1*fY0;
++}
++//----------------------------------------------------------------------------
++template &lt;class Real&gt;
++Real Query2&lt;Real&gt;::Det3 (Real fX0, Real fY0, Real fZ0, Real fX1, Real fY1,
++    Real fZ1, Real fX2, Real fY2, Real fZ2)
++{
++    Real fC00 = fY1*fZ2 - fY2*fZ1;
++    Real fC01 = fY2*fZ0 - fY0*fZ2;
++    Real fC02 = fY0*fZ1 - fY1*fZ0;
++    return fX0*fC00 + fX1*fC01 + fX2*fC02;
++}
++//----------------------------------------------------------------------------
++
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000097.html">[Yade-commits] r1132 - in branches/scons-layout: . lib
+</A></li>
+	<LI>Next message: <A HREF="000099.html">[Yade-commits] r1134 - branches/scons-layout/lib/miniWm3
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#98">[ date ]</a>
+              <a href="thread.html#98">[ thread ]</a>
+              <a href="subject.html#98">[ subject ]</a>
+              <a href="author.html#98">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

@@ -1,0 +1,218 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1203 - trunk/gui/cmd
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2007/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1203%20-%20trunk/gui/cmd&In-Reply-To=%3C200706171939.l5HJdEsS027987%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000167.html">
+   <LINK REL="Next"  HREF="000169.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1203 - trunk/gui/cmd</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1203%20-%20trunk/gui/cmd&In-Reply-To=%3C200706171939.l5HJdEsS027987%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1203 - trunk/gui/cmd">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Sun Jun 17 21:39:14 CEST 2007</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000167.html">[Yade-commits] r1202 - in trunk: . core extra/clump gui gui/cmd	gui/qt3 pkg/common/RenderingEngine/OpenGLRenderingEngine
+</A></li>
+        <LI>Next message: <A HREF="000169.html">[Yade-commits] r1204 - trunk/gui/cmd
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#168">[ date ]</a>
+              <a href="thread.html#168">[ thread ]</a>
+              <a href="subject.html#168">[ subject ]</a>
+              <a href="author.html#168">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2007-06-17 21:39:14 +0200 (Sun, 17 Jun 2007)
+New Revision: 1203
+
+Added:
+   trunk/gui/cmd/attrUtils.cpp
+Modified:
+   trunk/gui/cmd/yadeControl.cpp
+Log:
+Convenience functions for serialization - experimental.
+
+Added: trunk/gui/cmd/attrUtils.cpp
+===================================================================
+--- trunk/gui/cmd/attrUtils.cpp	2007-06-17 08:43:07 UTC (rev 1202)
++++ trunk/gui/cmd/attrUtils.cpp	2007-06-17 19:39:14 UTC (rev 1203)
+@@ -0,0 +1,108 @@
++#include&lt;sstream&gt;
++#include&lt;boost/any.hpp&gt;
++#include&lt;map&gt;
++#include&lt;vector&gt;
++#include&lt;boost/shared_ptr.hpp&gt;
++#include&lt;yade/lib-serialization-xml/XMLFormatManager.hpp&gt;
++
++using namespace std;
++using namespace boost;
++
++class AttrAccess{
++	struct AttrDesc{vector&lt;int&gt; types; shared_ptr&lt;Archive&gt; archive;};
++	private:
++		const shared_ptr&lt;Serializable&gt; ser;
++		Serializable::Archives archives;
++	public:
++		typedef map&lt;string,AttrDesc&gt; DescriptorMap;
++		DescriptorMap descriptors; // maps attribute name to its archive and vector of its types (given as ints, from the following enum)
++		enum {BOOL,STRING,NUMBER}; // allowed types
++		
++		AttrAccess(Serializable* _ser){ser=shared_ptr&lt;Serializable&gt;(_ser); init();}
++		AttrAccess(shared_ptr&lt;Serializable&gt; _ser){ser=_ser; init();}
++
++		//! create archives and descriptors
++		void init(){
++			if(ser-&gt;getArchives().empty()) ser-&gt;registerSerializableAttributes(false);
++			archives=ser-&gt;getArchives();
++			for(Serializable::Archives::iterator ai=archives.begin();ai!=archives.end();++ai){
++				if((*ai)-&gt;isFundamental() &amp;&amp; (*ai)-&gt;getName()!=&quot;serializationDynlib&quot;){
++					AttrDesc desc; 
++					desc.archive=*ai;
++					// serialize to get size
++					stringstream stream; vector&lt;string&gt; values;
++					(*ai)-&gt;serialize(stream,**ai,0); IOFormatManager::parseFundamental(stream.str(),values);
++					any instance=(*ai)-&gt;getAddress(); // gets pointer to the stored value
++					// 3 possibilities: one BOOL, one STRING, one or more NUMBERs
++					if     (values.size()==1 &amp;&amp; any_cast&lt;bool*&gt;(&amp;instance))   desc.types.push_back(AttrAccess::BOOL);
++					else if(values.size()==1 &amp;&amp; any_cast&lt;string*&gt;(&amp;instance)) desc.types.push_back(AttrAccess::STRING);
++					else {for(size_t i=0; i&lt;values.size(); i++)               desc.types.push_back(AttrAccess::NUMBER);};
++					descriptors[(*ai)-&gt;getName()]=desc;
++				}
++			}
++		}
++		
++		//! Return serialized attribute by its name, as vector of strings
++		vector&lt;string&gt; getAttrStr(string name){
++			vector&lt;string&gt; ret;
++			shared_ptr&lt;Archive&gt; arch=descriptors[name].archive;
++			stringstream stream;
++			arch-&gt;serialize(stream,*arch,0);
++			IOFormatManager::parseFundamental(stream.str(),ret);
++			return ret;
++		}
++		//! name, values and types of given attribute, on one line as string
++		string dumpAttr(string name){
++			string vals,types; AttrDesc desc=descriptors[name]; vector&lt;string&gt; values=getAttrStr(name);
++			for(size_t i=0; i&lt;values.size(); i++) vals+=(i&gt;0?&quot; &quot;:&quot;&quot;)+values[i];
++			for(size_t i=0; i&lt;desc.types.size(); i++) types+=string(i&gt;0?&quot; &quot;:&quot;&quot;)+(desc.types[i]==BOOL?&quot;BOOL&quot;:(desc.types[i]==STRING?&quot;STRING&quot;:&quot;NUMBER&quot;));
++			return name+&quot; =\t&quot;+vals+&quot;\t (&quot;+types+&quot;)&quot;;
++		}
++		//! call dumpAttr for all attributes
++		string dumpAttrs(){ string ret; for(DescriptorMap::iterator I=descriptors.begin();I!=descriptors.end();I++) ret+=dumpAttr(I-&gt;first)+&quot;\n&quot;; return ret;}
++
++		//! set attribute by name from its serialized value
++		void setAttrStr(string name, string value){
++			stringstream voidStream;
++			descriptors[name].archive-&gt;deserialize(voidStream,*(descriptors[name].archive),value);
++		}
++		//! set attribute from its (non-serialized) value
++		void setAttr(string name, bool value){setAttrStr(name,value?&quot;1&quot;:&quot;0&quot;);}
++		void setAttr(string name, string value){setAttrStr(name,value);}
++		template&lt;typename containedType&gt; void setAttr(string name, vector&lt;containedType&gt; values){
++			string val(&quot;{&quot;); for(size_t i=0; i&lt;values.size();i++) val+=(lexical_cast&lt;string&gt;(values[i]))+&quot; &quot;; setAttrStr(name,val+&quot;}&quot;);
++		}
++};
++
++void showAttrs(shared_ptr&lt;Serializable&gt; ser){
++	if (ser-&gt;getArchives().empty()) ser-&gt;registerSerializableAttributes(false);
++	Serializable::Archives archives=ser-&gt;getArchives();
++
++	for(Serializable::Archives::iterator ai=archives.begin();ai!=archives.end();++ai){
++		if ((*ai)-&gt;isFundamental() &amp;&amp; (*ai)-&gt;getName() != &quot;outputFileName&quot; &amp;&amp; (*ai)-&gt;getName() != &quot;serializationDynlib&quot; ){
++			//shared_ptr&lt;AttributeDescriptor&gt; descriptor(new AttributeDescriptor);
++			//descriptor-&gt;name=(*ai)-&gt;getName();
++			cerr&lt;&lt;&quot;NAME: &quot;&lt;&lt;(*ai)-&gt;getName()&lt;&lt;endl;
++
++			vector&lt;string&gt; strings; stringstream stream;
++			(*ai)-&gt;serialize(stream,*(*ai),0);
++			IOFormatManager::parseFundamental(stream.str(),strings);
++
++			for(unsigned int i=0;i&lt;strings.size();i++){
++				any instance=(*ai)-&gt;getAddress();
++				if(bool** b=any_cast&lt;bool*&gt;(&amp;instance)){
++					cerr&lt;&lt;&quot;\tBOOL: &quot;&lt;&lt;(**b?&quot;true&quot;:&quot;false&quot;)&lt;&lt;endl;
++					//descriptor-&gt;types.push_back(AttributeDescriptor::BOOLEAN);
++				} else {
++					cerr&lt;&lt;&quot;\tNUM : &quot;&lt;&lt;strings[i]&lt;&lt;endl;
++					//descriptor-&gt;types.push_back(AttributeDescriptor::FLOATING);
++				}
++			}
++			// not possible to store descriptor into a map or set ?????!!! I don't know why but it is crashing, so I use a vector and lookup table
++			//descriptors.push_back(descriptor);
++			//lookUp[descriptor-&gt;name] = descriptors.size()-1;
++		}
++	}
++	ser-&gt;unregisterSerializableAttributes(false);
++}
++
+
+Modified: trunk/gui/cmd/yadeControl.cpp
+===================================================================
+--- trunk/gui/cmd/yadeControl.cpp	2007-06-17 08:43:07 UTC (rev 1202)
++++ trunk/gui/cmd/yadeControl.cpp	2007-06-17 19:39:14 UTC (rev 1203)
+@@ -12,6 +12,8 @@
+ 
+ #include&lt;unistd.h&gt;
+ 
++#include&quot;attrUtils.cpp&quot;
++
+ class RenderingEngine;
+ 
+ class pyOmega{
+@@ -81,7 +83,17 @@
+ 		QGLFormat format;	QGLFormat::setDefaultFormat(format); format.setStencil(TRUE); format.setAlpha(TRUE);
+ 		viewer=new GLViewer(viewId,renderer,format,0,viewId==0?0:instances[0]-&gt;viewer);
+ 		viewer-&gt;notMoving();
++		showAttrs(renderer);
+ 
++		AttrAccess acc(renderer);
++		cerr&lt;&lt;acc.dumpAttrs();
++		cerr&lt;&lt;&quot;=========== will change these values: =========&quot;&lt;&lt;endl;
++		cerr&lt;&lt;acc.dumpAttr(&quot;Background_color&quot;)&lt;&lt;endl&lt;&lt;acc.dumpAttr(&quot;Draw_inside&quot;)&lt;&lt;endl;
++		acc.setAttrStr(&quot;Background_color&quot;,&quot;{ .8 .8 .8 }&quot;);
++		acc.setAttr(&quot;Draw_inside&quot;,false);
++		cerr&lt;&lt;&quot;=========== new values are: =========&quot;&lt;&lt;endl;
++		cerr&lt;&lt;acc.dumpAttr(&quot;Background_color&quot;)&lt;&lt;endl&lt;&lt;acc.dumpAttr(&quot;Draw_inside&quot;)&lt;&lt;endl;
++
+ 		if(viewId==0){
+ 			app-&gt;setMainWidget(viewer);
+ 			boost::thread redrawThread(boost::bind(&amp;pyGLViewer::redrawAlarm,this));
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000167.html">[Yade-commits] r1202 - in trunk: . core extra/clump gui gui/cmd	gui/qt3 pkg/common/RenderingEngine/OpenGLRenderingEngine
+</A></li>
+	<LI>Next message: <A HREF="000169.html">[Yade-commits] r1204 - trunk/gui/cmd
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#168">[ date ]</a>
+              <a href="thread.html#168">[ thread ]</a>
+              <a href="subject.html#168">[ subject ]</a>
+              <a href="author.html#168">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

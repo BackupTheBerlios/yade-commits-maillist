@@ -1,0 +1,358 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1220 - in trunk: core extra extra/clump extra/screw	extra/tetra lib/factory
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2007/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1220%20-%20in%20trunk%3A%20core%20extra%20extra/clump%20extra/screw%0A%09extra/tetra%20lib/factory&In-Reply-To=%3C200707011201.l61C1Min025391%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000184.html">
+   <LINK REL="Next"  HREF="000186.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1220 - in trunk: core extra extra/clump extra/screw	extra/tetra lib/factory</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1220%20-%20in%20trunk%3A%20core%20extra%20extra/clump%20extra/screw%0A%09extra/tetra%20lib/factory&In-Reply-To=%3C200707011201.l61C1Min025391%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1220 - in trunk: core extra extra/clump extra/screw	extra/tetra lib/factory">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Sun Jul  1 14:01:22 CEST 2007</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000184.html">[Yade-commits] r1219 - trunk
+</A></li>
+        <LI>Next message: <A HREF="000186.html">[Yade-commits] r1221 - tags/yade-0.11.1-rc	tags/yade-0.11.1-rc/lib/serialization tags/yade-0.11.1-rc/pkg/dem	tags/yade-0.11.1-rc/pkg/dem/Engine/DeusExMachina	tags/yade-0.11.1-rc/pkg/dem/Engine/StandAloneEngine	tags/yade-0.11.1-rc/pkg/dem/PreProcessor trunk	trunk/pkg/dem/Engine/StandAloneEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#185">[ date ]</a>
+              <a href="thread.html#185">[ thread ]</a>
+              <a href="subject.html#185">[ subject ]</a>
+              <a href="author.html#185">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2007-07-01 14:01:21 +0200 (Sun, 01 Jul 2007)
+New Revision: 1220
+
+Added:
+   trunk/extra/screw/
+   trunk/extra/screw/ScrewGen.cpp
+   trunk/extra/screw/ScrewGen.hpp
+Modified:
+   trunk/core/yade.cpp
+   trunk/extra/SConscript
+   trunk/extra/clump/Shop.cpp
+   trunk/extra/tetra/Tetra.cpp
+   trunk/lib/factory/DynLibManager.cpp
+Log:
+1. Add screw example (this is really my personal one...)
+2. Fix Shop::tetra (tetra interacting geometry still incorrect or incorrectly drawn... why???)
+3. Remove python finalization, boost should take care of that.
+4. Possibly fix plugin loader bug (first plugin after one with yadePluginClasses &quot;inherits&quot; them unless it has its own yadePluginClasses defined).
+
+
+
+Modified: trunk/core/yade.cpp
+===================================================================
+--- trunk/core/yade.cpp	2007-06-30 09:27:39 UTC (rev 1219)
++++ trunk/core/yade.cpp	2007-07-01 12:01:21 UTC (rev 1220)
+@@ -206,8 +206,8 @@
+ 	int ok = frontEnd-&gt;run(argc,argv);
+ 
+ 	#ifdef EMBED_PYTHON
+-		LOG_DEBUG(&quot;Finalizing Python...&quot;);
+-		Py_Finalize(); // FIXME: <A HREF="http://www.boost.org/libs/python/todo.html#pyfinalize-safety">http://www.boost.org/libs/python/todo.html#pyfinalize-safety</A> says this is unsafe with boost::python
++		// LOG_DEBUG(&quot;Finalizing Python...&quot;);
++		// Py_Finalize(); // FIXME: <A HREF="http://www.boost.org/libs/python/todo.html#pyfinalize-safety">http://www.boost.org/libs/python/todo.html#pyfinalize-safety</A> says this is unsafe with boost::python
+ 	#endif
+ 	#ifdef YADE_DEBUG
+ 		unlink(Omega::instance().gdbCrashBatch.c_str());
+
+Modified: trunk/extra/SConscript
+===================================================================
+--- trunk/extra/SConscript	2007-06-30 09:27:39 UTC (rev 1219)
++++ trunk/extra/SConscript	2007-07-01 12:01:21 UTC (rev 1220)
+@@ -29,6 +29,10 @@
+ 	env.SharedLibrary('Clump',
+ 		['clump/Clump.cpp'],
+ 		LIBS=env['LIBS']+['Shop']),
++
++	env.SharedLibrary('ScrewGen',
++		['screw/ScrewGen.cpp'],
++		LIBS=env['LIBS']+['Shop','Clump']),
+ 		
+ 	env.SharedLibrary('Tetra',['tetra/Tetra.cpp'],LIBS=env['LIBS']+['Tetrahedron',
+          'ParticleParameters',
+
+Modified: trunk/extra/clump/Shop.cpp
+===================================================================
+--- trunk/extra/clump/Shop.cpp	2007-06-30 09:27:39 UTC (rev 1219)
++++ trunk/extra/clump/Shop.cpp	2007-07-01 12:01:21 UTC (rev 1220)
+@@ -333,16 +333,19 @@
+ }
+ 
+ /*! Create body - tetrahedron. */
+-shared_ptr&lt;Body&gt; Shop::tetra(Vector3r v[4]){
++shared_ptr&lt;Body&gt; Shop::tetra(Vector3r v_global[4]){
+ 		shared_ptr&lt;Body&gt; body=shared_ptr&lt;Body&gt;(new Body(body_id_t(0),getDefault&lt;int&gt;(&quot;body_sdecGroupMask&quot;)));
+ 		body-&gt;isDynamic=true;
+ 
++		Vector3r centroid=(v_global[0]+v_global[1]+v_global[2]+v_global[3])*.25;
++		Vector3r v[4]; for(int i=0; i&lt;4; i++) v[i]=v_global[i]-centroid;
++
+ 		shared_ptr&lt;BodyMacroParameters&gt; physics(new BodyMacroParameters);
+ 		physics-&gt;angularVelocity=Vector3r(0,0,0);
+ 		physics-&gt;velocity=Vector3r(0,0,0);
+ 		physics-&gt;mass=getDefault&lt;double&gt;(&quot;phys_density&quot;)*TetrahedronVolume(v);
+ 		// inertia will be calculated below, by TetrahedronWithLocalAxesPrincipal
+-		physics-&gt;se3=Se3r((v[0]+v[1]+v[2]+v[3])*.25,Quaternionr(Vector3r(0,0,1),0));
++		physics-&gt;se3=Se3r(centroid,Quaternionr(Vector3r(0,0,1),0));
+ 		physics-&gt;young=getDefault&lt;double&gt;(&quot;phys_young&quot;);
+ 		physics-&gt;poisson=getDefault&lt;double&gt;(&quot;phys_poisson&quot;);
+ 		physics-&gt;frictionAngle=getDefault&lt;double&gt;(&quot;phys_frictionAngle&quot;);
+
+Added: trunk/extra/screw/ScrewGen.cpp
+===================================================================
+--- trunk/extra/screw/ScrewGen.cpp	2007-06-30 09:27:39 UTC (rev 1219)
++++ trunk/extra/screw/ScrewGen.cpp	2007-07-01 12:01:21 UTC (rev 1220)
+@@ -0,0 +1,123 @@
++#include&quot;ScrewGen.hpp&quot;
++#include&lt;yade/extra/Clump.hpp&gt;
++#include&lt;yade/extra/Shop.hpp&gt;
++
++char* yadePluginClasses[]={
++	&quot;ScrewGen&quot;,
++	NULL /*sentinel*/
++};
++
++CREATE_LOGGER(ScrewGen);
++
++ScrewGen::ScrewGen(){
++	n_tip=5;
++	shaft_density=2;
++	x_tip=0;
++	x_tip_shaft=2;
++	x_shaft_end=8;
++	r_shaft=1;
++
++	thread_x_per_rad=.5;
++	thread_sphere_r=.2;
++	thread_sphere_density=2;
++
++}
++
++
++bool ScrewGen::generate(){
++	// basic things
++	rootBody=Shop::rootBody();
++	Shop::rootBodyActors(rootBody);
++	// clumps do not need to subscribe currently (that will most likely change, though)
++	rootBody-&gt;engines.push_back(shared_ptr&lt;ClumpMemberMover&gt;(new ClumpMemberMover));
++
++
++	Omega::instance().setRootBody(rootBody);
++
++
++	// ground
++	shared_ptr&lt;Body&gt; ground=Shop::box(Vector3r(5,0,-2),Vector3r(5,5,.2));
++	ground-&gt;isDynamic=false;
++	// revert random colors for this single case...
++	ground-&gt;geometricalModel-&gt;diffuseColor=Vector3r(.6,.6,.6);
++	ground-&gt;interactingGeometry-&gt;diffuseColor=Vector3r(.3,.3,.3);
++	rootBody-&gt;bodies-&gt;insert(ground);
++
++
++	// SCREW
++	shared_ptr&lt;Clump&gt; screw=shared_ptr&lt;Clump&gt;(new Clump());
++	shared_ptr&lt;Body&gt; screwAsBody(static_pointer_cast&lt;Body&gt;(screw));
++	rootBody-&gt;bodies-&gt;insert(screwAsBody);
++	screw-&gt;isDynamic=true;
++
++	// tip
++	for(unsigned i=1; i&lt;n_tip; i++){
++		Vector3r C=Vector3r(x_tip+i*((x_tip_shaft-x_tip)/n_tip),0,0);
++		Real r=r_shaft*(i/((double)n_tip));
++		shared_ptr&lt;Body&gt; sphere=Shop::sphere(C,r);
++		body_id_t lastId=rootBody-&gt;bodies-&gt;insert(sphere);
++		screw-&gt;add(lastId);
++		LOG_INFO(&quot;Sphere at &quot;&lt;&lt;C&lt;&lt;&quot;, radius &quot;&lt;&lt;r);
++	}
++	// shaft
++	unsigned n_shaft=(unsigned)((x_shaft_end-x_tip_shaft)/(r_shaft/shaft_density));
++	for(unsigned i=1; i&lt;n_shaft; i++){
++		Vector3r C=Vector3r(x_tip_shaft+i*((x_shaft_end-x_tip_shaft)/n_shaft),0,0);
++		Real r=r_shaft;
++		shared_ptr&lt;Body&gt; sphere=Shop::sphere(C,r);
++		body_id_t lastId=rootBody-&gt;bodies-&gt;insert(sphere);
++		screw-&gt;add(lastId);
++		LOG_INFO(&quot;Sphere at &quot;&lt;&lt;C&lt;&lt;&quot;, radius &quot;&lt;&lt;r);
++	}
++	LOG_INFO(&quot;Tip and shaft done&quot;);
++
++	//thread
++	// how many radians do we have to turn to cover the shaft
++	Real total_angle=(x_shaft_end-x_tip_shaft)/thread_x_per_rad;
++	if(false){ //create thread as spheres
++		Real thread_n_spheres_per_rad=(r_shaft+thread_sphere_r)/(thread_sphere_r/thread_sphere_density);
++		for(unsigned i=0; i&lt;thread_n_spheres_per_rad*total_angle; i++){
++			Real angle=(1./thread_n_spheres_per_rad)*i;
++			Vector3r C(x_tip_shaft+thread_x_per_rad*angle,sin(angle)*(r_shaft+thread_sphere_r),cos(angle)*(r_shaft+thread_sphere_r));
++			shared_ptr&lt;Body&gt; sphere=Shop::sphere(C,thread_sphere_r);
++			body_id_t lastId=rootBody-&gt;bodies-&gt;insert(sphere);
++			screw-&gt;add(lastId);
++			LOG_INFO(&quot;Sphere at &quot;&lt;&lt;C&lt;&lt;&quot;, radius &quot;&lt;&lt;thread_sphere_r);
++		}
++	} else { // create thread as tetrahedra
++		Real thread_n_tetra_per_rad=(r_shaft+2*thread_sphere_r)/(thread_sphere_r); // unit density
++		for(unsigned i=0; i&lt;thread_n_tetra_per_rad*total_angle; i++){
++			Real angle=(1./thread_n_tetra_per_rad)*i;
++			Real half_angle_step=.5/thread_n_tetra_per_rad;
++			Vector3r vx[4];
++			// tetrahedron that has 2 vertices on the thread top
++			vx[0]=Vector3r(x_tip_shaft+thread_x_per_rad*(angle-half_angle_step),sin(angle-half_angle_step)*(r_shaft+2*thread_sphere_r),cos(angle-half_angle_step)*(r_shaft+2*thread_sphere_r));
++			vx[1]=Vector3r(x_tip_shaft+thread_x_per_rad*(angle+half_angle_step),sin(angle+half_angle_step)*(r_shaft+2*thread_sphere_r),cos(angle+half_angle_step)*(r_shaft+2*thread_sphere_r));
++			//Vector3r thread_normal_on _shaft_surf=
++			vx[2]=Vector3r(x_tip_shaft+thread_x_per_rad*(angle)-thread_sphere_r,sin(angle)*(r_shaft),cos(angle)*(r_shaft));
++			vx[3]=Vector3r(x_tip_shaft+thread_x_per_rad*(angle)+thread_sphere_r,sin(angle)*(r_shaft),cos(angle)*(r_shaft));
++			shared_ptr&lt;Body&gt; tetra=Shop::tetra(vx);
++			body_id_t lastId=rootBody-&gt;bodies-&gt;insert(tetra);
++			screw-&gt;add(lastId);
++
++			// bottom filler: 2 points on lower x (2,3,1 coincident)
++			vx[0]=Vector3r(x_tip_shaft+thread_x_per_rad*(angle+2*half_angle_step)-thread_sphere_r,sin(angle+2*half_angle_step)*(r_shaft),cos(angle+2*half_angle_step)*(r_shaft));
++			tetra=Shop::tetra(vx);
++			lastId=rootBody-&gt;bodies-&gt;insert(tetra);
++			screw-&gt;add(lastId);
++
++			// bottom filler: 2 points on greater x (2,3,1 coincident)
++			vx[0]=Vector3r(x_tip_shaft+thread_x_per_rad*(angle+2*half_angle_step)+thread_sphere_r,sin(angle+2*half_angle_step)*(r_shaft),cos(angle+2*half_angle_step)*(r_shaft));
++			tetra=Shop::tetra(vx);
++			lastId=rootBody-&gt;bodies-&gt;insert(tetra);
++			screw-&gt;add(lastId);
++
++			LOG_INFO(&quot;Thread top tetra with vertices &quot;&lt;&lt;vx[0]&lt;&lt;&quot;, &quot;&lt;&lt;vx[1]&lt;&lt;&quot;, &quot;&lt;&lt;vx[2]&lt;&lt;&quot;, &quot;&lt;&lt;vx[3]);
++		}
++	}
++
++	screw-&gt;updateProperties(false);
++
++	message=&quot;OK.&quot;;
++	return true;
++}
+
+Added: trunk/extra/screw/ScrewGen.hpp
+===================================================================
+--- trunk/extra/screw/ScrewGen.hpp	2007-06-30 09:27:39 UTC (rev 1219)
++++ trunk/extra/screw/ScrewGen.hpp	2007-07-01 12:01:21 UTC (rev 1220)
+@@ -0,0 +1,53 @@
++#pragma once
++
++#include&lt;vector&gt;
++#include&lt;map&gt;
++#include&lt;boost/shared_ptr.hpp&gt;
++
++#include&lt;yade/core/Body.hpp&gt;
++#include&lt;yade/core/MetaBody.hpp&gt;
++#include&lt;yade/core/FileGenerator.hpp&gt;
++#include&lt;yade/core/DeusExMachina.hpp&gt;
++#include&lt;yade/lib-factory/Factorable.hpp&gt;
++#include&lt;yade/pkg-common/PhysicalParametersEngineUnit.hpp&gt;
++#include&lt;yade/pkg-common/RigidBodyParameters.hpp&gt;
++#include&lt;yade/pkg-common/AABB.hpp&gt;
++#include&lt;yade/lib-base/Logging.hpp&gt;
++#include&lt;yade/lib-base/yadeWm3Extra.hpp&gt;
++
++
++class ScrewGen: public FileGenerator {
++	DECLARE_LOGGER;
++	private:
++		Real x_tip, x_tip_shaft, x_shaft_end, r_shaft, shaft_density;
++		unsigned n_tip;
++		//Real thread_circum_per_rad;
++		Real thread_x_per_rad;
++		Real thread_sphere_r,thread_sphere_density;
++	public:
++		ScrewGen();
++		~ScrewGen(){};
++		bool generate();
++	protected:
++		virtual void postProcessAttributes(bool deserializing){};
++		void registerAttributes(){
++			FileGenerator::registerAttributes();
++			REGISTER_ATTRIBUTE(x_tip);
++			REGISTER_ATTRIBUTE(x_tip_shaft);
++			REGISTER_ATTRIBUTE(x_shaft_end);
++			REGISTER_ATTRIBUTE(r_shaft);
++			REGISTER_ATTRIBUTE(n_tip);
++			REGISTER_ATTRIBUTE(shaft_density);
++			REGISTER_ATTRIBUTE(thread_x_per_rad);
++			REGISTER_ATTRIBUTE(thread_sphere_r);
++			REGISTER_ATTRIBUTE(thread_sphere_density);
++		};
++	REGISTER_CLASS_NAME(ScrewGen);
++	REGISTER_BASE_CLASS_NAME(FileGenerator);
++};
++
++REGISTER_SERIALIZABLE(ScrewGen,false);
++
++
++
++
+
+Modified: trunk/extra/tetra/Tetra.cpp
+===================================================================
+--- trunk/extra/tetra/Tetra.cpp	2007-06-30 09:27:39 UTC (rev 1219)
++++ trunk/extra/tetra/Tetra.cpp	2007-07-01 12:01:21 UTC (rev 1220)
+@@ -395,7 +395,7 @@
+ 			#undef __ONEFACE
+ 		glEnd();
+ 	}
+-	
++
+ }
+ 
+ /*! Calculates tetrahedron inertia relative to the origin (0,0,0), with unit density (scales linearly).
+
+Modified: trunk/lib/factory/DynLibManager.cpp
+===================================================================
+--- trunk/lib/factory/DynLibManager.cpp	2007-06-30 09:27:39 UTC (rev 1219)
++++ trunk/lib/factory/DynLibManager.cpp	2007-07-01 12:01:21 UTC (rev 1220)
+@@ -81,6 +81,8 @@
+ 
+ bool DynLibManager::loadFromDirectoryList (const string&amp; libName )
+ {
++	lastPluginClasses.clear();
++
+ 	if (libName.empty())
+ 		return false;
+ 
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000184.html">[Yade-commits] r1219 - trunk
+</A></li>
+	<LI>Next message: <A HREF="000186.html">[Yade-commits] r1221 - tags/yade-0.11.1-rc	tags/yade-0.11.1-rc/lib/serialization tags/yade-0.11.1-rc/pkg/dem	tags/yade-0.11.1-rc/pkg/dem/Engine/DeusExMachina	tags/yade-0.11.1-rc/pkg/dem/Engine/StandAloneEngine	tags/yade-0.11.1-rc/pkg/dem/PreProcessor trunk	trunk/pkg/dem/Engine/StandAloneEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#185">[ date ]</a>
+              <a href="thread.html#185">[ thread ]</a>
+              <a href="subject.html#185">[ subject ]</a>
+              <a href="author.html#185">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

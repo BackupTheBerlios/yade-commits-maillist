@@ -1,0 +1,106 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1191 - trunk/scripts
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2007/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1191%20-%20trunk/scripts&In-Reply-To=%3C200706051823.l55INg2o014088%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000155.html">
+   <LINK REL="Next"  HREF="000157.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1191 - trunk/scripts</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1191%20-%20trunk/scripts&In-Reply-To=%3C200706051823.l55INg2o014088%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1191 - trunk/scripts">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Tue Jun  5 20:23:42 CEST 2007</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000155.html">[Yade-commits] r1190 - in trunk/pkg: dem dem/Engine/DeusExMachina	dem/Engine/EngineUnit dem/Engine/StandAloneEngine	dem/PreProcessor mass-spring/PreProcessor
+</A></li>
+        <LI>Next message: <A HREF="000157.html">[Yade-commits] r1192 - in trunk/pkg: dem/Engine/StandAloneEngine	mass-spring/PreProcessor realtime-rigidbody/PreProcessor
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#156">[ date ]</a>
+              <a href="thread.html#156">[ thread ]</a>
+              <a href="subject.html#156">[ subject ]</a>
+              <a href="author.html#156">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2007-06-05 20:23:41 +0200 (Tue, 05 Jun 2007)
+New Revision: 1191
+
+Modified:
+   trunk/scripts/debian-prep
+Log:
+Adjust debian package generation back to svn.
+
+Modified: trunk/scripts/debian-prep
+===================================================================
+--- trunk/scripts/debian-prep	2007-06-05 17:13:23 UTC (rev 1190)
++++ trunk/scripts/debian-prep	2007-06-05 18:23:41 UTC (rev 1191)
+@@ -1,20 +1,24 @@
+ #!/bin/sh
+ # this script must be run from yade's top-level directory!
+ #
+-# svn used to be used:
+-# REVISION=&quot;svn$( svn info | egrep '^Revision:' | cut -f2 -d' ')&quot;
++# if there is file RELEASE, it will be the version number ($REVISION) and SNAPSHOT will be empty.
+ #
+-# bzr used:
+-# REVISION=&quot;bzr$( bzr version-info | egrep '^revno:' | cut -f2 -d' ')&quot;
++# Othervwise svn or bzr versioning information will be used.
+ #
+-# if there is file RELEASE, it will be the version number ($REVISION) and SNAPSHOT will be empty.
++# Errors out if RELEASE or .svn or .bzr don't exist.
+ #
+ if [ -f RELEASE ]; then
+ 	REVISION=`cat RELEASE`
+ 	SNAPSHOT=&quot;&quot;
+-else
++elif [ -d .svn ]; then
+ 	REVISION=&quot;svn$( svn info | egrep '^Revision:' | cut -f2 -d' ')&quot;
+ 	SNAPSHOT=&quot;-snapshot&quot;
++elif [ -d .bzr ]; then
++	REVISION=&quot;bzr$( bzr version-info | egrep '^revno:' | cut -f2 -d' ')&quot;
++	SNAPSHOT=&quot;-snapshot&quot;
++else
++	echo 'Revision could not be determined (RELEASE or .svn or .bzr)' &gt;2
++	exit 1
+ fi
+ _REVISION=&quot;-$REVISION&quot;
+ echo $REVISION &gt; REVISION
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000155.html">[Yade-commits] r1190 - in trunk/pkg: dem dem/Engine/DeusExMachina	dem/Engine/EngineUnit dem/Engine/StandAloneEngine	dem/PreProcessor mass-spring/PreProcessor
+</A></li>
+	<LI>Next message: <A HREF="000157.html">[Yade-commits] r1192 - in trunk/pkg: dem/Engine/StandAloneEngine	mass-spring/PreProcessor realtime-rigidbody/PreProcessor
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#156">[ date ]</a>
+              <a href="thread.html#156">[ thread ]</a>
+              <a href="subject.html#156">[ subject ]</a>
+              <a href="author.html#156">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

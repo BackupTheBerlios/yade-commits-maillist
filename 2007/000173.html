@@ -1,0 +1,762 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1208 - in trunk: . core examples extra/clump	gui/cmd pkg/common/RenderingEngine/OpenGLRenderingEngine
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2007/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1208%20-%20in%20trunk%3A%20.%20core%20examples%20extra/clump%0A%09gui/cmd%20pkg/common/RenderingEngine/OpenGLRenderingEngine&In-Reply-To=%3C200706201305.l5KD5Ki8019346%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000172.html">
+   <LINK REL="Next"  HREF="000174.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1208 - in trunk: . core examples extra/clump	gui/cmd pkg/common/RenderingEngine/OpenGLRenderingEngine</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1208%20-%20in%20trunk%3A%20.%20core%20examples%20extra/clump%0A%09gui/cmd%20pkg/common/RenderingEngine/OpenGLRenderingEngine&In-Reply-To=%3C200706201305.l5KD5Ki8019346%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1208 - in trunk: . core examples extra/clump	gui/cmd pkg/common/RenderingEngine/OpenGLRenderingEngine">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Wed Jun 20 15:05:20 CEST 2007</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000172.html">[Yade-commits] r1207 - tags/yade-release-candidate-0.11.0/core	trunk/core
+</A></li>
+        <LI>Next message: <A HREF="000174.html">[Yade-commits] r1209 - trunk
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#173">[ date ]</a>
+              <a href="thread.html#173">[ thread ]</a>
+              <a href="subject.html#173">[ subject ]</a>
+              <a href="author.html#173">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2007-06-20 15:05:18 +0200 (Wed, 20 Jun 2007)
+New Revision: 1208
+
+Added:
+   trunk/examples/cmdGui1.py
+Modified:
+   trunk/SConstruct
+   trunk/core/FileGenerator.cpp
+   trunk/core/Omega.cpp
+   trunk/core/yade.cpp
+   trunk/extra/clump/Clump.cpp
+   trunk/gui/cmd/attrUtils.cpp
+   trunk/gui/cmd/cmdGui.cpp
+   trunk/gui/cmd/cmdGui.hpp
+   trunk/gui/cmd/yadeControl.cpp
+   trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.cpp
+Log:
+1. SCons will download new version of itself if older thatn 0.96.93 and will proxy all calls to it transparently (hopefully)
+2. Revamped python wrappers, now all attributes are settable as dicionary entries in respective instances from python
+3. added example of python script that generates and runs BoxStack
+4. Do not #define DEBUG, since it is used in log4cxx (as log4cxx::Levels::DEBUG). YADE_DEBUG is used everywhere. If you ever get weird errors about that, #undef DEBUG after including qt3 headers.
+5. Some code cleanups.
+
+
+
+
+Modified: trunk/SConstruct
+===================================================================
+--- trunk/SConstruct	2007-06-19 17:54:33 UTC (rev 1207)
++++ trunk/SConstruct	2007-06-20 13:05:18 UTC (rev 1208)
+@@ -28,6 +28,26 @@
+ sconsVersion=sum([int(SCons.__version__.split('.')[ord[0]])*ord[1] for ord in [(0,10000),(1,100),(2,1)][:len(SCons.__version__.split('.'))] ])
+ 
+ ##########################################################################################
++########## PROXY TO NEWER SCONS (DOWNLOADED IF NEEDED) ###################################
++##########################################################################################
++
++if sconsVersion&lt;9693:
++	newUrl=&quot;<A HREF="http://dfn.dl.sourceforge.net/sourceforge/scons/scons-local-0.97.tar.gz">http://dfn.dl.sourceforge.net/sourceforge/scons/scons-local-0.97.tar.gz</A>&quot;
++	newDir=&quot;./scons-local/scons-local-0.97&quot;
++	if not os.path.exists(newDir):
++		print &quot;Scons version too old, downloading new version. All subsequent calls will be proxied to the new version transparently.&quot;
++		import urllib,tarfile
++		(filename,headers)=urllib.urlretrieve(newUrl)
++		print filename
++		print headers
++		tar=tarfile.open(filename, &quot;r:gz&quot;)
++		for tarinfo in tar: tar.extract(tarinfo,'./scons-local/')
++		print &quot;Done extracting scons to&quot;,newDir
++	if os.path.exists(newDir):
++		Exit(os.execv(&quot;./scons-local/scons.py&quot;,sys.argv[1:]))
++
++
++##########################################################################################
+ ############# OPTIONS ####################################################################
+ ##########################################################################################
+ 
+@@ -275,7 +295,7 @@
+ env.Append(CPPDEFINES=[('SUFFIX',r'\&quot;$SUFFIX\&quot;'),('PREFIX',r'\&quot;$runtimePREFIX\&quot;')])
+ 
+ ### COMPILER
+-if env['debug']: env.Append(CXXFLAGS='-ggdb3',CPPDEFINES=['DEBUG','YADE_DEBUG'])
++if env['debug']: env.Append(CXXFLAGS='-ggdb3',CPPDEFINES=['YADE_DEBUG'])
+ else: env.Append(CXXFLAGS='-O2')
+ if env['optimize']:
+ 	env.Append(CXXFLAGS=Split('-O3 -ffast-math'),
+
+Modified: trunk/core/FileGenerator.cpp
+===================================================================
+--- trunk/core/FileGenerator.cpp	2007-06-19 17:54:33 UTC (rev 1207)
++++ trunk/core/FileGenerator.cpp	2007-06-20 13:05:18 UTC (rev 1208)
+@@ -3,11 +3,11 @@
+ *  GNU General Public License v2 or later. See file LICENSE for details. *
+ *************************************************************************/
+ 
+-#include &lt;cstdlib&gt;
++#include&lt;cstdlib&gt;
+ #include&lt;yade/lib-multimethods/MultiMethodsExceptions.hpp&gt;
+-#include &lt;boost/date_time/posix_time/posix_time.hpp&gt;
++#include&lt;boost/date_time/posix_time/posix_time.hpp&gt;
+ 
+-#include &quot;FileGenerator.hpp&quot;
++#include&quot;FileGenerator.hpp&quot;
+ 
+ CREATE_LOGGER(FileGenerator);
+ 
+
+Modified: trunk/core/Omega.cpp
+===================================================================
+--- trunk/core/Omega.cpp	2007-06-19 17:54:33 UTC (rev 1207)
++++ trunk/core/Omega.cpp	2007-06-20 13:05:18 UTC (rev 1208)
+@@ -8,22 +8,22 @@
+ *  GNU General Public License v2 or later. See file LICENSE for details. *
+ *************************************************************************/
+ 
+-#include &quot;Omega.hpp&quot;
+-#include &quot;yadeExceptions.hpp&quot;
+-#include &quot;MetaBody.hpp&quot;
+-#include &quot;ThreadRunner.hpp&quot;
+-#include &quot;Preferences.hpp&quot;
+-#include &lt;Wm3Vector3.h&gt;
++#include&quot;Omega.hpp&quot;
++#include&quot;yadeExceptions.hpp&quot;
++#include&quot;MetaBody.hpp&quot;
++#include&quot;ThreadRunner.hpp&quot;
++#include&quot;Preferences.hpp&quot;
++#include&lt;Wm3Vector3.h&gt;
+ #include&lt;yade/lib-base/yadeWm3.hpp&gt;
+ #include&lt;yade/lib-serialization/IOFormatManager.hpp&gt;
+ #include&lt;yade/lib-serialization/IOFormatManager.hpp&gt;
+ #include&lt;yade/lib-multimethods/FunctorWrapper.hpp&gt;
+ #include&lt;yade/lib-multimethods/Indexable.hpp&gt;
+-#include &lt;cstdlib&gt;
+-#include &lt;boost/filesystem/operations.hpp&gt;
+-#include &lt;boost/filesystem/convenience.hpp&gt;
++#include&lt;cstdlib&gt;
++#include&lt;boost/filesystem/operations.hpp&gt;
++#include&lt;boost/filesystem/convenience.hpp&gt;
+ 
+-#include &lt;cxxabi.h&gt;
++#include&lt;cxxabi.h&gt;
+ 
+ CREATE_LOGGER(Omega);
+ 
+
+Modified: trunk/core/yade.cpp
+===================================================================
+--- trunk/core/yade.cpp	2007-06-19 17:54:33 UTC (rev 1207)
++++ trunk/core/yade.cpp	2007-06-20 13:05:18 UTC (rev 1208)
+@@ -202,12 +202,12 @@
+ 		
+ 	shared_ptr&lt;FrontEnd&gt; frontEnd = dynamic_pointer_cast&lt;FrontEnd&gt;(ClassFactory::instance().createShared(gui));
+ 	
+- 	for(int i=0;i&lt;argc; i++)cerr&lt;&lt;&quot;Argument &quot;&lt;&lt;i&lt;&lt;&quot;: &quot;&lt;&lt;argv[i]&lt;&lt;endl;
++ 	// for(int i=0;i&lt;argc; i++)cerr&lt;&lt;&quot;Argument &quot;&lt;&lt;i&lt;&lt;&quot;: &quot;&lt;&lt;argv[i]&lt;&lt;endl;
+ 	int ok = frontEnd-&gt;run(argc,argv);
+ 
+ 	#ifdef EMBED_PYTHON
+ 		LOG_DEBUG(&quot;Finalizing Python...&quot;);
+-		Py_Finalize();
++		Py_Finalize(); // FIXME: <A HREF="http://www.boost.org/libs/python/todo.html#pyfinalize-safety">http://www.boost.org/libs/python/todo.html#pyfinalize-safety</A> says this is unsafe with boost::python
+ 	#endif
+ 	#ifdef YADE_DEBUG
+ 		unlink(Omega::instance().gdbCrashBatch.c_str());
+
+Added: trunk/examples/cmdGui1.py
+===================================================================
+--- trunk/examples/cmdGui1.py	2007-06-19 17:54:33 UTC (rev 1207)
++++ trunk/examples/cmdGui1.py	2007-06-20 13:05:18 UTC (rev 1208)
+@@ -0,0 +1,41 @@
++# sample rc script for cmdGui
++#
++# yade-trunk -N cmdGui -- -s examples/cmdGui1.py
++#
++#
++p=Preprocessor()
++# show available generators
++print &quot;Available generators:&quot;,p.listGenerators()
++p.generator=&quot;BoxStack&quot;
++# set output file (default: ../data/scene.xml)
++p.output=&quot;/tmp/scene.xml&quot;
++# serializer (default: XMLFormatManager, no need to change)
++print &quot;Available serializers:&quot;,p.listSerializers()
++# changing attributes
++p['nbBoxes']=[3,5,5]
++p['boxDensity']=4000
++# run the generator, returns status
++p.generate()
++#
++# create Omega instance, which controls simulation
++#
++o=Omega()
++# load simulation
++o.load(&quot;/tmp/scene.xml&quot;)
++# run the simulation
++o.run()
++#
++# open one View (more views will crash...)
++v=View()
++# get iteration number
++print o.iter
++# stop somewhere after iteration 10000
++import time
++while True:
++	time.sleep(1)
++	print &quot;iteration %d\tsimulation time %gs\treal time %gs&quot;%(o.iter,o.time,o.realtime)
++	if o.iter&gt;1000:
++		o.pause()
++		break
++# quit yade
++sys.exit(0)
+
+Modified: trunk/extra/clump/Clump.cpp
+===================================================================
+--- trunk/extra/clump/Clump.cpp	2007-06-19 17:54:33 UTC (rev 1207)
++++ trunk/extra/clump/Clump.cpp	2007-06-20 13:05:18 UTC (rev 1208)
+@@ -341,7 +341,7 @@
+ 
+ bool ClumpTestGen::generate()
+ {
+-	Shop::setDefault(&quot;param_pythonRunExpr&quot;,string(&quot;if S.i%50==0 and S.i&lt;1000 and S.i&gt;500:\n\tprint S.i,len(S.sel),B[1].x, B[1].E&quot;));
++	//Shop::setDefault(&quot;param_pythonRunExpr&quot;,string(&quot;if S.i%50==0 and S.i&lt;1000 and S.i&gt;500:\n\tprint S.i,len(S.sel),B[1].x, B[1].E&quot;));
+ 
+ 	rootBody=Shop::rootBody();
+ 	Shop::rootBodyActors(rootBody);
+
+Modified: trunk/gui/cmd/attrUtils.cpp
+===================================================================
+--- trunk/gui/cmd/attrUtils.cpp	2007-06-19 17:54:33 UTC (rev 1207)
++++ trunk/gui/cmd/attrUtils.cpp	2007-06-20 13:05:18 UTC (rev 1208)
+@@ -4,24 +4,49 @@
+ #include&lt;vector&gt;
+ #include&lt;boost/shared_ptr.hpp&gt;
+ #include&lt;yade/lib-serialization-xml/XMLFormatManager.hpp&gt;
++#include&lt;boost/python.hpp&gt;
+ 
+ using namespace std;
+ using namespace boost;
+ 
++/*! Define inline proxy functions that access attributes of some object associated with this class.
++ * \param accessor is an shared_ptr&lt;AttrAccess&gt; (or AttrAccess*), properly initialized and associated with the object of your choice
++ * \param ensureFunc is member function called before every attribute access. It typically would check whether acessor is not NULL, otherwise instantiate it.
++ */
++#define ATTR_ACCESS_CXX(accessor,ensureFunc) \
++	boost::python::object wrappedPyGet(std::string key){ensureFunc();return accessor-&gt;pyGet(key);} \
++	void wrappedPySet(std::string key,python::object val){ensureFunc(); accessor-&gt;pySet(key,val);} \
++	boost::python::list wrappedPyKeys(){ensureFunc(); return accessor-&gt;pyKeys();} 
++	
++/*! Python special functions complementing proxies defined by ATTR_ACCESS_CXX, to be used with boost::python::class_&lt;&gt;.
++ *
++ * They define python special functions that support dictionary operations on this object and calls proxies for them. */
++#define ATTR_ACCESS_PY(cxxClass) \
++	def(&quot;__getitem__&quot;,&amp;cxxClass::wrappedPyGet).def(&quot;__setitem__&quot;,&amp;cxxClass::wrappedPySet).def(&quot;keys&quot;,&amp;cxxClass::wrappedPyKeys)
++
++
++/*! Helper class for accessing registered attributes through the serialization interface.
++ *
++ * 4 possible types of attributes are supported: bool, string, number, array of numbers.
++ * This class exposes pySet, pyGet and pyKeys methods to python so that associated object supports python syntax for dictionary member access.
++ */
+ class AttrAccess{
+ 	struct AttrDesc{vector&lt;int&gt; types; shared_ptr&lt;Archive&gt; archive;};
+ 	private:
+ 		const shared_ptr&lt;Serializable&gt; ser;
+ 		Serializable::Archives archives;
+ 	public:
++		DECLARE_LOGGER;
+ 		typedef map&lt;string,AttrDesc&gt; DescriptorMap;
+-		DescriptorMap descriptors; // maps attribute name to its archive and vector of its types (given as ints, from the following enum)
++		//! maps attribute name to its archive and vector of its types (given as ints, from the following enum)
++		DescriptorMap descriptors;
++		//! allowed types
+ 		enum {BOOL,STRING,NUMBER}; // allowed types
+ 		
+ 		AttrAccess(Serializable* _ser): ser(shared_ptr&lt;Serializable&gt;(_ser)){init();}
+ 		AttrAccess(shared_ptr&lt;Serializable&gt; _ser):ser(_ser){init();}
+ 
+-		//! create archives and descriptors
++		//! create archives and descriptors, always called from the constructor
+ 		void init(){
+ 			if(ser-&gt;getArchives().empty()) ser-&gt;registerSerializableAttributes(false);
+ 			archives=ser-&gt;getArchives();
+@@ -58,19 +83,55 @@
+ 			for(size_t i=0; i&lt;desc.types.size(); i++) types+=string(i&gt;0?&quot; &quot;:&quot;&quot;)+(desc.types[i]==BOOL?&quot;BOOL&quot;:(desc.types[i]==STRING?&quot;STRING&quot;:&quot;NUMBER&quot;));
+ 			return name+&quot; =\t&quot;+vals+&quot;\t (&quot;+types+&quot;)&quot;;
+ 		}
+-		//! call dumpAttr for all attributes
++		//! call dumpAttr for all attributes (used for debugging)
+ 		string dumpAttrs(){ string ret; for(DescriptorMap::iterator I=descriptors.begin();I!=descriptors.end();I++) ret+=dumpAttr(I-&gt;first)+&quot;\n&quot;; return ret;}
+-
+ 		//! set attribute by name from its serialized value
+ 		void setAttrStr(string name, string value){
++			LOG_DEBUG(&quot;Will set `&quot;&lt;&lt;name&lt;&lt;&quot;' to `&quot;&lt;&lt;value&lt;&lt;&quot;'.&quot;);
+ 			stringstream voidStream;
+ 			descriptors[name].archive-&gt;deserialize(voidStream,*(descriptors[name].archive),value);
+ 		}
+-		//! set attribute from its (non-serialized) value
++		//! set attribute from its (non-serialized) value, for all possible types
+ 		void setAttr(string name, bool value){setAttrStr(name,value?&quot;1&quot;:&quot;0&quot;);}
+ 		void setAttr(string name, string value){setAttrStr(name,value);}
+-		template&lt;typename containedType&gt; void setAttr(string name, vector&lt;containedType&gt; values){
+-			string val(&quot;{&quot;); for(size_t i=0; i&lt;values.size();i++) val+=(lexical_cast&lt;string&gt;(values[i]))+&quot; &quot;; setAttrStr(name,val+&quot;}&quot;);
++		void setAttr(string name, double value){setAttrStr(name,lexical_cast&lt;string&gt;(value));}
++		void setAttr(string name, vector&lt;double&gt; values){string val(&quot;{&quot;); for(size_t i=0; i&lt;values.size();i++) val+=(lexical_cast&lt;string&gt;(values[i]))+&quot; &quot;; setAttrStr(name,val+&quot;}&quot;); }
++
++		//! return python list of keys (attribute names)
++		boost::python::list pyKeys(){boost::python::list ret; for(DescriptorMap::iterator I=descriptors.begin();I!=descriptors.end();I++)ret.append(I-&gt;first); return ret;}
++
++		//! return attribute value as python object
++		boost::python::object pyGet(std::string key){
++			vector&lt;string&gt; raw=getAttrStr(key);
++			if(raw.size()==1){
++				if(descriptors[key].types[0]==BOOL) return boost::python::object(lexical_cast&lt;bool&gt;(raw[0]));
++				if(descriptors[key].types[0]==STRING) return boost::python::object(raw[0]);
++				if(descriptors[key].types[0]==NUMBER) return boost::python::object(lexical_cast&lt;double&gt;(raw[0]));
++			} else { // list of numbers
++				/*list&lt;double&gt; ret;
++				for(vector&lt;string&gt;::iterator I=raw.begin();I!=raw.end();I++)ret.push_back(lexical_cast&lt;double&gt;(*I));
++				return boost::python::object&lt;list&lt;double&gt; &gt;(ret);*/
++				boost::python::list ret;
++				for(vector&lt;string&gt;::iterator I=raw.begin();I!=raw.end();I++)ret.append(lexical_cast&lt;double&gt;(*I));
++				return ret;
++			}
++			return boost::python::object();
+ 		}
++		//! set attribute value from python object
++		void pySet(std::string key, python::object val){
++			if(descriptors[key].types.size()==1){
++				if(descriptors[key].types[0]==BOOL) { setAttr(key,python::extract&lt;bool&gt;(val)); return;}
++				if(descriptors[key].types[0]==STRING){setAttr(key,python::extract&lt;string&gt;(val)); return;}
++				if(descriptors[key].types[0]==NUMBER){setAttr(key,python::extract&lt;double&gt;(val)); return;}
++			} else {
++				if(PySequence_Check(val.ptr()) &amp;&amp; PySequence_Size(val.ptr())==(int)descriptors[key].types.size()){
++					vector&lt;double&gt; cval;
++					for(int i=0; i&lt;PySequence_Size(val.ptr()); i++) cval.push_back(python::extract&lt;double&gt;(PySequence_GetItem(val.ptr(),i)));
++					setAttr(key,cval);
++				} else {	throw std::invalid_argument(string(&quot;Value for `&quot;)+key+&quot;' not sequence or not of the expected length (&quot;+lexical_cast&lt;string&gt;(descriptors[key].types.size())+&quot;)&quot;); }
++			}
++		}
+ };
+ 
++CREATE_LOGGER(AttrAccess);
++
+
+Modified: trunk/gui/cmd/cmdGui.cpp
+===================================================================
+--- trunk/gui/cmd/cmdGui.cpp	2007-06-19 17:54:33 UTC (rev 1207)
++++ trunk/gui/cmd/cmdGui.cpp	2007-06-20 13:05:18 UTC (rev 1208)
+@@ -1,45 +1,72 @@
+-#include&lt;Python.h&gt;
++//#include&lt;Python.h&gt;
+ #include&lt;boost/thread/thread.hpp&gt;
++#include&lt;boost/python.hpp&gt;
++#include&lt;errno.h&gt;
+ 
+ #include&quot;cmdGui.hpp&quot;
+ 
+ #include &lt;X11/Xlib.h&gt;
+ 
++using namespace boost;
++
+ //void cmdlineThreadStart(){
+ //}
+ 
+ CREATE_LOGGER(cmdGui);
+ 
++void cmdGui::help(){
++	cerr&lt;&lt;&quot; cmdGui (python console) frontend.\n\
++\n\
++	-h       print this help\n\
++	-s file  run this python script before entering interactive prompt\n\
++\n\
++	Sample session:\n\
++\n\
++	&gt;&gt;&gt; p=Preprocessor\n\
++	&gt;&gt;&gt; p.generator='Funnel'\n\
++	&gt;&gt;&gt; p['density']=2000\n\
++	&gt;&gt;&gt; p.output='/tmp/funnel.xml'\n\
++	&gt;&gt;&gt; p.generate()\n\
++	&gt;&gt;&gt; o=Omega()\n\
++	&gt;&gt;&gt; o.run()\n\
++	&gt;&gt;&gt; # ^D to exit\n\
++&quot;;
++}
+ 
+ int cmdGui::run(int argc, char *argv[]) {
+-#if 0
+-	opterr = 0;
++	string runScript;
++	
+ 	int ch;
+-	while((ch=getopt(argc,argv,&quot;t:g:&quot;))!=-1)
+-		switch(ch){
+-//			case 'H'	: help(); 						return 1;
+-			case 't'	: Omega::instance().setTimeStep
+-						(lexical_cast&lt;Real&gt;(optarg));			break;
+-//			case 'g'	: Omega::instance().setGravity
+-//						(Vector3r(0,-lexical_cast&lt;Real&gt;(optarg),0));	break;
+-			default		: break;
+-		}
+-#endif
++	while((ch=getopt(argc,argv,&quot;hs:&quot;))!=-1)
++	switch(ch){
++		case 'h': help(); return 1;
++		case 's': runScript=string(optarg); break;
++		default: break;
++	}
++
+ 	XInitThreads();
+ 
+-	// thread init
+-
+-	PyGILState_STATE pyState = PyGILState_Ensure();	
+-
++	PyGILState_STATE pyState = PyGILState_Ensure();
++		// wrap those in python::handle&lt;&gt; ??
+ 		PyRun_SimpleString(&quot;import sys, readline&quot;);
+ 		PyRun_SimpleString(&quot;sys.path.insert(0,'&quot; PREFIX &quot;/lib/yade&quot; SUFFIX &quot;/extra');&quot;);
+ 		PyRun_SimpleString(&quot;sys.path.insert(0,'&quot; PREFIX &quot;/lib/yade&quot; SUFFIX &quot;/gui');&quot;);
+-
+ 		//int status=PyRun_SimpleString(&quot;from pyade import *&quot;); // pyade will import _pyade by itself
+ 		//if(status){ LOG_ERROR(&quot;pyade import failed.&quot;); } else LOG_DEBUG(&quot;pyade imported.&quot;);
+-		
+ 		PyRun_SimpleString(&quot;from yadeControl import *&quot;);
+ 
++		if(!runScript.empty()){
++			LOG_DEBUG(&quot;Will now run file `&quot;&lt;&lt;runScript&lt;&lt;&quot;'&quot;);
++			FILE* runScriptFILE=fopen(runScript.c_str(),&quot;r&quot;);
++			if(runScriptFILE){
++				PyRun_SimpleFile(runScriptFILE,runScript.c_str());
++			}
++			else{
++				string strerr(strerror(errno));
++				LOG_ERROR(&quot;Unable to open file `&quot;&lt;&lt;runScript&lt;&lt;&quot;':&quot;&lt;&lt;strerr&lt;&lt;&quot;.&quot;);
++			}
++		}
++
+ 	PyGILState_Release(pyState);
+ 
+ 	//boost::thread cmdlineThread(&amp;cmdlineThreadStart);
+
+Modified: trunk/gui/cmd/cmdGui.hpp
+===================================================================
+--- trunk/gui/cmd/cmdGui.hpp	2007-06-19 17:54:33 UTC (rev 1207)
++++ trunk/gui/cmd/cmdGui.hpp	2007-06-20 13:05:18 UTC (rev 1208)
+@@ -10,6 +10,7 @@
+ class cmdGui: public FrontEnd
+ {
+ 	private:
++		void help();
+ 	public:
+ 		cmdGui(){};
+ 		virtual ~cmdGui(){};
+
+Modified: trunk/gui/cmd/yadeControl.cpp
+===================================================================
+--- trunk/gui/cmd/yadeControl.cpp	2007-06-19 17:54:33 UTC (rev 1207)
++++ trunk/gui/cmd/yadeControl.cpp	2007-06-20 13:05:18 UTC (rev 1208)
+@@ -1,19 +1,31 @@
+-#include&lt;yade/core/Omega.hpp&gt;
+-#include&lt;yade/core/FileGenerator.hpp&gt;
++#include&lt;sstream&gt;
++#include&lt;map&gt;
++#include&lt;vector&gt;
++#include&lt;unistd.h&gt;
++#include&lt;list&gt;
+ 
+ #include&lt;boost/python.hpp&gt;
+-#include &lt;boost/python/suite/indexing/vector_indexing_suite.hpp&gt;
++#include&lt;boost/python/suite/indexing/vector_indexing_suite.hpp&gt;
+ #include&lt;boost/bind.hpp&gt;
+ #include&lt;boost/thread/thread.hpp&gt;
+ #include&lt;boost/filesystem/operations.hpp&gt;
++#include&lt;boost/date_time/posix_time/posix_time.hpp&gt;
++#include&lt;boost/any.hpp&gt;
++#include&lt;boost/shared_ptr.hpp&gt;
++#include&lt;boost/python.hpp&gt;
+ 
+-//using namespace boost::python;
++#include&lt;yade/lib-base/Logging.hpp&gt;
++#include&lt;yade/lib-serialization-xml/XMLFormatManager.hpp&gt;
++#include&lt;yade/core/Omega.hpp&gt;
++#include&lt;yade/core/FileGenerator.hpp&gt;
++#include&lt;yade/gui-qt3/GLViewer.hpp&gt;
+ 
+-#include&lt;yade/gui-qt3/GLViewer.hpp&gt;
+ #include&lt;qapplication.h&gt;
++// qt3 sucks
++#undef DEBUG
+ 
+-#include&lt;unistd.h&gt;
+-#include&lt;list&gt;
++using namespace boost;
++using namespace std;
+ 
+ #include&quot;attrUtils.cpp&quot;
+ 
+@@ -26,6 +38,11 @@
+ 
+ 	long iter(){ return OMEGA.getCurrentIteration();}
+ 	double simulationTime(){return OMEGA.getSimulationTime();}
++	double realTime(){
++		posix_time::time_duration duration=microsec_clock::local_time()-OMEGA.getMsStartingSimulationTime();
++		duration-=OMEGA.getSimulationPauseDuration();
++		return double(duration.total_seconds())+double(duration.total_milliseconds()%1000)/1000; // FIXME: fractional_seconds are usec or msec or compile-time dependent?! documentation not clear on that.
++	}
+ 	// long realTime(){return OMEGA(get...);}
+ 	double dt_get(){return OMEGA.getTimeStep();}
+ 	void dt_set(double dt){OMEGA.setTimeStep(dt);}
+@@ -44,9 +61,19 @@
+ 		OMEGA.createSimulationLoop();
+ 		cerr&lt;&lt;&quot;LOAD!&quot;&lt;&lt;endl;
+ 	}
++	#undef OMEGA
+ };
+ 
++/*! Generic preprocessor (FileGenerator) wrapper, with complete attribute access. */
+ class pyPreprocessor{
++	shared_ptr&lt;FileGenerator&gt; gen;
++	shared_ptr&lt;AttrAccess&gt; accessor;
++	void ensureGen(void){
++		if(!gen || gen-&gt;getClassName()!=generator){ // first time or changed generator; shared_ptr should delete the old object if not referenced anymore
++			gen=static_pointer_cast&lt;FileGenerator&gt;(ClassFactory::instance().createShared(generator));
++			accessor=shared_ptr&lt;AttrAccess&gt;(new AttrAccess(gen));
++		}
++	}
+ 	public:
+ 		pyPreprocessor(){serializer=&quot;XMLFormatManager&quot;; output=&quot;../data/scene.xml&quot;;}
+ 		std::string generator;
+@@ -70,32 +97,36 @@
+ 			#define _CHECK_NONEMPTY(s) if(s.empty()) throw std::runtime_error(&quot;`&quot; #s &quot;' is empty.&quot;)
+ 				_CHECK_NONEMPTY(generator); _CHECK_NONEMPTY(serializer);	_CHECK_NONEMPTY(output);
+ 			#undef _CHECK_NONEMPTY
+-			shared_ptr&lt;FileGenerator&gt; gen=static_pointer_cast&lt;FileGenerator&gt;(ClassFactory::instance().createShared(generator));
++			ensureGen();
+ 			gen-&gt;setFileName(output);
+ 			gen-&gt;setSerializationLibrary(serializer);
+ 			bool ret=gen-&gt;generateAndSave();
+ 			cerr&lt;&lt;(ret?&quot;SUCCESS:\n&quot;:&quot;FAILURE:\n&quot;)&lt;&lt;gen-&gt;message&lt;&lt;endl;
+ 			return ret;
+ 		}
++		ATTR_ACCESS_CXX(accessor,ensureGen);
+ };
+ 		
+ 
+-
+-
++/*! GL viewer wrapper, with full attribute access.
++ *
++ * Creates the 3D view on instantiation. Currently displays nothing (why???), although it redraws just fine.
++ * Has many bugs: multiple views will lead to crash, explicit delete crashes (somewhere in qt) as well.
++ */
+ class pyGLViewer{
+ 	//DECLARE_LOGGER;
+ 	shared_ptr&lt;RenderingEngine&gt; renderer;
+-	GLViewer* viewer;
+-	static vector&lt;pyGLViewer*&gt; instances;
++	shared_ptr&lt;GLViewer&gt; viewer;
++	shared_ptr&lt;boost::thread&gt; redrawThread,appThread;
+ 	QApplication* app;
+ 	void redrawAlarm(void){
+-		while(instances.size()&gt;0){ // this means for eternity really...
+-			for(vector&lt;pyGLViewer*&gt;::iterator I=instances.begin(); I!=instances.end(); I++) (*I)-&gt;viewer-&gt;updateGL();
+-			usleep(50000);
+-		}
++		while(true){viewer-&gt;updateGL(); usleep(50000);}
+ 	}
++	shared_ptr&lt;AttrAccess&gt; accessor;
++	void ensureAcc(){if(!accessor)accessor=shared_ptr&lt;AttrAccess&gt;(new AttrAccess(renderer));}
+ public:
+-	//void appExec(){app-&gt;exec();}
++	DECLARE_LOGGER;
++	ATTR_ACCESS_CXX(accessor,ensureAcc);	
+ 	pyGLViewer(){
+ 		shared_ptr&lt;Factorable&gt; _renderer=ClassFactory::instance().createShared(&quot;OpenGLRenderingEngine&quot;);
+ 		renderer=static_pointer_cast&lt;RenderingEngine&gt;(_renderer);
+@@ -104,60 +135,51 @@
+ 			Type of instance is: 15RenderingEngine
+ 			RuntimeError: Cannot determine type with findType()
+ 		*/
+-		#if 0
+-			if(renderer){// TODO: handle exceptions
+-				filesystem::path rendererConfig=filesystem::path(Omega::instance().yadeConfigPath+&quot;/OpenGLRendererPref.xml&quot;);
+-				if(filesystem::exists(rendererConfig)) IOFormatManager::loadFromFile(&quot;XMLFormatManager&quot;,rendererConfig.string(),&quot;renderer&quot;,renderer);
+-			} else {cerr&lt;&lt;&quot;Cannot create renderer!!!&quot;&lt;&lt;endl; abort();}
+-		#endif
++		if(renderer){// TODO: handle exceptions
++			filesystem::path rendererConfig=filesystem::path(Omega::instance().yadeConfigPath+&quot;/OpenGLRendererPref.xml&quot;);
++			if(filesystem::exists(rendererConfig)){
++				try{IOFormatManager::loadFromFile(&quot;XMLFormatManager&quot;,rendererConfig.string(),&quot;renderer&quot;,renderer);}
++				catch(SerializableError&amp; e){LOG_WARN(&quot;Unable to load renderer preferences from `&quot;&lt;&lt;rendererConfig.string()&lt;&lt;&quot;': &quot;&lt;&lt;e.what());}
++			}
++		} else throw runtime_error(&quot;Unable to create renderer!&quot;);
+ 
+-		// maximum: one app
+-		int viewId=(int)instances.size();
+-		instances.push_back(this);
++		int viewId=0;
++		if(viewId==0){	int _argc=0; char* _argv[]={&quot;foo&quot;}; app=new QApplication(_argc,_argv);}
+ 
+-		if(viewId==0){ int _argc=0; char* _argv[]={&quot;foo&quot;}; app=new QApplication(_argc,_argv); }
+-
+ 		QGLFormat format;	QGLFormat::setDefaultFormat(format); format.setStencil(TRUE); format.setAlpha(TRUE);
+-		viewer=new GLViewer(viewId,renderer,format,0,viewId==0?0:instances[0]-&gt;viewer);
++		viewer=shared_ptr&lt;GLViewer&gt;(new GLViewer(viewId,renderer,format,0,0));
++		viewer-&gt;centerScene();
+ 		viewer-&gt;notMoving();
+-		// showAttrs(renderer); // deprecated
+ 
+-		AttrAccess acc(renderer);
+-		cerr&lt;&lt;acc.dumpAttrs();
+-		cerr&lt;&lt;&quot;=========== will change these values: =========&quot;&lt;&lt;endl;
+-		cerr&lt;&lt;acc.dumpAttr(&quot;Background_color&quot;)&lt;&lt;endl&lt;&lt;acc.dumpAttr(&quot;Draw_inside&quot;)&lt;&lt;endl;
+-		acc.setAttrStr(&quot;Background_color&quot;,&quot;{ .8 .8 .8 }&quot;);
+-		acc.setAttr(&quot;Draw_inside&quot;,false);
+-		cerr&lt;&lt;&quot;=========== new values are: =========&quot;&lt;&lt;endl;
+-		cerr&lt;&lt;acc.dumpAttr(&quot;Background_color&quot;)&lt;&lt;endl&lt;&lt;acc.dumpAttr(&quot;Draw_inside&quot;)&lt;&lt;endl;
+-
+ 		if(viewId==0){
+-			app-&gt;setMainWidget(viewer);
+-			boost::thread redrawThread(boost::bind(&amp;pyGLViewer::redrawAlarm,this));
++			app-&gt;setMainWidget(viewer.get());
++			redrawThread=shared_ptr&lt;boost::thread&gt;(new boost::thread(boost::bind(&amp;pyGLViewer::redrawAlarm,this)));
+ 		}
+-		boost::thread appThread(boost::bind(&amp;QApplication::exec,app));
++		appThread=shared_ptr&lt;boost::thread&gt;(new boost::thread(boost::bind(&amp;QApplication::exec,app)));
+ 	}
+-	~pyGLViewer(){
+-		// remove this instance from the list
+-		for(vector&lt;pyGLViewer*&gt;::iterator I=instances.begin(); I!=instances.end(); I++){if((*I)==this) {instances.erase(I); break;}}
++	~pyGLViewer(){// redrawThread and appThread deleted by the descructor
++		//viewer-&gt;close();
++		//app-&gt;quit();
+ 	}
+ };
+ 
+-vector&lt;pyGLViewer*&gt; pyGLViewer::instances;
+-//CREATE_LOGGER(pyGLViewer);
++CREATE_LOGGER(pyGLViewer);
+ 
+ 
+ BOOST_PYTHON_MODULE(yadeControl)
+ {
+ 	/* <A HREF="http://mail.python.org/pipermail/c++-sig/2004-March/007025.html">http://mail.python.org/pipermail/c++-sig/2004-March/007025.html</A>
+-	<A HREF="http://mail.python.org/pipermail/c++-sig/2004-March/007029.html">http://mail.python.org/pipermail/c++-sig/2004-March/007029.html</A> */
++	<A HREF="http://mail.python.org/pipermail/c++-sig/2004-March/007029.html">http://mail.python.org/pipermail/c++-sig/2004-March/007029.html</A>
++
++	UNUSED, deal with boost::python::list instead
++
+ 	python::class_&lt;std::vector&lt;std::string&gt; &gt;(&quot;_vectSs&quot;)
+-		.def(python::vector_indexing_suite&lt;std::vector&lt;std::string&gt;,true&gt;());  
++		.def(python::vector_indexing_suite&lt;std::vector&lt;std::string&gt;,true&gt;());   */
+ 
+-	boost::python::class_&lt;pyOmega&gt;(&quot;Omega_base&quot;)
++	boost::python::class_&lt;pyOmega&gt;(&quot;Omega&quot;)
+ 		.add_property(&quot;iter&quot;,&amp;pyOmega::iter)
+ 		.add_property(&quot;time&quot;,&amp;pyOmega::simulationTime)
+-		// TODO: return computation time
++		.add_property(&quot;realtime&quot;,&amp;pyOmega::realTime)
+ 		.add_property(&quot;dt&quot;,&amp;pyOmega::dt_get,&amp;pyOmega::dt_set)
+ 		//.add_property(&quot;timeStepper&quot;,&amp;timeStepper_get,&amp;timeStepper_set)
+ 		.def(&quot;load&quot;,&amp;pyOmega::load)
+@@ -165,32 +187,28 @@
+ 		.def(&quot;pause&quot;,&amp;pyOmega::pause)
+ 		.def(&quot;step&quot;,&amp;pyOmega::step);
+ 
++		#if 0
++			.def(&quot;oneStep&quot;,&amp;oneStep)
++			.def(&quot;newView&quot;, &amp;newView)
++			.def(&quot;centerScene&quot;, &amp;centerScene)
++		#endif
++
+ 	boost::python::class_&lt;pyPreprocessor&gt;(&quot;Preprocessor&quot;)
+ 		.add_property(&quot;generator&quot;,&amp;pyPreprocessor::generator,&amp;pyPreprocessor::generator)
+ 		.add_property(&quot;serializer&quot;,&amp;pyPreprocessor::serializer,&amp;pyPreprocessor::serializer)
+ 		.add_property(&quot;output&quot;,&amp;pyPreprocessor::output,&amp;pyPreprocessor::output)
+ 		.def(&quot;generate&quot;,&amp;pyPreprocessor::generate)
+ 		.def(&quot;listSerializers&quot;,&amp;pyPreprocessor::listSerializers)
+-		.def(&quot;listGenerators&quot;,&amp;pyPreprocessor::listGenerators);
++		.def(&quot;listGenerators&quot;,&amp;pyPreprocessor::listGenerators)
++		.ATTR_ACCESS_PY(pyPreprocessor);
+ 
+-	boost::python::class_&lt;pyGLViewer&gt;(&quot;View&quot;);
++	boost::python::class_&lt;pyGLViewer&gt;(&quot;View&quot;)
++		.ATTR_ACCESS_PY(pyGLViewer);
+ 
+-	//		.def(&quot;greet&quot;, &amp;World::greet)
+-	//		.def(&quot;set&quot;, &amp;World::set) 
+-	
+ 	//scope().attr(&quot;iter&quot;)=OMEGA(getCurrentIteration());
+ 	//scope().attr(&quot;time&quot;)=realTime(getSimulationTime());
+ 	//scope().attr(&quot;verbose&quot;)=;
+ 	//scope().attr(&quot;verbose&quot;) = verbose;
+ 
+-		#if 0
+-			.def(&quot;oneStep&quot;,&amp;oneStep)
+-			.def(&quot;newView&quot;, &amp;newView)
+-			.def(&quot;centerScene&quot;, &amp;centerScene)
+-
+-		.def(&quot;greet&quot;, &amp;World::greet)
+-		.def(&quot;set&quot;, &amp;World::set) 
+-		;
+-		#endif
+ }
+ 
+
+Modified: trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.cpp
+===================================================================
+--- trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.cpp	2007-06-19 17:54:33 UTC (rev 1207)
++++ trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.cpp	2007-06-20 13:05:18 UTC (rev 1208)
+@@ -136,7 +136,7 @@
+ 	glColor3f(1.0,1.0,1.0);
+ 	glutSolidSphere(3,10,10);
+ 	glPopMatrix();	
+-	
++
+ 	if (Body_geometrical_model)
+ 	{
+ 		if (Cast_shadows)
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000172.html">[Yade-commits] r1207 - tags/yade-release-candidate-0.11.0/core	trunk/core
+</A></li>
+	<LI>Next message: <A HREF="000174.html">[Yade-commits] r1209 - trunk
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#173">[ date ]</a>
+              <a href="thread.html#173">[ thread ]</a>
+              <a href="subject.html#173">[ subject ]</a>
+              <a href="author.html#173">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

@@ -1,0 +1,701 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1240 - in trunk/pkg/lattice: Engine/EngineUnit	PreProcessor
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1240%20-%20in%20trunk/pkg/lattice%3A%20Engine/EngineUnit%0A%09PreProcessor&In-Reply-To=%3C200801241504.m0OF4AL0007170%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000204.html">
+   <LINK REL="Next"  HREF="000206.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1240 - in trunk/pkg/lattice: Engine/EngineUnit	PreProcessor</H1>
+    <B>cosurgi at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1240%20-%20in%20trunk/pkg/lattice%3A%20Engine/EngineUnit%0A%09PreProcessor&In-Reply-To=%3C200801241504.m0OF4AL0007170%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1240 - in trunk/pkg/lattice: Engine/EngineUnit	PreProcessor">cosurgi at mail.berlios.de
+       </A><BR>
+    <I>Thu Jan 24 16:04:10 CET 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000204.html">[Yade-commits] r1239 - in trunk: core extra extra/clump gui/cmd	lib/base pkg/dem/Engine/DeusExMachina pkg/dem/PreProcessor
+</A></li>
+        <LI>Next message: <A HREF="000206.html">[Yade-commits] r1241 - in trunk: . doc
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#205">[ date ]</a>
+              <a href="thread.html#205">[ thread ]</a>
+              <a href="subject.html#205">[ subject ]</a>
+              <a href="author.html#205">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: cosurgi
+Date: 2008-01-24 16:04:10 +0100 (Thu, 24 Jan 2008)
+New Revision: 1240
+
+Modified:
+   trunk/pkg/lattice/Engine/EngineUnit/LatticeSet2LatticeBeams.cpp
+   trunk/pkg/lattice/PreProcessor/LatticeExample.cpp
+   trunk/pkg/lattice/PreProcessor/LatticeExample.hpp
+Log:
+Use lattice model for simulation of concrete with steel fibres reinforcement.
+
+M    trunk/pkg/lattice/Engine/EngineUnit/LatticeSet2LatticeBeams.cpp
+M    trunk/pkg/lattice/PreProcessor/LatticeExample.cpp
+M    trunk/pkg/lattice/PreProcessor/LatticeExample.hpp
+
+
+Modified: trunk/pkg/lattice/Engine/EngineUnit/LatticeSet2LatticeBeams.cpp
+===================================================================
+--- trunk/pkg/lattice/Engine/EngineUnit/LatticeSet2LatticeBeams.cpp	2008-01-07 09:59:04 UTC (rev 1239)
++++ trunk/pkg/lattice/Engine/EngineUnit/LatticeSet2LatticeBeams.cpp	2008-01-24 15:04:10 UTC (rev 1240)
+@@ -36,12 +36,14 @@
+ 			line-&gt;length                    = beam-&gt;length;
+ 
+ 			// FIXME - display aggregates as brown, bonds as dark brown.
+-			      if(beam-&gt;longitudalStiffness   &lt; 0.09  ) line-&gt;diffuseColor = Vector3r(0.8,0.8,0.8); else // BOND  
+-			      if(beam-&gt;longitudalStiffness   &lt; 0.12  ) line-&gt;diffuseColor = Vector3r(0.4,0.4,0.4); else // CEMENT   
+-			                                               line-&gt;diffuseColor = Vector3r(0.0,0.0,0.0);      // AGGREGATE
++			                                             line-&gt;diffuseColor = Vector3r(0.6,0.6,0.6); // DEFAULT color
+ 
+-			      if(beam-&gt;longitudalStiffness &gt; 0.99 ) line-&gt;diffuseColor = Vector3r(0.6,0.6,0.6); // DEFAULT generation
+-			      if(beam-&gt;longitudalStiffness &gt; 1.2  ) line-&gt;diffuseColor = Vector3r(0.4,0.4,1.0); // NON-DESTROY
++			      if(beam-&gt;longitudalStiffness == 14.0 ) line-&gt;diffuseColor = Vector3r(0.06,0.06,0.06); // BOND  
++			      if(beam-&gt;longitudalStiffness == 20.0 ) line-&gt;diffuseColor = Vector3r(0.46,0.46,0.46); // CEMENT   
++			      if(beam-&gt;longitudalStiffness == 60.0 ) line-&gt;diffuseColor = Vector3r(0.0,0.0,0.0); // AGGREGATE
++			      if(beam-&gt;longitudalStiffness == 160.0) line-&gt;diffuseColor = Vector3r(1.0,1.0,0.35); // STEEL
++
++			      if(beam-&gt;longitudalStiffness == 10.0 ) line-&gt;diffuseColor = Vector3r(0.0,1.0,0.0); // NON-DESTROY
+ 		}
+ 	}
+ }
+
+Modified: trunk/pkg/lattice/PreProcessor/LatticeExample.cpp
+===================================================================
+--- trunk/pkg/lattice/PreProcessor/LatticeExample.cpp	2008-01-07 09:59:04 UTC (rev 1239)
++++ trunk/pkg/lattice/PreProcessor/LatticeExample.cpp	2008-01-24 15:04:10 UTC (rev 1240)
+@@ -161,6 +161,7 @@
+         nonDestroy_A_max         = Vector3r(0,0,0);
+         nonDestroy_B_min         = Vector3r(0,0,0);
+         nonDestroy_B_max         = Vector3r(0,0,0);
++	nonDestroy_stiffness	 = 10.0;
+ 
+ 	CT_A_min		 = Vector3r(0,0,-1);
+ 	CT_A_max		 = Vector3r(0,0,-1);
+@@ -186,6 +187,17 @@
+         bond_torsStiffness_noUnit= 0.28;                                // k_b bond
+         bond_critCompressStrain  = 100.0;                               // E.c bond
+         bond_critTensileStrain   = 50.0;                                // E.l bond
++	// MaterialParameters of steel fibres
++        fibre_longStiffness_noUnit=8.0;      // k_l fibre
++        fibre_bendStiffness_noUnit=5.6;      // k_b fibre
++        fibre_torsStiffness_noUnit=5.6;      // k_t fibre
++        fibre_critCompressStrain = 1;        // E.c fibre
++        fibre_critTensileStrain  = 0.0055;   // E.l fibre
++	fibre_count		 = 0;
++	beams_per_fibre		 = 10;
++	fibre_allows		 = 0.5;
++	fibre_irregularity_noUnit= 5;
++	fibre_balancing_iterations= 300;
+ 		
+ 	nodeRec_A_min=Vector3r(0,0,0);
+ 	nodeRec_A_max=Vector3r(0,0,0);
+@@ -382,6 +394,7 @@
+         REGISTER_ATTRIBUTE(nonDestroy_A_max);
+         REGISTER_ATTRIBUTE(nonDestroy_B_min);
+         REGISTER_ATTRIBUTE(nonDestroy_B_max);
++        REGISTER_ATTRIBUTE(nonDestroy_stiffness);
+        
+ 	REGISTER_ATTRIBUTE(CT);
+ 	REGISTER_ATTRIBUTE(CT_A_min);
+@@ -407,10 +420,24 @@
+         REGISTER_ATTRIBUTE(bond_torsStiffness_noUnit);
+         REGISTER_ATTRIBUTE(bond_critCompressStrain);
+         REGISTER_ATTRIBUTE(bond_critTensileStrain);
++        // MaterialParameters of steel fibres
++        REGISTER_ATTRIBUTE(fibre_longStiffness_noUnit);      // k_l fibre
++        REGISTER_ATTRIBUTE(fibre_bendStiffness_noUnit);      // k_b fibre
++        REGISTER_ATTRIBUTE(fibre_torsStiffness_noUnit);      // k_t fibre
++        REGISTER_ATTRIBUTE(fibre_critCompressStrain);        // E.c fibre
++        REGISTER_ATTRIBUTE(fibre_critTensileStrain);         // E.l fibre
++	REGISTER_ATTRIBUTE(fibre_count);
++	REGISTER_ATTRIBUTE(beams_per_fibre);
++	REGISTER_ATTRIBUTE(fibre_allows);
++	REGISTER_ATTRIBUTE(fibre_irregularity_noUnit);
++	REGISTER_ATTRIBUTE(fibre_balancing_iterations);
+ }
+ 
+ bool LatticeExample::generate()
+ {
++	fibres_total=0;
++	matrix_total=0;
++	beam_total=0;
+ 	rootBody = shared_ptr&lt;MetaBody&gt;(new MetaBody);
+ 	createActors(rootBody);
+ 	positionRootBody(rootBody);
+@@ -436,6 +463,9 @@
+ 
+         unsigned int totalNodesCount = 0;
+ 	{
++		if(fibre_count &gt; 0.0)
++			makeFibres();
++
+ 		setStatus(&quot;creating nodes...&quot;);
+ 		float all = nbNodes[0]*nbNodes[1]*nbNodes[2];
+ 		float current = 0.0;
+@@ -452,14 +482,43 @@
+ 					shared_ptr&lt;Body&gt; node;
+ 					if(createNode(node,i,j,k) || quads)
+ 					{
++						if( fibre_count &lt; 0.5 || fibreAllows(node-&gt;physicalParameters-&gt;se3.position))
++						{
+ 						rootBody-&gt;bodies-&gt;insert(node), ++totalNodesCount;
+ 						if(FLAT)
+ 							vert2.push_back(Vector2r(node-&gt;physicalParameters-&gt;se3.position[0],node-&gt;physicalParameters-&gt;se3.position[1])); // Delaunay
+ 						else
+ 							vert3.push_back(node-&gt;physicalParameters-&gt;se3.position); // Delaunay
++						}
+ 					}
+ 				}
+ 		}
++		if(fibre_count &gt; 0.0)
++		{
++			setStatus(&quot;creating fibre nodes...&quot;);
++			for(int i = 0 ; i &lt; fibre_count ; ++i)
++		        {
++				Vector3r pos = fibres[i].first;
++				Vector3r del = fibres[i].second;
++				for(int j = 0 ; j &lt; beams_per_fibre ; ++j)
++				{
++					shared_ptr&lt;Body&gt; node;
++					if(createNodeXYZ(
++						node,
++						pos[0] + 1.0*j*del[0],
++						pos[1] + 1.0*j*del[1],
++						pos[2] + 1.0*j*del[2] ))
++					{
++						rootBody-&gt;bodies-&gt;insert(node), ++totalNodesCount;
++						if(FLAT)
++							vert2.push_back(Vector2r(node-&gt;physicalParameters-&gt;se3.position[0],node-&gt;physicalParameters-&gt;se3.position[1])); // Delaunay
++						else
++							vert3.push_back(node-&gt;physicalParameters-&gt;se3.position); // Delaunay
++					}
++				}
++			}
++		}
++
+ 	}
+ 
+         BodyRedirectionVector bc;
+@@ -736,7 +795,10 @@
+         imposeTranslation(rootBody,region_E_min,region_E_max,direction_E,displacement_E_meters);
+         imposeTranslation(rootBody,region_F_min,region_F_max,direction_F,displacement_F_meters);
+ 
++	beam_total=bc.size();
+         if(useAggregates) addAggregates(rootBody);
++	setStatus(&quot;making fibres...&quot;);
++	if(fibre_count &gt; 0.0) makeFibreBeams(rootBody);
+ 	if(shouldTerminate()) return false;
+         
+         nonDestroy(rootBody,nonDestroy_A_min,nonDestroy_A_max);
+@@ -744,16 +806,20 @@
+         
+ 	modifyCT(rootBody,CT_A_min,CT_A_max);
+         modifyCT(rootBody,CT_B_min,CT_B_max);
+-        
+-        cerr &lt;&lt; &quot;finished.. saving\n&quot;;
+ 
+         message=&quot;Number of nodes created:\n&quot; + lexical_cast&lt;string&gt;(nbNodes[0]) + &quot;,&quot;
+                                             + lexical_cast&lt;string&gt;(nbNodes[1]) + &quot;,&quot;
+-                                            + lexical_cast&lt;string&gt;(nbNodes[2]) + &quot;,&quot;
++                                            + lexical_cast&lt;string&gt;(nbNodes[2]) + &quot;,\n&quot;
+ 	     + &quot;Number of beams: &quot; + lexical_cast&lt;string&gt;(bc.size()) + &quot;\n&quot;
++	     + &quot;Fibres total: &quot; + lexical_cast&lt;string&gt;(fibres_total) + &quot;\n&quot;
++	     + &quot;Matrix beams total: &quot; + lexical_cast&lt;string&gt;(matrix_total) + &quot;\n&quot;
++	     + &quot;Fibres/matrix %: &quot; + lexical_cast&lt;string&gt;(100.0*fibres_total/matrix_total) + &quot;\n&quot;
++	     + &quot;Fibres/all beams %: &quot; + lexical_cast&lt;string&gt;(100.0*fibres_total/beam_total) + &quot;\n&quot;
+ 	     + &quot;\nNOTE: sometimes it can look better when 'drawWireFrame' is enabled in Display tab.&quot;;
+-		  return true;
+ 
++        cerr &lt;&lt; &quot;finished.. saving\n&quot; &lt;&lt; message &lt;&lt; &quot;\n&quot;;
++	
++	return true;
+ }
+ 
+ /// returns true if angle is bigger than minAngle_betweenBeams_deg
+@@ -790,6 +856,44 @@
+ 	return answer;
+ }
+ 
++bool LatticeExample::createNodeXYZ(shared_ptr&lt;Body&gt;&amp; body, Real x, Real y, Real z)
++{
++	body = shared_ptr&lt;Body&gt;(new Body(body_id_t(0),nodeGroupMask));
++	shared_ptr&lt;LatticeNodeParameters&gt; physics(new LatticeNodeParameters);
++	shared_ptr&lt;Sphere&gt; gSphere(new Sphere);
++	
++	Quaternionr q;
++	q.FromAxisAngle( Vector3r(Mathr::UnitRandom(),Mathr::UnitRandom(),Mathr::UnitRandom()) , Mathr::UnitRandom()*Mathr::PI );
++	
++	Vector3r position(x,y,z);
++
++	Real radius 			= cellsizeUnit_in_meters*0.05;
++	
++	body-&gt;isDynamic			= true;
++	
++	physics-&gt;se3			= Se3r(position,q);
++
++	gSphere-&gt;radius			= radius;
++	gSphere-&gt;diffuseColor		= Vector3r(1.8,1.8,0.0);
++	gSphere-&gt;wire			= false;
++	gSphere-&gt;visible		= true;
++	gSphere-&gt;shadowCaster		= false;
++	
++        body-&gt;geometricalModel          = gSphere;
++        body-&gt;physicalParameters        = physics;
++ 
++	if( 	   position[0] &gt;= speciemen_size_in_meters[0] 
++		|| position[1] &gt;= speciemen_size_in_meters[1]
++		|| position[2] &gt;= speciemen_size_in_meters[2] )
++		return false;
++	if( 	   position[0] &lt; 0 
++		|| position[1] &lt; 0
++		|| position[2] &lt; 0 )
++		return false;
++
++        return true;
++}
++
+ bool LatticeExample::createNode(shared_ptr&lt;Body&gt;&amp; body, int i, int j, int k)
+ {
+ 	body = shared_ptr&lt;Body&gt;(new Body(body_id_t(0),nodeGroupMask));
+@@ -1156,7 +1260,7 @@
+ 				)
+ 			{
+ 				b-&gt;isDynamic = false;
+-				b-&gt;geometricalModel-&gt;diffuseColor = Vector3r(0.3,0.3,0.3);
++				b-&gt;geometricalModel-&gt;diffuseColor = Vector3r(2.0,2.0,0.0);
+ 				translationCondition-&gt;subscribedBodies.push_back(b-&gt;getId());
+ 			}
+ 		}
+@@ -1253,11 +1357,11 @@
+                 LatticeBeamParameters* beam = static_cast&lt;LatticeBeamParameters*&gt;( ((*(rootBody-&gt;bodies))[*vsta])-&gt;physicalParameters.get());
+                 beam-&gt;criticalTensileStrain     = 0.9;
+                 beam-&gt;criticalCompressiveStrain = 0.9;
+-                beam-&gt;longitudalStiffness       = 10.0;
+-                beam-&gt;bendingStiffness          = 2.8;
+-                beam-&gt;torsionalStiffness        = 2.8;
+-                (*(rootBody-&gt;bodies))[beam-&gt;id1]-&gt;geometricalModel-&gt;diffuseColor = Vector3r(0.2,0.5,0.7);
+-                (*(rootBody-&gt;bodies))[beam-&gt;id2]-&gt;geometricalModel-&gt;diffuseColor = Vector3r(0.2,0.5,0.7);
++                beam-&gt;longitudalStiffness       = nonDestroy_stiffness;
++                beam-&gt;bendingStiffness          = nonDestroy_stiffness*0.1;
++                beam-&gt;torsionalStiffness        = nonDestroy_stiffness*0.1;
++//                (*(rootBody-&gt;bodies))[beam-&gt;id1]-&gt;geometricalModel-&gt;diffuseColor = Vector3r(0.2,0.5,0.7);
++//                (*(rootBody-&gt;bodies))[beam-&gt;id2]-&gt;geometricalModel-&gt;diffuseColor = Vector3r(0.2,0.5,0.7);
+         }
+ }
+ 
+@@ -1298,13 +1402,8 @@
+ /////////////////////////////////////////////////////////////////////////////////////////
+ /////////////////////////////////////////////////////////////////////////////////////////
+ 
+-struct Circle
++bool LatticeExample::overlaps(Circle&amp; cc,std::vector&lt;Circle&gt;&amp; c)
+ {
+-        float x,y,z,d;
+-};
+-
+-bool overlaps(Circle&amp; cc,std::vector&lt;Circle&gt;&amp; c)
+-{
+         std::vector&lt;Circle&gt;::iterator end=c.end();
+         for(std::vector&lt;Circle&gt;::iterator i=c.begin();i!=end;++i)
+         {
+@@ -1313,10 +1412,33 @@
+                 if(dist2&lt;r2)
+                         return true;
+         }
++
++	if(fibre_count &gt; 0)
++	{
++		for(int i = 0 ; i &lt; fibre_count ; ++i)
++		{
++			Vector3r pos = fibres[i].first;
++			Vector3r del = fibres[i].second;
++			for(int j = 0 ; j &lt; beams_per_fibre ; ++j)
++			{
++				Vector3r p(
++					pos[0] + 1.0*j*del[0],
++					pos[1] + 1.0*j*del[1],
++					pos[2] + 1.0*j*del[2] );
++				Vector3r dist;
++				Vector3r a(cc.x,cc.y,cc.z);
++				dist = p-a;
++				if(dist.Length() &lt; cc.d*0.5 )
++					return true;
++			}
++		}
++	}
++
++
+         return false;
+ };
+ 
+-int aggInside(Vector3r&amp; a,Vector3r&amp; b,std::vector&lt;Circle&gt;&amp; c, Real cellsizeUnit_in_meters)
++int LatticeExample::aggInside(Vector3r&amp; a,Vector3r&amp; b,std::vector&lt;Circle&gt;&amp; c, Real cellsizeUnit_in_meters)
+ { // checks if nodes 'a','b' are inside any of aggregates from list 'c'
+         int res=0;
+         std::vector&lt;Circle&gt;::iterator end=c.end();
+@@ -1337,7 +1459,7 @@
+         return false;
+ }
+ 
+-float aggsAreas(std::vector&lt;Circle&gt;&amp; c)
++float LatticeExample::aggsAreas(std::vector&lt;Circle&gt;&amp; c)
+ {
+         float aggArea=0.0;
+         std::vector&lt;Circle&gt;::iterator end=c.end();
+@@ -1346,7 +1468,7 @@
+         return aggArea;
+ }
+ 
+-float aggsVolumes(std::vector&lt;Circle&gt;&amp; c)
++float LatticeExample::aggsVolumes(std::vector&lt;Circle&gt;&amp; c)
+ {
+         float aggVolume=0.0;
+         std::vector&lt;Circle&gt;::iterator end=c.end();
+@@ -1441,8 +1563,8 @@
+                                 beam-&gt;criticalTensileStrain     = agg_critTensileStrain;
+                                 beam-&gt;criticalCompressiveStrain = agg_critCompressStrain;
+                 
+-                                (*(rootBody-&gt;bodies))[beam-&gt;id1]-&gt;geometricalModel-&gt;diffuseColor = Vector3r(0.6,0.2,0.0);
+-                                (*(rootBody-&gt;bodies))[beam-&gt;id2]-&gt;geometricalModel-&gt;diffuseColor = Vector3r(0.6,0.2,0.0);
++//                                (*(rootBody-&gt;bodies))[beam-&gt;id1]-&gt;geometricalModel-&gt;diffuseColor = Vector3r(0.6,0.2,0.0);
++//                                (*(rootBody-&gt;bodies))[beam-&gt;id2]-&gt;geometricalModel-&gt;diffuseColor = Vector3r(0.6,0.2,0.0);
+                         }
+                         else if(ovv==1) // bond
+                         {
+@@ -1452,10 +1574,219 @@
+                                 beam-&gt;criticalTensileStrain     = bond_critTensileStrain;
+                                 beam-&gt;criticalCompressiveStrain = bond_critCompressStrain;
+                 
+-                                (*(rootBody-&gt;bodies))[beam-&gt;id1]-&gt;geometricalModel-&gt;diffuseColor = Vector3r(0.6,0.6,0.0);
+-                                (*(rootBody-&gt;bodies))[beam-&gt;id2]-&gt;geometricalModel-&gt;diffuseColor = Vector3r(0.6,0.6,0.0);
++//                                (*(rootBody-&gt;bodies))[beam-&gt;id1]-&gt;geometricalModel-&gt;diffuseColor = Vector3r(0.6,0.6,0.0);
++//                                (*(rootBody-&gt;bodies))[beam-&gt;id2]-&gt;geometricalModel-&gt;diffuseColor = Vector3r(0.6,0.6,0.0);
+                         }
++			else // matrix
++				matrix_total+=1.0;
+                 }
+         }
+ }
+ 
++//
++// old method - just put randomly
++//
++//void LatticeExample::makeFibres()
++//{
++//	fibres.clear();
++//
++//        Real AGGREGATES_X=speciemen_size_in_meters[0];
++//        Real AGGREGATES_Y=speciemen_size_in_meters[1];
++//        Real AGGREGATES_Z=speciemen_size_in_meters[2];
++//	if(AGGREGATES_Z &lt; cellsizeUnit_in_meters )
++//		AGGREGATES_Z = 0.0;
++//
++//        typedef boost::minstd_rand StdGenerator;
++//        static StdGenerator generator;
++//        static boost::variate_generator&lt;StdGenerator&amp;, boost::uniform_real&lt;&gt; &gt;
++//                random1(generator, boost::uniform_real&lt;&gt;(0,1));
++//
++//	for(int i = 0 ; i &lt; fibre_count ; ++i)
++//        {
++//                Vector3r cc;
++//		Vector3r del;
++//                cc[0]=random1()*AGGREGATES_X, cc[1]=random1()*AGGREGATES_Y, cc[2]=AGGREGATES_Z==0?0:random1()*AGGREGATES_Z;
++//                del[0]=random1()-0.5, del[1]=random1()-0.5, del[2]=((AGGREGATES_Z==0)?(0):(random1()-0.5));
++//		del.Normalize();
++//		del=cellsizeUnit_in_meters * del;
++//		fibres.push_back(std::make_pair(cc,del));
++//        }
++//}
++
++
++// new method - equally balance fibres over volume using repulsion
++void LatticeExample::makeFibres()
++{
++	fibres.clear();
++
++        Real AGGREGATES_X=speciemen_size_in_meters[0];
++        Real AGGREGATES_Y=speciemen_size_in_meters[1];
++        Real AGGREGATES_Z=speciemen_size_in_meters[2];
++	if(AGGREGATES_Z &lt; cellsizeUnit_in_meters )
++		AGGREGATES_Z = 0.0;
++
++        typedef boost::minstd_rand StdGenerator;
++        static StdGenerator generator;
++        static boost::variate_generator&lt;StdGenerator&amp;, boost::uniform_real&lt;&gt; &gt;
++                random1(generator, boost::uniform_real&lt;&gt;(0,1));
++
++	for(int i = 0 ; i &lt; fibre_count ; ++i)
++        {
++                Vector3r cc;
++		Vector3r del;
++                cc[0]=random1()*AGGREGATES_X, cc[1]=random1()*AGGREGATES_Y, cc[2]=((AGGREGATES_Z==0)?(0):(random1()*AGGREGATES_Z));
++                del[0]=random1()-0.5, del[1]=random1()-0.5, del[2]=((AGGREGATES_Z==0)?(0):(random1()-0.5));
++		del.Normalize();
++		del=cellsizeUnit_in_meters * del;
++		fibres.push_back(std::make_pair(cc,del));
++        }
++
++// repulsion !!
++	for(int frame=0; frame &lt; fibre_balancing_iterations ; ++frame)
++	{
++		std::vector&lt;Vector3r &gt; moves;
++		moves.clear();
++		for(unsigned int i = 0 ; i &lt; fibres.size() ; ++i )
++		{
++			Vector3r d(0,0,0);
++			Vector3r c1 = fibres[i].first + fibres[i].second*beams_per_fibre*0.5;
++			//emulate periodic boundary
++			for(int px = -1 ; px &lt; 2 ; ++px )
++			for(int py = -1 ; py &lt; 2 ; ++py )
++			for(int pz = ((AGGREGATES_Z==0)?0:-1) ; pz &lt; ((AGGREGATES_Z==0)?1:2) ; ++pz )
++			{
++				Vector3r PERIODIC_DELTA(px*AGGREGATES_X,py*AGGREGATES_Y,pz*AGGREGATES_Z);
++				for(unsigned int j = 0 ; j &lt; fibres.size() ; ++j )
++					if(i != j)
++					{
++						Vector3r c2 = fibres[j].first + fibres[j].second*beams_per_fibre*0.5 + PERIODIC_DELTA;
++						Vector3r dir=c1-c2;
++						Real r = dir.Normalize(); // dir is unit vector, r is a distance
++						if(r &lt; cellsizeUnit_in_meters)
++						{
++							r=cellsizeUnit_in_meters;
++							dir[0]=random1()-0.5, dir[1]=random1()-0.5, dir[2]=((AGGREGATES_Z==0)?(0):(random1()-0.5));
++							dir.Normalize();
++						}
++						d += dir * 1/(r*r);
++					}
++			}
++			// repulsion from walls.
++			Vector3r MAX(AGGREGATES_X, AGGREGATES_Y, AGGREGATES_Z);
++			for(int I=0 ; I&lt;((AGGREGATES_Z==0)?2:3) ; ++I)
++			{
++				if(c1[I] &gt; 0 &amp;&amp; c1[I] &lt; MAX[I])
++					d[I] += (1/(c1[I]*c1[I]) - 1/((MAX[I]-c1[I])*(MAX[I]-c1[I])))*0.5;
++				else
++					std::cerr &lt;&lt; &quot;fibre &quot; &lt;&lt; i &lt;&lt; &quot; is escaping\n&quot;;
++			}
++			moves.push_back(d);
++		}
++		assert(moves.size() == fibres.size() );
++		Real maxl=0;
++		for(unsigned int i = 0 ; i &lt; moves.size() ; ++i )
++			maxl = std::max(moves[i].Length(),maxl);
++	//	std::cerr &lt;&lt; &quot;maxl= &quot; &lt;&lt; maxl &lt;&lt; &quot;\n&quot;;
++		for(unsigned int i = 0 ; i &lt; moves.size() ; ++i )
++			moves[i] = cellsizeUnit_in_meters*moves[i]/maxl;
++	
++		for(unsigned int i = 0 ; i &lt; fibres.size() ; ++i )
++			fibres[i].first+=moves[i];
++	
++		for(unsigned int i = 0 ; i &lt; fibres.size() ; ++i )
++		{
++			Vector3r c1 = fibres[i].first + fibres[i].second*beams_per_fibre*0.5;
++			if(   c1[0] &lt; 0 
++			   || c1[1] &lt; 0 
++			   || c1[2] &lt; 0
++			   || c1[0] &gt; AGGREGATES_X
++			   || c1[1] &gt; AGGREGATES_Y
++			   || c1[2] &gt; AGGREGATES_Z)
++				std::cerr &lt;&lt; &quot;putting again randomly\n&quot;, fibres[i].first = Vector3r(random1()*AGGREGATES_X, random1()*AGGREGATES_Y, ((AGGREGATES_Z==0)?(0):(random1()*AGGREGATES_Z)));
++		}
++		
++	//std::cerr &lt;&lt; &quot;frame= &quot; &lt;&lt; frame++ &lt;&lt; &quot;\n&quot;;
++		setStatus(&quot;balancing fibres...&quot;);
++		setProgress(1.0*frame/(1.0*fibre_balancing_iterations));
++	}
++
++	for(unsigned int i = 0 ; i &lt; fibres.size() ; ++i )
++		fibres[i].first+=Vector3r(random1()-0.5, random1()-0.5, ((AGGREGATES_Z==0)?(0):(random1()-0.5)) )*fibre_irregularity_noUnit*cellsizeUnit_in_meters;
++}
++
++
++bool LatticeExample::isFibre(Vector3r a,Vector3r b)
++{
++	bool A=false;
++	bool B=false;
++	for(int i = 0 ; i &lt; fibre_count ; ++i)
++        {
++		Vector3r pos = fibres[i].first;
++		Vector3r del = fibres[i].second;
++		for(int j = 0 ; j &lt; beams_per_fibre ; ++j)
++		{
++			Vector3r p(
++				pos[0] + 1.0*j*del[0],
++				pos[1] + 1.0*j*del[1],
++				pos[2] + 1.0*j*del[2] );
++			if(p == a) A=true;
++			if(p == b) B=true;
++		}
++	}
++	return A &amp;&amp; B;
++}
++
++bool LatticeExample::fibreAllows(Vector3r a)
++{
++	for(int i = 0 ; i &lt; fibre_count ; ++i)
++        {
++		Vector3r pos = fibres[i].first;
++		Vector3r del = fibres[i].second;
++		for(int j = 0 ; j &lt; beams_per_fibre ; ++j)
++		{
++			Vector3r p(
++				pos[0] + 1.0*j*del[0],
++				pos[1] + 1.0*j*del[1],
++				pos[2] + 1.0*j*del[2] );
++			Vector3r dist;
++			dist = p-a;
++			if(dist.Length() &lt; cellsizeUnit_in_meters*fibre_allows )
++				return false;
++		}
++	}
++	return true;
++}
++
++
++
++void LatticeExample::makeFibreBeams(shared_ptr&lt;MetaBody&gt;&amp; rootBody)
++{
++        { // set different properties for beams that are fibre
++                BodyContainer::iterator bi    = rootBody-&gt;bodies-&gt;begin();
++                BodyContainer::iterator biEnd = rootBody-&gt;bodies-&gt;end();
++                for(  ; bi!=biEnd ; ++bi )  // loop over all beams
++                {
++                        Body* body = (*bi).get();
++                        if( ! ( body-&gt;getGroupMask() &amp; beamGroupMask ) )
++                                continue; // skip non-beams
++
++                        LatticeBeamParameters* beam     = static_cast&lt;LatticeBeamParameters*&gt;(body-&gt;physicalParameters.get());
++                        if(isFibre(       (*(rootBody-&gt;bodies))[beam-&gt;id1]-&gt;physicalParameters-&gt;se3.position
++                                         ,(*(rootBody-&gt;bodies))[beam-&gt;id2]-&gt;physicalParameters-&gt;se3.position))
++			{
++				beam-&gt;longitudalStiffness       = fibre_longStiffness_noUnit;
++                        	beam-&gt;bendingStiffness          = fibre_bendStiffness_noUnit;
++                        	beam-&gt;torsionalStiffness	= fibre_torsStiffness_noUnit;
++                        	beam-&gt;criticalTensileStrain     = fibre_critTensileStrain;
++                        	beam-&gt;criticalCompressiveStrain = fibre_critCompressStrain;
++                
++//                        	(*(rootBody-&gt;bodies))[beam-&gt;id1]-&gt;geometricalModel-&gt;diffuseColor = Vector3r(2.0,2.0,0.0);
++//                        	(*(rootBody-&gt;bodies))[beam-&gt;id2]-&gt;geometricalModel-&gt;diffuseColor = Vector3r(2.0,2.0,0.0);
++				
++				fibres_total+=1.0;
++			}
++                }
++        }
++}
++
++
+
+Modified: trunk/pkg/lattice/PreProcessor/LatticeExample.hpp
+===================================================================
+--- trunk/pkg/lattice/PreProcessor/LatticeExample.hpp	2008-01-07 09:59:04 UTC (rev 1239)
++++ trunk/pkg/lattice/PreProcessor/LatticeExample.hpp	2008-01-24 15:04:10 UTC (rev 1240)
+@@ -72,10 +72,41 @@
+                                 ,bond_bendStiffness_noUnit      // k_b bond
+                                 ,bond_torsStiffness_noUnit      // k_t bond
+                                 ,bond_critCompressStrain        // E.c bond
+-                                ,bond_critTensileStrain;        // E.l bond
++                                ,bond_critTensileStrain         // E.l bond
++                        // MaterialParameters of steel fibres
++                                ,fibre_longStiffness_noUnit      // k_l fibre
++                                ,fibre_bendStiffness_noUnit      // k_b fibre
++                                ,fibre_torsStiffness_noUnit      // k_t fibre
++                                ,fibre_critCompressStrain        // E.c fibre
++                                ,fibre_critTensileStrain         // E.l fibre
++				,fibre_count
++				,beams_per_fibre
++				,fibre_allows
++				,fibre_irregularity_noUnit
++				,fibre_balancing_iterations
++				
++				,fibres_total
++				,matrix_total
++				,beam_total;
+ 
++		std::vector&lt;std::pair&lt;Vector3r,Vector3r&gt; &gt; fibres; // start, direction
++
+                 void addAggregates(shared_ptr&lt;MetaBody&gt;&amp; rootBody);
++                void makeFibreBeams(shared_ptr&lt;MetaBody&gt;&amp; rootBody);
++		bool isFibre(Vector3r,Vector3r);
++		bool fibreAllows(Vector3r);
++
++////////////////////////////////////////////////////
++struct Circle
++{
++        float x,y,z,d;
++};
++		bool overlaps(Circle&amp; cc,std::vector&lt;Circle&gt;&amp; c);
++		int aggInside(Vector3r&amp; a,Vector3r&amp; b,std::vector&lt;Circle&gt;&amp; c, Real cellsizeUnit_in_meters);
++		float aggsAreas(std::vector&lt;Circle&gt;&amp; c);
++		float aggsVolumes(std::vector&lt;Circle&gt;&amp; c);
+                 
++////////////////////////////////////////////
+                 
+         // conditions
+ 		Vector3r 	 region_A_min
+@@ -206,6 +237,8 @@
+                                 ,nonDestroy_B_min
+                                 ,nonDestroy_B_max;
+ 
++		Real		 nonDestroy_stiffness;
++
+ 	// region of modified crit_TensileStrain
+ 	
+ 		Vector3r	 CT_A_min
+@@ -226,6 +259,7 @@
+ 		void createActors(shared_ptr&lt;MetaBody&gt;&amp; rootBody);
+ 		void positionRootBody(shared_ptr&lt;MetaBody&gt;&amp; rootBody);
+ 		bool createNode(shared_ptr&lt;Body&gt;&amp; body, int i, int j, int k);
++		bool createNodeXYZ(shared_ptr&lt;Body&gt;&amp; body, Real i, Real j, Real k);
+ 		bool createQuad(shared_ptr&lt;Body&gt;&amp; body, int i, int j, Vector3r);
+                 void createBeam(shared_ptr&lt;Body&gt;&amp; body, int i, int j);
+                 Real calcBeamPositionOrientationLength(shared_ptr&lt;Body&gt;&amp; body);
+@@ -239,6 +273,7 @@
+                 void regionDelete(shared_ptr&lt;MetaBody&gt;&amp; rootBody, Vector3r min, Vector3r max);
+                 void nonDestroy(shared_ptr&lt;MetaBody&gt;&amp; rootBody, Vector3r min, Vector3r max);
+                 void modifyCT(shared_ptr&lt;MetaBody&gt;&amp; rootBody, Vector3r min, Vector3r max);
++		void makeFibres();
+ 
+                 virtual void registerAttributes();
+                 REGISTER_CLASS_NAME(LatticeExample);
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000204.html">[Yade-commits] r1239 - in trunk: core extra extra/clump gui/cmd	lib/base pkg/dem/Engine/DeusExMachina pkg/dem/PreProcessor
+</A></li>
+	<LI>Next message: <A HREF="000206.html">[Yade-commits] r1241 - in trunk: . doc
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#205">[ date ]</a>
+              <a href="thread.html#205">[ thread ]</a>
+              <a href="subject.html#205">[ subject ]</a>
+              <a href="author.html#205">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

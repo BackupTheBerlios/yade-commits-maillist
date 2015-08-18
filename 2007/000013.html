@@ -1,0 +1,196 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1048 - in trunk: yade-core/src/yade	yade-packages/yade-package-dem/src/PreProcessor
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2007/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1048%20-%20in%20trunk%3A%20yade-core/src/yade%0A%09yade-packages/yade-package-dem/src/PreProcessor&In-Reply-To=%3C200701301038.l0UAcqDb012233%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000012.html">
+   <LINK REL="Next"  HREF="000014.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1048 - in trunk: yade-core/src/yade	yade-packages/yade-package-dem/src/PreProcessor</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1048%20-%20in%20trunk%3A%20yade-core/src/yade%0A%09yade-packages/yade-package-dem/src/PreProcessor&In-Reply-To=%3C200701301038.l0UAcqDb012233%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1048 - in trunk: yade-core/src/yade	yade-packages/yade-package-dem/src/PreProcessor">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Tue Jan 30 11:38:52 CET 2007</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000012.html">[Yade-commits] r1047 - in trunk:	yade-packages/yade-package-dem/src/PreProcessor yade-scripts
+</A></li>
+        <LI>Next message: <A HREF="000014.html">[Yade-commits] r1049 - trunk/yade-core/src/yade
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#13">[ date ]</a>
+              <a href="thread.html#13">[ thread ]</a>
+              <a href="subject.html#13">[ subject ]</a>
+              <a href="author.html#13">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2007-01-30 11:38:52 +0100 (Tue, 30 Jan 2007)
+New Revision: 1048
+
+Modified:
+   trunk/yade-core/src/yade/Omega.cpp
+   trunk/yade-packages/yade-package-dem/src/PreProcessor/PreProcessor.pro
+Log:
+1. Fixed Omega::scanPlugins so that it loads plugins that were linked without -rpath for their dependencies. Everything is in #ifdef STUPID_DLL
+2. Removed again IsotropicCompressionTest since needed headers are missing. Bruno, please add them back (they were removed in the 1045 commit.) and then enable IsotropicCompressionTest in yade-packages/yade-package-dem/src/PreProcessor/PreProcessor.pro again.
+
+
+
+Modified: trunk/yade-core/src/yade/Omega.cpp
+===================================================================
+--- trunk/yade-core/src/yade/Omega.cpp	2007-01-30 09:38:20 UTC (rev 1047)
++++ trunk/yade-core/src/yade/Omega.cpp	2007-01-30 10:38:52 UTC (rev 1048)
+@@ -186,7 +186,7 @@
+ 
+ void Omega::scanPlugins()
+ {
+-
++#define STUPID_DLL
+ //	ClassFactory::instance().unloadAll();
+ 
+ 	// TODO: remove all comments of the form /*DLL ... */, they comment the old code that whould not be needed any more
+@@ -197,7 +197,9 @@
+ 		ClassFactory::instance().addBaseDirectory((*dldi));
+ 			
+ 	vector&lt;string&gt; dynlibsList;
+-	/*DLL vector&lt; int &gt;    dynlibsListLoaded; */
++	#ifdef STUPID_DLL
++		vector&lt; int &gt;    dynlibsListLoaded;
++	#endif
+ 
+ 	vector&lt;string&gt;::iterator si = preferences-&gt;dynlibDirectories.begin();
+ 	vector&lt;string&gt;::iterator siEnd = preferences-&gt;dynlibDirectories.end();
+@@ -234,7 +236,9 @@
+ 					if(dynlibsList.size()==0 || ClassFactory::instance().systemNameToLibName(name.leaf())!=dynlibsList.back()) {
+ 						LOG_DEBUG(&quot;Added plugin: &quot;&lt;&lt;*si&lt;&lt;&quot;/&quot;&lt;&lt;di-&gt;leaf()&lt;&lt;&quot;.&quot;);
+ 						dynlibsList.push_back(ClassFactory::instance().systemNameToLibName(name.leaf()));
+-						/*DLL dynlibsListLoaded.push_back(false); */
++						#ifdef STUPID_DLL
++							dynlibsListLoaded.push_back(false);
++						#endif
+ 					}
+ 					else LOG_DEBUG(&quot;Possible plugin discarded: &quot;&lt;&lt;*si&lt;&lt;&quot;/&quot;&lt;&lt;name.leaf()&lt;&lt;&quot;.&quot;);
+ 				} else LOG_DEBUG(&quot;File not considered a plugin: &quot;&lt;&lt;di-&gt;leaf()&lt;&lt;&quot;.&quot;);
+@@ -245,18 +249,31 @@
+ 
+ 	bool allLoaded = false;
+ 	int overflow = 30; // to prevent infinite loop
+-	/*DLL assert(dynlibsList.size() == dynlibsListLoaded.size() ); */
+ 	vector&lt;string&gt; dynlibsClassList; // dynlibsList holds filenames, this holds classes defined inside (may be different if using yadePuginClasses)
+-	/*DLL while (!allLoaded &amp;&amp; --overflow &gt; 0)	{	*/
++	#ifdef STUPID_DLL
++		assert(dynlibsList.size() == dynlibsListLoaded.size());
++		while (!allLoaded &amp;&amp; --overflow &gt; 0){
++		int loaded = 0;
++	#endif
+ 		vector&lt; string &gt;::iterator dlli    = dynlibsList.begin();
+ 		vector&lt; string &gt;::iterator dlliEnd = dynlibsList.end();
+-		/*DLL int loaded = 0; */
+ 		allLoaded = true;
+-		for( ; dlli!=dlliEnd ; ++dlli /*DLL , ++loaded */ )
++		for( ; dlli!=dlliEnd ; ++dlli
++		#ifdef STUPID_DLL
++		, ++loaded
++		#endif
++		)
+ 		{
+-			/*DLL if( dynlibsListLoaded[loaded] == false ) { */
++			#ifdef STUPID_DLL
++			if( dynlibsListLoaded[loaded] == false ) {
++				LOG_DEBUG(&quot;Trying to load plugin &quot;&lt;&lt;*dlli&lt;&lt;&quot; (no.&quot;&lt;&lt;loaded&lt;&lt;&quot;; overflow=&quot;&lt;&lt;overflow&lt;&lt;&quot;)&quot;);
++			#endif
+ 			bool thisLoaded = ClassFactory::instance().load((*dlli));
+-			if (!thisLoaded &amp;&amp; overflow == 1){
++			if (!thisLoaded
++				#ifdef STUPID_DLL
++				&amp;&amp; overflow == 1
++				#endif
++				){
+ 				string err=ClassFactory::instance().lastError();
+ 				// HACK
+ 				if(err.find(&quot;cannot open shared object file: No such file or directory&quot;)!=std::string::npos){
+@@ -270,22 +287,29 @@
+ 					int status=0;
+ 					char* demangled_sym=abi::__cxa_demangle(sym.c_str(),0,0,&amp;status);
+ 					LOG_FATAL(&quot;Undefined symbol `&quot;&lt;&lt;demangled_sym&lt;&lt;&quot;' (&quot;&lt;&lt;err&lt;&lt;&quot;).&quot;);
+-
+ 				}
+ 				else LOG_ERROR(&quot;Error loading Library `&quot;&lt;&lt;(*dlli)&lt;&lt;&quot;': &quot;&lt;&lt;err&lt;&lt;&quot; .&quot;); // leave space to not to confuse c++filt
+ 			}
++			#ifdef STUPID_DLL
++			else if (!thisLoaded) { LOG_DEBUG(&quot;Plugin &quot;&lt;&lt;*dlli&lt;&lt;&quot; not loaded successfully this time...&quot;); }
++			#endif
+ 			else { // no error
+ 				if (ClassFactory::instance().lastPluginClasses().size()==0){ // regular plugin, one class per file
+ 					dynlibsClassList.push_back(*dlli);
++					LOG_DEBUG(&quot;Plugin &quot;&lt;&lt;*dlli&lt;&lt;&quot; loaded succesfully.&quot;);
+ 				} else {// if plugin defines yadePluginClasses (has multiple classes), insert these into dynLibsList
+ 					vector&lt;string&gt; css=ClassFactory::instance().lastPluginClasses();
+ 					for(size_t i=0; i&lt;css.size();i++) { dynlibsClassList.push_back(css[i]); LOG_DEBUG(&quot;Plugin &quot;&lt;&lt;*dlli&lt;&lt;&quot;: added class &quot;&lt;&lt;css[i]&lt;&lt;&quot;.&quot;);  }
+ 				}
+ 			}
+ 			allLoaded &amp;= thisLoaded;
+-			/*DLL if(thisLoaded) dynlibsListLoaded[loaded] = true; } */
++			#ifdef STUPID_DLL
++				if(thisLoaded) dynlibsListLoaded[loaded] = true; }
++			#endif
+ 		}
+-	/*DLL} */
++	#ifdef STUPID_DLL
++	}
++	#endif
+ 
+ 	if(!allLoaded) LOG_WARN(&quot;Couldn't load everything, some stuff may work incorrectly.&quot;);
+ 	
+
+Modified: trunk/yade-packages/yade-package-dem/src/PreProcessor/PreProcessor.pro
+===================================================================
+--- trunk/yade-packages/yade-package-dem/src/PreProcessor/PreProcessor.pro	2007-01-30 09:38:20 UTC (rev 1047)
++++ trunk/yade-packages/yade-package-dem/src/PreProcessor/PreProcessor.pro	2007-01-30 10:38:52 UTC (rev 1048)
+@@ -9,8 +9,7 @@
+            SDECSpheresPlane \
+            SDECMovingWall \
+            TetrahedronsTest \
+-	   TriaxialTest \
+-	   IsotropicCompressionTest
++	   TriaxialTest
+ 	   
+ 
+ CONFIG += debug \
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000012.html">[Yade-commits] r1047 - in trunk:	yade-packages/yade-package-dem/src/PreProcessor yade-scripts
+</A></li>
+	<LI>Next message: <A HREF="000014.html">[Yade-commits] r1049 - trunk/yade-core/src/yade
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#13">[ date ]</a>
+              <a href="thread.html#13">[ thread ]</a>
+              <a href="subject.html#13">[ subject ]</a>
+              <a href="author.html#13">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

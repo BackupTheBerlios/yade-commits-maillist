@@ -1,0 +1,172 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1437 - in trunk: gui gui/py	pkg/common/Engine/EngineUnit
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1437%20-%20in%20trunk%3A%20gui%20gui/py%0A%09pkg/common/Engine/EngineUnit&In-Reply-To=%3C200807211327.m6LDRTXO013723%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000396.html">
+   <LINK REL="Next"  HREF="000398.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1437 - in trunk: gui gui/py	pkg/common/Engine/EngineUnit</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1437%20-%20in%20trunk%3A%20gui%20gui/py%0A%09pkg/common/Engine/EngineUnit&In-Reply-To=%3C200807211327.m6LDRTXO013723%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1437 - in trunk: gui gui/py	pkg/common/Engine/EngineUnit">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Mon Jul 21 15:27:29 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000396.html">[Yade-commits] r1436 - in trunk: core extra extra/clump	extra/spherical-dem-simulator gui/py gui/qt3 pkg/common	pkg/common/Engine/DeusExMachina pkg/dem	pkg/dem/DataClass/InteractionGeometry pkg/dem/PreProcessor	pkg/fem pkg/fem/PreProcessor pkg/mass-spring	pkg/mass-spring/PreProcessor pkg/realtime-rigidbody	pkg/realtime-rigidbody/PreProcessor scripts
+</A></li>
+        <LI>Next message: <A HREF="000398.html">[Yade-commits] r1438 - in trunk/pkg: common/Engine/DeusExMachina	common/Engine/EngineUnit common/Engine/MetaEngine	common/RenderingEngine/GLDrawBoundingVolume	common/RenderingEngine/GLDrawGeometricalModel	common/RenderingEngine/GLDrawInteractingGeometry	common/RenderingEngine/GLDrawInteractionGeometry	common/RenderingEngine/GLDrawInteractionPhysics	common/RenderingEngine/GLDrawShadowVolume	common/RenderingEngine/GLDrawState	common/RenderingEngine/OpenGLRenderingEngine	dem/Engine/StandAloneEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#397">[ date ]</a>
+              <a href="thread.html#397">[ thread ]</a>
+              <a href="subject.html#397">[ subject ]</a>
+              <a href="author.html#397">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2008-07-21 15:27:29 +0200 (Mon, 21 Jul 2008)
+New Revision: 1437
+
+Added:
+   trunk/gui/py/eudoxos.py
+Modified:
+   trunk/gui/SConscript
+   trunk/pkg/common/Engine/EngineUnit/CundallNonViscousForceDamping.cpp
+   trunk/pkg/common/Engine/EngineUnit/CundallNonViscousForceDamping.hpp
+Log:
+1. Add private functions to eudoxos.py
+2. Fix a few broken includes
+
+
+Modified: trunk/gui/SConscript
+===================================================================
+--- trunk/gui/SConscript	2008-07-21 13:12:23 UTC (rev 1436)
++++ trunk/gui/SConscript	2008-07-21 13:27:29 UTC (rev 1437)
+@@ -61,6 +61,7 @@
+ 			),
+ 		env.File('__init__.py','py'),
+ 		env.File('utils.py','py'),
++		env.File('eudoxos.py','py'),
+ 		env.File('runtime.py','py'),
+ 		env.File('ipython.py','py'),
+ 		env.File('plot.py','py'),
+
+Added: trunk/gui/py/eudoxos.py
+===================================================================
+--- trunk/gui/py/eudoxos.py	2008-07-21 13:12:23 UTC (rev 1436)
++++ trunk/gui/py/eudoxos.py	2008-07-21 13:27:29 UTC (rev 1437)
+@@ -0,0 +1,45 @@
++# encoding: utf-8
++# 2008 &#169; V&#225;clav &#352;milauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">eudoxos at arcig.cz</A>&gt;
++#
++# I doubt there functions will be useful for anyone besides me.
++#
++
++
++def oofemTextExport():
++	&quot;&quot;&quot;Export simulation data in text format 
++	
++	The format is line-oriented as follows:
++		# 3 lines of material parameters:
++		1. E G # elastic
++		2. epsCrackOnset epsFr expBending xiShear #tension
++		3. cohesionT tanPhi # shear
++		4. [number of spheres] [number of links]
++		5. id x y z r -1/0/1[on negative/no/positive boundary] # spheres
++		&#8230;
++		n. id1 id2 contact_point_x cp_y cp_z A # interactions &quot;&quot;&quot;
++	from yade.wrapper import Omega
++	material,bodies,interactions=[],[],[]
++	o=Omega()
++
++	ph=o.interactions.nth(0).phys # some params are the same everywhere
++	material.append(&quot;%g %g&quot;%(ph['E'],ph['G']))
++	material.append(&quot;%g %g %g %g&quot;%(ph['epsCrackOnset'],ph['epsFracture'],ph['expBending'],ph['xiShear']))
++	material.append(&quot;%g %g&quot;%(ph['undamagedCohesion'],ph['tanFrictionAngle']))
++
++	# need strainer for getting bodies in positive/negative boundary
++	strainers=[e for e in o.engines if e.name=='UniaxialStrainer']
++	if len(strainers)&gt;0: strainer=strainers[0]
++	else: strainer=None
++
++	for b in o.bodies:
++		if strainer and b.id in strainer['negIds']: boundary=-1
++		elif strainer and b.id in strainer['posIds']: boundary=1
++		else: boundary=0
++		bodies.append(&quot;%d %g %g %g %g %d&quot;%(b.id,b.phys['se3'][0],b.phys['se3'][1],b.phys['se3'][2],b.shape['radius'],boundary))
++
++	for i in o.interactions:
++		if not i.geom or not i.phys: continue
++		cp=i.geom['contactPoint']
++		interactions.append(&quot;%d %d %g %g %g %g&quot;%(i.id1,i.id2,cp[0],cp[1],cp[2],i.phys['crossSection']))
++
++	return material+[&quot;%d %d&quot;%(len(bodies),len(interactions))]+bodies+interactions
+
+Modified: trunk/pkg/common/Engine/EngineUnit/CundallNonViscousForceDamping.cpp
+===================================================================
+--- trunk/pkg/common/Engine/EngineUnit/CundallNonViscousForceDamping.cpp	2008-07-21 13:12:23 UTC (rev 1436)
++++ trunk/pkg/common/Engine/EngineUnit/CundallNonViscousForceDamping.cpp	2008-07-21 13:27:29 UTC (rev 1437)
+@@ -6,9 +6,9 @@
+ *  GNU General Public License v2 or later. See file LICENSE for details. *
+ *************************************************************************/
+ 
+-#include &quot;CundallNonViscousForceDamping.hpp&quot;
+-#include &quot;ParticleParameters.hpp&quot;
+-#include &quot;Force.hpp&quot;
++#include&lt;yade/pkg-common/ParticleParameters.hpp&gt;
++#include&lt;yade/pkg-common/Force.hpp&gt;
++#include&quot;CundallNonViscousForceDamping.hpp&quot;
+ 
+ 
+ CundallNonViscousForceDamping::CundallNonViscousForceDamping() : damping(0)
+
+Modified: trunk/pkg/common/Engine/EngineUnit/CundallNonViscousForceDamping.hpp
+===================================================================
+--- trunk/pkg/common/Engine/EngineUnit/CundallNonViscousForceDamping.hpp	2008-07-21 13:12:23 UTC (rev 1436)
++++ trunk/pkg/common/Engine/EngineUnit/CundallNonViscousForceDamping.hpp	2008-07-21 13:27:29 UTC (rev 1437)
+@@ -9,7 +9,7 @@
+ #ifndef ACTION_FORCE_DAMPING_HPP
+ #define ACTION_FORCE_DAMPING_HPP
+ 
+-#include &quot;PhysicalActionDamperUnit.hpp&quot;
++#include&lt;yade/pkg-common/PhysicalActionDamperUnit.hpp&gt;
+ 
+ class CundallNonViscousForceDamping : public PhysicalActionDamperUnit
+ {
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000396.html">[Yade-commits] r1436 - in trunk: core extra extra/clump	extra/spherical-dem-simulator gui/py gui/qt3 pkg/common	pkg/common/Engine/DeusExMachina pkg/dem	pkg/dem/DataClass/InteractionGeometry pkg/dem/PreProcessor	pkg/fem pkg/fem/PreProcessor pkg/mass-spring	pkg/mass-spring/PreProcessor pkg/realtime-rigidbody	pkg/realtime-rigidbody/PreProcessor scripts
+</A></li>
+	<LI>Next message: <A HREF="000398.html">[Yade-commits] r1438 - in trunk/pkg: common/Engine/DeusExMachina	common/Engine/EngineUnit common/Engine/MetaEngine	common/RenderingEngine/GLDrawBoundingVolume	common/RenderingEngine/GLDrawGeometricalModel	common/RenderingEngine/GLDrawInteractingGeometry	common/RenderingEngine/GLDrawInteractionGeometry	common/RenderingEngine/GLDrawInteractionPhysics	common/RenderingEngine/GLDrawShadowVolume	common/RenderingEngine/GLDrawState	common/RenderingEngine/OpenGLRenderingEngine	dem/Engine/StandAloneEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#397">[ date ]</a>
+              <a href="thread.html#397">[ thread ]</a>
+              <a href="subject.html#397">[ subject ]</a>
+              <a href="author.html#397">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

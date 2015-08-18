@@ -1,0 +1,134 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1391 - in trunk: core gui/py
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1391%20-%20in%20trunk%3A%20core%20gui/py&In-Reply-To=%3C200806171308.m5HD8V6U028160%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000351.html">
+   <LINK REL="Next"  HREF="000353.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1391 - in trunk: core gui/py</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1391%20-%20in%20trunk%3A%20core%20gui/py&In-Reply-To=%3C200806171308.m5HD8V6U028160%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1391 - in trunk: core gui/py">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Tue Jun 17 15:08:31 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000351.html">[Yade-commits] r1390 - in trunk: . core extra gui/py lib/import	lib/miniWm3 pkg/dem/Engine/DeusExMachina
+</A></li>
+        <LI>Next message: <A HREF="000353.html">[Yade-commits] r1392 - trunk/gui/py
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#352">[ date ]</a>
+              <a href="thread.html#352">[ thread ]</a>
+              <a href="subject.html#352">[ subject ]</a>
+              <a href="author.html#352">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2008-06-17 15:08:31 +0200 (Tue, 17 Jun 2008)
+New Revision: 1391
+
+Modified:
+   trunk/core/MetaBody.cpp
+   trunk/gui/py/yadeControl.cpp
+Log:
+1. Fix tagging, do it as list&lt;string&gt;; must NOT contain spaces!
+2. Adapt python to that (replaces spaces automatically and so on)
+
+
+
+Modified: trunk/core/MetaBody.cpp
+===================================================================
+--- trunk/core/MetaBody.cpp	2008-06-17 11:56:11 UTC (rev 1390)
++++ trunk/core/MetaBody.cpp	2008-06-17 13:08:31 UTC (rev 1391)
+@@ -16,6 +16,7 @@
+ #include&lt;yade/lib-base/yadeWm3.hpp&gt;
+ #include&lt;boost/foreach.hpp&gt;
+ #include&lt;boost/date_time/posix_time/posix_time.hpp&gt;
++#include&lt;boost/algorithm/string.hpp&gt;
+ 
+ 
+ /* this is meant to improve usability: MetaBody is ready by default (so is Omega by that token)
+@@ -47,7 +48,10 @@
+ 	gethostname(hostname,HOST_NAME_MAX);
+ 	pw=getpwuid(geteuid()); if(!pw) throw runtime_error(&quot;getpwuid(geteuid()) failed!&quot;);
+ 	// a few default tags
+-	tags.push_back(string(&quot;author=&quot;)+pw-&gt;pw_gecos+&quot; (&quot;+string(pw-&gt;pw_name)+&quot;@&quot;+hostname+&quot;)&quot;);
++	// real name: will have all non-ASCII characters replaced by ? since serialization doesn't handle that
++	// the standard GECOS format is Real Name,,, - first command and after will be discarded
++	string gecos(pw-&gt;pw_gecos), gecos2; size_t p=gecos.find(&quot;,&quot;); if(p!=string::npos) boost::algorithm::erase_tail(gecos,gecos.size()-p); for(size_t i=0;i&lt;gecos.size();i++){gecos2.push_back(((unsigned char)gecos[i])&lt;128 ? gecos[i] : '?'); }
++	tags.push_back(boost::algorithm::replace_all_copy(string(&quot;author=&quot;)+gecos2+&quot; (&quot;+string(pw-&gt;pw_name)+&quot;@&quot;+hostname+&quot;)&quot;,&quot; &quot;,&quot;~&quot;));
+ 	tags.push_back(string(&quot;isoTime=&quot;+boost::posix_time::to_iso_string(boost::posix_time::second_clock::local_time())));
+ 	tags.push_back(string(&quot;description=&quot;));
+ }
+
+Modified: trunk/gui/py/yadeControl.cpp
+===================================================================
+--- trunk/gui/py/yadeControl.cpp	2008-06-17 11:56:11 UTC (rev 1390)
++++ trunk/gui/py/yadeControl.cpp	2008-06-17 13:08:31 UTC (rev 1391)
+@@ -215,22 +215,23 @@
+ 		const shared_ptr&lt;MetaBody&gt; mb;
+ 		bool hasKey(string key){ FOREACH(string val, mb-&gt;tags){ if(algorithm::starts_with(val,key+&quot;=&quot;)){ return true;} } return false; }
+ 		string getItem(string key){
+-			FOREACH(string val, mb-&gt;tags){
+-				if(algorithm::starts_with(val,key+&quot;=&quot;)){ algorithm::erase_head(val,val.size()+1); return val;}
++			FOREACH(string&amp; val, mb-&gt;tags){
++				if(algorithm::starts_with(val,key+&quot;=&quot;)){ string val1(val); algorithm::erase_head(val1,key.size()+1); algorithm::replace_all(val1,&quot;~&quot;,&quot; &quot;); return val1;}
+ 			}
+ 			PyErr_SetString(PyExc_KeyError, &quot;Invalid key.&quot;);
+ 			python::throw_error_already_set(); /* make compiler happy; never reached */ return string();
+ 		}
+ 		void setItem(string key,string newVal){
+-			FOREACH(string&amp; val, mb-&gt;tags){if(algorithm::starts_with(val,key+&quot;=&quot;)){ val=newVal; return; } }
+-			mb-&gt;tags.push_back(key+&quot;=&quot;+newVal);
++			string item=algorithm::replace_all_copy(key+&quot;=&quot;+newVal,&quot; &quot;,&quot;~&quot;);
++			FOREACH(string&amp; val, mb-&gt;tags){if(algorithm::starts_with(val,key+&quot;=&quot;)){ val=item; return; } }
++			mb-&gt;tags.push_back(item);
+ 			}
+ 		python::list keys(){
+ 			python::list ret;
+ 			FOREACH(string val, mb-&gt;tags){
+ 				size_t i=val.find(&quot;=&quot;);
+-				if(i==string::npos) throw runtime_error(&quot;Tags must be in the key:value format&quot;);
+-				algorithm::erase_head(val,i); ret.append(val);
++				if(i==string::npos) throw runtime_error(&quot;Tags must be in the key=value format&quot;);
++				algorithm::erase_tail(val,val.size()-i); ret.append(val);
+ 			}
+ 			return ret;
+ 		}
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000351.html">[Yade-commits] r1390 - in trunk: . core extra gui/py lib/import	lib/miniWm3 pkg/dem/Engine/DeusExMachina
+</A></li>
+	<LI>Next message: <A HREF="000353.html">[Yade-commits] r1392 - trunk/gui/py
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#352">[ date ]</a>
+              <a href="thread.html#352">[ thread ]</a>
+              <a href="subject.html#352">[ subject ]</a>
+              <a href="author.html#352">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

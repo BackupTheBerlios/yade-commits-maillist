@@ -1,0 +1,578 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1399 - in branches/przewdnik: core gui/qt3	pkg/common/Engine/StandAloneEngine/Visualisation	pkg/common/RenderingEngine/OpenGLRenderingEngine
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1399%20-%20in%20branches/przewdnik%3A%20core%20gui/qt3%0A%09pkg/common/Engine/StandAloneEngine/Visualisation%0A%09pkg/common/RenderingEngine/OpenGLRenderingEngine&In-Reply-To=%3C200806251707.m5PH7Kvm013978%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000359.html">
+   <LINK REL="Next"  HREF="000361.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1399 - in branches/przewdnik: core gui/qt3	pkg/common/Engine/StandAloneEngine/Visualisation	pkg/common/RenderingEngine/OpenGLRenderingEngine</H1>
+    <B>przewdnik at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1399%20-%20in%20branches/przewdnik%3A%20core%20gui/qt3%0A%09pkg/common/Engine/StandAloneEngine/Visualisation%0A%09pkg/common/RenderingEngine/OpenGLRenderingEngine&In-Reply-To=%3C200806251707.m5PH7Kvm013978%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1399 - in branches/przewdnik: core gui/qt3	pkg/common/Engine/StandAloneEngine/Visualisation	pkg/common/RenderingEngine/OpenGLRenderingEngine">przewdnik at mail.berlios.de
+       </A><BR>
+    <I>Wed Jun 25 19:07:20 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000359.html">[Yade-commits] r1398 - in trunk: . extra gui/py
+</A></li>
+        <LI>Next message: <A HREF="000361.html">[Yade-commits] r1400 - in branches/przewdnik/core: . visualisation
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#360">[ date ]</a>
+              <a href="thread.html#360">[ thread ]</a>
+              <a href="subject.html#360">[ subject ]</a>
+              <a href="author.html#360">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: przewdnik
+Date: 2008-06-25 19:07:11 +0200 (Wed, 25 Jun 2008)
+New Revision: 1399
+
+Modified:
+   branches/przewdnik/core/Body.cpp
+   branches/przewdnik/core/Omega.hpp
+   branches/przewdnik/core/RenderingEngine.hpp
+   branches/przewdnik/gui/qt3/GLViewer.cpp
+   branches/przewdnik/gui/qt3/SimulationController.cpp
+   branches/przewdnik/pkg/common/Engine/StandAloneEngine/Visualisation/VisualisationEngine.cpp
+   branches/przewdnik/pkg/common/Engine/StandAloneEngine/Visualisation/VisualisationEngine.hpp
+   branches/przewdnik/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.cpp
+   branches/przewdnik/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.hpp
+Log:
+Work in progress with switching rendering to new composite object.
+
+Modified: branches/przewdnik/core/Body.cpp
+===================================================================
+--- branches/przewdnik/core/Body.cpp	2008-06-22 20:46:30 UTC (rev 1398)
++++ branches/przewdnik/core/Body.cpp	2008-06-25 17:07:11 UTC (rev 1399)
+@@ -65,4 +65,3 @@
+ 	REGISTER_ATTRIBUTE(boundingVolume);
+ 	REGISTER_ATTRIBUTE(clumpId);
+ }
+-
+
+Modified: branches/przewdnik/core/Omega.hpp
+===================================================================
+--- branches/przewdnik/core/Omega.hpp	2008-06-22 20:46:30 UTC (rev 1398)
++++ branches/przewdnik/core/Omega.hpp	2008-06-25 17:07:11 UTC (rev 1399)
+@@ -44,11 +44,11 @@
+ 
+ #include &quot;SimulationFlow.hpp&quot;
+ #include &quot;Body.hpp&quot;
++#include &quot;visualisation/VisualisationContainer.hpp&quot;
+ 
+ class MetaBody;
+ class ThreadRunner;
+ class Preferences;
+-class BodyContainer;
+ 
+ using namespace boost;
+ using namespace boost::posix_time;
+@@ -76,7 +76,7 @@
+ 		map&lt;string,DynlibDescriptor&gt;	 dynlibs;	// FIXME : should store that in ClassFactory ?
+ 		
+ 		shared_ptr&lt;MetaBody&gt;		 rootBody;
+-		shared_ptr&lt;BodyContainer&gt;		 visualisationBody;
++		shared_ptr&lt;VisualisationContainer&gt;		 visualisationContainer;
+ 		ptime				 sStartingSimulationTime;
+ 		ptime				 msStartingSimulationTime;
+ 		ptime				 msStartingPauseTime;
+@@ -132,8 +132,8 @@
+ 		void		setRootBody(shared_ptr&lt;MetaBody&gt;&amp;);
+ 		void		freeRootBody();
+ 		
+-		const		shared_ptr&lt;BodyContainer&gt;&amp; getVisualisationBody();
+-		void		setVisualisationBody(shared_ptr&lt;BodyContainer&gt;&amp;);
++		const		shared_ptr&lt;VisualisationContainer&gt;&amp; getVisualisationBody();
++		void		setVisualisationBody(shared_ptr&lt;VisualisationContainer&gt;&amp;);
+ 		void		freeVisualisationBody();
+ 		
+ 		ptime		getMsStartingSimulationTime();
+
+Modified: branches/przewdnik/core/RenderingEngine.hpp
+===================================================================
+--- branches/przewdnik/core/RenderingEngine.hpp	2008-06-22 20:46:30 UTC (rev 1398)
++++ branches/przewdnik/core/RenderingEngine.hpp	2008-06-25 17:07:11 UTC (rev 1399)
+@@ -18,8 +18,8 @@
+ 		RenderingEngine():Serializable() {};
+ 		virtual ~RenderingEngine() {} ;
+ 	
+-		virtual void render(const shared_ptr&lt;MetaBody&gt;&amp; , const int selection = -1) {throw;};
+-		virtual void renderWithNames(const shared_ptr&lt;MetaBody&gt;&amp; ) {throw;};
++		virtual void render(const shared_ptr&lt;VisualisationContainer&gt;&amp; , const int selection = -1) {throw;};
++		virtual void renderWithNames(const shared_ptr&lt;VisualisationContainer&gt;&amp; ) {throw;};
+ 		virtual void init() {throw;};
+ 
+ 	REGISTER_CLASS_NAME(RenderingEngine);
+
+Modified: branches/przewdnik/gui/qt3/GLViewer.cpp
+===================================================================
+--- branches/przewdnik/gui/qt3/GLViewer.cpp	2008-06-22 20:46:30 UTC (rev 1398)
++++ branches/przewdnik/gui/qt3/GLViewer.cpp	2008-06-25 17:07:11 UTC (rev 1399)
+@@ -63,6 +63,7 @@
+ 
+ void GLViewer::keyPressEvent(QKeyEvent *e)
+ {
++	BodyContainer *bc = &amp;Omega::instance().getVisualisationBody();
+ 	if ( e-&gt;key()==Qt::Key_M )
+ 		if( !(isMoving = !isMoving ) )
+ 		{
+@@ -78,7 +79,7 @@
+ 			setMouseBinding(Qt::RightButton, FRAME, ROTATE);
+ 			setWheelBinding(Qt::NoButton , FRAME, ZOOM);
+ 		}
+-	else if( e-&gt;key()==Qt::Key_C &amp;&amp; selectedName() != -1 &amp;&amp; (*(Omega::instance().getRootBody()-&gt;bodies)).exists(selectedName()))
++	else if( e-&gt;key()==Qt::Key_C &amp;&amp; selectedName() != -1 &amp;&amp; (bc-&gt;bodies)).exists(selectedName()))
+ 		setSceneCenter(manipulatedFrame()-&gt;position()), updateGL();
+ 	else if( e-&gt;key()==Qt::Key_D )
+ 		wasDynamic = true;
+@@ -146,14 +147,16 @@
+ 
+ void GLViewer::centerScene()
+ {
+-	if (!Omega::instance().getRootBody())
++	VisualisationContainer *bc = &amp;Omega::instance().getVisualisationBody();
++	if (!bc)
+ 		return;
+ 
+-	if(Omega::instance().getRootBody()-&gt;bodies-&gt;size() &lt; 500)
++	if(bc-&gt;getBodyContainer-&gt;size() &lt; 500)
+ 		displayMessage(&quot;Less than 500 bodies, moving possible. Select with shift, press 'm' to move. Use / * - + for cutting plane.&quot;, 6000);
+ 	else
+ 		displayMessage(&quot;More than 500 bodies. Moving not possible. Use / * - + for cutting plane.&quot;, 6000);
+ 
++	// TODO [przewdnik] boundingVolume...
+ 	Vector3r min = Omega::instance().getRootBody()-&gt;boundingVolume-&gt;min;
+ 	Vector3r max = Omega::instance().getRootBody()-&gt;boundingVolume-&gt;max;
+ 	Vector3r center = (max+min)*0.5;
+@@ -166,13 +169,14 @@
+ 
+ void GLViewer::draw() // FIXME maybe rename to RendererFlowControl, or something like that?
+ {
+-	if(Omega::instance().getRootBody())
++	if(Omega::instance().getVisualisationBody())
+ 	{
+ 		int selection = selectedName();
+-		if(selection != -1 &amp;&amp; (*(Omega::instance().getRootBody()-&gt;bodies)).exists(selection) )
++		BodyContainer *bc = &amp;Omega::instance().getVisualisationBody().getBodyContainer();
++		if(selection != -1 &amp;&amp; (*bc).exists(selection) )
+ 		{
+-			Quaternionr&amp; q = (*(Omega::instance().getRootBody()-&gt;bodies))[selection]-&gt;physicalParameters-&gt;se3.orientation;
+-			Vector3r&amp;    v = (*(Omega::instance().getRootBody()-&gt;bodies))[selection]-&gt;physicalParameters-&gt;se3.position;
++			Quaternionr&amp; q = bc[selection]-&gt;physicalParameters-&gt;se3.orientation;
++			Vector3r&amp;    v = bc[selection]-&gt;physicalParameters-&gt;se3.position;
+ 			float v0,v1,v2;
+ 			manipulatedFrame()-&gt;getPosition(v0,v1,v2);
+ 			v[0]=v0;v[1]=v1;v[2]=v2;
+@@ -180,19 +184,20 @@
+ 			manipulatedFrame()-&gt;getOrientation(q0,q1,q2,q3);
+ 			q[0]=q0;q[1]=q1;q[2]=q2;q[3]=q3;
+ 
+-			(*(Omega::instance().getRootBody()-&gt;bodies))[selection]-&gt;userForcedDisplacementRedrawHook();	
++			bc[selection]-&gt;userForcedDisplacementRedrawHook();	
+ 		}
+ 		
+ 	// FIXME - here we want to actually call all responsible GLDraw Actors
+-		renderer-&gt;render(Omega::instance().getRootBody(), selectedName());
++		renderer-&gt;render(bc, selectedName());
+ 	}
+ }
+ 
+ void GLViewer::drawWithNames() // FIXME maybe rename to RendererFlowControl, or something like that?
+ {
+-	if (Omega::instance().getRootBody() &amp;&amp; Omega::instance().getRootBody()-&gt;bodies-&gt;size() &lt; 500 )
++	BodyContainer bc = Omega::instance().getVisualisationBody();
++	if (bc &amp;&amp; bc-&gt;size() &lt; 500 )
+ 	// FIXME - here we want to actually call all responsible GLDraw Actors
+-		renderer-&gt;renderWithNames(Omega::instance().getRootBody());
++		renderer-&gt;renderWithNames(bc);
+ }
+ 
+ // new object selected.
+@@ -210,7 +215,8 @@
+ 		}
+ 		return;
+ 	}
+-	if( (*(Omega::instance().getRootBody()-&gt;bodies)).exists(selection) )
++	BodyContainer *bc = &amp;Omega::instance().getVisualisationBody();
++	if( bc.exists(selection) )
+ 	{
+ 		if(Body::byId(body_id_t(selection))-&gt;isClumpMember()){ // select clump (invisible) instead of its member
+ 			cerr&lt;&lt;&quot;Clump member #&quot;&lt;&lt;selection&lt;&lt;&quot; selected, selecting clump instead.&quot;&lt;&lt;endl;
+@@ -219,11 +225,11 @@
+ 		}
+ 
+ 		std::cerr &lt;&lt; &quot;new selection &quot; &lt;&lt; selection &lt;&lt; &quot;\n&quot;;
+-		wasDynamic = (*(Omega::instance().getRootBody()-&gt;bodies))[selection]-&gt;isDynamic;
+-		(*(Omega::instance().getRootBody()-&gt;bodies))[selection]-&gt;isDynamic = false;
++		wasDynamic = bc[selection]-&gt;isDynamic;
++		bc[selection]-&gt;isDynamic = false;
+ 
+-		Quaternionr&amp; q = (*(Omega::instance().getRootBody()-&gt;bodies))[selection]-&gt;physicalParameters-&gt;se3.orientation;
+-		Vector3r&amp;    v = (*(Omega::instance().getRootBody()-&gt;bodies))[selection]-&gt;physicalParameters-&gt;se3.position;
++		Quaternionr&amp; q = bc[selection]-&gt;physicalParameters-&gt;se3.orientation;
++		Vector3r&amp;    v = bc[selection]-&gt;physicalParameters-&gt;se3.position;
+ 		manipulatedFrame()-&gt;setPositionAndOrientation(qglviewer::Vec(v[0],v[1],v[2]),qglviewer::Quaternion(q[0],q[1],q[2],q[3]));
+ 	}
+ 
+@@ -234,11 +240,12 @@
+ void GLViewer::endSelection(const QPoint &amp;point)
+ {
+ 	int old = selectedName();
++	BodyContainer bc = Omega::instance().getVisualisationBody();
+ 
+ 	QGLViewer::endSelection(point);
+ 
+-	if(old != -1 &amp;&amp; old!=selectedName() &amp;&amp; (*(Omega::instance().getRootBody()-&gt;bodies)).exists(old) )
+-		(*(Omega::instance().getRootBody()-&gt;bodies))[old]-&gt;isDynamic = wasDynamic;
++	if(old != -1 &amp;&amp; old!=selectedName() &amp;&amp; (*bc).exists(old) )
++		(*bc)[old]-&gt;isDynamic = wasDynamic;
+ }
+ 
+ void GLViewer::postDraw()
+
+Modified: branches/przewdnik/gui/qt3/SimulationController.cpp
+===================================================================
+--- branches/przewdnik/gui/qt3/SimulationController.cpp	2008-06-22 20:46:30 UTC (rev 1398)
++++ branches/przewdnik/gui/qt3/SimulationController.cpp	2008-06-25 17:07:11 UTC (rev 1399)
+@@ -440,9 +440,9 @@
+ void SimulationController::timerEvent( QTimerEvent* )
+ {
+ 	updater-&gt;oneLoop();
+-	BodyContainer bc;
++	VisualisationContainer vc;
+ 	queue.pop(bc);
+-	Omega::instance().setVisualisationBody(bc);
++	Omega::instance().setVisualisationBody(vc);
+ 	redrawAll();
+ 	if(sync)
+ 		Omega::instance().spawnSingleSimulationLoop();
+
+Modified: branches/przewdnik/pkg/common/Engine/StandAloneEngine/Visualisation/VisualisationEngine.cpp
+===================================================================
+--- branches/przewdnik/pkg/common/Engine/StandAloneEngine/Visualisation/VisualisationEngine.cpp	2008-06-22 20:46:30 UTC (rev 1398)
++++ branches/przewdnik/pkg/common/Engine/StandAloneEngine/Visualisation/VisualisationEngine.cpp	2008-06-25 17:07:11 UTC (rev 1399)
+@@ -2,7 +2,7 @@
+ 
+ VisualisationEngine::VisualisationEngine()
+ {
+-	queue = InterprocessQueue&lt;BodyContainer&gt;();
++	queue = InterprocessQueue&lt;VisualisationContainer&gt;();
+ 	queue.init(&quot;vis_queue&quot;);
+ 	
+ 	lastDone = vector&lt;Real&gt;(config.list.size(), 0);
+@@ -35,7 +35,9 @@
+ 				 Body qbody = createQBody(*bi, *it);
+ 				 container.insert(qbody);
+ 			 	}
+-			 queue.push(container);
++			 VisualisationContainer visContainer;
++			 visContainer.setBodyContainer(container);
++			 queue.push(visContainer);
+ 		 }
+ 	   }            
+ }
+
+Modified: branches/przewdnik/pkg/common/Engine/StandAloneEngine/Visualisation/VisualisationEngine.hpp
+===================================================================
+--- branches/przewdnik/pkg/common/Engine/StandAloneEngine/Visualisation/VisualisationEngine.hpp	2008-06-22 20:46:30 UTC (rev 1398)
++++ branches/przewdnik/pkg/common/Engine/StandAloneEngine/Visualisation/VisualisationEngine.hpp	2008-06-25 17:07:11 UTC (rev 1399)
+@@ -7,7 +7,7 @@
+ class VisualisationEngine : public StandAloneEngine
+ {
+ private:
+-	InterprocessQueue&lt;BodyContainer&gt; queue;
++	InterprocessQueuer&lt;VisualisationContainer&gt; queue;
+ 	vector&lt;Real&gt; lastDone;
+ 	
+ public:
+
+Modified: branches/przewdnik/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.cpp
+===================================================================
+--- branches/przewdnik/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.cpp	2008-06-22 20:46:30 UTC (rev 1398)
++++ branches/przewdnik/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.cpp	2008-06-25 17:07:11 UTC (rev 1399)
+@@ -76,9 +76,9 @@
+ 	}
+ }
+ 
+-void OpenGLRenderingEngine::renderWithNames(const shared_ptr&lt;MetaBody&gt;&amp; rootBody)
++void OpenGLRenderingEngine::renderWithNames(const shared_ptr&lt;BodyContainer&gt;&amp; bodies)
+ {
+-	shared_ptr&lt;BodyContainer&gt;&amp; bodies = rootBody-&gt;bodies;
++//	shared_ptr&lt;BodyContainer&gt;&amp; bodies = rootBody-&gt;bodies;
+ 	BodyContainer::iterator bi    = bodies-&gt;begin();
+ 	BodyContainer::iterator biEnd = bodies-&gt;end();
+ 	for( ; bi!=biEnd ; ++bi)
+@@ -104,7 +104,7 @@
+ };
+ 
+ void OpenGLRenderingEngine::render(
+-		const shared_ptr&lt;MetaBody&gt;&amp; rootBody, 
++		const shared_ptr&lt;BodyContainer&gt;&amp; bodies, 
+ 		body_id_t selection	// FIXME: not sure. maybe a list of selections, 
+ 					// or maybe bodies themselves should remember if they are selected?
+ 		)
+@@ -147,9 +147,9 @@
+ 		{	
+ 			
+ 			if (Fast_shadow_volume)
+-				renderSceneUsingFastShadowVolumes(rootBody,Light_position);
++				renderSceneUsingFastShadowVolumes(bodies,Light_position);
+ 			else
+-				renderSceneUsingShadowVolumes(rootBody,Light_position);
++				renderSceneUsingShadowVolumes(bodies,Light_position);
+ 				
+ 			// draw transparent shadow volume
+ 			if (Shadow_volumes)
+@@ -165,10 +165,10 @@
+ 				glEnable(GL_CULL_FACE);
+ 			
+ 				glCullFace(GL_FRONT);
+-				renderShadowVolumes(rootBody,Light_position);
++				renderShadowVolumes(bodies,Light_position);
+ 				
+ 				glCullFace(GL_BACK);
+-				renderShadowVolumes(rootBody,Light_position);
++				renderShadowVolumes(bodies,Light_position);
+ 				
+ 				glEnable(GL_DEPTH_TEST);
+ 				glDisable(GL_BLEND);
+@@ -179,28 +179,28 @@
+ 		{
+ 			glEnable(GL_CULL_FACE);
+ 			glEnable(GL_NORMALIZE);
+-			renderGeometricalModel(rootBody);
++			renderGeometricalModel(bodies);
+ 		}
+ 	}
+ 	
+ 	if (Body_state)
+-		renderState(rootBody);
++		renderState(bodies);
+ 	
+ 	if (Body_bounding_volume)
+-		renderBoundingVolume(rootBody);
++		renderBoundingVolume(bodies);
+ 	
+ 	if (Body_interacting_geom)
+ 	{
+ 		glEnable(GL_LIGHTING);
+ 		glEnable(GL_CULL_FACE);
+-		renderInteractingGeometry(rootBody);
++		renderInteractingGeometry(bodies);
+ 	}
+ 
+ 	if (Interaction_geometry)
+-		renderInteractionGeometry(rootBody);
++		renderInteractionGeometry(bodies);
+ 	
+ 	if (Interaction_physics)
+-		renderInteractionPhysics(rootBody);
++		renderInteractionPhysics(bodies);
+ 	
+ 
+ /*	shared_ptr&lt;BodyContainer&gt; bodies = rootBody-&gt;bodies;
+@@ -234,13 +234,13 @@
+ }
+ 
+ 
+-void OpenGLRenderingEngine::renderSceneUsingShadowVolumes(const shared_ptr&lt;MetaBody&gt;&amp; rootBody,Vector3r Light_position)
++void OpenGLRenderingEngine::renderSceneUsingShadowVolumes(const shared_ptr&lt;BodyContainer&gt;&amp; bodies,Vector3r Light_position)
+ {
+ 	glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+ 	glEnable(GL_CULL_FACE);
+ 	glCullFace(GL_BACK);
+ 	glEnable(GL_NORMALIZE);
+-	renderGeometricalModel(rootBody);	
++	renderGeometricalModel(bodies);	
+ 	
+ 	glClear(GL_STENCIL_BUFFER_BIT);
+ 	glEnable(GL_STENCIL_TEST);
+@@ -249,11 +249,11 @@
+ 
+ 	glStencilOp(GL_KEEP, GL_KEEP, GL_INCR);
+ 	glCullFace(GL_BACK);  /* increment using front face of shadow volume */
+-	renderShadowVolumes(rootBody,Light_position);
++	renderShadowVolumes(bodies,Light_position);
+ 	
+ 	glStencilOp(GL_KEEP, GL_KEEP, GL_DECR);
+ 	glCullFace(GL_FRONT);  /* increment using front face of shadow volume */
+-	renderShadowVolumes(rootBody,Light_position);	
++	renderShadowVolumes(bodies,Light_position);	
+ 			
+ 	glDepthMask(GL_TRUE);
+ 	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+@@ -265,13 +265,13 @@
+ 	glStencilFunc(GL_NOTEQUAL, 0, (GLuint)(-1));
+ 	glDisable(GL_LIGHT0);
+ 	glEnable(GL_NORMALIZE);
+-	renderGeometricalModel(rootBody);	
++	renderGeometricalModel(bodies);	
+ 	
+ 	glStencilFunc(GL_EQUAL, 0, 1);  /* draw lit part */
+ 	glStencilFunc(GL_EQUAL, 0, (GLuint)(-1));
+ 	glEnable(GL_LIGHT0);
+ 	glEnable(GL_NORMALIZE);
+-	renderGeometricalModel(rootBody);	
++	renderGeometricalModel(bodies);	
+ 	
+ 	glDepthFunc(GL_LESS);
+ 	glDisable(GL_STENCIL_TEST);
+@@ -279,11 +279,11 @@
+ }
+ 
+ 
+-void OpenGLRenderingEngine::renderSceneUsingFastShadowVolumes(const shared_ptr&lt;MetaBody&gt;&amp; rootBody,Vector3r Light_position)
++void OpenGLRenderingEngine::renderSceneUsingFastShadowVolumes(const shared_ptr&lt;BodyContainer&gt;&amp; bodies,Vector3r Light_position)
+ {
+ 	glEnable(GL_CULL_FACE);
+ 	glEnable(GL_NORMALIZE);
+-	renderGeometricalModel(rootBody);	
++	renderGeometricalModel(bodies);	
+ 
+ 	glClear(GL_STENCIL_BUFFER_BIT);
+ 	glEnable(GL_STENCIL_TEST);
+@@ -294,11 +294,11 @@
+ 
+ 	glStencilOp(GL_KEEP, GL_KEEP, GL_INCR);
+ 	glCullFace(GL_BACK);  /* increment using front face of shadow volume */
+-	renderShadowVolumes(rootBody,Light_position);
++	renderShadowVolumes(bodies,Light_position);
+ 	
+ 	glStencilOp(GL_KEEP, GL_KEEP, GL_DECR);
+ 	glCullFace(GL_FRONT);  /* increment using front face of shadow volume */
+-	renderShadowVolumes(rootBody,Light_position);	
++	renderShadowVolumes(bodies,Light_position);	
+ 	
+ 	// Need to do that to remove shadow that are not on object but if glClear is 0
+ /*	glStencilOp(GL_KEEP, GL_KEEP, GL_INCR);	
+@@ -372,29 +372,32 @@
+ }	
+ 
+ 
+-void OpenGLRenderingEngine::renderShadowVolumes(const shared_ptr&lt;MetaBody&gt;&amp; rootBody,Vector3r Light_position)
++void OpenGLRenderingEngine::renderShadowVolumes(const shared_ptr&lt;BodyContainer&gt;&amp; bodies,Vector3r Light_position)
+ {	
+-	if (!rootBody-&gt;geometricalModel)
+-	{
+-		BodyContainer::iterator bi    = rootBody-&gt;bodies-&gt;begin();
+-		BodyContainer::iterator biEnd = rootBody-&gt;bodies-&gt;end();
++	// TODO [przewdnik]: geometricalModel
++/*	if (!rootBody-&gt;geometricalModel)
++	{ */
++		BodyContainer::iterator bi    = bodies-&gt;begin();
++		BodyContainer::iterator biEnd = bodies-&gt;end();
+ 		for(; bi!=biEnd ; ++bi )
+ 		{
+ 			if ((*bi)-&gt;geometricalModel-&gt;shadowCaster &amp;&amp; ( ((*bi)-&gt;getGroupMask() &amp; Draw_mask) || (*bi)-&gt;getGroupMask()==0 ))
+ 				shadowVolumeDispatcher((*bi)-&gt;geometricalModel,(*bi)-&gt;physicalParameters,Light_position);
+ 		}
+-	}
++/*	}
+ 	else
+ 		shadowVolumeDispatcher(rootBody-&gt;geometricalModel,rootBody-&gt;physicalParameters,Light_position);
++*/
+ }
+ 
+ 
+-void OpenGLRenderingEngine::renderGeometricalModel(const shared_ptr&lt;MetaBody&gt;&amp; rootBody)
++void OpenGLRenderingEngine::renderGeometricalModel(const shared_ptr&lt;BodyContainer&gt;&amp; bodies)
+ {	
+-	shared_ptr&lt;BodyContainer&gt;&amp; bodies = rootBody-&gt;bodies;
++	//shared_ptr&lt;BodyContainer&gt;&amp; bodies = rootBody-&gt;bodies;
+ 	bool done=false;
+ 
+-	if((rootBody-&gt;geometricalModel || Draw_inside) &amp;&amp; Draw_inside)
++	if (Draw_inside)
++//	if((rootBody-&gt;geometricalModel || Draw_inside) &amp;&amp; Draw_inside)
+ 	{
+ 		BodyContainer::iterator bi    = bodies-&gt;begin();
+ 		BodyContainer::iterator biEnd = bodies-&gt;end();
+@@ -428,12 +431,13 @@
+ 		}
+ 	}
+ 	
+-	if(rootBody-&gt;geometricalModel)
++/*	if(rootBody-&gt;geometricalModel)
+ 		geometricalModelDispatcher(rootBody-&gt;geometricalModel,rootBody-&gt;physicalParameters,Body_wire);
++		*/
+ }
+ 
+ 
+-void OpenGLRenderingEngine::renderInteractionGeometry(const shared_ptr&lt;MetaBody&gt;&amp; rootBody)
++void OpenGLRenderingEngine::renderInteractionGeometry(const shared_ptr&lt;BodyContainer&gt;&amp; bodies)
+ {	
+ 	{
+ 		boost::mutex::scoped_lock lock(rootBody-&gt;persistentInteractions-&gt;drawloopmutex);
+
+Modified: branches/przewdnik/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.hpp
+===================================================================
+--- branches/przewdnik/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.hpp	2008-06-22 20:46:30 UTC (rev 1398)
++++ branches/przewdnik/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.hpp	2008-06-25 17:07:11 UTC (rev 1399)
+@@ -77,19 +77,19 @@
+ 		virtual ~OpenGLRenderingEngine();
+ 	
+ 		void init();
+-		void render(const shared_ptr&lt;MetaBody&gt;&amp; body, body_id_t selection = body_id_t(-1));
+-		virtual void renderWithNames(const shared_ptr&lt;MetaBody&gt;&amp; );
++		void render(const shared_ptr&lt;BodyContainer&gt;&amp; body, body_id_t selection = body_id_t(-1));
++		virtual void renderWithNames(const shared_ptr&lt;BodyContainer&gt; &gt;&amp; );
+ 	
+ 	private :
+-		void renderGeometricalModel(const shared_ptr&lt;MetaBody&gt;&amp; rootBody);
+-		void renderInteractionPhysics(const shared_ptr&lt;MetaBody&gt;&amp; rootBody);
+-		void renderInteractionGeometry(const shared_ptr&lt;MetaBody&gt;&amp; rootBody);
+-		void renderState(const shared_ptr&lt;MetaBody&gt;&amp; rootBody);
+-		void renderBoundingVolume(const shared_ptr&lt;MetaBody&gt;&amp; rootBody);
+-		void renderInteractingGeometry(const shared_ptr&lt;MetaBody&gt;&amp; rootBody);
+-		void renderShadowVolumes(const shared_ptr&lt;MetaBody&gt;&amp; rootBody,Vector3r Light_position);
+-		void renderSceneUsingShadowVolumes(const shared_ptr&lt;MetaBody&gt;&amp; rootBody,Vector3r Light_position);
+-		void renderSceneUsingFastShadowVolumes(const shared_ptr&lt;MetaBody&gt;&amp; rootBody,Vector3r Light_position);
++		void renderGeometricalModel(const shared_ptr&lt;BodyContainer&gt;&amp; rootBody);
++		void renderInteractionPhysics(const shared_ptr&lt;BodyContainer&gt;&amp; rootBody);
++		void renderInteractionGeometry(const shared_ptr&lt;BodyContainer&gt;&amp; rootBody);
++		void renderState(const shared_ptr&lt;BodyContainer&gt;&amp; rootBody);
++		void renderBoundingVolume(const shared_ptr&lt;BodyContainer&gt;&amp; rootBody);
++		void renderInteractingGeometry(const shared_ptr&lt;BodyContainer&gt;&amp; rootBody);
++		void renderShadowVolumes(const shared_ptr&lt;BodyContainer&gt;&amp; rootBody,Vector3r Light_position);
++		void renderSceneUsingShadowVolumes(const shared_ptr&lt;BodyContainer&gt;&amp; rootBody,Vector3r Light_position);
++		void renderSceneUsingFastShadowVolumes(const shared_ptr&lt;BodyContainer&gt;&amp; rootBody,Vector3r Light_position);
+ 	
+ 	protected :
+ 		void postProcessAttributes(bool deserializing);
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000359.html">[Yade-commits] r1398 - in trunk: . extra gui/py
+</A></li>
+	<LI>Next message: <A HREF="000361.html">[Yade-commits] r1400 - in branches/przewdnik/core: . visualisation
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#360">[ date ]</a>
+              <a href="thread.html#360">[ thread ]</a>
+              <a href="subject.html#360">[ subject ]</a>
+              <a href="author.html#360">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

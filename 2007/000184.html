@@ -1,0 +1,163 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1219 - trunk
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2007/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1219%20-%20trunk&In-Reply-To=%3C200706300927.l5U9Rd6X012563%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000183.html">
+   <LINK REL="Next"  HREF="000185.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1219 - trunk</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1219%20-%20trunk&In-Reply-To=%3C200706300927.l5U9Rd6X012563%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1219 - trunk">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Sat Jun 30 11:27:39 CEST 2007</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000183.html">[Yade-commits] r1218 - trunk
+</A></li>
+        <LI>Next message: <A HREF="000185.html">[Yade-commits] r1220 - in trunk: core extra extra/clump extra/screw	extra/tetra lib/factory
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#184">[ date ]</a>
+              <a href="thread.html#184">[ thread ]</a>
+              <a href="subject.html#184">[ subject ]</a>
+              <a href="author.html#184">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2007-06-30 11:27:39 +0200 (Sat, 30 Jun 2007)
+New Revision: 1219
+
+Modified:
+   trunk/yade.spec
+Log:
+spec file works on fedora 6 now
+
+Modified: trunk/yade.spec
+===================================================================
+--- trunk/yade.spec	2007-06-30 07:15:03 UTC (rev 1218)
++++ trunk/yade.spec	2007-06-30 09:27:39 UTC (rev 1219)
+@@ -1,5 +1,6 @@
+-#%define defREVISIONS if [ -f RELEASE ]; then REVISION=`cat RELEASE` SNAPSHOT=&quot;&quot; elif [ -d .svn ]; then REVISION=&quot;svn$( svn info | egrep '^Revision:' | cut -f2 -d' ')&quot; SNAPSHOT=&quot;-snapshot&quot; elif [ -d .bzr ]; then REVISION=&quot;bzr$( bzr version-info | egrep '^revno:' | cut -f2 -d' ')&quot; SNAPSHOT=&quot;-snapshot&quot; else echo 'Revision could not be determined (RELEASE or .svn or .bzr)' &gt;2 exit 1 fi; if [ -z &quot;$REVISION&quot; ]; then _REVISION=&quot;&quot;; else _REVISION=_$REVISION; export REVISION SNAPSHOT _REVISION
+-
++#
++# This needs to be tuned by hand
++#
+ %define REVISION 0.11
+ %define _REVISION -0.11
+ %define SNAPSHOT -stable
+@@ -7,7 +8,8 @@
+ # do not strip files after compilation
+ %define __spec_install_post /usr/lib/rpm/brp-compress
+ 
+-#%defREVISIONS
++# do not generate debug package
++%define debug_package %{nil}
+ 
+ Name: yade%{_REVISION}
+ Provides: yade%{SNAPSHOT}
+@@ -20,14 +22,18 @@
+ Url: <A HREF="http://yade.wikia.com">http://yade.wikia.com</A>
+ Source: <A HREF="http://download.berlios.de/yade/yade-0.11.0.tar.gz">http://download.berlios.de/yade/yade-0.11.0.tar.gz</A>
+ Group: Applications/Engineering
++BuildRoot: %{_tmppath}/%{name}-buildroot
+ 
+ %package dbg
+ Summary: Platform for discrete numerical modeling, debugging version.
+ Group: Applications/Engineering
++Provides: yade%{SNAPSHOT}-dbg
+ 
+-%package dev
++%package devel
+ Summary: Platform for discrete numerical modeling, development files.
+ Group: Applications/Engineering
++Provides: yade%{SNAPSHOT}-devel
++Requires: boost-devel python-devel qt-devel libQGLViewer-devel glut-devel
+ 
+ %description
+ YADE is an Open Source GNU/GPL Software framework designed with dynamic libraries in a way that it is easy to add new numerical models for simulation. It aims to provide versatile means to perform discrete modelling.
+@@ -35,35 +41,35 @@
+ %description dbg
+ YADE is an Open Source GNU/GPL Software framework designed with dynamic libraries in a way that it is easy to add new numerical models for simulation. It aims to provide versatile means to perform discrete modelling. This packages is built with debugging support.
+ 
+-%description dev
++%description devel
+ YADE is an Open Source GNU/GPL Software framework designed with dynamic libraries in a way that it is easy to add new numerical models for simulation. It aims to provide versatile means to perform discrete modelling. This package contains development files.
+ 
+-
+-%define RPM_BUILD_ROOT /var/tmp/%{name}-%{version}-buildroot
+-
+ %prep
+ %setup -n yade-0.11.0
+ 
+ %build
+ 
+ %install
+-set
+ #optimized build (main package)
+ scons buildPrefix=${RPM_BUILD_DIR} PREFIX=%{RPM_BUILD_ROOT}/usr runtimePREFIX=/usr version=%{REVISION} useMiniWm3=1 exclude=realtime-rigidbody variant='' optimize=1 debug=0
+ #debug build (-dbg)
+ scons variant=-dbg optimize=0 debug=1
+-# install headers (-dev)
++# install headers (-devel)
+ scons %{RPM_BUILD_ROOT}/usr/include %{RPM_BUILD_ROOT}/usr/lib/pkgconfig
+ 
++
+ %files
+-/usr/lib/yade{$_REVISION}
+-/usr/bin/yade{$_REVISION}
++%defattr(-,root,root)
++/usr/lib/%name
++/usr/bin/%name
+ 
+ %files dbg
+-/usr/lib/yade{$_REVISION}-dbg
+-/usr/bin/yade{$_REVISION}-dbg
++%defattr(-,root,root)
++/usr/lib/%name-dbg
++/usr/bin/%name-dbg
+ 
+-%files dev
+-/usr/include/yade{$_REVISION}
+-/usr/lib/pkgconfig/yade{$_REVISION}*.pc
++%files devel
++%defattr(-,root,root)
++/usr/include/%name
++/usr/lib/pkgconfig/%{name}*.pc
+ 
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000183.html">[Yade-commits] r1218 - trunk
+</A></li>
+	<LI>Next message: <A HREF="000185.html">[Yade-commits] r1220 - in trunk: core extra extra/clump extra/screw	extra/tetra lib/factory
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#184">[ date ]</a>
+              <a href="thread.html#184">[ thread ]</a>
+              <a href="subject.html#184">[ subject ]</a>
+              <a href="author.html#184">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

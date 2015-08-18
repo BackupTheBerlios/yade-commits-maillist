@@ -1,0 +1,893 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1402 - in trunk: . core extra gui gui/py gui/qt3	pkg/common pkg/common/Engine scripts
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1402%20-%20in%20trunk%3A%20.%20core%20extra%20gui%20gui/py%20gui/qt3%0A%09pkg/common%20pkg/common/Engine%20scripts&In-Reply-To=%3C200806261143.m5QBh6ON004448%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000362.html">
+   <LINK REL="Next"  HREF="000364.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1402 - in trunk: . core extra gui gui/py gui/qt3	pkg/common pkg/common/Engine scripts</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1402%20-%20in%20trunk%3A%20.%20core%20extra%20gui%20gui/py%20gui/qt3%0A%09pkg/common%20pkg/common/Engine%20scripts&In-Reply-To=%3C200806261143.m5QBh6ON004448%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1402 - in trunk: . core extra gui gui/py gui/qt3	pkg/common pkg/common/Engine scripts">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Thu Jun 26 13:43:06 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000362.html">[Yade-commits] r1401 - in trunk: . core extra gui/py gui/qt3 lib	lib/serialization pkg/common pkg/common/DataClass/PhysicalParameters	pkg/dem/Engine/DeusExMachina scripts
+</A></li>
+        <LI>Next message: <A HREF="000364.html">[Yade-commits] r1403 - in trunk: gui/py pkg/common/Engine	pkg/common/Engine/MetaEngine	pkg/common/Engine/StandAloneEngine scripts
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#363">[ date ]</a>
+              <a href="thread.html#363">[ thread ]</a>
+              <a href="subject.html#363">[ subject ]</a>
+              <a href="author.html#363">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2008-06-26 13:43:03 +0200 (Thu, 26 Jun 2008)
+New Revision: 1402
+
+Added:
+   trunk/pkg/common/Engine/ParallelEngine.cpp
+   trunk/pkg/common/Engine/ParallelEngine.hpp
+   trunk/scripts/simple-scene-parallel.py
+Modified:
+   trunk/SConstruct
+   trunk/core/Body.cpp
+   trunk/core/Body.hpp
+   trunk/extra/Brefcom.cpp
+   trunk/gui/SConscript
+   trunk/gui/py/yadeControl.cpp
+   trunk/gui/qt3/GLSimulationPlayerViewer.cpp
+   trunk/gui/qt3/GLSimulationPlayerViewer.hpp
+   trunk/gui/qt3/GLViewer.cpp
+   trunk/gui/qt3/GLViewer.hpp
+   trunk/gui/qt3/QtGeneratedSimulationPlayer.ui
+   trunk/gui/qt3/QtSimulationPlayer.cpp
+   trunk/gui/qt3/QtSimulationPlayer.hpp
+   trunk/gui/qt3/YadeQtMainWindow.cpp
+   trunk/pkg/common/SConscript
+   trunk/scripts/simple-scene.py
+Log:
+1. Parallel engine that runs engines in parallel; python wrapper for that
+2. Added simple-scene-parallel.py for an example (sppedup of 16% over simple-scene.py)
+3. Added openmp flags to scons (enabled by default)
+4. Simultaneous builds of multiple profiles: scons profile=default,opt will run all the machinery
+5. Refactored grid-drawing code; press 'x','y','z' to have grids with that normal
+6. Ported some things from GLViewer to GLSimulationPlayerViewer (grid and mouse events)
+
+
+
+Modified: trunk/SConstruct
+===================================================================
+--- trunk/SConstruct	2008-06-25 18:43:53 UTC (rev 1401)
++++ trunk/SConstruct	2008-06-26 11:43:03 UTC (rev 1402)
+@@ -65,22 +65,40 @@
+ 
+ env=Environment(tools=['default'])
+ 
+-
+ profileFile='scons.current-profile'
+ profOpts=Options(profileFile)
+ profOpts.AddOptions(('profile','Config profile to use (predefined: default or &quot;&quot;, opt)','default'))
+ profOpts.Update(env)
+-profOpts.Save(profileFile,env)
++# multiple profiles - run them all at the same time
++# take care not to save current profile for those parallel builds
++if not os.environ.has_key('SCONS_PROFILE_NOSAVE'): profOpts.Save(profileFile,env)
+ 
++if ',' in env['profile']:
++	profiles=env['profile'].split(',')
++	import threading,subprocess
++	def runProfile(profile): subprocess.call([sys.argv[0],'-Q','profile='+p])
++	profileThreads=[]
++	os.environ['SCONS_PROFILE_NOSAVE']=''
++	for arg in sys.argv[2:]:
++		print &quot;WARNING: parallel-building, extra argument `%s' ignored!&quot;%arg
++	for p in profiles:
++		t=threading.Thread(target=runProfile,name='profile_'+p,args=(p,))
++		t.start()
++		profileThreads.append(t)
++	for t in profileThreads:
++		t.join()
++	Exit()
++
++
+ if env['profile']=='': env['profile']='default'
+ optsFile='scons.profile-'+env['profile']
+ profile=env['profile']
+ print '@@@ Using profile',profile,'('+optsFile+') @@@'
+ 
+ # defaults for various profiles
+-if profile=='default': defOptions={'debug':1,'variant':'','optimize':0}
+-elif profile=='opt': defOptions={'debug':0,'variant':'-opt','optimize':1}
+-else: defOptions={'debug':0,'optimize':0,'variant':profile}
++if profile=='default': defOptions={'debug':1,'variant':'','optimize':0,'openmp':True}
++elif profile=='opt': defOptions={'debug':0,'variant':'-opt','optimize':1,'openmp':True}
++else: defOptions={'debug':0,'optimize':0,'variant':profile,'openmp':True}
+ 
+ 
+ opts=Options(optsFile)
+@@ -98,7 +116,8 @@
+ 	('variant','Build variant, will be suffixed to all files, along with version (beware: if PREFIX is the same, headers of the older version will still be overwritten',defOptions['variant'],None,lambda x:x),
+ 	BoolOption('debug', 'Enable debugging information and disable optimizations',defOptions['debug']),
+ 	BoolOption('gprof','Enable profiling information for gprof',0),
+-	BoolOption('optimize','Turn on heavy optimizations (generates SSE2 instructions)',defOptions['optimize']),
++	BoolOption('optimize','Turn on heavy optimizations',defOptions['optimize']),
++	BoolOption('openmp','Compile with openMP parallelization support',defOptions['openmp']),
+ 	ListOption('exclude','Yade components that will not be built','none',names=['qt3','gui','extra','common','dem','fem','lattice','mass-spring','realtime-rigidbody']),
+ 	EnumOption('arcs','Whether to generate or use branch probabilities','',['','gen','use'],{'no':'','0':'','false':''},1),
+ 	# OK, dummy prevents bug in scons: if one selects all, it says all in scons.config, but without quotes, which generates error.
+@@ -357,6 +376,7 @@
+ ### COMPILER
+ if env['debug']: env.Append(CXXFLAGS='-ggdb3',CPPDEFINES=['YADE_DEBUG'])
+ else: env.Append(CXXFLAGS='-O2')
++if env['openmp']: env.Append(CXXFLAGS='-fopenmp',LIBS='gomp')
+ if env['optimize']:
+ 	env.Append(CXXFLAGS=Split('-O3 -ffast-math'),
+ 		CPPDEFINES=[('YADE_CAST','static_cast'),('YADE_PTR_CAST','static_pointer_cast'),'NDEBUG'])
+
+Modified: trunk/core/Body.cpp
+===================================================================
+--- trunk/core/Body.cpp	2008-06-25 18:43:53 UTC (rev 1401)
++++ trunk/core/Body.cpp	2008-06-26 11:43:03 UTC (rev 1402)
+@@ -16,20 +16,10 @@
+ 
+ //! This could be -1 if id_t is re-typedef'ed as `int'
+ const body_id_t Body::ID_NONE=body_id_t(-1);
+-/*! The definition will change once Omega disappears, but the interface should be the same.
+- * \warning This relies on Omega::instance().getRootBody() returning the respective rootBody.
+- * Therefore, if you use this from a FileGenerator, you will need to call something like \code
+-	shared_ptr&lt;MetaBody&gt; oldRootBody=Omega::instance().getRootBody();
+-	Omega::instance().setRootBody(rootBody);
+-	// ...
+-	// do your stuff here
+-	// ...
+-	Omega::instance().setRootBody(oldRootBody);
+-	\endcode
+-	\warning Make sure that a simulation is not running during generation, otherwise it will most likely crash. It seems that Omega::getRootBodyMutex that could be used for this purpose is just a dummy function.
+- * */
++
+ const shared_ptr&lt;Body&gt;&amp; Body::byId(body_id_t _id, MetaBody* rb){return (*((rb?rb:Omega::instance().getRootBody().get())-&gt;bodies))[_id];}
+ 
++
+ // we must initialize id = 0, otherwise BodyContainer will crash.
+ Body::Body () : 
+ 	  Serializable()
+
+Modified: trunk/core/Body.hpp
+===================================================================
+--- trunk/core/Body.hpp	2008-06-25 18:43:53 UTC (rev 1401)
++++ trunk/core/Body.hpp	2008-06-26 11:43:03 UTC (rev 1402)
+@@ -48,6 +48,7 @@
+ 		static const body_id_t ID_NONE;
+ 		//! get Body pointer given its id. 
+ 		static const shared_ptr&lt;Body&gt;&amp; byId(body_id_t _id,MetaBody* rb=NULL);
++		
+ 		//! Whether this Body is a Clump.
+ 		//! @note The following is always true: \code (Body::isClump() XOR Body::isClumpMember() XOR Body::isStandalone()) \endcode
+ 		bool isClump() const {return clumpId!=ID_NONE &amp;&amp; id==clumpId;}
+
+Modified: trunk/extra/Brefcom.cpp
+===================================================================
+--- trunk/extra/Brefcom.cpp	2008-06-25 18:43:53 UTC (rev 1401)
++++ trunk/extra/Brefcom.cpp	2008-06-26 11:43:03 UTC (rev 1402)
+@@ -143,7 +143,7 @@
+ 		NNAN(epsN);
+ 
+ 		// /* TODO: recover non-cohesive contact deletion: */
+-		if(!BC-&gt;isCohesive &amp;&amp; epsN&gt;0.){ /* delete this interaction later */ /* (*I)-&gt;isReal=false; */ continue; }
++		if(!BC-&gt;isCohesive &amp;&amp; epsN&gt;0.){ /* delete this interaction later */ I-&gt;isReal=false; continue; }
+ 
+ 		/* shear strain: always use it, even for epsN&gt;0 */
+ 		/*if(false &amp;&amp; epsN&gt;0) { epsT=Vector3r::ZERO; } else {*/
+@@ -274,7 +274,7 @@
+ 		bodyDamage[id1].second+=BC-&gt;omega; bodyDamage[id2].second+=BC-&gt;omega;
+ 	}
+ 	FOREACH(shared_ptr&lt;Body&gt; B, *rootBody-&gt;bodies){
+-		if(bodyDamage[B-&gt;getId()].first==0) continue;
++		if(bodyDamage[B-&gt;getId()].first==0) {B-&gt;geometricalModel-&gt;diffuseColor=Vector3r(0.5,0.5,B-&gt;isDynamic?0:1); continue; }
+ 		Real normDmg=bodyDamage[B-&gt;getId()].second/bodyDamage[B-&gt;getId()].first;
+ 		B-&gt;geometricalModel-&gt;diffuseColor=Vector3r(normDmg,1-normDmg,B-&gt;isDynamic?0:1);
+ 	}
+
+Modified: trunk/gui/SConscript
+===================================================================
+--- trunk/gui/SConscript	2008-06-25 18:43:53 UTC (rev 1401)
++++ trunk/gui/SConscript	2008-06-26 11:43:03 UTC (rev 1402)
+@@ -56,7 +56,8 @@
+ 				'InteractionGeometryMetaEngine',
+ 				'InteractionPhysicsMetaEngine',
+ 				'PhysicalParametersMetaEngine',
+-				'STLImporter'
++				'STLImporter',
++				'ParallelEngine'
+ 			],
+ 			),
+ 		env.File('__init__.py','py'),
+
+Modified: trunk/gui/py/yadeControl.cpp
+===================================================================
+--- trunk/gui/py/yadeControl.cpp	2008-06-25 18:43:53 UTC (rev 1401)
++++ trunk/gui/py/yadeControl.cpp	2008-06-26 11:43:03 UTC (rev 1402)
+@@ -31,6 +31,7 @@
+ #include&lt;yade/core/StandAloneEngine.hpp&gt;
+ #include&lt;yade/core/DeusExMachina.hpp&gt;
+ #include&lt;yade/core/EngineUnit.hpp&gt;
++#include&lt;yade/pkg-common/ParallelEngine.hpp&gt;
+ #include&lt;yade/core/EngineUnit1D.hpp&gt;
+ #include&lt;yade/core/EngineUnit2D.hpp&gt;
+ 
+@@ -132,9 +133,40 @@
+ BASIC_PY_PROXY(pyBoundingVolume,BoundingVolume);
+ BASIC_PY_PROXY(pyInteractingGeometry,InteractingGeometry);
+ 
++BASIC_PY_PROXY(pyDeusExMachina,DeusExMachina);
+ BASIC_PY_PROXY(pyStandAloneEngine,StandAloneEngine);
+-BASIC_PY_PROXY(pyDeusExMachina,DeusExMachina);
+ 
++python::list anyEngines_get(const vector&lt;shared_ptr&lt;Engine&gt; &gt;&amp;);
++void anyEngines_set(vector&lt;shared_ptr&lt;Engine&gt; &gt;&amp;, python::object);
++
++BASIC_PY_PROXY_HEAD(pyParallelEngine,ParallelEngine)
++	pyParallelEngine(python::list slaves){init(&quot;ParallelEngine&quot;); slaves_set(slaves);}
++	void slaves_set(python::list slaves){
++		ensureAcc(); shared_ptr&lt;ParallelEngine&gt; me=dynamic_pointer_cast&lt;ParallelEngine&gt;(proxee); if(!me) throw runtime_error(&quot;Proxied class not a ParallelEngine. (WTF?)&quot;);
++		int len=PySequence_Size(slaves.ptr()); /*[boost1.34] python::len(ftrs)*/;
++		me-&gt;slaves=ParallelEngine::slaveContainer(); // empty the container
++		for(int i=0; i&lt;len; i++){
++			python::extract&lt;python::list&gt; grpMaybe(slaves[i]);
++			python::list grpList;
++			if(grpMaybe.check()){ grpList=grpMaybe(); }
++			else{ /* we got a standalone thing; let's wrap it in list */ grpList.append(slaves[i]); }
++			vector&lt;shared_ptr&lt;Engine&gt; &gt; grpVec;
++			anyEngines_set(grpVec,grpList);
++			me-&gt;slaves.push_back(grpVec);
++		}
++	}
++	python::list slaves_get(void){	
++		ensureAcc(); shared_ptr&lt;ParallelEngine&gt; me=dynamic_pointer_cast&lt;ParallelEngine&gt;(proxee); if(!me) throw runtime_error(&quot;Proxied class not a ParallelEngine. (WTF?)&quot;);
++		python::list ret;
++		FOREACH(vector&lt;shared_ptr&lt;Engine &gt; &gt;&amp; grp, me-&gt;slaves){
++			python::list rret=anyEngines_get(grp);
++			if(PySequence_Size(rret.ptr())==1){ ret.append(rret[0]); } else ret.append(rret);
++		}
++		return ret;
++	}
++BASIC_PY_PROXY_TAIL;
++
++
+ BASIC_PY_PROXY_HEAD(pyEngineUnit,EngineUnit)
+ 	python::list bases_get(void){ python::list ret; vector&lt;string&gt; t=proxee-&gt;getFunctorTypes(); for(size_t i=0; i&lt;t.size(); i++) ret.append(t[i]); return ret; }
+ BASIC_PY_PROXY_TAIL;
+@@ -182,6 +214,29 @@
+ 		}
+ BASIC_PY_PROXY_TAIL;
+ 
++python::list anyEngines_get(const vector&lt;shared_ptr&lt;Engine&gt; &gt;&amp; engContainer){
++	python::list ret; 
++	FOREACH(const shared_ptr&lt;Engine&gt;&amp; eng, engContainer){
++		#define APPEND_ENGINE_IF_POSSIBLE(engineType,pyEngineType) { shared_ptr&lt;engineType&gt; e=dynamic_pointer_cast&lt;engineType&gt;(eng); if(e) { ret.append(pyEngineType(e)); continue; } }
++		APPEND_ENGINE_IF_POSSIBLE(MetaEngine,pyMetaEngine); APPEND_ENGINE_IF_POSSIBLE(StandAloneEngine,pyStandAloneEngine); APPEND_ENGINE_IF_POSSIBLE(DeusExMachina,pyDeusExMachina); APPEND_ENGINE_IF_POSSIBLE(ParallelEngine,pyParallelEngine); 
++		throw std::runtime_error(&quot;Unknown engine type: `&quot;+eng-&gt;getClassName()+&quot;' (only MetaEngine, StandAloneEngine, DeusExMachina and ParallelEngine are supported)&quot;);
++	}
++	return ret;
++}
++
++void anyEngines_set(vector&lt;shared_ptr&lt;Engine&gt; &gt;&amp; engContainer, python::object egs){
++	int len=PySequence_Size(egs.ptr()) /*[boost1.34] python::len(egs)*/;
++	//const shared_ptr&lt;MetaBody&gt;&amp; rootBody=OMEGA.getRootBody(); rootBody-&gt;engines.clear();
++	engContainer.clear();
++	for(int i=0; i&lt;len; i++){
++		#define PUSH_BACK_ENGINE_IF_POSSIBLE(pyEngineType) if(python::extract&lt;pyEngineType&gt;(PySequence_GetItem(egs.ptr(),i)).check()){ pyEngineType e=python::extract&lt;pyEngineType&gt;(PySequence_GetItem(egs.ptr(),i)); engContainer.push_back(e.proxee); /* cerr&lt;&lt;&quot;added &quot;&lt;&lt;e.pyStr()&lt;&lt;&quot;, a &quot;&lt;&lt;#pyEngineType&lt;&lt;endl; */ continue; }
++		PUSH_BACK_ENGINE_IF_POSSIBLE(pyStandAloneEngine); PUSH_BACK_ENGINE_IF_POSSIBLE(pyMetaEngine); PUSH_BACK_ENGINE_IF_POSSIBLE(pyDeusExMachina); PUSH_BACK_ENGINE_IF_POSSIBLE(pyParallelEngine);
++		throw std::runtime_error(&quot;Encountered unknown engine type (unable to extract from python object)&quot;);
++	}
++}
++
++
++
+ BASIC_PY_PROXY_HEAD(pyInteraction,Interaction)
+ 	NONPOD_ATTRIBUTE_ACCESS(geom,pyInteractionGeometry,interactionGeometry);
+ 	NONPOD_ATTRIBUTE_ACCESS(phys,pyInteractionPhysics,interactionPhysics);
+@@ -380,26 +435,6 @@
+ 		}
+ 	}
+ 
+-	python::list anyEngines_get(vector&lt;shared_ptr&lt;Engine&gt; &gt;&amp; engContainer){
+-		python::list ret; 
+-		FOREACH(shared_ptr&lt;Engine&gt;&amp; eng, engContainer){
+-			#define APPEND_ENGINE_IF_POSSIBLE(engineType,pyEngineType) { shared_ptr&lt;engineType&gt; e=dynamic_pointer_cast&lt;engineType&gt;(eng); if(e) { ret.append(pyEngineType(e)); continue; } }
+-			APPEND_ENGINE_IF_POSSIBLE(MetaEngine,pyMetaEngine); APPEND_ENGINE_IF_POSSIBLE(StandAloneEngine,pyStandAloneEngine); APPEND_ENGINE_IF_POSSIBLE(DeusExMachina,pyDeusExMachina);
+-			throw std::runtime_error(&quot;Unknown engine type: `&quot;+eng-&gt;getClassName()+&quot;' (only MetaEngine, StandAloneEngine and DeusExMachina are supported)&quot;);
+-		}
+-		return ret;
+-	}
+-
+-	void anyEngines_set(vector&lt;shared_ptr&lt;Engine&gt; &gt;&amp; engContainer, python::object egs){
+-		assertRootBody(); int len=PySequence_Size(egs.ptr()) /*[boost1.34] python::len(egs)*/;
+-		//const shared_ptr&lt;MetaBody&gt;&amp; rootBody=OMEGA.getRootBody(); rootBody-&gt;engines.clear();
+-		engContainer.clear();
+-		for(int i=0; i&lt;len; i++){
+-			#define PUSH_BACK_ENGINE_IF_POSSIBLE(pyEngineType) if(python::extract&lt;pyEngineType&gt;(PySequence_GetItem(egs.ptr(),i)).check()){ pyEngineType e=python::extract&lt;pyEngineType&gt;(PySequence_GetItem(egs.ptr(),i)); engContainer.push_back(e.proxee); /* cerr&lt;&lt;&quot;added &quot;&lt;&lt;e.pyStr()&lt;&lt;&quot;, a &quot;&lt;&lt;#pyEngineType&lt;&lt;endl; */ continue; }
+-			PUSH_BACK_ENGINE_IF_POSSIBLE(pyStandAloneEngine); PUSH_BACK_ENGINE_IF_POSSIBLE(pyMetaEngine); PUSH_BACK_ENGINE_IF_POSSIBLE(pyDeusExMachina);
+-			throw std::runtime_error(&quot;Encountered unknown engine type (unable to extract from python object)&quot;);
+-		}
+-	}
+ 	python::list engines_get(void){assertRootBody(); return anyEngines_get(OMEGA.getRootBody()-&gt;engines);}
+ 	void engines_set(python::object egs){assertRootBody(); anyEngines_set(OMEGA.getRootBody()-&gt;engines,egs);}
+ 	python::list initializers_get(void){assertRootBody(); return anyEngines_get(OMEGA.getRootBody()-&gt;initializers);}
+@@ -412,7 +447,8 @@
+ 				RETURN_ENGINE_IF_POSSIBLE(MetaEngine,pyMetaEngine);
+ 				RETURN_ENGINE_IF_POSSIBLE(StandAloneEngine,pyStandAloneEngine);
+ 				RETURN_ENGINE_IF_POSSIBLE(DeusExMachina,pyDeusExMachina);
+-				throw std::runtime_error(&quot;Unable to cast engine to MetaEngine, StandAloneEngine or DeusExMachina? ??&quot;);
++				RETURN_ENGINE_IF_POSSIBLE(ParallelEngine,pyParallelEngine);
++				throw std::runtime_error(&quot;Unable to cast engine to MetaEngine, StandAloneEngine, DeusExMachina or ParallelEngine? ??&quot;);
+ 			}
+ 		}
+ 		throw std::invalid_argument(string(&quot;No engine labeled `&quot;)+label+&quot;'&quot;);
+@@ -505,6 +541,9 @@
+ 	BASIC_PY_PROXY_WRAPPER(pyMetaEngine,&quot;MetaEngine&quot;)
+ 		.add_property(&quot;functors&quot;,&amp;pyMetaEngine::functors_get,&amp;pyMetaEngine::functors_set)
+ 		.def(python::init&lt;string,python::list&gt;());
++	BASIC_PY_PROXY_WRAPPER(pyParallelEngine,&quot;ParallelEngine&quot;)
++		.add_property(&quot;slaves&quot;,&amp;pyParallelEngine::slaves_get,&amp;pyParallelEngine::slaves_set)
++		.def(python::init&lt;python::list&gt;());
+ 	BASIC_PY_PROXY_WRAPPER(pyDeusExMachina,&quot;DeusExMachina&quot;);
+ 	BASIC_PY_PROXY_WRAPPER(pyEngineUnit,&quot;EngineUnit&quot;)
+ 		.add_property(&quot;bases&quot;,&amp;pyEngineUnit::bases_get);
+
+Modified: trunk/gui/qt3/GLSimulationPlayerViewer.cpp
+===================================================================
+--- trunk/gui/qt3/GLSimulationPlayerViewer.cpp	2008-06-25 18:43:53 UTC (rev 1401)
++++ trunk/gui/qt3/GLSimulationPlayerViewer.cpp	2008-06-26 11:43:03 UTC (rev 1402)
+@@ -13,7 +13,9 @@
+ #include &lt;boost/lexical_cast.hpp&gt;
+ #include &lt;boost/filesystem/operations.hpp&gt;
+ #include &lt;boost/filesystem/convenience.hpp&gt;
++#include&lt;yade/lib-opengl/OpenGLWrapper.hpp&gt;
+ 
++
+ #undef DEBUG /* I HATE&#160;qt3 for this! ::log4cxx::Level::DEBUG becomes ::log4cxx::Level:: becomes syntax error */
+ #include&lt;yade/pkg-dem/PositionOrientationRecorder.hpp&gt;
+ 
+@@ -37,6 +39,22 @@
+ 	setAnimationPeriod(1);
+ 	saveSnapShots = false;
+ 	frameNumber=0;
++	drawGridXYZ[0]=drawGridXYZ[1]=drawGridXYZ[2]=false;
++	
++
++	// cut&amp;paste from GLViewer::notMoving()
++	camera()-&gt;frame()-&gt;setWheelSensitivity(-1.0f);
++	setMouseBinding(Qt::LeftButton + Qt::RightButton, CAMERA, ZOOM);
++	setMouseBinding(Qt::MidButton, CAMERA, ZOOM);
++	setMouseBinding(Qt::LeftButton, CAMERA, ROTATE);
++	setMouseBinding(Qt::RightButton, CAMERA, TRANSLATE);
++	setWheelBinding(Qt::NoButton, CAMERA, ZOOM);
++	setMouseBinding(Qt::SHIFT + Qt::LeftButton, SELECT);
++	setMouseBinding(Qt::SHIFT + Qt::LeftButton + Qt::RightButton, FRAME, ZOOM);
++	setMouseBinding(Qt::SHIFT + Qt::MidButton, FRAME, TRANSLATE);
++	setMouseBinding(Qt::SHIFT + Qt::RightButton, FRAME, ROTATE);
++	setWheelBinding(Qt::ShiftButton , FRAME, ZOOM);
++
+ }
+ 
+ 
+@@ -86,6 +104,8 @@
+ 	updateGL();
+ 	frameNumber=0;
+ 	setSnapshotCounter(0);
++	// this is to allow manipulation of bodies from python, Omega().bodies etc.
++	Omega::instance().setRootBody(rootBody);
+ 
+ 	for(vector&lt;shared_ptr&lt;Engine&gt; &gt;::iterator I=rootBody-&gt;engines.begin(); I!=rootBody-&gt;engines.end(); ++I){
+ 		LOG_TRACE((*I)-&gt;getClassName());
+@@ -165,4 +185,53 @@
+ 	return true;
+ }
+ 
++// parts copied from GLViewer::keyPressEvent
++void GLSimulationPlayerViewer::keyPressEvent(QKeyEvent *e){
++	     if(e-&gt;key()==Qt::Key_G) drawGridXYZ[2]=!drawGridXYZ[2], updateGL();
++	else if(e-&gt;key()==Qt::Key_X) drawGridXYZ[0]=!drawGridXYZ[0], updateGL();
++	else if(e-&gt;key()==Qt::Key_Y) drawGridXYZ[1]=!drawGridXYZ[1], updateGL();
++	else if(e-&gt;key()==Qt::Key_Z) drawGridXYZ[2]=!drawGridXYZ[2], updateGL();
++	else if(e-&gt;key()==Qt::Key_T){ if (camera()-&gt;type() == qglviewer::Camera::ORTHOGRAPHIC) camera()-&gt;setType(qglviewer::Camera::PERSPECTIVE); else camera()-&gt;setType(qglviewer::Camera::ORTHOGRAPHIC);}
++	else if(e-&gt;key()==Qt::Key_O ) camera()-&gt;setFieldOfView(camera()-&gt;fieldOfView()*0.9), updateGL();
++	else if(e-&gt;key()==Qt::Key_P ) camera()-&gt;setFieldOfView(camera()-&gt;fieldOfView()*1.1), updateGL();
++	else if(e-&gt;key()!=Qt::Key_Escape &amp;&amp; e-&gt;key()!=Qt::Key_Space) QGLViewer::keyPressEvent(e);
++}
+ 
++// copied from GLViewer::postDraw
++void GLSimulationPlayerViewer::postDraw(){
++	if(drawGridXYZ[0]||drawGridXYZ[1]||drawGridXYZ[2])
++	{
++		glPushMatrix();
++		glPushAttrib(GL_ALL_ATTRIB_BITS);
++		qglColor(foregroundColor());
++		glDisable(GL_LIGHTING);
++		glLineWidth(0.1);
++		glBegin(GL_LINES);
++			Real diameter=QGLViewer::camera()-&gt;sceneRadius()*2;
++			qglviewer::Vec center=QGLViewer::camera()-&gt;sceneCenter();
++			Real gridStep=pow(10,(floor(log10(diameter)-.5)));
++			int nLines=2*2*((int)(diameter/gridStep))/2+1; // odd number
++			int lineNoExt=(nLines-1)/2;
++			for(int planeAxis=0; planeAxis&lt;3; planeAxis++){
++				if(!drawGridXYZ[planeAxis]) continue;
++				int otherAxes[2]={(planeAxis+1)%3,(planeAxis+2)%3};
++				Vector3r color(.3,.3,.3); color[planeAxis]=.6;
++				glColor3v(color);
++				for(int lineAxisIdx=0; lineAxisIdx&lt;2; lineAxisIdx++){
++					int lineAxis=otherAxes[lineAxisIdx];
++					int linePerp=otherAxes[(lineAxisIdx+1)%2];
++					for(int lineNo=-lineNoExt; lineNo&lt;=lineNoExt; lineNo++){
++						Vector3r from,to;
++						from[planeAxis]=to[planeAxis]=0;
++						from[linePerp]=to[linePerp]=center[linePerp]+lineNo*gridStep;
++						from[lineAxis]=center[lineAxis]-lineNoExt*gridStep; to[lineAxis]=center[lineAxis]+lineNoExt*gridStep;
++						glVertex3v(from); glVertex3v(to);
++					}
++				}
++			}
++		glEnd();
++		glPopAttrib();
++		glPopMatrix();
++	}
++	QGLViewer::postDraw();
++}
+
+Modified: trunk/gui/qt3/GLSimulationPlayerViewer.hpp
+===================================================================
+--- trunk/gui/qt3/GLSimulationPlayerViewer.hpp	2008-06-25 18:43:53 UTC (rev 1401)
++++ trunk/gui/qt3/GLSimulationPlayerViewer.hpp	2008-06-26 11:43:03 UTC (rev 1402)
+@@ -28,6 +28,7 @@
+ 		
+ 		string fileName, inputBaseName, inputBaseDirectory, outputBaseName, outputBaseDirectory;
+ 		bool				 saveSnapShots;
++		bool 	drawGridXYZ[3];
+ 		int				 frameNumber;
+ 		bool loadPositionOrientationFile();
+ 		list&lt;string&gt; xyzFiles;
+@@ -48,6 +49,9 @@
+ 		virtual void fastDraw();
+ 		virtual void animate();
+ 		virtual void initializeGL();
++		virtual void postDraw();
++		virtual void keyPressEvent(QKeyEvent* e);
++		
+ 	DECLARE_LOGGER;
+ };
+ 
+
+Modified: trunk/gui/qt3/GLViewer.cpp
+===================================================================
+--- trunk/gui/qt3/GLViewer.cpp	2008-06-25 18:43:53 UTC (rev 1401)
++++ trunk/gui/qt3/GLViewer.cpp	2008-06-26 11:43:03 UTC (rev 1402)
+@@ -14,6 +14,7 @@
+ #include&quot;YadeQtMainWindow.hpp&quot;
+ #include&lt;GL/glut.h&gt;
+ #include&lt;yade/lib-opengl/FpsTracker.hpp&gt;
++#include&lt;yade/lib-opengl/OpenGLWrapper.hpp&gt;
+ #include&lt;yade/core/Body.hpp&gt;
+ #include&lt;yade/core/Interaction.hpp&gt;
+ 
+@@ -22,7 +23,7 @@
+ {
+ 	isMoving=false;
+ 	renderer=rendererInit;
+-	drawGrid = false;
++	drawGridXYZ[0]=drawGridXYZ[1]=drawGridXYZ[2]=false;
+ 	viewId = id;
+ 	cut_plane = 0;
+ 	cut_plane_delta = -2;
+@@ -84,8 +85,10 @@
+ 		setSceneCenter(manipulatedFrame()-&gt;position()), updateGL();
+ 	else if( e-&gt;key()==Qt::Key_D )
+ 		wasDynamic = true;
+-	else if( e-&gt;key()==Qt::Key_G )
+-		drawGrid = !drawGrid, updateGL();
++	else if(e-&gt;key()==Qt::Key_G) drawGridXYZ[2]=!drawGridXYZ[2], updateGL();
++	else if(e-&gt;key()==Qt::Key_X) drawGridXYZ[0]=!drawGridXYZ[0], updateGL();
++	else if(e-&gt;key()==Qt::Key_Y) drawGridXYZ[1]=!drawGridXYZ[1], updateGL();
++	else if(e-&gt;key()==Qt::Key_Z) drawGridXYZ[2]=!drawGridXYZ[2], updateGL();
+ 
+ // FIXME BEGIN - arguments for GLDraw*ers should be from dialog box, not through Omega !!!
+ 	else if( e-&gt;key()==Qt::Key_Delete )
+@@ -164,7 +167,7 @@
+ 			min=Vector3r(inf,inf,inf); max=Vector3r(-inf,-inf,-inf);
+ 			FOREACH(const shared_ptr&lt;Body&gt;&amp; b, *rb-&gt;bodies){
+ 				max=componentMaxVector(max,b-&gt;physicalParameters-&gt;se3.position);
+-				max=componentMinVector(min,b-&gt;physicalParameters-&gt;se3.position);
++				min=componentMinVector(min,b-&gt;physicalParameters-&gt;se3.position);
+ 			}
+ 		}
+ 	} else {
+@@ -257,7 +260,7 @@
+ 
+ void GLViewer::postDraw()
+ {
+-	if( drawGrid ) // FIXME drawGrid is yet another RendererFlowControl's Actor.
++	if(drawGridXYZ[0]||drawGridXYZ[1]||drawGridXYZ[2])
+ 	{
+ //		glMatrixMode(GL_MODELVIEW);
+ 		glPushMatrix();
+@@ -266,35 +269,29 @@
+ 		glDisable(GL_LIGHTING);
+ 		glLineWidth(0.1);
+ 		glBegin(GL_LINES);
+-
+-		float sizef = QGLViewer::camera()-&gt;sceneRadius()*3.0f; 
+-		int size = static_cast&lt;int&gt;(sizef);
+-		qglviewer::Vec v = QGLViewer::camera()-&gt;sceneCenter();
+-		int x = static_cast&lt;int&gt;(v[0]); int y = static_cast&lt;int&gt;(v[1]);
+-		float xf = (static_cast&lt;int&gt;(v[0]*100.0))/100.0;
+-		float yf = (static_cast&lt;int&gt;(v[1]*100.0))/100.0;
+-//		float nbSubdivisions = size;
+-//		for (int i=0; i&lt;=nbSubdivisions; ++i)
+-		for (int i= -size ; i&lt;=size; ++i )
+-		{
+-//			const float pos = size*(2.0*i/nbSubdivisions-1.0);
+-			glVertex2i( i   +x, -size+y);
+-			glVertex2i( i   +x, +size+y);
+-			glVertex2i(-size+x, i    +y);
+-			glVertex2i( size+x, i    +y);
+-		}
+-		if(sizef &lt;= 2.0)
+-		{
+-			glColor3f(0.9,0.9,0.9);
+-			for (float i= -(static_cast&lt;int&gt;(sizef*100.0))/100.0 ; i&lt;=sizef; i+=0.01 )
+-			{
+-				glVertex2f( i    +xf, -sizef+yf);
+-				glVertex2f( i    +xf, +sizef+yf);
+-				glVertex2f(-sizef+xf, i     +yf);
+-				glVertex2f( sizef+xf, i     +yf);
++			Real diameter=QGLViewer::camera()-&gt;sceneRadius()*2;
++			qglviewer::Vec center=QGLViewer::camera()-&gt;sceneCenter();
++			Real gridStep=pow(10,(floor(log10(diameter)-.5)));
++			int nLines=2*2*((int)(diameter/gridStep))/2+1; // odd number
++			int lineNoExt=(nLines-1)/2;
++			//cerr&lt;&lt;&quot;Diameter &quot;&lt;&lt;diameter&lt;&lt;&quot;, center &quot;&lt;&lt;center[0]&lt;&lt;&quot; &quot;&lt;&lt;center[1]&lt;&lt;&quot; &quot;&lt;&lt;center[2]&lt;&lt;&quot;; step &quot;&lt;&lt;gridStep&lt;&lt;&quot;; nLines &quot;&lt;&lt;nLines&lt;&lt;endl;
++			for(int planeAxis=0; planeAxis&lt;3; planeAxis++){
++				if(!drawGridXYZ[planeAxis]) continue;
++				int otherAxes[2]={(planeAxis+1)%3,(planeAxis+2)%3};
++				Vector3r color(.3,.3,.3); color[planeAxis]=.6;
++				glColor3v(color);
++				for(int lineAxisIdx=0; lineAxisIdx&lt;2; lineAxisIdx++){
++					int lineAxis=otherAxes[lineAxisIdx];
++					int linePerp=otherAxes[(lineAxisIdx+1)%2];
++					for(int lineNo=-lineNoExt; lineNo&lt;=lineNoExt; lineNo++){
++						Vector3r from,to;
++						from[planeAxis]=to[planeAxis]=0;
++						from[linePerp]=to[linePerp]=center[linePerp]+lineNo*gridStep;
++						from[lineAxis]=center[lineAxis]-lineNoExt*gridStep; to[lineAxis]=center[lineAxis]+lineNoExt*gridStep;
++						glVertex3v(from); glVertex3v(to);
++					}
++				}
+ 			}
+-		}
+-		
+ 		glEnd();
+ 		glPopAttrib();
+ 		glPopMatrix();
+
+Modified: trunk/gui/qt3/GLViewer.hpp
+===================================================================
+--- trunk/gui/qt3/GLViewer.hpp	2008-06-25 18:43:53 UTC (rev 1401)
++++ trunk/gui/qt3/GLViewer.hpp	2008-06-26 11:43:03 UTC (rev 1402)
+@@ -20,7 +20,7 @@
+ 	friend class QGLThread;
+ 	private :
+ //		GLWindowsManager	wm;
+-		bool			drawGrid; // FIXME - draw grid is in fact just another GLDrawActor
++		bool 			drawGridXYZ[3];
+ 		bool			isMoving;
+ 		bool			wasDynamic;
+ 		float			cut_plane;
+
+Modified: trunk/gui/qt3/QtGeneratedSimulationPlayer.ui
+===================================================================
+--- trunk/gui/qt3/QtGeneratedSimulationPlayer.ui	2008-06-25 18:43:53 UTC (rev 1401)
++++ trunk/gui/qt3/QtGeneratedSimulationPlayer.ui	2008-06-26 11:43:03 UTC (rev 1402)
+@@ -150,7 +150,7 @@
+                 &lt;property name=&quot;name&quot;&gt;
+                     &lt;cstring&gt;unnamed&lt;/cstring&gt;
+                 &lt;/property&gt;
+-                &lt;spacer row=&quot;4&quot; column=&quot;2&quot; rowspan=&quot;1&quot; colspan=&quot;2&quot;&gt;
++                &lt;spacer row=&quot;3&quot; column=&quot;2&quot; rowspan=&quot;1&quot; colspan=&quot;2&quot;&gt;
+                     &lt;property name=&quot;name&quot;&gt;
+                         &lt;cstring&gt;spacer4&lt;/cstring&gt;
+                     &lt;/property&gt;
+@@ -167,7 +167,7 @@
+                         &lt;/size&gt;
+                     &lt;/property&gt;
+                 &lt;/spacer&gt;
+-                &lt;spacer row=&quot;4&quot; column=&quot;0&quot;&gt;
++                &lt;spacer row=&quot;3&quot; column=&quot;0&quot;&gt;
+                     &lt;property name=&quot;name&quot;&gt;
+                         &lt;cstring&gt;spacer3&lt;/cstring&gt;
+                     &lt;/property&gt;
+@@ -184,7 +184,7 @@
+                         &lt;/size&gt;
+                     &lt;/property&gt;
+                 &lt;/spacer&gt;
+-                &lt;widget class=&quot;QLabel&quot; row=&quot;3&quot; column=&quot;0&quot;&gt;
++                &lt;widget class=&quot;QLabel&quot; row=&quot;2&quot; column=&quot;0&quot;&gt;
+                     &lt;property name=&quot;name&quot;&gt;
+                         &lt;cstring&gt;tlInputDirectory&lt;/cstring&gt;
+                     &lt;/property&gt;
+@@ -192,7 +192,7 @@
+                         &lt;string&gt;Directory:&lt;/string&gt;
+                     &lt;/property&gt;
+                 &lt;/widget&gt;
+-                &lt;widget class=&quot;QPushButton&quot; row=&quot;4&quot; column=&quot;1&quot;&gt;
++                &lt;widget class=&quot;QPushButton&quot; row=&quot;3&quot; column=&quot;1&quot;&gt;
+                     &lt;property name=&quot;name&quot;&gt;
+                         &lt;cstring&gt;pbLoad&lt;/cstring&gt;
+                     &lt;/property&gt;
+@@ -200,7 +200,7 @@
+                         &lt;string&gt;Load&lt;/string&gt;
+                     &lt;/property&gt;
+                 &lt;/widget&gt;
+-                &lt;widget class=&quot;QLineEdit&quot; row=&quot;3&quot; column=&quot;1&quot; rowspan=&quot;1&quot; colspan=&quot;2&quot;&gt;
++                &lt;widget class=&quot;QLineEdit&quot; row=&quot;2&quot; column=&quot;1&quot; rowspan=&quot;1&quot; colspan=&quot;2&quot;&gt;
+                     &lt;property name=&quot;name&quot;&gt;
+                         &lt;cstring&gt;leInputDirectory&lt;/cstring&gt;
+                     &lt;/property&gt;
+@@ -242,7 +242,7 @@
+                         &lt;string&gt;Simluation File:&lt;/string&gt;
+                     &lt;/property&gt;
+                 &lt;/widget&gt;
+-                &lt;widget class=&quot;QPushButton&quot; row=&quot;3&quot; column=&quot;3&quot;&gt;
++                &lt;widget class=&quot;QPushButton&quot; row=&quot;2&quot; column=&quot;3&quot;&gt;
+                     &lt;property name=&quot;name&quot;&gt;
+                         &lt;cstring&gt;pbInputDirectory&lt;/cstring&gt;
+                     &lt;/property&gt;
+@@ -400,13 +400,13 @@
+         &lt;data format=&quot;PNG&quot; length=&quot;160&quot;&gt;89504e470d0a1a0a0000000d4948445200000015000000150806000000a917a5960000006749444154388dadccd10d80300c03d1947118a1fbcb23b00e2c4013dbc9fd9ef4168098eecae6def73b8eba70893a3085aa308d2ab084b2b08c32b08556b08d66700b3dc16d1478d628fa07b6d01368a31968a11528a30c28a12c48a30a48a12a58a20e1811f101d3512a7c38fee1ac0000000049454e44ae426082&lt;/data&gt;
+     &lt;/image&gt;
+     &lt;image name=&quot;image1&quot;&gt;
+-        &lt;data format=&quot;PNG&quot; length=&quot;181&quot;&gt;89504e470d0a1a0a0000000d4948445200000015000000150806000000a917a5960000007c49444154388db5d5c10dc0200805d0da749a8ee0fe6104d7694f4d0851f91f28270de479e2db44e4a8aeeb3bf47e3fba21329aeee9bb57273a681f2d411998425198461138847a7018ddc1297405a7d1195c825ab80cd51b5782da154ea3b34c48a1ab9009a3bbd40aa15e0cd22892ab148a06358c32c9dffef8a35ea81230cf566a45c40000000049454e44ae426082&lt;/data&gt;
++        &lt;data format=&quot;PNG&quot; length=&quot;255&quot;&gt;89504e470d0a1a0a0000000d4948445200000015000000150806000000a917a596000000c649444154388db594d90a83400c458f0bd28542feff9ffa2f81822fadda87d176d4319d14bd20e38470b22a1c2fbd8ce7109e8fbdf050caf9555ad07bc2cf051d9db50679cdb30310176cd298690a98d2e4a37506340b5847bebdd5e7320f0840b778b7a0b99265f02ee9b68e660d4acb34683d4cb3e10b3569b30e7c073e80abfced72819ea86a0fd49014c0754f68153e6f79ec053d8743dad8e818943c41e3fb1e7b3a0b60fe13fe819e4037d62bc8b3a7004d6883adcc4cf516cedf4007942ad3ef38bd01af6e31af98932e9f0000000049454e44ae426082&lt;/data&gt;
+     &lt;/image&gt;
+     &lt;image name=&quot;image2&quot;&gt;
+         &lt;data format=&quot;PNG&quot; length=&quot;113&quot;&gt;89504e470d0a1a0a0000000d4948445200000015000000150806000000a917a5960000003849444154388d633c76ec1803b50113d54da495a12cd804adacb4fe23f38f1dbbc6488c1c0c0c1def8f1a3a6ae8a8a123d350c6915df203007bf20ccfb0566fcb0000000049454e44ae426082&lt;/data&gt;
+     &lt;/image&gt;
+     &lt;image name=&quot;image3&quot;&gt;
+-        &lt;data format=&quot;PNG&quot; length=&quot;119&quot;&gt;89504e470d0a1a0a0000000d4948445200000015000000150806000000a917a5960000003e49444154388d633c76ec1803b50113d54d1c5286b2a00b585969fd27d59063c7ae3122f3878ef7470d1d3574d4506a028c0205bd7020070c1defd3c45000a13508e31a4d23f00000000049454e44ae426082&lt;/data&gt;
++        &lt;data format=&quot;PNG&quot; length=&quot;305&quot;&gt;89504e470d0a1a0a0000000d4948445200000015000000150806000000a917a596000000f849444154388db5943b12823010863f1f95158de839b0f5021ec00bd8702b8f2117e0326ab38d54385a844748086c66f49f49917d7c2cc966412501e4a38b85a536b081abc01350c9405e0dc882cd831701600daca6539340ae57a9a44d2533c069b9bf7f77f605706e96ad83922fb5a9b25bb9e5a3b7ab2559183880c6744b7bcbf201b945248eaafdf2c6b25d7f05b555fe03fafc07741b8790fdf092c7a1c7c8c2bcf8165a59b64b24d48eb739737d1a92e44e5ee6064cbc2815b06e3dcea4f19e6181e9db12d3155bcc195e80d330b49f5a2e34c51f2a1aed207904a01d5c314f017843b2768d810191ac31e3ad1af75319bf0f04f8024c83732f0a67978c0000000049454e44ae426082&lt;/data&gt;
+     &lt;/image&gt;
+     &lt;image name=&quot;image4&quot;&gt;
+         &lt;data format=&quot;PNG&quot; length=&quot;892&quot;&gt;89504e470d0a1a0a0000000d4948445200000018000000180806000000e0773df800000343494441544889ed95cf6f146518c73f5d5a8b96a5ab6de84230b6b02858b134023d28743de8414d6a8c7f01ff801aaf24c24d2f0ac6709693f1a0f5e4c5c42e8907f560a736c4d616322dd275b7753bdb617766f6fdf17898e9b26db798102f263ec924cfccfbe4f3fd3ecffb2403ffc743c408f00e3099493fbafefc338704986a53370e7c909c6dd6f46e2fea68c92780cfcf9d3e92397f26c7f8991ce363c748a552bcffe1249f5e2f5c023ce0cdde7d7bf3e74e1fe5a5178ef0daf967393cd0cbb52f7ee0e2d56f2f0197771398aafc319b4ffbdfd3914a01202288152a5e8deb5fff8888f0e2e810c3b92cc65a8cb1186dd0da50a9d6197dfb6307186d15e86c7df1aa1efb3ac03434d65aac8d018fa4e0c25b679b40dfafa38dc1688bd686a8a1d0da72b03f7daab8e64f259dbe0b2cb50a384b6595ef4f871863304630d6a055ecb01d501bc37a790d43378ff53dc5b5cfae706ae444fe9bafbee4bd8b571de072ab80e7380ec363d0084394d2281d0b6c07d6ea0d0e0c8d923994e3f8cbc364d25d1094e347cde3955c0077fb880a9ee761f61cc6f7570942454369362a1eb55a83fd0347c9648f317af669b2d9be045882!
+ fa34d40191982250f8690ea0b0e30e5cd7258a0ee0fb012b772b3c79f2154e8e3d4736fb440c0bca102d4269710b50442059082b961b3fcf7bc0d27601d7755d3a7bdee0aefb1df90b1f9131b720b809c5c4e12633015a2b8858ac3548b214337377009c765bb404201d5d74f6f493e98e60b5747f5d45106b6390c430b1a6b96db1806171b9d81ccf8e1101186bd9d3bd1fa915b15a379dd90420d292b7f9eefcb6bc85b745c07166101106064fa0c27be830481c9b16973be156ee9f19ad77efa05aad22081beb1542df60a260db185af264f69bc2c618b4d6fcba50dcbd03e2dd1ddcdb9326dc28b5779d8063a0a1d1d0440d451429eefc59e5e6ad32c08ddd054406b343c78956969b176713874a1b948a6161a49873d798febd84b350667671955aa80ac0950775c0bd0d9f747f1f4150472b4d4369c22886ce2dad313d5f6266a1cceced55af1628279977a1d5f503051e3f98a3abd3e216ffe297f9620c5c2c737ba5ead502b5092b0033ed80ff149f4c4cbc2eafe6c704580726897f3e230f03db2dc6ff6de07f3bfe067d9f88db21915f870000000049454e44ae426082&lt;/data&gt;
+
+Modified: trunk/gui/qt3/QtSimulationPlayer.cpp
+===================================================================
+--- trunk/gui/qt3/QtSimulationPlayer.cpp	2008-06-25 18:43:53 UTC (rev 1401)
++++ trunk/gui/qt3/QtSimulationPlayer.cpp	2008-06-26 11:43:03 UTC (rev 1402)
+@@ -29,10 +29,10 @@
+ {
+ 	string selectedFilter;
+ 	std::vector&lt;string&gt; filters;
+-	filters.push_back(&quot;XML Yade File (*.xml)&quot;);
++	filters.push_back(&quot;XML Yade File (*.xml *.xml.gz *.xml.bz2)&quot;);
+ 	string fileName = FileDialog::getOpenFileName(&quot;.&quot;, filters, &quot;Choose a file to load&quot;,NULL,selectedFilter );
+  
+-	if (!fileName.empty() &amp;&amp; selectedFilter == &quot;XML Yade File (*.xml)&quot;)
++	if (!fileName.empty() &amp;&amp; selectedFilter == &quot;XML Yade File (*.xml *.xml.gz *.xml.bz2)&quot;)
+ 		leInputConfigFile-&gt;setText(fileName);
+ }
+ 
+@@ -112,5 +112,3 @@
+ 	glSimulationPlayerViewer-&gt;outputBaseName=leOutputBaseName-&gt;text().ascii();
+ 	glSimulationPlayerViewer-&gt;outputBaseDirectory=leOutputDirectory-&gt;text().ascii();
+ }
+-
+-
+
+Modified: trunk/gui/qt3/QtSimulationPlayer.hpp
+===================================================================
+--- trunk/gui/qt3/QtSimulationPlayer.hpp	2008-06-25 18:43:53 UTC (rev 1401)
++++ trunk/gui/qt3/QtSimulationPlayer.hpp	2008-06-26 11:43:03 UTC (rev 1402)
+@@ -33,6 +33,7 @@
+ 	public slots : virtual void pbResetClicked();
+ 	
+  	protected    : void closeEvent(QCloseEvent *);
++//						void keyPressEvent(QKeyEvent *){};
+ 
+ 	REGISTER_CLASS_NAME(QtSimulationPlayer);
+ 	REGISTER_BASE_CLASS_NAME(Factorable);
+
+Modified: trunk/gui/qt3/YadeQtMainWindow.cpp
+===================================================================
+--- trunk/gui/qt3/YadeQtMainWindow.cpp	2008-06-25 18:43:53 UTC (rev 1401)
++++ trunk/gui/qt3/YadeQtMainWindow.cpp	2008-06-26 11:43:03 UTC (rev 1402)
+@@ -85,8 +85,9 @@
+ }
+ 
+ void YadeQtMainWindow::redrawAll(bool force){
+-	if(force || (simulationController &amp;&amp; !simulationController-&gt;syncRunning))
++	if(force || (simulationController &amp;&amp; !simulationController-&gt;syncRunning)){
+ 		FOREACH(const shared_ptr&lt;GLViewer&gt;&amp; glv,glViews){ if(glv) glv-&gt;updateGL(); }
++	}
+ }
+ 
+ void YadeQtMainWindow::loadSimulation(string file){
+
+Added: trunk/pkg/common/Engine/ParallelEngine.cpp
+===================================================================
+--- trunk/pkg/common/Engine/ParallelEngine.cpp	2008-06-25 18:43:53 UTC (rev 1401)
++++ trunk/pkg/common/Engine/ParallelEngine.cpp	2008-06-26 11:43:03 UTC (rev 1402)
+@@ -0,0 +1,23 @@
++#include&quot;ParallelEngine.hpp&quot;
++YADE_PLUGIN(&quot;ParallelEngine&quot;);
++list&lt;string&gt; ParallelEngine::getNeededBex(){
++	list&lt;string&gt; ret;
++	FOREACH(const vector&lt;shared_ptr&lt;Engine&gt; &gt;&amp; ve, slaves){
++		FOREACH(const shared_ptr&lt;Engine&gt;&amp; e, ve){
++			list&lt;string&gt; rret=e-&gt;getNeededBex();
++			FOREACH(const string&amp; bex, rret) {ret.push_back(bex);}
++		}
++	}
++	return ret;
++}
++
++void ParallelEngine::action(MetaBody* rootBody){
++	// openMP warns if the iteration variable is unsigned...
++	const int size=(int)slaves.size();
++	#pragma omp for schedule(dynamic,1)
++	for(int i=0; i&lt;size; i++){
++		// run every slave group sequentially
++		FOREACH(const shared_ptr&lt;Engine&gt;&amp; e, slaves[i])
++			if(e-&gt;isActivated()) e-&gt;action(rootBody);
++	}
++}
+
+Added: trunk/pkg/common/Engine/ParallelEngine.hpp
+===================================================================
+--- trunk/pkg/common/Engine/ParallelEngine.hpp	2008-06-25 18:43:53 UTC (rev 1401)
++++ trunk/pkg/common/Engine/ParallelEngine.hpp	2008-06-26 11:43:03 UTC (rev 1402)
+@@ -0,0 +1,17 @@
++#pragma once
++#include&lt;yade/core/StandAloneEngine.hpp&gt;
++class ParallelEngine: public Engine {
++	public:
++		typedef vector&lt;vector&lt;shared_ptr&lt;Engine&gt; &gt; &gt; slaveContainer;
++		slaveContainer slaves;
++		ParallelEngine(){};
++		virtual ~ParallelEngine(){};
++		virtual void action(MetaBody*);
++		virtual bool isActivated(){return true;}
++		virtual list&lt;string&gt; getNeededBex();		
++	protected:
++		void registerAttributes(){Engine::registerAttributes(); REGISTER_ATTRIBUTE(slaves); }
++	REGISTER_CLASS_NAME(ParallelEngine);
++	REGISTER_BASE_CLASS_NAME(Engine);
++};
++REGISTER_SERIALIZABLE(ParallelEngine,false);
+
+Modified: trunk/pkg/common/SConscript
+===================================================================
+--- trunk/pkg/common/SConscript	2008-06-25 18:43:53 UTC (rev 1401)
++++ trunk/pkg/common/SConscript	2008-06-26 11:43:03 UTC (rev 1402)
+@@ -2,6 +2,9 @@
+ Import('*')
+ env.Install('$PREFIX/lib/yade$SUFFIX/pkg-common',[
+ 
++	env.SharedLibrary('ParallelEngine',
++		['Engine/ParallelEngine.cpp']),
++
+ 	env.SharedLibrary('BodyAssocVector',
+ 		['Container/BodyAssocVector.cpp'],
+ 		LIBS=env['LIBS']+['yade-base']),
+
+Added: trunk/scripts/simple-scene-parallel.py
+===================================================================
+--- trunk/scripts/simple-scene-parallel.py	2008-06-25 18:43:53 UTC (rev 1401)
++++ trunk/scripts/simple-scene-parallel.py	2008-06-26 11:43:03 UTC (rev 1402)
+@@ -0,0 +1,47 @@
++# -*- encoding=utf-8 -*-
++
++o=Omega()
++
++o.initializers=[
++	StandAloneEngine('PhysicalActionContainerInitializer'),
++	MetaEngine('BoundingVolumeMetaEngine',[EngineUnit('InteractingSphere2AABB'),EngineUnit('InteractingBox2AABB'),EngineUnit('MetaInteractingGeometry2AABB')])
++	]
++o.engines=[
++	# physical actions will not be needed until the contact law comes in;
++	# therefore it can run in parallel with the AABB engines and collider;
++	# but since collider depends on AABBs, they will run sequentially, one after another
++	#
++	# ParallelEngine takes list of engines, which are run in parallel;
++	# 	if an element of the list is itself a list, it is run sequentially.
++	#	openMP has number of environment variables (notably, how many threads to use):
++	#  	<A HREF="http://docs.sun.com/source/819-0501/5_compiling.html#19273">http://docs.sun.com/source/819-0501/5_compiling.html#19273</A>
++	#  
++	#  overview: <A HREF="http://en.wikipedia.org/wiki/Openmp">http://en.wikipedia.org/wiki/Openmp</A>
++	#	homepage: <A HREF="http://openmp.org">http://openmp.org</A> for details,
++	#  implementation of openMP in gcc: <A HREF="http://gcc.gnu.org/projects/gomp/">http://gcc.gnu.org/projects/gomp/</A>
++	#
++	ParallelEngine([
++		StandAloneEngine('PhysicalActionContainerReseter'),
++		[
++			MetaEngine('BoundingVolumeMetaEngine',[EngineUnit('InteractingSphere2AABB'),EngineUnit('InteractingBox2AABB'),EngineUnit('MetaInteractingGeometry2AABB')]),
++			StandAloneEngine('PersistentSAPCollider'),
++		]
++	]),
++	# interaction geometry and interaction physics are indepent and may run in parallel
++	ParallelEngine([
++		MetaEngine('InteractionGeometryMetaEngine',[EngineUnit('InteractingSphere2InteractingSphere4SpheresContactGeometry'),EngineUnit('InteractingBox2InteractingSphere4SpheresContactGeometry')]),
++		MetaEngine('InteractionPhysicsMetaEngine',[EngineUnit('SimpleElasticRelationships')]),
++	]),
++	# the rest must be run sequentially
++	# (contact law as well as gravity modify physical actions, which are, once computed, used in the integrator)
++	StandAloneEngine('ElasticContactLaw'),
++	DeusExMachina('GravityEngine',{'gravity':[0,0,-9.81]}),
++	DeusExMachina('NewtonsDampedLaw',{'damping':0.2})
++]
++
++from yade import utils
++o.bodies.append(utils.box(center=[0,0,0],extents=[.5,.5,.5],dynamic=False,color=[1,0,0],young=30e9,poisson=.3,density=2400))
++o.bodies.append(utils.sphere([0,0,2],1,color=[0,1,0],young=30e9,poisson=.3,density=2400))
++o.dt=.5*utils.PWaveTimeStep()
++
++o.run(100000); o.wait(); print o.iter/o.realtime,&quot;iterations/sec&quot;
+
+
+Property changes on: trunk/scripts/simple-scene-parallel.py
+___________________________________________________________________
+Name: svn:executable
+   + *
+
+Modified: trunk/scripts/simple-scene.py
+===================================================================
+--- trunk/scripts/simple-scene.py	2008-06-25 18:43:53 UTC (rev 1401)
++++ trunk/scripts/simple-scene.py	2008-06-26 11:43:03 UTC (rev 1402)
+@@ -126,6 +126,4 @@
+ 
+ ## Save the scene to file, so that it can be loaded later. Supported extension are: .xml, .xml.gz, .xml.bz2.
+ o.save('/tmp/a.xml.bz2');
+-
+-#utils.runInQtGui() # will run in background
+-#quit()
++#o.run(100000); o.wait(); print o.iter/o.realtime,'iterations/sec'
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000362.html">[Yade-commits] r1401 - in trunk: . core extra gui/py gui/qt3 lib	lib/serialization pkg/common pkg/common/DataClass/PhysicalParameters	pkg/dem/Engine/DeusExMachina scripts
+</A></li>
+	<LI>Next message: <A HREF="000364.html">[Yade-commits] r1403 - in trunk: gui/py pkg/common/Engine	pkg/common/Engine/MetaEngine	pkg/common/Engine/StandAloneEngine scripts
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#363">[ date ]</a>
+              <a href="thread.html#363">[ thread ]</a>
+              <a href="subject.html#363">[ subject ]</a>
+              <a href="author.html#363">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

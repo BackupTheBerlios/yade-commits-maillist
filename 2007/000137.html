@@ -1,0 +1,203 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1172 - in trunk: extra/tetra	pkg/common/DataClass/GeometricalModel
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2007/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1172%20-%20in%20trunk%3A%20extra/tetra%0A%09pkg/common/DataClass/GeometricalModel&In-Reply-To=%3C200705261005.l4QA5SYT009238%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000136.html">
+   <LINK REL="Next"  HREF="000138.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1172 - in trunk: extra/tetra	pkg/common/DataClass/GeometricalModel</H1>
+    <B>cosurgi at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1172%20-%20in%20trunk%3A%20extra/tetra%0A%09pkg/common/DataClass/GeometricalModel&In-Reply-To=%3C200705261005.l4QA5SYT009238%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1172 - in trunk: extra/tetra	pkg/common/DataClass/GeometricalModel">cosurgi at mail.berlios.de
+       </A><BR>
+    <I>Sat May 26 12:05:28 CEST 2007</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000136.html">[Yade-commits] r1171 - in trunk: . gui/qt3
+</A></li>
+        <LI>Next message: <A HREF="000138.html">[Yade-commits] r1173 - in trunk/pkg: common/Container	common/Engine/StandAloneEngine dem/Engine/EngineUnit
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#137">[ date ]</a>
+              <a href="thread.html#137">[ thread ]</a>
+              <a href="subject.html#137">[ subject ]</a>
+              <a href="author.html#137">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: cosurgi
+Date: 2007-05-26 12:05:22 +0200 (Sat, 26 May 2007)
+New Revision: 1172
+
+Modified:
+   trunk/extra/tetra/Tetra.cpp
+   trunk/extra/tetra/Tetra.hpp
+   trunk/pkg/common/DataClass/GeometricalModel/Tetrahedron.cpp
+   trunk/pkg/common/DataClass/GeometricalModel/Tetrahedron.hpp
+Log:
+Tetrahedron modification to std::vector
+
+
+
+Modified: trunk/extra/tetra/Tetra.cpp
+===================================================================
+--- trunk/extra/tetra/Tetra.cpp	2007-05-25 16:34:42 UTC (rev 1171)
++++ trunk/extra/tetra/Tetra.cpp	2007-05-26 10:05:22 UTC (rev 1172)
+@@ -428,7 +428,8 @@
+ I checked &quot;a&quot; charcter by character and it is correct; it the author wrong (doubtful)?
+ 
+ */
+-Matrix3r TetrahedronInertiaTensor(const Vector3r v[4]){
++//Matrix3r TetrahedronInertiaTensor(const Vector3r v[4]){
++Matrix3r TetrahedronInertiaTensor(const vector&lt;Vector3r&gt;&amp; v){
+ 	#define x1 v[0][0]
+ 	#define y1 v[0][1]
+ 	#define z1 v[0][2]
+@@ -442,6 +443,9 @@
+ 	#define y4 v[3][1]
+ 	#define z4 v[3][2]
+ 
++// FIXME - C array
++	assert(v.size()==4);
++
+ 	// Jacobian of transformation to the reference 4hedron
+ 	double detJ=(x2-x1)*(y3-y1)*(z4-z1)+(x3-x1)*(y4-y1)*(z2-z1)+(x4-x1)*(y2-y1)*(z3-z1)
+ 		-(x2-x1)*(y4-y1)*(z3-z1)-(x3-x1)*(y2-y1)*(z4-z1)-(x4-x1)*(y3-y1)*(z2-z1);
+@@ -486,13 +490,22 @@
+ }
+ 
+ /*! Caluclate tetrahedron's central inertia tensor */
+-Matrix3r TetrahedronCentralInertiaTensor(const Vector3r v[4]){
+-	Vector3r vv[4];
++//Matrix3r TetrahedronCentralInertiaTensor(const Vector3r v[4]){
++Matrix3r TetrahedronCentralInertiaTensor(const vector&lt;Vector3r&gt;&amp; v){
++	assert(v.size()==4);
++	vector&lt;Vector3r&gt; vv;
++
++//	Vector3r vv[4];
+ 	Vector3r cg=(v[0]+v[1]+v[2]+v[3])*.25;
+-	vv[0]=v[0]-cg;
+-	vv[1]=v[1]-cg;
+-	vv[2]=v[2]-cg;
+-	vv[3]=v[3]-cg;
++//	vv[0]=v[0]-cg;
++//	vv[1]=v[1]-cg;
++//	vv[2]=v[2]-cg;
++//	vv[3]=v[3]-cg;
++	vv.push_back(v[0]-cg);
++	vv.push_back(v[1]-cg);
++	vv.push_back(v[2]-cg);
++	vv.push_back(v[3]-cg);
++
+ 	return TetrahedronInertiaTensor(vv);
+ }
+ 
+
+Modified: trunk/extra/tetra/Tetra.hpp
+===================================================================
+--- trunk/extra/tetra/Tetra.hpp	2007-05-25 16:34:42 UTC (rev 1171)
++++ trunk/extra/tetra/Tetra.hpp	2007-05-26 10:05:22 UTC (rev 1172)
+@@ -30,9 +30,11 @@
+ class TetraMold: public InteractingGeometry{
+ 	public:
+ 		//! vertices of the tetrahedron.
+-		Vector3r v[4];
+-		TetraMold(){createIndex();}
+-		TetraMold(Vector3r v0, Vector3r v1, Vector3r v2, Vector3r v3){createIndex(); v[0]=v0; v[1]=v1; v[2]=v2; v[3]=v3; }
++		// FIXME - a std::vector....
++		std::vector&lt;Vector3r&gt; v; 
++		//Vector3r v[4];
++		TetraMold(){createIndex(); v.resize(0); }
++		TetraMold(Vector3r v0, Vector3r v1, Vector3r v2, Vector3r v3){createIndex(); v.resize(4); v[0]=v0; v[1]=v1; v[2]=v2; v[3]=v3; }
+ 		virtual ~TetraMold (){};
+ 	protected:
+ 		void registerAttributes(){InteractingGeometry::registerAttributes(); REGISTER_ATTRIBUTE(v);}
+@@ -175,8 +177,11 @@
+ // Miscillaneous functions
+ //! Tetrahedron's volume.
+ Real TetrahedronVolume(const Vector3r v[4]){ return fabs(Vector3r(v[1]-v[0]).Dot(Vector3r(v[2]-v[0]).Cross(v[3]-v[0])))/6.; }
+-Matrix3r TetrahedronInertiaTensor(const Vector3r v[4]);
+-Matrix3r TetrahedronCentralInertiaTensor(const Vector3r v[4]);
++Real TetrahedronVolume(const vector&lt;Vector3r&gt;&amp; v){ return fabs(Vector3r(v[1]-v[0]).Dot(Vector3r(v[2]-v[0]).Cross(v[3]-v[0])))/6.; }
++Matrix3r TetrahedronInertiaTensor(const vector&lt;Vector3r&gt;&amp; v);
++//Matrix3r TetrahedronInertiaTensor(const Vector3r v[4]);
++Matrix3r TetrahedronCentralInertiaTensor(const vector&lt;Vector3r&gt;&amp; v);
++//Matrix3r TetrahedronCentralInertiaTensor(const Vector3r v[4]);
+ Quaternionr TetrahedronWithLocalAxesPrincipal(shared_ptr&lt;Body&gt;&amp; tetraBody);
+ 
+ 
+
+Modified: trunk/pkg/common/DataClass/GeometricalModel/Tetrahedron.cpp
+===================================================================
+--- trunk/pkg/common/DataClass/GeometricalModel/Tetrahedron.cpp	2007-05-25 16:34:42 UTC (rev 1171)
++++ trunk/pkg/common/DataClass/GeometricalModel/Tetrahedron.cpp	2007-05-26 10:05:22 UTC (rev 1172)
+@@ -13,12 +13,17 @@
+ Tetrahedron::Tetrahedron(): GeometricalModel()
+ {
+ 	createIndex();
++ 	// FIXME: something like v(4,Vector3r(0,0,0)) should work...
++	// FIXME - remove that line when we can move to C array[4]
++	for(size_t i=0; i&lt;4; i++) v.push_back(Vector3r(0,0,0));
+ }
+ 
+ Tetrahedron::Tetrahedron(const Vector3r&amp; v0,const Vector3r&amp; v1,const Vector3r&amp; v2,const Vector3r&amp; v3) : GeometricalModel()
+ {
+ 	createIndex();
+-	v[0]=v0; v[1]=v1; v[2]=v2; v[3]=v3;
++	// FIXME - we can move to C array[4] ...
++	v.push_back(v0); v.push_back(v1); v.push_back(v2); v.push_back(v3);
++//	v[0]=v0; v[1]=v1; v[2]=v2; v[3]=v3;
+ }
+ 
+ Tetrahedron::~Tetrahedron()
+
+Modified: trunk/pkg/common/DataClass/GeometricalModel/Tetrahedron.hpp
+===================================================================
+--- trunk/pkg/common/DataClass/GeometricalModel/Tetrahedron.hpp	2007-05-25 16:34:42 UTC (rev 1171)
++++ trunk/pkg/common/DataClass/GeometricalModel/Tetrahedron.hpp	2007-05-26 10:05:22 UTC (rev 1172)
+@@ -17,7 +17,9 @@
+ class Tetrahedron : public GeometricalModel
+ {
+ 	public :
+-		Vector3r v[4]; // vertices of tetrahedron
++	// FIXME - we can go back to C array when we migrate to boost::serialization. yade::serialization does not support C arrays
++		std::vector&lt;Vector3r&gt; v; // vertices of tetrahedron
++//		Vector3r v[4]; // vertices of tetrahedron
+ 
+ 		Tetrahedron();
+ 		Tetrahedron(const Vector3r&amp; v0, const Vector3r&amp; v1, const Vector3r&amp; v2, const Vector3r&amp; v3);
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000136.html">[Yade-commits] r1171 - in trunk: . gui/qt3
+</A></li>
+	<LI>Next message: <A HREF="000138.html">[Yade-commits] r1173 - in trunk/pkg: common/Container	common/Engine/StandAloneEngine dem/Engine/EngineUnit
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#137">[ date ]</a>
+              <a href="thread.html#137">[ thread ]</a>
+              <a href="subject.html#137">[ subject ]</a>
+              <a href="author.html#137">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

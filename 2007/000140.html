@@ -1,0 +1,224 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1175 - in trunk: core gui/qt3	pkg/realtime-rigidbody/PreProcessor
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2007/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1175%20-%20in%20trunk%3A%20core%20gui/qt3%0A%09pkg/realtime-rigidbody/PreProcessor&In-Reply-To=%3C200705282105.l4SL5umM013985%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000139.html">
+   <LINK REL="Next"  HREF="000141.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1175 - in trunk: core gui/qt3	pkg/realtime-rigidbody/PreProcessor</H1>
+    <B>cosurgi at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1175%20-%20in%20trunk%3A%20core%20gui/qt3%0A%09pkg/realtime-rigidbody/PreProcessor&In-Reply-To=%3C200705282105.l4SL5umM013985%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1175 - in trunk: core gui/qt3	pkg/realtime-rigidbody/PreProcessor">cosurgi at mail.berlios.de
+       </A><BR>
+    <I>Mon May 28 23:05:56 CEST 2007</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000139.html">[Yade-commits] r1174 - trunk
+</A></li>
+        <LI>Next message: <A HREF="000141.html">[Yade-commits] r1176 - in trunk: . extra/clump	extra/spherical-dem-simulator gui/qt3
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#140">[ date ]</a>
+              <a href="thread.html#140">[ thread ]</a>
+              <a href="subject.html#140">[ subject ]</a>
+              <a href="author.html#140">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: cosurgi
+Date: 2007-05-28 23:05:55 +0200 (Mon, 28 May 2007)
+New Revision: 1175
+
+Modified:
+   trunk/core/Omega.cpp
+   trunk/gui/qt3/QtFileGenerator.cpp
+   trunk/gui/qt3/SimulationController.cpp
+   trunk/gui/qt3/SimulationController.hpp
+   trunk/gui/qt3/YadeQtMainWindow.cpp
+   trunk/pkg/realtime-rigidbody/PreProcessor/RotatingBox.cpp
+Log:
+- timestepper is set correctly when loading file in GUI (I hope!) - no need to reload second time
+- FileGenerator does not open SimulationController if it already exists
+
+
+
+
+Modified: trunk/core/Omega.cpp
+===================================================================
+--- trunk/core/Omega.cpp	2007-05-28 14:37:54 UTC (rev 1174)
++++ trunk/core/Omega.cpp	2007-05-28 21:05:55 UTC (rev 1175)
+@@ -440,6 +440,9 @@
+ //FIXME : make that recursive to scan all submetabodies ???
+ bool Omega::containTimeStepper()
+ {
++        if(!rootBody) 
++		return false;
++
+ 	vector&lt;shared_ptr&lt;Engine&gt; &gt;::iterator ai    = rootBody-&gt;engines.begin();
+ 	vector&lt;shared_ptr&lt;Engine&gt; &gt;::iterator aiEnd = rootBody-&gt;engines.end();
+ 	for(int i=0;ai!=aiEnd;++ai,i++)
+
+Modified: trunk/gui/qt3/QtFileGenerator.cpp
+===================================================================
+--- trunk/gui/qt3/QtFileGenerator.cpp	2007-05-28 14:37:54 UTC (rev 1174)
++++ trunk/gui/qt3/QtFileGenerator.cpp	2007-05-28 21:05:55 UTC (rev 1175)
+@@ -224,7 +224,10 @@
+ 		 * 1. it is desired,
+ 		 * 2. generation was successful (unreliable check: generator returns string; we just have a look if the filename specified exists or not),
+ 		 * 3. no simulation is open already (by checking Omega's simulationFileName) */
+-		if(cbOpenAutomatically-&gt;isChecked() &amp;&amp; filesystem::exists(filesystem::path((const char*)(leOutputFileName-&gt;text()))) &amp;&amp; Omega::instance().getSimulationFileName()==&quot;&quot;){
++		if(	   cbOpenAutomatically-&gt;isChecked() 
++			&amp;&amp; filesystem::exists(filesystem::path((const char*)(leOutputFileName-&gt;text()))) 
++			&amp;&amp; Omega::instance().getSimulationFileName()==&quot;&quot;)
++		{
+ 			QWidget* qw=this; while (qw-&gt;parentWidget()) qw=qw-&gt;parentWidget(); // find toplevel widget - which should be yade's main window
+ 			Omega::instance().setSimulationFileName((const char*)(leOutputFileName-&gt;text()));
+ 			(dynamic_cast&lt;YadeQtMainWindow*&gt;(qw))-&gt;fileNewSimulation();
+
+Modified: trunk/gui/qt3/SimulationController.cpp
+===================================================================
+--- trunk/gui/qt3/SimulationController.cpp	2007-05-28 14:37:54 UTC (rev 1174)
++++ trunk/gui/qt3/SimulationController.cpp	2007-05-28 21:05:55 UTC (rev 1175)
+@@ -161,7 +161,7 @@
+ }
+ 
+ 
+-void SimulationController::loadSimulationFromFileName(const std::string&amp; fileName)
++void SimulationController::loadSimulationFromFileName(const std::string&amp; fileName,bool center)
+ {
+ 	assert(filesystem::exists(fileName));
+ 
+@@ -219,7 +219,10 @@
+ 			pbOneSimulationStep-&gt;setDisabled(true);
+ 		}
+ 
+-		pbCenterSceneClicked();
++		if(center)
++			pbCenterSceneClicked();
++		
++		rbTimeStepper-&gt;setEnabled(Omega::instance().containTimeStepper());
+ }
+ 
+ void SimulationController::pbSaveClicked()
+@@ -319,17 +322,29 @@
+ 
+ 	pbStopClicked();
+ 
++/*
+ 	Omega::instance().finishSimulationLoop();
+ 	Omega::instance().joinSimulationLoop(); 
+ 	Omega::instance().loadSimulation();
+ 	Omega::instance().createSimulationLoop();
++*/
++	std::string name=Omega::instance().getSimulationFileName(); 
++	loadSimulationFromFileName(name,false);
+ 
+-	changeSkipTimeStepper = true;
+-	skipTimeStepper = !wasUsingTimeStepper;
+-	updater-&gt;oneLoop(); // to refresh gui
++	if(Omega::instance().getRootBody())
++	{
++		changeSkipTimeStepper = true;
++		skipTimeStepper = !wasUsingTimeStepper;
++		updater-&gt;oneLoop(); // to refresh gui
+ 
+-	rbTimeStepper-&gt;setEnabled(Omega::instance().containTimeStepper());
+-	redrawAll();
++		rbTimeStepper-&gt;setEnabled(Omega::instance().containTimeStepper());
++		redrawAll();
++	} 
++	else
++	{
++		Omega::instance().setSimulationFileName(name);
++		pbResetSimulation-&gt;setEnabled(true);
++	}
+ 
+ //	pbCenterSceneClicked();  // FIXME - add autocenter option...
+ }
+@@ -365,7 +380,7 @@
+ 
+ void SimulationController::bgTimeStepClicked(int i)
+ {
+-	switch (i)
++	switch (i) // FIXME wtf ? (code written by Olivier)
+ 	{
+ 		case 0 : //Use timeStepper
+ 			changeSkipTimeStepper = true;
+
+Modified: trunk/gui/qt3/SimulationController.hpp
+===================================================================
+--- trunk/gui/qt3/SimulationController.hpp	2007-05-28 14:37:54 UTC (rev 1174)
++++ trunk/gui/qt3/SimulationController.hpp	2007-05-28 21:05:55 UTC (rev 1175)
+@@ -38,7 +38,7 @@
+ 		QFrame * scrollViewFrame;
+ 		QVBoxLayout* scrollViewLayout;
+ 		void addNewView();
+-		void loadSimulationFromFileName(const std::string&amp; fileName);
++		void loadSimulationFromFileName(const std::string&amp; fileName,bool center=true);
+ 	
+ 	public : 
+ 		bool	 changeSkipTimeStepper
+
+Modified: trunk/gui/qt3/YadeQtMainWindow.cpp
+===================================================================
+--- trunk/gui/qt3/YadeQtMainWindow.cpp	2007-05-28 14:37:54 UTC (rev 1174)
++++ trunk/gui/qt3/YadeQtMainWindow.cpp	2007-05-28 21:05:55 UTC (rev 1175)
+@@ -140,7 +140,8 @@
+ 
+ void YadeQtMainWindow::fileNewSimulation()
+ {
+-	simulationController = new SimulationController(workspace);
++	if(!simulationController)
++		simulationController = new SimulationController(workspace);
+ 	simulationController-&gt;show();
+ 	connect( simulationController, SIGNAL( closeSignal() ), this, SLOT( closeSimulationControllerEvent() ) );
+ 	fileNewSimulationAction-&gt;setEnabled(false);
+
+Modified: trunk/pkg/realtime-rigidbody/PreProcessor/RotatingBox.cpp
+===================================================================
+--- trunk/pkg/realtime-rigidbody/PreProcessor/RotatingBox.cpp	2007-05-28 14:37:54 UTC (rev 1174)
++++ trunk/pkg/realtime-rigidbody/PreProcessor/RotatingBox.cpp	2007-05-28 21:05:55 UTC (rev 1175)
+@@ -126,7 +126,7 @@
+ 				rootBody-&gt;bodies-&gt;insert(box);
+  			}
+ 
+-	return &quot;&quot;;
++	return &quot;\nATTN: please set smaller timestep or it will bounce like crazy.&quot;;
+ }
+ 
+ 
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000139.html">[Yade-commits] r1174 - trunk
+</A></li>
+	<LI>Next message: <A HREF="000141.html">[Yade-commits] r1176 - in trunk: . extra/clump	extra/spherical-dem-simulator gui/qt3
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#140">[ date ]</a>
+              <a href="thread.html#140">[ thread ]</a>
+              <a href="subject.html#140">[ subject ]</a>
+              <a href="author.html#140">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

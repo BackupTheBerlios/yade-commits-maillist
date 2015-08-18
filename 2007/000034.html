@@ -1,0 +1,290 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1069 - in	trunk/yade-packages/yade-package-dem/src/Engine/EngineUnit: .	SimpleElasticRelationships
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2007/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1069%20-%20in%0A%09trunk/yade-packages/yade-package-dem/src/Engine/EngineUnit%3A%20.%0A%09SimpleElasticRelationships&In-Reply-To=%3C200702231646.l1NGkT1p022821%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000033.html">
+   <LINK REL="Next"  HREF="000035.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1069 - in	trunk/yade-packages/yade-package-dem/src/Engine/EngineUnit: .	SimpleElasticRelationships</H1>
+    <B>chareyre at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1069%20-%20in%0A%09trunk/yade-packages/yade-package-dem/src/Engine/EngineUnit%3A%20.%0A%09SimpleElasticRelationships&In-Reply-To=%3C200702231646.l1NGkT1p022821%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1069 - in	trunk/yade-packages/yade-package-dem/src/Engine/EngineUnit: .	SimpleElasticRelationships">chareyre at mail.berlios.de
+       </A><BR>
+    <I>Fri Feb 23 17:46:29 CET 2007</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000033.html">[Yade-commits] r1068 - trunk
+</A></li>
+        <LI>Next message: <A HREF="000035.html">[Yade-commits] r1070 - in trunk/yade-packages/yade-package-dem/src:	Engine/DeusExMachina/TriaxialCompressionEngine	Engine/DeusExMachina/TriaxialStressController	PreProcessor/TriaxialTest
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#34">[ date ]</a>
+              <a href="thread.html#34">[ thread ]</a>
+              <a href="subject.html#34">[ subject ]</a>
+              <a href="author.html#34">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: chareyre
+Date: 2007-02-23 17:46:29 +0100 (Fri, 23 Feb 2007)
+New Revision: 1069
+
+Added:
+   trunk/yade-packages/yade-package-dem/src/Engine/EngineUnit/SimpleElasticRelationships/
+   trunk/yade-packages/yade-package-dem/src/Engine/EngineUnit/SimpleElasticRelationships/SimpleElasticRelationships.cpp
+   trunk/yade-packages/yade-package-dem/src/Engine/EngineUnit/SimpleElasticRelationships/SimpleElasticRelationships.hpp
+   trunk/yade-packages/yade-package-dem/src/Engine/EngineUnit/SimpleElasticRelationships/SimpleElasticRelationships.pro
+Modified:
+   trunk/yade-packages/yade-package-dem/src/Engine/EngineUnit/EngineUnit.pro
+Log:
+
+A simple definition of contact stiffness based on E and nu :
+kn = E*size of sphere (so that apparent stiffness will be independent of size)
+ks = nu*kn
+
+
+
+
+Modified: trunk/yade-packages/yade-package-dem/src/Engine/EngineUnit/EngineUnit.pro
+===================================================================
+--- trunk/yade-packages/yade-package-dem/src/Engine/EngineUnit/EngineUnit.pro	2007-02-23 14:09:33 UTC (rev 1068)
++++ trunk/yade-packages/yade-package-dem/src/Engine/EngineUnit/EngineUnit.pro	2007-02-23 16:46:29 UTC (rev 1069)
+@@ -4,8 +4,12 @@
+ 
+ 
+ SUBDIRS += MacroMicroElasticRelationships \
++	   MacroMicroElasticRelationshipsWater \
++	   SimpleElasticRelationships \
+            InteractingBox2InteractingSphere4SpheresContactGeometry \
++	   InteractingBox2InteractingSphere4SpheresContactGeometryWater \
+            InteractingSphere2InteractingSphere4SpheresContactGeometry \
++	   InteractingSphere2InteractingSphere4SpheresContactGeometryWater \
+ 	   InteractingMyTetrahedron2AABB \
+ 	   InteractingMyTetrahedron2InteractingMyTetrahedron4InteractionOfMyTetrahedron \
+ 	   InteractingMyTetrahedron2InteractingBox4InteractionOfMyTetrahedron \
+
+Added: trunk/yade-packages/yade-package-dem/src/Engine/EngineUnit/SimpleElasticRelationships/SimpleElasticRelationships.cpp
+===================================================================
+--- trunk/yade-packages/yade-package-dem/src/Engine/EngineUnit/SimpleElasticRelationships/SimpleElasticRelationships.cpp	2007-02-23 14:09:33 UTC (rev 1068)
++++ trunk/yade-packages/yade-package-dem/src/Engine/EngineUnit/SimpleElasticRelationships/SimpleElasticRelationships.cpp	2007-02-23 16:46:29 UTC (rev 1069)
+@@ -0,0 +1,100 @@
++/*************************************************************************
++*  Copyright (C) 2007 by Bruno CHAREYRE                                 *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">bruno.chareyre at hmg.inpg.fr</A>                                        *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#include &quot;SimpleElasticRelationships.hpp&quot;
++#include &quot;SpheresContactGeometry.hpp&quot;
++#include &quot;ElasticContactInteraction.hpp&quot;
++#include &quot;SDECLinkGeometry.hpp&quot; // FIXME - I can't dispatch by SDECLinkGeometry &lt;-&gt; SpheresContactGeometry !!?
++#include &quot;SDECLinkPhysics.hpp&quot; // FIXME
++#include &quot;BodyMacroParameters.hpp&quot;
++#include &lt;yade/yade-core/Omega.hpp&gt;
++#include &lt;yade/yade-core/MetaBody.hpp&gt;
++
++
++SimpleElasticRelationships::SimpleElasticRelationships()
++{
++
++}
++
++
++void SimpleElasticRelationships::registerAttributes()
++{
++	
++}
++
++
++void SimpleElasticRelationships::go(	  const shared_ptr&lt;PhysicalParameters&gt;&amp; b1 // BodyMacroParameters
++					, const shared_ptr&lt;PhysicalParameters&gt;&amp; b2 // BodyMacroParameters
++					, const shared_ptr&lt;Interaction&gt;&amp; interaction)
++{
++	BodyMacroParameters* sdec1 = static_cast&lt;BodyMacroParameters*&gt;(b1.get());
++	BodyMacroParameters* sdec2 = static_cast&lt;BodyMacroParameters*&gt;(b2.get());
++	SpheresContactGeometry* interactionGeometry = dynamic_cast&lt;SpheresContactGeometry*&gt;(interaction-&gt;interactionGeometry.get());
++	
++	if(interactionGeometry) // so it is SpheresContactGeometry  - NON PERMANENT LINK
++	{
++		if( interaction-&gt;isNew)
++		{
++			interaction-&gt;interactionPhysics = shared_ptr&lt;ElasticContactInteraction&gt;(new ElasticContactInteraction());
++			ElasticContactInteraction* contactPhysics = dynamic_cast&lt;ElasticContactInteraction*&gt;(interaction-&gt;interactionPhysics.get());
++
++			Real Ea 	= sdec1-&gt;young;
++			Real Eb 	= sdec2-&gt;young;
++			Real Va 	= sdec1-&gt;poisson;
++			Real Vb 	= sdec2-&gt;poisson;
++			Real Da 	= interactionGeometry-&gt;radius1; // FIXME - multiply by factor of sphere interaction distance (so sphere interacts at bigger range that its geometrical size)
++			Real Db 	= interactionGeometry-&gt;radius2; // FIXME - as above
++			Real fa 	= sdec1-&gt;frictionAngle;
++			Real fb 	= sdec2-&gt;frictionAngle;
++
++			//Real Eab	= 2*Ea*Eb/(Ea+Eb);
++			//Real Vab	= 2*Va*Vb/(Va+Vb);
++
++			Real Dinit 	= Da+Db; 			// FIXME - is it just a sum?
++			//Real Sinit 	= Mathr::PI * std::pow( std::min(Da,Db) , 2);
++
++			Real Kn = 2*Ea*Da*Eb*Db/(Ea*Da+Eb*Db);//harmonic average of two stiffnesses
++			Real Ks = 2*Ea*Da*Va*Eb*Db*Vb/(Ea*Da*Va+Eb*Db*Va);//harmonic average of two stiffnesses with ks=V*kn for each sphere
++
++			contactPhysics-&gt;initialKn			= Kn;
++			contactPhysics-&gt;initialKs			= Ks;
++//cerr &lt;&lt; &quot;Ks: &quot; &lt;&lt;       contactPhysics-&gt;initialKs			&lt;&lt; endl;
++			contactPhysics-&gt;frictionAngle			= std::min(fa,fb); // FIXME - this is actually a waste of memory space, just like initialKs and initialKn
++			contactPhysics-&gt;tangensOfFrictionAngle		= std::tan(contactPhysics-&gt;frictionAngle); 
++
++			contactPhysics-&gt;prevNormal 			= interactionGeometry-&gt;normal;
++			contactPhysics-&gt;initialEquilibriumDistance	= Dinit;			
++
++			contactPhysics-&gt;kn = contactPhysics-&gt;initialKn;
++			contactPhysics-&gt;ks = contactPhysics-&gt;initialKs;
++			contactPhysics-&gt;equilibriumDistance = contactPhysics-&gt;initialEquilibriumDistance;
++
++		}
++		else
++		{	// FIXME - are those lines necessary ???? what they are doing in fact ???
++			ElasticContactInteraction* contactPhysics = dynamic_cast&lt;ElasticContactInteraction*&gt;(interaction-&gt;interactionPhysics.get());
++
++			contactPhysics-&gt;kn = contactPhysics-&gt;initialKn;
++			contactPhysics-&gt;ks = contactPhysics-&gt;initialKs;
++			contactPhysics-&gt;equilibriumDistance = contactPhysics-&gt;initialEquilibriumDistance;
++		}	
++		
++	}
++	else   // this is PERMANENT LINK because previous dynamic_cast failed, dispatcher should do this job
++	{
++		SDECLinkGeometry* sdecLinkGeometry =  dynamic_cast&lt;SDECLinkGeometry*&gt;(interaction-&gt;interactionGeometry.get());
++		if (sdecLinkGeometry)
++		{		
++			SDECLinkPhysics* linkPhysics = static_cast&lt;SDECLinkPhysics*&gt;(interaction-&gt;interactionPhysics.get());
++	//		linkPhysics-&gt;frictionAngle 		= ?? //FIXME - uninitialized 
++			linkPhysics-&gt;kn 			= linkPhysics-&gt;initialKn;
++			linkPhysics-&gt;ks 			= linkPhysics-&gt;initialKs;
++			linkPhysics-&gt;equilibriumDistance 	= linkPhysics-&gt;initialEquilibriumDistance;
++		}
++	}
++};
+
+Added: trunk/yade-packages/yade-package-dem/src/Engine/EngineUnit/SimpleElasticRelationships/SimpleElasticRelationships.hpp
+===================================================================
+--- trunk/yade-packages/yade-package-dem/src/Engine/EngineUnit/SimpleElasticRelationships/SimpleElasticRelationships.hpp	2007-02-23 14:09:33 UTC (rev 1068)
++++ trunk/yade-packages/yade-package-dem/src/Engine/EngineUnit/SimpleElasticRelationships/SimpleElasticRelationships.hpp	2007-02-23 16:46:29 UTC (rev 1069)
+@@ -0,0 +1,33 @@
++/*************************************************************************
++*  Copyright (C) 2007 by Bruno CHAREYRE                                 *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">bruno.chareyre at hmg.inpg.fr</A>                                        *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#ifndef SIMPLECONTACTMODEL_HPP
++#define SIMPLECONTACTMODEL_HPP
++
++#include &lt;yade/yade-package-common/InteractionPhysicsEngineUnit.hpp&gt;
++
++class SimpleElasticRelationships : public InteractionPhysicsEngineUnit
++{
++	public :
++		SimpleElasticRelationships();
++
++		virtual void go(	const shared_ptr&lt;PhysicalParameters&gt;&amp; b1,
++					const shared_ptr&lt;PhysicalParameters&gt;&amp; b2,
++					const shared_ptr&lt;Interaction&gt;&amp; interaction);
++
++	protected :
++		virtual void registerAttributes();
++	REGISTER_CLASS_NAME(SimpleElasticRelationships);
++	REGISTER_BASE_CLASS_NAME(InteractionPhysicsEngineUnit);
++
++};
++
++REGISTER_SERIALIZABLE(SimpleElasticRelationships,false);
++
++#endif // SIMPLECONTACTMODEL_HPP
++
+
+Added: trunk/yade-packages/yade-package-dem/src/Engine/EngineUnit/SimpleElasticRelationships/SimpleElasticRelationships.pro
+===================================================================
+--- trunk/yade-packages/yade-package-dem/src/Engine/EngineUnit/SimpleElasticRelationships/SimpleElasticRelationships.pro	2007-02-23 14:09:33 UTC (rev 1068)
++++ trunk/yade-packages/yade-package-dem/src/Engine/EngineUnit/SimpleElasticRelationships/SimpleElasticRelationships.pro	2007-02-23 16:46:29 UTC (rev 1069)
+@@ -0,0 +1,40 @@
++isEmpty ( YADE_QMAKE_PATH ) {
++error( &quot;YADE_QMAKE_PATH internal qmake variable is not set, you should run for example qmake YADE_QMAKE_PATH=/usr/local, this will not work from inside kdevelop (when they will fix it?)&quot; )
++}
++
++
++LIBS += -lSDECLinkPhysics \
++        -lSDECLinkGeometry \
++        -lElasticContactInteraction \
++        -lSpheresContactGeometry \
++        -lBodyMacroParameters \
++        -lRigidBodyParameters \
++        -lParticleParameters \
++        -lInteractionPhysicsMetaEngine \
++        -rdynamic 
++INCLUDEPATH += $${YADE_QMAKE_PATH}/include/ \
++               ../../../DataClass/InteractionPhysics/SDECLinkPhysics \
++               ../../../DataClass/InteractionPhysics/ElasticContactInteraction \
++               ../../../DataClass/InteractionGeometry/SDECLinkGeometry \
++               ../../../DataClass/InteractionGeometry/SpheresContactGeometry \
++               ../../../DataClass/PhysicalParameters/BodyMacroParameters 
++QMAKE_LIBDIR = ../../../../bin \
++               ../../../../bin \
++               ../../../../bin \
++               ../../../../bin \
++               ../../../../bin \
++               $${YADE_QMAKE_PATH}/lib/yade/yade-package-common/ \
++               $${YADE_QMAKE_PATH}/lib/yade/yade-libs/ 
++QMAKE_CXXFLAGS_RELEASE += -lpthread \
++                          -pthread 
++QMAKE_CXXFLAGS_DEBUG += -lpthread \
++                        -pthread 
++DESTDIR = ../../../../bin 
++CONFIG += debug \
++          thread \
++          warn_on \
++          dll 
++TEMPLATE = lib 
++HEADERS += SimpleElasticRelationships.hpp 
++SOURCES += SimpleElasticRelationships.cpp 
++QMAKE_RUN_CXX_IMP = $(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $(shell pwd)/$&lt;
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000033.html">[Yade-commits] r1068 - trunk
+</A></li>
+	<LI>Next message: <A HREF="000035.html">[Yade-commits] r1070 - in trunk/yade-packages/yade-package-dem/src:	Engine/DeusExMachina/TriaxialCompressionEngine	Engine/DeusExMachina/TriaxialStressController	PreProcessor/TriaxialTest
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#34">[ date ]</a>
+              <a href="thread.html#34">[ thread ]</a>
+              <a href="subject.html#34">[ subject ]</a>
+              <a href="author.html#34">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

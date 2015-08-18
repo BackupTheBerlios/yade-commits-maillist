@@ -1,0 +1,3395 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1347 - in trunk: . examples lib lib/import	pkg/common pkg/common/DataClass/GeometricalModel	pkg/common/DataClass/InteractingGeometry	pkg/common/Engine/EngineUnit pkg/common/Engine/StandAloneEngine	pkg/common/RenderingEngine/GLDrawGeometricalModel	pkg/common/RenderingEngine/GLDrawInteractingGeometry pkg/dem	pkg/dem/Engine/EngineUnit pkg/dem/PreProcessor
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1347%20-%20in%20trunk%3A%20.%20examples%20lib%20lib/import%0A%09pkg/common%20pkg/common/DataClass/GeometricalModel%0A%09pkg/common/DataClass/InteractingGeometry%0A%09pkg/common/Engine/EngineUnit%20pkg/common/Engine/StandAloneEngine%0A%09pkg/common/RenderingEngine/GLDrawGeometricalModel%0A%09pkg/common/RenderingEngine/GLDrawInteractingGeometry%20pkg/dem%0A%09pkg/dem/Engine/EngineUnit%20pkg/dem/PreProcessor&In-Reply-To=%3C200805101315.m4ADFf5r021034%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000308.html">
+   <LINK REL="Next"  HREF="000310.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1347 - in trunk: . examples lib lib/import	pkg/common pkg/common/DataClass/GeometricalModel	pkg/common/DataClass/InteractingGeometry	pkg/common/Engine/EngineUnit pkg/common/Engine/StandAloneEngine	pkg/common/RenderingEngine/GLDrawGeometricalModel	pkg/common/RenderingEngine/GLDrawInteractingGeometry pkg/dem	pkg/dem/Engine/EngineUnit pkg/dem/PreProcessor</H1>
+    <B>sega at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1347%20-%20in%20trunk%3A%20.%20examples%20lib%20lib/import%0A%09pkg/common%20pkg/common/DataClass/GeometricalModel%0A%09pkg/common/DataClass/InteractingGeometry%0A%09pkg/common/Engine/EngineUnit%20pkg/common/Engine/StandAloneEngine%0A%09pkg/common/RenderingEngine/GLDrawGeometricalModel%0A%09pkg/common/RenderingEngine/GLDrawInteractingGeometry%20pkg/dem%0A%09pkg/dem/Engine/EngineUnit%20pkg/dem/PreProcessor&In-Reply-To=%3C200805101315.m4ADFf5r021034%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1347 - in trunk: . examples lib lib/import	pkg/common pkg/common/DataClass/GeometricalModel	pkg/common/DataClass/InteractingGeometry	pkg/common/Engine/EngineUnit pkg/common/Engine/StandAloneEngine	pkg/common/RenderingEngine/GLDrawGeometricalModel	pkg/common/RenderingEngine/GLDrawInteractingGeometry pkg/dem	pkg/dem/Engine/EngineUnit pkg/dem/PreProcessor">sega at mail.berlios.de
+       </A><BR>
+    <I>Sat May 10 15:15:41 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000308.html">[Yade-commits] r1346 - in trunk: core extra extra/tetra extra/usct
+</A></li>
+        <LI>Next message: <A HREF="000310.html">[Yade-commits] r1348 - in trunk: core extra extra/clump extra/usct	gui gui/py gui/qt3 pkg/common/Engine/DeusExMachina
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#309">[ date ]</a>
+              <a href="thread.html#309">[ thread ]</a>
+              <a href="subject.html#309">[ subject ]</a>
+              <a href="author.html#309">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: sega
+Date: 2008-05-10 15:15:38 +0200 (Sat, 10 May 2008)
+New Revision: 1347
+
+Added:
+   trunk/examples/hourglass.stl
+   trunk/lib/import/
+   trunk/lib/import/STLImporter.cpp
+   trunk/lib/import/STLImporter.hpp
+   trunk/lib/import/STLReader.cpp
+   trunk/lib/import/STLReader.hpp
+   trunk/lib/import/utils.hpp
+   trunk/pkg/common/DataClass/GeometricalModel/Facet.cpp
+   trunk/pkg/common/DataClass/GeometricalModel/Facet.hpp
+   trunk/pkg/common/DataClass/GeometricalModel/GeometricalEdge.cpp
+   trunk/pkg/common/DataClass/GeometricalModel/GeometricalEdge.hpp
+   trunk/pkg/common/DataClass/GeometricalModel/Vertex.cpp
+   trunk/pkg/common/DataClass/GeometricalModel/Vertex.hpp
+   trunk/pkg/common/DataClass/InteractingGeometry/InteractingEdge.cpp
+   trunk/pkg/common/DataClass/InteractingGeometry/InteractingEdge.hpp
+   trunk/pkg/common/DataClass/InteractingGeometry/InteractingFacet.cpp
+   trunk/pkg/common/DataClass/InteractingGeometry/InteractingFacet.hpp
+   trunk/pkg/common/DataClass/InteractingGeometry/InteractingVertex.cpp
+   trunk/pkg/common/DataClass/InteractingGeometry/InteractingVertex.hpp
+   trunk/pkg/common/Engine/EngineUnit/InteractingEdge2AABB.cpp
+   trunk/pkg/common/Engine/EngineUnit/InteractingEdge2AABB.hpp
+   trunk/pkg/common/Engine/EngineUnit/InteractingFacet2AABB.cpp
+   trunk/pkg/common/Engine/EngineUnit/InteractingFacet2AABB.hpp
+   trunk/pkg/common/Engine/StandAloneEngine/SpatialQuickSortCollider.cpp
+   trunk/pkg/common/Engine/StandAloneEngine/SpatialQuickSortCollider.hpp
+   trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawFacet.cpp
+   trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawFacet.hpp
+   trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawGeometricalEdge.cpp
+   trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawGeometricalEdge.hpp
+   trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawVertex.cpp
+   trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawVertex.hpp
+   trunk/pkg/common/RenderingEngine/GLDrawInteractingGeometry/GLDrawInteractingEdge.cpp
+   trunk/pkg/common/RenderingEngine/GLDrawInteractingGeometry/GLDrawInteractingEdge.hpp
+   trunk/pkg/common/RenderingEngine/GLDrawInteractingGeometry/GLDrawInteractingFacet.cpp
+   trunk/pkg/common/RenderingEngine/GLDrawInteractingGeometry/GLDrawInteractingFacet.hpp
+   trunk/pkg/common/RenderingEngine/GLDrawInteractingGeometry/GLDrawInteractingVertex.cpp
+   trunk/pkg/common/RenderingEngine/GLDrawInteractingGeometry/GLDrawInteractingVertex.hpp
+   trunk/pkg/dem/Engine/EngineUnit/InteractingEdge2InteractingSphere4SpheresContactGeometry.cpp
+   trunk/pkg/dem/Engine/EngineUnit/InteractingEdge2InteractingSphere4SpheresContactGeometry.hpp
+   trunk/pkg/dem/Engine/EngineUnit/InteractingFacet2InteractingSphere4SpheresContactGeometry.cpp
+   trunk/pkg/dem/Engine/EngineUnit/InteractingFacet2InteractingSphere4SpheresContactGeometry.hpp
+   trunk/pkg/dem/Engine/EngineUnit/InteractingVertex2InteractingSphere4SpheresContactGeometry.cpp
+   trunk/pkg/dem/Engine/EngineUnit/InteractingVertex2InteractingSphere4SpheresContactGeometry.hpp
+   trunk/pkg/dem/PreProcessor/STLImporterTest.cpp
+   trunk/pkg/dem/PreProcessor/STLImporterTest.hpp
+Modified:
+   trunk/SConstruct
+   trunk/lib/SConscript
+   trunk/pkg/common/SConscript
+   trunk/pkg/dem/SConscript
+Log:
+1. Main commit: import a geometry of walls from a STL file. 
+
+An STL file describes a raw unstructured triangulated surface by the unit
+normal and vertices (ordered by the right-hand rule) of the triangles using a
+three-dimensional Cartesian coordinate system (see
+<A HREF="http://en.wikipedia.org/wiki/STL_%28file_format%29">http://en.wikipedia.org/wiki/STL_%28file_format%29</A>).  Allows binary and ascii
+formats of a STL file.
+
+The STLImporterTest preprocessor provided a example. In order to work it need
+hourglass.stl file located in YADESOURCE/example.
+
+(For creation a STL file I use blender, see <A HREF="http://www.blender.org">http://www.blender.org</A>)
+
+The STL file is imported into YADE as follows: the vertices, edges and facets
+are distinct bodies; the facets which have a common edge and lies on a plane
+are joined, herewith maximum number of vertices in the joined facet are limited
+(by default 4).
+
+A facet is a convex polygon and describes by N vertices (3,4 or more). The
+origin vertex of a facet lies in the facet se3 position.  The others vertices
+is describes relative to the origin vertex.  Let the vector n_f is the facets
+normal.  Then the distance from the centre x of a sphere to a facets plane will be
+equal to the module of the vector d, 
+d = n_f.Dot(x-x'),
+where vector x' is a any vertex of the facet (for example, the origin vertex).
+Provided that the projection of the centre of a sphere to facets plane lies in
+side perimeter, i.e.
+(x'_j+1 - x'_j).Dot(x - d - x'_j)&gt;0, j=1,...,N-1.
+
+A edge is a vector with origin in the edge se3 position.
+Two normals n1, n2 are connected with an edge. This normals being normals to the planes
+passing through an edge perpendicular to two facets which the given edge divides 
+(an edge cannot divide more than two facets).
+Contact between sphere and an edge is possible only if the sphere centre is
+simultaneously on a positive side of both planes, i.e.
+n_j.Dot(x-x'_j)&gt;=0, j=1,2
+where x'_j is a point lies on the edge j.
+Let x'_0 is the edge origin, l is the length of the edge, n'_0 is the unit
+direction vector. Then the distance from a point x to the edge (_not_
+including its final points) will be equal to the vector module d,
+d = x - x'_0 - cn'_0,
+if c = n'_0.Dot(x-x'_0)/l^2 satisfies to a condition 0&lt;c&lt;1.
+
+A vertex is a point lies in the vertex se3 position. So much normals are
+connected with vertex, how many edges converge in the given vertex. I.e.
+normals are normals to the planes passing through vertex and perpendicular
+edges converging in vertex. Contact of sphere to vertex is possible, if the
+sphere centre is on a positive side of all planes (by analogy to edges).
+
+2. Add new collider: SpatialQuickSortCollider is analog PersistentSAPCollider,
+but seems more fast.
+
+3. SConstruct been modified in order to works with symbol links in the YADESOURCE directory.
+
+
+
+
+Modified: trunk/SConstruct
+===================================================================
+--- trunk/SConstruct	2008-05-07 21:48:59 UTC (rev 1346)
++++ trunk/SConstruct	2008-05-10 13:15:38 UTC (rev 1347)
+@@ -332,6 +332,7 @@
+ 
+ # paths to in-tree SConscript files
+ libDirs=['lib','pkg/common','pkg/dem','pkg/fem','pkg/lattice','pkg/mass-spring','pkg/realtime-rigidbody','extra','gui']
++#libDirs = libDirs + ['pkg/gram'] 
+ # BUT: exclude stuff that should be excluded
+ libDirs=[x for x in libDirs if not re.match('^.*/('+'|'.join(env['exclude'])+')$',x)]
+ # where are we going to be installed... pkg/dem becomes pkg-dem
+@@ -419,7 +420,13 @@
+ 	yadeInc=join(yadeRoot,'include','yade-%s'%env['version'],'yade')
+ 	#print &quot;CALLED, prefix=%s, yadeInc=%s&quot;%(prefix,yadeInc)
+ 
+-	for root, dirs, files in os.walk('.',topdown=True):
++	__paths = ['.']
++	for root, dirs, files in os.walk('.'):
++	    for dir in dirs:
++		if os.path.islink(os.path.join(root,dir)):
++		    __paths = __paths + [os.path.join(root,dir)]
++	for __path in __paths:
++	    for root, dirs, files in os.walk(__path,topdown=True):
+ 		for d in ('.svn'): ## skip all files that are not part of sources in the proper sense!
+ 			try: dirs.remove(d)
+ 			except ValueError: pass
+
+Added: trunk/examples/hourglass.stl
+===================================================================
+(Binary files differ)
+
+
+Property changes on: trunk/examples/hourglass.stl
+___________________________________________________________________
+Name: svn:mime-type
+   + application/octet-stream
+
+Modified: trunk/lib/SConscript
+===================================================================
+--- trunk/lib/SConscript	2008-05-07 21:48:59 UTC (rev 1346)
++++ trunk/lib/SConscript	2008-05-10 13:15:38 UTC (rev 1347)
+@@ -1,3 +1,4 @@
++# vim: set filetype=python :
+ Import('*')
+ 
+ if 'qt3' not in env['exclude']:
+@@ -113,6 +114,16 @@
+ 			'serialization/FormatChecker.cpp',
+ 			'serialization/Serializable.cpp',
+ 			'serialization/SerializableSingleton.cpp',
+-			'serialization/SerializationExceptions.cpp'])
++			'serialization/SerializationExceptions.cpp']),
++
++	env.SharedLibrary('STLImporter',
++		['import/STLReader.cpp',
++		    'import/STLImporter.cpp'],
++		LIBS=env['LIBS']+['Vertex'
++		    ,'InteractingVertex'
++		    ,'GeometricalEdge'
++		    ,'InteractingEdge'
++		    ,'Facet'
++		    ,'InteractingFacet'])
+ ])
+ 
+
+Added: trunk/lib/import/STLImporter.cpp
+===================================================================
+--- trunk/lib/import/STLImporter.cpp	2008-05-07 21:48:59 UTC (rev 1346)
++++ trunk/lib/import/STLImporter.cpp	2008-05-10 13:15:38 UTC (rev 1347)
+@@ -0,0 +1,390 @@
++/*************************************************************************
++*  Copyright (C) 2008 by Sergei Dorofeenko				 *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">sega at users.berlios.de</A>                                                 *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++#include &quot;STLImporter.hpp&quot;
++
++STLImporter::STLImporter()  
++{
++    import_vertices = true;
++    import_edges = true;
++    import_facets = true;
++    facets_wire=false;
++    import_flat_edges_flag = false;
++    import_flat_vertices_flag = false;
++    max_vertices_in_facet = 4;
++}
++
++bool STLImporter::open(const char* filename)
++{
++    vector&lt;double&gt; vtmp, ntmp;
++    vector&lt;int&gt;  etmp, ftmp;
++    STLReader::tolerance = Math&lt;Real&gt;::ZERO_TOLERANCE;
++    
++    STLReader reader;
++    if(!reader.open(filename, back_inserter(vtmp), back_inserter(etmp), back_inserter(ftmp), back_inserter(ntmp)))
++	return false;
++
++    vts.clear(); egs.clear(); fcs.clear();
++
++    for(int i=0,e=vtmp.size(); i&lt;e; i+=3)
++	vts.push_back(Vrtx(vtmp[i], vtmp[i+1], vtmp[i+2]));
++
++    for(int i=0,e=etmp.size(); i&lt;e; i+=2)
++	egs.push_back(Edg(etmp[i], etmp[i+1]));
++
++    for(int i=0,e=ftmp.size(); i&lt;e; i+=3)
++	fcs.push_back(Fct(ftmp[i], ftmp[i+1], ftmp[i+2]));
++
++    nbFlatEdges=0;
++    for(int i=0,e=egs.size(); i&lt;e; ++i)
++	processEdge(i);
++
++    facetsConsolidation();
++
++    nbFlatVertices=0;
++    for(int i=0,e=vts.size(); i&lt;e; ++i)
++	processVertex(i);
++
++    return true;
++}
++
++void STLImporter::import(vector&lt;shared_ptr&lt;Body&gt; &gt; &amp;bds)
++{
++    int index=0;
++    if (import_vertices) 
++	for(int j=0,e=vts.size(); j&lt;e; ++j)
++	{
++	    if (!import_flat_vertices_flag &amp;&amp; vts[j].flat) continue;
++
++	    shared_ptr&lt;Vertex&gt; gVertex(new Vertex);
++	    gVertex-&gt;diffuseColor		= Vector3r(0.7,0.7,0.7);
++	    gVertex-&gt;wire			= false;
++	    gVertex-&gt;visible			= true;
++	    gVertex-&gt;shadowCaster		= true;
++
++	    shared_ptr&lt;InteractingVertex&gt; iVertex(new InteractingVertex);
++	    iVertex-&gt;normals=vts[j].normals;
++	    iVertex-&gt;flat=vts[j].flat;
++	    iVertex-&gt;diffuseColor		= Vector3r(0.8,0.3,0.3);
++
++	    bds[index]-&gt;physicalParameters-&gt;se3 = Se3r( vts[j].point, Quaternionr( 1,0,0,0 ) );
++	    bds[index]-&gt;geometricalModel	= gVertex;
++	    bds[index]-&gt;interactingGeometry	= iVertex;
++
++	    ++index;
++	}
++
++    if (import_edges) 
++	for(int j=0,e=egs.size(); j&lt;e; ++j)
++	{ 
++	    if (!import_flat_edges_flag &amp;&amp; egs[j].flat) continue;
++
++	    Vector3r p0 = vts[egs[j].first].point
++		    ,p1 = vts[egs[j].second].point;
++
++	    shared_ptr&lt;GeometricalEdge&gt; gEdge(new GeometricalEdge);
++	    gEdge-&gt;edge			= p1-p0;
++	    gEdge-&gt;diffuseColor		= Vector3r(0.8,0.8,0.8);
++	    gEdge-&gt;wire			= false;
++	    gEdge-&gt;visible		= true;
++	    gEdge-&gt;shadowCaster		= true;
++
++	    shared_ptr&lt;InteractingEdge&gt; iEdge(new InteractingEdge);
++	    iEdge-&gt;edge			= p1-p0;
++	    iEdge-&gt;normal1	        = egs[j].normal1;
++	    iEdge-&gt;normal2	        = egs[j].normal2;
++	    iEdge-&gt;both			= egs[j].both;
++	    iEdge-&gt;flat			= egs[j].flat;
++	    iEdge-&gt;diffuseColor		= Vector3r(0.8,0.3,0.3);
++
++	    bds[index]-&gt;physicalParameters-&gt;se3 = Se3r(p0 , Quaternionr( 1,0,0,0 ) );
++	    bds[index]-&gt;geometricalModel	= gEdge;
++	    bds[index]-&gt;interactingGeometry	= iEdge;
++
++	    ++index;
++	}
++
++    if (import_facets) 
++	for(int i=0,e=fcs.size(); i&lt;e; ++i)
++	{
++	    const Fct &amp;f = fcs[i];
++	    Vector3r p0 (vts[f[0]].point);
++
++	    shared_ptr&lt;InteractingFacet&gt; iFacet(new InteractingFacet);
++	    iFacet-&gt;diffuseColor    = Vector3r(0.8,0.3,0.3);
++
++	    shared_ptr&lt;Facet&gt; gFacet(new Facet);
++	    gFacet-&gt;diffuseColor    = Vector3r(0.5,0.5,0.5);
++	    gFacet-&gt;wire	    = facets_wire;
++	    gFacet-&gt;visible	    = true;
++	    gFacet-&gt;shadowCaster    = true;
++
++	    for (int j=1,ej=f.size(); j&lt;ej; ++j)
++	    {   
++		iFacet-&gt;vertices.push_back(vts[f[j]].point - p0);
++		gFacet-&gt;vertices.push_back(vts[f[j]].point - p0);
++	    }
++
++	    bds[index]-&gt;physicalParameters-&gt;se3 = Se3r( p0, Quaternionr( 1,0,0,0 ) );
++	    bds[index]-&gt;geometricalModel	= gFacet;
++	    bds[index]-&gt;interactingGeometry	= iFacet;
++
++	    ++index;
++	}
++}
++
++void STLImporter::processVertex(int id)
++{
++    Vrtx &amp;vrtx = vts[id];
++
++    Vector3r p0 (vrtx.point);
++
++    for(int i=0,ei=egs.size(); i&lt;ei; ++i)
++    {
++//	if (egs[i].flat) continue; //FIXME: &#1087;&#1083;&#1086;&#1089;&#1082;&#1080;&#1077; &#1087;&#1088;&#1086;&#1089;&#1090;&#1086; &#1087;&#1088;&#1086;&#1087;&#1091;&#1089;&#1082;&#1072;&#1077;&#1084;
++
++	Vector3r v0(vts[egs[i].first].point)
++		,v1(vts[egs[i].second].point)
++		,normal;
++	if ( p0 == v0 ) normal = v0-v1; 
++	else if (p0 == v1) normal = v1-v0; 
++	else continue;
++	normal.Normalize();
++	if ( vrtx.normals.size() &lt; 2 ) // &#1087;&#1077;&#1088;&#1074;&#1099;&#1077; &#1076;&#1074;&#1077; &#1085;&#1086;&#1088;&#1084;&#1072;&#1083;&#1080;
++	{
++	    vrtx.normals.push_back(normal);
++	    if ( vrtx.normals.size()==2 &amp;&amp; (vrtx.normals[0].UnitCross(vrtx.normals[1])).Length() == 0)
++	    { // &#1074;&#1077;&#1088;&#1096;&#1080;&#1085;&#1072; &#1083;&#1077;&#1078;&#1080;&#1090; &#1085;&#1072; &#1088;&#1077;&#1073;&#1088;&#1077;
++		vrtx.flat = true;
++		break;
++	    }
++	    continue;
++	}
++	// &#1090;&#1088;&#1077;&#1090;&#1100;&#1103; &#1085;&#1086;&#1088;&#1084;&#1072;&#1083;&#1100; &#1080; &#1076;&#1072;&#1083;&#1077;&#1077;
++	bool add_normal_flag=true;
++	for (int ii=0,eii=vrtx.normals.size()-1; ii&lt;eii; ++ii)
++	{
++	    for (int jj=ii+1, ejj=vrtx.normals.size(); jj&lt;ejj; ++jj)
++	    {
++		Vector3r n1n2 = vrtx.normals[ii].UnitCross(vrtx.normals[jj]); // &#1087;&#1086;&#1074;&#1086;&#1088;&#1086;&#1090; &#1086;&#1090; ni &#1082; nj
++		if ( Math&lt;Real&gt;::FAbs(n1n2.Dot(normal)) &lt; Math&lt;Real&gt;::ZERO_TOLERANCE )
++		{ // &#1085;&#1086;&#1088;&#1084;&#1072;&#1083;&#1100; n &#1083;&#1077;&#1078;&#1080;&#1090; &#1074; &#1087;&#1083;&#1086;&#1089;&#1082;&#1086;&#1089;&#1090;&#1080; ni, nj
++		    add_normal_flag = false;
++
++		    Vector3r n1normal = vrtx.normals[ii].UnitCross(normal); // &#1087;&#1086;&#1074;&#1086;&#1088;&#1086;&#1090; &#1086;&#1090; ni &#1082; n
++
++		    if ( n1n2.Dot(n1normal) &lt; Math&lt;Real&gt;::ZERO_TOLERANCE) 
++		    { // &#1087;&#1086;&#1074;&#1086;&#1088;&#1086;&#1090;&#1099; ni-&gt;nj &#1080; ni-&gt;n &#1088;&#1072;&#1079;&#1085;&#1086;&#1085;&#1072;&#1087;&#1088;&#1072;&#1074;&#1083;&#1077;&#1085;&#1085;&#1099;&#1077; 
++			Vector3r normaln1 = normal.UnitCross(vrtx.normals[ii]); // &#1087;&#1086;&#1074;&#1086;&#1088;&#1086;&#1090; &#1086;&#1090; n &#1082; ni
++			Vector3r normaln2 = normal.UnitCross(vrtx.normals[jj]); // &#1087;&#1086;&#1074;&#1086;&#1088;&#1086;&#1090; &#1086;&#1090; n &#1082; nj
++			if ( normaln1.Dot(normaln2) &lt; Math&lt;Real&gt;::ZERO_TOLERANCE) 
++			    // &#1087;&#1086;&#1074;&#1086;&#1088;&#1086;&#1090;&#1099; n-&gt;ni &#1080; n-&gt;nj &#1088;&#1072;&#1079;&#1085;&#1086;&#1085;&#1072;&#1087;&#1088;&#1072;&#1074;&#1083;&#1077;&#1085;&#1085;&#1099;&#1077; =&gt;
++			    vrtx.flat = true; // &#1074;&#1077;&#1088;&#1096;&#1080;&#1085;&#1072; &#1083;&#1077;&#1078;&#1080;&#1090; &#1074;&#1086; &#1074;&#1085;&#1091;&#1090;&#1088;&#1077;&#1085;&#1085;&#1077;&#1084; &#1091;&#1075;&#1083;&#1091;
++			else
++			    // &#1087;&#1086;&#1074;&#1086;&#1088;&#1086;&#1090;&#1099; n-&gt;ni &#1080; n-&gt;nj &#1089;&#1086;&#1085;&#1072;&#1087;&#1088;&#1072;&#1074;&#1083;&#1077;&#1085;&#1099; =&gt;
++			    vrtx.normals[ii] = normal; // ni &lt;- n
++		    }
++		    else // &#1087;&#1086;&#1074;&#1086;&#1088;&#1086;&#1090;&#1099; ni-&gt;nj &#1080; ni-&gt;n &#1089;&#1086;&#1085;&#1072;&#1087;&#1088;&#1072;&#1074;&#1083;&#1077;&#1085;&#1099;
++		       	if (vrtx.normals[ii].Dot(normal) &lt; vrtx.normals[ii].Dot(vrtx.normals[jj]))
++			    // &#1091;&#1075;&#1086;&#1083; &#1084;&#1077;&#1078;&#1076;&#1091; ni &#1080; n &#1073;&#1086;&#1083;&#1100;&#1096;&#1077; &#1095;&#1077;&#1084; &#1084;&#1077;&#1078;&#1076;&#1091; ni &#1080; nj =&gt;
++			    vrtx.normals[jj]=normal; // nj &lt;- n
++		}
++	    }
++	}
++	if (add_normal_flag) vrtx.normals.push_back(normal);
++    }
++
++    if (vrtx.flat)
++	nbFlatVertices++;
++}
++
++void STLImporter::processEdge(int id)
++{
++    Edg &amp;edg = egs[id];
++
++    Vector3r p0 (vts[edg.first].point);
++    Vector3r p1 (vts[edg.second].point);
++
++    edg.normal1 = edg.normal2 = Vector3r::ZERO;
++
++    pair&lt;Vector3r,Vector3r&gt; edge( minmax(p0, p1) );
++    for(int i=0,ei=fcs.size(); i&lt;ei; ++i)
++    {
++	Vector3r v0(vts[fcs[i][0]].point)  // &#1075;&#1088;&#1072;&#1085;&#1100; &#1090;&#1088;&#1077;&#1091;&#1075;&#1086;&#1083;&#1100;&#1085;&#1072;&#1103; 
++		,v1(vts[fcs[i][1]].point)
++	        ,v2(vts[fcs[i][2]].point);
++	Vector3r N(0,0,0);
++	if ( edge == minmax(v0,v1) ) // &#1086;&#1087;&#1088;&#1077;&#1076;&#1077;&#1083;&#1103;&#1077;&#1084; &#1085;&#1086;&#1088;&#1084;&#1072;&#1083;&#1100; &#1082; &#1088;&#1077;&#1073;&#1088;&#1091;	     
++	{
++	    v1 -= v0;
++	    v2 -= v0;
++	    Vector3r ne = v1; ne.Normalize();
++	    N = ne * v2.Dot(ne) - v2;  
++	}
++	else if ( edge == minmax(v0,v2) ) 
++	{
++	    v1 -= v0;
++	    v2 -= v0;
++	    Vector3r ne = v2; ne.Normalize();
++	    N = ne * v1.Dot(ne) - v1;
++	}
++	else if ( edge == minmax(v1,v2) ) 
++	{
++	    v1 -= v0;
++	    v2 -= v0;
++	    Vector3r ne = v2-v1; ne.Normalize();
++	    N = v1 + ne*(-v1).Dot(ne);
++	}
++
++	if (N.Normalize() &gt; 0)
++	{
++	    if (edg.normal1 == Vector3r::ZERO) // &#1091;&#1089;&#1090;&#1072;&#1085;&#1072;&#1074;&#1083;&#1080;&#1074;&#1072;&#1077;&#1084; &#1087;&#1077;&#1088;&#1074;&#1091;&#1102; &#1085;&#1086;&#1088;&#1084;&#1072;&#1083;&#1100;
++	    {
++		edg.normal1 = N;
++		continue;
++	    }
++	    if (edg.normal2 == Vector3r::ZERO) // &#1091;&#1089;&#1090;&#1072;&#1085;&#1072;&#1074;&#1083;&#1080;&#1074;&#1072;&#1077;&#1084; &#1074;&#1090;&#1086;&#1088;&#1091;&#1102; &#1085;&#1086;&#1088;&#1084;&#1072;&#1083;&#1100;
++	    {
++		edg.normal2 = N;
++		edg.both=true;
++		continue;
++	    }
++	    // &#1089; &#1088;&#1077;&#1073;&#1088;&#1086;&#1084; &#1089;&#1074;&#1103;&#1079;&#1072;&#1085;&#1086; &#1073;&#1086;&#1083;&#1077;&#1077; 2 &#1075;&#1088;&#1072;&#1085;&#1077;&#1081;?!
++	    cerr &lt;&lt; &quot;WARNING: Edge have over two facets&quot; &lt;&lt; endl;
++	}
++    }
++    if ( Math&lt;Real&gt;::FAbs(edg.normal1.Dot(edg.normal2) + 1) &lt;= Math&lt;Real&gt;::ZERO_TOLERANCE)
++    { // &#1089;&#1082;&#1072;&#1083;&#1103;&#1088;&#1085;&#1086;&#1077; &#1087;&#1088;&#1086;&#1080;&#1079;&#1074;&#1077;&#1076;&#1077;&#1085;&#1080;&#1077; &#1085;&#1086;&#1088;&#1084;&#1072;&#1083;&#1077;&#1081; &#1088;&#1072;&#1074;&#1085;&#1086; -1 =&gt; &#1075;&#1088;&#1072;&#1085;&#1080; &#1083;&#1077;&#1078;&#1072;&#1090; &#1074; &#1086;&#1076;&#1085;&#1086;&#1081; &#1087;&#1083;&#1086;&#1089;&#1082;&#1086;&#1089;&#1090;&#1080;, &#1088;&#1077;&#1073;&#1088;&#1086; &#1087;&#1083;&#1086;&#1089;&#1082;&#1086;&#1077;
++	edg.flat=true;
++	nbFlatEdges++;
++    }
++}
++
++void STLImporter::facetsConsolidation()
++{
++    int nbFlatEdgesOld = nbFlatEdges;
++
++    vector&lt;Edg&gt;::iterator edge_it = egs.begin(), edge_end = egs.end();
++    while( edge_it != edge_end ) // &#1086;&#1073;&#1093;&#1086;&#1076;&#1080;&#1084; &#1074;&#1089;&#1077; &#1088;&#1077;&#1073;&#1088;&#1072;
++    {
++	if (!edge_it-&gt;flat) // &#1080;&#1097;&#1077;&#1084; &#1087;&#1083;&#1086;&#1089;&#1082;&#1086;&#1077; &#1088;&#1077;&#1073;&#1088;&#1086;
++	{
++	    ++edge_it;
++	    continue;
++	}
++	// &#1087;&#1083;&#1086;&#1089;&#1082;&#1086;&#1077; &#1088;&#1077;&#1073;&#1088;&#1086;
++	pair&lt;int,int&gt; edge = minmax(edge_it-&gt;first, edge_it-&gt;second); 
++
++	// &#1080;&#1097;&#1077;&#1084; &#1075;&#1088;&#1072;&#1085;&#1080;, &#1082;&#1086;&#1090;&#1086;&#1088;&#1099;&#1077; &#1088;&#1072;&#1079;&#1076;&#1077;&#1083;&#1103;&#1077;&#1090; edge
++	int facet1=-1, facet2=-1;
++	int edge_in_facet1, edge_in_facet2;
++	for (int facet_it=0, facet_end=fcs.size(); facet_it&lt;facet_end &amp;&amp; facet2&lt;0; ++facet_it) // &#1094;&#1080;&#1082;&#1083; &#1087;&#1086; &#1075;&#1088;&#1072;&#1085;&#1103;&#1084;
++	{
++	    for (int edge_in_facet_it=0, edge_in_facet_end=fcs[facet_it].size(); // &#1094;&#1080;&#1082;&#1083; &#1087;&#1086; &#1088;&#1077;&#1073;&#1088;&#1072;&#1084; &#1075;&#1088;&#1072;&#1085;&#1080;
++		    edge_in_facet_it &lt; edge_in_facet_end; ++edge_in_facet_it)
++	    {
++		pair&lt;int,int&gt; edge_in_facet = fcs[facet_it].edge(edge_in_facet_it);
++		if ( edge == minmax(edge_in_facet.first, edge_in_facet.second) )
++		{ // edge &#1089;&#1086;&#1074;&#1087;&#1072;&#1076;&#1072;&#1077;&#1090; &#1089; &#1086;&#1076;&#1085;&#1080;&#1084; &#1080;&#1079; &#1088;&#1077;&#1073;&#1077;&#1088; &#1075;&#1088;&#1072;&#1085;&#1080;
++		    if (facet1&lt;0)
++		    { 
++		      facet1 = facet_it;
++		      edge_in_facet1 = edge_in_facet_it;
++		    }
++		    else
++		    {
++		      facet2 = facet_it;
++		      edge_in_facet2 = edge_in_facet_it;
++		    }
++		    break;
++		}
++	    } 
++	} //for
++
++	// &#1086;&#1073;&#1098;&#1077;&#1076;&#1080;&#1085;&#1103;&#1077;&#1084; &#1085;&#1072;&#1081;&#1076;&#1077;&#1085;&#1085;&#1099;&#1077; &#1075;&#1088;&#1072;&#1085;&#1080;
++	Fct f1 = fcs[facet1], f2 = fcs[facet2];
++	if (f1.vertex.size()&lt;max_vertices_in_facet &amp;&amp; f2.vertex.size()&lt;max_vertices_in_facet)
++	{
++	    f2.remove_edge(edge_in_facet2);
++	    f1.vertex.insert(f1.vertex.begin()+edge_in_facet1+1, f2.vertex.begin(), f2.vertex.end() );
++	    reduce_facet_vertices(f1);
++	    
++	    // &#1077;&#1089;&#1083;&#1080; &#1087;&#1086;&#1083;&#1091;&#1095;&#1080;&#1074;&#1096;&#1080;&#1081;&#1089;&#1103; &#1084;&#1085;&#1086;&#1075;&#1086;&#1091;&#1075;&#1086;&#1083;&#1100;&#1085;&#1080;&#1082; &#1074;&#1099;&#1087;&#1091;&#1082;&#1083;&#1099;&#1081;, &#1087;&#1088;&#1080;&#1085;&#1080;&#1084;&#1072;&#1077;&#1084; &#1086;&#1073;&#1098;&#1077;&#1076;&#1080;&#1085;&#1077;&#1085;&#1080;&#1077; 
++	    if (convex_test(f1))
++	    {
++		fcs[facet1]=f1;
++		fcs.erase(fcs.begin()+facet2);
++		edge_it = egs.erase(edge_it);
++		nbFlatEdges--;
++		continue;
++	    } 
++	}
++	++edge_it;
++    } // while
++
++    // &#1077;&#1089;&#1083;&#1080; &#1073;&#1099;&#1083;&#1080; &#1086;&#1073;&#1098;&#1077;&#1076;&#1080;&#1085;&#1077;&#1085;&#1080;&#1103; &#1075;&#1088;&#1072;&#1085;&#1077;&#1081;, &#1087;&#1086;&#1074;&#1090;&#1086;&#1088;&#1103;&#1077;&#1084; &#1087;&#1088;&#1086;&#1094;&#1077;&#1076;&#1091;&#1088;&#1091;
++    if (nbFlatEdgesOld != nbFlatEdges) 
++	facetsConsolidation();
++
++    // &#1086;&#1073;&#1098;&#1077;&#1076;&#1080;&#1085;&#1080;&#1083;&#1080; &#1074;&#1089;&#1077;, &#1095;&#1090;&#1086; &#1084;&#1086;&#1078;&#1085;&#1086; =&gt; &#1074;&#1099;&#1093;&#1086;&#1076;
++    return;
++}
++
++bool STLImporter::convex_test(const Fct&amp; f) const
++{
++    const vector&lt;int&gt;&amp; v = f.vertex;
++    int N = v.size();
++    Vector3r R,T = (vts[v[0]].point-vts[v[N-1]].point).UnitCross(vts[v[1]].point-vts[v[0]].point);
++    for (int i=1; i&lt;N; ++i)
++    {
++	if (i==N-1)
++	    R = (vts[v[N-1]].point-vts[v[N-2]].point).UnitCross(vts[v[0]].point-vts[v[N-1]].point);
++	else
++	    R = (vts[v[i]].point-vts[v[i-1]].point).UnitCross(vts[v[i+1]].point-vts[v[i]].point);
++
++	if ( T.Dot(R) &lt; Math&lt;Real&gt;::ZERO_TOLERANCE ) // T &#1085;&#1072;&#1087;&#1088;&#1072;&#1074;&#1083;&#1077;&#1085;&#1086; &#1087;&#1088;&#1086;&#1090;&#1080;&#1074;&#1086;&#1087;&#1086;&#1083;&#1086;&#1078;&#1085;&#1086; R
++	    return false;
++    }
++    return true;
++}
++
++void STLImporter::reduce_facet_vertices(Fct&amp; f)
++{
++    vector&lt;int&gt;&amp; v = f.vertex;
++    int i=0, N = v.size();
++    while (i&lt;N)
++    {
++	int k,l,m;
++	if (i == 0)
++	{
++	    k=0; l=N-1; m=1;
++	}
++	else if (i==N-1)
++	{
++	    k=N-1; l=N-2; m=0;
++	}
++	else
++	{
++	    k=i; l=i-1; m=i+1;
++	}
++
++	Real L = ((vts[v[k]].point-vts[v[l]].point).UnitCross(vts[v[m]].point-vts[v[k]].point)).Length();
++	if (L == 0)
++	{ // &#1090;&#1088;&#1080; &#1074;&#1077;&#1088;&#1096;&#1080;&#1085;&#1099; &#1083;&#1077;&#1078;&#1072;&#1090; &#1085;&#1072; &#1086;&#1076;&#1085;&#1086;&#1081; &#1087;&#1088;&#1103;&#1084;&#1086;&#1081; =&gt; &#1091;&#1076;&#1072;&#1083;&#1103;&#1077;&#1084; &#1089;&#1088;&#1077;&#1076;&#1085;&#1102;&#1102;
++	    v.erase(v.begin()+i);
++	    N--;
++	}
++	else i++;
++    }
++}
++
++ostream&amp; operator&lt;&lt;(ostream&amp; os, const STLImporter::Fct&amp; f)
++{
++    for (int i=0,e=f.vertex.size(); i&lt;e; ++i)
++	os &lt;&lt; f.vertex[i] &lt;&lt; ' ';
++    return os;
++}
+
+Added: trunk/lib/import/STLImporter.hpp
+===================================================================
+--- trunk/lib/import/STLImporter.hpp	2008-05-07 21:48:59 UTC (rev 1346)
++++ trunk/lib/import/STLImporter.hpp	2008-05-10 13:15:38 UTC (rev 1347)
+@@ -0,0 +1,132 @@
++/*************************************************************************
++*  Copyright (C) 2008 by Sergei Dorofeenko				 *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">sega at users.berlios.de</A>                                                 *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++#ifndef STLIMPORTER_HPP
++#define STLIMPORTER_HPP
++#include &lt;yade/pkg-common/Vertex.hpp&gt;
++#include &lt;yade/pkg-common/InteractingVertex.hpp&gt;
++#include &lt;yade/pkg-common/GeometricalEdge.hpp&gt;
++#include &lt;yade/pkg-common/InteractingEdge.hpp&gt;
++#include &lt;yade/pkg-common/Facet.hpp&gt;
++#include &lt;yade/pkg-common/InteractingFacet.hpp&gt;
++#include &quot;STLReader.hpp&quot;
++#include&lt;yade/core/Body.hpp&gt;
++
++class STLImporter {
++    public:
++	STLImporter();	
++
++	/// open stl file 
++	bool open(const char* filename);
++	
++	/// number of all imported elements 
++	int number_of_all_imported() const {return number_of_imported_vertices() + number_of_imported_edges() + number_of_imported_facets();}
++	/// number of imported vertices (all|corner)
++	int number_of_imported_vertices() const {if (import_vertices) return (import_flat_vertices_flag) ? number_of_vertices() : number_of_corner_vertices(); else return 0;}
++	/// number of imported edges (all|corner)
++	int number_of_imported_edges() const {if (import_edges) return (import_flat_edges_flag) ? number_of_edges() : number_of_corner_edges(); else return 0;}
++	/// number of imported facets (all|corner)
++	int number_of_imported_facets() const {return number_of_facets();}
++	
++	/// number of all vertices
++	int number_of_vertices() const { return vts.size(); }
++	/// number of corner vertices
++	int number_of_corner_vertices() const { return number_of_vertices()-number_of_flat_vertices(); }
++	/// number of vertices lies on a flats
++	int number_of_flat_vertices() const { return nbFlatVertices; }
++	/// number of facets 
++	int number_of_facets() const { return fcs.size(); }
++	/// number of all edges
++	int number_of_edges() const { return egs.size(); }
++	/// number of corner edges
++	int number_of_corner_edges() const { return number_of_edges()-number_of_flat_edges(); }
++	/// number of edges lies on a flats
++	int number_of_flat_edges() const { return nbFlatEdges; }
++
++	/// max number of facet vertices (by default 4)
++	int max_vertices_in_facet; 
++
++	void set_imported_stuff(bool v, bool e, bool f) {import_vertices=v; import_edges=e; import_facets=f;}
++	/// import vertices (by default true)
++	bool import_vertices;
++	/// import edges (by default true)
++	bool import_edges;
++	/// import facets (by default true)
++	bool import_facets;
++
++	/// (by default false)
++	bool facets_wire;
++
++	/// import edges on a flats (by default false)
++	bool import_flat_edges_flag; 
++	/// import vertices on a flats (by default false)
++	bool import_flat_vertices_flag; 
++
++	/// import stuffs (sequence vertices, edges, facets)
++	void import(vector&lt;shared_ptr&lt;Body&gt; &gt;&amp;);
++
++    protected:
++	/// Vertex
++	struct Vrtx {
++	    Vector3r point;
++	    vector&lt;Vector3r&gt; normals;
++	    bool flat;
++	    Vrtx(Real x, Real y, Real z) : point(x,y,z), flat(false) {}
++	};
++
++	/// Edge
++	struct Edg {
++	    int first, second;
++	    Vector3r normal1, normal2;
++	    bool both,flat;
++	    Edg(int f, int s) : first(f), second(s), both(false), flat(false) {}
++	};
++
++	/// Facet
++	struct Fct {
++	    vector&lt;int&gt; vertex;
++	    /// constructor (each facet have 3 vertices as minimum)
++	    Fct(int f, int s, int t) { vertex.resize(3); vertex[0]=f; vertex[1]=s; vertex[2]=t; }
++	    /// get vertex i
++	    int&amp; operator[] (int i) { return vertex[i]; }
++	    int operator[] (int i) const { return vertex[i]; }
++	    /// number of vertices
++	    int size() const { return vertex.size(); }
++	    /// get edge i (vertices i,i+1)
++	    pair&lt;int,int&gt; edge(int i) const { return pair&lt;int,int&gt;(vertex[i], ( (i+1&lt;size()) ? vertex[i+1] : vertex[0]) ); }
++	    /// remove edge i
++	    void remove_edge(int i) { vertex.erase(vertex.begin()+i); vertex.erase( vertex.begin()+( (i&lt;size()) ? i:0) ); }
++	};
++
++	/// remove vertices of facets which lies of a flat
++	void reduce_facet_vertices(Fct&amp; f); 
++
++	// FIXME: add  checking of a orientation (clockwise)
++	/// check convexity of a facet
++	bool convex_test(const Fct&amp; f) const;
++
++	friend ostream&amp; operator&lt;&lt;(ostream&amp; os, const Fct&amp; f);
++
++	/// define cut off flats for a edge
++	void processEdge(int id);
++
++	/// join facets which have a common edge and lies on a flat 
++	void facetsConsolidation();
++	/// define cut off flats for a vertex
++	void processVertex(int id);
++
++    private:
++	int nbFlatVertices;
++	int nbFlatEdges;
++	vector&lt;Vrtx&gt; vts;
++	vector&lt;Edg&gt; egs;
++	vector&lt;Fct&gt; fcs;	
++};
++
++ostream&amp; operator&lt;&lt;(ostream&amp; os, const STLImporter::Fct&amp; f);
++
++#endif // STLIMPORTER_HPP
+
+Added: trunk/lib/import/STLReader.cpp
+===================================================================
+--- trunk/lib/import/STLReader.cpp	2008-05-07 21:48:59 UTC (rev 1346)
++++ trunk/lib/import/STLReader.cpp	2008-05-10 13:15:38 UTC (rev 1347)
+@@ -0,0 +1,27 @@
++/*************************************************************************
++*  Copyright (C) 2008 by Sergei Dorofeenko				 *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">sega at users.berlios.de</A>                                                 *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++#include &quot;STLReader.hpp&quot;
++
++float STLReader::tolerance =0;
++
++//void STLReader::open(const char* filename)
++//{
++//    is.open(filename);
++//}
++//
++//void STLReader::close()
++//{
++//    is.close();
++//}
++//
++//bool STLReader::operator!() const
++//{
++//    return !is;
++//}
++
++
+
+Added: trunk/lib/import/STLReader.hpp
+===================================================================
+--- trunk/lib/import/STLReader.hpp	2008-05-07 21:48:59 UTC (rev 1346)
++++ trunk/lib/import/STLReader.hpp	2008-05-10 13:15:38 UTC (rev 1347)
+@@ -0,0 +1,228 @@
++/*************************************************************************
++*  Copyright (C) 2008 by Sergei Dorofeenko				 *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">sega at users.berlios.de</A>                                                 *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++#ifndef __STLREADER_HPP__
++#define __STLREADER_HPP__
++
++#include &lt;stdio.h&gt;
++#include &lt;set&gt;
++#include &lt;vector&gt;
++#include &lt;cmath&gt;
++#include &quot;utils.hpp&quot;
++
++using namespace std;
++
++class STLReader {
++    public:
++
++	// if it is binary there are 80 char of comment, the number fn of faces and then exactly fn*4*3 bytes.
++	enum {STL_LABEL_SIZE=80};
++	
++	template&lt;class OutV, class OutE, class OutF, class OutN&gt;
++	    bool open(const char* filename, OutV vertices, OutE edges, OutF facets, OutN normals);
++	
++	static float tolerance;
++    
++    protected:
++	template&lt;class OutV, class OutE, class OutF, class OutN&gt;
++	    bool open_binary(const char* filename, OutV vertices, OutE edges, OutF facets, OutN normals);
++	
++	template&lt;class OutV, class OutE, class OutF, class OutN&gt;
++	    bool open_ascii(const char* filename, OutV vertices, OutE edges, OutF facets, OutN normals);
++
++	struct Vrtx {
++	    float pos[3];
++	    Vrtx(){}
++	    Vrtx(float x, float y, float z) {pos[0]=x; pos[1]=y; pos[2]=z;}
++	    bool operator&lt; (const Vrtx&amp; v) const
++	    {
++		return memcmp(pos, v.pos,3*sizeof(float)) &lt; 0;
++	    }
++	    float operator[](int id) const { return pos[id]; }
++	    float&amp; operator[](int id) { return pos[id]; }
++	};
++
++	class IsDifferent {
++	    public:
++		bool operator() (const Vrtx&amp; v1, const Vrtx&amp; v2)
++		{
++		    if ( std::abs(v1[0]-v2[0])&lt;STLReader::tolerance 
++			    &amp;&amp; std::abs(v1[1]-v2[1])&lt;STLReader::tolerance 
++			    &amp;&amp; std::abs(v1[2]-v2[2])&lt;STLReader::tolerance ) 
++			return false;
++		    return true;
++		}
++	};
++};
++
++template&lt;class OutV, class OutE, class OutF, class OutN&gt;
++bool STLReader::open(const char* filename, OutV vertices, OutE edges, OutF facets, OutN normals)
++{
++    FILE *fp;
++    bool binary=false;
++    fp = fopen(filename, &quot;r&quot;);
++    if(fp == NULL) 
++	return false;
++      
++    /* Find size of file */
++    fseek(fp, 0, SEEK_END);
++    int file_size = ftell(fp);
++    int facenum;
++    /* Check for binary or ASCII file */
++    fseek(fp, STL_LABEL_SIZE, SEEK_SET);
++    fread(&amp;facenum, sizeof(int), 1, fp);
++    int expected_file_size=STL_LABEL_SIZE + 4 + (sizeof(short)+4*sizeof(float) )*facenum ;
++    if(file_size ==  expected_file_size) binary = true;
++    unsigned char tmpbuf[128];
++    fread(tmpbuf,sizeof(tmpbuf),1,fp);
++    for(int i = 0; i &lt; sizeof(tmpbuf); i++)
++      {
++	if(tmpbuf[i] &gt; 127)
++		{
++		  binary=true;
++		  break;
++		}
++      }
++    // Now we know if the stl file is ascii or binary.
++    fclose(fp);
++    if(binary) return open_binary(filename,vertices,edges,facets,normals);
++    else return open_ascii(filename,vertices,edges,facets,normals);
++}
++
++template&lt;class OutV, class OutE, class OutF, class OutN&gt;
++bool STLReader::open_ascii(const char* filename,  OutV vertices, OutE edges, OutF facets, OutN normals)
++{
++    FILE *fp;
++    fp = fopen(filename, &quot;r&quot;);
++    if(fp == NULL)
++      return false;
++    
++    /* Skip the first line of the file */
++    while(getc(fp) != '\n');
++    
++    vector&lt;Vrtx&gt; vcs;
++    set&lt;pair&lt;int,int&gt; &gt; egs;
++
++    /* Read a single facet from an ASCII .STL file */
++    while(!feof(fp))
++    {
++	float n[3];
++	Vrtx v[3];
++	fscanf(fp, &quot;%*s %*s %f %f %f\n&quot;, &amp;n[0], &amp;n[1], &amp;n[2]);
++	fscanf(fp, &quot;%*s %*s&quot;);
++	fscanf(fp, &quot;%*s %f %f %f\n&quot;, &amp;v[0][0],  &amp;v[0][1],  &amp;v[0][2]);
++	fscanf(fp, &quot;%*s %f %f %f\n&quot;, &amp;v[1][0],  &amp;v[1][1],  &amp;v[1][2]);
++	fscanf(fp, &quot;%*s %f %f %f\n&quot;, &amp;v[2][0],  &amp;v[2][1],  &amp;v[2][2]);
++	fscanf(fp, &quot;%*s&quot;); // end loop
++	fscanf(fp, &quot;%*s&quot;); // end facet
++	if(feof(fp)) break;
++
++	int vid[3];
++	for(int i=0;i&lt;3;++i)
++	{
++	    (normals++) = n[i];
++	    bool is_different=true;
++	    IsDifferent isd;
++	    int j=0;
++	    for(int ej=vcs.size(); j&lt;ej; ++j) 
++		if ( !(is_different = isd(v[i],vcs[j])) ) break;
++	    if (is_different) 
++	    {
++		vid[i] = vcs.size();
++		vcs.push_back(v[i]);
++	    }
++	    else
++		vid[i] = j;
++	    (facets++) = vid[i];
++	}
++	egs.insert(minmax(vid[0], vid[1]));
++	egs.insert(minmax(vid[1], vid[2]));
++	egs.insert(minmax(vid[2], vid[0]));
++    }
++    fclose(fp);
++    
++    for(vector&lt;Vrtx&gt;::iterator it=vcs.begin(),end=vcs.end(); it!=end; ++it)
++    {
++	(vertices++) = (*it)[0];
++	(vertices++) = (*it)[1];
++	(vertices++) = (*it)[2];
++    }
++    for(set&lt;pair&lt;int,int&gt; &gt;::iterator it=egs.begin(),end=egs.end(); it!=end; ++it)
++    {
++	(edges++) = it-&gt;first;
++	(edges++) = it-&gt;second;
++    }
++    return true;
++}
++
++template&lt;class OutV, class OutE, class OutF, class OutN&gt;
++bool STLReader::open_binary(const char* filename,  OutV vertices, OutE edges, OutF facets, OutN normals)
++{
++    FILE *fp;
++    fp = fopen(filename, &quot;rb&quot;);
++    if(fp == NULL)
++    {
++	return false;
++    }
++
++    int facenum;
++    fseek(fp, STL_LABEL_SIZE, SEEK_SET);
++    fread(&amp;facenum, sizeof(int), 1, fp);
++    
++    vector&lt;Vrtx&gt; vcs;
++    set&lt;pair&lt;int,int&gt; &gt; egs;
++
++    // For each triangle read the normal, the three coords and a short set to zero
++    for(int i=0;i&lt;facenum;++i)
++    {
++      short attr;
++      float n[3];
++      Vrtx v[3];
++      fread(&amp;n,3*sizeof(float),1,fp);
++      fread(&amp;v,sizeof(Vrtx),3,fp);
++      fread(&amp;attr,sizeof(short),1,fp);
++
++      //FIXME: &#1059;&#1073;&#1088;&#1072;&#1090;&#1100; &#1076;&#1091;&#1073;&#1083;&#1080;&#1088;&#1086;&#1074;&#1072;&#1085;&#1080;&#1077; &#1082;&#1086;&#1076;&#1072; &#1089; open_ascii
++      int vid[3];
++	for(int i=0;i&lt;3;++i)
++	{
++	    (normals++) = n[i];
++	    bool is_different=true;
++	    IsDifferent isd;
++	    int j=0;
++	    for(int ej=vcs.size(); j&lt;ej; ++j) 
++		if ( !(is_different = isd(v[i],vcs[j])) ) break;
++	    if (is_different) 
++	    {
++		vid[i] = vcs.size();
++		vcs.push_back(v[i]);
++	    }
++	    else
++		vid[i] = j;
++	    (facets++) = vid[i];
++	}
++	egs.insert(minmax(vid[0], vid[1]));
++	egs.insert(minmax(vid[1], vid[2]));
++	egs.insert(minmax(vid[2], vid[0]));
++    }
++    fclose(fp);
++    
++    for(vector&lt;Vrtx&gt;::iterator it=vcs.begin(),end=vcs.end(); it!=end; ++it)
++    {
++	(vertices++) = (*it)[0];
++	(vertices++) = (*it)[1];
++	(vertices++) = (*it)[2];
++    }
++    for(set&lt;pair&lt;int,int&gt; &gt;::iterator it=egs.begin(),end=egs.end(); it!=end; ++it)
++    {
++	(edges++) = it-&gt;first;
++	(edges++) = it-&gt;second;
++    }
++    return true;
++}
++
++#endif // __STLREADER_HPP__
+
+Added: trunk/lib/import/utils.hpp
+===================================================================
+--- trunk/lib/import/utils.hpp	2008-05-07 21:48:59 UTC (rev 1346)
++++ trunk/lib/import/utils.hpp	2008-05-10 13:15:38 UTC (rev 1347)
+@@ -0,0 +1,22 @@
++#ifndef UTILS__HEADER__FILE__
++#define UTILS__HEADER__FILE__
++
++#include&lt;utility&gt;
++using namespace std;
++
++template&lt;class T&gt;
++pair&lt;T,T&gt; minmax(const T &amp;a, const T &amp;b) 
++{
++    return (a&lt;b) ? pair&lt;T,T&gt;(a,b) : pair&lt;T,T&gt;(b,a);
++}
++
++template&lt;class T&gt;
++void minmaxEx(T &amp;a, T &amp;b) 
++{
++    if (a&lt;b)
++    {
++	T t=a; a=b; b=t;
++    }
++}
++
++#endif // UTILS__HEADER__FILE__
+
+Added: trunk/pkg/common/DataClass/GeometricalModel/Facet.cpp
+===================================================================
+--- trunk/pkg/common/DataClass/GeometricalModel/Facet.cpp	2008-05-07 21:48:59 UTC (rev 1346)
++++ trunk/pkg/common/DataClass/GeometricalModel/Facet.cpp	2008-05-10 13:15:38 UTC (rev 1347)
+@@ -0,0 +1,29 @@
++/*************************************************************************
++*  Copyright (C) 2008 by Sergei Dorofeenko				 *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">sega at users.berlios.de</A>                                                 *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#include &quot;Facet.hpp&quot;
++#include&lt;yade/lib-opengl/OpenGLWrapper.hpp&gt;
++
++Facet::Facet () : GeometricalModel()
++{
++	createIndex();
++}
++
++
++Facet::~Facet ()
++{
++}
++
++
++void Facet::registerAttributes()
++{
++	GeometricalModel::registerAttributes();
++	REGISTER_ATTRIBUTE(vertices);
++}
++
++YADE_PLUGIN();
+
+Added: trunk/pkg/common/DataClass/GeometricalModel/Facet.hpp
+===================================================================
+--- trunk/pkg/common/DataClass/GeometricalModel/Facet.hpp	2008-05-07 21:48:59 UTC (rev 1346)
++++ trunk/pkg/common/DataClass/GeometricalModel/Facet.hpp	2008-05-10 13:15:38 UTC (rev 1347)
+@@ -0,0 +1,31 @@
++/*************************************************************************
++*  Copyright (C) 2008 by Sergei Dorofeenko				 *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">sega at users.berlios.de</A>                                                 *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#ifndef FACET_HPP
++#define FACET_HPP
++
++#include&lt;yade/core/GeometricalModel.hpp&gt;
++
++class Facet : public GeometricalModel {
++    public :
++	vector&lt;Vector3r&gt; vertices;
++
++	Facet ();
++	virtual ~Facet ();
++
++    protected :
++	    void registerAttributes();
++    REGISTER_CLASS_NAME(Facet);
++    REGISTER_BASE_CLASS_NAME(GeometricalModel);
++    REGISTER_CLASS_INDEX(Facet,GeometricalModel);
++};
++
++REGISTER_SERIALIZABLE(Facet,false);
++
++#endif // FACET_HPP
++
+
+Added: trunk/pkg/common/DataClass/GeometricalModel/GeometricalEdge.cpp
+===================================================================
+--- trunk/pkg/common/DataClass/GeometricalModel/GeometricalEdge.cpp	2008-05-07 21:48:59 UTC (rev 1346)
++++ trunk/pkg/common/DataClass/GeometricalModel/GeometricalEdge.cpp	2008-05-10 13:15:38 UTC (rev 1347)
+@@ -0,0 +1,29 @@
++/*************************************************************************
++*  Copyright (C) 2008 by Sergei Dorofeenko				 *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">sega at users.berlios.de</A>                                                 *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#include &quot;GeometricalEdge.hpp&quot;
++#include&lt;yade/lib-opengl/OpenGLWrapper.hpp&gt;
++
++GeometricalEdge::GeometricalEdge () : GeometricalModel()
++{
++	createIndex();
++}
++
++
++GeometricalEdge::~GeometricalEdge ()
++{
++}
++
++
++void GeometricalEdge::registerAttributes()
++{
++	GeometricalModel::registerAttributes();
++	REGISTER_ATTRIBUTE(edge);
++}
++
++YADE_PLUGIN();
+
+Added: trunk/pkg/common/DataClass/GeometricalModel/GeometricalEdge.hpp
+===================================================================
+--- trunk/pkg/common/DataClass/GeometricalModel/GeometricalEdge.hpp	2008-05-07 21:48:59 UTC (rev 1346)
++++ trunk/pkg/common/DataClass/GeometricalModel/GeometricalEdge.hpp	2008-05-10 13:15:38 UTC (rev 1347)
+@@ -0,0 +1,30 @@
++/*************************************************************************
++*  Copyright (C) 2008 by Sergei Dorofeenko				 *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">sega at users.berlios.de</A>                                                 *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++#ifndef GEOMETRICALEDGE_HPP
++#define GEOMETRICALEDGE_HPP
++
++#include&lt;yade/core/GeometricalModel.hpp&gt;
++
++class GeometricalEdge : public GeometricalModel {
++	public :
++	    Vector3r edge;
++
++	    GeometricalEdge ();
++	    virtual ~GeometricalEdge ();
++
++	protected :
++		void registerAttributes();
++	REGISTER_CLASS_NAME(GeometricalEdge);
++	REGISTER_BASE_CLASS_NAME(GeometricalModel);
++	REGISTER_CLASS_INDEX(GeometricalEdge,GeometricalModel);
++};
++
++REGISTER_SERIALIZABLE(GeometricalEdge,false);
++
++#endif // GEOMETRICALEDGE_HPP
++
+
+Added: trunk/pkg/common/DataClass/GeometricalModel/Vertex.cpp
+===================================================================
+--- trunk/pkg/common/DataClass/GeometricalModel/Vertex.cpp	2008-05-07 21:48:59 UTC (rev 1346)
++++ trunk/pkg/common/DataClass/GeometricalModel/Vertex.cpp	2008-05-10 13:15:38 UTC (rev 1347)
+@@ -0,0 +1,26 @@
++/*************************************************************************
++*  Copyright (C) 2008 by Sergei Dorofeenko				 *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">sega at users.berlios.de</A>                                                 *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++#include &quot;Vertex.hpp&quot;
++
++Vertex::Vertex () : GeometricalModel()
++{
++	createIndex();
++}
++
++
++Vertex::~Vertex ()
++{
++}
++
++
++void Vertex::registerAttributes()
++{
++	GeometricalModel::registerAttributes();
++}
++
++YADE_PLUGIN();
+
+Added: trunk/pkg/common/DataClass/GeometricalModel/Vertex.hpp
+===================================================================
+--- trunk/pkg/common/DataClass/GeometricalModel/Vertex.hpp	2008-05-07 21:48:59 UTC (rev 1346)
++++ trunk/pkg/common/DataClass/GeometricalModel/Vertex.hpp	2008-05-10 13:15:38 UTC (rev 1347)
+@@ -0,0 +1,28 @@
++/*************************************************************************
++*  Copyright (C) 2008 by Sergei Dorofeenko				 *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">sega at users.berlios.de</A>                                                 *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++#ifndef VERTEX_HPP
++#define VERTEX_HPP
++
++#include&lt;yade/core/GeometricalModel.hpp&gt;
++
++class Vertex : public GeometricalModel {
++	public :
++		Vertex ();
++		virtual ~Vertex ();
++
++	protected :
++	    void registerAttributes();
++	    REGISTER_CLASS_NAME(Vertex);
++	    REGISTER_BASE_CLASS_NAME(GeometricalModel);
++	    REGISTER_CLASS_INDEX(Vertex,GeometricalModel);
++};
++
++REGISTER_SERIALIZABLE(Vertex,false);
++
++#endif // VERTEX_HPP
++
+
+Added: trunk/pkg/common/DataClass/InteractingGeometry/InteractingEdge.cpp
+===================================================================
+--- trunk/pkg/common/DataClass/InteractingGeometry/InteractingEdge.cpp	2008-05-07 21:48:59 UTC (rev 1346)
++++ trunk/pkg/common/DataClass/InteractingGeometry/InteractingEdge.cpp	2008-05-10 13:15:38 UTC (rev 1347)
+@@ -0,0 +1,36 @@
++/*************************************************************************
++*  Copyright (C) 2008 by Sergei Dorofeenko				 *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">sega at users.berlios.de</A>                                                 *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++#include &quot;InteractingEdge.hpp&quot;
++
++InteractingEdge::InteractingEdge() : InteractingGeometry()
++{
++    createIndex();
++}
++
++InteractingEdge::~InteractingEdge()
++{
++}
++
++void InteractingEdge::registerAttributes()
++{
++    InteractingGeometry::registerAttributes();
++    REGISTER_ATTRIBUTE(edge);
++    REGISTER_ATTRIBUTE(both);
++    REGISTER_ATTRIBUTE(flat);
++    REGISTER_ATTRIBUTE(normal1);
++    REGISTER_ATTRIBUTE(normal2);
++}
++
++void InteractingEdge::postProcessAttributes(bool deserializing)
++{
++    if (deserializing)
++	squaredLength = edge.SquaredLength();
++}
++
++
++YADE_PLUGIN();
+
+Added: trunk/pkg/common/DataClass/InteractingGeometry/InteractingEdge.hpp
+===================================================================
+--- trunk/pkg/common/DataClass/InteractingGeometry/InteractingEdge.hpp	2008-05-07 21:48:59 UTC (rev 1346)
++++ trunk/pkg/common/DataClass/InteractingGeometry/InteractingEdge.hpp	2008-05-10 13:15:38 UTC (rev 1347)
+@@ -0,0 +1,38 @@
++/*************************************************************************
++*  Copyright (C) 2008 by Sergei Dorofeenko				 *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">sega at users.berlios.de</A>                                                 *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++#ifndef INTERACTINGEDGE_HPP
++#define INTERACTINGEDGE_HPP
++
++#include &lt;yade/core/InteractingGeometry.hpp&gt;
++
++class InteractingEdge : public InteractingGeometry {
++    public:
++	Vector3r edge;
++	/// Squared length of edge
++	Real squaredLength;
++	Vector3r normal1,normal2;
++	/// &quot;both&quot; is true if both normal1 and normal2 are set.
++	bool both;
++	/// &quot;flat&quot; is true if normal1 == -normal2 (edge lies on a flat)
++	bool flat;
++
++	InteractingEdge();
++	virtual ~InteractingEdge();
++
++    protected:
++	void registerAttributes();
++	void postProcessAttributes(bool deserializing);
++	REGISTER_CLASS_NAME(InteractingEdge);
++	REGISTER_BASE_CLASS_NAME(InteractingGeometry);
++
++	REGISTER_CLASS_INDEX(InteractingEdge,InteractingGeometry);
++};
++
++REGISTER_SERIALIZABLE(InteractingEdge,false);
++
++#endif // INTERACTINGEDGE_HPP
+
+Added: trunk/pkg/common/DataClass/InteractingGeometry/InteractingFacet.cpp
+===================================================================
+--- trunk/pkg/common/DataClass/InteractingGeometry/InteractingFacet.cpp	2008-05-07 21:48:59 UTC (rev 1346)
++++ trunk/pkg/common/DataClass/InteractingGeometry/InteractingFacet.cpp	2008-05-10 13:15:38 UTC (rev 1347)
+@@ -0,0 +1,58 @@
++/*************************************************************************
++*  Copyright (C) 2008 by Sergei Dorofeenko				 *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">sega at users.berlios.de</A>                                                 *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++#include &quot;InteractingFacet.hpp&quot;
++
++InteractingFacet::InteractingFacet() : InteractingGeometry()
++{
++    createIndex();
++}
++
++InteractingFacet::~InteractingFacet()
++{
++}
++
++void InteractingFacet::registerAttributes()
++{
++    InteractingGeometry::registerAttributes();
++    REGISTER_ATTRIBUTE(vertices);
++}
++
++void InteractingFacet::postProcessAttributes(bool deserializing)
++{
++    if (deserializing)
++    {
++	normal = vertices[1].UnitCross(vertices[0]);
++	for (int i=0, e=vertices.size()+1; i&lt;e; ++i)
++	{
++	    Vector3r edge,p0;
++	    if (i==0)
++	    {
++		edge = vertices[0];
++		p0 = vertices[e-2];
++		cm = vertices[0];
++	    }
++	    else if (i==e-1)
++	    {
++		edge = vertices[e-2];
++		p0 = vertices[0];
++		cm /= e;
++	    }
++	    else
++	    {
++		edge = vertices[i] - vertices[i-1];
++		p0 = -vertices[i];
++		cm += vertices[i];
++	    }
++		
++	    Vector3r nml = p0 - edge * edge.Dot(p0) / edge.SquaredLength();
++	    nml.Normalize();
++	    edgeNormals.push_back(nml);
++	}
++    }
++}
++YADE_PLUGIN();
+
+Added: trunk/pkg/common/DataClass/InteractingGeometry/InteractingFacet.hpp
+===================================================================
+--- trunk/pkg/common/DataClass/InteractingGeometry/InteractingFacet.hpp	2008-05-07 21:48:59 UTC (rev 1346)
++++ trunk/pkg/common/DataClass/InteractingGeometry/InteractingFacet.hpp	2008-05-10 13:15:38 UTC (rev 1347)
+@@ -0,0 +1,39 @@
++/*************************************************************************
++*  Copyright (C) 2008 by Sergei Dorofeenko				 *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">sega at users.berlios.de</A>                                                 *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++#ifndef INTERACTINGFACET_HPP
++#define INTERACTINGFACET_HPP
++
++#include &lt;yade/core/InteractingGeometry.hpp&gt;
++
++class InteractingFacet : public InteractingGeometry {
++    public:
++	/// Vertices of facet
++	vector&lt;Vector3r&gt; vertices;
++	/// Facets normal
++	Vector3r normal; 
++	/// Normals of edges (directed into facet)
++	vector&lt;Vector3r&gt; edgeNormals;
++	/// Center of mass 
++	Vector3r cm; 
++
++	InteractingFacet();
++
++	virtual ~InteractingFacet();
++
++    protected:
++	void registerAttributes();
++	void postProcessAttributes(bool deserializing);
++	REGISTER_CLASS_NAME(InteractingFacet);
++	REGISTER_BASE_CLASS_NAME(InteractingGeometry);
++
++	REGISTER_CLASS_INDEX(InteractingFacet,InteractingGeometry);
++};
++
++REGISTER_SERIALIZABLE(InteractingFacet,false);
++
++#endif // INTERACTINGFACET_HPP
+
+Added: trunk/pkg/common/DataClass/InteractingGeometry/InteractingVertex.cpp
+===================================================================
+--- trunk/pkg/common/DataClass/InteractingGeometry/InteractingVertex.cpp	2008-05-07 21:48:59 UTC (rev 1346)
++++ trunk/pkg/common/DataClass/InteractingGeometry/InteractingVertex.cpp	2008-05-10 13:15:38 UTC (rev 1347)
+@@ -0,0 +1,26 @@
++/*************************************************************************
++*  Copyright (C) 2008 by Sergei Dorofeenko				 *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">sega at users.berlios.de</A>                                                 *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++#include &quot;InteractingVertex.hpp&quot;
++
++InteractingVertex::InteractingVertex() : InteractingGeometry()
++{
++    createIndex();
++}
++
++InteractingVertex::~InteractingVertex()
++{
++}
++
++void InteractingVertex::registerAttributes()
++{
++    InteractingGeometry::registerAttributes();
++    REGISTER_ATTRIBUTE(normals);
++    REGISTER_ATTRIBUTE(flat);
++}
++
++YADE_PLUGIN();
+
+Added: trunk/pkg/common/DataClass/InteractingGeometry/InteractingVertex.hpp
+===================================================================
+--- trunk/pkg/common/DataClass/InteractingGeometry/InteractingVertex.hpp	2008-05-07 21:48:59 UTC (rev 1346)
++++ trunk/pkg/common/DataClass/InteractingGeometry/InteractingVertex.hpp	2008-05-10 13:15:38 UTC (rev 1347)
+@@ -0,0 +1,33 @@
++/*************************************************************************
++*  Copyright (C) 2008 by Sergei Dorofeenko				 *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">sega at users.berlios.de</A>                                                 *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++#ifndef INTERACTINGVERTEX_HPP
++#define INTERACTINGVERTEX_HPP
++
++#include &lt;yade/core/InteractingGeometry.hpp&gt;
++
++class InteractingVertex : public InteractingGeometry {
++    public:
++
++	vector&lt;Vector3r&gt; normals;
++	/// This vertex lies on a flat
++	bool flat;
++
++	InteractingVertex();
++	virtual ~InteractingVertex();
++
++    protected:
++	void registerAttributes();
++	REGISTER_CLASS_NAME(InteractingVertex);
++	REGISTER_BASE_CLASS_NAME(InteractingGeometry);
++
++	REGISTER_CLASS_INDEX(InteractingVertex,InteractingGeometry);
++};
++
++REGISTER_SERIALIZABLE(InteractingVertex,false);
++
++#endif // INTERACTINGVERTEX_HPP
+
+Added: trunk/pkg/common/Engine/EngineUnit/InteractingEdge2AABB.cpp
+===================================================================
+--- trunk/pkg/common/Engine/EngineUnit/InteractingEdge2AABB.cpp	2008-05-07 21:48:59 UTC (rev 1346)
++++ trunk/pkg/common/Engine/EngineUnit/InteractingEdge2AABB.cpp	2008-05-10 13:15:38 UTC (rev 1347)
+@@ -0,0 +1,31 @@
++/*************************************************************************
++*  Copyright (C) 2008 by Sergei Dorofeenko				 *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">sega at users.berlios.de</A>                                                 *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++ 
++#include &lt;yade/pkg-common/InteractingEdge.hpp&gt;
++#include &quot;InteractingEdge2AABB.hpp&quot;
++#include &lt;yade/pkg-common/AABB.hpp&gt;
++
++void InteractingEdge2AABB::go(	  const shared_ptr&lt;InteractingGeometry&gt;&amp; cm
++				, shared_ptr&lt;BoundingVolume&gt;&amp; bv
++				, const Se3r&amp; se3
++				, const Body*	)
++{
++	AABB* aabb = static_cast&lt;AABB*&gt;(bv.get());
++	Vector3r edge = static_cast&lt;InteractingEdge*&gt;(cm.get())-&gt;edge;
++
++	Vector3r p0 = se3.position;
++	Vector3r p1 = se3.position + se3.orientation.Rotate(edge);
++	
++	aabb-&gt;min = componentMinVector(p0,p1);
++	aabb-&gt;max = componentMaxVector(p0,p1);	
++	
++	aabb-&gt;halfSize = (aabb-&gt;max - aabb-&gt;min)/2;
++	aabb-&gt;center = aabb-&gt;min + aabb-&gt;halfSize;
++}
++	
++YADE_PLUGIN();
+
+Added: trunk/pkg/common/Engine/EngineUnit/InteractingEdge2AABB.hpp
+===================================================================
+--- trunk/pkg/common/Engine/EngineUnit/InteractingEdge2AABB.hpp	2008-05-07 21:48:59 UTC (rev 1346)
++++ trunk/pkg/common/Engine/EngineUnit/InteractingEdge2AABB.hpp	2008-05-10 13:15:38 UTC (rev 1347)
+@@ -0,0 +1,31 @@
++/*************************************************************************
++*  Copyright (C) 2008 by Sergei Dorofeenko				 *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">sega at users.berlios.de</A>                                                 *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++ 
++#ifndef EDGE2AABB_HPP
++#define EDGE2AABB_HPP
++
++#include &lt;yade/pkg-common/BoundingVolumeEngineUnit.hpp&gt;
++
++class InteractingEdge2AABB : public BoundingVolumeEngineUnit
++{
++	public :
++		void go(	  const shared_ptr&lt;InteractingGeometry&gt;&amp; cm
++				, shared_ptr&lt;BoundingVolume&gt;&amp; bv
++				, const Se3r&amp; se3
++				, const Body*	);
++	
++	FUNCTOR2D(InteractingEdge,AABB);
++
++	REGISTER_CLASS_NAME(InteractingEdge2AABB);
++	REGISTER_BASE_CLASS_NAME(BoundingVolumeEngineUnit);
++};
++
++REGISTER_SERIALIZABLE(InteractingEdge2AABB,false);
++
++#endif // EDGE2AABB_HPP
++
+
+Added: trunk/pkg/common/Engine/EngineUnit/InteractingFacet2AABB.cpp
+===================================================================
+--- trunk/pkg/common/Engine/EngineUnit/InteractingFacet2AABB.cpp	2008-05-07 21:48:59 UTC (rev 1346)
++++ trunk/pkg/common/Engine/EngineUnit/InteractingFacet2AABB.cpp	2008-05-10 13:15:38 UTC (rev 1347)
+@@ -0,0 +1,35 @@
++/*************************************************************************
++*  Copyright (C) 2008 by Sergei Dorofeenko				 *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">sega at users.berlios.de</A>                                                 *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++ 
++#include &lt;yade/pkg-common/InteractingFacet.hpp&gt;
++#include &quot;InteractingFacet2AABB.hpp&quot;
++#include &lt;yade/pkg-common/AABB.hpp&gt;
++
++void InteractingFacet2AABB::go(	  const shared_ptr&lt;InteractingGeometry&gt;&amp; cm
++				, shared_ptr&lt;BoundingVolume&gt;&amp; bv
++				, const Se3r&amp; se3
++				, const Body*	)
++{
++	AABB* aabb = static_cast&lt;AABB*&gt;(bv.get());
++	InteractingFacet* facet = static_cast&lt;InteractingFacet*&gt;(cm.get());
++	Vector3r v0 = se3.position;
++	Matrix3r facetAxisT; se3.orientation.ToRotationMatrix(facetAxisT);
++
++	aabb-&gt;min=aabb-&gt;max = v0;
++	for (int i=0,e=facet-&gt;vertices.size();i&lt;e;++i)
++	{
++	    Vector3r v = v0 + facetAxisT * facet-&gt;vertices[i];
++	    aabb-&gt;min = componentMinVector( aabb-&gt;min, v);
++	    aabb-&gt;max = componentMaxVector( aabb-&gt;max, v);
++	}
++	
++	aabb-&gt;halfSize = (aabb-&gt;max - aabb-&gt;min)/2;
++	aabb-&gt;center = aabb-&gt;min + aabb-&gt;halfSize;
++}
++	
++YADE_PLUGIN();
+
+Added: trunk/pkg/common/Engine/EngineUnit/InteractingFacet2AABB.hpp
+===================================================================
+--- trunk/pkg/common/Engine/EngineUnit/InteractingFacet2AABB.hpp	2008-05-07 21:48:59 UTC (rev 1346)
++++ trunk/pkg/common/Engine/EngineUnit/InteractingFacet2AABB.hpp	2008-05-10 13:15:38 UTC (rev 1347)
+@@ -0,0 +1,31 @@
++/*************************************************************************
++*  Copyright (C) 2008 by Sergei Dorofeenko				 *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">sega at users.berlios.de</A>                                                 *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++ 
++#ifndef FACET2AABB_HPP
++#define FACET2AABB_HPP
++
++#include &lt;yade/pkg-common/BoundingVolumeEngineUnit.hpp&gt;
++
++class InteractingFacet2AABB : public BoundingVolumeEngineUnit
++{
++	public :
++		void go(	  const shared_ptr&lt;InteractingGeometry&gt;&amp; cm
++				, shared_ptr&lt;BoundingVolume&gt;&amp; bv
++				, const Se3r&amp; se3
++				, const Body*	);
++	
++	FUNCTOR2D(InteractingFacet,AABB);
++	
++	REGISTER_CLASS_NAME(InteractingFacet2AABB);
++	REGISTER_BASE_CLASS_NAME(BoundingVolumeEngineUnit);
++};
++
++REGISTER_SERIALIZABLE(InteractingFacet2AABB,false);
++
++#endif // FACET2AABB_HPP
++
+
+Added: trunk/pkg/common/Engine/StandAloneEngine/SpatialQuickSortCollider.cpp
+===================================================================
+--- trunk/pkg/common/Engine/StandAloneEngine/SpatialQuickSortCollider.cpp	2008-05-07 21:48:59 UTC (rev 1346)
++++ trunk/pkg/common/Engine/StandAloneEngine/SpatialQuickSortCollider.cpp	2008-05-10 13:15:38 UTC (rev 1347)
+@@ -0,0 +1,111 @@
++/*************************************************************************
++*  Copyright (C) 2008 by Sergei Dorofeenko				 *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">sega at users.berlios.de</A>                                                 *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++#include &quot;SpatialQuickSortCollider.hpp&quot;
++#include &lt;yade/core/MetaBody.hpp&gt;
++#include &lt;yade/core/BodyContainer.hpp&gt;
++#include &lt;math.h&gt;
++#include &lt;algorithm&gt;
++
++
++SpatialQuickSortCollider::SpatialQuickSortCollider() : BroadInteractor()
++{
++}
++
++SpatialQuickSortCollider::~SpatialQuickSortCollider()
++{
++
++}
++
++void SpatialQuickSortCollider::registerAttributes()
++{
++    BroadInteractor::registerAttributes();
++}
++
++void SpatialQuickSortCollider::action(MetaBody* ncb)
++{
++     shared_ptr&lt;BodyContainer&gt; bodies = ncb-&gt;bodies;
++
++	int nbElements=bodies-&gt;size();
++       if (nbElements!=rank.size())
++       {
++	   int n = rank.size();
++	   rank.resize(nbElements);
++	   for (; n&lt;nbElements; ++n)
++	       rank[n] = shared_ptr&lt;AABBBound&gt;(new AABBBound);
++       }
++
++	Vector3r min,max;
++	shared_ptr&lt;Body&gt; b;
++	BodyContainer::iterator bi    = bodies-&gt;begin();
++	BodyContainer::iterator biEnd = bodies-&gt;end();
++	for(int i=0 ; bi!=biEnd ; ++bi,++i )
++	{
++	   b = *bi;
++	   
++	   if(b-&gt;boundingVolume) 
++	   {
++	      min = b-&gt;boundingVolume-&gt;min;
++	      max = b-&gt;boundingVolume-&gt;max;
++	   }
++	   else
++	      min=max=b-&gt;physicalParameters-&gt;se3.position;
++
++	   rank[i]-&gt;id = b-&gt;getId();
++	   rank[i]-&gt;min = min;
++	   rank[i]-&gt;max = max;
++	}
++
++	shared_ptr&lt; InteractionContainer &gt; transientInteractions = ncb-&gt;transientInteractions;
++
++	InteractionContainer::iterator ii    = transientInteractions-&gt;begin();
++	InteractionContainer::iterator iiEnd = transientInteractions-&gt;end();
++	for( ; ii!=iiEnd ; ++ii)
++	   (*ii)-&gt;isReal = false;
++
++
++	sort(rank.begin(), rank.end(), xBoundComparator()); // sotring along X
++
++	int id,id2,i,j;
++	shared_ptr&lt;Interaction&gt; interaction;
++	for(int i=0,e=nbElements-1; i&lt;e; ++i)
++	{
++	    id  = rank[i]-&gt;id;
++	    min = rank[i]-&gt;min; 
++	    max = rank[i]-&gt;max; 
++	    j=i;
++	    while(++j&lt;nbElements)
++	    {
++		if ( rank[j]-&gt;min[0] &lt; max[0])
++		{
++		    if (   rank[j]-&gt;min[1] &lt; max[1]
++			&amp;&amp; rank[j]-&gt;max[1] &gt; min[1]
++			&amp;&amp; rank[j]-&gt;min[2] &lt; max[2]
++			&amp;&amp; rank[j]-&gt;max[2] &gt; min[2])
++		    {
++			id2=rank[j]-&gt;id;
++			if ( (interaction = transientInteractions-&gt;find(body_id_t(id),body_id_t(id2))) == 0)
++			{
++			    interaction = shared_ptr&lt;Interaction&gt;(new Interaction(id,id2) );
++			    interaction-&gt;isReal=true;
++			    transientInteractions-&gt;insert(interaction);
++			}
++			else
++			    interaction-&gt;isReal = true;
++		    }
++		}
++		else break;
++	    }
++	}
++
++	ii    = transientInteractions-&gt;begin();
++	iiEnd = transientInteractions-&gt;end();
++	for( ; ii!=iiEnd ; ++ii)
++	   if ( ! (interaction = *ii)-&gt;isReal ) transientInteractions-&gt;erase( interaction-&gt;getId1(), interaction-&gt;getId2());
++
++}
++
+
+Added: trunk/pkg/common/Engine/StandAloneEngine/SpatialQuickSortCollider.hpp
+===================================================================
+--- trunk/pkg/common/Engine/StandAloneEngine/SpatialQuickSortCollider.hpp	2008-05-07 21:48:59 UTC (rev 1346)
++++ trunk/pkg/common/Engine/StandAloneEngine/SpatialQuickSortCollider.hpp	2008-05-10 13:15:38 UTC (rev 1347)
+@@ -0,0 +1,52 @@
++/*************************************************************************
++*  Copyright (C) 2008 by Sergei Dorofeenko				 *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">sega at users.berlios.de</A>                                                 *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++#ifndef ___SPATIALQUICKSORTCOLLIDER___
++#define ___SPATIALQUICKSORTCOLLIDER___
++
++#include &lt;yade/core/BroadInteractor.hpp&gt;
++#include &lt;yade/core/InteractionContainer.hpp&gt;
++#include &lt;vector&gt;
++
++using namespace std;
++
++class SpatialQuickSortCollider : public BroadInteractor {
++    protected:
++
++	struct AABBBound {
++	    Vector3r min,max;
++	    int id;
++	};
++
++	class xBoundComparator {
++	    public:
++	      bool operator() (shared_ptr&lt;AABBBound&gt; b1, shared_ptr&lt;AABBBound&gt; b2)
++	      {
++		 return b1-&gt;min[0] &lt; b2-&gt;min[0];
++	      }
++	};
++
++	vector&lt;shared_ptr&lt;AABBBound&gt; &gt; rank;
++
++	void registerAttributes();
++
++    public:
++
++	SpatialQuickSortCollider();
++	virtual ~SpatialQuickSortCollider();
++
++	virtual void action(MetaBody*);
++
++
++	REGISTER_CLASS_NAME(SpatialQuickSortCollider);
++	REGISTER_BASE_CLASS_NAME(BroadInteractor);
++
++};
++REGISTER_SERIALIZABLE(SpatialQuickSortCollider,false);
++
++#endif //___SPATIALQUICKSORTCOLLIDER___
++
+
+Added: trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawFacet.cpp
+===================================================================
+--- trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawFacet.cpp	2008-05-07 21:48:59 UTC (rev 1346)
++++ trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawFacet.cpp	2008-05-10 13:15:38 UTC (rev 1347)
+@@ -0,0 +1,44 @@
++/*************************************************************************
++*  Copyright (C) 2008 by Sergei Dorofeenko				 *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">sega at users.berlios.de</A>                                                 *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#include &quot;GLDrawFacet.hpp&quot;
++#include &lt;yade/pkg-common/Facet.hpp&gt;
++#include&lt;yade/lib-opengl/OpenGLWrapper.hpp&gt;
++
++void GLDrawFacet::go(const shared_ptr&lt;GeometricalModel&gt;&amp; gm, const shared_ptr&lt;PhysicalParameters&gt;&amp; ph,bool wire)
++{
++    Facet* facet = static_cast&lt;Facet*&gt;(gm.get());
++    
++    glColor3v(gm-&gt;diffuseColor); 
++
++
++    if (gm-&gt;wire || wire)
++    {
++	glBegin(GL_LINE_LOOP);
++	glDisable(GL_LIGHTING);
++
++	glVertex3(0.0,0.0,0.0);
++	for (int i=0, e=facet-&gt;vertices.size(); i&lt;e; ++i)
++	    glVertex3v(facet-&gt;vertices[i]);
++
++	glEnd();
++    }
++    else
++    {
++	glDisable(GL_CULL_FACE);
++	glEnable(GL_LIGHTING);
++	glBegin(GL_POLYGON);
++
++	glVertex3(0.0,0.0,0.0);
++	for (int i=0, e=facet-&gt;vertices.size(); i&lt;e; ++i)
++	    glVertex3v(facet-&gt;vertices[i]);
++
++	glEnd();
++    }
++}
++YADE_PLUGIN();
+
+Added: trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawFacet.hpp
+===================================================================
+--- trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawFacet.hpp	2008-05-07 21:48:59 UTC (rev 1346)
++++ trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawFacet.hpp	2008-05-10 13:15:38 UTC (rev 1347)
+@@ -0,0 +1,28 @@
++/*************************************************************************
++*  Copyright (C) 2008 by Sergei Dorofeenko				 *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">sega at users.berlios.de</A>                                                 *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#ifndef GLDRAWFACET_HPP
++#define GLDRAWFACET_HPP
++
++#include&lt;yade/pkg-common/GLDrawGeometricalModelFunctor.hpp&gt;
++
++class GLDrawFacet : public GLDrawGeometricalModelFunctor
++{
++	
++	public :
++		virtual void go(const shared_ptr&lt;GeometricalModel&gt;&amp;, const shared_ptr&lt;PhysicalParameters&gt;&amp;,bool);
++		
++	RENDERS(Facet);
++	REGISTER_CLASS_NAME(GLDrawFacet);
++	REGISTER_BASE_CLASS_NAME(GLDrawGeometricalModelFunctor);
++};
++
++REGISTER_SERIALIZABLE(GLDrawFacet,false);
++
++#endif // GLDRAWFACET_HPP
++
+
+Added: trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawGeometricalEdge.cpp
+===================================================================
+--- trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawGeometricalEdge.cpp	2008-05-07 21:48:59 UTC (rev 1346)
++++ trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawGeometricalEdge.cpp	2008-05-10 13:15:38 UTC (rev 1347)
+@@ -0,0 +1,27 @@
++/*************************************************************************
++*  Copyright (C) 2008 by Sergei Dorofeenko				 *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">sega at users.berlios.de</A>                                                 *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#include &quot;GLDrawGeometricalEdge.hpp&quot;
++#include &lt;yade/pkg-common/GeometricalEdge.hpp&gt;
++#include&lt;yade/lib-opengl/OpenGLWrapper.hpp&gt;
++
++void GLDrawGeometricalEdge::go(const shared_ptr&lt;GeometricalModel&gt;&amp; gm, const shared_ptr&lt;PhysicalParameters&gt;&amp; ph,bool wire)
++{
++	Vector3r edge = static_cast&lt;GeometricalEdge*&gt;(gm.get())-&gt;edge;
++
++	glColor3v(gm-&gt;diffuseColor); 
++
++	glBegin(GL_LINES);
++	glDisable(GL_LIGHTING);
++
++	glVertex3(0.0,0.0,0.0);
++	glVertex3v(edge);
++
++	glEnd();
++}
++YADE_PLUGIN();
+
+Added: trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawGeometricalEdge.hpp
+===================================================================
+--- trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawGeometricalEdge.hpp	2008-05-07 21:48:59 UTC (rev 1346)
++++ trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawGeometricalEdge.hpp	2008-05-10 13:15:38 UTC (rev 1347)
+@@ -0,0 +1,27 @@
++/*************************************************************************
++*  Copyright (C) 2008 by Sergei Dorofeenko				 *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">sega at users.berlios.de</A>                                                 *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++#ifndef GLDRAWGEOMETRICALEDGE_HPP
++#define GLDRAWGEOMETRICALEDGE_HPP
++
++#include&lt;yade/pkg-common/GLDrawGeometricalModelFunctor.hpp&gt;
++
++class GLDrawGeometricalEdge : public GLDrawGeometricalModelFunctor
++{
++	
++	public :
++		virtual void go(const shared_ptr&lt;GeometricalModel&gt;&amp;, const shared_ptr&lt;PhysicalParameters&gt;&amp;,bool);
++		
++	RENDERS(GeometricalEdge);
++	REGISTER_CLASS_NAME(GLDrawGeometricalEdge);
++	REGISTER_BASE_CLASS_NAME(GLDrawGeometricalModelFunctor);
++};
++
++REGISTER_SERIALIZABLE(GLDrawGeometricalEdge,false);
++
++#endif // GLDRAWGEOMETRICALEDGE_HPP
++
+
+Added: trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawVertex.cpp
+===================================================================
+--- trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawVertex.cpp	2008-05-07 21:48:59 UTC (rev 1346)
++++ trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawVertex.cpp	2008-05-10 13:15:38 UTC (rev 1347)
+@@ -0,0 +1,21 @@
++/*************************************************************************
++*  Copyright (C) 2008 by Sergei Dorofeenko				 *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">sega at users.berlios.de</A>                                                 *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#include &quot;GLDrawVertex.hpp&quot;
++#include &lt;yade/pkg-common/Vertex.hpp&gt;
++#include&lt;yade/lib-opengl/OpenGLWrapper.hpp&gt;
++
++void GLDrawVertex::go(const shared_ptr&lt;GeometricalModel&gt;&amp; gm, const shared_ptr&lt;PhysicalParameters&gt;&amp; ph,bool wire)
++{
++    glColor3v(gm-&gt;diffuseColor); 
++    glBegin(GL_POINTS);  
++      glDisable(GL_LIGHTING);
++      glVertex3(0.0,0.0,0.0); 
++    glEnd();
++}
++YADE_PLUGIN();
+
+Added: trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawVertex.hpp
+===================================================================
+--- trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawVertex.hpp	2008-05-07 21:48:59 UTC (rev 1346)
++++ trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawVertex.hpp	2008-05-10 13:15:38 UTC (rev 1347)
+@@ -0,0 +1,28 @@
++/*************************************************************************
++*  Copyright (C) 2008 by Sergei Dorofeenko				 *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">sega at users.berlios.de</A>                                                 *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#ifndef GLDRAWVERTEX_HPP
++#define GLDRAWVERTEX_HPP
++
++#include&lt;yade/pkg-common/GLDrawGeometricalModelFunctor.hpp&gt;
++
++class GLDrawVertex : public GLDrawGeometricalModelFunctor
++{
++	
++	public :
++		virtual void go(const shared_ptr&lt;GeometricalModel&gt;&amp;, const shared_ptr&lt;PhysicalParameters&gt;&amp;,bool);
++		
++	RENDERS(Vertex);
++	REGISTER_CLASS_NAME(GLDrawVertex);
++	REGISTER_BASE_CLASS_NAME(GLDrawGeometricalModelFunctor);
++};
++
++REGISTER_SERIALIZABLE(GLDrawVertex,false);
++
++#endif // GLDRAWVERTEX_HPP
++
+
+Added: trunk/pkg/common/RenderingEngine/GLDrawInteractingGeometry/GLDrawInteractingEdge.cpp
+===================================================================
+--- trunk/pkg/common/RenderingEngine/GLDrawInteractingGeometry/GLDrawInteractingEdge.cpp	2008-05-07 21:48:59 UTC (rev 1346)
++++ trunk/pkg/common/RenderingEngine/GLDrawInteractingGeometry/GLDrawInteractingEdge.cpp	2008-05-10 13:15:38 UTC (rev 1347)
+@@ -0,0 +1,47 @@
++/*************************************************************************
++*  Copyright (C) 2008 by Sergei Dorofeenko				 *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">sega at users.berlios.de</A>                                                 *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#include &quot;GLDrawInteractingEdge.hpp&quot;
++#include &lt;yade/pkg-common/InteractingEdge.hpp&gt;
++#include&lt;yade/lib-opengl/OpenGLWrapper.hpp&gt;
++
++
++
++void GLDrawInteractingEdge::go(const shared_ptr&lt;InteractingGeometry&gt;&amp; cm, const shared_ptr&lt;PhysicalParameters&gt;&amp; ,bool)
++{   
++    InteractingEdge* e = static_cast&lt;InteractingEdge*&gt;(cm.get());
++
++
++
++    glBegin(GL_LINES);
++
++	glDisable(GL_LIGHTING);
++
++	if (e-&gt;flat)
++	    glColor3(1.0,1.0,0.0);
++	else
++	    glColor3(0.0,1.0,0.0);
++
++	glVertex3(0,0,0);
++	glVertex3v(e-&gt;edge);
++
++	glColor3(1.0,0.0,0.0);
++
++	glVertex3v(e-&gt;edge/2);
++	glVertex3v(e-&gt;edge/2 + e-&gt;normal1);
++
++	if (e-&gt;both)
++	{
++	    glVertex3v(e-&gt;edge/2);
++	    glVertex3v(e-&gt;edge/2 + e-&gt;normal2);
++	}
++
++    glEnd();
++}
++
++YADE_PLUGIN();
+
+Added: trunk/pkg/common/RenderingEngine/GLDrawInteractingGeometry/GLDrawInteractingEdge.hpp
+===================================================================
+--- trunk/pkg/common/RenderingEngine/GLDrawInteractingGeometry/GLDrawInteractingEdge.hpp	2008-05-07 21:48:59 UTC (rev 1346)
++++ trunk/pkg/common/RenderingEngine/GLDrawInteractingGeometry/GLDrawInteractingEdge.hpp	2008-05-10 13:15:38 UTC (rev 1347)
+@@ -0,0 +1,28 @@
++/*************************************************************************
++*  Copyright (C) 2008 by Sergei Dorofeenko				 *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">sega at users.berlios.de</A>                                                 *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#ifndef __GLDRAWINTERACTINGEDGE_HPP__
++#define __GLDRAWINTERACTINGEDGE_HPP__
++
++#include&lt;yade/pkg-common/GLDrawInteractingGeometryFunctor.hpp&gt;
++
++class GLDrawInteractingEdge : public GLDrawInteractingGeometryFunctor
++{	
++	
++	public :
++		virtual void go(const shared_ptr&lt;InteractingGeometry&gt;&amp;, const shared_ptr&lt;PhysicalParameters&gt;&amp;,bool);
++
++	RENDERS(InteractingEdge);
++	REGISTER_CLASS_NAME(GLDrawInteractingEdge);
++	REGISTER_BASE_CLASS_NAME(GLDrawInteractingGeometryFunctor);
++};
++
++REGISTER_SERIALIZABLE(GLDrawInteractingEdge,false);
++
++#endif //  GLDRAWINTERACTINGEDGE_HPP
++
+
+Added: trunk/pkg/common/RenderingEngine/GLDrawInteractingGeometry/GLDrawInteractingFacet.cpp
+===================================================================
+--- trunk/pkg/common/RenderingEngine/GLDrawInteractingGeometry/GLDrawInteractingFacet.cpp	2008-05-07 21:48:59 UTC (rev 1346)
++++ trunk/pkg/common/RenderingEngine/GLDrawInteractingGeometry/GLDrawInteractingFacet.cpp	2008-05-10 13:15:38 UTC (rev 1347)
+@@ -0,0 +1,60 @@
++/*************************************************************************
++*  Copyright (C) 2008 by Sergei Dorofeenko				 *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">sega at users.berlios.de</A>                                                 *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#include &quot;GLDrawInteractingFacet.hpp&quot;
++#include &lt;yade/pkg-common/InteractingFacet.hpp&gt;
++#include&lt;yade/lib-opengl/OpenGLWrapper.hpp&gt;
++
++
++
++void GLDrawInteractingFacet::go(const shared_ptr&lt;InteractingGeometry&gt;&amp; cm, const shared_ptr&lt;PhysicalParameters&gt;&amp; ,bool)
++{   
++    InteractingFacet* facet = static_cast&lt;InteractingFacet*&gt;(cm.get());
++    int N = facet-&gt;vertices.size();
++
++    glDisable(GL_LIGHTING);
++
++    // facet
++    glBegin(GL_LINE_LOOP);
++	glColor3(1.0,0.0,0.0);
++	glVertex3(0.0,0.0,0.0);
++	for (int i=0; i&lt;N; ++i)
++	    glVertex3v(facet-&gt;vertices[i]);
++    glEnd();
++
++    Vector3r b;
++
++    // normals of edges
++    glBegin(GL_LINES);
++	glColor3(1.0,0.0,1.0);
++
++	b = facet-&gt;vertices[0]/2;
++	glVertex3v(b);
++	glVertex3v(b+facet-&gt;edgeNormals[0]);
++
++	b = facet-&gt;vertices[N-1]/2;
++	glVertex3v(b);
++	glVertex3v(b+facet-&gt;edgeNormals[N]);
++
++	for (int i=1; i&lt;N; ++i)
++	{
++	    b = facet-&gt;vertices[i-1]+(facet-&gt;vertices[i]-facet-&gt;vertices[i-1])/2;
++	    glVertex3v(b);
++	    glVertex3v(b+facet-&gt;edgeNormals[i]);
++	}
++    glEnd();
++    
++    // normal of facet
++    glBegin(GL_LINES);
++	glColor3(0.0,0.0,1.0); 
++	glVertex3v(facet-&gt;cm);
++	glVertex3v(facet-&gt;cm+facet-&gt;normal);
++    glEnd();
++}
++
++YADE_PLUGIN();
+
+Added: trunk/pkg/common/RenderingEngine/GLDrawInteractingGeometry/GLDrawInteractingFacet.hpp
+===================================================================
+--- trunk/pkg/common/RenderingEngine/GLDrawInteractingGeometry/GLDrawInteractingFacet.hpp	2008-05-07 21:48:59 UTC (rev 1346)
++++ trunk/pkg/common/RenderingEngine/GLDrawInteractingGeometry/GLDrawInteractingFacet.hpp	2008-05-10 13:15:38 UTC (rev 1347)
+@@ -0,0 +1,28 @@
++/*************************************************************************
++*  Copyright (C) 2008 by Sergei Dorofeenko				 *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">sega at users.berlios.de</A>                                                 *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#ifndef __GLDRAWINTERACTINGFACET_HPP__
++#define __GLDRAWINTERACTINGFACET_HPP__
++
++#include&lt;yade/pkg-common/GLDrawInteractingGeometryFunctor.hpp&gt;
++
++class GLDrawInteractingFacet : public GLDrawInteractingGeometryFunctor
++{	
++	
++	public :
++		virtual void go(const shared_ptr&lt;InteractingGeometry&gt;&amp;, const shared_ptr&lt;PhysicalParameters&gt;&amp;,bool);
++
++	RENDERS(InteractingFacet);
++	REGISTER_CLASS_NAME(GLDrawInteractingFacet);
++	REGISTER_BASE_CLASS_NAME(GLDrawInteractingGeometryFunctor);
++};
++
++REGISTER_SERIALIZABLE(GLDrawInteractingFacet,false);
++
++#endif //  GLDRAWINTERACTINGFACET_HPP
++
+
+Added: trunk/pkg/common/RenderingEngine/GLDrawInteractingGeometry/GLDrawInteractingVertex.cpp
+===================================================================
+--- trunk/pkg/common/RenderingEngine/GLDrawInteractingGeometry/GLDrawInteractingVertex.cpp	2008-05-07 21:48:59 UTC (rev 1346)
++++ trunk/pkg/common/RenderingEngine/GLDrawInteractingGeometry/GLDrawInteractingVertex.cpp	2008-05-10 13:15:38 UTC (rev 1347)
+@@ -0,0 +1,40 @@
++/*************************************************************************
++*  Copyright (C) 2008 by Sergei Dorofeenko				 *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">sega at users.berlios.de</A>                                                 *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#include &quot;GLDrawInteractingVertex.hpp&quot;
++#include &lt;yade/pkg-common/InteractingVertex.hpp&gt;
++#include&lt;yade/lib-opengl/OpenGLWrapper.hpp&gt;
++
++
++
++void GLDrawInteractingVertex::go(const shared_ptr&lt;InteractingGeometry&gt;&amp; cm, const shared_ptr&lt;PhysicalParameters&gt;&amp; ,bool)
++{   
++    InteractingVertex* v = static_cast&lt;InteractingVertex*&gt;(cm.get());
++
++    glDisable(GL_LIGHTING);
++
++    if ( v-&gt;flat )
++	glColor3(1.0,0.0,0.0);
++    else
++	glColor3(0.0,1.0,0.0);
++
++    for (int i=0, ei=v-&gt;normals.size(); i&lt;ei; ++i)
++    {
++	glBegin(GL_LINES);
++	    glVertex3(0,0,0);
++	    glVertex3v(v-&gt;normals[i]);
++	glEnd();
++    }
++
++
++    glBegin(GL_POINTS);  
++      glVertex3(0.0,0.0,0.0); 
++    glEnd();
++}
++
++YADE_PLUGIN();
+
+Added: trunk/pkg/common/RenderingEngine/GLDrawInteractingGeometry/GLDrawInteractingVertex.hpp
+===================================================================
+--- trunk/pkg/common/RenderingEngine/GLDrawInteractingGeometry/GLDrawInteractingVertex.hpp	2008-05-07 21:48:59 UTC (rev 1346)
++++ trunk/pkg/common/RenderingEngine/GLDrawInteractingGeometry/GLDrawInteractingVertex.hpp	2008-05-10 13:15:38 UTC (rev 1347)
+@@ -0,0 +1,28 @@
++/*************************************************************************
++*  Copyright (C) 2008 by Sergei Dorofeenko				 *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">sega at users.berlios.de</A>                                                 *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#ifndef __GLDRAWINTERACTINGVERTEX_HPP__
++#define __GLDRAWINTERACTINGVERTEX_HPP__
++
++#include&lt;yade/pkg-common/GLDrawInteractingGeometryFunctor.hpp&gt;
++
++class GLDrawInteractingVertex : public GLDrawInteractingGeometryFunctor
++{	
++	
++	public :
++		virtual void go(const shared_ptr&lt;InteractingGeometry&gt;&amp;, const shared_ptr&lt;PhysicalParameters&gt;&amp;,bool);
++
++	RENDERS(InteractingVertex);
++	REGISTER_CLASS_NAME(GLDrawInteractingVertex);
++	REGISTER_BASE_CLASS_NAME(GLDrawInteractingGeometryFunctor);
++};
++
++REGISTER_SERIALIZABLE(GLDrawInteractingVertex,false);
++
++#endif //  GLDRAWINTERACTINGVERTEX_HPP
++
+
+Modified: trunk/pkg/common/SConscript
+===================================================================
+--- trunk/pkg/common/SConscript	2008-05-07 21:48:59 UTC (rev 1346)
++++ trunk/pkg/common/SConscript	2008-05-10 13:15:38 UTC (rev 1347)
+@@ -1,3 +1,4 @@
++# vim: set filetype=python :
+ Import('*')
+ env.Install('$PREFIX/lib/yade$SUFFIX/pkg-common',[
+ 
+@@ -48,7 +49,16 @@
+ 	env.SharedLibrary('MetaInteractingGeometry',
+ 		['DataClass/InteractingGeometry/MetaInteractingGeometry.cpp'],
+ 		LIBS=env['LIBS']+['yade-base']),
++    
++	env.SharedLibrary('InteractingVertex'
++	    ,['DataClass/InteractingGeometry/InteractingVertex.cpp']),
++	
++	env.SharedLibrary('InteractingEdge'
++	    ,['DataClass/InteractingGeometry/InteractingEdge.cpp']),
+ 
++	env.SharedLibrary('InteractingFacet'
++	    ,['DataClass/InteractingGeometry/InteractingFacet.cpp']),
++
+ 	env.SharedLibrary('ParticleParameters',
+ 		['DataClass/PhysicalParameters/ParticleParameters.cpp'],
+ 		LIBS=env['LIBS']+['yade-base']),
+@@ -111,6 +121,15 @@
+ 		LIBS=env['LIBS']+['yade-base','yade-multimethods'],
+ 		CPPPATH=env['CPPPATH']+['$PREFIX/include','DataClass/GeometricalModel']),
+ 
++	env.SharedLibrary('Vertex'
++	    ,['DataClass/GeometricalModel/Vertex.cpp']),
++	
++	env.SharedLibrary('GeometricalEdge'
++	    ,['DataClass/GeometricalModel/GeometricalEdge.cpp']),
++    
++	env.SharedLibrary('Facet'
++	    ,['DataClass/GeometricalModel/Facet.cpp']),
++	
+ 	env.SharedLibrary('MomentEngine',
+ 		['Engine/DeusExMachina/MomentEngine.cpp'],
+ 		LIBS=env['LIBS']+['yade-base',  'Momentum', 'ParticleParameters'],
+@@ -299,6 +318,14 @@
+ 			'Engine/MetaEngine',
+ 			'Engine/EngineUnit']),
+ 
++	env.SharedLibrary('InteractingEdge2AABB'
++	    ,['Engine/EngineUnit/InteractingEdge2AABB.cpp']
++	    ,LIBS=env['LIBS']+['AABB','InteractingEdge']),
++    
++	env.SharedLibrary('InteractingFacet2AABB'
++	    ,['Engine/EngineUnit/InteractingFacet2AABB.cpp']
++	    ,LIBS=env['LIBS']+['AABB','InteractingFacet']),
++
+ 	env.SharedLibrary('LeapFrogOrientationIntegrator',
+ 		['Engine/EngineUnit/LeapFrogOrientationIntegrator.cpp'],
+ 		LIBS=env['LIBS']+['yade-base',
+@@ -419,6 +446,9 @@
+ #		LIBPATH=env['LIBPATH']+['/home/bruno/micromacro/KdevMicroMacro/src'],
+ #		LIBS=env['LIBS']+['yade-base', 'TesselationWrapper', 'CGAL',  'InteractingSphere', 'RigidBodyParameters'],
+ #		CPPPATH=env['CPPPATH']+['Engine/StandAloneEngine', '$PREFIX/include', '/home/bruno/micromacro/KdevMicroMacro/src']),
++    
++	env.SharedLibrary('SpatialQuickSortCollider' 
++	    ,['Engine/StandAloneEngine/SpatialQuickSortCollider.cpp']),
+ 		
+ 	env.SharedLibrary('PersistentSAPCollider',
+ 		['Engine/StandAloneEngine/PersistentSAPCollider.cpp'],
+@@ -507,6 +537,18 @@
+ 			'$PREFIX/include',
+ 			'DataClass/GeometricalModel',
+ 			'RenderingEngine/OpenGLRenderingEngine']),
++    
++	env.SharedLibrary('GLDrawVertex'
++	    ,['RenderingEngine/GLDrawGeometricalModel/GLDrawVertex.cpp']
++	    ,LIBS=env['LIBS']+['yade-opengl','Vertex']),
++	
++	env.SharedLibrary('GLDrawGeometricalEdge'
++	    ,['RenderingEngine/GLDrawGeometricalModel/GLDrawGeometricalEdge.cpp']
++	    ,LIBS=env['LIBS']+['yade-opengl','GeometricalEdge']),
++	
++	env.SharedLibrary('GLDrawFacet'
++	    ,['RenderingEngine/GLDrawGeometricalModel/GLDrawFacet.cpp']
++	    ,LIBS=env['LIBS']+['yade-opengl','Facet']),
+ 
+ 	env.SharedLibrary('GLDrawInteractingBox',
+ 		['RenderingEngine/GLDrawInteractingGeometry/GLDrawInteractingBox.cpp'],
+@@ -532,6 +574,18 @@
+ 			'RenderingEngine/OpenGLRenderingEngine',
+ 			'RenderingEngine/GLDrawInteractingGeometry']),
+ 
++	env.SharedLibrary('GLDrawInteractingVertex'
++	    ,['RenderingEngine/GLDrawInteractingGeometry/GLDrawInteractingVertex.cpp']
++	    ,LIBS=env['LIBS']+['yade-opengl','InteractingVertex']),
++	
++	env.SharedLibrary('GLDrawInteractingEdge'
++	    ,['RenderingEngine/GLDrawInteractingGeometry/GLDrawInteractingEdge.cpp']
++	    ,LIBS=env['LIBS']+['yade-opengl','InteractingEdge']),
++
++	env.SharedLibrary('GLDrawInteractingFacet'
++	    ,['RenderingEngine/GLDrawInteractingGeometry/GLDrawInteractingFacet.cpp']
++	    ,LIBS=env['LIBS']+['yade-opengl','InteractingFacet']),
++	
+ 	env.SharedLibrary('GLDrawBoxShadowVolume',
+ 		['RenderingEngine/GLDrawShadowVolume/GLDrawBoxShadowVolume.cpp'],
+ 		LIBS=env['LIBS']+['yade-base',
+
+Added: trunk/pkg/dem/Engine/EngineUnit/InteractingEdge2InteractingSphere4SpheresContactGeometry.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/EngineUnit/InteractingEdge2InteractingSphere4SpheresContactGeometry.cpp	2008-05-07 21:48:59 UTC (rev 1346)
++++ trunk/pkg/dem/Engine/EngineUnit/InteractingEdge2InteractingSphere4SpheresContactGeometry.cpp	2008-05-10 13:15:38 UTC (rev 1347)
+@@ -0,0 +1,100 @@
++/*************************************************************************
++*  Copyright (C) 2008 by Sergei Dorofeenko				 *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">sega at users.berlios.de</A>                                                 *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#include&quot;InteractingEdge2InteractingSphere4SpheresContactGeometry.hpp&quot;
++#include&lt;yade/pkg-dem/SpheresContactGeometry.hpp&gt;
++#include&lt;yade/pkg-common/InteractingSphere.hpp&gt;
++#include&lt;yade/pkg-common/InteractingEdge.hpp&gt;
++
++#include&lt;yade/lib-base/yadeWm3Extra.hpp&gt;
++
++
++InteractingEdge2InteractingSphere4SpheresContactGeometry::InteractingEdge2InteractingSphere4SpheresContactGeometry()
++{
++}
++
++void InteractingEdge2InteractingSphere4SpheresContactGeometry::registerAttributes()
++{	
++}
++
++bool InteractingEdge2InteractingSphere4SpheresContactGeometry::go(	const shared_ptr&lt;InteractingGeometry&gt;&amp; cm1,
++							const shared_ptr&lt;InteractingGeometry&gt;&amp; cm2,
++							const Se3r&amp; se31,
++							const Se3r&amp; se32,
++							const shared_ptr&lt;Interaction&gt;&amp; c)
++{
++	InteractingEdge*   e = static_cast&lt;InteractingEdge*&gt;(cm1.get());
++
++	// FIXME: ignore edges on a flat?
++	if (e-&gt;flat) return false; 
++
++	Real squaredLength = e-&gt;squaredLength;
++	Real sphereRadius = static_cast&lt;InteractingSphere*&gt;(cm2.get())-&gt;radius;
++
++	Vector3r ep = se31.position;
++	Vector3r sp = se32.position;
++	Vector3r rp = sp - ep;
++	
++	// TODO: orientation normal1 &amp; normal2!!!
++
++	if (e-&gt;both) {
++	    if ( e-&gt;normal1.Dot(rp) &lt; 0 || e-&gt;normal2.Dot(rp) &lt; 0 ) return false;
++	} else if ( e-&gt;normal1.Dot(rp) &lt; 0 ) return false;
++
++	Vector3r edge = e-&gt;edge; // TODO: orientation edge!!! se31.orientation.Rotate(e-&gt;edge); 
++
++	Real c1 = rp.Dot(edge);
++	if ( c1&lt;=0 || squaredLength&lt;=c1 ) return false;
++
++	Vector3r Pb = ep + c1/squaredLength*edge;
++
++	Vector3r normal = sp - Pb;
++	Real penetrationDepth = sphereRadius - normal.Normalize();
++
++	if (penetrationDepth &gt; 0)
++	{
++	    shared_ptr&lt;SpheresContactGeometry&gt; scm;
++	    if (c-&gt;interactionGeometry)
++		scm = YADE_PTR_CAST&lt;SpheresContactGeometry&gt;(c-&gt;interactionGeometry);
++	    else
++		scm = shared_ptr&lt;SpheresContactGeometry&gt;(new SpheresContactGeometry());
++
++	    scm-&gt;contactPoint = Pb-0.5*penetrationDepth*normal;
++	    scm-&gt;normal = normal;
++	    scm-&gt;penetrationDepth = penetrationDepth;
++	    scm-&gt;radius1 = 2*sphereRadius;
++	    scm-&gt;radius2 = sphereRadius;
++			    
++	    if (!c-&gt;interactionGeometry)
++		    c-&gt;interactionGeometry = scm;
++    
++	    return true;
++	}
++	else return false;
++}
++
++
++bool InteractingEdge2InteractingSphere4SpheresContactGeometry::goReverse(	const shared_ptr&lt;InteractingGeometry&gt;&amp; cm1,
++								const shared_ptr&lt;InteractingGeometry&gt;&amp; cm2,
++								const Se3r&amp; se31,
++								const Se3r&amp; se32,
++								const shared_ptr&lt;Interaction&gt;&amp; c)
++{
++	bool isInteracting = go(cm2,cm1,se32,se31,c);
++	if (isInteracting)
++	{
++	    SpheresContactGeometry* scm = static_cast&lt;SpheresContactGeometry*&gt;(c-&gt;interactionGeometry.get());
++	    scm-&gt;normal = -scm-&gt;normal;
++	    Real tmpR = scm-&gt;radius1;
++	    scm-&gt;radius1 = scm-&gt;radius2;
++	    scm-&gt;radius2 = tmpR;
++	}
++	return isInteracting;
++}
++
++YADE_PLUGIN();
+
+Added: trunk/pkg/dem/Engine/EngineUnit/InteractingEdge2InteractingSphere4SpheresContactGeometry.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/EngineUnit/InteractingEdge2InteractingSphere4SpheresContactGeometry.hpp	2008-05-07 21:48:59 UTC (rev 1346)
++++ trunk/pkg/dem/Engine/EngineUnit/InteractingEdge2InteractingSphere4SpheresContactGeometry.hpp	2008-05-10 13:15:38 UTC (rev 1347)
+@@ -0,0 +1,44 @@
++/*************************************************************************
++*  Copyright (C) 2008 by Sergei Dorofeenko				 *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">sega at users.berlios.de</A>                                                 *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#ifndef EDGE2SPHERE4SPHERESCONTACTGEOMETRY_HPP
++#define EDGE2SPHERE4SPHERESCONTACTGEOMETRY_HPP
++
++#include&lt;yade/pkg-common/InteractionGeometryEngineUnit.hpp&gt;
++
++class InteractingEdge2InteractingSphere4SpheresContactGeometry : public InteractionGeometryEngineUnit
++{
++	public :
++		virtual bool go(	const shared_ptr&lt;InteractingGeometry&gt;&amp; cm1,
++					const shared_ptr&lt;InteractingGeometry&gt;&amp; cm2,
++					const Se3r&amp; se31,
++					const Se3r&amp; se32,
++					const shared_ptr&lt;Interaction&gt;&amp; c);
++		virtual bool goReverse(	const shared_ptr&lt;InteractingGeometry&gt;&amp; cm1,
++					const shared_ptr&lt;InteractingGeometry&gt;&amp; cm2,
++					const Se3r&amp; se31,
++					const Se3r&amp; se32,
++					const shared_ptr&lt;Interaction&gt;&amp; c);
++					
++		InteractingEdge2InteractingSphere4SpheresContactGeometry();		
++					
++	REGISTER_CLASS_NAME(InteractingEdge2InteractingSphere4SpheresContactGeometry);
++	REGISTER_BASE_CLASS_NAME(InteractionGeometryEngineUnit);
++
++	FUNCTOR2D(InteractingEdge,InteractingSphere);
++
++	DEFINE_FUNCTOR_ORDER_2D(InteractingEdge,InteractingSphere);
++	
++	protected :
++		virtual void registerAttributes();
++};
++
++REGISTER_SERIALIZABLE(InteractingEdge2InteractingSphere4SpheresContactGeometry,false);
++
++#endif //  EDGE2SPHERE4SPHERESCONTACTGEOMETRY_HPP
++
+
+Added: trunk/pkg/dem/Engine/EngineUnit/InteractingFacet2InteractingSphere4SpheresContactGeometry.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/EngineUnit/InteractingFacet2InteractingSphere4SpheresContactGeometry.cpp	2008-05-07 21:48:59 UTC (rev 1346)
++++ trunk/pkg/dem/Engine/EngineUnit/InteractingFacet2InteractingSphere4SpheresContactGeometry.cpp	2008-05-10 13:15:38 UTC (rev 1347)
+@@ -0,0 +1,91 @@
++/*************************************************************************
++*  Copyright (C) 2008 by Sergei Dorofeenko				 *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">sega at users.berlios.de</A>                                                 *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#include&quot;InteractingFacet2InteractingSphere4SpheresContactGeometry.hpp&quot;
++#include&lt;yade/pkg-dem/SpheresContactGeometry.hpp&gt;
++#include&lt;yade/pkg-common/InteractingSphere.hpp&gt;
++#include&lt;yade/pkg-common/InteractingFacet.hpp&gt;
++
++#include&lt;yade/lib-base/yadeWm3Extra.hpp&gt;
++
++
++InteractingFacet2InteractingSphere4SpheresContactGeometry::InteractingFacet2InteractingSphere4SpheresContactGeometry()
++{
++}
++
++void InteractingFacet2InteractingSphere4SpheresContactGeometry::registerAttributes()
++{	
++}
++
++bool InteractingFacet2InteractingSphere4SpheresContactGeometry::go(	const shared_ptr&lt;InteractingGeometry&gt;&amp; cm1,
++							const shared_ptr&lt;InteractingGeometry&gt;&amp; cm2,
++							const Se3r&amp; se31,
++							const Se3r&amp; se32,
++							const shared_ptr&lt;Interaction&gt;&amp; c)
++{
++	InteractingFacet*   facet = static_cast&lt;InteractingFacet*&gt;(cm1.get());
++	Vector3r fp = se31.position;
++	Vector3r sp = se32.position - fp;// TODO: orientation!!! //se31.orientation.Inverse()*(se32.position - fp);
++	Vector3r normal = facet-&gt;normal;
++	Real L = normal.Dot(sp);
++	if (L&lt;0) { normal=-normal; L=-L; }
++	Real sphereRadius = static_cast&lt;InteractingSphere*&gt;(cm2.get())-&gt;radius;
++
++	if (L &lt; sphereRadius) 
++	{
++	    sp -= normal * L;
++
++	    int N = facet-&gt;vertices.size();
++	    if (facet-&gt;edgeNormals[0].Dot(sp) &lt;= 0) return false;
++	    if (facet-&gt;edgeNormals[N].Dot(sp) &lt;= 0) return false;
++	    for (int i=1; i&lt;N; ++i)
++		if (facet-&gt;edgeNormals[i].Dot(sp - facet-&gt;vertices[i]) &lt;= 0) return false;
++
++	    
++  	    shared_ptr&lt;SpheresContactGeometry&gt; scm;
++  	    if (c-&gt;interactionGeometry)
++  		scm = YADE_PTR_CAST&lt;SpheresContactGeometry&gt;(c-&gt;interactionGeometry);
++  	    else
++  		scm = shared_ptr&lt;SpheresContactGeometry&gt;(new SpheresContactGeometry());
++  
++	    Real penetrationDepth = sphereRadius - L;
++
++  	    scm-&gt;contactPoint = sp + fp - 0.5*penetrationDepth*normal; // TODO: orientation!!!
++  	    scm-&gt;normal = normal; // TODO: orientation!!!
++  	    scm-&gt;penetrationDepth = penetrationDepth;
++  	    scm-&gt;radius1 = 2*sphereRadius;
++  	    scm-&gt;radius2 = sphereRadius;
++  			    
++  	    if (!c-&gt;interactionGeometry)
++  		    c-&gt;interactionGeometry = scm;
++      
++  	    return true;
++	}
++	return false;
++}
++
++
++bool InteractingFacet2InteractingSphere4SpheresContactGeometry::goReverse(	const shared_ptr&lt;InteractingGeometry&gt;&amp; cm1,
++								const shared_ptr&lt;InteractingGeometry&gt;&amp; cm2,
++								const Se3r&amp; se31,
++								const Se3r&amp; se32,
++								const shared_ptr&lt;Interaction&gt;&amp; c)
++{
++	bool isInteracting = go(cm2,cm1,se32,se31,c);
++	if (isInteracting)
++	{
++	    SpheresContactGeometry* scm = static_cast&lt;SpheresContactGeometry*&gt;(c-&gt;interactionGeometry.get());
++	    scm-&gt;normal = -scm-&gt;normal;
++	    Real tmpR = scm-&gt;radius1;
++	    scm-&gt;radius1 = scm-&gt;radius2;
++	    scm-&gt;radius2 = tmpR;
++	}
++	return isInteracting;
++}
++
++YADE_PLUGIN();
+
+Added: trunk/pkg/dem/Engine/EngineUnit/InteractingFacet2InteractingSphere4SpheresContactGeometry.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/EngineUnit/InteractingFacet2InteractingSphere4SpheresContactGeometry.hpp	2008-05-07 21:48:59 UTC (rev 1346)
++++ trunk/pkg/dem/Engine/EngineUnit/InteractingFacet2InteractingSphere4SpheresContactGeometry.hpp	2008-05-10 13:15:38 UTC (rev 1347)
+@@ -0,0 +1,44 @@
++/*************************************************************************
++*  Copyright (C) 2008 by Sergei Dorofeenko				 *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">sega at users.berlios.de</A>                                                 *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#ifndef FACET2SPHERE4SPHERESCONTACTGEOMETRY_HPP
++#define FACET2SPHERE4SPHERESCONTACTGEOMETRY_HPP
++
++#include&lt;yade/pkg-common/InteractionGeometryEngineUnit.hpp&gt;
++
++class InteractingFacet2InteractingSphere4SpheresContactGeometry : public InteractionGeometryEngineUnit
++{
++	public :
++		virtual bool go(	const shared_ptr&lt;InteractingGeometry&gt;&amp; cm1,
++					const shared_ptr&lt;InteractingGeometry&gt;&amp; cm2,
++					const Se3r&amp; se31,
++					const Se3r&amp; se32,
++					const shared_ptr&lt;Interaction&gt;&amp; c);
++		virtual bool goReverse(	const shared_ptr&lt;InteractingGeometry&gt;&amp; cm1,
++					const shared_ptr&lt;InteractingGeometry&gt;&amp; cm2,
++					const Se3r&amp; se31,
++					const Se3r&amp; se32,
++					const shared_ptr&lt;Interaction&gt;&amp; c);
++					
++		InteractingFacet2InteractingSphere4SpheresContactGeometry();		
++					
++	REGISTER_CLASS_NAME(InteractingFacet2InteractingSphere4SpheresContactGeometry);
++	REGISTER_BASE_CLASS_NAME(InteractionGeometryEngineUnit);
++
++	FUNCTOR2D(InteractingFacet,InteractingSphere);
++
++	DEFINE_FUNCTOR_ORDER_2D(InteractingFacet,InteractingSphere);
++	
++	protected :
++		virtual void registerAttributes();
++};
++
++REGISTER_SERIALIZABLE(InteractingFacet2InteractingSphere4SpheresContactGeometry,false);
++
++#endif //  FACET2SPHERE4SPHERESCONTACTGEOMETRY_HPP
++
+
+Added: trunk/pkg/dem/Engine/EngineUnit/InteractingVertex2InteractingSphere4SpheresContactGeometry.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/EngineUnit/InteractingVertex2InteractingSphere4SpheresContactGeometry.cpp	2008-05-07 21:48:59 UTC (rev 1346)
++++ trunk/pkg/dem/Engine/EngineUnit/InteractingVertex2InteractingSphere4SpheresContactGeometry.cpp	2008-05-10 13:15:38 UTC (rev 1347)
+@@ -0,0 +1,88 @@
++/*************************************************************************
++*  Copyright (C) 2008 by Sergei Dorofeenko				 *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">sega at users.berlios.de</A>                                                 *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#include&quot;InteractingVertex2InteractingSphere4SpheresContactGeometry.hpp&quot;
++#include&lt;yade/pkg-dem/SpheresContactGeometry.hpp&gt;
++#include&lt;yade/pkg-common/InteractingSphere.hpp&gt;
++#include&lt;yade/pkg-common/InteractingVertex.hpp&gt;
++
++#include&lt;yade/lib-base/yadeWm3Extra.hpp&gt;
++
++
++InteractingVertex2InteractingSphere4SpheresContactGeometry::InteractingVertex2InteractingSphere4SpheresContactGeometry()
++{
++}
++
++void InteractingVertex2InteractingSphere4SpheresContactGeometry::registerAttributes()
++{	
++}
++
++bool InteractingVertex2InteractingSphere4SpheresContactGeometry::go(	const shared_ptr&lt;InteractingGeometry&gt;&amp; cm1,
++							const shared_ptr&lt;InteractingGeometry&gt;&amp; cm2,
++							const Se3r&amp; se31,
++							const Se3r&amp; se32,
++							const shared_ptr&lt;Interaction&gt;&amp; c)
++{
++
++    InteractingSphere* s2 = static_cast&lt;InteractingSphere*&gt;(cm2.get());
++
++    Vector3r normal = se32.position-se31.position; // TODO: Orientation!!!
++
++    InteractingVertex* v = static_cast&lt;InteractingVertex*&gt;(cm1.get());
++
++    // ignore vertices of a flat
++    if (v-&gt;flat) return false; 
++
++    for(int i=0,ei=v-&gt;normals.size(); i&lt;ei; ++i)
++	if ( normal.Dot(v-&gt;normals[i]) &lt; 0 ) return false;
++
++    Real penetrationDepth = s2-&gt;radius - normal.Normalize();
++	    
++    if (penetrationDepth&gt;0)
++    {
++
++	    shared_ptr&lt;SpheresContactGeometry&gt; scm;
++	    if (c-&gt;interactionGeometry)
++		scm = YADE_PTR_CAST&lt;SpheresContactGeometry&gt;(c-&gt;interactionGeometry);
++	    else
++		scm = shared_ptr&lt;SpheresContactGeometry&gt;(new SpheresContactGeometry());
++
++	    scm-&gt;contactPoint = se31.position-0.5*penetrationDepth*normal;
++	    scm-&gt;normal = normal;
++	    scm-&gt;penetrationDepth = penetrationDepth;
++	    scm-&gt;radius1 = 2*s2-&gt;radius;
++	    scm-&gt;radius2 = s2-&gt;radius;
++			    
++	    if (!c-&gt;interactionGeometry)
++		    c-&gt;interactionGeometry = scm;
++    
++	    return true;
++    }
++    else return false;
++}
++
++
++bool InteractingVertex2InteractingSphere4SpheresContactGeometry::goReverse(	const shared_ptr&lt;InteractingGeometry&gt;&amp; cm1,
++								const shared_ptr&lt;InteractingGeometry&gt;&amp; cm2,
++								const Se3r&amp; se31,
++								const Se3r&amp; se32,
++								const shared_ptr&lt;Interaction&gt;&amp; c)
++{
++	bool isInteracting = go(cm2,cm1,se32,se31,c);
++	if (isInteracting)
++	{
++	    SpheresContactGeometry* scm = static_cast&lt;SpheresContactGeometry*&gt;(c-&gt;interactionGeometry.get());
++	    scm-&gt;normal = -scm-&gt;normal;
++	    Real tmpR = scm-&gt;radius1;
++	    scm-&gt;radius1 = scm-&gt;radius2;
++	    scm-&gt;radius2 = tmpR;
++	}
++	return isInteracting;
++}
++
++YADE_PLUGIN();
+
+Added: trunk/pkg/dem/Engine/EngineUnit/InteractingVertex2InteractingSphere4SpheresContactGeometry.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/EngineUnit/InteractingVertex2InteractingSphere4SpheresContactGeometry.hpp	2008-05-07 21:48:59 UTC (rev 1346)
++++ trunk/pkg/dem/Engine/EngineUnit/InteractingVertex2InteractingSphere4SpheresContactGeometry.hpp	2008-05-10 13:15:38 UTC (rev 1347)
+@@ -0,0 +1,43 @@
++/*************************************************************************
++*  Copyright (C) 2008 by Sergei Dorofeenko				 *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">sega at users.berlios.de</A>                                                 *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#ifndef VERTEX2SPHERE4SPHERESCONTACTGEOMETRY_HPP
++#define VERTEX2SPHERE4SPHERESCONTACTGEOMETRY_HPP
++
++#include&lt;yade/pkg-common/InteractionGeometryEngineUnit.hpp&gt;
++
++class InteractingVertex2InteractingSphere4SpheresContactGeometry : public InteractionGeometryEngineUnit
++{
++	public :
++		virtual bool go(	const shared_ptr&lt;InteractingGeometry&gt;&amp; cm1,
++					const shared_ptr&lt;InteractingGeometry&gt;&amp; cm2,
++					const Se3r&amp; se31,
++					const Se3r&amp; se32,
++					const shared_ptr&lt;Interaction&gt;&amp; c);
++		virtual bool goReverse(	const shared_ptr&lt;InteractingGeometry&gt;&amp; cm1,
++					const shared_ptr&lt;InteractingGeometry&gt;&amp; cm2,
++					const Se3r&amp; se31,
++					const Se3r&amp; se32,
++					const shared_ptr&lt;Interaction&gt;&amp; c);
++					
++		InteractingVertex2InteractingSphere4SpheresContactGeometry();		
++					
++
++	FUNCTOR2D(InteractingVertex,InteractingSphere);
++	DEFINE_FUNCTOR_ORDER_2D(InteractingVertex,InteractingSphere);
++	REGISTER_CLASS_NAME(InteractingVertex2InteractingSphere4SpheresContactGeometry);
++	REGISTER_BASE_CLASS_NAME(InteractionGeometryEngineUnit);
++	
++	protected :
++		virtual void registerAttributes();
++};
++
++REGISTER_SERIALIZABLE(InteractingVertex2InteractingSphere4SpheresContactGeometry,false);
++
++#endif //  VERTEX2SPHERE4SPHERESCONTACTGEOMETRY_HPP
++
+
+Added: trunk/pkg/dem/PreProcessor/STLImporterTest.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/STLImporterTest.cpp	2008-05-07 21:48:59 UTC (rev 1346)
++++ trunk/pkg/dem/PreProcessor/STLImporterTest.cpp	2008-05-10 13:15:38 UTC (rev 1347)
+@@ -0,0 +1,333 @@
++/*************************************************************************
++*  Copyright (C) 2008 by Sergei Dorofeenko				 *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">sega at users.berlios.de</A>                                                 *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#include &quot;STLImporterTest.hpp&quot;
++#include &lt;yade/pkg-common/SpatialQuickSortCollider.hpp&gt;
++#include &lt;yade/lib-import/STLImporter.hpp&gt;
++#include&lt;yade/core/Body.hpp&gt;
++#include&lt;yade/core/Interaction.hpp&gt;
++#include&lt;yade/core/MetaBody.hpp&gt;
++#include&lt;yade/lib-serialization/IOFormatManager.hpp&gt;
++#include&lt;yade/pkg-common/AABB.hpp&gt;
++#include&lt;yade/pkg-common/BodyRedirectionVector.hpp&gt;
++#include&lt;yade/pkg-common/BoundingVolumeMetaEngine.hpp&gt;
++#include&lt;yade/pkg-common/CundallNonViscousForceDamping.hpp&gt;
++#include&lt;yade/pkg-common/CundallNonViscousMomentumDamping.hpp&gt;
++#include&lt;yade/pkg-common/GravityEngine.hpp&gt;
++#include&lt;yade/pkg-common/InteractingSphere.hpp&gt;
++#include&lt;yade/pkg-common/InteractionGeometryMetaEngine.hpp&gt;
++#include&lt;yade/pkg-common/InteractionPhysicsMetaEngine.hpp&gt;
++#include&lt;yade/pkg-common/InteractionVecSet.hpp&gt;
++#include&lt;yade/pkg-common/MetaInteractingGeometry.hpp&gt;
++#include&lt;yade/pkg-common/MetaInteractingGeometry2AABB.hpp&gt;
++#include&lt;yade/pkg-common/PhysicalActionApplier.hpp&gt;
++#include&lt;yade/pkg-common/PhysicalActionContainerInitializer.hpp&gt;
++#include&lt;yade/pkg-common/PhysicalActionContainerReseter.hpp&gt;
++#include&lt;yade/pkg-common/PhysicalActionDamper.hpp&gt;
++#include&lt;yade/pkg-common/PhysicalActionVectorVector.hpp&gt;
++#include&lt;yade/pkg-common/PhysicalParametersMetaEngine.hpp&gt;
++#include&lt;yade/pkg-common/Sphere.hpp&gt;
++#include&lt;yade/pkg-dem/BodyMacroParameters.hpp&gt;
++#include&lt;yade/pkg-dem/ElasticContactLaw.hpp&gt;
++#include&lt;yade/pkg-dem/ElasticCriterionTimeStepper.hpp&gt;
++#include&lt;yade/pkg-dem/MacroMicroElasticRelationships.hpp&gt;
++
++STLImporterTest::STLImporterTest() : FileGenerator()
++{
++	nbSpheres = Vector3r(10,10,10);
++	minRadius = 0.07;
++	maxRadius = 0.07;
++	dampingForce = 0.3;
++	dampingMomentum = 0.3;
++	timeStepUpdateInterval = 300;
++	sphereYoungModulus   = 15000000.0;
++	spherePoissonRatio  = 0.2;
++	sphereFrictionDeg   = 18.0;
++	density = 2600;
++	rotationBlocked = false;
++	gravity = Vector3r(0,-9.81,0);
++	disorder = Vector3r(0.002,0.002,0.002);
++	verticesImport=true;
++       	facetsImport=true;
++       	facetsWire=true;
++       	edgesImport=true;
++	stlFileName = &quot;hourglass.stl&quot;;
++	spheresHeight = 0;
++}
++
++
++STLImporterTest::~STLImporterTest()
++{
++
++}
++
++
++void STLImporterTest::postProcessAttributes(bool)
++{
++
++}
++
++
++void STLImporterTest::registerAttributes()
++{
++	FileGenerator::registerAttributes();
++	REGISTER_ATTRIBUTE(nbSpheres);
++	REGISTER_ATTRIBUTE(minRadius);
++	REGISTER_ATTRIBUTE(maxRadius);
++	REGISTER_ATTRIBUTE(spheresHeight);
++	REGISTER_ATTRIBUTE(sphereYoungModulus);
++	REGISTER_ATTRIBUTE(spherePoissonRatio);
++	REGISTER_ATTRIBUTE(sphereFrictionDeg);
++	REGISTER_ATTRIBUTE(gravity);
++	REGISTER_ATTRIBUTE(density);
++	REGISTER_ATTRIBUTE(disorder);
++	REGISTER_ATTRIBUTE(stlFileName);
++	REGISTER_ATTRIBUTE(verticesImport);
++	REGISTER_ATTRIBUTE(edgesImport);
++	REGISTER_ATTRIBUTE(facetsImport);
++	REGISTER_ATTRIBUTE(facetsWire);
++	REGISTER_ATTRIBUTE(dampingForce);
++	REGISTER_ATTRIBUTE(dampingMomentum);
++	REGISTER_ATTRIBUTE(rotationBlocked);
++	REGISTER_ATTRIBUTE(timeStepUpdateInterval);
++}
++
++
++bool STLImporterTest::generate()
++{
++	rootBody = shared_ptr&lt;MetaBody&gt;(new MetaBody);
++	createActors(rootBody);
++	positionRootBody(rootBody);
++
++	rootBody-&gt;dt = 0.001; //default time step
++
++////////////////////////////////////
++///////// Container
++	
++	rootBody-&gt;persistentInteractions	= shared_ptr&lt;InteractionContainer&gt;(new InteractionVecSet);
++	rootBody-&gt;transientInteractions		= shared_ptr&lt;InteractionContainer&gt;(new InteractionVecSet);
++	rootBody-&gt;physicalActions		= shared_ptr&lt;PhysicalActionContainer&gt;(new PhysicalActionVectorVector);
++	rootBody-&gt;bodies 			= shared_ptr&lt;BodyContainer&gt;(new BodyRedirectionVector);
++		
++////////////////////////////////////
++///////// walls
++
++	cerr &lt;&lt; &quot;Import walls geometry from file: &quot; &lt;&lt; stlFileName &lt;&lt; endl;
++	STLImporter imp;
++	if (!imp.open(stlFileName.c_str()))
++	{
++	    cerr &lt;&lt; &quot;ERROR: Bad file: &quot; &lt;&lt; stlFileName &lt;&lt; endl;
++	    return false;
++	}
++	imp.set_imported_stuff(verticesImport,edgesImport,facetsImport);
++	imp.facets_wire=facetsWire;
++	cerr &lt;&lt; &quot;Vertices (corner, flat): &quot; &lt;&lt; imp.number_of_vertices()
++	    &lt;&lt; &quot; (&quot; &lt;&lt; imp.number_of_corner_vertices() &lt;&lt; &quot;, &quot; &lt;&lt; imp.number_of_flat_vertices() &lt;&lt; &quot;)&quot;
++	    &lt;&lt; &quot;, Edges (corner, flat): &quot; &lt;&lt; imp.number_of_edges() 
++	    &lt;&lt; &quot; (&quot; &lt;&lt; imp.number_of_corner_edges() &lt;&lt; &quot;, &quot; &lt;&lt; imp.number_of_flat_edges() &lt;&lt; &quot;)&quot;
++	    &lt;&lt; &quot;, Facets: &quot; &lt;&lt; imp.number_of_facets() &lt;&lt; endl;
++	vector&lt;shared_ptr&lt;Body&gt; &gt; bds(imp.number_of_all_imported());
++	// create bodies
++	for(int i=0,e=bds.size();i&lt;e;++i)
++	{
++	    bds[i] = shared_ptr&lt;Body&gt;(new Body(body_id_t(0),1));
++    
++	    bds[i]-&gt;isDynamic		= false;
++	    
++	    // physical parameters
++	    shared_ptr&lt;BodyMacroParameters&gt; physics(new BodyMacroParameters);
++	    physics-&gt;angularVelocity	= Vector3r(0,0,0);
++	    physics-&gt;velocity		= Vector3r(0,0,0);
++	    physics-&gt;mass			= 0;
++	    physics-&gt;inertia		= Vector3r(0,0,0);
++	    physics-&gt;young			= sphereYoungModulus;
++	    physics-&gt;poisson		= spherePoissonRatio;
++	    physics-&gt;frictionAngle		= sphereFrictionDeg * Mathr::PI/180.0;
++	    bds[i]-&gt;physicalParameters	= physics;
++
++	    // bounding box only for edges and facets (not for vertices)
++	    if(i&gt;=imp.number_of_imported_vertices())
++	    {
++		shared_ptr&lt;AABB&gt; aabb(new AABB);
++		aabb-&gt;diffuseColor		= Vector3r(0,1,0);
++		bds[i]-&gt;boundingVolume	= aabb;
++	    }
++	    
++	    rootBody-&gt;bodies-&gt;insert(bds[i]);
++	}
++	// import bodies (create geometry)
++	imp.import(bds);
++	cerr &lt;&lt; &quot;Imported: &quot; 
++	    &lt;&lt; imp.number_of_imported_vertices() &lt;&lt; &quot; vertices, &quot; 
++	    &lt;&lt; imp.number_of_imported_edges() &lt;&lt; &quot; edges, &quot; 
++	    &lt;&lt; imp.number_of_imported_facets() &lt;&lt; &quot; facets&quot; &lt;&lt; endl;
++
++///////// spheres
++	float all = nbSpheres[0]*nbSpheres[1]*nbSpheres[2];
++	float current = 0.0;
++
++	for(int i=0;i&lt;nbSpheres[0];i++)
++	{
++		if(shouldTerminate()) return false;
++
++		for(int j=0;j&lt;nbSpheres[1];j++)
++			for(int k=0;k&lt;nbSpheres[2];k++)
++			{
++				shared_ptr&lt;Body&gt; sphere;
++				createSphere(sphere,i,j,k);
++				rootBody-&gt;bodies-&gt;insert(sphere);
++
++				setProgress(current++/all);
++			}
++	}
++	
++	return true;
++}
++
++void STLImporterTest::createSphere(shared_ptr&lt;Body&gt;&amp; body, int i, int j, int k)
++{
++	body = shared_ptr&lt;Body&gt;(new Body(body_id_t(0),1));
++	shared_ptr&lt;BodyMacroParameters&gt; physics(new BodyMacroParameters);
++	shared_ptr&lt;AABB&gt; aabb(new AABB);
++	shared_ptr&lt;Sphere&gt; gSphere(new Sphere);
++	shared_ptr&lt;InteractingSphere&gt; iSphere(new InteractingSphere);
++	
++	Quaternionr q;
++	q.FromAxisAngle( Vector3r(0,0,1),0);
++	
++	Vector3r position		= Vector3r(i,j+spheresHeight,k)*(2*maxRadius*1.1) 
++					  - Vector3r( nbSpheres[0]/2*(2*maxRadius*1.1) , 0 , nbSpheres[2]/2*(2*maxRadius*1.1) )
++					  + Vector3r( 	 Mathr::SymmetricRandom()*disorder[0]
++					  		,Mathr::SymmetricRandom()*disorder[1]
++							,Mathr::SymmetricRandom()*disorder[2])*maxRadius;
++	
++	Real radius 			= (Mathr::IntervalRandom(minRadius,maxRadius));
++	
++	body-&gt;isDynamic			= true;
++	
++	physics-&gt;angularVelocity	= Vector3r(0,0,0);
++	physics-&gt;velocity		= Vector3r(0,0,0);
++	physics-&gt;mass			= 4.0/3.0*Mathr::PI*radius*radius*radius*density;
++	physics-&gt;inertia		= Vector3r(2.0/5.0*physics-&gt;mass*radius*radius,2.0/5.0*physics-&gt;mass*radius*radius,2.0/5.0*physics-&gt;mass*radius*radius); //
++	physics-&gt;se3			= Se3r(position,q);
++	physics-&gt;young			= sphereYoungModulus;
++	physics-&gt;poisson		= spherePoissonRatio;
++	physics-&gt;frictionAngle		= sphereFrictionDeg * Mathr::PI/180.0;
++
++	aabb-&gt;diffuseColor		= Vector3r(0,1,0);
++
++	gSphere-&gt;radius			= radius;
++	gSphere-&gt;diffuseColor		= Vector3r(Mathr::UnitRandom(),Mathr::UnitRandom(),Mathr::UnitRandom());
++	gSphere-&gt;wire			= false;
++	gSphere-&gt;visible		= true;
++	gSphere-&gt;shadowCaster		= true;
++	
++	iSphere-&gt;radius			= radius;
++	iSphere-&gt;diffuseColor		= Vector3r(0.8,0.3,0.3);
++
++	body-&gt;interactingGeometry	= iSphere;
++	body-&gt;geometricalModel		= gSphere;
++	body-&gt;boundingVolume		= aabb;
++	body-&gt;physicalParameters	= physics;
++}
++
++void STLImporterTest::createActors(shared_ptr&lt;MetaBody&gt;&amp; rootBody)
++{
++	shared_ptr&lt;PhysicalActionContainerInitializer&gt; physicalActionInitializer(new PhysicalActionContainerInitializer);
++	physicalActionInitializer-&gt;physicalActionNames.push_back(&quot;Force&quot;);
++	physicalActionInitializer-&gt;physicalActionNames.push_back(&quot;Momentum&quot;);
++	
++	shared_ptr&lt;InteractionGeometryMetaEngine&gt; interactionGeometryDispatcher(new InteractionGeometryMetaEngine);
++	interactionGeometryDispatcher-&gt;add(&quot;InteractingSphere2InteractingSphere4SpheresContactGeometry&quot;);
++	interactionGeometryDispatcher-&gt;add(&quot;InteractingBox2InteractingSphere4SpheresContactGeometry&quot;);
++	interactionGeometryDispatcher-&gt;add(&quot;InteractingVertex2InteractingSphere4SpheresContactGeometry&quot;);
++	interactionGeometryDispatcher-&gt;add(&quot;InteractingEdge2InteractingSphere4SpheresContactGeometry&quot;);
++	interactionGeometryDispatcher-&gt;add(&quot;InteractingFacet2InteractingSphere4SpheresContactGeometry&quot;);
++
++	shared_ptr&lt;InteractionPhysicsMetaEngine&gt; interactionPhysicsDispatcher(new InteractionPhysicsMetaEngine);
++	interactionPhysicsDispatcher-&gt;add(&quot;MacroMicroElasticRelationships&quot;);
++		
++	shared_ptr&lt;BoundingVolumeMetaEngine&gt; boundingVolumeDispatcher	= shared_ptr&lt;BoundingVolumeMetaEngine&gt;(new BoundingVolumeMetaEngine);
++	boundingVolumeDispatcher-&gt;add(&quot;InteractingSphere2AABB&quot;);
++	boundingVolumeDispatcher-&gt;add(&quot;InteractingEdge2AABB&quot;);
++	boundingVolumeDispatcher-&gt;add(&quot;InteractingFacet2AABB&quot;);
++	boundingVolumeDispatcher-&gt;add(&quot;InteractingBox2AABB&quot;);
++	boundingVolumeDispatcher-&gt;add(&quot;MetaInteractingGeometry2AABB&quot;);
++	
++	shared_ptr&lt;GravityEngine&gt; gravityCondition(new GravityEngine);
++	gravityCondition-&gt;gravity = gravity;
++	
++	shared_ptr&lt;CundallNonViscousForceDamping&gt; actionForceDamping(new CundallNonViscousForceDamping);
++	actionForceDamping-&gt;damping = dampingForce;
++	shared_ptr&lt;CundallNonViscousMomentumDamping&gt; actionMomentumDamping(new CundallNonViscousMomentumDamping);
++	actionMomentumDamping-&gt;damping = dampingMomentum;
++	shared_ptr&lt;PhysicalActionDamper&gt; actionDampingDispatcher(new PhysicalActionDamper);
++	actionDampingDispatcher-&gt;add(actionForceDamping);
++	actionDampingDispatcher-&gt;add(actionMomentumDamping);
++	
++	shared_ptr&lt;PhysicalActionApplier&gt; applyActionDispatcher(new PhysicalActionApplier);
++	applyActionDispatcher-&gt;add(&quot;NewtonsForceLaw&quot;);
++	applyActionDispatcher-&gt;add(&quot;NewtonsMomentumLaw&quot;);
++	
++	shared_ptr&lt;PhysicalParametersMetaEngine&gt; positionIntegrator(new PhysicalParametersMetaEngine);
++	positionIntegrator-&gt;add(&quot;LeapFrogPositionIntegrator&quot;);
++	shared_ptr&lt;PhysicalParametersMetaEngine&gt; orientationIntegrator(new PhysicalParametersMetaEngine);
++	orientationIntegrator-&gt;add(&quot;LeapFrogOrientationIntegrator&quot;);
++
++	shared_ptr&lt;ElasticCriterionTimeStepper&gt; sdecTimeStepper(new ElasticCriterionTimeStepper);
++	sdecTimeStepper-&gt;sdecGroupMask = 1;
++	sdecTimeStepper-&gt;timeStepUpdateInterval = timeStepUpdateInterval;
++
++	rootBody-&gt;engines.clear();
++	rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new PhysicalActionContainerReseter));
++	rootBody-&gt;engines.push_back(sdecTimeStepper);
++	rootBody-&gt;engines.push_back(boundingVolumeDispatcher);	
++	rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new SpatialQuickSortCollider));
++	rootBody-&gt;engines.push_back(interactionGeometryDispatcher);
++	rootBody-&gt;engines.push_back(interactionPhysicsDispatcher);
++	rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new ElasticContactLaw));
++	rootBody-&gt;engines.push_back(gravityCondition);
++	rootBody-&gt;engines.push_back(actionDampingDispatcher);
++	rootBody-&gt;engines.push_back(applyActionDispatcher);
++	rootBody-&gt;engines.push_back(positionIntegrator);
++
++	if(!rotationBlocked)
++		rootBody-&gt;engines.push_back(orientationIntegrator);
++
++	rootBody-&gt;initializers.clear();
++	rootBody-&gt;initializers.push_back(physicalActionInitializer);
++	rootBody-&gt;initializers.push_back(boundingVolumeDispatcher);
++}
++
++
++void STLImporterTest::positionRootBody(shared_ptr&lt;MetaBody&gt;&amp; rootBody) 
++{
++	rootBody-&gt;isDynamic		= false;
++	
++	Quaternionr q;
++	q.FromAxisAngle( Vector3r(0,0,1),0);
++
++	shared_ptr&lt;ParticleParameters&gt; physics(new ParticleParameters); // FIXME : fix indexable class PhysicalParameters
++	physics-&gt;se3				= Se3r(Vector3r(0,0,0),q);
++	physics-&gt;mass				= 0;
++	physics-&gt;velocity			= Vector3r(0,0,0);
++	physics-&gt;acceleration			= Vector3r::ZERO;
++		
++	shared_ptr&lt;MetaInteractingGeometry&gt; set(new MetaInteractingGeometry());
++	set-&gt;diffuseColor			= Vector3r(0,0,1);
++	
++	shared_ptr&lt;AABB&gt; aabb(new AABB);
++	aabb-&gt;diffuseColor			= Vector3r(0,0,1);
++	
++	rootBody-&gt;interactingGeometry		= YADE_PTR_CAST&lt;InteractingGeometry&gt;(set);	
++	rootBody-&gt;boundingVolume		= YADE_PTR_CAST&lt;BoundingVolume&gt;(aabb);
++	rootBody-&gt;physicalParameters 		= physics;
++}
++
++
++YADE_PLUGIN();
+
+Added: trunk/pkg/dem/PreProcessor/STLImporterTest.hpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/STLImporterTest.hpp	2008-05-07 21:48:59 UTC (rev 1346)
++++ trunk/pkg/dem/PreProcessor/STLImporterTest.hpp	2008-05-10 13:15:38 UTC (rev 1347)
+@@ -0,0 +1,64 @@
++/*************************************************************************
++*  Copyright (C) 2008 by Sergei Dorofeenko				 *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">sega at users.berlios.de</A>                                                 *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#ifndef STLIMPORTERTEST_HPP
++#define STLIMPORTERTEST_HPP
++
++#include&lt;yade/core/FileGenerator.hpp&gt;
++
++class STLImporterTest : public FileGenerator
++{
++	private :
++		Vector3r	 nbSpheres
++				,disorder
++				,gravity;
++
++		string		stlFileName;
++		bool		 verticesImport
++				,edgesImport
++			        ,facetsImport
++			        ,facetsWire;
++
++		bool		rotationBlocked;
++
++		Real		 minRadius
++				,maxRadius
++				,density
++				,dampingForce
++				,dampingMomentum
++				,spheresHeight
++				,sphereYoungModulus
++				,spherePoissonRatio
++				,sphereFrictionDeg;
++
++		int		 timeStepUpdateInterval;
++
++		void createSphere(shared_ptr&lt;Body&gt;&amp; body, int i, int j, int k);
++		void createActors(shared_ptr&lt;MetaBody&gt;&amp; rootBody);
++		void positionRootBody(shared_ptr&lt;MetaBody&gt;&amp; rootBody);
++
++	// construction
++	public :
++		STLImporterTest ();
++		~STLImporterTest ();
++		
++
++	protected :
++		bool generate();
++
++		virtual void postProcessAttributes(bool deserializing);
++		void registerAttributes();
++	REGISTER_CLASS_NAME(STLImporterTest);
++	REGISTER_BASE_CLASS_NAME(FileGenerator);
++};
++
++REGISTER_SERIALIZABLE(STLImporterTest,false);
++
++#endif // STLIMPORTERTEST_HPP
++
++
+
+Modified: trunk/pkg/dem/SConscript
+===================================================================
+--- trunk/pkg/dem/SConscript	2008-05-07 21:48:59 UTC (rev 1346)
++++ trunk/pkg/dem/SConscript	2008-05-10 13:15:38 UTC (rev 1347)
+@@ -88,6 +88,27 @@
+ 			'yade-multimethods',
+ 			'InteractingSphere']),
+ 			
++	env.SharedLibrary('InteractingVertex2InteractingSphere4SpheresContactGeometry'
++	    ,['Engine/EngineUnit/InteractingVertex2InteractingSphere4SpheresContactGeometry.cpp']
++	    ,LIBS=env['LIBS']+['InteractingVertex'
++				,'InteractingSphere'
++				,'InteractionGeometryMetaEngine'
++				,'SpheresContactGeometry']),
++	
++	env.SharedLibrary('InteractingEdge2InteractingSphere4SpheresContactGeometry'
++	    ,['Engine/EngineUnit/InteractingEdge2InteractingSphere4SpheresContactGeometry.cpp']
++	    ,LIBS=env['LIBS']+['InteractingEdge'
++				,'InteractingSphere'
++				,'InteractionGeometryMetaEngine'
++				,'SpheresContactGeometry']),
++    
++	env.SharedLibrary('InteractingFacet2InteractingSphere4SpheresContactGeometry'
++	    ,['Engine/EngineUnit/InteractingFacet2InteractingSphere4SpheresContactGeometry.cpp']
++	    ,LIBS=env['LIBS']+['InteractingFacet'
++				,'InteractingSphere'
++				,'InteractionGeometryMetaEngine'
++				,'SpheresContactGeometry']),
++
+ 	env.SharedLibrary('InteractingSphere2InteractingSphere4DistantSpheresContactGeometry',
+ 		['Engine/EngineUnit/InteractingSphere2InteractingSphere4DistantSpheresContactGeometry.cpp'],
+ 		LIBS=env['LIBS']+['SDECLinkGeometry',
+@@ -834,9 +855,6 @@
+ 	TriaxialCompressionEngine
+ 	GlobalStiffnessTimeStepper''')),
+ 
+-
+-
+-
+ env.SharedLibrary('ContactStressRecorder',
+ 		['Engine/DeusExMachina/ContactStressRecorder.cpp'],
+ 		LIBS=env['LIBS']+['ParticleParameters',
+@@ -1041,8 +1059,38 @@
+ 			    ,'Sphere'
+ 			    ])
+ 
+-
+-
+-
++	,env.SharedLibrary('STLImporterTest'
++	    ,['PreProcessor/STLImporterTest.cpp']
++	    ,LIBS=env['LIBS']+['AABB'
++				,'STLImporter'
++				,'BodyRedirectionVector'
++				,'BoundingVolumeMetaEngine'
++				,'CundallNonViscousForceDamping'
++				,'CundallNonViscousMomentumDamping'
++				,'ElasticContactLaw'
++				,'ElasticCriterionTimeStepper'
++				,'Facet'
++				,'GeometricalEdge'
++				,'GravityEngine'
++				,'InteractingEdge'
++				,'InteractingFacet'
++				,'InteractingSphere'
++				,'InteractingVertex'
++				,'InteractionGeometryMetaEngine'
++				,'InteractionPhysicsMetaEngine'
++				,'InteractionVecSet'
++				,'MacroMicroElasticRelationships'
++				,'MetaInteractingGeometry'
++				,'MetaInteractingGeometry2AABB'
++				,'ParticleParameters'
++				,'PhysicalActionApplier'
++				,'PhysicalActionContainerInitializer'
++				,'PhysicalActionContainerReseter'
++				,'PhysicalActionVectorVector'
++				,'PhysicalParametersMetaEngine'
++				,'SpatialQuickSortCollider'
++				,'Sphere'
++				,'Vertex'
++				])
+ ])
+ 
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000308.html">[Yade-commits] r1346 - in trunk: core extra extra/tetra extra/usct
+</A></li>
+	<LI>Next message: <A HREF="000310.html">[Yade-commits] r1348 - in trunk: core extra extra/clump extra/usct	gui gui/py gui/qt3 pkg/common/Engine/DeusExMachina
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#309">[ date ]</a>
+              <a href="thread.html#309">[ thread ]</a>
+              <a href="subject.html#309">[ subject ]</a>
+              <a href="author.html#309">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>

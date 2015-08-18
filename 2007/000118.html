@@ -1,0 +1,92 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yade-commits] r1153 - branches/scons-layout/debian
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-commits/2007/index.html" >
+   <LINK REL="made" HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1153%20-%20branches/scons-layout/debian&In-Reply-To=%3C200703221029.l2MATLV9013680%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000117.html">
+   <LINK REL="Next"  HREF="000119.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yade-commits] r1153 - branches/scons-layout/debian</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-commits%40lists.berlios.de?Subject=Re%3A%20%5BYade-commits%5D%20r1153%20-%20branches/scons-layout/debian&In-Reply-To=%3C200703221029.l2MATLV9013680%40sheep.berlios.de%3E"
+       TITLE="[Yade-commits] r1153 - branches/scons-layout/debian">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Thu Mar 22 11:29:21 CET 2007</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000117.html">[Yade-commits] r1152 - in branches/scons-layout: . debian scripts
+</A></li>
+        <LI>Next message: <A HREF="000119.html">[Yade-commits] r1154 - trunk
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#118">[ date ]</a>
+              <a href="thread.html#118">[ thread ]</a>
+              <a href="subject.html#118">[ subject ]</a>
+              <a href="author.html#118">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2007-03-22 11:29:21 +0100 (Thu, 22 Mar 2007)
+New Revision: 1153
+
+Modified:
+   branches/scons-layout/debian/rules
+Log:
+fix wm3 includes
+
+Modified: branches/scons-layout/debian/rules
+===================================================================
+--- branches/scons-layout/debian/rules	2007-03-22 10:23:49 UTC (rev 1152)
++++ branches/scons-layout/debian/rules	2007-03-22 10:29:21 UTC (rev 1153)
+@@ -69,12 +69,13 @@
+ 	## files SVNVERSION and _SVNVERSION contain snapshot version without/with leading '-' respectively (like svn1113 and -svn1113)
+ 
+ 	### WARNING: !!!!!!!!!!!!! if this hangs later on, use fakeroot-tcp instead of fakeroot !!!!!!!!
++	## scons remembers settings, specify only those that have changed on subsequent invocations
+ 	#install headers
+-	scons buildPrefix=debian runtimePREFIX=/usr PREFIX=debian/yade${_SVNVERSION}-dev/usr variant='' version=${SVNVERSION} useMiniWm3=0 exclude=realtime-rigidbody debian/yade${_SVNVERSION}-dev/usr/include
++	scons buildPrefix=debian runtimePREFIX=/usr PREFIX=debian/yade${_SVNVERSION}-dev/usr variant='' version=${SVNVERSION} useMiniWm3=0 exclude=realtime-rigidbody CPPPATH=/usr/include/wm3 debian/yade${_SVNVERSION}-dev/usr/include
+ 	#debug build
+-	scons buildPrefix=debian runtimePREFIX=/usr PREFIX=debian/yade${_SVNVERSION}-dbg/usr variant=-dbg pretty=0 optimize=0 debug=1 version=${SVNVERSION} useMiniWm3=0 exclude=realtime-rigidbody
++	scons PREFIX=debian/yade${_SVNVERSION}-dbg/usr variant=-dbg optimize=0 debug=1
+ 	#optimized build
+-	scons buildPrefix=debian runtimePREFIX=/usr PREFIX=debian/yade${_SVNVERSION}/usr variant='' pretty=0 optimize=1 debug=0 version=${SVNVERSION} useMiniWm3=0 exclude=realtime-rigidbody
++	scons PREFIX=debian/yade${_SVNVERSION}/usr variant='' optimize=1 debug=0
+ 
+ 
+ # Build architecture-independent files here.
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000117.html">[Yade-commits] r1152 - in branches/scons-layout: . debian scripts
+</A></li>
+	<LI>Next message: <A HREF="000119.html">[Yade-commits] r1154 - trunk
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#118">[ date ]</a>
+              <a href="thread.html#118">[ thread ]</a>
+              <a href="subject.html#118">[ subject ]</a>
+              <a href="author.html#118">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-commits">More information about the Yade-commits
+mailing list</a><br>
+</body></html>
